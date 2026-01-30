@@ -75,4 +75,14 @@ When you encounter a link (in `INBOX_LINKS.md` or user prompt):
 - **MCP First**: Every feature should be an MCP Tool or Resource.
 - **Testing**: Add tests for new services.
 
+---
+
+## 7. GEARS Syntax Standards
+For all `implementation_plan.md` "Proposed Changes" and technical specs, you MUST use the GEARS syntax:
+`[Where <static>] [While <stateful>] [When <trigger>] The <subject> shall <behavior>`
+
+### Examples:
+- **Good**: "When the user clicks 'Save', the `memoryRouter` shall invoke `vectorStore.addDocuments`."
+- **Bad**: "Make it save when you click."
+
 <end_of_instructions>
