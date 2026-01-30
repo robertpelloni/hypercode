@@ -54,7 +54,7 @@ export class Director {
         // Advanced Controls
         enableChatPaste: true, // Output to Chat Window
         enableCouncil: true, // Autonomous Decision Making
-        autoSubmitChat: false, // If true, Director submits its own messages immediately
+        autoSubmitChat: true, // If true, Director submits its own messages immediately
         chatPrefix: "[Director]:", // Prefix for chat messages
         // Message Type Prefixes
         directorActionPrefix: "🎬 **Director Action**:",
@@ -507,7 +507,15 @@ class ConversationMonitor {
 
         // PERIODIC ALT+ENTER: Click Accept buttons that pause development
         // This runs every 30 seconds (heartbeat interval) to keep things moving
-        try { await this.server.executeTool('native_input', { keys: 'alt+enter' }); } catch (e) { }
+        // SAFETY: Only run if user is IDLE (> 5s inactive) to prevent focus stealing
+        // @ts-ignore
+        const lastActive = this.server.lastUserActivityTime || 0;
+        if (Date.now() - lastActive > 5000) {
+            try {
+                // Target the VS Code window explicitly to ensure Alt+Enter registers
+                await this.server.executeTool('native_input', { keys: 'alt+enter', windowTitle: 'Visual Studio Code' });
+            } catch (e) { }
+        }
 
         // If Director is busy executing a task, don't interrupt (unless stuck?)
         if (this.isRunningTask) {

@@ -1029,6 +1029,7 @@ export class MCPServer {
         });
 
         serverInstance.setRequestHandler(CallToolRequestSchema, async (request) => {
+            this.lastUserActivityTime = Date.now();
             return await this.executeTool(request.params.name, request.params.arguments);
         });
     }
