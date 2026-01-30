@@ -1,9 +1,9 @@
 # AIOS Ecosystem Dashboard
 
-**Last Updated:** 2026-01-29 23:30:50
-**Total Modules:** 873
+**Last Updated:** 2026-01-29 23:43:15
+**Total Modules:** 874
 
-This dashboard tracks the status of all 873 integrated submodules and tools within the AIOS ecosystem.
+This dashboard tracks the status of all 874 integrated submodules and tools within the AIOS ecosystem.
 
 ## SuperAI CLI Ecosystem (40)
 
@@ -636,6 +636,12 @@ This dashboard tracks the status of all 873 integrated submodules and tools with
 | **PageIndex** | `external/rag/PageIndex` | `823c11e` <br> *((heads/main))* | <div align="center"> |
 | **vectorize-ui** | `external/rag/vectorize-ui` | `29183da` <br> *((heads/main))* | Vectorize UI is a Ruby on Rails application that provides a web interface for creating and managing vector stores using PostgreSQL's pgvector extensio... |
 | **WeKnora** | `external/rag/WeKnora` | `928d1c3` <br> *((v0.2.2-136-g928d1c3))* | <p align="center"> |
+
+## External: Research (1)
+
+| Name | Path | Version/Commit | Description |
+|------|------|----------------|-------------|
+| **kea-research** | `external/research/kea-research` | `8a019f8` <br> *((v0.2.0-1-g8a019f8))* | <p align="center"> |
 
 ## External: Sandboxing (7)
 
