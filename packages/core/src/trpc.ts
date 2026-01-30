@@ -10,6 +10,7 @@ import { commandsRouter } from './routers/commandsRouter.js';
 import { symbolsRouter } from './routers/symbolsRouter.js';
 import { autoDevRouter } from './routers/autoDevRouter.js';
 import { shellRouter } from './routers/shellRouter.js';
+import { memoryRouter } from './routers/memoryRouter.js';
 
 // Re-export core definitions for other files that might rely on them
 export { t, publicProcedure, adminProcedure };
@@ -22,6 +23,7 @@ export const appRouter = t.router({
     symbols: symbolsRouter,
     autoDev: autoDevRouter,
     shell: shellRouter,
+    memory: memoryRouter,
     health: publicProcedure.query(() => {
         return { status: 'running', service: '@borg/core' };
     }),

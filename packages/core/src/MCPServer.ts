@@ -106,7 +106,7 @@ export class MCPServer {
     public permissionManager: PermissionManager;
     public auditService: AuditService;
     public shellService: ShellService;
-    private vectorStore: any; // Lazy loaded
+    public vectorStore: any; // Lazy loaded
     private indexer: any; // Lazy loaded
     private memoryInitialized: boolean = false;
     private pendingRequests: Map<string, (response: any) => void> = new Map();
@@ -230,7 +230,7 @@ export class MCPServer {
      * Lazy initialization of memory system (VectorStore + Indexer)
      * Only loaded when memory tools are first used to speed up startup
      */
-    private async initializeMemorySystem() {
+    public async initializeMemorySystem() {
         if (this.memoryInitialized) return;
 
         console.log("[MCPServer] Lazy-loading memory system...");
