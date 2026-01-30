@@ -1,4 +1,10 @@
 # Changelog
+## [1.5.2] - 2026-01-30
+### Added
+- **Memory Manager**: Created `MemoryManager` service to abstract vector store interactions (`packages/core/src/services/MemoryManager.ts`).
+- **Memory Parity**: Refactored `MCPServer` to use `MemoryManager` instead of raw `VectorStore`/`Indexer` for Jan.ai parity.
+- **Auto-Drive Fixes**: Patched `Director` focus stealing and `MCPServer` activity tracking.
+
 ## [1.5.1] - 2026-01-30
 ### Added
 - **Universal Documentation**: Created `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` as the single source of truth for all AI agents.

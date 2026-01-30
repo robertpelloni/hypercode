@@ -1,13 +1,17 @@
 import { VectorProvider, Document, SearchResult } from '../interfaces/VectorProvider.js';
 import path from 'path';
+import fs from 'fs/promises';
+import { existsSync } from 'fs';
 
 export class MemoryManager {
     private provider: VectorProvider | null = null;
     private initialized: boolean = false;
     private dbPath: string;
+    private registryPath: string;
 
     constructor(workspaceRoot: string = process.cwd()) {
         this.dbPath = path.join(workspaceRoot, '.borg', 'db');
+        this.registryPath = path.join(workspaceRoot, '.borg', 'memory', 'contexts.json');
     }
 
     private async initialize() {
@@ -43,9 +47,17 @@ export class MemoryManager {
                     score: 0 // LanceDB wrapper didn't return score in previous interface, need update if needed
                 }));
             },
-            delete: async (ids: string[]) => {
-                // TODO: Implement delete in VectorStore
+            get: async (id: string) => {
+                const doc = await store.get(id);
+                if (!doc) return null;
+                return {
+                    id: doc.id,
+                    content: doc.content,
+                    metadata: { file_path: doc.file_path, hash: doc.hash },
+                    score: 1
+                };
             },
+            delete: async (ids: string[]) => store.delete(ids),
             reset: async () => store.reset()
         };
 
@@ -71,6 +83,14 @@ export class MemoryManager {
             metadata: metadata
         }]);
 
+        await this.addToRegistry({
+            id: docId,
+            title: metadata.title || 'Untitled',
+            source: metadata.source || 'unknown',
+            createdAt: Date.now(),
+            metadata
+        });
+
         return docId;
     }
 
@@ -79,5 +99,68 @@ export class MemoryManager {
         if (!this.provider) return [];
 
         return await this.provider.search(query, limit);
+    }
+    public async indexCodebase(rootDir: string): Promise<number> {
+        if (!this.initialized) await this.initialize();
+        if (!this.provider) throw new Error("Provider failed to init");
+
+        console.log(`[MemoryManager] Indexing codebase at ${rootDir}...`);
+
+        // Lazy load Indexer from @borg/memory
+        // @ts-ignore
+        const { Indexer, VectorStore } = await import('@borg/memory');
+
+        // Re-instantiate internal VectorStore for Indexer (Indexer expects concrete VectorStore, not Provider)
+        // TODO: Refactor Indexer to accept VectorProvider interface in future
+        const store = new VectorStore(this.dbPath);
+        const indexer = new Indexer(store);
+
+        return await indexer.indexDirectory(rootDir);
+    }
+    public async getContext(id: string) {
+        if (!this.initialized) await this.initialize();
+        if (!this.provider || !this.provider.get) return null;
+        return await this.provider.get(id);
+    }
+
+    public async deleteContext(id: string) {
+        if (!this.initialized) await this.initialize();
+        if (!this.provider) return;
+
+        await this.provider.delete([id]);
+        await this.removeFromRegistry(id);
+    }
+
+    public async listContexts() {
+        try {
+            if (!existsSync(this.registryPath)) return [];
+            const data = await fs.readFile(this.registryPath, 'utf-8');
+            return JSON.parse(data);
+        } catch (e) {
+            return [];
+        }
+    }
+
+    private async addToRegistry(entry: any) {
+        try {
+            const dir = path.dirname(this.registryPath);
+            if (!existsSync(dir)) await fs.mkdir(dir, { recursive: true });
+
+            let current = await this.listContexts();
+            current.unshift(entry); // Newest first
+            await fs.writeFile(this.registryPath, JSON.stringify(current, null, 2));
+        } catch (e) {
+            console.error("Failed to update memory registry:", e);
+        }
+    }
+
+    private async removeFromRegistry(id: string) {
+        try {
+            let current = await this.listContexts();
+            current = current.filter((c: any) => c.id !== id);
+            await fs.writeFile(this.registryPath, JSON.stringify(current, null, 2));
+        } catch (e) {
+            console.error("Failed to update memory registry:", e);
+        }
     }
 }

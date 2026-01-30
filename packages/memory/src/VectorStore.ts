@@ -134,6 +134,45 @@ export class VectorStore {
     }
 
     /**
+     * Get a single document by ID.
+     */
+    async get(id: string): Promise<CodeDocument | null> {
+        if (!this.initialized) await this.initialize();
+
+        try {
+            const results = await this.table.search().where(`id = '${id}'`).limit(1).execute();
+            if (Array.isArray(results) && results.length > 0) {
+                return {
+                    id: results[0].id,
+                    file_path: results[0].file_path,
+                    content: results[0].content,
+                    hash: results[0].hash
+                };
+            }
+        } catch (e) {
+            console.error(`[VectorStore] Failed to get ${id}:`, e);
+        }
+        return null;
+    }
+
+    /**
+     * Delete documents by ID.
+     */
+    async delete(ids: string[]) {
+        if (!this.initialized) await this.initialize();
+        if (ids.length === 0) return;
+
+        try {
+            // Construct SQL-like filter: id IN ('a', 'b')
+            const idList = ids.map(id => `'${id}'`).join(", ");
+            await this.table.delete(`id IN (${idList})`);
+            console.log(`[VectorStore] Deleted ${ids.length} documents.`);
+        } catch (e: any) {
+            console.error(`[VectorStore] Failed to delete: ${e.message}`);
+        }
+    }
+
+    /**
      * Clear all data.
      */
     async reset() {

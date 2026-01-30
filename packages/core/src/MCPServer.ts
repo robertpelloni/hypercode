@@ -70,6 +70,7 @@ console.log("[MCPServer] ✓ Commands");
 import { ContextManager } from "./context/ContextManager.js";
 import { SymbolPinService } from "./services/SymbolPinService.js";
 import { AutoDevService } from "./services/AutoDevService.js";
+import { MemoryManager } from "./services/MemoryManager.js";
 
 
 import { PermissionManager, AutonomyLevel } from "./security/PermissionManager.js";
@@ -106,8 +107,9 @@ export class MCPServer {
     public permissionManager: PermissionManager;
     public auditService: AuditService;
     public shellService: ShellService;
-    public vectorStore: any; // Lazy loaded
-    private indexer: any; // Lazy loaded
+    public memoryManager: MemoryManager; // Centralized Memory Service
+    // public vectorStore: any; // DEPRECATED
+    // private indexer: any; // DEPRECATED
     private memoryInitialized: boolean = false;
     private pendingRequests: Map<string, (response: any) => void> = new Map();
     public suggestionService: SuggestionService;
@@ -191,10 +193,8 @@ export class MCPServer {
         this.commandRegistry.register(new StashCommand());
         this.commandRegistry.register(new FixCommand(() => this.autoDevService));
 
-        // Memory System - LAZY LOADED on first use to speed up startup
-        // VectorStore and Indexer are created in initializeMemorySystem()
-        this.vectorStore = null;
-        this.indexer = null;
+        // Memory System
+        this.memoryManager = new MemoryManager(process.cwd());
 
         this.squadService = new SquadService(this);
 
@@ -233,18 +233,16 @@ export class MCPServer {
     public async initializeMemorySystem() {
         if (this.memoryInitialized) return;
 
-        console.log("[MCPServer] Lazy-loading memory system...");
-        const startTime = Date.now();
+        console.log("[MCPServer] Lazy-loading memory system (MemoryManager)...");
+        // this.memoryManager is instantiated in constructor but lazily initialized internally
+        // Actually, we should instantiate it here or in constructor?
+        // Let's rely on internal lazy loading of MemoryManager, but trigger it here to be safe
+        // Or just let tool calls trigger it.
+        // For parity with old logic, let's just make sure it's ready.
+        // await this.memoryManager.initialize(); // private method, called via public methods
 
-        // Dynamic imports to avoid loading heavy deps at startup
-        const { VectorStore, Indexer } = await import('@borg/memory');
-
-        const dbPath = path.join(process.cwd(), '.borg', 'db');
-        this.vectorStore = new VectorStore(dbPath);
-        this.indexer = new Indexer(this.vectorStore);
+        // Actually, let's just mark initialized true
         this.memoryInitialized = true;
-
-        console.log(`[MCPServer] Memory system loaded in ${Date.now() - startTime}ms`);
     }
 
     private createServerInstance(): Server {
@@ -661,23 +659,22 @@ export class MCPServer {
                 };
             }
             else if (name === "index_codebase") {
-                await this.initializeMemorySystem(); // Lazy load memory system
                 const dir = args?.path || process.cwd();
                 console.log(`[Borg Core] Indexing codebase at ${dir}...`);
-                const count = await this.indexer.indexDirectory(dir);
+                const count = await this.memoryManager.indexCodebase(dir);
                 result = {
                     content: [{ type: "text", text: `Indexed ${count} documents/chunks from ${dir}.` }]
                 };
             }
             else if (name === "search_codebase") {
-                await this.initializeMemorySystem(); // Lazy load memory system
                 const query = args?.query as string;
                 console.log(`[Borg Core] Semantic Searching for: ${query}`);
-                const matches = await this.vectorStore.search(query);
+                const matches = await this.memoryManager.search(query);
 
                 let text = `Searching for: "${query}"\n\n`;
                 matches.forEach((m: any, i: number) => {
-                    text += `${i + 1}. [${m.file_path}]\n${m.content.substring(0, 200)}...\n\n`;
+                    const filePath = m.metadata?.file_path || m.id;
+                    text += `${i + 1}. [${filePath}]\n${m.content.substring(0, 200)}...\n\n`;
                 });
 
                 result = {

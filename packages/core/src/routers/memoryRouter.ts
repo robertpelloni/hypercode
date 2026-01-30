@@ -12,33 +12,18 @@ export const memoryRouter = t.router({
     })).mutation(async ({ input }) => {
         // @ts-ignore
         const mcpServer = global.mcpServerInstance;
-        if (!mcpServer) throw new Error("MCPServer not initialized");
-
-        // Lazy init valid check?
-        // We need access to vectorStore.
-        // MCPServer doesn't expose it publicly in the interface I saw earlier (it was private).
-        // I might need to make it public or add a public accessor.
-
-        // Check and init memory system
-        if (!mcpServer.vectorStore) {
-            console.log("Memory system not ready, initializing...");
-            await mcpServer.initializeMemorySystem();
+        if (!mcpServer || !mcpServer.memoryManager) {
+            return { success: false, error: "MemoryManager not initialized" };
         }
 
-        if (!mcpServer.vectorStore) {
-            return { success: false, error: "VectorStore failed to initialize" };
-        }
+        const id = await mcpServer.memoryManager.saveContext(input.content, {
+            title: input.title,
+            source: input.source,
+            url: input.url,
+            ...input.metadata
+        });
 
-        const docId = `web/${Date.now()}/${Math.random().toString(36).substring(7)}`;
-
-        await mcpServer.vectorStore.addDocuments([{
-            id: docId,
-            file_path: input.url, // Treat URL as file path for now
-            content: `Title: ${input.title || 'Untitled'}\nSource: ${input.source}\nURL: ${input.url}\n\n${input.content}`,
-            hash: 'dynamic-web-content'
-        }]);
-
-        return { success: true, id: docId };
+        return { success: true, id };
     }),
 
     query: publicProcedure.input(z.object({
@@ -47,8 +32,34 @@ export const memoryRouter = t.router({
     })).query(async ({ input }) => {
         // @ts-ignore
         const mcpServer = global.mcpServerInstance;
-        if (!mcpServer || !mcpServer.vectorStore) return [];
+        if (!mcpServer || !mcpServer.memoryManager) return [];
 
-        return await mcpServer.vectorStore.search(input.query, input.limit);
+        return await mcpServer.memoryManager.search(input.query, input.limit);
+    }),
+
+    listContexts: publicProcedure.query(async () => {
+        // @ts-ignore
+        const mcpServer = global.mcpServerInstance;
+        if (!mcpServer || !mcpServer.memoryManager) return [];
+        return await mcpServer.memoryManager.listContexts();
+    }),
+
+    getContext: publicProcedure.input(z.object({
+        id: z.string()
+    })).query(async ({ input }) => {
+        // @ts-ignore
+        const mcpServer = global.mcpServerInstance;
+        if (!mcpServer || !mcpServer.memoryManager) return null;
+        return await mcpServer.memoryManager.getContext(input.id);
+    }),
+
+    deleteContext: publicProcedure.input(z.object({
+        id: z.string()
+    })).mutation(async ({ input }) => {
+        // @ts-ignore
+        const mcpServer = global.mcpServerInstance;
+        if (!mcpServer || !mcpServer.memoryManager) return { success: false };
+        await mcpServer.memoryManager.deleteContext(input.id);
+        return { success: true };
     })
 });

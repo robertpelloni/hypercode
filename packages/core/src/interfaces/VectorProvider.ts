@@ -26,6 +26,11 @@ export interface VectorProvider {
     search(query: string, limit?: number): Promise<SearchResult[]>;
 
     /**
+     * Get by ID
+     */
+    get?(id: string): Promise<SearchResult | null>;
+
+    /**
      * Delete documents by ID
      */
     delete(ids: string[]): Promise<void>;

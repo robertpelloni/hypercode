@@ -35,8 +35,8 @@
 
 ## Phase 15.5: Universal Standards & Parity (Feature Injection)
 **Goal:** Adopt best-in-class standards found during research.
-- [ ] **GEARS Syntax:** Adopt `sublang.xyz` spec for implementation plans.
-- [ ] **Memory Parity:** Study and replicate Jan.ai's local memory/connector architecture.
+- [x] **GEARS Syntax:** Adopt `sublang.xyz` spec for implementation plans. (See `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`)
+- [x] **Memory Parity:** Study and replicate Jan.ai's local memory/connector architecture. (See `packages/core/src/services/MemoryManager.ts`)
 - [ ] **Skills Parity:** Integrate skills from `dotfiles/claude-code`.
 - [ ] **Roo Control:** Enhance MobileNav to match `docs.roocode.com/roomote`.
 

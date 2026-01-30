@@ -51,7 +51,7 @@ export class Council {
         transcripts.push({ speaker: critic.name, text: securityReview.response });
 
         // 4. Product Manager Synthesis (Final Directive)
-        const directive = await this.consultMember(product, context, "Synthesize the feedback into a single, actionable DIRECTIVE for the Agent. Start your response with 'DIRECTIVE: ...'");
+        const directive = await this.consultMember(product, context, "Synthesize the feedback into a single, actionable DIRECTIVE for the Agent. Start your response with 'DIRECTIVE: ...'", "DIRECTIVE: STANDBY");
         transcripts.push({ speaker: "Final Directive", text: directive.response });
 
         // Extract directive text
@@ -73,7 +73,7 @@ export class Council {
         return result;
     }
 
-    private async consultMember(member: CouncilMember, context: string, instruction: string): Promise<{ member: CouncilMember, response: string, shortAdvice: string }> {
+    private async consultMember(member: CouncilMember, context: string, instruction: string, fallbackText: string = "I have no strong objections, proceed with caution."): Promise<{ member: CouncilMember, response: string, shortAdvice: string }> {
         const model = await this.modelSelector.selectModel({ taskComplexity: 'medium', taskType: 'supervisor' });
 
         const systemPrompt = `You are ${member.name}, a member of the AI Council.
@@ -86,19 +86,35 @@ ${context}
 Task: ${instruction}
 Keep your response concise (under 4 sentences).`;
 
-        try {
-            const response = await this.llmService.generateText(model.provider, model.modelId, systemPrompt, "Your turn.");
-            const content = response.content.trim();
-            console.log(`[Council] 👤 ${member.name}: ${content}`);
+        let attempts = 0;
+        const maxAttempts = 2; // Retry once
 
-            return {
-                member,
-                response: content,
-                shortAdvice: content
-            };
-        } catch (e: any) {
-            console.error(`[Council] Error consulting ${member.name}:`, e.message);
-            return { member, response: "Abstained.", shortAdvice: "Abstained." };
+        while (attempts < maxAttempts) {
+            attempts++;
+            try {
+                const response = await this.llmService.generateText(model.provider, model.modelId, systemPrompt, "Your turn.");
+                const content = response.content.trim();
+                console.log(`[Council] 👤 ${member.name}: ${content}`);
+
+                return {
+                    member,
+                    response: content,
+                    shortAdvice: content
+                };
+            } catch (e: any) {
+                console.error(`[Council] ⚠️ Error consulting ${member.name} (Attempt ${attempts}):`, e.message);
+                if (attempts < maxAttempts) {
+                    await new Promise(r => setTimeout(r, 2000)); // Backoff
+                }
+            }
         }
+
+        // Fallback after retries
+        console.error(`[Council] ❌ ${member.name} failed to respond.`);
+        return {
+            member,
+            response: fallbackText,
+            shortAdvice: "No objection."
+        };
     }
 }
