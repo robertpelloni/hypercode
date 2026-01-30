@@ -5,4 +5,5 @@ export * from './components/DirectorStatusWidget';
 export * from './components/DirectorConfigPanel';
 export * from './components/CodeIntelPage';
 export * from './components/ContextPanel';
-export * from './widgets/DependencyGraph
+export * from './widgets/DependencyGraphWidget';
+// AuditLogViewer not created yet, skip
