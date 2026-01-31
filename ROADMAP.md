@@ -26,21 +26,25 @@
 - [x] **Draggable Dashboard:** `dnd-kit` grid layout with persistence.
 - [x] **Configurable Persona:** Custom prefixes and behavior settings.
 
-## Phase 15: Deep Research & Absorption (Continuous)
+## Phase 15: Deep Research & Absorption (Completed)
 **Goal:** Achieve feature parity with the "Definitive Borg Resource Index".
-- [ ] **Ingest:** Process `reference/aios_master_index.csv`.
-- [ ] **Analyze:** Sub-agents to scrape and summarize every tool.
-- [ ] **Absorb:** Re-implement key features into Borg Core.
-- [ ] **Submodules:** Add all relevant repos as upstream references.
+- [x] **Ingest:** Processed `INBOX_LINKS.md` (Batches 1-3).
+- [x] **Analyze:** Created `web-research` skill and autonomous script.
+- [x] **Absorb:** Injected `treesitter-expert`, `frontend-design`, `mcp-builder` skills.
+- [x] **Submodules:** Added key repos (`anthropic-skills`, `awesome-mcp-servers`).
 
-## Phase 15.5: Universal Standards & Parity (Feature Injection)
-**Goal:** Adopt best-in-class standards found during research.
-- [x] **GEARS Syntax:** Adopt `sublang.xyz` spec for implementation plans. (See `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`)
-- [x] **Memory Parity:** Study and replicate Jan.ai's local memory/connector architecture. (See `packages/core/src/services/MemoryManager.ts`)
-- [ ] **Skills Parity:** Integrate skills from `dotfiles/claude-code`.
-- [ ] **Roo Control:** Enhance MobileNav to match `docs.roocode.com/roomote`.
+## Phase 16: The SuperAI Browser Extension (CURRENT FOCUS)
+**Goal:** Bridge local context into web-based AI models (ChatGPT, Gemini, Claude.ai).
 
-## Phase 20: Borg Core Implementation (New)
+### Functionality Injection
+- [x] **MCP Injection:** Expose local MCP tools (FS, Git, Terminal) to web chats.
+- [x] **Context Export:** One-click export of web chats into Borg long-term memory.
+- [x] **Memory Recording:** Background recording of browsing research.
+
+### Browser Capabilities (via MCP)
+- [ ] **Page Scraping:** Turn current page content into markdown context (Integrating `ReaderTools`).
+- [ ] **Console Reader:** Stream browser console logs to the Borg debugger.
+- [ ] **History & Email:** Secure access to history and GMail via authenticated MCP servers.
 **Goal:** Build the "Director + Swarm" Orchestrator.
 - [x] **Scaffolding:** Monorepo (Turborepo), Next.js Dashboard, Core Package initialized.
 - [x] **ModelSelector:** Quota management logic and **Automatic Fallback** (Priority).

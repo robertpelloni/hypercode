@@ -18,5 +18,9 @@
 | ✅ | Desktop 2FA | Tool | 8 | Offline, local-first 2FA authenticator. | Consider for "Secure Access" module. |
 | ✅ | Agentic Dev Basics (Klabnik) | Article | 9 | "Stop writing code", use Version Control, avoid Compaction. | Add to "Best Practices". |
 | ✅ | Clauder | Tool | 8 | Connects isolated Claude instances (CLI/Web). | Study "A2A" protocol logic. |
-| ✅ | Skill.md (Mintlify) | Spec | 9 | Open standard for documenting agent skills. | **Adopt this format for Borg Skills.** |
+| ✅ | Skill.md (Mintlify) | Spec | 9 | Open standard logic adopted. | **Standardized on `skill.md`.** |
+| ✅ | Web Research Skill | Skill | 10 | Autonomous research agent. | **Injected.** |
+| ✅ | TreeSitter Expert Skill | Skill | 9 | Neovim/TreeSitter architecture guide. | **Injected.** |
+| ✅ | Frontend Design Skill | Skill | 9 | Anthropic's design patterns. | **Injected.** |
+| ✅ | MCP Builder Skill | Skill | 9 | Anthropic's server guide. | **Injected.** |
 | ✅ | Gemini CLI #16728 | Issue | 3 | JetBrains detection logic. | Reference only. |
