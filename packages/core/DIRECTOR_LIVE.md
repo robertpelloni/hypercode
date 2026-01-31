@@ -58,3 +58,27 @@ Abstained.
 
 ### [9:17:05 PM] Director
 🏛️ [Council]: Abstained.
+
+### Council Directive
+Abstained.
+
+### [9:21:59 PM] Director
+🏛️ [Council]: Abstained.
+
+### Council Directive
+Abstained.
+
+### [9:22:46 PM] Director
+🏛️ [Council]: Abstained.
+
+### Council Directive
+Abstained.
+
+### [9:27:40 PM] Director
+🏛️ [Council]: Abstained.
+
+### Council Directive
+Abstained.
+
+### [9:28:28 PM] Director
+🏛️ [Council]: Abstained.
