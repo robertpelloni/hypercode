@@ -1,10 +1,12 @@
 # EXTREME WIP ALPHA DEVELOPED "IN THE OPEN," DON'T BOTHER TRYING TO USE IT UNLESS YOU PLAN ON HACKING ON IT TO GET IT WORKING
 
-# BORG (previously Borg): The Universal AI Operating System
+# BORG (previously AIOS): The Universal AI Operating System
 
 A unified operating system for PC-based local AI tools. Manage everything from tool installation to autonomous multi-agent orchestration in a single, high-fidelity dashboard.
 
 ![Borg Dashboard](https://via.placeholder.com/1200x600?text=Borg+Dashboard+Preview)
+
+![Borg Borg Borg](https://www.youtube.com/watch?v=RQZsZWrqp2c)
 
 ## 🚀 Key Features
 
