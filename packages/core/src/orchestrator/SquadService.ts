@@ -143,4 +143,37 @@ export class SquadService {
         }
         return `Member ${id} not found.`;
     }
+
+    // --- Job Management (Indexer, etc) ---
+
+    private indexerJob: any | null = null; // Lazy load IndexerJob type to avoid cirular dep issues if possible, but importing class is fine
+
+    public async toggleIndexer(enabled: boolean) {
+        if (enabled) {
+            if (!this.indexerJob) {
+                // @ts-ignore
+                const { IndexerJob } = await import('../jobs/IndexerJob.js');
+                // @ts-ignore
+                if (this.server.memoryManager) {
+                    // @ts-ignore
+                    this.indexerJob = new IndexerJob(this.server.memoryManager, process.cwd());
+                }
+            }
+            if (this.indexerJob) {
+                this.indexerJob.start();
+                return true;
+            }
+        } else {
+            if (this.indexerJob) {
+                this.indexerJob.stop();
+                return false;
+            }
+        }
+        return false;
+    }
+
+    public getIndexerStatus() {
+        if (!this.indexerJob) return { running: false, indexing: false };
+        return this.indexerJob.getStatus();
+    }
 }

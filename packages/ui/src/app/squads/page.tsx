@@ -23,6 +23,15 @@ export default function SquadsPage() {
         onSuccess: () => utils.squad.list.invalidate()
     });
 
+    // Indexer Hooks
+    const { data: indexerStatus, refetch: refetchIndexer } = trpc.squad.getIndexerStatus.useQuery(undefined, {
+        refetchInterval: 5000
+    });
+
+    const indexerMutation = trpc.squad.toggleIndexer.useMutation({
+        onSuccess: () => refetchIndexer()
+    });
+
     const [branch, setBranch] = useState("chore/feature-x");
     const [goal, setGoal] = useState("Implement Feature X");
 
@@ -43,6 +52,37 @@ export default function SquadsPage() {
                     </p>
                 </div>
             </header>
+
+
+
+            {/* Continuous Indexer Card */}
+            <Card className="bg-muted/30">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-lg font-medium flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${indexerStatus?.running ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                        Continuous Indexing Squad
+                    </CardTitle>
+                    <Button
+                        variant={indexerStatus?.running ? "destructive" : "default"}
+                        size="sm"
+                        onClick={() => indexerMutation.mutate({ enabled: !indexerStatus?.running })}
+                        disabled={indexerMutation.isPending}
+                    >
+                        {indexerStatus?.running ? "Stop Indexer" : "Start Indexer"}
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground mb-2">
+                        Automatically scans codebase every 5 minutes to keep Symbols and Graph up-to-date.
+                    </p>
+                    {indexerStatus?.indexing && (
+                        <div className="flex items-center gap-2 text-xs text-blue-400">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Currently Indexing...
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
 
             {/* Active Squads List */}
             <div className="grid gap-4">
@@ -130,6 +170,6 @@ export default function SquadsPage() {
                     </Button>
                 </CardContent>
             </Card>
-        </div>
+        </div >
     );
 }

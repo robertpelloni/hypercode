@@ -314,17 +314,7 @@ export const appRouter = t.router({
         }
         throw new Error("MCPServer not found");
     }),
-    repoGraph: t.router({
-        get: t.procedure.query(async () => {
-            // @ts-ignore
-            if (global.mcpServerInstance && global.mcpServerInstance.autoTestService) {
-                // @ts-ignore
-                const graph = global.mcpServerInstance.autoTestService.repoGraph;
-                return graph.toJSON();
-            }
-            return { consumers: {}, dependencies: {} };
-        })
-    }),
+    repoGraph: graphRouter,
     autoTest: t.router({
         getResults: t.procedure.query(() => {
             // @ts-ignore

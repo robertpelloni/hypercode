@@ -20,7 +20,7 @@ function getGraphService(): RepoGraphService {
 }
 
 export const graphRouter = t.router({
-    getGraph: publicProcedure.query(async () => {
+    get: publicProcedure.query(async () => {
         const service = getGraphService();
         if (!service) {
             return { nodes: [], links: [] };

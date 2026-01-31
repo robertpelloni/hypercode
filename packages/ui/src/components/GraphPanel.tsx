@@ -110,8 +110,6 @@ export function GraphPanel() {
                         ref={fgRef}
                         width={containerDimensions.width}
                         height={containerDimensions.height}
-                        width={containerDimensions.width}
-                        height={containerDimensions.height}
                         graphData={displayGraph}
                         nodeLabel="id"
                         nodeColor={(node: any) => {

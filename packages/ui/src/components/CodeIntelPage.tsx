@@ -7,7 +7,7 @@ import { Loader2, RefreshCw, Network } from 'lucide-react';
 import { Button } from './ui/button';
 
 export function CodeIntelPage() {
-    const { data: graph, isLoading, refetch, isRefetching } = trpc.graph.getGraph.useQuery(undefined, {
+    const { data: graph, isLoading, refetch, isRefetching } = trpc.repoGraph.get.useQuery(undefined, {
         staleTime: 60000 // Cache for 1 min
     });
 

@@ -56,7 +56,7 @@
 ### Robust Indexing
 - [x] **Vector Integration:** Enhance `RepoMapService` to use vector embeddings for semantic search (RAG).
 - [x] **Tree-sitter Deep Dive:** Upgrade symbol extraction to support full call graphs and type hierarchies.
-- [ ] **Graph Service:** Finalize `RepoGraphService` to visualize import/export dependencies.
+- [x] **Graph Service:** Finalize `RepoGraphService` to visualize import/export dependencies.
 
 ### Secure Execution
 - [x] **Sandboxing:** Finalize `SandboxService` for secure Docker/WASM code execution (Integrating `code-sandbox/` tools).
