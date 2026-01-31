@@ -20,7 +20,7 @@
     "zod": "^3.25.76",
     "@trpc/server": "^11.8.1",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.6"
   },
   "devDependencies": {
     "@borg/tsconfig": "workspace:*",
