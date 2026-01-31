@@ -1,3 +1,5 @@
+# EXTREME WIP ALPHA DEVELOPED "IN THE OPEN," DON'T BOTHER TRYING TO USE IT UNLESS YOU PLAN ON HACKING ON IT TO GET IT WORKING
+
 # BORG (previously Borg): The Universal AI Operating System
 
 A unified operating system for PC-based local AI tools. Manage everything from tool installation to autonomous multi-agent orchestration in a single, high-fidelity dashboard.
@@ -35,7 +37,7 @@ A unified operating system for PC-based local AI tools. Manage everything from t
 ## 📦 Installation
 ```bash
 # Clone
-git clone https://github.com/OhMyOpenCode/borg.git
+git clone https://github.com/robertpelloni/borg.git
 cd borg
 
 # Install
