@@ -5,6 +5,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
+import { Button, Input } from '@borg/ui';
+
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
     const [sent, setSent] = useState(false);
@@ -38,17 +40,17 @@ export default function ForgotPasswordPage() {
 
                 {!sent ? (
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <input
+                        <Input
                             type="email"
                             placeholder="Email address"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full h-10 px-3 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
+                            className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus-visible:ring-blue-500/50"
                             required
                         />
-                        <button type="submit" className="w-full h-10 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors shadow-lg shadow-blue-500/20">
+                        <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20">
                             Send Reset Link
-                        </button>
+                        </Button>
                     </form>
                 ) : (
                     <div className="text-center space-y-4">
