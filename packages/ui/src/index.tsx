@@ -13,6 +13,7 @@ export * from './widgets/DependencyGraphWidget';
 export * from './components/WorkshopPage';
 export * from './components/SkillLibrary';
 export * from './components/LibraryPage';
+export * from './components/ChroniclePage';
 // Basic UI Primitives
 export * from "./components/ui/button";
 export * from "./components/ui/input";
