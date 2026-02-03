@@ -3229,3 +3229,6 @@
 [submodule "reference/browser/puppeteer"]
 	path = reference/browser/puppeteer
 	url = https://github.com/puppeteer/puppeteer.git
+[submodule "external/frameworks/ui-tars"]
+	path = external/frameworks/ui-tars
+	url = https://github.com/bytedance/UI-TARS-desktop
