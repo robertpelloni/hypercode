@@ -3241,3 +3241,12 @@
 [submodule "external/tools/tokentap"]
 	path = external/tools/tokentap
 	url = https://github.com/jmuncor/tokentap
+[submodule "external/frameworks/pi-mono"]
+	path = external/frameworks/pi-mono
+	url = https://github.com/badlogic/pi-mono
+[submodule "external/tools/claude-mem"]
+	path = external/tools/claude-mem
+	url = https://github.com/thedotmack/claude-mem
+[submodule "external/frameworks/opencode-interpreter"]
+	path = external/frameworks/opencode-interpreter
+	url = https://github.com/OpenCodeInterpreter/OpenCodeInterpreter
