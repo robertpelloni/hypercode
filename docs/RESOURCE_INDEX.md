@@ -24,3 +24,6 @@
 | ✅ | Frontend Design Skill | Skill | 9 | Anthropic's design patterns. | **Injected.** |
 | ✅ | MCP Builder Skill | Skill | 9 | Anthropic's server guide. | **Injected.** |
 | ✅ | Gemini CLI #16728 | Issue | 3 | JetBrains detection logic. | Reference only. |
+| ✅ | KeaBase Research | Tool/Platform | 9 | Multi-AI collaboration and consensus platform. | Submodule as `external/research/kea-research`. |
+| ✅ | MCP Reasoner | Reasoning | 10 | Systematic reasoning (Beam Search/MCTS) for Claude. | Submodule as `external/frameworks/mcp-reasoner`. |
+| ✅ | LobeHub | Agent Harness | 10 | Visual, multi-modal, MCP-ready agent workspace. | Submodule as `external/frameworks/lobehub`. |

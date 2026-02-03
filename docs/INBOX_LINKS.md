@@ -366,12 +366,12 @@
 - https://arxiv.org/abs/2502.16982
 
 ## Batch 4 (2026-02-01)
-- https://github.com/KeaBase/kea-research
-- https://github.com/Jacck/mcp-reasoner
-- https://github.com/lobehub/lobehub
-- https://github.com/tensorchord/Awesome-LLMOps
-- https://github.com/NevaMind-AI/memU
-- https://github.com/openclaw/openclaw
+- [x] https://github.com/KeaBase/kea-research (Indexed in RESOURCE_INDEX.md, Submodule `external/research/kea-research`)
+- [x] https://github.com/Jacck/mcp-reasoner (Indexed in RESOURCE_INDEX.md, Submodule `external/frameworks/mcp-reasoner`)
+- [x] https://github.com/lobehub/lobehub (Indexed in RESOURCE_INDEX.md, Submodule `external/frameworks/lobehub`)
+- [x] https://github.com/tensorchord/Awesome-LLMOps (Indexed in RESOURCE_INDEX.md, Submodule `external/frameworks/Awesome-LLMOps`)
+- [x] https://github.com/NevaMind-AI/memU (Indexed in RESOURCE_INDEX.md, Submodule `external/memory/memU`)
+- [x] https://github.com/openclaw/openclaw (Indexed in RESOURCE_INDEX.md, Submodule `external/frameworks/openclaw`)
 - https://github.com/Shubhamsaboo/awesome-llm-apps
 - https://github.com/trending/developers
 - https://github.com/ThePrimeagen/99
@@ -413,8 +413,4 @@
 - https://github.com/cosinusalpha/webctl
 - https://github.com/ZeframLou/call-me
 - https://github.com/xpipe-io/xpipe
-- https://github.com/marcopesani/mcp-server-serper
-- https://github.com/code-yeongyu/oh-my-opencode/releases/tag/v3.0.0-beta.7
-- https://github.com/Lyapsus/opencode-optimal-model-temps
-- https://lynchmark.com/blog/gemini-optimal-temperature
-
+- https://git
