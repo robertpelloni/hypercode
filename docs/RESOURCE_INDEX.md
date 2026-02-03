@@ -94,4 +94,37 @@
 | ✅ | Python Debug Skill | Tool/Skill | 9 | Debugging skill for Claude using pdb (human-like). | Submodule as `external/tools/python-debugger-skill`. |
 | ✅ | Societies of Thought | Research/Logic | 10 | Scaling reasoning by simulating internal agent dialogue. | Reference only (Adopt for Council). |
 | ✅ | Nanocoder | Tool/Agent | 8 | Smarter AI tool handling and config (v1.21.0). | Submodule as `external/tools/nanocoder`. |
+| ✅ | Circuit | Tool/Orch | 9 | Visual agent chaining (Codex/Claude Code) with drag-and-drop. | Submodule as `external/tools/circuit`. |
+| ✅ | Bifrost | Tool/Gateway | 9 | AI gateway with semantic caching and MCP support. | Submodule as `external/tools/bifrost`. |
+| ✅ | Agno TS | Library/Client | 8 | TypeScript/React client libraries for Agno agents. | Reference only. |
+| ✅ | Jules Companion | App/Mac | 7 | Mac app for Jules using public Gemini APIs. | Submodule as `external/apps/jules-companion`. |
+| ✅ | Opencode Orchestrator | Tool/Orch | 10 | High-performance async orchestrator for OpenCode. | NPM `opencode-orchestrator`. |
+| ✅ | Codex Loop Deep Dive | Article/Internal | 9 | Detailed analysis of Codex prompt building/compaction. | Reference only. |
+| ✅ | Doris | Agent/Personal | 10 | Voice-first personal assistant with MCP memory/persistence. | Submodule as `external/agents/doris`. |
+| ✅ | CKB | Tool/Intelligence | 9 | Code intelligence MCP with 80+ tools (Call graphs, dead code). | Submodule as `external/tools/ckb`. |
+| ✅ | searxNcrawl | Tool/Search | 8 | Privacy-focused search (SearXNG) + crawl4ai integration. | Submodule as `external/tools/searxncrawl`. |
+| ✅ | Second Brain | Tool/RAG | 7 | Private RAG system for personal/professional knowledge. | Reference only. |
+| ✅ | Qwen3 Max (Thinking) | Model/Reasoning | 10 | Qwen's latest high-performance thinking/reasoning model. | Reference only. |
+| ✅ | Gnapsis | Tool/Graph | 9 | Knowledge graph MCP server for AI coding assistants. | Submodule as `external/mcp-servers/gnapsis`. |
+| ✅ | Local RAG SDK | Framework/RAG | 8 | Offline, O(1) context retrieval without API keys. | Reference only. |
+| ✅ | Opencode.nvim | Link/Editor | 10 | Full integration of OpenCode CLI into Neovim. | Reference only. |
+| ✅ | PolyMCP | Tool/Library | 10 | Framework to transform Python functions into MCP tools. | Submodule as `external/frameworks/polymcp`. |
+| ✅ | GLM-4.7-Flash (Thinking) | Model/Logic | 10 | Thinking model with 99% score on τ²-Bench Telecom. | Reference only. |
+| ✅ | Claude Code Hooks | Article/Core | 9 | Deep dive into Claude Code's underrated hook system. | Reference only. |
+| ✅ | GLM-4.7 Optimization | Guide/Infra | 9 | Params for GLM-4.7 (repeat penalty: 1.0) and unsloth usage. | Reference only. |
+| ✅ | DeepSeek-V3.2 | Model/Math | 10 | Matches GPT-5 on math with 10x lower cost ($0.028/M). | Reference only. |
+| ✅ | IncidentFox | Tool/Ops | 10 | MCP server for production inspection (K8s, Logs, AWS). | Submodule as `external/tools/incidentfox`. |
+| ✅ | kiroIDE Skills | Tool/Skill | 9 | Collection of 75 agent skills for kiroIDE/Claude. | Reference only. |
+| ✅ | Clawdbot | Agent/Shell | 8 | Claude-based agent with shell access and heartbeat. | Reference only. |
+| ✅ | MCPB | Protocol/Bundle | 10 | Bundle format for MCP servers (Airgapped, no runtime install). | Reference only. |
+| ✅ | ThemeContext MCP | Tool/Design | 10 | Extracts design tokens (CSS, Tailwind) from any URL. | Submodule as `external/tools/theme-context`. |
+| ✅ | large-codebase-cc | Guide/Logic | 9 | Techniques for running Claude Code on 100k+ LOC repos. | Reference only. |
 | ✅ | 99 | Project | 2 | ThePrimeagen's 99 problems / repo. | Reference only. |
+| ✅ | pi-mono | Toolkit/Agent | 10 | AI agent toolkit (CLI, API, UI, Slack bot, vLLM). | Submodule as `external/frameworks/pi-mono`. |
+| ✅ | claude-mem | Tool/Memory | 10 | Claude Code plugin for session capture and context. | Submodule as `external/tools/claude-mem`. |
+| ✅ | CodexBar | Tool/HUD | 9 | Usage stats for OpenAI Codex and Claude Code. | Reference only. |
+| ✅ | Stable-Video-Infinity | Model/Video | 10 | Infinite-length video generation (ICLR 26). | Reference only. |
+| ✅ | OpenCodeInterpreter | Framework/Code | 10 | Open-source suite for code generation + execution. | Submodule as `external/frameworks/open-code-interpreter`. |
+| ✅ | openwork | UI/Agent | 10 | Open-source Claude Cowork alternative (opencode-based). | Submodule as `external/ui/openwork`. |
+| ✅ | llama-swap | Tool/Infra | 9 | Tool for swapping model weights in memory. | Reference only. |
+| ✅ | gemini-cli-git | Tool/CLI | 9 | Git operations powered by Gemini 3. | Reference only. |

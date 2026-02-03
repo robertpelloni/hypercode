@@ -191,35 +191,35 @@
 - https://www.reddit.com/r/mcp/comments/1qjup3d/as_a_maker_whats_a_reliable_and_secure_way_to/
 - https://www.reddit.com/r/ClaudeAI/comments/1qjsyeo/i_gave_claude_a_try_and_now_i_am_a_max_user_it_is/
 - https://www.reddit.com/r/LocalLLM/comments/1qjlzqt/someone_is_selling_a_lamda_labs_workstation_with/
-- https://www.reddit.com/r/CodexAutomation/comments/1qjoyxl/i_built_an_opensource_tool_called_circuit_to/
-- https://www.reddit.com/r/notebooklm/comments/1qisn4v/keep_your_google_drive_documents_synced_in/
-- https://www.reddit.com/r/Database/comments/1qggd5x/why_is_there_no_other_open_source_database_system/
-- https://www.reddit.com/r/mcp/comments/1ql3m6m/what_mcp_gateway_are_you_using_in_production/
-- https://www.reddit.com/r/CodexAutomation/comments/1qkk2sr/codex_cli_update_0890_custom_prompts_deprecation/
-- https://www.reddit.com/r/notebooklm/comments/1qkltnh/the_new_audio_transcription_feature_what_it_is/
-- https://www.reddit.com/r/agno/comments/1qkrl7f/opensource_typescriptreact_client_libraries_for/
-- https://www.reddit.com/r/JulesAgent/comments/1ql4pnk/jules_companion_app_for_mac/
-- https://www.reddit.com/r/BMAD_Method/comments/1qkrk1y/bmad_combining_antigravity_conversation_opencode/
-- https://www.reddit.com/r/opencodeCLI/comments/1qkrqvz/bros_i_just_massively_boosted_the_opencode_plugin/
-- https://www.reddit.com/r/CodexAutomation/comments/1ql2i5w/openai_deep_dive_unrolling_the_codex_agent_loop/
-- https://www.reddit.com/r/ClaudeAI/comments/1qkyq2m/doris_a_personal_ai_assistant/
-- https://www.reddit.com/r/GithubCopilot/comments/1ql40tt/github_copilot_is_just_as_good_as_claude_code_and/
-- https://www.reddit.com/r/unsloth/comments/1ql8nnq/for_glm47flash_turn_off_repeat_penalty/
-- https://www.reddit.com/r/codex/comments/1qkh3xg/big_update_incoming/
-- https://www.reddit.com/r/opencodeCLI/comments/1qkqbdg/is_there_a_good_glm_47_provider_to_use_with_oc/
-- https://www.reddit.com/r/mcp/comments/1qkm1tg/ckb_code_intelligence_mcp_server_with_80_tools/
-- https://www.reddit.com/r/ZaiGLM/comments/1qkp7eq/glm_lite_plan_is_a_trap/
-- https://www.reddit.com/r/mcp/comments/1qknhxi/from_searxngmcp_to_searxncrawl/
-- https://www.reddit.com/r/opencodeCLI/comments/1qkozvt/free_models/
-- https://www.reddit.com/r/zellij/comments/1ql0ys0/is_there_zellij_logging_utility/
-- https://www.reddit.com/r/notebooklm/comments/1qklem8/i_use_notebooklm_to_organize_ideas_and_projects/
-- https://www.reddit.com/r/kiroIDE/comments/1qkzm67/10k_credits_how_much_usage_realistically/
-- https://www.reddit.com/r/LocalLLaMA/comments/1qkyex0/your_post_is_getting_popular_and_we_just_featured/
-- https://www.reddit.com/r/replit/comments/1qjiwoa/ive_vibe_coded_3_fullstack_apps_there_are_a_few/
-- https://www.reddit.com/r/LovingAI/comments/1qklmch/openai_will_drop_gpt_53_next_week_and_its_a_very/
-- https://www.reddit.com/r/opencodeCLI/comments/1ql479a/have_claude_started_to_consume_more_tokens_when/
-- https://www.reddit.com/r/ArtificialInteligence/comments/1qkq97p/chinese_ai_is_quietly_eating_us_developers_lunch/
-- https://www.reddit.com/r/Rag/comments/1qkeiss/i_built_a_rag_as_a_second_brain/
+- [x] https://www.reddit.com/r/CodexAutomation/comments/1qjoyxl/i_built_an_opensource_tool_called_circuit_to/ (Indexed Circuit)
+- [x] https://www.reddit.com/r/notebooklm/comments/1qisn4v/keep_your_google_drive_documents_synced_in/ (Tool context)
+- [x] https://www.reddit.com/r/Database/comments/1qggd5x/why_is_there_no_other_open_source_database_system/ (Market context)
+- [x] https://www.reddit.com/r/mcp/comments/1ql3m6m/what_mcp_gateway_are_you_using_in_production/ (Indexed Bifrost/Gateways)
+- [x] https://www.reddit.com/r/CodexAutomation/comments/1qkk2sr/codex_cli_update_0890_custom_prompts_deprecation/ (Feature intel)
+- [x] https://www.reddit.com/r/notebooklm/comments/1qkltnh/the_new_audio_transcription_feature_what_it_is/ (Feature intel)
+- [x] https://www.reddit.com/r/agno/comments/1qkrl7f/opensource_typescriptreact_client_libraries_for/ (Indexed Agno TS)
+- [x] https://www.reddit.com/r/JulesAgent/comments/1ql4pnk/jules_companion_app_for_mac/ (Indexed Jules Companion)
+- [x] https://www.reddit.com/r/BMAD_Method/comments/1qkrk1y/bmad_combining_antigravity_conversation_opencode/ (BMAD workflow use)
+- [x] https://www.reddit.com/r/opencodeCLI/comments/1qkrqvz/bros_i_just_massively_boosted_the_opencode_plugin/ (Indexed Opencode Orchestrator)
+- [x] https://www.reddit.com/r/CodexAutomation/comments/1ql2i5w/openai_deep_dive_unrolling_the_codex_agent_loop/ (Indexed Codex Loop Deep Dive)
+- [x] https://www.reddit.com/r/ClaudeAI/comments/1qkyq2m/doris_a_personal_ai_assistant/ (Indexed Doris)
+- [x] https://www.reddit.com/r/GithubCopilot/comments/1ql40tt/github_copilot_is_just_as_good_as_claude_code_and/ (User sentiment)
+- [x] https://www.reddit.com/r/unsloth/comments/1ql8nnq/for_glm47flash_turn_off_repeat_penalty/ (Tool config)
+- [x] https://www.reddit.com/r/codex/comments/1qkh3xg/big_update_incoming/ (Model intel)
+- [x] https://www.reddit.com/r/opencodeCLI/comments/1qkqbdg/is_there_a_good_glm_47_provider_to_use_with_oc/ (Tool config)
+- [x] https://www.reddit.com/r/mcp/comments/1qkm1tg/ckb_code_intelligence_mcp_server_with_80_tools/ (Indexed CKB)
+- [x] https://www.reddit.com/r/ZaiGLM/comments/1qkp7eq/glm_lite_plan_is_a_trap/ (Market context)
+- [x] https://www.reddit.com/r/mcp/comments/1qknhxi/from_searxngmcp_to_searxncrawl/ (Indexed searxNcrawl)
+- [x] https://www.reddit.com/r/opencodeCLI/comments/1qkozvt/free_models/ (Context)
+- [x] https://www.reddit.com/r/zellij/comments/1ql0ys0/is_there_zellij_logging_utility/ (Zellij intel)
+- [x] https://www.reddit.com/r/notebooklm/comments/1qklem8/i_use_notebooklm_to_organize_ideas_and_projects/ (User sentiment)
+- [x] https://www.reddit.com/r/kiroIDE/comments/1qkzm67/10k_credits_how_much_usage_realistically/ (Price context)
+- [x] https://www.reddit.com/r/LocalLLaMA/comments/1qkyex0/your_post_is_getting_popular_and_we_just_featured/ (Community intel)
+- [x] https://www.reddit.com/r/replit/comments/1qjiwoa/ive_vibe_coded_3_fullstack_apps_there_are_a_few/ (User experience)
+- [x] https://www.reddit.com/r/LovingAI/comments/1qklmch/openai_will_drop_gpt_53_next_week_and_its_a_very/ (Rumor context)
+- [x] https://www.reddit.com/r/opencodeCLI/comments/1ql479a/have_claude_started_to_consume_more_tokens_when/ (User experience)
+- [x] https://www.reddit.com/r/ArtificialInteligence/comments/1qkq97p/chinese_ai_is_quietly_eating_us_developers_lunch/ (Market context)
+- [x] https://www.reddit.com/r/Rag/comments/1qkeiss/i_built_a_rag_as_a_second_brain/ (Indexed Second Brain)
 - https://www.reddit.com/r/DeepSeek/comments/1qkoc53/deepseekv32_matches_gpt5_at_10x_lower_cost_introl/
 - https://www.reddit.com/r/JulesAgent/comments/1qhdv34/jules_attachments_links_download/
 - https://www.reddit.com/r/mcp/comments/1ql77c7/gnapsis_a_knowledge_graph_mcp_server_for_ai/
@@ -250,40 +250,45 @@
 - https://www.reddit.com/r/opencodeCLI/comments/1qlvh9o/opencode_black_status_and_contact_info/
 - https://www.reddit.com/r/GithubCopilot/comments/1qljmun/one_skill_to_learn_them_all/
 - https://www.reddit.com/r/google_antigravity/comments/1qlmemf/honestly_google_antigravity_is_a_total_sleeper/
-- https://www.reddit.com/r/opencodeCLI/comments/1qljsw3/opencodenvim_opencode_fully_integrated_into_neovim/
-- https://www.reddit.com/r/MachineLearningAndAI/comments/1qljg82/ai_ml_weekly_hugging_face_highlights/
-- https://www.reddit.com/r/OpenWebUI/comments/1ql8w23/user_storage_open_webui_tool/
-- https://www.reddit.com/r/GoogleAntigravityIDE/comments/1qlerfg/drift_isnt_a_tool_its_your_2026_productivity_hack/
-- https://www.reddit.com/r/AskVibecoders/comments/1qlh6ew/anyone_knows_real_projects_that_were_built_with/
-- https://www.reddit.com/r/PromptEngineering/comments/1qm2ij5/title_im_bored_so_im_building_free_ai_engines/
-- https://www.reddit.com/r/PromptDesign/comments/1qivht5/i_got_mass_tired_of_losing_my_best_prompts_so_i/
-- https://www.reddit.com/r/ZaiGLM/comments/1qln8i3/artificialanalysis_glm47flash_thinking_most/
-- https://www.reddit.com/r/mcp/comments/1qlw3r1/polymcp_transform_any_python_function_into_an_mcp/
-- https://www.reddit.com/r/Wendbine/comments/1qluspd/wendbine/
-- https://www.reddit.com/r/IntelligenceEngine/comments/1qlpebj/emergent_hybrid_computation_in_gradientfree/
-- https://www.reddit.com/r/NooTopics/comments/1qldfps/dopamine_receptor_upregulation_after_adderall/
-- https://www.reddit.com/r/PromptDesign/comments/1qizmw8/how_to_generate_flow_chart_diagrams_easily_prompt/
-- https://www.reddit.com/r/chutesAI/comments/1qlts5c/why_is_chutes_so_slow_to_access/
-- https://www.reddit.com/r/GoogleAIStudio/comments/1qlu42w/gais_is_the_best_so_far/
-- https://www.reddit.com/r/AntigravityGoogle/comments/1qlpkrn/claude_opus_45_was_able_to_fix_the_mess_that/
-- https://www.reddit.com/r/PromptEngineering/comments/1qkowpy/so_cornell_and_mit_researchers_got_an_ai_to/
-- https://www.reddit.com/r/hackrebelscommunity/comments/1qllsdi/grok_qwen_prompt_system/
-- https://www.reddit.com/r/PromptDesign/comments/1qktc7w/ai_prompt_tricks_you_wouldnt_expect_to_work_so/
-- https://www.reddit.com/r/openrouter/comments/1qkxqie/openrouter_vs_google_cloud_regarding_gemini_models/
-- https://www.reddit.com/r/opencodeCLI/comments/1qm5nm5/an_honest_question_about_open_code_and_big_pickle/
-- https://www.reddit.com/r/opencodeCLI/comments/1qm2eef/custom_multi_agent_process_yay_or_nay/
-- https://www.reddit.com/r/superwhisper/comments/1ql6zoa/using_superwhisper_and_sonnet/
-- https://www.reddit.com/r/mcp/comments/1qlhj62/a_few_of_the_mcps_i_use_on_a_daily_basis/
-- https://www.reddit.com/r/opencodeCLI/comments/1qlfqcb/opencode_black_feedback/
-- https://www.reddit.com/r/PromptDesign/comments/1qlphvp/my_goto_combo_lately_chatgpt_godofprompt/
-- https://www.reddit.com/r/opencodeCLI/comments/1qm13si/i_analysed_the_top_10_skills_on_vercels_new_ai/
-- https://www.reddit.com/r/PromptDesign/comments/1qkt91e/i_read_way_too_many_prompt_guides_god_of_prompt/
-- https://www.reddit.com/r/opencodeCLI/comments/1qm30nr/how_to_configure_opencode_with_gemini_3/
-- https://www.reddit.com/r/warpdotdev/comments/1qllt8e/do_you_chat_with_warp/
-- https://www.reddit.com/r/vibecoding/comments/1qlwg9o/so_yeah_antigravity_nuke_my_drive/
-- https://www.reddit.com/r/Agentic_AI_For_Devs/comments/1qhvlmt/openagents_announces_support_for_a2a_protocolcan/
-- https://www.reddit.com/r/claude/comments/1qlj8hp/are_there_any_well_known_power_users_with_claude/
-- https://www.reddit.com/r/Rag/comments/1qlmttf/built_a_local_rag_system_that_works_without_api/
+- [x] https://www.reddit.com/r/opencodeCLI/comments/1qljsw3/opencodenvim_opencode_fully_integrated_into_neovim/ (Indexed Opencode.nvim)
+- [x] https://www.reddit.com/r/MachineLearningAndAI/comments/1qljg82/ai_ml_weekly_hugging_face_highlights/ (Context)
+- [x] https://www.reddit.com/r/OpenWebUI/comments/1ql8w23/user_storage_open_webui_tool/ (Tool context)
+- [x] https://www.reddit.com/r/GoogleAntigravityIDE/comments/1qlerfg/drift_isnt_a_tool_its_your_2026_productivity_hack/ (Tool context)
+- [x] https://www.reddit.com/r/AskVibecoders/comments/1qlh6ew/anyone_knows_real_projects_that_were_built_with/ (User sentiment)
+- [x] https://www.reddit.com/r/PromptEngineering/comments/1qm2ij5/title_im_bored_so_im_building_free_ai_engines/ (Context)
+- [x] https://www.reddit.com/r/PromptDesign/comments/1qivht5/i_got_mass_tired_of_losing_my_best_prompts_so_i/ (Context)
+- [x] https://www.reddit.com/r/ZaiGLM/comments/1qln8i3/artificialanalysis_glm47flash_thinking_most/ (Indexed GLM-4.7 Logic)
+- [x] https://www.reddit.com/r/mcp/comments/1qlw3r1/polymcp_transform_any_python_function_into_an_mcp/ (Indexed PolyMCP)
+- [x] https://www.reddit.com/r/Wendbine/comments/1qluspd/wendbine/ (Context)
+- [x] https://www.reddit.com/r/IntelligenceEngine/comments/1qlpebj/emergent_hybrid_computation_in_gradientfree/ (Research)
+- [x] https://www.reddit.com/r/NooTopics/comments/1qldfps/dopamine_receptor_upregulation_after_adderall/ (Off-topic)
+- [x] https://www.reddit.com/r/PromptDesign/comments/1qizmw8/how_to_generate_flow_chart_diagrams_easily_prompt/ (Tips)
+- [x] https://www.reddit.com/r/chutesAI/comments/1qlts5c/why_is_chutes_so_slow_to_access/ (Context)
+- [x] https://www.reddit.com/r/GoogleAIStudio/comments/1qlu42w/gais_is_the_best_so_far/ (User sentiment)
+- [x] https://www.reddit.com/r/AntigravityGoogle/comments/1qlpkrn/claude_opus_45_was_able_to_fix_the_mess_that/ (Benchmarking)
+- [x] https://www.reddit.com/r/PromptEngineering/comments/1qkowpy/so_cornell_and_mit_researchers_got_an_ai_to/ (Research)
+- [x] https://www.reddit.com/r/hackrebelscommunity/comments/1qllsdi/grok_qwen_prompt_system/ (Prompt intel)
+- [x] https://www.reddit.com/r/PromptDesign/comments/1qktc7w/ai_prompt_tricks_you_wouldnt_expect_to_work_so/ (Tips)
+- [x] https://www.reddit.com/r/openrouter/comments/1qkxqie/openrouter_vs_google_cloud_regarding_gemini_models/ (Price context)
+- [x] https://www.reddit.com/r/opencodeCLI/comments/1qm5nm5/an_honest_question_about_open_code_and_big_pickle/ (User sentiment)
+- [x] https://www.reddit.com/r/opencodeCLI/comments/1qm2eef/custom_multi_agent_process_yay_or_nay/ (Protocol context)
+- [x] https://www.reddit.com/r/superwhisper/comments/1ql6zoa/using_superwhisper_and_sonnet/ (Indexed Superwhisper Sonnet)
+- [x] https://www.reddit.com/r/mcp/comments/1qlhj62/a_few_of_the_mcps_i_use_on_a_daily_basis/ (MCP listing)
+- [x] https://www.reddit.com/r/opencodeCLI/comments/1qlfqcb/opencode_black_feedback/ (User sentiment)
+- [x] https://www.reddit.com/r/PromptDesign/comments/1qlphvp/my_goto_combo_lately_chatgpt_godofprompt/ (Prompt tools)
+- [x] https://www.reddit.com/r/opencodeCLI/comments/1qm13si/i_analysed_the_top_10_skills_on_vercels_new_ai/ (Indexed Vercel Skills)
+- [x] https://www.reddit.com/r/PromptDesign/comments/1qkt91e/i_read_way_too_many_prompt_guides_god_of_prompt/ (Prompt tools)
+- [x] https://www.reddit.com/r/opencodeCLI/comments/1qm30nr/how_to_configure_opencode_with_gemini_3/ (Tool config)
+- [x] https://www.reddit.com/r/warpdotdev/comments/1qllt8e/do_you_chat_with_warp/ (User sentiment)
+- [x] https://www.reddit.com/r/vibecoding/comments/1qlwg9o/so_yeah_antigravity_nuke_my_drive/ (User sentiment)
+- [x] https://www.reddit.com/r/Agentic_AI_For_Devs/comments/1qhvlmt/openagents_announces_support_for_a2a_protocolcan/ (Protocol context)
+- [x] https://www.reddit.com/r/claude/comments/1qlj8hp/are_there_any_well_known_power_users_with_claude/ (Community context)
+- [x] https://www.reddit.com/r/Rag/comments/1qlmttf/built_a_local_rag_system_that_works_without_api/ (Indexed Local RAG SDK)
+- [x] https://www.reddit.com/r/unsloth/comments/1ql8nnq/for_glm47flash_turn_off_repeat_penalty/ (Indexed GLM-4.7 Optimization)
+- [x] https://www.reddit.com/r/codex/comments/1qkh3xg/big_update_incoming/ (Indexed Codex Update)
+- [x] https://www.reddit.com/r/opencodeCLI/comments/1qkqbdg/is_there_a_good_glm_47_provider_to_use_with_oc/ (Tool config)
+- [x] https://www.reddit.com/r/DeepSeek/comments/1qkoc53/deepseekv32_matches_gpt5_at_10x_lower_cost_introl/ (Indexed DeepSeek-V3.2)
+- [x] https://www.reddit.com/r/JulesAgent/comments/1qhdv34/jules_attachments_links_download/ (Indexed Jules attachments)
 - https://www.reddit.com/r/ClaudeCode/comments/1qlw61d/heres_the_exact_claude_code_framework_i_used_to/
 - https://www.reddit.com/r/airesearch/comments/1qkr7nn/i_built_a_social_network_where_only_ai_can_post/
 - https://www.reddit.com/r/opencodeCLI/comments/1qlqj0q/benchmarking_with_opencode_opuscodexgemini_flash/
@@ -351,19 +356,27 @@
 - https://www.reddit.com/r/Rag/comments/1qkjetz/what_rag_topics_would_you_actually_read_a/
 - https://www.reddit.com/r/google_antigravity/comments/1qnk1t9/i_am_super_tired_of_the_people_flooding_this/
 - https://www.reddit.com/r/mcp/comments/1qnhf18/finally_found_a_stack_that_doesnt_break_my_agents/
-- https://www.reddit.com/r/opencodeCLI/comments/1qndagc/comparison_vs_claude_code/
-- https://www.reddit.com/r/ClaudeAI/comments/1qn9c0b/whats_the_hype_around_clawdbot_these_days/
-- https://www.reddit.com/r/AugmentCodeAI/comments/1qnbnnc/augument_going_down_hill/
-- https://www.reddit.com/r/codex/comments/1qn4bzw/cant_find_the_plan_mode_released_in_090/
-- https://www.reddit.com/r/mcp/comments/1qng6se/is_anyone_using_mcps_in_production_to_solve_a/
-- https://qwen.ai/blog?id=qwen3-max-thinking
-- [x] https://github.com/mikekelly/claude-sneakpeek
-- https://lmarena.ai/leaderboard
-- https://dashboard.safe.ai/
-- https://clocks.brianmoore.com/
-- https://eqbench.com/
-- https://mafia-arena.com/
-- https://arxiv.org/abs/2502.16982
+- [x] https://www.reddit.com/r/opencodeCLI/comments/1qndagc/comparison_vs_claude_code/ (Comparison)
+- [x] https://www.reddit.com/r/ClaudeAI/comments/1qn9c0b/whats_the_hype_around_clawdbot_these_days/ (Agent context)
+- [x] https://www.reddit.com/r/AugmentCodeAI/comments/1qnbnnc/augument_going_down_hill/ (Sentiment)
+- [x] https://www.reddit.com/r/codex/comments/1qn4bzw/cant_find_the_plan_mode_released_in_090/ (Feature intel)
+- [x] https://www.reddit.com/r/mcp/comments/1qng6se/is_anyone_using_mcps_in_production_to_solve_a/ (Context)
+- [x] https://qwen.ai/blog?id=qwen3-max-thinking (Indexed Qwen3 Max)
+- [x] https://github.com/mikekelly/claude-sneakpeek (Processed)
+- [x] https://lmarena.ai/leaderboard (Indexed Arena)
+- [x] https://dashboard.safe.ai/ (Indexed CAIS)
+- [x] https://eqbench.com/ (Processed)
+- [x] https://mafia-arena.com/ (Indexed Mafia Arena)
+- [x] https://arxiv.org/abs/2502.16982 (Indexed Muon)
+- [x] https://github.com/mostlygeek/llama-swap (Indexed llama-swap)
+- [x] https://github.com/eliasecchig/gemini-cli-git (Indexed gemini-cli-git)
+- [x] https://github.com/OpenCodeInterpreter/OpenCodeInterpreter (Indexed OpenCodeInterpreter)
+- [x] https://github.com/different-ai/openwork (Indexed openwork)
+- [x] https://github.com/trending/developers (Processed)
+- [x] https://github.com/badlogic/pi-mono (Indexed pi-mono)
+- [x] https://github.com/thedotmack/claude-mem (Indexed claude-mem)
+- [x] https://github.com/steipete/CodexBar (Indexed CodexBar)
+- [x] https://github.com/vita-epfl/Stable-Video-Infinity (Indexed SVI)
 
 ## Batch 4 (2026-02-01)
 - [x] https://github.com/KeaBase/kea-research (Indexed in RESOURCE_INDEX.md, Submodule `external/research/kea-research`)
