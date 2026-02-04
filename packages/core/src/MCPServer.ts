@@ -101,6 +101,8 @@ import { KnowledgeService } from './services/KnowledgeService.js';
 
 
 import { PermissionManager, AutonomyLevel } from "./security/PermissionManager.js";
+import { BrowserTool } from "@borg/tools";
+import { SearchService } from "@borg/search";
 console.log("[MCPServer] ✓ PermissionManager");
 
 const __filename = fileURLToPath(import.meta.url);
@@ -175,6 +177,10 @@ export class MCPServer {
     public lspTools: LSPTools;
     public agentMemoryService: AgentMemoryService;
 
+    // Core Integrations (Phase 5 & 6)
+    public browserTool: BrowserTool;
+    public searchService: SearchService;
+
     // Core Agents
     public geminiAgent: GeminiAgent;
     public claudeAgent: ClaudeAgent;
@@ -244,6 +250,10 @@ export class MCPServer {
         this.workflowEngine = new WorkflowEngine({ persistDir: path.join(process.cwd(), '.borg', 'workflows') });
         this.lspTools = new LSPTools(process.cwd());
         this.agentMemoryService = new AgentMemoryService({ persistDir: path.join(process.cwd(), '.borg', 'agent_memory') });
+
+        // Phase 5 & 6 Init
+        this.browserTool = new BrowserTool();
+        this.searchService = new SearchService();
 
         // Initialize Core Agents
         this.geminiAgent = new GeminiAgent(this.llmService, this.promptRegistry);
