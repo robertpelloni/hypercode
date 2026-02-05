@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc -w"
+    "dev": "tsc -w --preserveWatchOutput"
   },
   "dependencies": {
     "socket.io": "^4.7.0"

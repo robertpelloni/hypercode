@@ -8,7 +8,7 @@ export default defineConfig({
     },
     format: ['iife'],
     outDir: 'dist',
-    clean: true,
+    clean: false,
     noExternal: [/(.*)/], // Bundle everything for the browser
     platform: 'browser',
     target: 'es2022',

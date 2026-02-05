@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node packages/cli/dist/index.js start",
     "build": "turbo run build",
-    "dev": "turbo run dev --concurrency 20",
+    "dev": "set CI=true && turbo run dev --concurrency 20",
     "dev:server": "turbo run dev:server --parallel",
     "dev:web": "turbo run dev --filter @borg/web",
     "lint": "turbo run lint",
@@ -15,9 +15,9 @@
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.0.16",
     "@types/node": "^20.10.0",
-    "turbo": "^2.7.5",
+    "@vitest/coverage-v8": "^4.0.16",
+    "turbo": "^2.8.3",
     "typescript": "^5.3.3",
     "vitest": "^4.0.16"
   },
