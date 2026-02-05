@@ -3,8 +3,11 @@ import path from 'path';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
 
+import { ContextPruner, PruningOptions } from './ContextPruner.js';
+
 export class MemoryManager {
     private provider: VectorProvider | null = null;
+    private pruner: ContextPruner;
     private initialized: boolean = false;
     private dbPath: string;
     private registryPath: string;
@@ -13,6 +16,7 @@ export class MemoryManager {
     constructor(workspaceRoot: string = process.cwd()) {
         this.dbPath = path.join(workspaceRoot, '.borg', 'db');
         this.registryPath = path.join(workspaceRoot, '.borg', 'memory', 'contexts.json');
+        this.pruner = new ContextPruner();
     }
 
     private async initialize() {
@@ -232,4 +236,25 @@ export class MemoryManager {
             console.error("Failed to update memory registry:", e);
         }
     }
+}
+
+    /**
+     * Infinite Context V3: Prune a conversation history to fit within limits.
+     */
+    public pruneContext(messages: any[], options ?: Partial<PruningOptions>): any[] {
+    if (options) {
+        // Re-instantiate pruner if temporary options provided
+        // Or just use a temporary instance
+        const tempPruner = new ContextPruner(options);
+        return tempPruner.prune(messages);
+    }
+    return this.pruner.prune(messages);
+}
+
+    /**
+     * Calculate token usage for observability
+     */
+    public getContextSize(messages: any[]): number {
+    return this.pruner.estimateTokens(messages);
+}
 }
