@@ -374,7 +374,20 @@ export class Director {
             systemPrompt += `\n\nUSER OVERRIDE INSTRUCTIONS:\n${this.config.customInstructions}\n(You MUST prioritize these instructions over default styles)`;
         }
 
-        const userPrompt = `GOAL: ${context.goal}\n${memoryContext}\n${pinnedContext}\n${shellContext}\nHISTORY:\n${context.history.join('\n')}\nWhat is the next step?`;
+        // PRUNE HISTORY (Infinite Context V3)
+        // Convert history strings to pseudo-messages for the pruner
+        const rawMessages = context.history.map(h => ({ role: 'user', content: h }));
+
+        // @ts-ignore
+        const safeMessages = this.server.memoryManager ? this.server.memoryManager.pruneContext(rawMessages, {
+            maxTokens: 10000, // Reasonable logic history limit
+            keepFirst: 0,
+            keepLast: 10 // Always keep last 10 steps
+        }) : rawMessages;
+
+        const effectiveHistory = safeMessages.map((m: any) => m.content);
+
+        const userPrompt = `GOAL: ${context.goal}\n${memoryContext}\n${pinnedContext}\n${shellContext}\nHISTORY:\n${effectiveHistory.join('\n')}\nWhat is the next step?`;
 
         try {
             // @ts-ignore
