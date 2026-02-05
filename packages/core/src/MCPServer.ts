@@ -59,6 +59,7 @@ console.log("[MCPServer] ✓ Phase 51/53 Infrastructure");
 import { SkillAssimilationService } from "./skills/SkillAssimilationService.js";
 import { registerSystemWorkflows } from "./orchestrator/SystemWorkflows.js";
 import { MCPAggregator } from "./mcp/MCPAggregator.js";
+import { SubmoduleManager } from "./mcp/SubmoduleManager.js";
 console.log("[MCPServer] ✓ SkillRegistry");
 
 import { SpawnerService } from "./agents/SpawnerService.js";
@@ -171,6 +172,7 @@ export class MCPServer {
     public promptRegistry: PromptRegistry;
     public skillAssimilationService: SkillAssimilationService;
     private mcpAggregator: MCPAggregator;
+    private submoduleManager: SubmoduleManager;
 
     // Phase 51: Core Infrastructure
     public lspService: LSPService;
@@ -248,6 +250,7 @@ export class MCPServer {
         );
 
         this.mcpAggregator = new MCPAggregator();
+        this.submoduleManager = new SubmoduleManager(process.cwd());
 
         // Phase 51: Core Infrastructure Services
         this.lspService = new LSPService(process.cwd());
@@ -588,6 +591,16 @@ export class MCPServer {
                 } else {
                     result = { content: [{ type: "text", text: "Error: No WebSocket server." }] };
                 }
+            }
+            else if (name === "browser_screenshot") {
+                const dataUrl = await this.captureScreenshotFromBrowser();
+                // Return generic 'image' content type if MCP supports it, or text with data URL
+                result = {
+                    content: [
+                        { type: "text", text: "Screenshot captured." },
+                        { type: "image", data: dataUrl.split(',')[1], mimeType: "image/png" }
+                    ]
+                };
             }
             else if (name === "get_knowledge_graph") {
                 result = await this.knowledgeService.getGraph(args?.query, args?.depth);
@@ -1160,6 +1173,25 @@ export class MCPServer {
                     content: [{ type: "text", text: msg }]
                 };
             }
+            else if (name === "mcp_add_server") {
+                const srvName = args.name as string;
+                const repoUrl = args.repoUrl as string;
+
+                // 1. Clone Repo
+                const cloneMsg = await this.submoduleManager.addSubmodule(srvName, repoUrl);
+
+                // 2. Add to Aggregator Config
+                await this.mcpAggregator.addServerConfig(srvName, {
+                    command: args.command,
+                    args: args.args,
+                    enabled: true,
+                    env: args.env
+                });
+
+                result = {
+                    content: [{ type: "text", text: `${cloneMsg}\nAdded server '${srvName}' to configuration and connected.` }]
+                };
+            }
             else if (name === "start_autotest") {
                 this.autoTestService.start();
                 result = { content: [{ type: "text", text: "Auto-Test Watcher Started." }] };
@@ -1606,6 +1638,21 @@ export class MCPServer {
                     },
                 },
                 {
+                    name: "mcp_add_server",
+                    description: "Add a new downstream MCP server (via git clone + config update)",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            name: { type: "string" },
+                            repoUrl: { type: "string" },
+                            command: { type: "string", description: "Command to start server (e.g. 'node')" },
+                            args: { type: "array", items: { type: "string" }, description: "Args for command (e.g. ['dist/index.js'])" },
+                            env: { type: "object", description: "Environment variables" }
+                        },
+                        required: ["name", "repoUrl", "command", "args"]
+                    }
+                },
+                {
                     name: "system_status",
                     description: "Get current system metrics (CPU, Memory, Uptime)",
                     inputSchema: { type: "object", properties: {} },
@@ -1634,6 +1681,11 @@ export class MCPServer {
                     name: "memorize_page",
                     description: "Save the current browser page content to long-term memory",
                     inputSchema: { type: "object", properties: {} },
+                },
+                {
+                    name: "browser_screenshot",
+                    description: "Capture a screenshot of the current browser page",
+                    inputSchema: { type: "object", properties: {} }
                 },
                 {
                     name: "memory_index_codebase",
@@ -2284,7 +2336,9 @@ export class MCPServer {
 
     async start() {
         console.log("[MCPServer] Loading Skills...");
-        await this.mcpAggregator.initialize();
+        // Non-blocking initialization of aggregator to prevent stalling Stdio/WS start
+        this.mcpAggregator.initialize().catch(e => console.error("[MCPServer] Aggregator Init Failed:", e));
+
         // Start Services
         // this.director.startChatDaemon(); // Removed, auto-drive handles this
 
@@ -2312,6 +2366,13 @@ export class MCPServer {
                         timestamp: Date.now(),
                         version: '0.1.0'
                     }));
+                } else if (req.url === '/mcp/servers') {
+                    const servers = await this.mcpAggregator.listServers();
+                    res.writeHead(200, {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*' // Allow Web UI access
+                    });
+                    res.end(JSON.stringify(servers));
                 } else {
                     res.writeHead(404);
                     res.end();

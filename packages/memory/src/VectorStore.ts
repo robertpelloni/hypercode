@@ -83,13 +83,58 @@ export class VectorStore {
         if (!this.db) await this.initialize();
         try {
             const table = await this.db.openTable('memories');
-            const results = await table.search(await this.createEmbeddings('')) // Dummy search to get builder? No.
+            const results = await table.search(await this.createEmbeddings(''))
                 .where(`id = '${id}'`)
                 .limit(1)
                 .toArray();
             return results.length > 0 ? results[0] : null;
         } catch (e) {
             return null;
+        }
+    }
+
+    async delete(ids: string[]) {
+        if (!this.db) await this.initialize();
+        if (ids.length === 0) return;
+
+        try {
+            const table = await this.db.openTable('memories');
+            const whereClause = ids.map(id => `id = '${id}'`).join(' OR ');
+            await table.delete(whereClause);
+        } catch (e) {
+            console.error("VectorStore.delete failed:", e);
+        }
+    }
+
+    async reset() {
+        if (!this.db) await this.initialize();
+        try {
+            // Drop table
+            await this.db.dropTable('memories');
+        } catch (e) {
+            // Ignore if doesn't exist
+        }
+    }
+
+    async listDocuments(where?: string, limit: number = 100) {
+        if (!this.db) await this.initialize();
+        try {
+            const table = await this.db.openTable('memories');
+            // Hacky "find all" via empty vector search? No, LanceDB vector search is required.
+            // Or use query() if supported?
+            // Fallback: search with empty query embedding but high limit?
+            // Actually, we can just use search() API with where clause.
+
+            // NOTE: LanceDB usually requires a vector query for search, BUT we can iterate too.
+            // Just use a dummy vector for standard listing sorted by... something?
+            const dummyVec = await this.createEmbeddings('query');
+
+            let queryBuilder = table.search(dummyVec).limit(limit);
+            if (where) queryBuilder = queryBuilder.where(where);
+
+            return await queryBuilder.toArray();
+        } catch (e) {
+            return [];
         }
     }
 

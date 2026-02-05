@@ -15,9 +15,9 @@ export class SandboxService {
      * @param code The code to execute
      * @param timeoutMs Max execution time (default 5000ms)
      */
-    public async execute(language: 'node' | 'python', code: string, timeoutMs: number = 5000): Promise<{ output: string, error?: string }> {
+    public async execute(language: 'node' | 'python', code: string, timeoutMs: number = 5000, context: Record<string, any> = {}): Promise<{ output: string, result?: any, error?: string }> {
         if (language === 'node') {
-            return this.executeNode(code, timeoutMs);
+            return this.executeNode(code, timeoutMs, context);
         } else if (language === 'python') {
             return this.executePython(code, timeoutMs);
         } else {
@@ -25,7 +25,7 @@ export class SandboxService {
         }
     }
 
-    private async executeNode(code: string, timeoutMs: number): Promise<{ output: string, error?: string }> {
+    private async executeNode(code: string, timeoutMs: number, contextOverrides: Record<string, any> = {}): Promise<{ output: string, result?: any, error?: string }> {
         // Capture console.log
         let outputBuffer = "";
         const sandbox = {
@@ -39,6 +39,7 @@ export class SandboxService {
             setInterval,
             clearInterval,
             Buffer,
+            ...contextOverrides, // Inject tools/variables here
             module: {},
             exports: {},
             require: (name: string) => {
@@ -52,26 +53,21 @@ export class SandboxService {
         try {
             const script = new vm.Script(code);
 
-            // Execute with timeout
-            // Run inside a promise race to handle async code if user writes promises?
-            // vm.runInContext is synchronous unless the code itself returns a promise.
-            // But if user writes "while(true)", runInContext blocks the event loop unless 'timeout' option is passed.
-            // The 'timeout' option in vm.Script only interrupts synchronous execution.
-
             const result = script.runInContext(context, {
                 timeout: timeoutMs,
                 displayErrors: true
             });
 
             // If the result is a Promise (async code), wait for it with timeout
-            if (result instanceof Promise) {
-                await Promise.race([
+            if (result && typeof (result as any).then === 'function') {
+                const resolved = await Promise.race([
                     result,
                     new Promise((_, reject) => setTimeout(() => reject(new Error("Execution timed out (Async)")), timeoutMs))
                 ]);
+                return { output: outputBuffer.trim(), result: resolved };
             }
 
-            return { output: outputBuffer.trim() };
+            return { output: outputBuffer.trim(), result };
 
         } catch (e: any) {
             return {

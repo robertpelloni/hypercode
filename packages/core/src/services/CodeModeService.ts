@@ -154,11 +154,14 @@ export class ToolRegistry {
     }
 }
 
+import { SandboxService } from '../security/SandboxService.js';
+
 /**
  * Code Executor - Sandboxed TypeScript/JavaScript execution
  */
 export class CodeExecutor {
     private options: Required<CodeModeOptions>;
+    private sandboxHelper: SandboxService;
 
     constructor(options: CodeModeOptions = {}) {
         this.options = {
@@ -167,6 +170,7 @@ export class CodeExecutor {
             allowAsync: options.allowAsync ?? true,
             sandboxLevel: options.sandboxLevel ?? 'strict',
         };
+        this.sandboxHelper = new SandboxService();
     }
 
     /**
@@ -178,92 +182,64 @@ export class CodeExecutor {
         additionalContext: Record<string, unknown> = {}
     ): Promise<ExecutionResult> {
         const startTime = Date.now();
-        const output: string[] = [];
         const toolsCalled: string[] = [];
 
-        // Create sandbox context
-        const sandbox: Record<string, unknown> = {
-            // Console capture
-            console: {
-                log: (...args: unknown[]) => {
-                    output.push(args.map(a => String(a)).join(' '));
-                },
-                error: (...args: unknown[]) => {
-                    output.push('[ERROR] ' + args.map(a => String(a)).join(' '));
-                },
-                warn: (...args: unknown[]) => {
-                    output.push('[WARN] ' + args.map(a => String(a)).join(' '));
-                },
-                info: (...args: unknown[]) => {
-                    output.push('[INFO] ' + args.map(a => String(a)).join(' '));
-                },
-            },
-
-            // Tools
+        // Prepare context
+        const context: Record<string, unknown> = {
             ...tools,
-
-            // Additional context
             ...additionalContext,
-
             // Track tool calls
             __trackCall: (name: string) => {
                 toolsCalled.push(name);
             },
         };
 
-        // Add safe built-ins
+        // Add safe built-ins if permissive
         if (this.options.sandboxLevel === 'permissive') {
-            sandbox.JSON = JSON;
-            sandbox.Math = Math;
-            sandbox.Date = Date;
-            sandbox.Array = Array;
-            sandbox.Object = Object;
-            sandbox.String = String;
-            sandbox.Number = Number;
-            sandbox.Boolean = Boolean;
-            sandbox.RegExp = RegExp;
-            sandbox.Map = Map;
-            sandbox.Set = Set;
-            sandbox.Promise = Promise;
+            const unsafeGlobals = [
+                'JSON', 'Math', 'Date', 'Array', 'Object', 'String', 'Number',
+                'Boolean', 'RegExp', 'Map', 'Set', 'Promise'
+            ];
+            unsafeGlobals.forEach(g => {
+                // @ts-ignore
+                if (global[g]) context[g] = global[g];
+            });
         }
 
-        // Create VM context
-        const context = vm.createContext(sandbox);
-
         try {
-            let result: unknown;
-
+            let finalCode = code;
             if (this.options.allowAsync) {
-                // Wrap in async IIFE for await support
-                const wrappedCode = `
-          (async () => {
-            ${code}
-          })()
-        `;
-
-                const script = new vm.Script(wrappedCode);
-                result = await script.runInContext(context, {
-                    timeout: this.options.timeout,
-                });
-            } else {
-                const script = new vm.Script(code);
-                result = script.runInContext(context, {
-                    timeout: this.options.timeout,
-                });
+                // Wrap in async IIFE for await support if not already
+                if (!code.trim().startsWith('(async')) {
+                    finalCode = `
+                      (async () => {
+                        ${code}
+                      })()
+                    `;
+                }
             }
 
+            const { output, result, error } = await this.sandboxHelper.execute(
+                'node',
+                finalCode,
+                this.options.timeout,
+                context
+            );
+
             return {
-                success: true,
+                success: !error,
                 result,
-                output: output.join('\n').slice(0, this.options.maxOutputLength),
+                error,
+                output: output.slice(0, this.options.maxOutputLength),
                 executionTime: Date.now() - startTime,
                 toolsCalled,
             };
+
         } catch (error) {
             return {
                 success: false,
                 error: error instanceof Error ? error.message : String(error),
-                output: output.join('\n').slice(0, this.options.maxOutputLength),
+                output: '[Execution Error]',
                 executionTime: Date.now() - startTime,
                 toolsCalled,
             };
