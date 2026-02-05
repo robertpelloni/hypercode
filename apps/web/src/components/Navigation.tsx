@@ -19,6 +19,7 @@ const NAV_ITEMS = [
     { href: '/dashboard/chronicle', label: 'Chronicle', color: 'hover:text-purple-400', activeColor: 'text-purple-400' },
     { href: '/dashboard/squads', label: 'Squads', color: 'hover:text-blue-400', activeColor: 'text-blue-400' },
     { href: '/dashboard/submodules', label: 'Submodules', color: 'hover:text-cyan-500', activeColor: 'text-cyan-500' },
+    { href: '/dashboard/mcp', label: 'MCP', color: 'hover:text-teal-500', activeColor: 'text-teal-500' },
     { href: '/dashboard/workshop', label: 'Workshop', color: 'hover:text-pink-500', activeColor: 'text-pink-500' },
     { href: '/dashboard/config', label: 'Settings', color: 'hover:text-slate-500', activeColor: 'text-slate-500' },
 ];

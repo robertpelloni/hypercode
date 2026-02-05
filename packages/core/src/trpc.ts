@@ -733,6 +733,51 @@ export const appRouter = t.router({
             }
             return { content: [] };
         })
+    }),
+    mcp: t.router({
+        list: t.procedure.query(async () => {
+            // @ts-ignore
+            if (global.mcpServerInstance) {
+                // @ts-ignore
+                return await global.mcpServerInstance.mcpAggregator.listServers();
+            }
+            return [];
+        }),
+        add: t.procedure.input(z.object({
+            name: z.string(),
+            command: z.string(),
+            args: z.array(z.string()).optional(),
+            env: z.record(z.string()).optional(),
+            repoUrl: z.string().optional()
+        })).mutation(async ({ input }) => {
+            // @ts-ignore
+            if (global.mcpServerInstance) {
+                // @ts-ignore
+                const server = global.mcpServerInstance;
+
+                if (input.repoUrl) {
+                    // Use the tool logic to handle cloning + adding
+                    return await server.executeTool('mcp_add_server', {
+                        name: input.name,
+                        repoUrl: input.repoUrl,
+                        command: input.command,
+                        args: input.args,
+                        env: input.env
+                    });
+                } else {
+                    // Direct add (manual config)
+                    // @ts-ignore
+                    await server.mcpAggregator.addServerConfig(input.name, {
+                        command: input.command,
+                        args: input.args,
+                        env: input.env,
+                        enabled: true
+                    });
+                    return { success: true };
+                }
+            }
+            throw new Error("MCPServer not found");
+        })
     })
 });
 
