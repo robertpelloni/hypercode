@@ -1,23 +1,12 @@
 
 import { MemoryManager } from './MemoryManager.js';
+import { GraphNode, GraphEdge } from '@borg/memory';
 
-
-export interface GraphNode {
-    id: string;
-    label: string;
-    type: 'topic' | 'document' | 'concept';
-    val: number; // Size/Importance
-}
-
-export interface GraphEdge {
-    source: string;
-    target: string;
-    value: number; // Similarity/Weight
-}
-
-export interface GraphData {
+export interface ContextBundle {
+    root: { id: string, type: string };
     nodes: GraphNode[];
     edges: GraphEdge[];
+    depth: number;
 }
 
 export class KnowledgeService {
@@ -27,69 +16,78 @@ export class KnowledgeService {
         this.memory = memory;
     }
 
-
+    /**
+     * Retrieves the Knowledge Graph (generic)
+     */
     public async getGraph(query?: string, depth: number = 1): Promise<{ content: any[] }> {
-        let nodes: GraphNode[] = [];
-        let edges: GraphEdge[] = [];
-
-        // 1. Get Root Nodes (Recent or Query-based)
-        // Combine Vector Search with Graph Search
-        const vectorDocs = await this.memory.search(query || "AI", 10);
-
-        let graphResults: string[] = [];
-        if (this.memory.graph) {
-            try {
-                graphResults = await this.memory.graph.search(query || "AI");
-            } catch (e) {
-                console.error("Graph search failed (bridge might be offline):", e);
-            }
-        }
-
-        // 2. Map to Graph Format
-        // Process Vector Results
-        vectorDocs.forEach(doc => {
-            const nodeId = doc.id || doc.metadata?.source || "unknown";
-            nodes.push({
-                id: nodeId,
-                label: (doc.metadata?.title as string) || "Untitled " + nodeId.substring(0, 8),
-                type: 'document',
-                val: 5
-            });
-
-            // Mock edge to central query if exists
-            if (query) {
-                edges.push({
-                    source: query,
-                    target: nodeId,
-                    value: 1
-                });
-            }
-        });
-
-        // Process Graph Results (Cognee returns formatted strings currently, we'd parse them if they were structured)
-        // For now, treat them as insights linked to the query
-        graphResults.forEach((res, idx) => {
-            const nodeId = `insight-${idx}`;
-            nodes.push({
-                id: nodeId,
-                label: res.substring(0, 50) + "...",
-                type: 'concept',
-                val: 8
-            });
-            if (query) {
-                edges.push({ source: query, target: nodeId, value: 2 });
-            }
-        });
+        // ... (Previous logic or delegation to getDeepContext)
+        // For now, let's keep the tool API compatible
 
         if (query) {
-            nodes.push({ id: query, label: query, type: 'topic', val: 10 });
+            const context = await this.getDeepContext(query, depth);
+            return {
+                content: [{
+                    type: "text",
+                    text: JSON.stringify(context, null, 2)
+                }]
+            };
+        }
+
+        return { content: [{ type: "text", text: "Please provide a query to search the graph." }] };
+    }
+
+    /**
+     * Recursive Context Retrieval
+     */
+    public async getDeepContext(rootId: string, maxDepth: number = 2): Promise<ContextBundle> {
+        if (!this.memory.graph) {
+            console.warn("[KnowledgeService] Graph memory not available.");
+            return { root: { id: rootId, type: 'unknown' }, nodes: [], edges: [], depth: 0 };
+        }
+
+        const visited = new Set<string>();
+        const queue: { id: string, depth: number }[] = [{ id: rootId, depth: 0 }];
+        const resultNodes: GraphNode[] = [];
+        const resultEdges: GraphEdge[] = [];
+
+        while (queue.length > 0) {
+            const current = queue.shift()!;
+            if (visited.has(current.id)) continue;
+            visited.add(current.id);
+
+            // Add current node to results? 
+            // We need to fetch it from graph if possible, or just stub it
+            // GraphMemory doesn't expose getNode(id) directly in the interface yet (only getNeighbors)
+            // But we can infer it or we might need to update GraphMemory to support `getNode(id)`.
+            // For now, let's just use neighbors to populate.
+
+            if (current.depth >= maxDepth) continue;
+
+            const neighbors = this.memory.graph.getNeighbors(current.id);
+
+            for (const neighbor of neighbors) {
+                // Track Edge (We don't have edge metadata directly from getNeighbors in the simple API, 
+                // we might need to update GraphMemory again to return Edges, not just Nodes)
+                // But let's assume simple relation for now.
+
+                resultEdges.push({
+                    source: current.id,
+                    target: neighbor.id,
+                    relation: 'related' // Simplification
+                });
+
+                if (!visited.has(neighbor.id)) {
+                    resultNodes.push(neighbor);
+                    queue.push({ id: neighbor.id, depth: current.depth + 1 });
+                }
+            }
         }
 
         return {
-            content: [{
-                type: "text",
-                text: JSON.stringify({ nodes, edges })
-            }]
+            root: { id: rootId, type: 'inferred' },
+            nodes: resultNodes,
+            edges: resultEdges,
+            depth: maxDepth
         };
     }
 }
