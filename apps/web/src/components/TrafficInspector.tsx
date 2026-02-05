@@ -52,6 +52,37 @@ export function TrafficInspector() {
 
         connect();
 
+        // Load History
+        const fetchHistory = async () => {
+            // @ts-ignore
+            const history = await utils.client.audit.query.query({ limit: 50 });
+            const historicalPackets: Packet[] = history.map((entry: any) => {
+                if (entry.event === 'TOOL_START') {
+                    return {
+                        id: entry.metadata?.id || Math.random().toString(36),
+                        type: 'TOOL_CALL_START',
+                        tool: entry.details?.tool,
+                        args: entry.details?.args,
+                        timestamp: new Date(entry.timestamp).getTime()
+                    };
+                }
+                if (entry.event === 'TOOL_END') {
+                    return {
+                        id: entry.metadata?.id || Math.random().toString(36),
+                        type: 'TOOL_CALL_END',
+                        result: JSON.stringify(entry.details?.result),
+                        success: entry.metadata?.success,
+                        duration: entry.metadata?.duration,
+                        timestamp: new Date(entry.timestamp).getTime()
+                    };
+                }
+                return null;
+            }).filter(Boolean) as Packet[];
+
+            setPackets(prev => [...historicalPackets, ...prev]);
+        };
+        fetchHistory();
+
         return () => {
             wsRef.current?.close();
         };

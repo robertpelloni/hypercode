@@ -2,7 +2,7 @@
 // Background Service Worker
 // Proxies requests from Content Script (Web Page) to Local Borg Core (localhost:3000)
 
-const CORE_URL = 'http://localhost:3000/trpc';
+const CORE_URL = 'http://localhost:3001';
 
 // Keep-alive setup for Service Worker
 const keepAlive = () => setInterval(chrome.runtime.getPlatformInfo, 20e3);

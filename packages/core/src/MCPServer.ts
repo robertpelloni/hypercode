@@ -462,6 +462,11 @@ export class MCPServer {
             });
         }
 
+        // Audit Start
+        try {
+            this.auditService.log('TOOL_START', { tool: name, args }, 'INFO');
+        } catch (e) { console.error("Audit Fail", e); }
+
         try {
             // 0. Permission Check
             // A. Policy Service (Fine-grained)
@@ -1557,6 +1562,9 @@ export class MCPServer {
             }
 
             // Broadcast Success
+            try {
+                this.auditService.log('TOOL_END', { tool: name, result: JSON.stringify(result).substring(0, 500), duration: Date.now() - startTime }, 'INFO');
+            } catch (e) { console.error("Audit Fail", e); }
             if (this.wssInstance) {
                 this.wssInstance.clients.forEach((c: any) => {
                     if (c.readyState === 1) c.send(JSON.stringify({
@@ -1586,6 +1594,11 @@ export class MCPServer {
             return result;
 
         } catch (e: any) {
+            // Audit Error
+            try {
+                this.auditService.log('TOOL_END', { tool: name, error: e.message, duration: Date.now() - startTime }, 'ERROR');
+            } catch (auditErr) { console.error("Audit Fail", auditErr); }
+
             // Broadcast Error
             if (this.wssInstance) {
                 this.wssInstance.clients.forEach((c: any) => {
@@ -2373,6 +2386,36 @@ export class MCPServer {
                         'Access-Control-Allow-Origin': '*' // Allow Web UI access
                     });
                     res.end(JSON.stringify(servers));
+                } else if (req.method === 'POST') {
+                    // Handle POST requests (Extension Compatibility)
+                    let body = '';
+                    req.on('data', chunk => body += chunk);
+                    req.on('end', async () => {
+                        try {
+                            const data = JSON.parse(body);
+                            res.writeHead(200, {
+                                'Content-Type': 'application/json',
+                                'Access-Control-Allow-Origin': '*'
+                            });
+
+                            if (req.url === '/director.chat') {
+                                // Direct chat interface
+                                const result = await this.director.executeTask(data.message);
+                                res.end(JSON.stringify({ result: { data: result } }));
+                            } else if (req.url === '/tool/execute') {
+                                // Generic tool execution
+                                const result = await this.executeTool(data.name, data.args);
+                                res.end(JSON.stringify({ result: { data: result } }));
+                            } else {
+                                // Forward to TRPC-like structure if needed, or 404
+                                res.writeHead(404);
+                                res.end(JSON.stringify({ error: 'Endpoint not found' }));
+                            }
+                        } catch (e: any) {
+                            res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                            res.end(JSON.stringify({ error: e.message }));
+                        }
+                    });
                 } else {
                     res.writeHead(404);
                     res.end();
@@ -2497,4 +2540,5 @@ export class MCPServer {
         }
         return null;
     }
-}
+
+
