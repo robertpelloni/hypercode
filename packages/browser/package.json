@@ -8,10 +8,10 @@
     "socket.io-client": "^4.7.4"
   },
   "devDependencies": {
-    "@types/chrome": "^0.0.263",
+    "@types/chrome": "^0.1.36",
     "ts-loader": "^9.5.1",
     "typescript": "^5.3.3",
-    "webpack": "^5.90.0",
+    "webpack": "^5.105.0",
     "webpack-cli": "^5.1.0"
   }
 }
