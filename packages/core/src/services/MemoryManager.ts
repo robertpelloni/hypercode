@@ -4,6 +4,8 @@ import fs from 'fs/promises';
 import { existsSync } from 'fs';
 
 import { ContextPruner, PruningOptions } from './ContextPruner.js';
+// @ts-ignore
+import type { GraphMemory } from '@borg/memory';
 
 export class MemoryManager {
     private provider: VectorProvider | null = null;
@@ -11,7 +13,7 @@ export class MemoryManager {
     private initialized: boolean = false;
     private dbPath: string;
     private registryPath: string;
-    public graph: any; // Type as GraphMemory when strict types are ready
+    public graph: GraphMemory | null = null;
 
     constructor(workspaceRoot: string = process.cwd()) {
         this.dbPath = path.join(workspaceRoot, '.borg', 'db');
@@ -32,6 +34,7 @@ export class MemoryManager {
         // @ts-ignore - The types might not match perfectly yet, acting as an adapter
         const store = new VectorStore(this.dbPath);
         this.graph = new GraphMemory();
+        await this.graph.initialize();
 
         this.provider = {
             initialize: async () => store.initialize(),
