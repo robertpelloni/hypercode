@@ -22,7 +22,7 @@ export class LLMService {
     private anthropicClient?: Anthropic;
     private forgeClient?: ForgeService;
     private totalUsage = { inputTokens: 0, outputTokens: 0, estimatedCostUSD: 0 };
-    private modelSelector: ModelSelector;
+    public modelSelector: ModelSelector;
 
     constructor(modelSelector?: ModelSelector) {
         this.modelSelector = modelSelector || new ModelSelector();

@@ -102,6 +102,7 @@ import { AutoDevService } from "./services/AutoDevService.js";
 import { MemoryManager } from "./services/MemoryManager.js";
 import { KnowledgeService } from './services/KnowledgeService.js';
 import { EventBus } from './services/EventBus.js';
+import { DeepResearchService } from './services/DeepResearchService.js';
 
 
 import { PermissionManager, AutonomyLevel } from "./security/PermissionManager.js";
@@ -175,6 +176,7 @@ export class MCPServer {
     private mcpAggregator: MCPAggregator;
     private submoduleManager: SubmoduleManager;
     public eventBus: EventBus;
+    public deepResearchService: DeepResearchService;
 
     // Phase 51: Core Infrastructure
     public lspService: LSPService;
@@ -314,6 +316,7 @@ export class MCPServer {
         this.memoryManager = new MemoryManager(process.cwd());
         this.researchService = new ResearchService(this, this.memoryManager); // Initialized AFTER memoryManager
         this.knowledgeService = new KnowledgeService(this.memoryManager); // Added
+        this.deepResearchService = new DeepResearchService(this.llmService, this.searchService, this.memoryManager);
 
         this.squadService = new SquadService(this);
         this.gitWorktreeManager = new GitWorktreeManager(process.cwd());
@@ -746,6 +749,14 @@ export class MCPServer {
                 if (!query) throw new Error("Missing 'query'");
                 await this.initializeMemorySystem();
                 const res = await this.memoryManager.search(query, limit);
+                result = { content: [{ type: "text", text: JSON.stringify(res, null, 2) }] };
+            }
+            // --- DEEP RESEARCH (Phase 31) ---
+            else if (name === "research_topic") {
+                const topic = args?.topic as string;
+                const depth = args?.depth as number || 2;
+                if (!topic) throw new Error("Missing 'topic'");
+                const res = await this.deepResearchService.researchTopic(topic, depth);
                 result = { content: [{ type: "text", text: JSON.stringify(res, null, 2) }] };
             }
             else if (name === "vscode_read_selection") {

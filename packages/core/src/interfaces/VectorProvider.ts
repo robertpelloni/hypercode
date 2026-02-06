@@ -9,6 +9,12 @@ export interface SearchResult extends Document {
     score: number;
 }
 
+export interface Message {
+    role: string;
+    content: string | Array<{ type: string; text?: string;[key: string]: any }>;
+    [key: string]: any;
+}
+
 export interface VectorProvider {
     /**
      * Initialize the provider (connect to DB, load models)

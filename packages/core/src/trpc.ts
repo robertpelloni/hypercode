@@ -33,7 +33,6 @@ export const appRouter = t.router({
     shell: shellRouter,
     memory: memoryRouter,
     knowledge: knowledgeRouter,
-    knowledge: knowledgeRouter,
     research: researchRouter,
     pulse: pulseRouter,
     health: publicProcedure.query(() => {

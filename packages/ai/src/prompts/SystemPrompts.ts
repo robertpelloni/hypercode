@@ -24,6 +24,7 @@ AVAILABLE TOOLS:
 - start_squad: Delegate a task to a parallel worker agent (Args: { branch: string, goal: string }).
 - list_squads: Check status of worker agents.
 - kill_squad: Terminate a worker and remove worktree.
+- research_topic: Autonomous Deep Research (Args: { topic: string, depth?: number }). Use this for finding information online.
 
 RESPONSE FORMAT:
 Return ONLY a valid JSON object (no markdown):
