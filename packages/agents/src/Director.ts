@@ -24,6 +24,7 @@ export class Director {
 
     // Execution State
     private activeGoal: string | null = null;
+    private currentProjectTask: any = null; // Phase 59: Track active project task
     private lastGoal: string | null = null;
     private lastGoalTime: number = 0;
     private currentStep: number = 0;
@@ -230,6 +231,17 @@ export class Director {
                         } catch (e: any) {
                             taskResult += ` (Merge Failed: ${e.message})`;
                             console.error(`[Director] Worktree merge failed: ${e}`);
+                        }
+
+                        // Phase 59: Complete Project Task
+                        // @ts-ignore
+                        if (this.currentProjectTask && this.server.projectTracker) {
+                            try {
+                                // @ts-ignore
+                                this.server.projectTracker.completeTask(this.currentProjectTask);
+                                console.log(`[Director] ✅ Marked task "${this.currentProjectTask.description}" as complete.`);
+                                this.currentProjectTask = null;
+                            } catch (e) { console.error(`[Director] Failed to complete project task: ${e}`); }
                         }
                     }
                     break;
@@ -823,10 +835,23 @@ class ConversationMonitor {
                 const previousContext = this.lastDirective ? `Previous Directive was: "${this.lastDirective}". The Director just finished this cycle.` : "";
                 const focus = config.defaultTopic ? `\n\nCURRENT FOCUS: "${config.defaultTopic}"\n(You MUST verify this focus is being addressed)` : "";
 
+                // Phase 59: Inject Project Tracker Context
+                // @ts-ignore
+                const projectTracker = this.server.projectTracker;
+                // @ts-ignore
+                const nextTask = projectTracker ? projectTracker.getNextTask() : null;
+                let taskContext = "";
+                if (nextTask) {
+                    taskContext = `\n\n[PROJECT PLAN]: The next priority task is: "${nextTask.description}" (File: ${nextTask.sourceFile}). Please direct the agent to complete this specific task.`;
+                    this.currentProjectTask = nextTask;
+                } else {
+                    taskContext = "\n\n[PROJECT PLAN]: No specific tasks found in task.md or ROADMAP.md. Proceed with GENERAL IMPROVEMENTS.";
+                }
+
                 // IMPORTANT: Append a note about repitition
                 const antiRepetition = `\n\nCRITICAL: Do NOT issue the same directive again. If the previous directive was "${this.lastDirective}", assume it is DONE or FAILED. Choose the NEXT step.`;
 
-                const prompt = `The agent is IDLE. ${previousContext}${focus}${antiRepetition} Review state. Provide a NEW directive. If no work is needed, reply 'DIRECTIVE: STANDBY'.`;
+                const prompt = `The agent is IDLE. ${previousContext}${focus}${taskContext}${antiRepetition} Review state. Provide a NEW directive. If no work is needed, reply 'DIRECTIVE: STANDBY'.`;
 
                 const directive = await activeCouncil.runConsensusSession(prompt);
                 console.error(`[Director] 📜 Council Directive: ${directive.summary}`);

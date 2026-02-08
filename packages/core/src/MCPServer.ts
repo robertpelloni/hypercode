@@ -68,6 +68,8 @@ import { TerminalSensor } from "./sensors/TerminalSensor.js";
 import { AutoTestReactor } from "./reactors/AutoTestReactor.js";
 import { HealerReactor } from "./reactors/HealerReactor.js";
 import { SessionManager } from "./services/SessionManager.js";
+import { ProjectTracker } from "./services/ProjectTracker.js";
+
 console.log("[MCPServer] ✓ SkillRegistry");
 
 import { SpawnerService } from "./agents/SpawnerService.js";
@@ -192,6 +194,7 @@ export class MCPServer {
     public councilService: CouncilService;
     public browserService: BrowserService;
     public sessionManager: SessionManager; // Phase 57: State Persistence
+    public projectTracker: ProjectTracker; // Phase 59: Autonomous Loop
 
     // Sensors (Phase 43)
     public fileSensor: FileSensor;
@@ -248,6 +251,7 @@ export class MCPServer {
         ]);
         this.skillRegistry.setMasterIndexPath(path.join(process.cwd(), 'BORG_MASTER_INDEX.jsonc'));
         this.sessionManager = new SessionManager(process.cwd()); // Phase 57: State Persistence
+        this.projectTracker = new ProjectTracker(process.cwd()); // Phase 59: Autonomous Loop
         this.director = new Director(this);
         this.council = new Council(this.modelSelector);
         this.permissionManager = new PermissionManager('high'); // Default to HIGH AUTONOMY as requested
