@@ -15,8 +15,8 @@
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
-    "@types/node": "^20.10.0",
-    "@vitest/coverage-v8": "^4.0.16",
+    "@types/node": "^20.19.33",
+    "@vitest/coverage-v8": "^4.0.18",
     "turbo": "^2.8.3",
     "typescript": "^5.3.3",
     "vitest": "^4.0.16"
