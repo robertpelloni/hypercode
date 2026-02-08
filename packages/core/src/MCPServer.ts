@@ -40,6 +40,7 @@ import { SquadService } from "./orchestrator/SquadService.js";
 import { GitWorktreeManager } from "./orchestrator/GitWorktreeManager.js";
 import { AuditService } from "./security/AuditService.js";
 import { GitService } from "./services/GitService.js";
+import { Supervisor } from "@borg/agents";
 import { SkillRegistry } from "./skills/SkillRegistry.js";
 import { SuggestionService } from "./suggestions/SuggestionService.js";
 import { ResearchService } from "./services/ResearchService.js";
@@ -214,6 +215,7 @@ export class MCPServer {
     public claudeAgent: ClaudeAgent;
     public metaArchitectAgent: MetaArchitectAgent;
     public council: Council;
+    public supervisor: Supervisor;
 
     private activeAgents: Map<string, AgentAdapter> = new Map();
     public directorConfig = {
@@ -273,13 +275,15 @@ export class MCPServer {
         // SearchService is needed for DeepResearchService types
         const searchService = new SearchService();
         this.memoryManager = new MemoryManager(process.cwd());
-        this.deepResearchService = new DeepResearchService(this.llmService, searchService, this.memoryManager); // Initialize FIRST
+        this.deepResearchService = new DeepResearchService(this, this.llmService, searchService, this.memoryManager); // Initialize FIRST
         this.skillAssimilationService = new SkillAssimilationService(
             this.skillRegistry,
             this.llmService,
             this.deepResearchService
         );
         this.darwinService = new DarwinService(this.llmService, this);
+        this.supervisor = new Supervisor(this);
+        this.lspService = new LSPService(process.cwd());
 
         this.mcpAggregator = new MCPAggregator();
         this.submoduleManager = new SubmoduleManager(process.cwd());
@@ -360,7 +364,7 @@ export class MCPServer {
         this.memoryManager = new MemoryManager(process.cwd());
         this.researchService = new ResearchService(this, this.memoryManager); // Initialized AFTER memoryManager
         this.knowledgeService = new KnowledgeService(this.memoryManager); // Added
-        this.deepResearchService = new DeepResearchService(this.llmService, this.searchService, this.memoryManager);
+        // DeepResearchService initialized earlier (line 276)
         this.councilService = new CouncilService();
         this.browserService = new BrowserService();
 

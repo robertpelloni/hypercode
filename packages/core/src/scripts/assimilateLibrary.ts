@@ -38,7 +38,8 @@ async function run() {
 
         const memoryManager = new MemoryManager(root);
         const searchService = new SearchService();
-        const deepResearch = new DeepResearchService(llm, searchService, memoryManager);
+        const mockServer = { executeTool: async () => ({ content: [{ text: "Mock content" }] }) };
+        const deepResearch = new DeepResearchService(mockServer, llm, searchService, memoryManager);
 
         const assimilator = new SkillAssimilationService(registry, llm, deepResearch);
 

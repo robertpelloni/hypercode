@@ -3,6 +3,7 @@ import { LLMService } from '@borg/ai';
 import { SearchService } from '@borg/search';
 import { MemoryManager } from './MemoryManager.js';
 import { BrowserTool } from '@borg/tools';
+import { MCPServer } from '../MCPServer.js';
 
 // Dynamically import WebSearchTool if needed, or define interface
 // We'll rely on our own internal 'search' helper that uses the SearchService if strictly compliant,
@@ -23,8 +24,10 @@ export class DeepResearchService {
     private llm: LLMService;
     private memory: MemoryManager;
     private browser: BrowserTool;
+    private server: any;
 
-    constructor(llm: LLMService, _search: SearchService, memory: MemoryManager) {
+    constructor(server: any, llm: LLMService, _search: SearchService, memory: MemoryManager) {
+        this.server = server;
         this.llm = llm;
         // SearchService ignored for now as it's local. We need Web Search.
         this.memory = memory;
@@ -218,4 +221,56 @@ export class DeepResearchService {
             };
         }
     }
+
+    // --- Ingestion & Broadcasting (Migrated from ResearchService) ---
+
+    /**
+     * Directly ingest a specific URL into memory
+     */
+    public async ingest(url: string): Promise<string> {
+        console.log(`[DeepResearch] Ingesting: ${url}`);
+        this.broadcast('RESEARCH_UPDATE', {
+            status: 'reading',
+            target: url,
+            url: url
+        });
+
+        try {
+            await this.server.executeTool("navigate", { url });
+            const result = await this.server.executeTool("read_page", { url });
+            const contentText = result.content?.[0]?.text || "";
+
+            if (contentText.startsWith("Error")) {
+                this.broadcast('RESEARCH_UPDATE', { status: 'error', target: url, error: contentText });
+                return `FAILED: ${contentText}`;
+            }
+
+            const ctxId = await this.memory.saveContext(
+                `INGESTED SOURCE: ${url}\n\n${contentText}`,
+                {
+                    title: url,
+                    source: url,
+                    type: 'research'
+                }
+            );
+
+            this.broadcast('RESEARCH_UPDATE', { status: 'memorized', target: url, id: ctxId });
+            return `MEMORIZED: ${url} (ID: ${ctxId})`;
+
+        } catch (e: any) {
+            this.broadcast('RESEARCH_UPDATE', { status: 'error', target: url, error: e.message });
+            return `ERROR: ${e.message}`;
+        }
+    }
+
+    private broadcast(type: string, payload: any) {
+        if (this.server.wssInstance) {
+            this.server.wssInstance.clients.forEach((client: any) => {
+                if (client.readyState === 1) {
+                    client.send(JSON.stringify({ type, payload }));
+                }
+            });
+        }
+    }
 }
+
