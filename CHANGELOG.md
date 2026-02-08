@@ -2,6 +2,54 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.0] - 2026-02-08
+
+### Added
+
+- **Phase 57: Resilient Intelligence**:
+  - **Model Fallback**: Automatic provider switch on 429 quota errors in `LLMService`.
+  - **Director Hardening**: Fixed focus-stealing in auto-drive loop. Added emergency brake (>5 directives in 2 min → 5 min cooldown).
+  - **SessionManager**: New `SessionManager` service for persisting agent state across restarts. Fully wired into `MCPServer.ts`.
+  - **Session tRPC Router**: New `sessionRouter.ts` with `getState`, `updateState`, `clear`, `heartbeat` endpoints.
+- **Phase 58: Grand Unification**:
+  - **Integration Test V2**: `test_grand_unification_v2.ts` covering SessionManager, Director, and core infrastructure.
+
+### Changed
+
+- **Documentation Overhaul (v2.6.0)**:
+  - Rewrote `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` — now 200+ lines with project structure, tech stack, git protocol, coding standards, agent orchestration, user preferences, quality checklist.
+  - Rewrote `CLAUDE.md` — full role definition (Architect), session protocol, model variants.
+  - Rewrote `GEMINI.md` — full role definition (Critic/Researcher), session protocol, model variants.
+  - Rewrote `GPT.md` — full role definition (Builder), session protocol, model variants.
+  - Rewrote `GROK.md` — full role definition (Innovator), removed dead `CORE_INSTRUCTIONS.md` reference.
+  - Rewrote `CODEX.md` — full role definition (Specialist), integration flow.
+  - Rewrote `copilot-instructions.md` — added project context, code generation guidelines, key file references.
+  - Updated `AGENTS.md` — comprehensive feature wishlist preserved, added preamble.
+
+### Fixed
+
+- **VERSION Desync**: `VERSION` (was 2.4.0) and `VERSION.md` (was 2.5.0) now both synced to 2.6.0.
+- **SessionManager Wiring**: Previous session failed to wire `SessionManager` into `MCPServer.ts` (3-line import/property/constructor fix).
+
+## [2.5.0] - 2026-02-07
+
+### Added
+
+- **Phase 46: Core Engine & Dashboard Rebuild**:
+  - **Full CLI**: Complete Commander.js CLI with 11 command groups (start, status, mcp, memory, agent, session, provider, tools, config, dashboard, about) each with comprehensive subcommands, --json output, colored tables, help text with examples.
+  - **WebUI Dashboard**: Full Vite+React+Tailwind SPA with dark neural theme. Pages: Dashboard overview, MCP Router (servers/tools/traffic/config/directory tabs), Memory (browse/search/import-export/config), Agents (spawn/chat/metrics), Sessions (manage/export/cloud), Providers (quota/OAuth/fallback chain), Tools (search/groups/enable-disable), Skills library, Config editor, About/submodule dashboard.
+  - **VISION.md**: Comprehensive 500+ line vision document covering all project goals, architecture, feature parity targets, and design philosophy.
+  - **LLM Instructions Overhaul**: Rewrote AGENTS.md, CLAUDE.md, GEMINI.md, GPT.md, GROK.md, CODEX.md, copilot-instructions.md with universal instructions reference, model-specific roles, changelog/version protocols.
+  - **docs/UNIVERSAL_LLM_INSTRUCTIONS.md**: Complete coding standards, documentation protocol, git protocol, architecture rules, session protocol, quality standards.
+  - **VERSION.md**: Single source of truth for version number (2.5.0), referenced at runtime.
+  - **Version Sync**: All package.json files, VERSION.md, and CHANGELOG.md synchronized to 2.5.0.
+
+### Changed
+
+- Upgraded root monorepo version from 2.4.0 to 2.5.0
+- Restructured WebUI from basic status-cards to full multi-page dashboard SPA
+- CLI expanded from 2-file stub to full 11-command-group CLI application
+
 ## [2.4.0] - 2026-02-07
 
 ### Added

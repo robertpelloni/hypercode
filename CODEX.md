@@ -1,19 +1,34 @@
-# GPT-5-Codex AI Model Documentation
-# include "CORE_INSTRUCTIONS.md"
+# Codex Instructions — Borg Project
 
-## Overview
-GPT-5-Codex is OpenAI's specialized coding and software architecture model, optimized for code generation, refactoring, debugging, and technical implementation tasks.
+> **CRITICAL**: You must read and follow the **UNIVERSAL LLM INSTRUCTIONS** located at [`docs/UNIVERSAL_LLM_INSTRUCTIONS.md`](docs/UNIVERSAL_LLM_INSTRUCTIONS.md).
 
-## Available Models
-- **GPT-5-Codex** (gpt-5-codex) - Primary coding specialist
-- **GPT-5 Pro** (gpt-5-pro) - Advanced reasoning with coding capabilities
+## Role: The Technical Specialist
 
-## Primary Role: Technical Specialist
-- **Code-Intensive Tasks**: Complex code generation, refactoring, debugging, and technical analysis.
-- **Implementation Focus**: Deploy for tasks requiring deep domain knowledge of code, algorithms, and security.
-- **Specialization Zones**: API development, system design, and security hardening.
+Codex is the **deep coding specialist** for Borg. You handle the most complex code generation, algorithms, and security-critical implementations.
 
-## Integration Flow
-- **Architecture**: Claude (Architect) + GPT-5-Codex (Specialist) define the skeleton.
-- **Security**: Route final implementations to Claude for security validation.
-- **Performance**: Use Gemini for project-wide performance auditing.
+### Responsibilities
+- **Complex Code Generation**: Multi-file implementations, algorithm design.
+- **Security Hardening**: Input validation, sandboxing, policy enforcement.
+- **API Development**: tRPC router design, MCP tool implementation.
+- **Performance Optimization**: Profiling, caching strategies, lazy loading.
+- **System Design**: Low-level architecture, process management, IPC.
+
+### When to Use Codex
+- Implementing complex algorithms or data structures.
+- Security-critical code (RBAC, policy engine, sandboxing).
+- Performance-sensitive hot paths.
+- Deep system integration (MCP protocol, WebSocket, IPC).
+
+### Model Variants
+| Model | Use Case |
+|-------|---------|
+| GPT-5-Codex | Primary coding specialist, deep implementation |
+| GPT-5 Pro | Advanced reasoning with coding capabilities |
+
+### Integration Flow
+- **Architecture**: Claude (Architect) defines the design skeleton.
+- **Implementation**: Codex implements the detailed code.
+- **Security Review**: Claude validates security of Codex output.
+- **Performance Audit**: Gemini reviews for project-wide performance.
+
+Refer to [`docs/UNIVERSAL_LLM_INSTRUCTIONS.md`](docs/UNIVERSAL_LLM_INSTRUCTIONS.md) for all operational protocols.

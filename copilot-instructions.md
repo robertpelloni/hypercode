@@ -1,14 +1,30 @@
-# Copilot Instructions
+# Copilot Instructions — Borg Project
 
-> **NOTICE**: Primary instructions are in **[docs/LLM_INSTRUCTIONS.md](docs/LLM_INSTRUCTIONS.md)**.
-> This file is optimized for GitHub Copilot in VS Code.
+> **NOTICE**: Primary instructions are in [`docs/UNIVERSAL_LLM_INSTRUCTIONS.md`](docs/UNIVERSAL_LLM_INSTRUCTIONS.md). This file is optimized for GitHub Copilot in VS Code.
 
 ## Context
-- **Project**: Borg (Neural Operating System)
-- **Language**: TypeScript (Node.js ESM)
+- **Project**: Borg — The Neural Operating System (AIOS)
+- **Language**: TypeScript (Node.js ESM, strict mode)
+- **Build**: pnpm + Turborepo monorepo
 - **Test**: Vitest
+- **Validation**: Zod schemas for all inputs
+- **Architecture**: MCP Server + tRPC + Express + WebSocket
 
-## Guidelines
-- Write strictly typed code.
-- Prefer `zod` for validation.
-- Assume `MCPServer` architecture.
+## Code Generation Guidelines
+- Write strictly typed TypeScript. Avoid `any`.
+- Prefer `zod` for runtime validation.
+- Use ESM imports with `.js` extensions.
+- Follow the `getMcpServer()` pattern in tRPC routers.
+- Place new routers in `packages/core/src/routers/`.
+- Place new services in `packages/core/src/services/`.
+- Use `publicProcedure` for read operations, `adminProcedure` for mutations.
+
+## Key Files to Reference
+- `packages/core/src/MCPServer.ts` — Central orchestrator (2764 lines).
+- `packages/core/src/trpc.ts` — tRPC app router (784 lines).
+- `packages/core/src/lib/trpc-core.js` — tRPC base definitions.
+- `apps/web/src/app/dashboard/` — Dashboard pages (31+ pages).
+
+## Testing
+- Run `npx tsc --noEmit` in `packages/core` to verify TypeScript.
+- Run `pnpm run build` for full monorepo build.

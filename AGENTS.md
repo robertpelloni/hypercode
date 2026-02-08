@@ -1,121 +1,155 @@
-# Agent Instructions
+# Agent Instructions — Borg Project
 
-> **CRITICAL**: You must read and follow the **UNIVERSAL LLM INSTRUCTIONS** located at `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`.
+> **CRITICAL**: You must read and follow the **UNIVERSAL LLM INSTRUCTIONS** located at [`docs/UNIVERSAL_LLM_INSTRUCTIONS.md`](docs/UNIVERSAL_LLM_INSTRUCTIONS.md).
 
 This file serves as the entry point for all autonomous agents working on the Borg project.
 
 ## Quick Links
-- **Universal Rules**: `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`
-- **Roadmap**: `ROADMAP.md`
-- **Architecture**: `docs/DESIGN.md`
-- **Submodules**: `docs/SUBMODULE_DASHBOARD.md`
+- **Universal Rules**: [`docs/UNIVERSAL_LLM_INSTRUCTIONS.md`](docs/UNIVERSAL_LLM_INSTRUCTIONS.md)
+- **Vision**: [`VISION.md`](VISION.md)
+- **Roadmap**: [`ROADMAP.md`](ROADMAP.md)
+- **Architecture**: [`docs/DESIGN.md`](docs/DESIGN.md)
+- **Submodules**: [`docs/SUBMODULE_DASHBOARD.md`](docs/SUBMODULE_DASHBOARD.md)
+- **Changelog**: [`CHANGELOG.md`](CHANGELOG.md)
+- **Version**: [`VERSION.md`](VERSION.md)
+- **Handoff**: [`HANDOFF_ANTIGRAVITY.md`](HANDOFF_ANTIGRAVITY.md)
 
-## Agent Protocols
-1. **Autonomy**: Solve problems independently.
-2. **Verification**: Always test your code.
-3. **Documentation**: Update Changelog and Roadmap.
+## Agent Roles
+| File | Model | Role |
+|------|-------|------|
+| [`CLAUDE.md`](CLAUDE.md) | Claude Opus/Sonnet | Architect — System design, refactoring, type safety |
+| [`GEMINI.md`](GEMINI.md) | Gemini Pro/Flash | Critic/Researcher — Cross-file analysis, deep research |
+| [`GPT.md`](GPT.md) | GPT-4o / o3 | Builder — Reliable implementation, debugging |
+| [`GROK.md`](GROK.md) | Grok-4 | Innovator — Creative solutions, edge cases |
+| [`CODEX.md`](CODEX.md) | GPT-5-Codex | Specialist — Complex algorithms, security |
+| [`copilot-instructions.md`](copilot-instructions.md) | Copilot | Inline — Real-time code completion |
+
+## Session Protocol
+1. **Read** `HANDOFF_ANTIGRAVITY.md` for context from previous sessions.
+2. **Read** `ROADMAP.md` to understand current phase.
+3. **Verify** build state: `npx tsc --noEmit` in `packages/core`.
+4. **Execute** assigned task autonomously.
+5. **Document** — Update CHANGELOG, ROADMAP, VERSION as needed.
+6. **Ship** — `git commit && git push` after each feature.
+7. **Handoff** — Update `HANDOFF_ANTIGRAVITY.md` at session end.
+
+## Core Protocols
+1. **Autonomy**: Solve problems independently. Don't ask unless architecturally ambiguous.
+2. **Verification**: Always run `tsc --noEmit` before committing.
+3. **Documentation**: Update Changelog and Roadmap with every feature.
 4. **Self-Correction (The Healer)**: If a tool fails, analyze the error and attempt a fix.
 5. **Evolution (The Darwin Protocol)**: Experiment with prompt variations if results are suboptimal.
+6. **Continuous Shipping**: Commit and push regularly. Do NOT wait for permission.
 
-Proceed with your assigned task.
+---
 
-
+## Feature Wishlist (The Assimilation Queue)
 
 The following features MUST be EXTREMELY WELL IMPLEMENTED and EXTREMELY WELL REPRESENTED by the UI, CLI, TUI, and documentation, including UI labeling and tooltips:
 
-mcp router/aggregator, mcp server which is mcp client which combines many mcp servers into one "master" mcp server, handles mcp session, instanciation, lifecycle auto start, restart, making sure it is available to multiple clients without multiple instances, making sure it does not time out and is responsive, measures latency, groups mcp servers into namespaces, groups tools into namespaces, enable/disable individual tools/servers, inspect mcp traffic, show activity, logging, mcp tool call chaining, TOON format, code mode, tool automatic renaming, tool reranking, tool semantic search, progressive tool disclosure, tool rag, context inspector, keep alive, heartbeat, mcp directory, automatic mcp install, environment variable and secrets management, mcp client config file autoconfig, auto write config file format, import/export configs, autodetect all configs on system, maintain/manage all configs on system, save sets of configs, wipe all client configs, set all client configs to x, etc, manage databases, handle auth. 
-mcp server chains other mcps. 
-can watch mcp traffic. 
-reduce context language. 
-reduce context syntax. 
-summarize session. 
-automatic context harvesting. 
-compaction. 
-context pruning, session pruning, memory pruning, memory reranking. 
-import/export session. 
-import/export memories. 
-autodetect session/memories. 
-code execution sandbox. 
-code indexing, understanding. 
-semantic code search. 
-lsp servers. 
-ast, see graph view ast code. 
-ripgrep. 
-code chunking. 
-RAG, various RAG techniques, intake documents, ocr, summarize. 
-embed skills, specs/speckit, tasks/task manager, bmad, agents, swarm
-plugins, cli sdk, ai sdk, a2a sdk, mcp sdk, acp sdk, agent sdk (many providers). 
-orchestrator. 
-CLIs/TUIs, webUIs. 
-resource management, lazy load, health checks, auto start, auto restart, timeout, latency, responsiveness, single-instance multiple clients, monitor memory usage, cpu usage, long running process. 
-proxy for stdio as remote. 
-proxy for remote as stdio. 
-proxy for sse as streaming-http. 
-proxy for streaming-http as stdio. 
-manage oauth, bearer token. 
-manage secrets, environment variables, paths. 
-manage env variable expansion, .env files. 
-subagents, long running, subcontexts, timeouts, multiple models, mutiple cli, orchestration, harness/cli/tiu as mcp. 
-multi-model debate, multi-model consensus, share context between models, multiple models pair programming with each other, architect-implementer. 
-mcp groups. 
-tool groups. 
-tool renaming, minimize context. 
-tool semantic search/tool rag. 
-tool lazy load, dynamic progressive tool disclosure. 
-tools as code, code mode. 
-mcp tool chaining. 
-TOON format, context saving. 
-inspect context, context makeup,
-usage, billing, dashboard, credits, api vs auth, resets on day at time. 
-intelligent selection of models based on credits, free tier, subscription, provider, switch between all providers of gemini 3 pro, then all providers of codex 5.2, then all opus 4.5. 
-plan with model x, implement with model y. 
-supervisor, council, autopilot. 
-skills, skill convert, skill rerank, skill improve. 
-prompt library, system prompts, prompt templates, improve prompts, jailbreaks. 
-personas. 
-subagent definitions, subagent collections. 
-agents.md, claude.md, copilot-instructions.md, gpt.md, llm-instructions.md, gemini.md, grok.md, warp.md. 
-changelog.md. 
-version, version.md. 
-vision.md. 
-readme.md. 
-handoff.md, init.md. 
-superpowers. 
-beads. 
-specs, tasks, bmad. 
-memory. 
-short term. 
-long term. 
-browser extension: store memory, browser-use, console/debug log, mcp superassistant, connect mcp to browser chat, connect universal memory to browser chat, export browser sessions, export browser memory, browser history. 
-connect to all interfaces all models. 
-all models connect to memory. 
-import/export all memory, sessions, chat history. 
-add to memory. 
-automatically add memories about x topic. 
-web search. 
-computer-use. 
-browser-use. 
-agentic loop, autopilot, supervisor, fallbacks, council, consensus. 
-manage cloud dev sessions. 
-manage local cli sessions. 
-cli has cli, tiu, webui by default. 
-connect to cli with webui, dashboard connects to cli. 
-no tui, only webui, only multi-session dashboard in web. 
-remembers repo folders. 
-list of all repo folders, workspace, last session. 
-auto start previous sessions. 
-pause all sessions. 
-import/export cloud dev memory, session history. 
-transfer task to cloud dev. 
-broadcast message to all cloud dev sessions. 
-broadcast message to all cli sessions. 
-remote management of sessions, mobile control of sessions, roo remote. 
-auto approve cloud dev plans. 
-start new session for expired (30 day) cloud dev sessions, inject session history, prune session log, archive old session. 
-continue paused/stalled cloud dev session. 
-web terminal like opencode web ui terminal. 
-cli activity log. 
-memory dashboard like supermemory console. 
-automatic adding of memories during session? all user input gets added as memories if there is new information?. 
-notebooklm integration. 
-notebooklm open source functionality. 
+### MCP Router / Aggregator
+- Master MCP server that aggregates many MCP servers into one unified interface
+- MCP session lifecycle: auto-start, restart, keep-alive, heartbeat, timeout
+- Single-instance serving multiple clients without duplication
+- Latency measurement and health monitoring per server
+- Namespace grouping for servers and tools
+- Enable/disable individual tools and servers
+- MCP traffic inspection with real-time JSON-RPC viewer
+- Tool call chaining and workflow composition
+- TOON format for context-saving tool descriptions
+- Code mode (tools as executable functions)
+- Tool automatic renaming (minimize context tokens)
+- Tool reranking (by relevance, frequency, semantic similarity)
+- Tool semantic search / tool RAG
+- Progressive tool disclosure (lazy loading)
+- Context inspector (see what's in the context window)
+- MCP directory with ratings and categories
+- Automatic MCP install from npm/pip/GitHub
+- Environment variable and secrets management per server
+- MCP client config auto-detection and auto-writing
+- Import/export MCP configs (JSON/JSONC)
+- Auto-detect all MCP configs on system
+- Save sets of configs, wipe all, set all to preset
+
+### Memory System
+- Short-term, medium-term, long-term, episodic, semantic, procedural memory
+- Context pruning, session pruning, memory pruning, reranking
+- Import/export sessions and memories
+- Auto-detect existing sessions/memories
+- Automatically add memories about specified topics
+- Memory dashboard (like Supermemory console)
+- Session summarization and compaction
+
+### Code Intelligence
+- Code execution sandbox (Docker/WASM)
+- Code indexing and semantic understanding
+- Semantic code search (vector + ripgrep hybrid)
+- LSP server integration (TypeScript, Python, Rust)
+- AST visualization (graph view)
+- Code chunking strategies (fixed, semantic, code-aware)
+- RAG pipeline: intake documents, OCR, summarize
+
+### Agent Orchestration
+- Supervisor, council, autopilot
+- Multi-model debate and consensus
+- Share context between models
+- Multiple models pair programming
+- Architect-implementer pattern
+- Subagents with timeouts, multiple models
+- Skills, skill conversion, skill improvement
+- Prompt library, system prompts, templates, jailbreaks
+- Personas and customizable agent behavior
+- Subagent definitions and collections
+
+### Provider & Billing
+- Intelligent model selection based on credits/free tier/subscription
+- Provider fallback chains (try all providers of Model X, then Model Y)
+- Plan with model X, implement with model Y
+- Usage, billing, dashboard, credits, API vs auth
+- Track reset dates and quotas
+
+### Browser Extension
+- Store memory from browsing
+- browser-use automation
+- Console/debug log capture
+- MCP SuperAssistant integration
+- Connect MCP to browser chat interfaces
+- Connect universal memory to browser chat
+- Export browser sessions and memory
+- Browser history integration
+
+### Session & Cloud Management
+- Manage cloud dev sessions (Jules, Devin, Codex)
+- Manage local CLI sessions
+- Connect dashboard to CLI sessions
+- Multi-session dashboard
+- Remember repo folders and workspaces
+- Auto-start previous sessions
+- Pause/resume all sessions
+- Import/export cloud dev memory
+- Transfer tasks between local and cloud
+- Broadcast messages to all sessions
+- Remote/mobile management
+- Web terminal (like OpenCode web UI)
+- CLI activity log
+
+### Interfaces
+- CLI with commander.js (11 command groups)
+- WebUI dashboard (Next.js + Vite+React)
+- No TUI, only WebUI and multi-session dashboard
+- Mobile-responsive for remote management
+
+### Integration Protocols
+- Plugins, CLI SDK, AI SDK, A2A SDK, MCP SDK, ACP SDK, Agent SDK
+- Proxy: stdio as remote, remote as stdio, SSE as streaming-HTTP
+- OAuth and bearer token management
+- .env file expansion and management
+- Harness CLI as MCP
+
+### Advanced Features
+- NotebookLM integration / open-source functionality
+- Computer-use automation
+- Web search integration
+- Beads issue tracking
+- Specs/SpecKit/BMAD task management
+- Superpowers framework
