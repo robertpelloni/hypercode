@@ -21,6 +21,8 @@ export interface SystemEvent {
 
 export class EventBus extends EventEmitter {
     private wildcardListeners: Array<{ pattern: RegExp, listener: (event: SystemEvent) => void }> = [];
+    private history: SystemEvent[] = [];
+    private readonly MAX_HISTORY = 1000;
 
     constructor() {
         super();
@@ -47,6 +49,12 @@ export class EventBus extends EventEmitter {
             payload
         };
 
+        // 0. Store in history
+        this.history.push(event);
+        if (this.history.length > this.MAX_HISTORY) {
+            this.history.shift();
+        }
+
         // 1. Emit exact match
         this.emit('system_event', event);
         this.emit(type, event);
@@ -65,5 +73,9 @@ export class EventBus extends EventEmitter {
 
     public onEvent(type: SystemEventType | string, listener: (event: SystemEvent) => void) {
         this.subscribe(type, listener);
+    }
+
+    public getHistory(limit: number = 100): SystemEvent[] {
+        return this.history.slice(-limit);
     }
 }

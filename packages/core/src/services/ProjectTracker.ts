@@ -46,6 +46,28 @@ export class ProjectTracker {
         return null;
     }
 
+    public getStatus() {
+        // Calculate progress based on checked items
+        // For efficiency, maybe cache this or just scan on demand since files are small
+        const taskMdPath = path.join(this.rootDir, 'task.md'); // Simplified
+        let total = 0;
+        let done = 0;
+
+        if (fs.existsSync(taskMdPath)) {
+            const content = fs.readFileSync(taskMdPath, 'utf-8');
+            total += (content.match(/-\s*\[[ x/]\]/g) || []).length;
+            done += (content.match(/-\s*\[x\]/g) || []).length;
+        }
+
+        const currentTask = this.getNextTask();
+
+        return {
+            progress: total > 0 ? Math.round((done / total) * 100) : 0,
+            status: currentTask ? 'busy' : 'idle',
+            currentTask: currentTask ? currentTask.description : 'Idle'
+        };
+    }
+
     private findTaskInFile(filePath: string): ProjectTask | null {
         const content = fs.readFileSync(filePath, 'utf-8');
         const lines = content.split('\n');

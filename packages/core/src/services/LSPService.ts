@@ -336,6 +336,14 @@ export class LSPService {
 
     constructor(private rootPath: string) { }
 
+    public getStatus() {
+        return {
+            status: this.symbolIndex.size > 0 ? 'indexed' : 'idle',
+            filesIndexed: this.symbolIndex.size,
+            activeServers: Array.from(this.servers.keys())
+        };
+    }
+
     /**
      * Get or create a language server for the given language
      */

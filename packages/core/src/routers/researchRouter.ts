@@ -11,7 +11,11 @@ export const researchRouter = t.router({
         }))
         .mutation(async ({ ctx, input }) => {
             // @ts-ignore
-            const service: ResearchService = (ctx as any).mcpServer.researchService;
+            const mcp = global.mcpServerInstance;
+            if (!mcp) throw new Error("MCP Server not found");
+
+            // @ts-ignore
+            const service: ResearchService = mcp.researchService;
             const report = await service.research(input.topic, input.depth);
             return { report };
         })

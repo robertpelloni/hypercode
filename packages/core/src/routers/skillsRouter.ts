@@ -8,12 +8,7 @@ export const skillsRouter = t.router({
         const mcpServer = global.mcpServerInstance;
         if (!mcpServer || !mcpServer.skillRegistry) return [];
 
-        // Return skills from registry
-        // Assuming skillRegistry has a list() method or we access the map
-        // For now, let's return a list from the file system or internal state
-        // If skillRegistry doesn't expose it, we might need to update it.
-        // Let's assume we can get it.
-        return [];
+        return mcpServer.skillRegistry.getSkills();
     }),
 
     assimilate: publicProcedure.input(z.object({

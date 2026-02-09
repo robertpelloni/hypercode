@@ -14,17 +14,13 @@ export const pulseRouter = t.router({
             const mcp = global.mcpServerInstance;
             if (!mcp || !mcp.eventBus) return [];
 
-            // Hack: Since EventBus is transient, we can't query persistent history unless we store it.
-            // For now, let's assume valid "latest" are just buffered or we just return nothing if no history service.
-            // Wait, an EventBus is ephemeral. If UI polls, it misses events between polls.
-            // We need a small buffer in EventBus or a PulseService.
+            const history = mcp.eventBus.getHistory(input.limit);
 
-            // Let's rely on a PulseService if we wanted persistence.
-            // But for Phase 30, let's just inspect active state.
+            if (input.afterTimestamp) {
+                return history.filter(e => e.timestamp > input.afterTimestamp!);
+            }
 
-            // Actually, let's look at `mcp.activeAgents` or similar.
-
-            return [];
+            return history;
         }),
 
     getSystemStatus: publicProcedure.query(async () => {
@@ -35,8 +31,8 @@ export const pulseRouter = t.router({
         return {
             status: 'online',
             uptime: process.uptime(),
-            agents: Array.from(mcp.activeAgents?.keys() || []),
-            memoryInitialized: mcp.memoryInitialized
+            agents: Array.from(mcp.activeAgentsMap?.keys() || []),
+            memoryInitialized: mcp.isMemoryInitialized
         };
     })
 });

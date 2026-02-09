@@ -135,6 +135,15 @@ export class SubmoduleService {
         }
     }
 
+    public async enableSubmodule(submodulePath: string): Promise<{ success: boolean; output: string }> {
+        try {
+            const { stdout, stderr } = await execAsync(`git submodule init ${submodulePath}`, { cwd: this.rootDir });
+            return { success: true, output: stdout + stderr };
+        } catch (error) {
+            return { success: false, output: String(error) };
+        }
+    }
+
     public detectCapabilities(submodulePath: string): { caps: string[], startCommand?: string } {
         const fullPath = path.join(this.rootDir, submodulePath);
         const caps: string[] = [];

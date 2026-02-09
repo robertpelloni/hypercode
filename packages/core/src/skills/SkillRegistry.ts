@@ -46,6 +46,10 @@ export class SkillRegistry {
         return this.skills.has(id);
     }
 
+    getSkills(): Skill[] {
+        return Array.from(this.skills.values());
+    }
+
     async loadSkills() {
         this.skills.clear();
 

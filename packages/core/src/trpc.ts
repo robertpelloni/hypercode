@@ -2,6 +2,7 @@ import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
 import { t, publicProcedure, adminProcedure } from './lib/trpc-core.js';
+import { getMcpServer } from './lib/mcpHelper.js';
 import { suggestionsRouter } from './routers/suggestionsRouter.js';
 import { squadRouter } from './routers/squadRouter.js';
 import { councilRouter } from './routers/councilRouter.js';
@@ -46,57 +47,26 @@ export const appRouter = t.router({
     skills: skillsRouter,
     healer: t.router({
         diagnose: t.procedure.input(z.object({ error: z.string(), context: z.string().optional() })).mutation(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.healerService.analyzeError(input.error, input.context || "");
-            }
-            throw new Error("MCPServer instance not found");
+            return getMcpServer().healerService.analyzeError(input.error, input.context || "");
         }),
         heal: t.procedure.input(z.object({ error: z.string(), context: z.string().optional() })).mutation(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                const success = await global.mcpServerInstance.healerService.heal(input.error, input.context || "");
-                return { success };
-            }
-            throw new Error("MCPServer instance not found");
+            const success = await getMcpServer().healerService.heal(input.error, input.context || "");
+            return { success };
         }),
         getHistory: t.procedure.query(async () => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.healerService.getHistory();
-            }
-            throw new Error("MCPServer instance not found");
+            return getMcpServer().healerService.getHistory();
         })
     }),
     darwin: t.router({
         evolve: t.procedure.input(z.object({ prompt: z.string(), goal: z.string() })).mutation(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.darwinService.proposeMutation(input.prompt, input.goal);
-            }
-            throw new Error("MCPServer instance not found");
+            return getMcpServer().darwinService.proposeMutation(input.prompt, input.goal);
         }),
         experiment: t.procedure.input(z.object({ mutationId: z.string(), task: z.string() })).mutation(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                const exp = await global.mcpServerInstance.darwinService.startExperiment(input.mutationId, input.task);
-                // @ts-ignore
-                return { experimentId: exp.id };
-            }
-            throw new Error("MCPServer instance not found");
+            const exp = await getMcpServer().darwinService.startExperiment(input.mutationId, input.task);
+            return { experimentId: exp.id };
         }),
         getStatus: t.procedure.query(async () => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.darwinService.getStatus();
-            }
-            throw new Error("MCPServer instance not found");
+            return getMcpServer().darwinService.getStatus();
         })
     }),
     health: publicProcedure.query(() => {
@@ -105,14 +75,22 @@ export const appRouter = t.router({
     getTaskStatus: publicProcedure
         .input(z.object({ taskId: z.string().optional() }))
         .query(({ input }) => {
+            // @ts-ignore
+            const mcp = global.mcpServerInstance;
+            if (!mcp) return { taskId: 'offline', status: 'offline', progress: 0 };
+
+            const status = mcp.projectTracker.getStatus();
             return {
-                taskId: input.taskId || 'current',
-                status: 'processing',
-                progress: 45
+                taskId: status.currentTask,
+                status: status.status,
+                progress: status.progress
             };
         }),
     indexingStatus: t.procedure.query(() => {
-        return { status: 'idle', filesIndexed: 0, totalFiles: 0 };
+        // @ts-ignore
+        const mcp = global.mcpServerInstance;
+        if (!mcp) return { status: 'offline', filesIndexed: 0, totalFiles: 0 };
+        return mcp.lspService.getStatus();
     }),
     remoteAccess: t.router({
         start: t.procedure.mutation(async () => {
@@ -156,148 +134,91 @@ export const appRouter = t.router({
 
     autonomy: t.router({
         setLevel: t.procedure.input(z.object({ level: z.enum(['low', 'medium', 'high']) })).mutation(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                global.mcpServerInstance.permissionManager.setAutonomyLevel(input.level);
-                return input.level;
-            }
-            throw new Error("MCPServer instance not found global");
+            getMcpServer().permissionManager.setAutonomyLevel(input.level);
+            return input.level;
         }),
         getLevel: t.procedure.query(() => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.permissionManager.autonomyLevel;
-            }
-            return 'low';
+            return getMcpServer().permissionManager.autonomyLevel;
         }),
         activateFullAutonomy: t.procedure.mutation(async () => {
-            // @ts-ignore
-            const mcp = global.mcpServerInstance;
-            if (mcp) {
-                // 1. Set Autonomy High
-                mcp.permissionManager.setAutonomyLevel('high');
+            const mcp = getMcpServer();
+            // 1. Set Autonomy High
+            mcp.permissionManager.setAutonomyLevel('high');
 
-                // 2. Start Director Chat Daemon
-                mcp.director.startChatDaemon();
+            // 2. Start Director Chat Daemon
+            // @ts-ignore - Private/Missing method usage preserved from original
+            mcp.director.startChatDaemon();
 
-                // 3. Start Watchdog (Long)
-                mcp.director.startWatchdog(100);
+            // 3. Start Watchdog (Long)
+            // @ts-ignore - Private/Missing method usage preserved from original
+            mcp.director.startWatchdog(100);
 
-                return "Autonomous Supervisor Activated (High Level + Chat Daemon + Watchdog)";
-            }
-            throw new Error("MCPServer instance not found");
+            return "Autonomous Supervisor Activated (High Level + Chat Daemon + Watchdog)";
         })
     }),
     director: t.router({
         memorize: t.procedure.input(z.object({ content: z.string(), source: z.string(), title: z.string().optional() })).mutation(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance && global.mcpServerInstance.memoryManager) {
-                // @ts-ignore
-                await global.mcpServerInstance.memoryManager.saveContext(input.content, {
-                    source: input.source,
-                    title: input.title || 'Untitled Web Page',
-                    type: 'web_page'
-                });
-                return "Memorized.";
-            }
-            return "Memory Manager not ready.";
+            await getMcpServer().memoryManager.saveContext(input.content, {
+                source: input.source,
+                title: input.title || 'Untitled Web Page',
+                type: 'web_page'
+            });
+            return "Memorized.";
         }),
         chat: t.procedure.input(z.object({ message: z.string() })).mutation(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                // @ts-ignore
-                const server = global.mcpServerInstance;
+            const server = getMcpServer();
 
-                // 1. Intercept Slash Commands
-                if (input.message.trim().startsWith('/')) {
-                    const commandResult = await server.commandRegistry.execute(input.message);
-                    if (commandResult && commandResult.handled) {
-                        return commandResult.output;
-                    }
+            // 1. Intercept Slash Commands
+            if (input.message.trim().startsWith('/')) {
+                const commandResult = await server.commandRegistry.execute(input.message);
+                if (commandResult && commandResult.handled) {
+                    return commandResult.output;
                 }
-
-                // 2. Intercept "Yes" / "Approve" for Suggestions
-                const pending = server.suggestionService.getPendingSuggestions();
-                if (pending.length > 0 && /^(yes|approve|do it|confirm|ok)$/i.test(input.message.trim())) {
-                    const latest = pending[0];
-                    const suggestion = server.suggestionService.resolveSuggestion(latest.id, 'APPROVED');
-
-                    if (suggestion && suggestion.payload?.tool) {
-                        server.director.broadcast(`✅ Approved: **${latest.title}**. Executing ${suggestion.payload.tool}...`);
-                        const result = await server.executeTool(suggestion.payload.tool, suggestion.payload.args);
-                        return `✅ Execution Complete.\n\nResult:\n${JSON.stringify(result)?.substring(0, 200)}...`;
-                    }
-
-                    return `✅ Approved suggestion: **${latest.title}**. (No tool attached)`;
-                }
-
-                // 3. Default: Director Execution
-                const result = await server.director.executeTask(input.message);
-                return result;
             }
-            throw new Error("MCPServer instance not found");
+
+            // 2. Intercept "Yes" / "Approve" for Suggestions
+            const pending = server.suggestionService.getPendingSuggestions();
+            if (pending.length > 0 && /^(yes|approve|do it|confirm|ok)$/i.test(input.message.trim())) {
+                const latest = pending[0];
+                const suggestion = server.suggestionService.resolveSuggestion(latest.id, 'APPROVED');
+
+                if (suggestion && suggestion.payload?.tool) {
+                    // @ts-ignore - Private/Missing method
+                    server.director.broadcast(`✅ Approved: **${latest.title}**. Executing ${suggestion.payload.tool}...`);
+                    const result = await server.executeTool(suggestion.payload.tool, suggestion.payload.args);
+                    return `✅ Execution Complete.\n\nResult:\n${JSON.stringify(result)?.substring(0, 200)}...`;
+                }
+
+                return `✅ Approved suggestion: **${latest.title}**. (No tool attached)`;
+            }
+
+            // 3. Default: Director Execution
+            // @ts-ignore - Private/Missing method
+            const result = await server.director.executeTask(input.message);
+            return result;
         }),
         status: t.procedure.query(() => {
-            // @ts-ignore
-            if (global.mcpServerInstance && global.mcpServerInstance.director) {
-                // @ts-ignore
-                return global.mcpServerInstance.director.getStatus();
-            }
-            return { active: false, status: 'OFFLINE' };
+            return getMcpServer().director.getStatus();
         }),
         updateConfig: t.procedure.input(z.object({
             defaultTopic: z.string().optional()
         })).mutation(({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance && global.mcpServerInstance.director) {
-                // @ts-ignore
-                global.mcpServerInstance.director.updateConfig(input);
-                return { success: true };
-            }
-            throw new Error("Director not found");
+            getMcpServer().director.updateConfig(input);
+            return { success: true };
         }),
         stopAutoDrive: adminProcedure.mutation(async () => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                global.mcpServerInstance.director.stopAutoDrive();
-                return "Stopped";
-            }
-            throw new Error("MCPServer instance not found");
+            getMcpServer().director.stopAutoDrive();
+            return "Stopped";
         }),
         startAutoDrive: adminProcedure.mutation(async () => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                // Running valid tool so it logs properly
-                // But we can call direct: mcp.director.startAutoDrive()
-                // Let's use executeTool to keep consistency
-                global.mcpServerInstance.executeTool('start_auto_drive', {});
-                return "Started";
-            }
-            throw new Error("MCPServer instance not found");
+            // Running valid tool so it logs properly
+            getMcpServer().executeTool('start_auto_drive', {});
+            return "Started";
         })
     }),
     directorConfig: t.router({
         get: t.procedure.query(async () => {
-            // @ts-ignore
-            if (global.mcpServerInstance && global.mcpServerInstance.director) {
-                // @ts-ignore
-                return global.mcpServerInstance.director.getConfig();
-            }
-            // Default config
-            return {
-                defaultTopic: "Implement Roadmap Features",
-                taskCooldownMs: 10000,
-                heartbeatIntervalMs: 30000,
-                periodicSummaryMs: 120000,
-                pasteToSubmitDelayMs: 1000,
-                acceptDetectionMode: 'polling' as const,
-                pollingIntervalMs: 30000
-            };
+            return getMcpServer().director.getConfig();
         }),
         update: t.procedure.input(z.object({
             defaultTopic: z.string().optional(),
@@ -324,13 +245,8 @@ export const appRouter = t.router({
             nudgeThresholdMs: z.number().optional(),
             verboseLogging: z.boolean().optional()
         })).mutation(({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance && global.mcpServerInstance.director) {
-                // @ts-ignore
-                global.mcpServerInstance.director.updateConfig(input);
-                return { success: true };
-            }
-            throw new Error("Director not found");
+            getMcpServer().director.updateConfig(input);
+            return { success: true };
         })
     }),
 
@@ -346,66 +262,43 @@ export const appRouter = t.router({
     session: sessionRouter,
 
     runCommand: adminProcedure.input(z.object({ command: z.string() })).mutation(async ({ input }) => {
+        const result = await getMcpServer().executeTool('execute_command', { command: input.command, cwd: process.cwd() });
         // @ts-ignore
-        if (global.mcpServerInstance) {
-            // @ts-ignore
-            const result = await global.mcpServerInstance.executeTool('execute_command', { command: input.command, cwd: process.cwd() });
-            // @ts-ignore
-            if (result.isError) throw new Error(result.content[0].text);
-            // @ts-ignore
-            return result.content[0].text;
-        }
-        throw new Error("MCPServer instance not found");
+        if (result.isError) throw new Error(result.content[0].text);
+        // @ts-ignore
+        return result.content[0].text;
     }),
     // skills router removed (duplicate)
     executeTool: adminProcedure.input(z.object({
         name: z.string(),
         args: z.any()
     })).mutation(async ({ input }) => {
+        const result = await getMcpServer().executeTool(input.name, input.args);
+        // Result is { content: ... }
         // @ts-ignore
-        if (global.mcpServerInstance) {
-            // @ts-ignore
-            const result = await global.mcpServerInstance.executeTool(input.name, input.args);
-            // Result is { content: ... }
-            // @ts-ignore
-            if (result.isError) throw new Error(result.content[0].text);
-            // @ts-ignore
-            return result.content[0].text;
-        }
-        throw new Error("MCPServer not found");
+        if (result.isError) throw new Error(result.content[0].text);
+        // @ts-ignore
+        return result.content[0].text;
     }),
     repoGraph: graphRouter,
     autoTest: t.router({
         getResults: t.procedure.query(() => {
-            // @ts-ignore
-            if (global.mcpServerInstance && global.mcpServerInstance.autoTestService) {
-                // @ts-ignore
-                const results = global.mcpServerInstance.autoTestService.testResults;
-                return Object.fromEntries(results);
-            }
-            return {};
+            const results = getMcpServer().autoTestService.testResults;
+            return Object.fromEntries(results);
         }),
         getStatus: t.procedure.query(() => {
-            // @ts-ignore
-            if (global.mcpServerInstance && global.mcpServerInstance.autoTestService) {
-                // @ts-ignore
-                return { isRunning: global.mcpServerInstance.autoTestService.isRunning };
-            }
-            return { isRunning: false };
+            return { isRunning: getMcpServer().autoTestService.isRunning };
         }),
         start: t.procedure.mutation(() => {
-            // @ts-ignore
-            if (global.mcpServerInstance) global.mcpServerInstance.autoTestService.start();
+            getMcpServer().autoTestService.start();
             return true;
         }),
         stop: t.procedure.mutation(() => {
-            // @ts-ignore
-            if (global.mcpServerInstance) global.mcpServerInstance.autoTestService.stop();
+            getMcpServer().autoTestService.stop();
             return true;
         }),
         clear: t.procedure.mutation(() => {
-            // @ts-ignore
-            if (global.mcpServerInstance) global.mcpServerInstance.autoTestService.testResults.clear();
+            getMcpServer().autoTestService.testResults.clear();
             return true;
         })
     }),
@@ -442,70 +335,30 @@ export const appRouter = t.router({
             }
         }),
         getLog: t.procedure.input(z.object({ limit: z.number().optional() })).query(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.gitService.getLog(input.limit);
-            }
-            return [];
+            return getMcpServer().gitService.getLog(input.limit);
         }),
         getStatus: t.procedure.query(async () => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.gitService.getStatus();
-            }
-            return { branch: 'unknown', clean: false, modified: [], staged: [] };
+            return getMcpServer().gitService.getStatus();
         }),
         revert: t.procedure.input(z.object({ hash: z.string() })).mutation(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.gitService.revert(input.hash);
-            }
-            throw new Error("No Server");
+            return getMcpServer().gitService.revert(input.hash);
         })
     }),
     submodule: t.router({
         list: t.procedure.query(async () => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.submoduleService.listSubmodules();
-            }
-            throw new Error("No Server");
+            return getMcpServer().submoduleService.listSubmodules();
         }),
         updateAll: t.procedure.mutation(async () => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.submoduleService.updateAll();
-            }
-            throw new Error("No Server");
+            return getMcpServer().submoduleService.updateAll();
         }),
         install: t.procedure.input(z.object({ path: z.string() })).mutation(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.submoduleService.installDependencies(input.path);
-            }
-            throw new Error("No Server");
+            return getMcpServer().submoduleService.installDependencies(input.path);
         }),
         build: t.procedure.input(z.object({ path: z.string() })).mutation(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.submoduleService.buildSubmodule(input.path);
-            }
-            throw new Error("No Server");
+            return getMcpServer().submoduleService.buildSubmodule(input.path);
         }),
         enable: t.procedure.input(z.object({ path: z.string() })).mutation(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.submoduleService.enableSubmodule(input.path);
-            }
-            throw new Error("No Server");
+            return getMcpServer().submoduleService.enableSubmodule(input.path);
         })
     }),
     billing: t.router({
@@ -518,15 +371,17 @@ export const appRouter = t.router({
                 mistral: !!process.env.MISTRAL_API_KEY
             };
 
-            // Mock Usage (In real app, read from SQL/Graph)
+            const mcp = getMcpServer();
+            const stats = mcp.llmService.getCostStats();
+            // Create a breakdown from the single total (simplification for now)
+            const breakdown = [
+                { provider: 'Total Evaluated', cost: stats.estimatedCostUSD, requests: stats.inputTokens + stats.outputTokens }
+            ];
+
             const usage = {
-                currentMonth: 42.50,
+                currentMonth: stats.estimatedCostUSD,
                 limit: 100.00,
-                breakdown: [
-                    { provider: 'OpenAI', cost: 12.50, requests: 1540 },
-                    { provider: 'Anthropic', cost: 25.00, requests: 890 },
-                    { provider: 'Gemini', cost: 5.00, requests: 3020 } // Cheap!
-                ]
+                breakdown
             };
 
             return { keys, usage };
@@ -534,15 +389,11 @@ export const appRouter = t.router({
     }),
     system: t.router({
         stats: t.procedure.query(async () => {
+            const result = await getMcpServer().executeTool('system_status', {});
             // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                const result = await global.mcpServerInstance.executeTool('system_status', {});
-                if (result.isError) return { error: result.content[0].text, platform: 'Error' };
-
-                return JSON.parse(result.content[0].text);
-            }
-            return { error: "No Server", platform: 'Unknown' };
+            if (result.isError) return { error: result.content[0].text, platform: 'Error' };
+            // @ts-ignore
+            return JSON.parse(result.content[0].text);
         }),
         info: t.procedure.query(async () => {
             const fs = await import('fs/promises');
@@ -599,22 +450,12 @@ export const appRouter = t.router({
             language: z.enum(['python', 'node']),
             code: z.string()
         })).mutation(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance && global.mcpServerInstance.sandboxService) {
-                // @ts-ignore
-                return global.mcpServerInstance.sandboxService.execute(input.language, input.code);
-            }
-            throw new Error("SandboxService not found");
+            return getMcpServer().sandboxService.execute(input.language, input.code);
         })
     }),
     audit: t.router({
         getLogs: t.procedure.input(z.object({ limit: z.number().optional() })).query(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.auditService.getLogs(input.limit || 50);
-            }
-            return [];
+            return getMcpServer().auditService.getLogs(input.limit || 50);
         }),
         query: t.procedure.input(z.object({
             level: z.string().optional(),
@@ -622,12 +463,7 @@ export const appRouter = t.router({
             event: z.string().optional(),
             limit: z.number().optional()
         })).query(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.auditService.query(input);
-            }
-            return [];
+            return getMcpServer().auditService.query(input);
         })
     }),
     // Merged into line 375
@@ -655,63 +491,45 @@ export const appRouter = t.router({
 
     policy: t.router({
         getRules: t.procedure.query(() => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return global.mcpServerInstance.policyService.getRules();
-            }
-            return [];
+            return getMcpServer().policyService.getRules();
         }),
         updateRules: t.procedure.input(z.object({ rules: z.array(z.any()) })).mutation(({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                global.mcpServerInstance.policyService.updateRules(input.rules);
-                return true;
-            }
-            throw new Error("No Server");
+            getMcpServer().policyService.updateRules(input.rules);
+            return true;
         }),
         lockdown: t.procedure.mutation(() => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                const mcp = global.mcpServerInstance;
-                // 1. Set Autonomy to Low
-                mcp.permissionManager.setAutonomyLevel('low');
-                // 2. Add Deny All Rule to top of policy (memory only or persist?)
-                // Let's persist a lockdown rule.
-                const rules = mcp.policyService.getRules();
-                // Check if already locked
-                if (rules[0].reason !== 'SYSTEM LOCKDOWN') {
-                    rules.unshift({ action: "*", resource: "*", effect: "DENY", reason: "SYSTEM LOCKDOWN" });
-                    mcp.policyService.updateRules(rules);
-                }
-                return "SYSTEM LOCKED DOWN";
+            const mcp = getMcpServer();
+            // 1. Set Autonomy to Low
+            mcp.permissionManager.setAutonomyLevel('low');
+            // 2. Add Deny All Rule to top of policy (memory only or persist?)
+            // Let's persist a lockdown rule.
+            const rules = mcp.policyService.getRules();
+            // Check if already locked
+            if (rules[0].reason !== 'SYSTEM LOCKDOWN') {
+                rules.unshift({ action: "*", resource: "*", effect: "DENY", reason: "SYSTEM LOCKDOWN" });
+                mcp.policyService.updateRules(rules);
             }
-            throw new Error("No Server");
+            return "SYSTEM LOCKED DOWN";
         }),
         unlock: t.procedure.mutation(() => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                const mcp = global.mcpServerInstance;
-                const rules = mcp.policyService.getRules();
-                if (rules[0].reason === 'SYSTEM LOCKDOWN') {
-                    rules.shift(); // Remove top rule
-                    mcp.policyService.updateRules(rules);
-                }
-                return "SYSTEM UNLOCKED";
+            const mcp = getMcpServer();
+            const rules = mcp.policyService.getRules();
+            if (rules[0].reason === 'SYSTEM LOCKDOWN') {
+                rules.shift(); // Remove top rule
+                mcp.policyService.updateRules(rules);
             }
-            throw new Error("No Server");
+            return "SYSTEM UNLOCKED";
         })
     }), // End policy
     vscode: t.router({
         open: t.procedure.input(z.object({
             path: z.string()
         })).mutation(async ({ input }) => {
-            const server = (global as any).mcpServerInstance;
+            const server = getMcpServer();
+            // @ts-ignore - shellService might be missing from interface
             if (server && server.shellService) {
                 try {
+                    // @ts-ignore
                     await server.shellService.execute(`code "${input.path}"`);
                     return true;
                 } catch (e) {
@@ -728,21 +546,12 @@ export const appRouter = t.router({
     }),
     search: t.router({
         query: t.procedure.input(z.object({ query: z.string() })).mutation(async ({ input }) => {
-            const server = (global as any).mcpServerInstance;
-            if (server) {
-                return await server.executeTool('search_codebase', { query: input.query });
-            }
-            return { content: [] };
+            return await getMcpServer().executeTool('search_codebase', { query: input.query });
         })
     }),
     mcp: t.router({
         list: t.procedure.query(async () => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                return await global.mcpServerInstance.mcpAggregator.listServers();
-            }
-            return [];
+            return await getMcpServer().mcpAggregator.listServers();
         }),
         add: t.procedure.input(z.object({
             name: z.string(),
@@ -751,33 +560,27 @@ export const appRouter = t.router({
             env: z.record(z.string()).optional(),
             repoUrl: z.string().optional()
         })).mutation(async ({ input }) => {
-            // @ts-ignore
-            if (global.mcpServerInstance) {
-                // @ts-ignore
-                const server = global.mcpServerInstance;
+            const server = getMcpServer();
 
-                if (input.repoUrl) {
-                    // Use the tool logic to handle cloning + adding
-                    return await server.executeTool('mcp_add_server', {
-                        name: input.name,
-                        repoUrl: input.repoUrl,
-                        command: input.command,
-                        args: input.args,
-                        env: input.env
-                    });
-                } else {
-                    // Direct add (manual config)
-                    // @ts-ignore
-                    await server.mcpAggregator.addServerConfig(input.name, {
-                        command: input.command,
-                        args: input.args,
-                        env: input.env,
-                        enabled: true
-                    });
-                    return { success: true };
-                }
+            if (input.repoUrl) {
+                // Use the tool logic to handle cloning + adding
+                return await server.executeTool('mcp_add_server', {
+                    name: input.name,
+                    repoUrl: input.repoUrl,
+                    command: input.command,
+                    args: input.args,
+                    env: input.env
+                });
+            } else {
+                // Direct add (manual config)
+                await server.mcpAggregator.addServerConfig(input.name, {
+                    command: input.command,
+                    args: input.args || [],
+                    env: input.env,
+                    enabled: true
+                });
+                return { success: true };
             }
-            throw new Error("MCPServer not found");
         })
     })
 });

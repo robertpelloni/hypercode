@@ -1,11 +1,11 @@
 
 import { z } from 'zod';
 import { t, publicProcedure } from '../trpc.js';
+import { getMcpServer } from '../lib/mcpHelper.js';
 
 export const squadRouter = t.router({
     list: publicProcedure.query(async () => {
-        // @ts-ignore
-        const server = global.mcpServerInstance;
+        const server = getMcpServer();
         if (!server) return [];
         return server.squadService.listMembers();
     }),

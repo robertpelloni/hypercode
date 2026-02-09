@@ -37,6 +37,7 @@ import { AutoTestService } from "./services/AutoTestService.js";
 import { ShellService } from "./services/ShellService.js";
 import { SandboxService } from "./security/SandboxService.js";
 import { SquadService } from "./orchestrator/SquadService.js";
+import { MeshService } from './services/MeshService.js';
 import { GitWorktreeManager } from "./orchestrator/GitWorktreeManager.js";
 import { AuditService } from "./security/AuditService.js";
 import { GitService } from "./services/GitService.js";
@@ -143,13 +144,17 @@ interface ToolRequest {
 
 console.log("[MCPServer] All imports complete!");
 
+declare global {
+    var mcpServerInstance: MCPServer;
+}
+
 export class MCPServer {
     private server: Server; // Stdio Server
     private wsServer: Server | null; // WebSocket Server
     private router: Router;
     public modelSelector: ModelSelector;
     public llmService: LLMService;
-    private director: Director;
+    public director: Director;
     public permissionManager: PermissionManager;
     public auditService: AuditService;
     public shellService: ShellService;
@@ -182,12 +187,12 @@ export class MCPServer {
     public metricsService: MetricsService; // Phase 31
     public policyService: PolicyService; // Phase 32
     private knowledgeService: KnowledgeService; // Knowledge Graph Service
-    private healerService: HealerService;
+    public healerService: HealerService;
     public darwinService: DarwinService;
     public promptRegistry: PromptRegistry;
     public skillRegistry: SkillRegistry;
     public skillAssimilationService: SkillAssimilationService;
-    private mcpAggregator: MCPAggregator;
+    public mcpAggregator: MCPAggregator;
     private submoduleManager: SubmoduleManager;
     public eventBus: EventBus;
     public deepResearchService: DeepResearchService;
@@ -195,6 +200,7 @@ export class MCPServer {
     public browserService: BrowserService;
     public sessionManager: SessionManager; // Phase 57: State Persistence
     public projectTracker: ProjectTracker; // Phase 59: Autonomous Loop
+    public meshService: MeshService | undefined; // Phase 60: P2P Mesh
 
     // Sensors (Phase 43)
     public fileSensor: FileSensor;
@@ -241,7 +247,15 @@ export class MCPServer {
         }
     };
 
-    constructor(options: { skipWebsocket?: boolean, skipAutoDrive?: boolean, inputTools?: InputTools, systemStatusTool?: SystemStatusTool, processRegistry?: ProcessRegistry } = {}) {
+    public get activeAgentsMap() {
+        return this.activeAgents;
+    }
+
+    public get isMemoryInitialized() {
+        return this.memoryInitialized;
+    }
+
+    constructor(options: { skipWebsocket?: boolean, skipAutoDrive?: boolean, skipMesh?: boolean, inputTools?: InputTools, systemStatusTool?: SystemStatusTool, processRegistry?: ProcessRegistry } = {}) {
         this.router = new Router();
         this.modelSelector = new ModelSelector();
         this.llmService = new LLMService(this.modelSelector);
@@ -331,7 +345,6 @@ export class MCPServer {
         this.metaArchitectAgent = new MetaArchitectAgent(this.llmService, this.promptRegistry);
 
         // Initialize Council with Agents
-        // @ts-ignore
         this.council = new Council(this.modelSelector);
         this.council.setServer(this);
         this.council.registerAgent(CouncilRole.CRITIC, this.geminiAgent);
@@ -378,7 +391,11 @@ export class MCPServer {
         this.squadService = new SquadService(this);
         this.gitWorktreeManager = new GitWorktreeManager(process.cwd());
 
-        // @ts-ignore
+        // Phase 60: Mesh Service
+        if (!options.skipMesh) {
+            this.meshService = new MeshService();
+        }
+
         global.mcpServerInstance = this;
 
         // Standard Server (Stdio)
@@ -399,7 +416,6 @@ export class MCPServer {
             }, 5000); // Wait 5s for connections to settle
         }
 
-        // WebSocket Server (Extension Bridge)
         if (!options.skipWebsocket) {
             this.wsServer = this.createServerInstance();
 
@@ -412,7 +428,6 @@ export class MCPServer {
 
             console.log(`[MCPServer] 🔌 WebSocket Bridge active on port ${PORT}`);
         } else {
-            // @ts-ignore
             this.wsServer = null;
             this.wssInstance = null;
         }
@@ -746,10 +761,6 @@ export class MCPServer {
                 if (this.wssInstance) {
                     this.wssInstance.clients.forEach((client: any) => {
                         if (client.readyState === 1) {
-                            // VSCode might expect different format, but assuming legacy type is ok for VSCode extension
-                            // Wait, if this shares the same websocket, it needs to match protocols.
-                            // But VSCode extension might be different than Browser Extension.
-                            // Assuming VSCode extension handles 'type'.
                             client.send(JSON.stringify({
                                 type: 'VSCODE_COMMAND',
                                 command,
@@ -761,6 +772,10 @@ export class MCPServer {
                 } else {
                     result = { content: [{ type: "text", text: "Error: No WebSocket server (Extension bridge) active." }] };
                 }
+            }
+            else if (name === "get_chrome_devtools_mcp_url") {
+                // Temporary mocked response to fix specific error
+                result = { content: [{ type: "text", text: "ws://localhost:9222" }] };
             }
 
             // Log flow
@@ -1746,7 +1761,18 @@ export class MCPServer {
                     result = { content: [{ type: "text", text: `Code Mode Tools:\n${formatted}` }] };
                 }
             }
-            else {
+            // Phase 60: The Mesh
+            else if (name === "swarm_broadcast") {
+                if (!this.meshService) {
+                    result = { content: [{ type: "text", text: "Mesh Service not active." }] };
+                } else {
+                    const type = args.type as any || 'TASK_OFFER';
+                    this.meshService.broadcast(type, args.payload || {});
+                    result = {
+                        content: [{ type: "text", text: `Broadcasted '${type}' to swarm.` }]
+                    };
+                }
+            } else {
                 // Check Standard Library
                 const terminalTools = this.terminalService.getTools();
                 const standardTool = [...FileSystemTools, ...terminalTools, ...MemoryTools, ...TunnelTools, ...LogTools, ...ConfigTools, ...SearchTools, ...ReaderTools, ...WorktreeTools, ...MetaTools, WebSearchTool].find(t => t.name === name);
@@ -2536,6 +2562,19 @@ export class MCPServer {
                     name: "list_code_tools",
                     description: "List tools available in Code Mode",
                     inputSchema: { type: "object", properties: {} }
+                },
+                // Phase 60: The Mesh tools
+                {
+                    name: "swarm_broadcast",
+                    description: "Broadcast a message to the Borg P2P Swarm",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            type: { type: "string", description: "Message Type (TASK_OFFER, etc.)" },
+                            payload: { type: "object", description: "Payload data" }
+                        },
+                        required: ["type"]
+                    }
                 }
             ];
 
@@ -2765,3 +2804,5 @@ export class MCPServer {
         return null;
     }
 }
+
+
