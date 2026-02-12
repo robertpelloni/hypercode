@@ -122,7 +122,7 @@ export default function MemoryPage() {
                             <CardContent>
                                 <ScrollArea className="h-[500px] pr-4">
                                     <div className="space-y-4">
-                                        {searchResults?.filter(m => m.type === 'session').map((m: any) => (
+                                        {searchResults?.filter((m: any) => m.type === 'session').map((m: any) => (
                                             <div key={m.id} className="p-3 rounded bg-zinc-900 border border-zinc-800 text-sm">
                                                 <p>{m.content}</p>
                                                 <div className="mt-2 text-xs text-muted-foreground flex justify-between">
@@ -131,7 +131,7 @@ export default function MemoryPage() {
                                                 </div>
                                             </div>
                                         ))}
-                                        {searchResults?.filter(m => m.type === 'session').length === 0 && (
+                                        {searchResults?.filter((m: any) => m.type === 'session').length === 0 && (
                                             <p className="text-zinc-500 text-sm italic">No recent session memories match query.</p>
                                         )}
                                     </div>
@@ -148,7 +148,7 @@ export default function MemoryPage() {
                             <CardContent>
                                 <ScrollArea className="h-[500px] pr-4">
                                     <div className="space-y-4">
-                                        {searchResults?.filter(m => m.type === 'working').map((m: any) => (
+                                        {searchResults?.filter((m: any) => m.type === 'working').map((m: any) => (
                                             <div key={m.id} className="p-3 rounded bg-zinc-900 border border-zinc-800 text-sm">
                                                 <p>{m.content}</p>
                                                 <div className="mt-2 text-xs text-muted-foreground flex justify-between">
@@ -157,7 +157,7 @@ export default function MemoryPage() {
                                                 </div>
                                             </div>
                                         ))}
-                                        {searchResults?.filter(m => m.type === 'working').length === 0 && (
+                                        {searchResults?.filter((m: any) => m.type === 'working').length === 0 && (
                                             <p className="text-zinc-500 text-sm italic">No working memories match query.</p>
                                         )}
                                     </div>
@@ -174,7 +174,7 @@ export default function MemoryPage() {
                             <CardContent>
                                 <ScrollArea className="h-[500px] pr-4">
                                     <div className="space-y-4">
-                                        {searchResults?.filter(m => m.type === 'long_term').map((m: any) => (
+                                        {searchResults?.filter((m: any) => m.type === 'long_term').map((m: any) => (
                                             <div key={m.id} className="p-3 rounded bg-zinc-900 border border-zinc-800 text-sm">
                                                 <p>{m.content}</p>
                                                 <div className="mt-2 text-xs text-muted-foreground flex justify-between">
@@ -183,7 +183,7 @@ export default function MemoryPage() {
                                                 </div>
                                             </div>
                                         ))}
-                                        {searchResults?.filter(m => m.type === 'long_term').length === 0 && (
+                                        {searchResults?.filter((m: any) => m.type === 'long_term').length === 0 && (
                                             <p className="text-zinc-500 text-sm italic">No long-term memories match query.</p>
                                         )}
                                     </div>

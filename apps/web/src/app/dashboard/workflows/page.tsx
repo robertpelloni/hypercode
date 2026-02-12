@@ -42,7 +42,7 @@ export default function WorkflowsPage() {
     const pauseMutation = trpc.workflow.pause.useMutation();
 
     // Determine active node from active execution
-    const activeExecution = executions?.find(e => e.id === activeExecutionId);
+    const activeExecution = executions?.find((e: any) => e.id === activeExecutionId);
 
     return (
         <div className="p-6 space-y-6">
@@ -130,7 +130,7 @@ export default function WorkflowsPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-2">
-                                {executions?.map(exec => (
+                                {executions?.map((exec: any) => (
                                     <div key={exec.id} className="flex items-center justify-between p-2 border rounded hover:bg-muted/50 cursor-pointer" onClick={() => setActiveExecutionId(exec.id)}>
                                         <div className="flex items-center gap-2">
                                             <Badge variant={exec.status === 'running' ? 'default' : 'secondary'}>

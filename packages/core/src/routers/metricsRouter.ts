@@ -1,7 +1,9 @@
 import { z } from 'zod';
 import { t, getMcpServer } from '../lib/trpc-core.js';
+import os from 'os';
 
 export const metricsRouter = t.router({
+    /** Get aggregated metric stats for a time window */
     getStats: t.procedure.input(z.object({
         windowMs: z.number().optional()
     }).optional()).query(async ({ input }) => {
@@ -9,6 +11,7 @@ export const metricsRouter = t.router({
         return server.metricsService.getStats(input?.windowMs);
     }),
 
+    /** Track a custom metric event */
     track: t.procedure.input(z.object({
         type: z.string(),
         value: z.number(),
@@ -17,5 +20,99 @@ export const metricsRouter = t.router({
         const server = getMcpServer();
         server.metricsService.track(input.type, input.value, input.tags);
         return { success: true };
-    })
+    }),
+
+    /** Get real-time system resource snapshot */
+    systemSnapshot: t.procedure.query(async () => {
+        const mem = process.memoryUsage();
+        const cpus = os.cpus();
+        const totalMem = os.totalmem();
+        const freeMem = os.freemem();
+        const uptime = process.uptime();
+
+        return {
+            timestamp: Date.now(),
+            process: {
+                heapUsed: mem.heapUsed,
+                heapTotal: mem.heapTotal,
+                rss: mem.rss,
+                external: mem.external,
+                arrayBuffers: mem.arrayBuffers,
+                uptimeSeconds: Math.round(uptime),
+                pid: process.pid,
+            },
+            system: {
+                totalMemory: totalMem,
+                freeMemory: freeMem,
+                usedMemory: totalMem - freeMem,
+                memoryUsagePercent: Math.round(((totalMem - freeMem) / totalMem) * 100),
+                cpuCount: cpus.length,
+                cpuModel: cpus[0]?.model ?? 'unknown',
+                loadAvg: os.loadavg(),
+                platform: os.platform(),
+                arch: os.arch(),
+                hostname: os.hostname(),
+            },
+        };
+    }),
+
+    /** Get timeline data for dashboard charts — downsampled time series */
+    getTimeline: t.procedure.input(z.object({
+        windowMs: z.number().default(3600000), // 1 hour default
+        buckets: z.number().min(10).max(200).default(60),
+        metricType: z.string().optional(), // filter by type
+    })).query(async ({ input }) => {
+        const server = getMcpServer();
+        const stats = server.metricsService.getStats(input.windowMs);
+        // If a specific metric type is requested, filter the series
+        const series = stats.series;
+        return {
+            windowMs: input.windowMs,
+            buckets: input.buckets,
+            metricType: input.metricType ?? 'all',
+            series,
+            counts: stats.counts,
+            averages: stats.averages,
+        };
+    }),
+
+    /** Get provider-level breakdown — requests, latency, cost per provider */
+    getProviderBreakdown: t.procedure.query(async () => {
+        const server = getMcpServer();
+        try {
+            const costStats = server.llmService.getCostStats();
+            const quota = server.llmService.modelSelector.getQuotaService();
+            const breakdown = quota.getUsageByModel();
+
+            return {
+                totalCost: costStats.estimatedCostUSD,
+                totalRequests: costStats.totalRequests ?? 0,
+                averageLatency: costStats.averageLatencyMs ?? 0,
+                providers: breakdown.length > 0 ? breakdown : [
+                    { provider: 'No Usage Yet', cost: 0, requests: 0 }
+                ],
+            };
+        } catch {
+            return {
+                totalCost: 0,
+                totalRequests: 0,
+                averageLatency: 0,
+                providers: [{ provider: 'System Starting', cost: 0, requests: 0 }],
+            };
+        }
+    }),
+
+    /** Start/stop system monitoring */
+    toggleMonitoring: t.procedure.input(z.object({
+        enabled: z.boolean(),
+        intervalMs: z.number().min(1000).max(60000).default(5000),
+    })).mutation(async ({ input }) => {
+        const server = getMcpServer();
+        if (input.enabled) {
+            server.metricsService.startMonitoring(input.intervalMs);
+        } else {
+            server.metricsService.stopMonitoring();
+        }
+        return { success: true, monitoring: input.enabled };
+    }),
 });
