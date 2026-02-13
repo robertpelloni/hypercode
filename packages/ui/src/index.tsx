@@ -34,6 +34,7 @@ export * from "./components/ui/slider";
 export * from "./components/ui/select";
 export * from "./components/ui/avatar";
 export * from "./components/ui/dropdown-menu";
+export * from "./components/ui/alert";
 
 export * from "./components/ui/textarea";
 export * from "./components/ui/table";
@@ -45,6 +46,13 @@ export * from "./components/ui/separator";
 export * from "./components/ui/use-toast";
 export * from "./components/ui/accordion";
 export * from "./components/WorkflowVisualizer";
-export * from "./components/WorkflowVisualizer";
 export * from "./utils/trpc";
 export * from "./hooks/useHealerStream";
+
+// Feature Components
+export * from "./components/GraphPanel";
+export * from "./components/CodeIntelPage";
+export * from "./components/ContextPanel";
+export * from "./components/MemoryPage";
+export * from "./components/IntegratedTerminal";
+export * from "./components/SystemStatus";
