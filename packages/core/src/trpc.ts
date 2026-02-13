@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import fs from 'fs/promises';
-import path from 'path';
+export { t, publicProcedure, adminProcedure } from './lib/trpc-core.js';
 import { t, publicProcedure, adminProcedure } from './lib/trpc-core.js';
 import { getMcpServer } from './lib/mcpHelper.js';
 import { suggestionsRouter } from './routers/suggestionsRouter.js';
@@ -18,9 +17,6 @@ import { memoryRouter } from './routers/memoryRouter.js';
 import { skillsRouter } from './routers/skillsRouter.js';
 import { researchRouter } from './routers/researchRouter.js';
 import { pulseRouter } from './routers/pulseRouter.js';
-
-// Re-export core definitions for other files that might rely on them
-export { t, publicProcedure, adminProcedure };
 
 import { knowledgeRouter } from './routers/knowledgeRouter.js';
 import { agentMemoryRouter } from './routers/agentMemoryRouter.js';
