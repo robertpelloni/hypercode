@@ -13,8 +13,7 @@ class WorktreeServerProxy implements IMCPServer {
     get modelSelector() { return this.server.modelSelector; }
     get permissionManager() { return this.server.permissionManager; }
     get directorConfig() { return this.server.directorConfig; }
-    // @ts-ignore
-    get council() { return this.server.council; }
+    get council() { return (this.server as any).council; }
 
     async executeTool(name: string, args: any): Promise<any> {
         // Intercept Path-based tools
@@ -161,12 +160,9 @@ export class SquadService {
     public async toggleIndexer(enabled: boolean) {
         if (enabled) {
             if (!this.indexerJob) {
-                // @ts-ignore
-                const { IndexerJob } = await import('../jobs/IndexerJob.js');
-                // @ts-ignore
-                if (this.server.memoryManager) {
-                    // @ts-ignore
-                    this.indexerJob = new IndexerJob(this.server.memoryManager, process.cwd());
+                const { IndexerJob } = await import('../jobs/IndexerJob.js') as any;
+                if ((this.server as any).memoryManager) {
+                    this.indexerJob = new IndexerJob((this.server as any).memoryManager, process.cwd());
                 }
             }
             if (this.indexerJob) {

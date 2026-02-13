@@ -52,7 +52,6 @@ export class DirectorCommand implements ICommand {
             director.stopAutoDrive();
             return { handled: true, output: "🛑 Director Auto-Drive Stopped." };
         } else if (subcommand === 'status') {
-            // @ts-ignore
             const status = (director as any).getStatus();
             return { handled: true, output: `📊 **Director Status**\nActive: ${status.active}\nState: ${status.status}\nGoal: ${status.goal || 'None'}\nApprove Mode: ${status.config.acceptDetectionMode}` };
         }

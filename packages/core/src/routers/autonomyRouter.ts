@@ -13,10 +13,8 @@ export const autonomyRouter = t.router({
     activateFullAutonomy: t.procedure.mutation(async () => {
         const mcp = getMcpServer();
         mcp.permissionManager.setAutonomyLevel('high');
-        // @ts-ignore - Private/Missing method usage preserved from original
-        mcp.director.startChatDaemon();
-        // @ts-ignore - Private/Missing method usage preserved from original
-        mcp.director.startWatchdog(100);
+        (mcp.director as any).startChatDaemon();
+        (mcp.director as any).startWatchdog(100);
         return "Autonomous Supervisor Activated (High Level + Chat Daemon + Watchdog)";
     })
 });

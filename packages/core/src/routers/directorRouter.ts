@@ -29,8 +29,7 @@ export const directorRouter = t.router({
             const suggestion = server.suggestionService.resolveSuggestion(latest.id, 'APPROVED');
 
             if (suggestion && suggestion.payload?.tool) {
-                // @ts-ignore - Private/Missing method
-                server.director.broadcast(`✅ Approved: **${latest.title}**. Executing ${suggestion.payload.tool}...`);
+                (server.director as any).broadcast(`✅ Approved: **${latest.title}**. Executing ${suggestion.payload.tool}...`);
                 const result = await server.executeTool(suggestion.payload.tool, suggestion.payload.args);
                 return `✅ Execution Complete.\n\nResult:\n${JSON.stringify(result)?.substring(0, 200)}...`;
             }
@@ -39,8 +38,7 @@ export const directorRouter = t.router({
         }
 
         // 3. Default: Director Execution
-        // @ts-ignore - Private/Missing method
-        const result = await server.director.executeTask(input.message);
+        const result = await (server.director as any).executeTask(input.message);
         return result;
     }),
     status: t.procedure.query(() => {
