@@ -4,5 +4,7 @@ packages:
 
   - 'mcp-servers/*'
   - 'packages/adapters/*'
+  - 'packages/opencode-autopilot/packages/*'
+  - 'packages/MCP-SuperAssistant/packages/*'
   - 'submodules/mcpenetes'
   - 'submodules/bobcoin'
