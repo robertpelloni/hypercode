@@ -1,14 +1,15 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@borg/ui';
 import { Badge } from '@borg/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@borg/ui';
 import { Button } from '@borg/ui';
 import { ScrollArea } from '@borg/ui';
-import { Shield, Lock } from 'lucide-react';
+import { Shield, Lock, Rocket, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AuditLogEntry {
     timestamp: number;
@@ -33,15 +34,46 @@ function normalizeAuditLogs(value: unknown): AuditLogEntry[] {
 
 export default function SecurityPage() {
     const [auditLimit] = useState(50);
+    const [levelFilter, setLevelFilter] = useState<'ALL' | 'INFO' | 'WARN' | 'ERROR'>('ALL');
+    const [searchTerm, setSearchTerm] = useState('');
     const utils = trpc.useUtils();
-    const { data: rawAuditLogs, isLoading: loadingLogs, refetch: refetchLogs } = trpc.audit.list.useQuery({ limit: auditLimit });
+    const { data: rawAuditLogs, isLoading: loadingLogs, error: logsError, refetch: refetchLogs } = trpc.audit.list.useQuery(
+        { limit: auditLimit },
+        { refetchInterval: 5000 }
+    );
     const auditLogs = normalizeAuditLogs(rawAuditLogs);
     const { data: autonomyLevel } = trpc.autonomy.getLevel.useQuery();
-    const lockdownMutation = trpc.autonomy.setLevel.useMutation({
+    const setLevelMutation = trpc.autonomy.setLevel.useMutation({
         onSuccess: async () => {
+            toast.success('Autonomy level updated.');
             await utils.autonomy.getLevel.invalidate();
+        },
+        onError: (error) => {
+            toast.error(error.message || 'Failed to update autonomy level.');
         }
     });
+    const fullAutonomyMutation = trpc.autonomy.activateFullAutonomy.useMutation({
+        onSuccess: async (message) => {
+            toast.success(typeof message === 'string' ? message : 'Full autonomy activated.');
+            await utils.autonomy.getLevel.invalidate();
+        },
+        onError: (error) => {
+            toast.error(error.message || 'Failed to activate full autonomy.');
+        }
+    });
+
+    const filteredLogs = useMemo(() => {
+        return auditLogs.filter((log) => {
+            const levelMatch = levelFilter === 'ALL' || log.level.toUpperCase() === levelFilter;
+            const search = searchTerm.trim().toLowerCase();
+            const action = log.action.toLowerCase();
+            const paramsText = typeof log.params === 'string'
+                ? log.params.toLowerCase()
+                : JSON.stringify(log.params ?? {}).toLowerCase();
+            const textMatch = !search || action.includes(search) || paramsText.includes(search);
+            return levelMatch && textMatch;
+        });
+    }, [auditLogs, levelFilter, searchTerm]);
 
     const policies = [
         {
@@ -70,15 +102,39 @@ export default function SecurityPage() {
                     <Badge variant={autonomyLevel === 'high' ? 'destructive' : 'secondary'} className="text-md px-3 py-1">
                         Autonomy: {autonomyLevel?.toUpperCase()}
                     </Badge>
-                    {/* Lockdown Button */}
+                    <Button
+                        variant="outline"
+                        disabled={setLevelMutation.isPending || autonomyLevel === 'medium'}
+                        onClick={() => setLevelMutation.mutate({ level: 'medium' })}
+                        title="Set autonomy to MEDIUM"
+                    >
+                        MEDIUM
+                    </Button>
+                    <Button
+                        variant="outline"
+                        disabled={setLevelMutation.isPending || autonomyLevel === 'high'}
+                        onClick={() => setLevelMutation.mutate({ level: 'high' })}
+                        title="Set autonomy to HIGH"
+                    >
+                        HIGH
+                    </Button>
                     <Button
                         variant="destructive"
-                        disabled={lockdownMutation.isPending || autonomyLevel === 'low'}
-                        onClick={() => lockdownMutation.mutate({ level: 'low' })}
+                        disabled={setLevelMutation.isPending || autonomyLevel === 'low'}
+                        onClick={() => setLevelMutation.mutate({ level: 'low' })}
                         title={autonomyLevel === 'low' ? 'System already in lockdown mode' : 'Set autonomy to LOW immediately'}
                     >
                         <Lock className="w-4 h-4 mr-2" />
-                        {lockdownMutation.isPending ? 'Applying...' : autonomyLevel === 'low' ? 'LOCKDOWN ACTIVE' : 'SYSTEM LOCKDOWN'}
+                        {setLevelMutation.isPending ? 'Applying...' : autonomyLevel === 'low' ? 'LOCKDOWN ACTIVE' : 'SYSTEM LOCKDOWN'}
+                    </Button>
+                    <Button
+                        variant="default"
+                        disabled={fullAutonomyMutation.isPending}
+                        onClick={() => fullAutonomyMutation.mutate()}
+                        title="Enable full autonomous supervisor mode"
+                    >
+                        <Rocket className="w-4 h-4 mr-2" />
+                        {fullAutonomyMutation.isPending ? 'Activating...' : 'ACTIVATE FULL AUTONOMY'}
                     </Button>
                 </div>
             </header>
@@ -97,13 +153,35 @@ export default function SecurityPage() {
                                 <CardTitle>System Audit Log</CardTitle>
                                 <CardDescription>Real-time record of all agent actions and tool executions.</CardDescription>
                             </div>
-                            <Button variant="outline" size="sm" onClick={() => refetchLogs()}>Refresh</Button>
+                            <div className="flex gap-2 items-center">
+                                <select
+                                    value={levelFilter}
+                                    onChange={(e) => setLevelFilter(e.target.value as 'ALL' | 'INFO' | 'WARN' | 'ERROR')}
+                                    className="h-9 rounded-md border bg-background px-2 text-xs"
+                                >
+                                    <option value="ALL">All levels</option>
+                                    <option value="INFO">INFO</option>
+                                    <option value="WARN">WARN</option>
+                                    <option value="ERROR">ERROR</option>
+                                </select>
+                                <input
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Filter action/params..."
+                                    className="h-9 rounded-md border bg-background px-2 text-xs w-44"
+                                />
+                                <Button variant="outline" size="sm" onClick={() => refetchLogs()}>
+                                    <RefreshCw className="w-4 h-4 mr-1" /> Refresh
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <ScrollArea className="h-[600px] w-full rounded-md border p-4">
-                                {loadingLogs ? <div>Loading logs...</div> : (
+                                {loadingLogs ? <div>Loading logs...</div> : logsError ? (
+                                    <div className="text-sm text-red-500">Failed to load audit logs. Try refresh.</div>
+                                ) : (
                                     <div className="space-y-4">
-                                        {auditLogs.map((log, i: number) => (
+                                        {filteredLogs.map((log, i: number) => (
                                             <div key={i} className="flex flex-col gap-1 border-b pb-2 last:border-0">
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex items-center gap-2">
@@ -124,6 +202,9 @@ export default function SecurityPage() {
                                                 </pre>
                                             </div>
                                         ))}
+                                        {filteredLogs.length === 0 && (
+                                            <div className="text-xs text-muted-foreground">No audit logs match the current filters.</div>
+                                        )}
                                     </div>
                                 )}
                             </ScrollArea>

@@ -75,6 +75,7 @@ UX hardening update:
 - Added `logs.summary` backend aggregation and rewired `/dashboard/mcp/observability` to consume server-side metrics.
 - Hardened `/dashboard/mcp/inspector` with tool filtering and preflight JSON validation before tool execution.
 - Added `research.enqueuePending` and wired `/dashboard/reader` with “Queue for Ingestion” action.
+- Expanded `/dashboard/security` controls with LOW/MEDIUM/HIGH autonomy actions, full autonomy activation, and audit-log filtering.
 
 Validation note:
 - Repository `pnpm typecheck` currently fails before execution due to missing Turbo task wiring (`Could not find task \`typecheck\` in project`); file-level diagnostics remain clean for changed files.
@@ -154,6 +155,7 @@ Borg is a monorepo AI Operating System with **47 registered tRPC routers**, **62
 | `agent.runTool` + `tools.list` | `/dashboard/mcp/inspector` | ✅ Interactive tool execution with validation |
 | `tools` + `mcpServers` + `skills` | `/dashboard/super-assistant` | ✅ Live capability overview |
 | `executeTool` + `research.enqueuePending` | `/dashboard/reader` | ✅ Read and queue URL ingestion |
+| `autonomy` + `audit` | `/dashboard/security` | ✅ Governance controls + filtered audit logs |
 
 ### 2.2 Dashboard Pages WITHOUT Dedicated Router Wiring
 
@@ -163,7 +165,6 @@ Borg is a monorepo AI Operating System with **47 registered tRPC routers**, **62
 | `/dashboard/events` | Unknown wiring | Verify → likely `pulse` router |
 | `/dashboard/library` | Unknown wiring | Verify → likely `skills` or static |
 | `/dashboard/manual` | Unknown wiring | Verify → likely static docs |
-| `/dashboard/security` | Unknown wiring | Verify → likely `autonomy`/`audit` |
 
 ### 2.3 Services NOT Fully Exposed via Router + UI
 
