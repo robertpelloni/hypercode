@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 export default function InspectorDashboard() {
     const { data: tools, isLoading: isLoadingTools } = trpc.tools.list.useQuery();
+    const [toolFilter, setToolFilter] = useState('');
     const [selectedTool, setSelectedTool] = useState<any | null>(null);
     const [argsJson, setArgsJson] = useState('{}');
     const [result, setResult] = useState<any | null>(null);
@@ -24,17 +25,35 @@ export default function InspectorDashboard() {
         }
     });
 
+    const parsedArgs = (() => {
+        try {
+            return { ok: true as const, value: JSON.parse(argsJson) };
+        } catch (e) {
+            return {
+                ok: false as const,
+                error: e instanceof Error ? e.message : 'Invalid JSON',
+            };
+        }
+    })();
+
+    const filteredTools = (tools || []).filter((tool: any) => {
+        if (!toolFilter.trim()) return true;
+        const q = toolFilter.toLowerCase();
+        return String(tool.name || '').toLowerCase().includes(q) ||
+            String(tool.description || '').toLowerCase().includes(q) ||
+            String(tool.server || '').toLowerCase().includes(q);
+    });
+
     const handleRun = () => {
         if (!selectedTool) return;
-        try {
-            const args = JSON.parse(argsJson);
-            runMutation.mutate({
-                toolName: selectedTool.name,
-                arguments: args
-            });
-        } catch (e) {
+        if (!parsedArgs.ok) {
             toast.error("Invalid JSON arguments");
+            return;
         }
+        runMutation.mutate({
+            toolName: selectedTool.name,
+            arguments: parsedArgs.value
+        });
     };
 
     return (
@@ -52,9 +71,17 @@ export default function InspectorDashboard() {
                 {/* Tool Selection Sidebar */}
                 <Card className="col-span-3 bg-zinc-900 border-zinc-800 flex flex-col overflow-hidden">
                     <CardHeader className="pb-3 border-b border-zinc-800">
-                        <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
-                            <Search className="h-4 w-4" /> Available Tools
-                        </CardTitle>
+                        <div className="space-y-3">
+                            <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+                                <Search className="h-4 w-4" /> Available Tools
+                            </CardTitle>
+                            <input
+                                value={toolFilter}
+                                onChange={(e) => setToolFilter(e.target.value)}
+                                placeholder="Filter tools..."
+                                className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2 text-xs text-white focus:ring-1 focus:ring-blue-500 outline-none"
+                            />
+                        </div>
                     </CardHeader>
                     <CardContent className="p-0 flex-1 overflow-y-auto">
                         {isLoadingTools ? (
@@ -63,7 +90,7 @@ export default function InspectorDashboard() {
                             </div>
                         ) : (
                             <div className="divide-y divide-zinc-800/50">
-                                {tools?.map((tool: any) => (
+                                {filteredTools.map((tool: any) => (
                                     <button
                                         key={tool.uuid}
                                         onClick={() => {
@@ -83,6 +110,11 @@ export default function InspectorDashboard() {
                                             }`} />
                                     </button>
                                 ))}
+                                {filteredTools.length === 0 && (
+                                    <div className="p-4 text-xs text-zinc-500 text-center">
+                                        No tools match "{toolFilter}".
+                                    </div>
+                                )}
                             </div>
                         )}
                     </CardContent>
@@ -101,7 +133,7 @@ export default function InspectorDashboard() {
                                         </CardTitle>
                                         <p className="text-sm text-zinc-400 mt-1">{selectedTool.description}</p>
                                     </div>
-                                    <Button onClick={handleRun} disabled={runMutation.isPending} className="bg-green-600 hover:bg-green-500">
+                                    <Button onClick={handleRun} disabled={runMutation.isPending || !parsedArgs.ok} className="bg-green-600 hover:bg-green-500">
                                         {runMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
                                         Run Tool
                                     </Button>
@@ -115,13 +147,16 @@ export default function InspectorDashboard() {
                                         <textarea
                                             value={argsJson}
                                             onChange={(e) => setArgsJson(e.target.value)}
-                                            className="w-full h-40 bg-zinc-950 border border-zinc-800 rounded-md p-4 font-mono text-sm text-zinc-300 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                                            className={`w-full h-40 bg-zinc-950 border rounded-md p-4 font-mono text-sm text-zinc-300 focus:ring-1 focus:ring-blue-500 outline-none resize-none ${parsedArgs.ok ? 'border-zinc-800' : 'border-red-900/50'}`}
                                         />
                                         {/* Schema Helper (Visual only for now) */}
                                         <div className="absolute top-2 right-2 text-[10px] text-zinc-600 bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
-                                            Schema Validation Active
+                                            {parsedArgs.ok ? 'JSON Valid' : 'JSON Invalid'}
                                         </div>
                                     </div>
+                                    {!parsedArgs.ok && (
+                                        <div className="text-xs text-red-400">{parsedArgs.error}</div>
+                                    )}
                                     {selectedTool.inputSchema && (
                                         <div className="text-xs text-zinc-500">
                                             Expected: <code className="bg-zinc-800 px-1 rounded">{JSON.stringify(selectedTool.inputSchema.properties ? Object.keys(selectedTool.inputSchema.properties) : [])}</code>
