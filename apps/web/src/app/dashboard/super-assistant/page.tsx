@@ -4,9 +4,10 @@ import React from "react";
 import { trpc } from "@/utils/trpc";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@borg/ui";
 import { Badge } from "@borg/ui";
+import { Button } from "@borg/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@borg/ui";
 import { ScrollArea } from "@borg/ui";
-import { Bot, Wrench, Server, Cpu, Activity, Zap } from "lucide-react";
+import { Bot, Wrench, Server, Cpu, Activity, Zap, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
 
 interface ToolItem {
     uuid: string;
@@ -28,15 +29,29 @@ function normalizeArray<T>(value: unknown): T[] {
 }
 
 export default function SuperAssistantDashboardPage() {
-    const { data: rawTools } = trpc.tools.list.useQuery();
-    const { data: rawServers } = trpc.mcpServers.list.useQuery();
-    const { data: rawSkills } = trpc.skills.list.useQuery();
+    const toolsQuery = trpc.tools.list.useQuery();
+    const serversQuery = trpc.mcpServers.list.useQuery();
+    const skillsQuery = trpc.skills.list.useQuery();
+
+    const rawTools = toolsQuery.data;
+    const rawServers = serversQuery.data;
+    const rawSkills = skillsQuery.data;
 
     const tools = normalizeArray<ToolItem>(rawTools);
     const servers = normalizeArray<ServerItem>(rawServers);
     const skills = normalizeArray<{ id: string; name: string; description: string }>(rawSkills);
 
     const activeServers = servers.filter((s) => s.status === "connected" || s.status === "active");
+    const hasErrors = toolsQuery.isError || serversQuery.isError || skillsQuery.isError;
+    const isLoading = toolsQuery.isLoading || serversQuery.isLoading || skillsQuery.isLoading;
+
+    const handleRefresh = async () => {
+        await Promise.all([
+            toolsQuery.refetch(),
+            serversQuery.refetch(),
+            skillsQuery.refetch(),
+        ]);
+    };
 
     return (
         <div className="w-full h-full flex flex-col">
@@ -50,16 +65,37 @@ export default function SuperAssistantDashboardPage() {
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    {hasErrors ? (
+                        <Badge variant="outline" className="border-rose-600 text-rose-400">
+                            <AlertTriangle className="w-3 h-3 mr-1" /> Degraded
+                        </Badge>
+                    ) : null}
+                    {isLoading ? (
+                        <Badge variant="outline" className="border-blue-600 text-blue-400">
+                            <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Loading
+                        </Badge>
+                    ) : null}
                     <Badge variant="outline" className="border-green-600 text-green-400">
                         <Activity className="w-3 h-3 mr-1" /> {activeServers.length} Active
                     </Badge>
                     <Badge variant="outline" className="border-purple-600 text-purple-400">
                         <Zap className="w-3 h-3 mr-1" /> {tools.length} Tools
                     </Badge>
+                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleRefresh}>
+                        <RefreshCw className="w-3 h-3 mr-1" /> Refresh
+                    </Button>
                 </div>
             </div>
 
             <div className="flex-1 p-6 overflow-auto">
+                {hasErrors ? (
+                    <div className="mb-4 rounded-md border border-rose-500/30 bg-rose-950/20 px-3 py-2 text-xs text-rose-300 flex items-center justify-between gap-3">
+                        <span>One or more data sources failed to load. Displaying partial results where available.</span>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleRefresh}>
+                            Retry fetch
+                        </Button>
+                    </div>
+                ) : null}
                 <Tabs defaultValue="overview" className="w-full">
                     <TabsList>
                         <TabsTrigger value="overview">Overview</TabsTrigger>

@@ -68,6 +68,7 @@ Validation:
 UX hardening update:
 - Added inline success/error operator feedback in `/dashboard/research` for both `retryFailed` and `retryAllFailed` actions.
 - Added 5-second auto-dismiss for queue feedback banners and `Last queue action` timestamp in Queue Status.
+- Hardened `/dashboard/super-assistant` with loading/degraded badges, partial-data warning, and refresh/retry controls.
 
 Validation note:
 - Repository `pnpm typecheck` currently fails before execution due to missing Turbo task wiring (`Could not find task \`typecheck\` in project`); file-level diagnostics remain clean for changed files.
@@ -145,7 +146,7 @@ Borg is a monorepo AI Operating System with **47 registered tRPC routers**, **62
 
 | Page | Current State | Action Needed |
 |------|--------------|---------------|
-| `/dashboard/super-assistant` | **Static placeholder** — hardcoded URL, no real data | Wire to MCP agent capabilities or archive |
+| `/dashboard/super-assistant` | Live queries (`tools.list`, `mcpServers.list`, `skills.list`) with resilience controls | Move to fully-wired list in next reconciliation pass |
 | `/dashboard/chronicle` | Unknown wiring | Verify router connection |
 | `/dashboard/events` | Unknown wiring | Verify → likely `pulse` router |
 | `/dashboard/library` | Unknown wiring | Verify → likely `skills` or static |
