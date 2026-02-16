@@ -69,6 +69,7 @@ UX hardening update:
 - Added inline success/error operator feedback in `/dashboard/research` for both `retryFailed` and `retryAllFailed` actions.
 - Added 5-second auto-dismiss for queue feedback banners and `Last queue action` timestamp in Queue Status.
 - Hardened `/dashboard/super-assistant` with loading/degraded badges, partial-data warning, and refresh/retry controls.
+- Replaced static `/dashboard/mcp/docs` mock content with live workspace doc loading via `executeTool` + `read_file`.
 
 Validation note:
 - Repository `pnpm typecheck` currently fails before execution due to missing Turbo task wiring (`Could not find task \`typecheck\` in project`); file-level diagnostics remain clean for changed files.
@@ -141,12 +142,13 @@ Borg is a monorepo AI Operating System with **47 registered tRPC routers**, **62
 | `savedScripts` | `/dashboard/mcp/scripts` | ✅ Script management |
 | `oauth` | `/dashboard/mcp/settings` | ✅ OAuth management |
 | `agent` | `/dashboard/mcp/agent` | ✅ Agent chat interface |
+| `executeTool` (+ docs files) | `/dashboard/mcp/docs` | ✅ Live workspace docs explorer |
+| `tools` + `mcpServers` + `skills` | `/dashboard/super-assistant` | ✅ Live capability overview |
 
 ### 2.2 Dashboard Pages WITHOUT Dedicated Router Wiring
 
 | Page | Current State | Action Needed |
 |------|--------------|---------------|
-| `/dashboard/super-assistant` | Live queries (`tools.list`, `mcpServers.list`, `skills.list`) with resilience controls | Move to fully-wired list in next reconciliation pass |
 | `/dashboard/chronicle` | Unknown wiring | Verify router connection |
 | `/dashboard/events` | Unknown wiring | Verify → likely `pulse` router |
 | `/dashboard/library` | Unknown wiring | Verify → likely `skills` or static |
@@ -156,7 +158,6 @@ Borg is a monorepo AI Operating System with **47 registered tRPC routers**, **62
 | `/dashboard/mcp/observability` | Unknown wiring | Verify → likely `metrics` |
 | `/dashboard/mcp/search` | Unknown wiring | Verify → likely `tools.search` |
 | `/dashboard/mcp/registry` | Unknown wiring | Verify → likely `mcpServers` |
-| `/dashboard/mcp/docs` | Unknown wiring | Verify → likely static |
 | `/dashboard/mcp/inspector` | Unknown wiring | Verify → likely `logs` |
 
 ### 2.3 Services NOT Fully Exposed via Router + UI
