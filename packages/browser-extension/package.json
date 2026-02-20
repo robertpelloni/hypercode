@@ -4,7 +4,7 @@
   "description": "Borg Browser Extension for Hub Connectivity",
   "scripts": {
     "build": "vite build",
-    "dev": "vite build --watch"
+    "dev": "vite build --watch --emptyOutDir false --clearScreen false"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",

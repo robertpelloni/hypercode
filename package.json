@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node packages/cli/dist/index.js start",
     "build": "turbo run build",
-    "dev": "set CI=true && turbo run dev --concurrency 30 --filter=!mcp-superassistant --filter=!@extension/hmr --filter=!@opencode-autopilot/cli",
+    "dev": "set CI=true&& turbo run dev --concurrency 30 --filter=!mcp-superassistant --filter=!@extension/hmr --filter=!@opencode-autopilot/cli",
     "dev:server": "turbo run dev:server --parallel",
     "dev:web": "turbo run dev --filter @borg/web",
     "lint": "turbo run lint",

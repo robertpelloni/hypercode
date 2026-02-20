@@ -1,5 +1,6 @@
 @import "tailwindcss";
-
+@source "../../../../packages/ui";
+@source "../../";
 @layer base {
   :root {
     --background: 0 0% 100%;

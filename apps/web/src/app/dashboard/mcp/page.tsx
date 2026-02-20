@@ -127,6 +127,7 @@ export default function MCPDashboard() {
     const [activeTab, setActiveTab] = useState<'servers' | 'tools'>('servers');
     const [showAutopilotEmbed, setShowAutopilotEmbed] = useState(false);
     const [panelOrder, setPanelOrder] = useState<PanelId[]>([...DEFAULT_PANEL_ORDER]);
+    const [isMounted, setIsMounted] = useState(false);
     const autopilotUrl = process.env.NEXT_PUBLIC_AUTOPILOT_DASHBOARD_URL || 'http://localhost:3847';
 
     useEffect(() => {
@@ -145,6 +146,7 @@ export default function MCPDashboard() {
         } catch {
             // no-op, fallback to defaults
         }
+        setIsMounted(true);
     }, []);
 
     const sensors = useSensors(
@@ -208,26 +210,43 @@ export default function MCPDashboard() {
                     <p className="text-xs text-zinc-500">Drag cards to reorder; layout is saved locally for this browser.</p>
                 </CardHeader>
                 <CardContent>
-                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handlePanelDragEnd}>
-                        <SortableContext items={orderedPanels} strategy={rectSortingStrategy}>
-                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                                {orderedPanels.map((id) => {
-                                    const panel = PANEL_META[id];
-                                    return (
-                                        <SortablePanelLink
-                                            key={id}
-                                            id={id}
-                                            title={panel.title}
-                                            href={panel.href}
-                                            description={panel.description}
-                                            icon={panel.icon}
-                                            accent={panel.accent}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        </SortableContext>
-                    </DndContext>
+                    {isMounted ? (
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handlePanelDragEnd}>
+                            <SortableContext items={orderedPanels} strategy={rectSortingStrategy}>
+                                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                                    {orderedPanels.map((id) => {
+                                        const panel = PANEL_META[id];
+                                        return (
+                                            <SortablePanelLink
+                                                key={id}
+                                                id={id}
+                                                title={panel.title}
+                                                href={panel.href}
+                                                description={panel.description}
+                                                icon={panel.icon}
+                                                accent={panel.accent}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            </SortableContext>
+                        </DndContext>
+                    ) : (
+                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                            {orderedPanels.map((id) => {
+                                const panel = PANEL_META[id];
+                                return (
+                                    <div key={id} className={`rounded-lg border border-zinc-800 bg-zinc-950/70 p-4`}>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <panel.icon className={`h-4 w-4 ${panel.accent}`} />
+                                            <span className="text-sm font-semibold text-zinc-100">{panel.title}</span>
+                                        </div>
+                                        <p className="text-xs text-zinc-500 leading-relaxed">{panel.description}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 

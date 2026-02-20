@@ -1,6 +1,6 @@
 export const runtime = 'nodejs';
 
-const DEFAULT_UPSTREAM_TRPC_URL = 'http://127.0.0.1:3001/trpc';
+const DEFAULT_UPSTREAM_TRPC_URL = 'http://127.0.0.1:12009/trpc';
 
 function resolveUpstreamBase(): string {
   return process.env.BORG_TRPC_UPSTREAM?.trim() || DEFAULT_UPSTREAM_TRPC_URL;
