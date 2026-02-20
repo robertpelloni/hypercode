@@ -14,7 +14,7 @@
         "build": "tsc",
         "dev": "tsc --watch --preserveWatchOutput",
         "lint": "eslint src/",
-        "test": "vitest run"
+        "test": "vitest run test/"
     },
     "dependencies": {
         "@borg/ai": "workspace:*",
