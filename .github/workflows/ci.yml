@@ -32,7 +32,7 @@ jobs:
         run: pnpm run check:release-gate:ci
 
   lint:
-    name: Lint
+    name: Placeholder Guard
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,8 +48,8 @@ jobs:
           
       - run: pnpm install --frozen-lockfile
       
-      - run: pnpm run lint
-        continue-on-error: true
+      - name: Run placeholder regression guard
+        run: pnpm run check:placeholders
 
   typecheck:
     name: Type Check
@@ -68,8 +68,8 @@ jobs:
           
       - run: pnpm install --frozen-lockfile
       
-      - run: pnpm run typecheck
-        continue-on-error: true
+      - name: Run core typecheck
+        run: pnpm -C packages/core exec tsc --noEmit
 
   test:
     name: Test

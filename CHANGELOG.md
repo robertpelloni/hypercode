@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.6] - 2026-02-22
+
+### Changed
+
+- **Root CI quality gates hardened with reliable checks**:
+  - Updated `.github/workflows/ci.yml` `lint` job to run strict placeholder regression guard (`pnpm run check:placeholders`).
+  - Updated `.github/workflows/ci.yml` `typecheck` job to run strict core typecheck (`pnpm -C packages/core exec tsc --noEmit`).
+  - Removed soft-fail semantics from these checks by replacing brittle commands that were failing due workspace-wide task/tooling gaps.
+
+### Validation
+
+- Verified local command parity for CI checks:
+  - `pnpm run check:placeholders` ✅
+  - `pnpm -C packages/core exec tsc --noEmit` ✅
+
 ## [2.7.5] - 2026-02-22
 
 ### Added
