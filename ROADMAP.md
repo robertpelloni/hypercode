@@ -1,7 +1,7 @@
 # Borg Project Roadmap
 
 > **Status**: Phase 64 (Release Readiness) - **IN PROGRESS**
-> **Version**: 2.7.4 (canonical from `VERSION.md`)
+> **Version**: 2.7.5 (canonical from `VERSION.md`)
 > **Codename**: AIOS (AI Operating System)
 
 ---
@@ -98,6 +98,7 @@
     - [x] Docker & Deployment Verification
     - [x] Cross-service local readiness checker (`scripts/verify_dev_readiness.mjs`)
     - [x] Strict machine-readable release gate (`check:release-gate`)
+    - [x] CI integration for release gate (`.github/workflows/ci.yml`)
     - [ ] Documentation Freeze
     - [ ] Final E2E Regression
 

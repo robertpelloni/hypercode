@@ -12,6 +12,8 @@ import { spawnSync } from "node:child_process";
 
 const usePnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const useNode = process.execPath;
+const ciMode = process.argv.includes("--ci");
+const requireReadinessInCi = process.env.RELEASE_GATE_REQUIRE_READINESS === "1";
 
 function run(name, command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -63,38 +65,42 @@ function printStep(message) {
 }
 
 async function main() {
-  printStep("Running strict readiness probe (machine-readable JSON)...");
+  if (!ciMode || requireReadinessInCi) {
+    printStep("Running strict readiness probe (machine-readable JSON)...");
 
-  const readiness = run(
-    "readiness",
-    useNode,
-    ["scripts/verify_dev_readiness.mjs", "--strict-json"],
-    { stdio: ["ignore", "pipe", "pipe"] },
-  );
-
-  if (readiness.error) {
-    fail("Readiness probe failed to execute.", String(readiness.error));
-  }
-
-  if ((readiness.status ?? 1) !== 0) {
-    fail(
-      "Readiness probe reported failure.",
-      [readiness.stdout, readiness.stderr].filter(Boolean).join("\n"),
+    const readiness = run(
+      "readiness",
+      useNode,
+      ["scripts/verify_dev_readiness.mjs", "--strict-json"],
+      { stdio: ["ignore", "pipe", "pipe"] },
     );
-  }
 
-  let readinessPayload;
-  try {
-    readinessPayload = JSON.parse(readiness.stdout);
-  } catch {
-    fail("Readiness output was not valid JSON.", readiness.stdout || readiness.stderr);
-  }
+    if (readiness.error) {
+      fail("Readiness probe failed to execute.", String(readiness.error));
+    }
 
-  if (!readinessPayload?.passed) {
-    fail("Readiness JSON indicates failed critical services.", JSON.stringify(readinessPayload, null, 2));
-  }
+    if ((readiness.status ?? 1) !== 0) {
+      fail(
+        "Readiness probe reported failure.",
+        [readiness.stdout, readiness.stderr].filter(Boolean).join("\n"),
+      );
+    }
 
-  console.log("[release-gate] Readiness OK");
+    let readinessPayload;
+    try {
+      readinessPayload = JSON.parse(readiness.stdout);
+    } catch {
+      fail("Readiness output was not valid JSON.", readiness.stdout || readiness.stderr);
+    }
+
+    if (!readinessPayload?.passed) {
+      fail("Readiness JSON indicates failed critical services.", JSON.stringify(readinessPayload, null, 2));
+    }
+
+    console.log("[release-gate] Readiness OK");
+  } else {
+    printStep("CI mode: skipping local readiness probe (requires running dev services).");
+  }
 
   printStep("Running placeholder regression check...");
   const placeholder = runPnpm("placeholder-check", ["run", "check:placeholders"], {
