@@ -110,6 +110,39 @@ async function pickPort(requestedPort, explicitPort) {
   return requestedPort;
 }
 
+function resolveDevLockPath(distDir) {
+  const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+  return path.resolve(scriptDir, "..", distDir, "dev", "lock");
+}
+
+function removeDevLockIfPresent(lockPath) {
+  try {
+    if (fs.existsSync(lockPath)) {
+      fs.rmSync(lockPath, { force: true });
+      return true;
+    }
+  } catch {
+    // Best-effort cleanup only.
+  }
+
+  return false;
+}
+
+async function cleanupStaleDevLockIfSafe(selectedPort, distDir) {
+  const lockPath = resolveDevLockPath(distDir);
+  const portIsFree = await isPortFree(Number(selectedPort));
+
+  // Only clean lock files when the target port is currently free.
+  // This avoids deleting lock state for an actively running Next dev instance.
+  if (!portIsFree) {
+    return;
+  }
+
+  if (removeDevLockIfPresent(lockPath)) {
+    console.log(`[web dev] Removed stale lock: ${lockPath}`);
+  }
+}
+
 async function main() {
   // Keep TypeScript include globs stable across dev port changes.
   normalizeTsconfigIncludes();
@@ -136,6 +169,8 @@ async function main() {
     ...process.env,
     NEXT_DIST_DIR: distDir,
   };
+
+  await cleanupStaleDevLockIfSafe(selectedPort, distDir);
 
   console.log(`[web dev] PORT=${selectedPort} NEXT_DIST_DIR=${distDir}`);
 

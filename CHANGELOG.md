@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.13] - 2026-02-23
+
+### Fixed
+
+- **Web dev stale lock auto-recovery**:
+  - Updated `apps/web/scripts/dev.mjs` to remove `.next-dev/dev/lock` only when the selected port is free.
+  - Prevents false startup failures after interrupted dev sessions while avoiding lock deletion for active instances.
+
+### Validation
+
+- Synthetic stale lock test: created `apps/web/.next-dev/dev/lock`, then ran:
+  - `pnpm -C apps/web run dev -- --port 3561`
+- Observed:
+  - stale lock removal log
+  - successful startup (`Ready`) on selected port
+
 ## [2.7.12] - 2026-02-23
 
 ### Fixed
