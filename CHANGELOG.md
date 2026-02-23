@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.11] - 2026-02-22
+
+### Changed
+
+- **Extension lint frontier reduction**:
+  - Narrowed root `lint:turbo` exclusion from all `@extension/*` packages to only `@extension/shared`.
+
+### Validation
+
+- `pnpm run lint:turbo` ✅
+- `pnpm run check:release-gate:ci` ✅
+
 ## [2.7.10] - 2026-02-22
 
 ### Added
