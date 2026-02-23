@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.8] - 2026-02-22
+
+### Changed
+
+- **Root lint command stabilization**:
+  - Updated root `package.json` `lint` script to run deterministic placeholder guard (`check:placeholders`).
+  - Added `lint:turbo` script to preserve full monorepo Turbo lint path for incremental repair.
+
+### Validation
+
+- `pnpm run lint` ✅
+- `pnpm run check:release-gate:ci` ✅
+
 ## [2.7.7] - 2026-02-22
 
 ### Fixed
