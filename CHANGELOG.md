@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.12] - 2026-02-23
+
+### Fixed
+
+- **Web dev launcher arg forwarding on Windows/PNPM**:
+  - Updated `apps/web/scripts/dev.mjs` to strip `--` delimiter tokens from forwarded script args.
+  - This prevents invalid Next.js startup invocations like `... apps/web --port` when running `pnpm -C apps/web run dev -- --port <n>`.
+
+- **Web tracing-root stability hardening**:
+  - Updated `apps/web/next.config.ts` to canonicalize `outputFileTracingRoot` using `path.resolve(...)`.
+  - Reduces false workspace-root inference in environments with multiple parent lockfiles.
+
+### Validation
+
+- `pnpm -C apps/web run dev -- --port 3557` starts with normalized args and reaches ready state after lock cleanup.
+- `pnpm run check:release-gate:ci` ✅
+
 ## [2.7.11] - 2026-02-22
 
 ### Changed
