@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.14] - 2026-02-23
+
+### Changed
+
+- **Scoped Turbo lint output noise reduction**:
+  - Updated root `lint:turbo` script to use `--output-logs=errors-only`.
+  - Preserves existing lint pass/fail semantics while reducing warning flood in local and gate runs.
+
+### Validation
+
+- `pnpm run lint:turbo` ✅
+
 ## [2.7.13] - 2026-02-23
 
 ### Fixed

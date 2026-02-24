@@ -1,6 +1,6 @@
 {
   "name": "borg-monorepo",
-  "version": "2.7.13",
+  "version": "2.7.14",
   "private": true,
   "packageManager": "pnpm@10.28.0",
   "scripts": {
@@ -10,7 +10,7 @@
     "dev:server": "turbo run dev:server --parallel",
     "dev:web": "turbo run dev --filter @borg/web",
     "lint": "pnpm run check:placeholders",
-    "lint:turbo": "turbo run lint --filter=!mcp-superassistant --filter=!@extension/shared --filter=!@borg/web",
+    "lint:turbo": "turbo run lint --output-logs=errors-only --filter=!mcp-superassistant --filter=!@extension/shared --filter=!@borg/web",
     "test": "turbo run test",
     "check:placeholders": "node scripts/check-placeholder-regressions.mjs",
     "check:dev-readiness": "node scripts/verify_dev_readiness.mjs",
