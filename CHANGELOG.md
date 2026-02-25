@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.24] - 2026-02-25
+
+### Added
+- **Provider Auth & Billing Matrix**: Overhauled `/dashboard/billing` with Recharts cost history, quota consumption data tables, AI model pricing matrices, and LLM fallback routing chains via `billingRouter`. Added OAuth Client scaffolding (`oauthRouter`).
+- **Execution Session Dashboard**: Created `/dashboard/session` to provide full Auto-Drive toggle control and dynamic global execution goal mutation using `sessionRouter`.
+- **Master Control Panel Parity**: Interlinked the advanced features (`Session`, `Evolution`, `Expert Squad`) into the root MCP UI dashboard array.
+
 ## [2.7.23] - 2026-02-25
 
 ### Added
