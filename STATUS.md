@@ -21,7 +21,7 @@ Borg has reached a **high level of resource density** but requires **structural 
 | Total Submodules | 932 (Verified via Git) |
 | Redundancy Rate | High (up to 6 paths per repo) |
 | Registered tRPC Routers | 49 (Fully Mapped) |
-| Dark Features (No UI) | 7 (Mesh, Policies, Audit, Browser, LSP, Namespaces, Symbols) |
+| Dark Features (No UI) | 6 (Policies, Audit, Browser, LSP, Namespaces, Symbols) |
 | Master Index Health | Synchronized (699 Unique Links) |
 
 ---
@@ -38,7 +38,7 @@ Borg has reached a **high level of resource density** but requires **structural 
 - **Mass Assimilation**: Transitioned all physical submodules to "Assimilated" status in the master index.
 
 ### 2.3 Feature Audit (completed)
-- **Dark Feature Mapping**: Identified specific backend routers (`meshRouter.ts`, `policiesRouter.ts`, `auditRouter.ts`) lacking Next.js UI representation.
+- **Dark Feature Mapping**: Identified specific backend routers (`policiesRouter.ts`, `auditRouter.ts`) lacking Next.js UI representation.
 - **Priority Report**: Formalized gaps in `docs/REPORTS/FEATURE_GAP_ANALYSIS_2026_02_24.md`.
 
 ---
@@ -49,7 +49,6 @@ Borg has reached a **high level of resource density** but requires **structural 
 - The monorepo has exceeded 900 submodules. Duplicate mappings for repos like `algonius-browser` (6 paths) are causing massive `.git` overhead and build slowdowns.
 
 ### 3.2 Frontend "Reality Closure" Gaps (P1)
-- **Mesh/P2P Swarm**: Backend is ready but users cannot monitor peer connections or node status.
 - **Policy Manager**: Critical security features (Allowed/Blocked commands) require a UI for standard users.
 - **Audit Logs**: No visual way to inspect session history or agent events.
 
@@ -58,7 +57,7 @@ Borg has reached a **high level of resource density** but requires **structural 
 ## 4. Priority Closure Order
 
 1. **Submodule Consolidation**: Use the deduplication report to merge duplicate paths into a single canonical location (P0).
-2. **"Dark Feature" UI Implementation**: Implement dashboard pages for Mesh and Policies (P1).
+2. **"Dark Feature" UI Implementation**: Implement dashboard pages for Policies (P1).
 3. **Phase 68 Memory Launch**: Initialize the multi-backend vector store using the repaired `memora` and `memory-opensource` mappings.
 
 ---
@@ -69,7 +68,7 @@ Borg has reached a **high level of resource density** but requires **structural 
 - [x] Submodule Dashboard updated
 - [x] Feature Gap Analysis completed
 - [ ] Submodule redundancy reduced by 50%
-- [ ] Mesh and Policy dashboards implemented
+- [ ] Policy dashboard implemented
 - [ ] `apps/web` build pass (with new dashboards)
 
 ---

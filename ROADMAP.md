@@ -1,7 +1,7 @@
 # Borg Project Roadmap
 
 > **Status**: Phase 64 (Release Readiness) - **IN PROGRESS**
-> **Version**: 2.7.22 (canonical from `VERSION.md`)
+> **Version**: 2.7.23 (canonical from `VERSION.md`)
 > **Codename**: AIOS (AI Operating System)
 
 ---
@@ -74,14 +74,6 @@
 
 ## Phase 60-69: The Hive Mind (Current)
 
-- [x] **Phase 60: The Mesh (P2P Execution)**
-    - [x] Hyperswarm / Secret-Stream integration
-    - [x] MeshService & Swarm Router
-    - [x] Node-to-node RPC verification
-- [x] **Phase 61: Specialized Agents (Mesh Workers)**
-    - [x] SpecializedAgent base class
-    - [x] CoderAgent & ResearcherAgent implementation
-    - [x] Capability-based routing
 - [x] **Phase 62: Ignition (Real Capabilities)**
     - [x] Real LLM coding integration (CoderAgent)
     - [x] DeepResearch integration (ResearcherAgent)
@@ -101,7 +93,8 @@
     - [x] Git Tree Stabilization (Repaired .gitmodules mapping errors)
     - [x] Knowledge Base Sync (932 submodules assimilated)
     - [x] Documentation Audit (Created feature gap and deduplication reports)
-    - [ ] Documentation Freeze
+    - [x] Documentation Freeze & Deep Analysis
+    - [ ] Submodule Operations Dashboard (React UI representation)
     - [ ] Final E2E Regression
 
 ## P3 — Future Phases (Post-63)

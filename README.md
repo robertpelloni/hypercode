@@ -13,7 +13,7 @@ A unified operating system for PC-based local AI tools. Manage everything from t
 The system has undergone a major structural stabilization and resource synchronization pass:
 - **Git Tree Restored**: Resolved fatal `no submodule mapping` errors by repairing `.gitmodules`.
 - **932 Submodules Assimilated**: The ecosystem has scaled to over 900 verified reference submodules across categories like `orchestration`, `mcp-servers`, and `memory`.
-- **Feature Gap Closure**: Identified "Dark Features" in the backend (Mesh P2P, Security Policies, Audit Logs) now slated for immediate UI implementation.
+- **Feature Gap Closure**: Identified "Dark Features" in the backend (Security Policies, Audit Logs) now slated for immediate UI implementation.
 - **Redundancy Roadmap**: Initiated a deduplication plan to consolidate redundant submodule paths and optimize build performance.
 
 [VIDEO EXPLANATION](https://www.youtube.com/watch?v=RQZsZWrqp2c)

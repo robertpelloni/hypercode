@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.23] - 2026-02-25
+
+### Added
+- **Deep Analysis & Documentation**: Conducted a comprehensive documentation overhaul (ROADMAP, AGENTS, VERSION) per user request to ensure complete project alignment and handoff readiness.
+- **Submodule Operations Dashboard**: Scaffolded the implementation plan for the Submodule DevOps Dashboard for Phase 64.
+
+### Fixed
+- **Next.js Tailwind Build**: Fixed a Turbopack/Webpack configuration issue in `@borg/web` that was preventing Tailwind CSS v4 from building correctly on the MetaMCP Dashboard.
+
+### Changed
+- **Version Bump**: Incremented version to 2.7.23.
+
 ## [2.7.22] - 2026-02-24
 
 ### Changed

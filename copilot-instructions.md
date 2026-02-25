@@ -30,5 +30,5 @@
 - Run `pnpm run build` for full monorepo build.
 
 ## Documentation & Versioning
-- **Document & Version**: YOU MUST increment the version number in the `VERSION` file on every build/session, and document the changes with the new version number in `CHANGELOG.md`. Ensure the version bump is referenced in your commit message.
-- Refer to `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` as the single source of truth for overarching guidelines.
+- **DOCUMENT & VERSION**: YOU MUST increment the version number in the `VERSION` and `VERSION.md` files on EVERY build/session. Update the changelog at `CHANGELOG.md` with the new version number. Ensure all version updates are synchronized and referenced in your commit message.
+- Refer to `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` as the single source of truth for overarching guidelines, especially submodules.

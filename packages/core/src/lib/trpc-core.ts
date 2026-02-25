@@ -388,11 +388,13 @@ export type BrowserServiceRuntime = {
     closeAll: () => Promise<void>;
 };
 
+/*
 export type MeshServiceRuntime = {
     nodeId: string;
     getStatus: () => { nodeId: string; peerCount: number; peerIds: string[] };
     broadcast: (type: string, payload: unknown) => void;
 };
+*/
 
 export type MarketplaceEntryRuntime = {
     id: string;
@@ -604,9 +606,11 @@ export function getBrowserService(): BrowserServiceRuntime | undefined {
     return getMcpServer().browserService as BrowserServiceRuntime | undefined;
 }
 
+/*
 export function getMeshService(): MeshServiceRuntime | undefined {
     return getMcpServer().meshService as MeshServiceRuntime | undefined;
 }
+*/
 
 export function getMarketplaceService(): MarketplaceServiceRuntime | undefined {
     return getMcpServer().marketplaceService as MarketplaceServiceRuntime | undefined;

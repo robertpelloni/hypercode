@@ -39,7 +39,7 @@ import { AutoTestService } from "./services/AutoTestService.js";
 import { ShellService } from "./services/ShellService.js";
 import { SandboxService } from "./security/SandboxService.js";
 import { SquadService } from "./orchestrator/SquadService.js";
-import { MeshService } from './services/MeshService.js';
+// import { MeshService } from './services/MeshService.js';
 import { GitWorktreeManager } from "./orchestrator/GitWorktreeManager.js";
 import { AuditService } from "./security/AuditService.js";
 import { GitService } from "./services/GitService.js";
@@ -218,7 +218,7 @@ export class MCPServer {
     public sessionManager: SessionManager; // Phase 57: State Persistence
 
     public projectTracker: ProjectTracker; // Phase 59: Autonomous Loop
-    public meshService: MeshService | undefined; // Phase 60: P2P Mesh
+    // public meshService: MeshService | undefined; // Phase 60: P2P Mesh
     public mcpConfigService: McpConfigService;
 
     // Sensors (Phase 43)
@@ -443,14 +443,16 @@ export class MCPServer {
         this.gitWorktreeManager = new GitWorktreeManager(process.cwd());
 
         // Phase 60: Mesh Service
+        /*
         if (!options.skipMesh) {
             this.meshService = new MeshService();
         }
+        */
 
         // Phase 65: Marketplace (Depends on Mesh)
         this.marketplaceService = new MarketplaceService(
             path.join(process.cwd(), '.borg', 'skills'),
-            this.meshService
+            undefined // this.meshService
         );
 
         global.mcpServerInstance = this;
@@ -1829,6 +1831,7 @@ export class MCPServer {
                     result = { content: [{ type: "text", text: `Code Mode Tools:\n${formatted}` }] };
                 }
             }
+            /*
             // Phase 60: The Mesh
             else if (name === "swarm_broadcast") {
                 if (!this.meshService) {
@@ -1840,7 +1843,9 @@ export class MCPServer {
                         content: [{ type: "text", text: `Broadcasted '${type}' to swarm.` }]
                     };
                 }
-            } else {
+            }
+            */
+            else {
                 // Check Standard Library
                 const terminalTools = this.terminalService.getTools();
                 const standardTool = [...FileSystemTools, ...terminalTools, ...MemoryTools, ...TunnelTools, ...LogTools, ...ConfigTools, ...SearchTools, ...ReaderTools, ...WorktreeTools, ...MetaTools, WebSearchTool].find(t => t.name === name);
@@ -2630,6 +2635,7 @@ export class MCPServer {
                 description: "List tools available in Code Mode",
                 inputSchema: { type: "object", properties: {} }
             },
+            /*
             // Phase 60: The Mesh tools
             {
                 name: "swarm_broadcast",
@@ -2643,6 +2649,7 @@ export class MCPServer {
                     required: ["type"]
                 }
             }
+            */
         ];
 
         // Standard Library Tools

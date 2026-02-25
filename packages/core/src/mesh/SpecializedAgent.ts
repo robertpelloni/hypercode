@@ -1,5 +1,5 @@
-import { MeshService } from '../services/MeshService.js';
-import { SwarmMessage, SwarmMessageType } from './SwarmProtocol.js';
+// import { MeshService } from '../services/MeshService.js';
+// import { SwarmMessage, SwarmMessageType } from './SwarmProtocol.js';
 
 interface TaskOffer {
     task: string;
@@ -32,20 +32,22 @@ function parseTaskOffer(payload: unknown): TaskOffer | null {
 }
 
 export abstract class SpecializedAgent {
-    protected mesh: MeshService;
+    // protected mesh: MeshService;
     public nodeId: string;
     public role: string;
     protected capabilities: string[] = [];
 
     constructor(role: string, capabilities: string[] = []) {
-        this.mesh = new MeshService();
-        this.nodeId = this.mesh.nodeId;
+        // this.mesh = new MeshService();
+        // this.nodeId = this.mesh.nodeId;
+        this.nodeId = 'local';
         this.role = role;
         this.capabilities = capabilities;
 
-        this.initialize();
+        // this.initialize();
     }
 
+    /*
     private initialize() {
         console.log(`[${this.role}] 🤖 Initializing Specialized Agent (Node: ${this.nodeId.slice(0, 8)}...)`);
 
@@ -100,8 +102,9 @@ export abstract class SpecializedAgent {
             }
         });
     }
+    */
 
-    private canHandle(offer: TaskOffer): boolean {
+    public canHandle(offer: TaskOffer): boolean {
         if (offer.requirements) {
             return offer.requirements.every((req: string) => this.capabilities.includes(req) || this.role === req);
         }
@@ -114,6 +117,6 @@ export abstract class SpecializedAgent {
     protected abstract handleTask(offer: TaskOffer): Promise<unknown>;
 
     public async destroy() {
-        await this.mesh.destroy();
+        // await this.mesh.destroy();
     }
 }

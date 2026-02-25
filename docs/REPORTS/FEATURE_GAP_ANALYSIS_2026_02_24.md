@@ -5,13 +5,7 @@ A cross-referencing of `packages/core/src/routers/*.ts` against `apps/web/src/ap
 
 ## 📊 Identified Gaps (High Priority)
 
-### 1. Mesh Control Center (`meshRouter.ts`)
-- **Status**: Backend ready (Hyperswarm / Secret-Stream).
-- **Missing UI**: No dashboard page to monitor P2P node connections, peer discovery, or node-to-node RPC status.
-- **Impact**: Users cannot visualize the "AI Hive Mind" connectivity.
-- **Update (2026-02-24)**: ✅ **IMPLEMENTED** at `/dashboard/mesh`. Provides node status, peer list, global broadcast, and "Ask Swarm" capabilities.
-
-### 2. Semantic Browser Interface (`browserRouter.ts`)
+### 1. Semantic Browser Interface (`browserRouter.ts`)
 - **Status**: Backend ready.
 - **Missing UI**: No dashboard page for controlling or monitoring headless browser sessions.
 - **Impact**: "Computer Use" capabilities are limited to terminal-driven macros.

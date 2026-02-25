@@ -10,7 +10,6 @@ import type { ComponentType } from 'react';
 export default function SystemStatusDashboard() {
     const { data: status, refetch } = trpc.mcp.getStatus.useQuery();
     const { data: browserStatus, refetch: refetchBrowser } = trpc.browser.status.useQuery(undefined, { refetchInterval: 5000 });
-    const { data: meshStatus, refetch: refetchMesh } = trpc.mesh.status.useQuery(undefined, { refetchInterval: 5000 });
 
     const closeAllPages = trpc.browser.closeAll.useMutation({
         onSuccess: () => {
@@ -20,18 +19,9 @@ export default function SystemStatusDashboard() {
         onError: (err) => toast.error(`Failed to close pages: ${err.message}`),
     });
 
-    const broadcastHeartbeat = trpc.mesh.broadcast.useMutation({
-        onSuccess: () => {
-            toast.success('Mesh heartbeat broadcast sent.');
-            void refetchMesh();
-        },
-        onError: (err) => toast.error(`Mesh broadcast failed: ${err.message}`),
-    });
-
     const handleRefresh = () => {
         void refetch();
         void refetchBrowser();
-        void refetchMesh();
     };
 
     return (
@@ -116,45 +106,6 @@ export default function SystemStatusDashboard() {
                         </div>
                     </CardContent>
                 </Card>
-
-                <Card className="bg-zinc-900 border-zinc-800">
-                    <CardContent className="p-6 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-medium text-white">Mesh Runtime</h3>
-                                <p className="text-xs text-zinc-500 mt-1">Live status from `meshRouter`</p>
-                            </div>
-                            <Radio className="h-5 w-5 text-emerald-400" />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div className="bg-zinc-950 border border-zinc-800 rounded p-3">
-                                <div className="text-zinc-500 text-xs">Available</div>
-                                <div className="text-white font-semibold">{meshStatus?.available ? 'Yes' : 'No'}</div>
-                            </div>
-                            <div className="bg-zinc-950 border border-zinc-800 rounded p-3">
-                                <div className="text-zinc-500 text-xs">Peers</div>
-                                <div className="text-white font-semibold">{meshStatus?.peerCount ?? 0}</div>
-                            </div>
-                        </div>
-
-                        <div className="bg-zinc-950 border border-zinc-800 rounded p-3">
-                            <div className="text-zinc-500 text-xs mb-1">Node ID</div>
-                            <div className="text-xs text-zinc-300 font-mono break-all">{meshStatus?.nodeId ?? 'N/A'}</div>
-                        </div>
-
-                        <div className="flex justify-end">
-                            <Button
-                                onClick={() => broadcastHeartbeat.mutate({ type: 'HEARTBEAT', payload: { source: 'dashboard/mcp/system', ts: Date.now() } })}
-                                disabled={!meshStatus?.available || broadcastHeartbeat.isPending}
-                                variant="outline"
-                                className="border-zinc-700 hover:bg-zinc-800"
-                            >
-                                Broadcast Heartbeat
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -165,7 +116,6 @@ export default function SystemStatusDashboard() {
                             <HealthRow name="Core API" status="Operational" latency="12ms" />
                             <HealthRow name="MCP Aggregator" status="Operational" latency="4ms" />
                             <HealthRow name="Browser Runtime" status={browserStatus?.available ? 'Operational' : 'Unavailable'} latency="-" />
-                            <HealthRow name="Mesh Runtime" status={meshStatus?.available ? 'Operational' : 'Unavailable'} latency="-" />
                             <HealthRow name="Vector Store" status="Operational" latency="45ms" />
                             <HealthRow name="Task Queue" status="Idle" latency="-" />
                         </div>
