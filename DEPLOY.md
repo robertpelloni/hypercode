@@ -1,6 +1,6 @@
 # Borg Deployment Guide
 
-> **Version**: 2.7.20
+> **Version**: 2.7.21
 > **Scope**: Local Development & Production Deployment
 
 ---

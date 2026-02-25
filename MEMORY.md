@@ -1,6 +1,6 @@
 # Borg Memory System Architecture
 
-> **Version**: 2.7.20 (Phase 64)
+> **Version**: 2.7.21 (Phase 64)
 > **Status**: Hybrid (SQLite + Vector Placeholder) - Evolving to Multi-Backend
 
 ---
@@ -36,7 +36,21 @@ interface MemoryManager {
 | **Semantic** | Vector DB (Chroma/LanceDB) | Embedding-based retrieval of concepts. |
 | **Graph** | Neo4j / Graphology | Relationship mapping (File A imports File B). |
 
-## 3. Current Implementation (v2.6.2)
+## 3. Integrated Backends (Phase 68)
+
+The following advanced memory backends have been assimilated as submodules and are available for integration:
+
+### 3.1 Memora (`external/memory/memora`)
+- **Type**: MCP Server (Python)
+- **Features**: Semantic storage, Knowledge Graphs, SQLite persistence with cloud sync (S3/R2/D1).
+- **Integration**: Registered in `borg.config.json` as `memora`.
+
+### 3.2 Papr Memory (`external/memory/memory-opensource`)
+- **Type**: Predictive Memory Layer (FastAPI)
+- **Features**: MongoDB + Qdrant + Neo4j stack, Predictive retrieval, custom ontologies.
+- **Integration**: Slated for container-based deployment in Phase 69.
+
+## 4. Current Implementation (v2.7.20)
 
 - **Vector Store**: Uses `vectordb` (LanceDB) locally for embedding search.
 - **Knowledge Service**: `KnowledgeService.ts` manages a primitive graph structure.

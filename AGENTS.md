@@ -11,7 +11,7 @@ This file serves as the entry point for all autonomous agents working on the Bor
 - **Architecture**: [`docs/DESIGN.md`](docs/DESIGN.md)
 - **Submodules**: [`docs/SUBMODULE_DASHBOARD.md`](docs/SUBMODULE_DASHBOARD.md)
 - **Changelog**: [`CHANGELOG.md`](CHANGELOG.md)
-- **Version**: [`VERSION.md`](VERSION.md) (Current: v2.7.3)
+- **Version**: [`VERSION.md`](VERSION.md) (Current: v2.7.21)
 - **Handoff**: [`HANDOFF_ANTIGRAVITY.md`](HANDOFF_ANTIGRAVITY.md)
 
 ## Agent Roles

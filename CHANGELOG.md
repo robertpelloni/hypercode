@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.21] - 2026-02-24
+
+### Added
+- **Memory Multi-Backend (Phase 68)**: Assimilated `memora` and `memory-opensource` as physical submodules in `external/memory/`.
+- **Memora Integration**: Registered the `memora` MCP server in `borg.config.json` for semantic persistent storage.
+- **Native Memory Viewer**: Replaced the `claude-mem` iframe with a high-fidelity, native React UI for searching and managing tiered agent memory (Session, Working, Long-Term).
+
+### Changed
+- **Version Bump**: Incremented version to 2.7.21.
+
 ## [2.7.20] - 2026-02-24
 
 ### Added

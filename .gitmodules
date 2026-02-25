@@ -3229,3 +3229,9 @@
 [submodule "references/gemini-mcp-r-labs"]
 	path = references/gemini-mcp-r-labs
 	url = https://github.com/RLabs-Inc/gemini-mcp
+[submodule "external/memory/memora"]
+	path = external/memory/memora
+	url = https://github.com/agentic-mcp-tools/memora
+[submodule "external/memory/memory-opensource"]
+	path = external/memory/memory-opensource
+	url = https://github.com/Papr-ai/memory-opensource
