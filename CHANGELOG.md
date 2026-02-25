@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.22] - 2026-02-24
+
+### Changed
+- **Submodule Consolidation (Phase 3)**: Removed 46 redundant submodule mappings for 15+ repositories (including `claude-code-tips`, `A2A`, `goose`, `CodeNomad`, `ccs`, `anthropic-skills`, `dotfiles`), establishing canonical paths under `external/` or `references/`.
+- **Version Bump**: Incremented version to 2.7.22.
+
 ## [2.7.21] - 2026-02-24
 
 ### Added

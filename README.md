@@ -1,7 +1,7 @@
 # BORG (previously AIOS): The Universal AI Operating System
 
 > **Status**: Phase 64 (Release Readiness v0.8.0-rc1) - **IN PROGRESS**
-> **Version**: 2.7.21
+> **Version**: 2.7.22
 > **Codename**: AIOS (AI Operating System)
 
 ---

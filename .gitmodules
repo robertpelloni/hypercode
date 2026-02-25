@@ -640,9 +640,6 @@
 [submodule "submodules/pluggedin-app"]
 	path = tools/refs/pluggedin-app
 	url = https://github.com/VeriTeknik/pluggedin-app
-[submodule "submodules/emdash"]
-	path = submodules/emdash
-	url = https://github.com/generalaction/emdash
 [submodule "submodules/mcpproxy-go"]
 	path = mcp-routers/mcpproxy-go
 	url = https://github.com/smart-mcp-proxy/mcpproxy-go
@@ -703,21 +700,9 @@
 [submodule "memory/systems/supermemory"]
 	path = memory/systems/supermemory
 	url = https://github.com/supermemoryai/supermemory
-[submodule "superai-cli/tools/ccs"]
-	path = superai-cli/tools/ccs
-	url = https://github.com/kaitranntt/ccs
 [submodule "superai-cli/tools/Lynkr"]
 	path = superai-cli/tools/Lynkr
 	url = https://github.com/vishalveerareddy123/Lynkr
-[submodule "superai-cli/tools/code-assistant-manager"]
-	path = superai-cli/tools/code-assistant-manager
-	url = https://github.com/Chat2AnyLLM/code-assistant-manager
-[submodule "superai-cli/clis/CodeNomad"]
-	path = superai-cli/clis/CodeNomad
-	url = https://github.com/NeuralNomadsAI/CodeNomad
-[submodule "superai-cli/clis/claude-code-madapp"]
-	path = superai-cli/clis/claude-code-madapp
-	url = https://github.com/MadAppGang/claude-code
 [submodule "superai-cli/proxies/gemini-openai-proxy-zuisong"]
 	path = superai-cli/proxies/gemini-openai-proxy-zuisong
 	url = https://github.com/zuisong/gemini-openai-proxy
@@ -727,21 +712,6 @@
 [submodule "superai-cli/proxies/gemini-openai-proxy-zhu"]
 	path = superai-cli/proxies/gemini-openai-proxy-zhu
 	url = https://github.com/zhu327/gemini-openai-proxy
-[submodule "superai-cli/routers/gemini-cli-router"]
-	path = superai-cli/routers/gemini-cli-router
-	url = https://github.com/Jasonzhangf/gemini-cli-router
-[submodule "superai-cli/routers/gemini-router"]
-	path = superai-cli/routers/gemini-router
-	url = https://github.com/takltc/gemini-router
-[submodule "superai-cli/proxies/ccproxy"]
-	path = superai-cli/proxies/ccproxy
-	url = https://github.com/starbased-co/ccproxy
-[submodule "superai-cli/routers/GoogleGeminiRouter"]
-	path = superai-cli/routers/GoogleGeminiRouter
-	url = https://github.com/Dhatchinamoorthy/GoogleGeminiRouter
-[submodule "superai-cli/extensions/gemini-superclaude-mcp-server"]
-	path = superai-cli/extensions/gemini-superclaude-mcp-server
-	url = https://github.com/Dianel555/gemini-superclaude-mcp-server
 [submodule "superai-cli/harnesses/SuperClaude_Framework"]
 	path = superai-cli/harnesses/SuperClaude_Framework
 	url = https://github.com/SuperClaude-Org/SuperClaude_Framework
@@ -790,18 +760,12 @@
 [submodule "financial/trading/trade-agent-mcp"]
 	path = financial/trading/trade-agent-mcp
 	url = https://github.com/Trade-Agent/trade-agent-mcp
-[submodule "financial/crypto/coingecko-mcp"]
-	path = financial/crypto/coingecko-mcp
-	url = https://github.com/coingecko/coingecko-typescript
 [submodule "financial/crypto/coinstats-mcp"]
 	path = financial/crypto/coinstats-mcp
 	url = https://github.com/CoinStatsHQ/coinstats-mcp
 [submodule "financial/crypto/awesome-crypto-mcp"]
 	path = financial/crypto/awesome-crypto-mcp
 	url = https://github.com/badkk/awesome-crypto-mcp-servers
-[submodule "financial/trading/ai-hedge-fund"]
-	path = financial/trading/ai-hedge-fund
-	url = https://github.com/virattt/ai-hedge-fund
 [submodule "RAG/systems/orama"]
 	path = RAG/systems/orama
 	url = https://github.com/oramasearch/orama.git
@@ -1045,18 +1009,12 @@
 [submodule "mcp-servers/financial/trade-agent-mcp"]
 	path = mcp-servers/financial/trade-agent-mcp
 	url = https://github.com/Trade-Agent/trade-agent-mcp
-[submodule "mcp-servers/financial/coingecko-typescript"]
-	path = mcp-servers/financial/coingecko-typescript
-	url = https://github.com/coingecko/coingecko-typescript
 [submodule "mcp-servers/financial/binance-mcp-server"]
 	path = mcp-servers/financial/binance-mcp-server
 	url = https://github.com/ethancod1ng/binance-mcp-server
 [submodule "mcp-servers/financial/Upsonic"]
 	path = mcp-servers/financial/Upsonic
 	url = https://github.com/Upsonic/Upsonic
-[submodule "mcp-servers/financial/ai-hedge-fund"]
-	path = mcp-servers/financial/ai-hedge-fund
-	url = https://github.com/virattt/ai-hedge-fund
 [submodule "mcp-servers/browser/cua"]
 	path = mcp-servers/browser/cua
 	url = https://github.com/trycua/cua
@@ -1072,9 +1030,6 @@
 [submodule "mcp-servers/browser/generalagents-python"]
 	path = mcp-servers/browser/generalagents-python
 	url = https://github.com/generalagents/generalagents-python
-[submodule "superai-cli/clis/codebuff"]
-	path = superai-cli/clis/codebuff
-	url = https://github.com/CodebuffAI/codebuff
 [submodule "superai-cli/clis/codex-kaioken"]
 	path = superai-cli/clis/codex-kaioken
 	url = https://github.com/jayasuryajsk/codex-kaioken
@@ -2590,30 +2545,15 @@
 [submodule "external/forks/zhifac/gemini-cli-router"]
 	path = external/forks/zhifac/gemini-cli-router
 	url = https://github.com/zhifac/gemini-cli-router
-[submodule "cli-harnesses/code-assistant-manager"]
-	path = cli-harnesses/code-assistant-manager
-	url = https://github.com/Chat2AnyLLM/code-assistant-manager
 [submodule "superai-cli/proxies/gemini-openai-proxy-2"]
 	path = superai-cli/proxies/gemini-openai-proxy-2
 	url = https://github.com/zuisong/gemini-openai-proxy
-[submodule "cli-harnesses/CodeNomad"]
-	path = cli-harnesses/CodeNomad
-	url = https://github.com/NeuralNomadsAI/CodeNomad
-[submodule "cli-harnesses/claude-code-madapp"]
-	path = cli-harnesses/claude-code-madapp
-	url = https://github.com/MadAppGang/claude-code
 [submodule "cli-harnesses/devin.cursorrules"]
 	path = cli-harnesses/devin.cursorrules
 	url = https://github.com/grapeot/devin.cursorrules
-[submodule "cli-harnesses/ccs"]
-	path = cli-harnesses/ccs
-	url = https://github.com/kaitranntt/ccs
 [submodule "cli-harnesses/Lynkr"]
 	path = cli-harnesses/Lynkr
 	url = https://github.com/vishalveerareddy123/Lynkr
-[submodule "cli-harnesses/emdash"]
-	path = cli-harnesses/emdash
-	url = https://github.com/generalaction/emdash
 [submodule "mcp-routers/agent-mcp-gateway"]
 	path = mcp-routers/agent-mcp-gateway
 	url = https://github.com/roddutra/agent-mcp-gateway
@@ -2761,12 +2701,6 @@
 [submodule "mcp-hubs/awesome-mcp-servers-wong2"]
 	path = mcp-hubs/awesome-mcp-servers-wong2
 	url = https://github.com/wong2/awesome-mcp-servers
-[submodule "skills/anthropics-skills"]
-	path = skills/anthropics-skills
-	url = https://github.com/anthropics/skills
-[submodule "external/TheNoeTrevino-dotfiles"]
-	path = external/TheNoeTrevino-dotfiles
-	url = https://github.com/TheNoeTrevino/dotfiles
 [submodule "multi-agent/TaskSync"]
 	path = multi-agent/TaskSync
 	url = https://github.com/4regab/TaskSync
@@ -2779,18 +2713,9 @@
 [submodule "multi-agent/agentic-ray"]
 	path = multi-agent/agentic-ray
 	url = https://github.com/rayai-labs/agentic-ray
-[submodule "cli-harnesses/claude-code-madappgang"]
-	path = cli-harnesses/claude-code-madappgang
-	url = https://github.com/MadAppGang/claude-code
-[submodule "cli-harnesses/codemachine-cli"]
-	path = cli-harnesses/codemachine-cli
-	url = https://github.com/moazbuilds/CodeMachine-CLI
 [submodule "mcp-hubs/awesome-mcp-servers"]
 	path = mcp-hubs/awesome-mcp-servers
 	url = https://github.com/appcypher/awesome-mcp-servers
-[submodule "cli-harnesses/codebuff"]
-	path = cli-harnesses/codebuff
-	url = https://github.com/CodebuffAI/codebuff
 [submodule "multi-agent/langgraph"]
 	path = multi-agent/langgraph
 	url = https://github.com/langchain-ai/langgraph
@@ -2842,15 +2767,6 @@
 [submodule "cli-harnesses/claude-code-router"]
 	path = cli-harnesses/claude-code-router
 	url = https://github.com/musistudio/claude-code-router
-[submodule "cli-harnesses/ccs-kaitranntt"]
-	path = cli-harnesses/ccs-kaitranntt
-	url = https://github.com/kaitranntt/ccs
-[submodule "cli-harnesses/emdash-generalaction"]
-	path = cli-harnesses/emdash-generalaction
-	url = https://github.com/generalaction/emdash
-[submodule "cli-harnesses/code-assistant-manager-Chat2AnyLLM"]
-	path = cli-harnesses/code-assistant-manager-Chat2AnyLLM
-	url = https://github.com/Chat2AnyLLM/code-assistant-manager
 [submodule "cli-harnesses/CodeNomad-NeuralNomadsAI"]
 	path = cli-harnesses/CodeNomad-NeuralNomadsAI
 	url = https://github.com/NeuralNomadsAI/CodeNomad
@@ -2863,30 +2779,15 @@
 [submodule "cli-harnesses/vercel-ai-proxy"]
 	path = cli-harnesses/vercel-ai-proxy
 	url = https://github.com/Hk-Gosuto/vercel-ai-proxy
-[submodule "cli-harnesses/gemini-cli-router"]
-	path = cli-harnesses/gemini-cli-router
-	url = https://github.com/Jasonzhangf/gemini-cli-router
 [submodule "cli-harnesses/gemini-cli-router-zhifac"]
 	path = cli-harnesses/gemini-cli-router-zhifac
 	url = https://github.com/zhifac/gemini-cli-router
 [submodule "cli-harnesses/claude-code-openrouter"]
 	path = cli-harnesses/claude-code-openrouter
 	url = https://github.com/derek-larson14/claude-code-openrouter
-[submodule "cli-harnesses/gemini-router"]
-	path = cli-harnesses/gemini-router
-	url = https://github.com/takltc/gemini-router
-[submodule "cli-harnesses/ccproxy"]
-	path = cli-harnesses/ccproxy
-	url = https://github.com/starbased-co/ccproxy
-[submodule "cli-harnesses/GoogleGeminiRouter"]
-	path = cli-harnesses/GoogleGeminiRouter
-	url = https://github.com/Dhatchinamoorthy/GoogleGeminiRouter
 [submodule "cli-harnesses/cc-switch-cli"]
 	path = cli-harnesses/cc-switch-cli
 	url = https://github.com/SaladDay/cc-switch-cli
-[submodule "cli-harnesses/gemini-superclaude-mcp-server"]
-	path = cli-harnesses/gemini-superclaude-mcp-server
-	url = https://github.com/Dianel555/gemini-superclaude-mcp-server
 [submodule "cli-harnesses/splitrail"]
 	path = cli-harnesses/splitrail
 	url = https://github.com/Piebald-AI/splitrail
@@ -2953,12 +2854,6 @@
 [submodule "cli-harnesses/factory"]
 	path = cli-harnesses/factory
 	url = https://github.com/factory-ai/factory
-[submodule "cli-harnesses/codebuff-CodebuffAI"]
-	path = cli-harnesses/codebuff-CodebuffAI
-	url = https://github.com/CodebuffAI/codebuff
-[submodule "cli-harnesses/CodeMachine-CLI-moazbuilds"]
-	path = cli-harnesses/CodeMachine-CLI-moazbuilds
-	url = https://github.com/moazbuilds/CodeMachine-CLI
 [submodule "cli-harnesses/codex"]
 	path = cli-harnesses/codex
 	url = https://github.com/openai/codex
@@ -2977,9 +2872,6 @@
 [submodule "external/skills_repos/humanizer"]
 	path = external/skills_repos/humanizer
 	url = https://github.com/blader/humanizer.git
-[submodule "external/skills_repos/anthropic-skills"]
-	path = external/skills_repos/anthropic-skills
-	url = https://github.com/anthropics/skills.git
 [submodule "external/skills_repos/openai-skills"]
 	path = external/skills_repos/openai-skills
 	url = https://github.com/openai/skills.git
@@ -3049,9 +2941,6 @@
 [submodule "external/awesome/awesome-llm-apps"]
 	path = external/awesome/awesome-llm-apps
 	url = https://github.com/Shubhamsaboo/awesome-llm-apps
-[submodule "external/skills_repos/TheNoeTrevino-dotfiles"]
-	path = external/skills_repos/TheNoeTrevino-dotfiles
-	url = https://github.com/TheNoeTrevino/dotfiles
 [submodule "reference/cli/opencode"]
 	path = reference/cli/opencode
 	url = https://github.com/sst/opencode.git
@@ -3067,9 +2956,6 @@
 [submodule "reference/mcp/mcp-tool-chainer"]
 	path = reference/mcp/mcp-tool-chainer
 	url = https://github.com/thirdstrandstudio/mcp-tool-chainer.git
-[submodule "reference/cli/codebuff"]
-	path = reference/cli/codebuff
-	url = https://github.com/CodebuffAI/codebuff.git
 [submodule "reference/context/beads"]
 	path = reference/context/beads
 	url = https://github.com/steveyegge/beads.git
@@ -3148,9 +3034,6 @@
 [submodule "packages/claude-mem"]
 	path = packages/claude-mem
 	url = https://github.com/robertpelloni/claude-mem
-[submodule "packages/skills/skills"]
-	path = packages/skills/skills
-	url = https://github.com/TheNoeTrevino/dotfiles
 [submodule "packages/mcp-directory/orchestration/blog.md"]
 	path = packages/mcp-directory/orchestration/blog.md
 	url = https://github.com/The-Pocket/PocketFlow-Tutorial-Cursor
