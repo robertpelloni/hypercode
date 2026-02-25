@@ -21,8 +21,11 @@ Conducted a deep analysis and documentation overhaul to synchronize the project 
 - **Submodule Dashboard**: Verified that `/dashboard/submodules` UI is fully implemented via Next.js Server Actions (`actions.ts`).
 - **Pulse Telemetry Dashboard**: Built `MetricsCharts.tsx` with Recharts and completely overhauled `SystemPulse.tsx`. It now streams live Node.js heap usage, CPU percentage, top MCP tools by error rate, and real-time raw event streams from `metricsRouter`, `logsRouter`, and `pulseRouter`.
 - **Agent Command Center**: Built `AgentPlayground.tsx` and scaffolded `/dashboard/agents` to wrap `agentRouter.ts` (chat, tool execution) completing the Agent State & Memory Viewer parity requirement alongside the existing `/dashboard/memory` page.
+- **Tools & Extensions Dashboard**: Scaffolded `/dashboard/mcp/tools` containing the Host Environment Terminal History component wired to `shellRouter.ts` and linking to existing `/dashboard/browser`, `/dashboard/marketplace` and `/dashboard/mcp/tool-sets`.
+- **Provider Auth & Billing Matrix**: Overhauled `/dashboard/billing/page.tsx` with Recharts and data tables spanning `costHistory`, `providerQuotas`, `modelPricing` and `fallbackChain` to provide deep observability into LLM routing logic. Added scaffolding to manage endpoints from `oauthRouter.ts`.
+- **Advanced Features & Auto-Drive**: Implemented `/dashboard/session/page.tsx` for granular control over the execution loop and system goals targeting `sessionRouter`. Modified the `Master Control Panel` (`mcp/page.tsx`) to surface the deeper advanced tools: Session Dashboard, Darwin Evolution (`darwinRouter`), and the Expert Squad (`expertRouter`).
 - **API Parity**: Verified `submoduleRouter.ts` is fully implemented in `@borg/core` using `SubmoduleService`.
-- **Completion**: Marked the requirements closed in `TODO.md` for "DevOps & Git", "Infrastructure & Health", and "Agent & Memory Wiring".
+- **Completion**: Marked all router namespace coverage gaps closed in `TODO.md` for Phase 64 Frontend Parity.
 
 ## 3. Recommended Next Steps
 1. Execute the remaining P0 tasks in `TODO.md` to finalize Phase 64 (Release Readiness).

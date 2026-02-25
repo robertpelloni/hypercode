@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@borg/ui";
 import { Button } from "@borg/ui";
-import { Loader2, Plus, Server, Wrench, Trash2, Upload, Box, RefreshCw, Terminal, Layers, Globe, Key, Shield, FileCode, Activity, Zap, Bot, Search, Sparkles, ExternalLink } from "lucide-react";
+import { Loader2, Plus, Server, Wrench, Trash2, Upload, Box, RefreshCw, Terminal, Layers, Globe, Key, Shield, FileCode, Activity, Zap, Bot, Search, Sparkles, ExternalLink, Cpu } from "lucide-react";
 import { DndContext, DragEndEvent, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -56,6 +56,10 @@ function safeStorageSet(key: string, value: string): void {
 
 const DEFAULT_PANEL_ORDER = [
     'autopilot',
+    'session',
+    'agent',
+    'experts',
+    'evolution',
     'namespaces',
     'endpoints',
     'api-keys',
@@ -65,7 +69,6 @@ const DEFAULT_PANEL_ORDER = [
     'ai-tools',
     'logs',
     'observability',
-    'agent',
     'search',
 ] as const;
 
@@ -78,6 +81,34 @@ const PANEL_META: Record<PanelId, { title: string; href: string; icon: any; desc
         icon: Sparkles,
         description: 'Launch governance and multi-model autopilot workflows.',
         accent: 'text-fuchsia-400',
+    },
+    'session': {
+        title: 'Execution Session',
+        href: '/dashboard/session',
+        icon: Activity,
+        description: 'Control state, Auto-Drive, and global executing goals.',
+        accent: 'text-blue-400',
+    },
+    'agent': {
+        title: 'Agent Playground',
+        href: '/dashboard/mcp/agent',
+        icon: Bot,
+        description: 'Test orchestration and agent tool usage.',
+        accent: 'text-pink-400',
+    },
+    'experts': {
+        title: 'Expert Squad',
+        href: '/dashboard/experts',
+        icon: Bot,
+        description: 'Deploy Researcher and Coder agents for deep tasks.',
+        accent: 'text-indigo-400',
+    },
+    'evolution': {
+        title: 'Evolution Engine',
+        href: '/dashboard/evolution',
+        icon: Sparkles,
+        description: 'Mutate and experiment with agent prompt configurations.',
+        accent: 'text-emerald-400',
     },
     'namespaces': {
         title: 'Namespaces',
@@ -122,10 +153,10 @@ const PANEL_META: Record<PanelId, { title: string; href: string; icon: any; desc
         accent: 'text-orange-400',
     },
     'ai-tools': {
-        title: 'AI Tools',
-        href: '/dashboard/mcp/ai-tools',
-        icon: Bot,
-        description: 'Audit tool inventory, providers, and API key readiness.',
+        title: 'Tools & Extensions',
+        href: '/dashboard/mcp/tools',
+        icon: Cpu,
+        description: 'Host shell audit logs, semantic browser, and marketplace.',
         accent: 'text-fuchsia-400',
     },
     'logs': {
@@ -141,13 +172,6 @@ const PANEL_META: Record<PanelId, { title: string; href: string; icon: any; desc
         icon: Zap,
         description: 'Track health signals and live metrics.',
         accent: 'text-indigo-400',
-    },
-    'agent': {
-        title: 'Agent Playground',
-        href: '/dashboard/mcp/agent',
-        icon: Bot,
-        description: 'Test orchestration and agent tool usage.',
-        accent: 'text-pink-400',
     },
     'search': {
         title: 'Search',
@@ -300,15 +324,14 @@ export default function MCPDashboard() {
                         Main dashboard interface for tools, subpages, and MCP operations
                         <span
                             title={COMPAT_MODE_HELP[compatMode]}
-                            className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-medium ${
-                            compatMode === 'native'
+                            className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-medium ${compatMode === 'native'
                                 ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10'
                                 : compatMode === 'bridge'
                                     ? 'border-blue-500/30 text-blue-300 bg-blue-500/10'
                                     : compatMode === 'fallback'
                                         ? 'border-amber-500/30 text-amber-300 bg-amber-500/10'
                                         : 'border-zinc-700 text-zinc-400 bg-zinc-900/70'
-                        }`}
+                                }`}
                         >
                             Data source: {compatMode}
                         </span>

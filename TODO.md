@@ -32,10 +32,10 @@
 > **Analysis Note (2026-02-24)**: The following backend routers were audited and found to lack comprehensive or active frontend representation in `apps/web/src/`. They must be wired to dashboards or widgets to achieve full "Reality Closure".
 - [x] **Agent & Memory Wiring**: `agentRouter.ts`, `agentMemoryRouter.ts`, `memoryRouter.ts` -> Build detailed Agent State & Memory Viewer.
 - [x] **Infrastructure & Health**: `serverHealthRouter.ts`, `logsRouter.ts`, `metricsRouter.ts` -> Build "Pulse" system telemetry view.
-- [ ] **Tools & Extensions**: `marketplaceRouter.ts`, `toolSetsRouter.ts`, `browserRouter.ts`, `shellRouter.ts` -> Enhance Tools Dashboard.
+- [x] **Tools & Extensions**: `marketplaceRouter.ts`, `toolSetsRouter.ts`, `browserRouter.ts`, `shellRouter.ts` -> Enhance Tools Dashboard.
 - [x] **DevOps & Git**: `gitRouter.ts`, `submoduleRouter.ts`, `symbolsRouter.ts` -> Build Submodule & Git Operations Dashboard.
-- [ ] **Authentication & Billing**: `apiKeysRouter.ts`, `oauthRouter.ts`, `billingRouter.ts` -> Build comprehensive Provider Auth & Billing Matrix.
-- [ ] **Advanced Features**: `darwinRouter.ts` (Evolution), `expertRouter.ts`, `policiesRouter.ts`, `savedScriptsRouter.ts`, `sessionRouter.ts`.
+- [x] **Authentication & Billing**: `apiKeysRouter.ts`, `oauthRouter.ts`, `billingRouter.ts` -> Build comprehensive Provider Auth & Billing Matrix.
+- [x] **Advanced Features**: `darwinRouter.ts` (Evolution), `expertRouter.ts`, `policiesRouter.ts`, `savedScriptsRouter.ts`, `sessionRouter.ts`.
 
 ### 3) UI TODO/hardcoded fallback cleanup
 - [ ] **Resolve Director endpoint test TODO**
