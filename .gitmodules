@@ -3058,3 +3058,6 @@
 [submodule "external/memory/memory-opensource"]
 	path = external/memory/memory-opensource
 	url = https://github.com/Papr-ai/memory-opensource
+[submodule "external/deer-flow"]
+	path = external/deer-flow
+	url = https://github.com/bytedance/deer-flow
