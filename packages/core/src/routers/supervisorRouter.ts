@@ -17,17 +17,57 @@ export const supervisorRouter = t.router({
         goal: z.string(),
         maxSteps: z.number().default(20)
     })).mutation(async ({ input }) => {
+        // Phase 76 Integration: Inject OpenCode's advanced file-watching and context synthesis logic
+        try {
+            const res = await fetch(`http://localhost:3847/api/sessions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // opencode-autopilot session manager accepts task + options
+                body: JSON.stringify({
+                    task: { description: input.goal },
+                    workingDirectory: process.cwd()
+                })
+            });
+            if (res.ok) {
+                const sessionData = await res.json();
+
+                // Start the session
+                await fetch(`http://localhost:3847/api/sessions/${sessionData.id}/start`, {
+                    method: 'POST'
+                });
+                return {
+                    success: true,
+                    sessionId: sessionData.id,
+                    message: "Goal successfully delegated to OpenCode Autopilot."
+                };
+            }
+        } catch (e: any) {
+            console.warn(`[Supervisor] OpenCode Autopilot unavailable (${e.message}). Falling back to native supervisor.`);
+        }
+
         const server = getMcpServer();
         return server.supervisor.supervise(input.goal, input.maxSteps);
     }),
 
     /** Get current supervisor status - active tasks, workers, queue depth */
     status: t.procedure.query(async () => {
+        // Attempt to aggregate stats from Opencode Autopilot
+        let opencodeActive = 0;
+        try {
+            const res = await fetch(`http://localhost:3847/api/health`);
+            if (res.ok) {
+                const data = await res.json();
+                opencodeActive = data.sessions?.active || 0;
+            }
+        } catch (e) {
+            // Ignore if down
+        }
+
         const server = getMcpServer();
         const sup = server.supervisor;
         return {
             isActive: sup.isActive?.() ?? false,
-            activeWorkers: sup.getActiveWorkers?.() ?? [],
+            activeWorkers: (sup.getActiveWorkers?.() ?? []).concat(opencodeActive > 0 ? [`OpenCode (${opencodeActive})`] : []),
             queueDepth: sup.getQueueDepth?.() ?? 0,
             lastActivity: sup.getLastActivity?.() ?? null,
             totalTasksCompleted: sup.getTotalCompleted?.() ?? 0,
@@ -39,9 +79,24 @@ export const supervisorRouter = t.router({
         limit: z.number().min(1).max(100).default(20),
         status: z.enum(['all', 'pending', 'active', 'completed', 'failed']).default('all'),
     }).optional()).query(async ({ input }) => {
+        let opencodeTasks: any[] = [];
+        try {
+            const res = await fetch(`http://localhost:3847/api/sessions`);
+            if (res.ok) {
+                const data = await res.json();
+                opencodeTasks = data.map((d: any) => ({
+                    id: d.id,
+                    description: d.currentTask || 'OpenCode Session',
+                    status: d.status === 'running' ? 'active' : d.status
+                }));
+            }
+        } catch (e) { }
+
         const server = getMcpServer();
         const sup = server.supervisor;
-        const allTasks = sup.listTasks?.() ?? [];
+        let allTasks = sup.listTasks?.() ?? [];
+        allTasks = [...allTasks, ...opencodeTasks];
+
         const filtered = input?.status === 'all'
             ? allTasks
             : allTasks.filter((t: unknown) => (t as SupervisorTaskRuntime).status === input?.status);
@@ -52,6 +107,13 @@ export const supervisorRouter = t.router({
     cancel: t.procedure.input(z.object({
         taskId: z.string()
     })).mutation(async ({ input }) => {
+        if (input.taskId.startsWith('session-')) {
+            try {
+                const res = await fetch(`http://localhost:3847/api/sessions/${input.taskId}/stop`, { method: 'POST' });
+                if (res.ok) return { success: true, taskId: input.taskId };
+            } catch (e) { }
+        }
+
         const server = getMcpServer();
         const sup = server.supervisor;
         if (sup.cancelTask) {

@@ -1,6 +1,17 @@
-# Handoff — Phase 74: Frontend Type Closure (v2.7.32)
+# Handoff — Phase 75: Doc Sync & DeerFlow Fix (v2.7.33)
 
-**Date:** 2026-02-27 | **Commit:** `fc31c511` → `main`
+**Date:** 2026-02-27 | **Commit:** `105eaed3` → `main`
+
+### Summary
+- **DeerFlow Port Fix**: Added `--filter=!deer-flow-frontend` to the root `pnpm run dev` script. DeerFlow was running `next dev` natively, competing for port 3000 and overriding the core Borg Dashboard.
+- **Doc Sync**: Updated `DEPLOY.md`, `MEMORY.md`, and `AGENTS.md` to reflect v2.7.33 reality (Multi-target Dockerfile tracking, Phase 70-71 Memory additions).
+- **Stub Audit**: Verified all remaining TODO/STUB paths in the P0 codebase. Zero critical blockers remain.
+- **Phase 74**: *(Previous step)* Scored zero errors on `tsc --noEmit` across both `packages/core` and `apps/web`.
+
+### Next Steps
+- Verify the local startup sequence with `pnpm run check:dev-readiness` in strict mode.
+
+---
 
 ### Summary
 Fixed all 11 TS errors in `apps/web`. Created `PageHeader.tsx`, `types/nav.ts`, `types/heroicons.d.ts`. Migrated `isLoading` → `isPending` (tRPC v11 / React Query v5). Rebuilt `@borg/core` dist types.

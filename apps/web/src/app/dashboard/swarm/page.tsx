@@ -8,11 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { trpc } from '@/utils/trpc';
 import {
-    UsersIcon,
-    ScaleIcon,
-    ArrowsRightLeftIcon,
-    PlayIcon
-} from '@heroicons/react/24/outline';
+    Users as UsersIcon,
+    Scale as ScaleIcon,
+    ArrowRightLeft as ArrowsRightLeftIcon,
+    Play as PlayIcon
+} from 'lucide-react';
 
 export default function SwarmDashboard() {
     const [activeTab, setActiveTab] = useState<'swarm' | 'debate' | 'consensus'>('swarm');

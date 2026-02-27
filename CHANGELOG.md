@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.34] - 2026-02-27
+
+### Added
+- **Phase 76: Deep Ecosystem Integration (Open-WebUI)**:
+  - Added `external/open-webui` as the 7th submodule, integrating the robust conversational interface natively into the workspace.
+  - **Frontend Sync**: Scaffolded `/dashboard/webui` Next.js page, embedding the interface into Borg's primary navigation system (`nav-config.ts`), marking it as a top-level native integration tab. 
+  - **Backend Sync**: Created `openWebUIRouter.ts` and exposed it via the main `AppRouter`, proxying native tooling and swarm capabilities into the WebUI backend architecture.
+
+- **Phase 6: React Native Mobile App (Native PWA Shell)**:
+  - Initialized an Expo React Native wrapper project via `npx create-expo-app` in `apps/mobile`. 
+  - Wired `react-native-webview` with dynamic screen padding to natively mount the Borg web dashboard onto iOS and Android platforms. 
+
+### Changed
+- **Version Bump**: Incremented version to 2.7.34 to mark the completion of the baseline submodule integrations and mobile scaffolding.
+
 ## [2.7.33] - 2026-02-27
 
 ### Updated

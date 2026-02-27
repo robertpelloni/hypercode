@@ -15,6 +15,7 @@ export const MCPAreas: NavArea[] = [
         label: "Core System",
         description: "Foundational subsystems and metrics",
         items: [
+            { id: "webui", label: "Open-WebUI", path: "/dashboard/webui", icon: GlobeAltIcon },
             { id: "pulse", label: "Pulse", path: "/dashboard", icon: CpuChipIcon },
             { id: "tools", label: "Host Terminal", path: "/dashboard/mcp/tools", icon: CommandLineIcon },
             { id: "browser", label: "Semantic Browser", path: "/dashboard/browser", icon: GlobeAltIcon },

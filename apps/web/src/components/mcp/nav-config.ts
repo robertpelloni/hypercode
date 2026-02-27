@@ -186,6 +186,18 @@ export const META_MCP_NAV: NavItem[] = [
 
 export const INTEGRATIONS_NAV: NavItem[] = [
     {
+        title: "Open-WebUI",
+        href: "/dashboard/webui",
+        icon: Bot,
+        variant: "default",
+    },
+    {
+        title: "MetaMCP UI",
+        href: "/dashboard/metamcp",
+        icon: Network,
+        variant: "ghost",
+    },
+    {
         title: "OpenCode Autopilot",
         href: "/dashboard/autopilot",
         icon: Sparkles,
@@ -200,6 +212,12 @@ export const INTEGRATIONS_NAV: NavItem[] = [
     {
         title: "DeerFlow Harness",
         href: "/dashboard/deer-flow",
+        icon: Network,
+        variant: "ghost",
+    },
+    {
+        title: "Claude-Mem",
+        href: "/dashboard/memory/claude-mem",
         icon: Network,
         variant: "ghost",
     },
@@ -235,6 +253,7 @@ export const MAIN_DASHBOARD_NAV: NavItem[] = [
     { title: "Pulse", href: "/dashboard/pulse", icon: Radio, variant: "ghost" },
     { title: "Reader", href: "/dashboard/reader", icon: BookMarked, variant: "ghost" },
     { title: "Architecture", href: "/dashboard/architecture", icon: Building2, variant: "ghost" },
+    { title: "Infrastructure", href: "/dashboard/infrastructure", icon: Server, variant: "ghost" },
     { title: "Evolution", href: "/dashboard/evolution", icon: Sparkles, variant: "ghost" },
     { title: "Config", href: "/dashboard/config", icon: Cog, variant: "ghost" },
     { title: "Chronicle", href: "/dashboard/chronicle", icon: ScrollText, variant: "ghost" },

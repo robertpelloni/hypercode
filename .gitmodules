@@ -3061,3 +3061,6 @@
 [submodule "external/deer-flow"]
 	path = external/deer-flow
 	url = https://github.com/bytedance/deer-flow
+[submodule "external/open-webui"]
+	path = external/open-webui
+	url = https://github.com/open-webui/open-webui

@@ -1,1 +1,4 @@
-{}
+{
+  "/dashboard/mcp/page": "app/dashboard/mcp/page.js",
+  "/dashboard/autopilot/page": "app/dashboard/autopilot/page.js"
+}

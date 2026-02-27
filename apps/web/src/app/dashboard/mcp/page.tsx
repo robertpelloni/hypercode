@@ -75,7 +75,14 @@ const DEFAULT_PANEL_ORDER = [
 
 type PanelId = (typeof DEFAULT_PANEL_ORDER)[number];
 
-const PANEL_META: Record<PanelId, { title: string; href: string; icon: any; description: string; accent: string }> = {
+const PANEL_META: Record<PanelId | 'open-webui', { title: string; href: string; icon: any; description: string; accent: string }> = {
+    'open-webui': {
+        title: 'Open-WebUI',
+        href: '/dashboard/webui',
+        icon: Bot,
+        description: 'Ultimate unified chat interface and LLM aggregation.',
+        accent: 'text-blue-400',
+    },
     'autopilot': {
         title: 'OpenCode Autopilot',
         href: '/dashboard/autopilot',
