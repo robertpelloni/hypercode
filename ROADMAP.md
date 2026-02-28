@@ -158,3 +158,8 @@
     - [x] Define `SwarmProtocol` for capability queries and task offers
     - [x] Reactivate P2P routing in `SpecializedAgent.ts`
     - [x] Refactor `SwarmOrchestrator` to dispatch tasks across the mesh
+- [x] **Phase 78: Mesh Network Realization (Redis)**
+    - [x] Install `ioredis` in `@borg/core`
+    - [x] Upgrade `MeshService.ts` to bridge `globalMeshBus` over Redis Pub/Sub
+    - [x] Add `REDIS_URL` environment configuration
+    - [x] Support multi-process and multi-container Swarm dispatch

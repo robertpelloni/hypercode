@@ -1,3 +1,13 @@
+# Handoff — Phase 78: Mesh Network Realization (v2.7.38)
+
+**Date:** 2026-02-28 | **Commit:** pending → `main`
+
+### Summary
+- **Redis Integration**: Upgraded `@borg/core` with `ioredis`. Refactored `MeshService.ts` to natively connect to standard `REDIS_URL` connection strings when available in the environment variables.
+- **Echo Storm Prevention**: Migrated the single `mesh_message` routing pipe inside `MeshService` into directional streams (`mesh_message_inbound` and `mesh_message_outbound`) to ensure outbound traffic sent to Redis isn't echoed infinitely back into local memory structures.
+- **Graceful Degradation**: Retained legacy local behavior. If no `REDIS_URL` is parsed, standard single-node fallback bridges `mesh_message_outbound` to `inbound` synchronously, avoiding system failures.
+- **Verification**: Zero TypeScript anomalies remaining. Checked `core` typings heavily via strict emission testing constraints. Version officially bumped to `2.7.38`.
+
 # Handoff — Phase 77: Autonomous Agent Mesh Network (v2.7.37)
 
 **Date:** 2026-02-28 | **Commit:** pending → `main`

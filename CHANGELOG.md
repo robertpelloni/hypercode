@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.38] - 2026-02-28
+
+### Added
+- **Phase 78: Mesh Network Realization (Redis)**: Migrated `MeshService.ts` from a local-only simulation to a distributed Pub/Sub architecture using `ioredis`. Local node processes now detect standard `REDIS_URL` secrets to fuse instances to a `borg:swarm:mesh` channel, enabling swarm logic across server instances. Developed dual-topic stream architecture natively blocking pub/sub echo storms.
+
 ## [2.7.37] - 2026-02-28
 
 ### Added

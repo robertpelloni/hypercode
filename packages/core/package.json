@@ -63,6 +63,7 @@
     "gray-matter": "^4.0.3",
     "hyperswarm": "^4.16.0",
     "ignore": "^7.0.5",
+    "ioredis": "^5.10.0",
     "jsdom": "^27.4.0",
     "mammoth": "^1.6.0",
     "nanoid": "^5.1.6",

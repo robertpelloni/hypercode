@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import crypto from 'crypto';
+import { Redis } from 'ioredis';
 
 export enum SwarmMessageType {
     CAPABILITY_QUERY = 'CAPABILITY_QUERY',
@@ -32,6 +33,66 @@ export interface SwarmMessage {
 const globalMeshBus = new EventEmitter();
 globalMeshBus.setMaxListeners(100);
 
+let redisSubscriber: Redis | null = null;
+let redisPublisher: Redis | null = null;
+const REDIS_CHANNEL = 'borg:swarm:mesh';
+
+// Initialize Redis if REDIS_URL is provided in the environment
+if (process.env.REDIS_URL) {
+    try {
+        redisSubscriber = new Redis(process.env.REDIS_URL, { lazyConnect: true });
+        redisPublisher = new Redis(process.env.REDIS_URL, { lazyConnect: true });
+
+        Promise.all([redisSubscriber.connect(), redisPublisher.connect()]).then(() => {
+            console.log('[MeshService] 🟢 Connected to Redis Mesh Bus');
+
+            redisSubscriber!.subscribe(REDIS_CHANNEL, (err: any) => {
+                if (err) console.error('[MeshService] 🔴 Redis Subscribe Error:', err);
+            });
+
+            // Listen for mesh messages from the wider distributed swarm
+            redisSubscriber!.on('message', (channel: string, message: string) => {
+                if (channel === REDIS_CHANNEL) {
+                    try {
+                        const parsed: SwarmMessage = JSON.parse(message);
+                        // Forward the remote message to all local MeshService instances
+                        globalMeshBus.emit('mesh_message_inbound', parsed);
+                    } catch (e: any) {
+                        console.error('[MeshService] Failed to parse Redis message', e);
+                    }
+                }
+            });
+
+            // Listen to messages emitted by local MeshService instances and blast them to the wider swarm
+            globalMeshBus.on('mesh_message_outbound', (msg: SwarmMessage) => {
+                redisPublisher!.publish(REDIS_CHANNEL, JSON.stringify(msg)).catch((e: any) => {
+                    console.error('[MeshService] Failed to publish message to Redis', e);
+                });
+            });
+
+        }).catch((err: any) => {
+            console.error('[MeshService] 🟡 Redis connection failed, falling back to local-only Mesh.', err.message);
+            setupLocalFallback();
+        });
+    } catch (e: any) {
+        console.warn(`[MeshService] 🟡 Redis initialization error: ${e.message}`);
+        setupLocalFallback();
+    }
+} else {
+    // If no Redis URL is given, run entirely locally across the single Node process
+    setupLocalFallback();
+}
+
+/**
+ * Routes outbound emissions straight back into inbound listeners.
+ * Emulates the mesh network internally if there is no Redis backend present.
+ */
+function setupLocalFallback() {
+    globalMeshBus.on('mesh_message_outbound', (msg: SwarmMessage) => {
+        globalMeshBus.emit('mesh_message_inbound', msg);
+    });
+}
+
 export class MeshService extends EventEmitter {
     public readonly nodeId: string;
     private readonly knownNodes: Set<string> = new Set();
@@ -41,8 +102,8 @@ export class MeshService extends EventEmitter {
         super();
         this.nodeId = crypto.randomUUID();
 
-        // Listen to global network traffic
-        globalMeshBus.on('mesh_message', this.handleGlobalMessage.bind(this));
+        // Listen to global inbound network traffic
+        globalMeshBus.on('mesh_message_inbound', this.handleGlobalMessage.bind(this));
 
         this.startHeartbeat();
     }
@@ -74,7 +135,7 @@ export class MeshService extends EventEmitter {
             payload,
             timestamp: Date.now()
         };
-        globalMeshBus.emit('mesh_message', msg);
+        globalMeshBus.emit('mesh_message_outbound', msg);
     }
 
     public sendDirect(targetNodeId: string, type: SwarmMessageType, payload: unknown) {
@@ -86,7 +147,7 @@ export class MeshService extends EventEmitter {
             payload,
             timestamp: Date.now()
         };
-        globalMeshBus.emit('mesh_message', msg);
+        globalMeshBus.emit('mesh_message_outbound', msg);
     }
 
     public sendResponse(originalMsg: SwarmMessage, type: SwarmMessageType, payload: unknown) {
@@ -99,7 +160,7 @@ export class MeshService extends EventEmitter {
             payload,
             timestamp: Date.now()
         };
-        globalMeshBus.emit('mesh_message', response);
+        globalMeshBus.emit('mesh_message_outbound', response);
     }
 
     public getPeers(): string[] {
@@ -108,7 +169,7 @@ export class MeshService extends EventEmitter {
 
     public destroy() {
         if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
-        globalMeshBus.off('mesh_message', this.handleGlobalMessage.bind(this));
+        globalMeshBus.off('mesh_message_inbound', this.handleGlobalMessage.bind(this));
         this.removeAllListeners();
     }
 }
