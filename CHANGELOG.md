@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.37] - 2026-02-28
+
+### Added
+- **Phase 77: Autonomous Agent Mesh Network**: Implemented `MeshService.ts` to act as a decentralized P2P event bus, paving the way for cross-node multi-agent Swarm deployments.
+- **SwarmProtocol**: Introduced typed JSON-RPC style `SwarmMessage` interface mapping capability queries, task offers, and remote execution results.
+- **Mesh Swarm Dispatcher**: Refactored `SwarmOrchestrator.executeTask` to broadcast generic `TASK_OFFER` events onto the Mesh Network, waiting for any capable peer agent before falling back to local simulation.
+- **SpecializedAgent Reactivation**: Fully restored `MeshService` capability routing within `SpecializedAgent.ts`, removing hardcoded stubs.
+
 ## [2.7.36] - 2026-02-28
 
 ### Added

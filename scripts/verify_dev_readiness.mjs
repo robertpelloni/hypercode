@@ -40,9 +40,9 @@ const SERVICE_CHECKS = [
   },
 ];
 
-const REQUEST_TIMEOUT_MS = Number(process.env.READINESS_TIMEOUT_MS || 2500);
-const REQUEST_RETRIES = Number(process.env.READINESS_RETRIES || 2);
-const RETRY_DELAY_MS = Number(process.env.READINESS_RETRY_DELAY_MS || 500);
+const REQUEST_TIMEOUT_MS = Number(process.env.READINESS_TIMEOUT_MS || 10000);
+const REQUEST_RETRIES = Number(process.env.READINESS_RETRIES || 5);
+const RETRY_DELAY_MS = Number(process.env.READINESS_RETRY_DELAY_MS || 2000);
 const strictJsonMode = process.argv.includes("--strict-json");
 const softMode = process.argv.includes("--soft");
 const jsonMode = process.argv.includes("--json") || strictJsonMode;

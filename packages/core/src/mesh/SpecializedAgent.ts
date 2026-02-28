@@ -1,5 +1,4 @@
-// import { MeshService } from '../services/MeshService.js';
-// import { SwarmMessage, SwarmMessageType } from './SwarmProtocol.js';
+import { MeshService, SwarmMessage, SwarmMessageType } from './MeshService.js';
 
 interface TaskOffer {
     task: string;
@@ -32,22 +31,20 @@ function parseTaskOffer(payload: unknown): TaskOffer | null {
 }
 
 export abstract class SpecializedAgent {
-    // protected mesh: MeshService;
+    protected mesh: MeshService;
     public nodeId: string;
     public role: string;
     protected capabilities: string[] = [];
 
     constructor(role: string, capabilities: string[] = []) {
-        // this.mesh = new MeshService();
-        // this.nodeId = this.mesh.nodeId;
-        this.nodeId = 'local';
+        this.mesh = new MeshService();
+        this.nodeId = this.mesh.nodeId;
         this.role = role;
         this.capabilities = capabilities;
 
-        // this.initialize();
+        this.initialize();
     }
 
-    /*
     private initialize() {
         console.log(`[${this.role}] 🤖 Initializing Specialized Agent (Node: ${this.nodeId.slice(0, 8)}...)`);
 
@@ -78,16 +75,7 @@ export abstract class SpecializedAgent {
 
                     try {
                         const result = await this.handleTask(offer);
-                        // Send Result as a Direct Message (not response, as RPC might have timed out, but usually response is better if within timeout)
-                        // If the Director is waiting on `request()`, it expects a response with same ID.
-                        // However, heavy tasks take time. RPC timeout is 10s.
-                        // If task takes longer, Director might have timed out.
-                        // Ideally, we send TASK_ACCEPT immediately (RPC resolved).
-                        // Then later sending TASK_RESULT as a NEW message or via a long-running stream?
-
-                        // For Phase 61, let's assume we send RESULT as a separate message `TASK_RESULT`.
-                        // The Director should listen for `TASK_RESULT`.
-
+                        // Send Result as a Direct Message
                         this.mesh.sendDirect(msg.sender, SwarmMessageType.TASK_RESULT, {
                             originalTaskId: msg.id,
                             result
@@ -102,7 +90,6 @@ export abstract class SpecializedAgent {
             }
         });
     }
-    */
 
     public canHandle(offer: TaskOffer): boolean {
         if (offer.requirements) {
@@ -117,6 +104,6 @@ export abstract class SpecializedAgent {
     protected abstract handleTask(offer: TaskOffer): Promise<unknown>;
 
     public async destroy() {
-        // await this.mesh.destroy();
+        this.mesh.destroy();
     }
 }

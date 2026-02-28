@@ -227,6 +227,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/dashboard/infrastructure/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/dashboard/infrastructure">> = Specific
+  const handler = {} as typeof import("../../../src/app/dashboard/infrastructure/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/dashboard/inspector/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/dashboard/inspector">> = Specific
@@ -470,10 +479,28 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/dashboard/memory/claude-mem/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/dashboard/memory/claude-mem">> = Specific
+  const handler = {} as typeof import("../../../src/app/dashboard/memory/claude-mem/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/dashboard/memory/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/dashboard/memory">> = Specific
   const handler = {} as typeof import("../../../src/app/dashboard/memory/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/dashboard/metamcp/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/dashboard/metamcp">> = Specific
+  const handler = {} as typeof import("../../../src/app/dashboard/metamcp/page.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

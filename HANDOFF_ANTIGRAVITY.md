@@ -1,3 +1,15 @@
+# Handoff — Phase 77: Autonomous Agent Mesh Network (v2.7.37)
+
+**Date:** 2026-02-28 | **Commit:** pending → `main`
+
+### Summary
+- **MeshService Implementation**: Created `MeshService.ts` utilizing a `globalMeshBus` EventEmitter to simulate zero-dependency inter-process communication as the foundation for the P2P Mesh Network.
+- **SwarmProtocol Defined**: Established structured `SwarmMessage` and `SwarmMessageType` typings mapping remote task assignments, capability queries, and result propagation.
+- **Agent Reactivation**: Uncommented and restored `MeshService` dependency within `SpecializedAgent.ts`, enabling agents to listen for network events, process assigned `TASK_OFFER` events based on their role/capabilities, and stream `TASK_RESULT` telemetry back to the network.
+- **Orchestrator Dispatch**: Upgraded `SwarmOrchestrator.executeTask` to broadcast `TASK_OFFER` assignments onto the P2P Mesh Network dynamically. Integrated graceful 120s timeout mechanisms and a fallback to local execution via the Autopilot Council session runner.
+- **Release Verification**: Confirmed strict typings pass completely via `tsc --noEmit` across `@borg/core`.
+- **Status Update**: Closed Phase 77 and bumped canonical version arrays to `v2.7.37`.
+
 # Handoff — Phase 76: MetaMCP Backend Fix & Full Dev Readiness (v2.7.35)
 
 **Date:** 2026-02-28 | **Commit:** pending → `main`

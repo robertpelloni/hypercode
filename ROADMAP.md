@@ -153,3 +153,8 @@
     - [x] Link via `DeerFlowBridgeService` HTTP client + TRPC router procedures
     - [x] Build `/dashboard/deer-flow` and inject into `mcp` array
 
+- [x] **Phase 77: Autonomous Agent Mesh Network**
+    - [x] Create decentralized `MeshService.ts` for cross-node messaging
+    - [x] Define `SwarmProtocol` for capability queries and task offers
+    - [x] Reactivate P2P routing in `SpecializedAgent.ts`
+    - [x] Refactor `SwarmOrchestrator` to dispatch tasks across the mesh

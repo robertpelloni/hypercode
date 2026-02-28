@@ -1,8 +1,8 @@
 {
-  "..\\..\\..\\node_modules\\.pnpm\\next@16.1.3_@babel+core@7.2_e15b9e807161b3c3b9df67784bf1bf0c\\node_modules\\next\\dist\\client\\dev\\hot-reloader\\app\\web-socket.js -> @vercel/turbopack-ecmascript-runtime/browser/dev/hmr-client/hmr-client.ts": {
-    "id": "..\\..\\..\\node_modules\\.pnpm\\next@16.1.3_@babel+core@7.2_e15b9e807161b3c3b9df67784bf1bf0c\\node_modules\\next\\dist\\client\\dev\\hot-reloader\\app\\web-socket.js -> @vercel/turbopack-ecmascript-runtime/browser/dev/hmr-client/hmr-client.ts",
+  "..\\..\\..\\node_modules\\.pnpm\\next@16.1.3_@babel+core@7.2_57777017c5f828ccab697a9f24550b55\\node_modules\\next\\dist\\client\\dev\\hot-reloader\\app\\web-socket.js -> @vercel/turbopack-ecmascript-runtime/browser/dev/hmr-client/hmr-client.ts": {
+    "id": "..\\..\\..\\node_modules\\.pnpm\\next@16.1.3_@babel+core@7.2_57777017c5f828ccab697a9f24550b55\\node_modules\\next\\dist\\client\\dev\\hot-reloader\\app\\web-socket.js -> @vercel/turbopack-ecmascript-runtime/browser/dev/hmr-client/hmr-client.ts",
     "files": [
-      "static/chunks/_app-pages-browser_node_modules_pnpm_next_16_1_3__babel_core_7_2_e15b9e807161b3c3b9df67784bf1-49013b.js"
+      "static/chunks/_app-pages-browser_node_modules_pnpm_next_16_1_3__babel_core_7_2_57777017c5f828ccab697a9f2455-fb9144.js"
     ]
   },
   "..\\..\\..\\packages\\ui\\src\\components\\GraphPanel.tsx -> react-force-graph-2d": {

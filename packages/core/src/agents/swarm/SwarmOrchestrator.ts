@@ -14,6 +14,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { EventEmitter } from 'events';
+import { MeshService, SwarmMessageType, SwarmMessage } from '../../mesh/MeshService.js';
 
 export interface SwarmTask {
     id: string;
@@ -37,6 +38,7 @@ export class SwarmOrchestrator extends EventEmitter {
     private tasks: Map<string, SwarmTask> = new Map();
     private config: Required<Pick<SwarmConfig, 'maxConcurrency' | 'defaultModel' | 'timeoutMs'>>;
     private opencodeUrl: string;
+    private mesh: MeshService;
 
     constructor(config: SwarmConfig = {}) {
         super();
@@ -46,6 +48,7 @@ export class SwarmOrchestrator extends EventEmitter {
             timeoutMs: config.timeoutMs || 120000
         };
         this.opencodeUrl = config.opencodeUrl || 'http://localhost:3847';
+        this.mesh = new MeshService();
     }
 
     /**
@@ -161,9 +164,9 @@ export class SwarmOrchestrator extends EventEmitter {
     }
 
     /**
-     * Execute a single task by delegating to the Autopilot server.
-     * Creates a session, sends the task description, and polls for completion.
-     * Falls back to a local timeout-based stub if the server is unreachable.
+     * Execute a single task by broadcasting to the Mesh Network.
+     * If an agent accepts and completes it, the result is captured.
+     * Falls back to a local stub if the mesh fails or times out.
      */
     private async executeTask(task: SwarmTask): Promise<void> {
         task.status = 'running';
@@ -171,67 +174,49 @@ export class SwarmOrchestrator extends EventEmitter {
         this.emit('task:started', task);
 
         try {
-            // Attempt to delegate to the Autopilot server for real LLM execution
-            const sessionRes = await fetch(`${this.opencodeUrl}/api/sessions`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    task: { description: task.description },
-                    workingDirectory: process.cwd()
-                }),
-                signal: AbortSignal.timeout(10000)
+            console.log(`[SwarmOrchestrator] 🌐 Broadcasting TASK_OFFER to Mesh Network: "${task.description.slice(0, 30)}..."`);
+
+            // Broadcast task to the Mesh
+            this.mesh.broadcast(SwarmMessageType.TASK_OFFER, {
+                task: task.description,
+                requirements: [] // Could be inferred from the task text
             });
 
-            if (sessionRes.ok) {
-                const sessionData = await sessionRes.json();
-                task.sessionId = sessionData.id;
-                console.log(`[Worker] Delegated task "${task.description}" to session ${sessionData.id}`);
+            // Wait for a TASK_RESULT from any agent
+            const resultPromise = new Promise<{ result?: any, error?: string }>((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    this.mesh.off('message', handler);
+                    reject(new Error('Mesh execution timed out'));
+                }, this.config.timeoutMs);
 
-                // Start the session's execution loop
-                await fetch(`${this.opencodeUrl}/api/sessions/${sessionData.id}/start`, {
-                    method: 'POST',
-                    signal: AbortSignal.timeout(10000)
-                });
-
-                // Poll session status until completion or timeout
-                const deadline = Date.now() + this.config.timeoutMs;
-                while (Date.now() < deadline) {
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-
-                    try {
-                        const statusRes = await fetch(
-                            `${this.opencodeUrl}/api/sessions/${sessionData.id}`,
-                            { signal: AbortSignal.timeout(5000) }
-                        );
-                        if (statusRes.ok) {
-                            const status = await statusRes.json();
-                            if (status.status === 'completed' || status.status === 'idle') {
-                                task.result = status.output || status.result || `Completed via autopilot session ${sessionData.id}`;
-                                task.status = 'completed';
-                                this.emit('task:completed', task);
-                                return;
-                            }
-                            if (status.status === 'failed' || status.status === 'error') {
-                                throw new Error(status.error || `Session ${sessionData.id} failed`);
-                            }
-                            // Still running — continue polling
+                const handler = (msg: SwarmMessage) => {
+                    if (msg.type === SwarmMessageType.TASK_RESULT) {
+                        const payload = msg.payload as any;
+                        if (payload.originalTaskId && msg.target === this.mesh.nodeId) { // Verify it's for us
+                            clearTimeout(timeout);
+                            this.mesh.off('message', handler);
+                            resolve({ result: payload.result, error: payload.error });
                         }
-                    } catch (pollErr: any) {
-                        // Polling error — session may have died
-                        if (pollErr.name === 'AbortError') continue;
-                        throw pollErr;
                     }
-                }
+                };
+                this.mesh.on('message', handler);
+            });
 
-                // Timed out waiting for session completion
-                task.result = `Task delegated to session ${sessionData.id} (execution ongoing, timed out waiting)`;
-                task.status = 'completed';
-                this.emit('task:completed', task);
-                return;
+            const meshResult = await resultPromise;
+
+            if (meshResult.error) {
+                throw new Error(meshResult.error);
             }
+
+            task.result = typeof meshResult.result === 'string'
+                ? meshResult.result
+                : JSON.stringify(meshResult.result, null, 2);
+            task.status = 'completed';
+            this.emit('task:completed', task);
+            return;
+
         } catch (err: any) {
-            // Autopilot server unreachable — log and fall through to local stub
-            console.warn(`[Worker] Autopilot delegation failed for "${task.description}": ${err.message}`);
+            console.warn(`[SwarmOrchestrator] Mesh delegation failed for "${task.description}": ${err.message}. Falling back to local execution.`);
         }
 
         // Local fallback: mark as completed with a note that no LLM was used
@@ -239,5 +224,9 @@ export class SwarmOrchestrator extends EventEmitter {
         task.result = `[Local fallback] Task "${task.description}" requires manual execution — autopilot unavailable`;
         task.status = 'completed';
         this.emit('task:completed', task);
+    }
+
+    public destroy() {
+        this.mesh.destroy();
     }
 }

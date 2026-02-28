@@ -1,45 +1,5 @@
 {
-  "node": {
-    "00835309f8d3b4e35912f2c7544b9548a409d108f5": {
-      "workers": {
-        "app/dashboard/submodules/page": {
-          "moduleId": "(action-browser)/../../node_modules/.pnpm/next@16.1.3_@babel+core@7.2_e15b9e807161b3c3b9df67784bf1bf0c/node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Chyper%5C%5Cworkspace%5C%5Cborg%5C%5Capps%5C%5Cweb%5C%5Csrc%5C%5Capp%5C%5Cdashboard%5C%5Csubmodules%5C%5Cactions.ts%22%2C%5B%7B%22id%22%3A%2200835309f8d3b4e35912f2c7544b9548a409d108f5%22%2C%22exportedName%22%3A%22fetchUserLinksAction%22%2C%22filename%22%3A%22..%2FC%3A%5C%5CUsers%5C%5Chyper%5C%5Cworkspace%5C%5Cborg%5C%5Capps%5C%5Cweb%5C%5Csrc%5C%5Capp%5C%5Cdashboard%5C%5Csubmodules%5C%5Cactions.ts%22%7D%2C%7B%22id%22%3A%2200d056a96e71e15f4163f81c966036c61f93a5ac92%22%2C%22exportedName%22%3A%22fetchSubmodulesAction%22%2C%22filename%22%3A%22..%2FC%3A%5C%5CUsers%5C%5Chyper%5C%5Cworkspace%5C%5Cborg%5C%5Capps%5C%5Cweb%5C%5Csrc%5C%5Capp%5C%5Cdashboard%5C%5Csubmodules%5C%5Cactions.ts%22%7D%2C%7B%22id%22%3A%2200f0b1f0ec9ee253e0cf09342e146769f6f1323c21%22%2C%22exportedName%22%3A%22healSubmodulesAction%22%2C%22filename%22%3A%22..%2FC%3A%5C%5CUsers%5C%5Chyper%5C%5Cworkspace%5C%5Cborg%5C%5Capps%5C%5Cweb%5C%5Csrc%5C%5Capp%5C%5Cdashboard%5C%5Csubmodules%5C%5Cactions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
-          "async": false
-        }
-      },
-      "layer": {
-        "app/dashboard/submodules/page": "action-browser"
-      },
-      "filename": "../C:\\Users\\hyper\\workspace\\borg\\apps\\web\\src\\app\\dashboard\\submodules\\actions.ts",
-      "exportedName": "fetchUserLinksAction"
-    },
-    "00d056a96e71e15f4163f81c966036c61f93a5ac92": {
-      "workers": {
-        "app/dashboard/submodules/page": {
-          "moduleId": "(action-browser)/../../node_modules/.pnpm/next@16.1.3_@babel+core@7.2_e15b9e807161b3c3b9df67784bf1bf0c/node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Chyper%5C%5Cworkspace%5C%5Cborg%5C%5Capps%5C%5Cweb%5C%5Csrc%5C%5Capp%5C%5Cdashboard%5C%5Csubmodules%5C%5Cactions.ts%22%2C%5B%7B%22id%22%3A%2200835309f8d3b4e35912f2c7544b9548a409d108f5%22%2C%22exportedName%22%3A%22fetchUserLinksAction%22%2C%22filename%22%3A%22..%2FC%3A%5C%5CUsers%5C%5Chyper%5C%5Cworkspace%5C%5Cborg%5C%5Capps%5C%5Cweb%5C%5Csrc%5C%5Capp%5C%5Cdashboard%5C%5Csubmodules%5C%5Cactions.ts%22%7D%2C%7B%22id%22%3A%2200d056a96e71e15f4163f81c966036c61f93a5ac92%22%2C%22exportedName%22%3A%22fetchSubmodulesAction%22%2C%22filename%22%3A%22..%2FC%3A%5C%5CUsers%5C%5Chyper%5C%5Cworkspace%5C%5Cborg%5C%5Capps%5C%5Cweb%5C%5Csrc%5C%5Capp%5C%5Cdashboard%5C%5Csubmodules%5C%5Cactions.ts%22%7D%2C%7B%22id%22%3A%2200f0b1f0ec9ee253e0cf09342e146769f6f1323c21%22%2C%22exportedName%22%3A%22healSubmodulesAction%22%2C%22filename%22%3A%22..%2FC%3A%5C%5CUsers%5C%5Chyper%5C%5Cworkspace%5C%5Cborg%5C%5Capps%5C%5Cweb%5C%5Csrc%5C%5Capp%5C%5Cdashboard%5C%5Csubmodules%5C%5Cactions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
-          "async": false
-        }
-      },
-      "layer": {
-        "app/dashboard/submodules/page": "action-browser"
-      },
-      "filename": "../C:\\Users\\hyper\\workspace\\borg\\apps\\web\\src\\app\\dashboard\\submodules\\actions.ts",
-      "exportedName": "fetchSubmodulesAction"
-    },
-    "00f0b1f0ec9ee253e0cf09342e146769f6f1323c21": {
-      "workers": {
-        "app/dashboard/submodules/page": {
-          "moduleId": "(action-browser)/../../node_modules/.pnpm/next@16.1.3_@babel+core@7.2_e15b9e807161b3c3b9df67784bf1bf0c/node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22C%3A%5C%5CUsers%5C%5Chyper%5C%5Cworkspace%5C%5Cborg%5C%5Capps%5C%5Cweb%5C%5Csrc%5C%5Capp%5C%5Cdashboard%5C%5Csubmodules%5C%5Cactions.ts%22%2C%5B%7B%22id%22%3A%2200835309f8d3b4e35912f2c7544b9548a409d108f5%22%2C%22exportedName%22%3A%22fetchUserLinksAction%22%2C%22filename%22%3A%22..%2FC%3A%5C%5CUsers%5C%5Chyper%5C%5Cworkspace%5C%5Cborg%5C%5Capps%5C%5Cweb%5C%5Csrc%5C%5Capp%5C%5Cdashboard%5C%5Csubmodules%5C%5Cactions.ts%22%7D%2C%7B%22id%22%3A%2200d056a96e71e15f4163f81c966036c61f93a5ac92%22%2C%22exportedName%22%3A%22fetchSubmodulesAction%22%2C%22filename%22%3A%22..%2FC%3A%5C%5CUsers%5C%5Chyper%5C%5Cworkspace%5C%5Cborg%5C%5Capps%5C%5Cweb%5C%5Csrc%5C%5Capp%5C%5Cdashboard%5C%5Csubmodules%5C%5Cactions.ts%22%7D%2C%7B%22id%22%3A%2200f0b1f0ec9ee253e0cf09342e146769f6f1323c21%22%2C%22exportedName%22%3A%22healSubmodulesAction%22%2C%22filename%22%3A%22..%2FC%3A%5C%5CUsers%5C%5Chyper%5C%5Cworkspace%5C%5Cborg%5C%5Capps%5C%5Cweb%5C%5Csrc%5C%5Capp%5C%5Cdashboard%5C%5Csubmodules%5C%5Cactions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
-          "async": false
-        }
-      },
-      "layer": {
-        "app/dashboard/submodules/page": "action-browser"
-      },
-      "filename": "../C:\\Users\\hyper\\workspace\\borg\\apps\\web\\src\\app\\dashboard\\submodules\\actions.ts",
-      "exportedName": "healSubmodulesAction"
-    }
-  },
+  "node": {},
   "edge": {},
   "encryptionKey": "lNZ06meGT6zg0dCYNKi/Yi1wTVnPArhBpRqUwM3as10="
 }

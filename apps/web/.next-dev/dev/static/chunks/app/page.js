@@ -8,9 +8,9 @@
  */
 (self["webpackChunk_N_E"] = self["webpackChunk_N_E"] || []).push([["app/page"],{
 
-/***/ "(app-pages-browser)/../../node_modules/.pnpm/next@16.1.3_@babel+core@7.2_e15b9e807161b3c3b9df67784bf1bf0c/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?server=false!":
+/***/ "(app-pages-browser)/../../node_modules/.pnpm/next@16.1.3_@babel+core@7.2_57777017c5f828ccab697a9f24550b55/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?server=false!":
 /*!*******************************************************************************************************************************************************************************************!*\
-  !*** ../../node_modules/.pnpm/next@16.1.3_@babel+core@7.2_e15b9e807161b3c3b9df67784bf1bf0c/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?server=false! ***!
+  !*** ../../node_modules/.pnpm/next@16.1.3_@babel+core@7.2_57777017c5f828ccab697a9f24550b55/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?server=false! ***!
   \*******************************************************************************************************************************************************************************************/
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
@@ -21,7 +21,7 @@
 },
 /******/ __webpack_require__ => { // webpackRuntimeModules
 /******/ var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-/******/ __webpack_require__.O(0, ["main-app"], () => (__webpack_exec__("(app-pages-browser)/../../node_modules/.pnpm/next@16.1.3_@babel+core@7.2_e15b9e807161b3c3b9df67784bf1bf0c/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?server=false!")));
+/******/ __webpack_require__.O(0, ["main-app"], () => (__webpack_exec__("(app-pages-browser)/../../node_modules/.pnpm/next@16.1.3_@babel+core@7.2_57777017c5f828ccab697a9f24550b55/node_modules/next/dist/build/webpack/loaders/next-flight-client-entry-loader.js?server=false!")));
 /******/ var __webpack_exports__ = __webpack_require__.O();
 /******/ _N_E = __webpack_exports__;
 /******/ }
