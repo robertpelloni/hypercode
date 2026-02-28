@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.36] - 2026-02-28
+
+### Added
+- **Multi-Turn Conversation History**: Extended `LLMService.generateText` with `history` option, wired into all 7 providers (Google, Anthropic, OpenAI, DeepSeek, Forge, Ollama, LM Studio) for full multi-turn context preservation.
+- **Real Swarm Intelligence**: Replaced all simulated stubs in the swarm package:
+  - `DebateProtocol.ts` — per-supervisor Proponent/Opponent/Judge adversarial debate via Council API
+  - `ConsensusEngine.ts` — multi-model parallel dispatch with synthesis LLM scoring
+  - `SwarmOrchestrator.ts` — Council debate decomposition + session polling execution
+
+### Changed
+- **Model Updates**: `ClaudeAgent` → `claude-3-5-sonnet-20241022`, `GeminiAgent` → `gemini-2.5-pro`
+- **Version Bump**: Incremented version to 2.7.36.
+
 ## [2.7.35] - 2026-02-28
 
 ### Fixed
