@@ -1,6 +1,6 @@
 # Borg — Master TODO List (Implementor Edition)
 
-> **Updated**: 2026-02-27 | **Version**: 2.7.33 | **Phase**: 75 (Doc Sync & Stub Audit — COMPLETED)
+> **Updated**: 2026-02-28 | **Version**: 2.7.35 | **Phase**: 76 (MetaMCP Backend Fix & Dev Readiness — COMPLETED)
 > **Execution Order**: P0 (must close before release) → P1 (critical feature parity) → P2 (quality/polish) → P3 (future)
 
 ---
@@ -75,12 +75,13 @@
 - [x] **Phase 73: Multi-Agent Orchestration & Swarm** — Swarm execution, multi-model debate, pair programming, consensus protocols.
 - [x] **Phase 74: Frontend Type Closure & Dev Readiness** — Clean tsc across core + web, missing module stubs, tRPC v11 migration.
 - [x] **Phase 75: Documentation Reality Sync & Stub Audit** — Synced DEPLOY.md, MEMORY.md, AGENTS.md to v2.7.33 reality. Stub audit: no critical P0 blockers.
+- [x] **Phase 76: MetaMCP Backend Fix & Dev Readiness** — Fixed silent ESM startup hang (8 missing SQLite schema tables + tsx watch deadlock). All 4 services pass strict readiness.
 
 ---
 
 ## Release Verification Checklist (Gate)
 
-- [ ] `pnpm run check:dev-readiness` passes in strict mode with all critical services up
+- [x] `pnpm run check:dev-readiness` passes in strict mode with all critical services up
 - [x] `apps/web` typecheck + build pass
 - [x] `packages/core` typecheck pass
 - [x] `pnpm run check:placeholders` passes (or equivalent placeholder scan)
@@ -88,4 +89,4 @@
 
 ---
 
-*This file is intentionally execution-ordered for implementor-model handoff and should be treated as the active backlog source of truth for Phase 64+ closure.*
+*This file is intentionally execution-ordered for implementor-model handoff. All P0/P1/P2 items and the Release Verification Gate are now fully closed as of v2.7.35.*
