@@ -42,6 +42,9 @@ export interface SwarmTask {
 
     // Phase 91: MCP Tool integration
     tools?: string[];
+
+    // Phase 94: Sub-Agent Task Routing
+    requirements?: string[];
 }
 
 export interface SwarmConfig {
@@ -231,13 +234,27 @@ export class SwarmOrchestrator extends EventEmitter {
 
             return parsed
                 .filter((item: any) => item && (item.description || item.task || item.name))
-                .map((item: any) => ({
-                    id: uuidv4(),
-                    description: item.description || item.task || item.name,
-                    status: 'pending' as const,
-                    priority: item.priority || 3,
-                    tools: tools || []
-                }));
+                .map((item: any) => {
+                    const desc = (item.description || item.task || item.name).toLowerCase();
+                    const reqs: string[] = [];
+
+                    // Phase 94: Sub-Agent Task Classification
+                    if (desc.includes('research') || desc.includes('search') || desc.includes('find') || desc.includes('analyze')) {
+                        reqs.push('researcher');
+                    }
+                    if (desc.includes('code') || desc.includes('implement') || desc.includes('refactor') || desc.includes('fix')) {
+                        reqs.push('coder');
+                    }
+
+                    return {
+                        id: uuidv4(),
+                        description: item.description || item.task || item.name,
+                        status: 'pending' as const,
+                        priority: item.priority || 3,
+                        tools: tools || [],
+                        requirements: reqs // Attach to task object
+                    };
+                });
         } catch {
             return [];
         }
@@ -377,7 +394,7 @@ export class SwarmOrchestrator extends EventEmitter {
 
             const offerPayload = {
                 task: task.description,
-                requirements: [],
+                requirements: task.requirements || [], // Phase 94: Pass requirements to the Mesh
                 tools: task.tools, // Phase 91/92: Add tools array to payload
                 missionId: this.currentMissionId,
                 originalTaskId: task.id,

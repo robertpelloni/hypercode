@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.54] - 2026-03-03
+### Added
+- **Phase 94: Sub-Agent Task Routing**
+  - Updated `SwarmOrchestrator` task decomposition logic to inspect task intent (e.g., "code", "research") and attach explicit `requirements` properties to the sub-objects.
+  - Implemented `MeshCoderAgent` and `MeshResearcherAgent` inheriting from `SpecializedAgent` to serve as autonomous listeners on the Local Mesh bus.
+  - Updated `MCPServer` to instantiate and expose these specialized agents. Task Offers tagged with specific agent requirements are now specifically routed to and bid upon by the most appropriate agent instance across the decentralized mesh, bypassing the generic `McpWorkerAgent`.
+
 ## [2.7.53] - 2026-03-03
 ### Added
 - **Phase 93: P2P Artifact Federation**

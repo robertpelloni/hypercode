@@ -35,6 +35,8 @@ import { MetaArchitectAgent } from "./agents/MetaArchitectAgent.js";
 import { CoderAgent } from "./agents/CoderAgent.js";
 import { ResearcherAgent } from "./agents/ResearcherAgent.js";
 import { McpWorkerAgent } from "./agents/McpWorkerAgent.js";
+import { MeshCoderAgent } from "./agents/MeshCoderAgent.js";
+import { MeshResearcherAgent } from "./agents/MeshResearcherAgent.js";
 import { ConfigManager } from "./config/ConfigManager.js";
 import { AutoTestService } from "./services/AutoTestService.js";
 import { ShellService } from "./services/ShellService.js";
@@ -251,6 +253,8 @@ export class MCPServer {
     public coderAgent: CoderAgent;
     public researcherAgent: ResearcherAgent;
     public mcpWorkerAgent: McpWorkerAgent;
+    public meshCoderAgent?: MeshCoderAgent;
+    public meshResearcherAgent?: MeshResearcherAgent;
     public council: Council;
     public supervisor: Supervisor;
 
@@ -470,6 +474,11 @@ export class MCPServer {
                     }
                 }
             });
+
+            // Phase 94: Sub-Agent Task Routing
+            // Attach specialized sub-agents to the mesh bus so they can bid on classified tasks
+            this.meshCoderAgent = new MeshCoderAgent(this);
+            this.meshResearcherAgent = new MeshResearcherAgent(this);
         }
 
         // Phase 65: Marketplace (Depends on Mesh)

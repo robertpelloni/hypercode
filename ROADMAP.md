@@ -58,5 +58,5 @@
     - [x] Mesh node auto-discovery and capability advertisement.
 - [x] **Phase 93: P2P Artifact Federation**
     - [x] Allow downstream mesh nodes to share files by broadcasting `read_file` results directly through the mesh bus.
-- [ ] **Phase 94: Sub-Agent Task Routing**
-    - [ ] Deploy specialized agents to execute sub-tasks without full node delegation.
+- [x] **Phase 94: Sub-Agent Task Routing**
+    - [x] Deploy specialized agents to execute sub-tasks without full node delegation.
