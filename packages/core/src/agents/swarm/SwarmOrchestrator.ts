@@ -375,16 +375,54 @@ export class SwarmOrchestrator extends EventEmitter {
                 }
             }
 
-            console.log(`[SwarmOrchestrator] 🌐 Broadcasting TASK_OFFER to Mesh Network (Attempt ${task.retryCount || 1}/${this.config.maxRetries}): "${task.description.slice(0, 30)}..."`);
-            this.mesh.broadcast(SwarmMessageType.TASK_OFFER, {
+            const offerPayload = {
                 task: task.description,
                 requirements: [],
+                tools: task.tools, // Phase 91/92: Add tools array to payload
                 missionId: this.currentMissionId,
                 originalTaskId: task.id,
                 context: Object.keys(globalContext).length > 0 ? globalContext : undefined // Phase 90
+            };
+
+            console.log(`[SwarmOrchestrator] 🌐 Broadcasting TASK_OFFER to Mesh Network (Attempt ${task.retryCount || 1}/${this.config.maxRetries}): "${task.description.slice(0, 30)}..."`);
+            this.mesh.broadcast(SwarmMessageType.TASK_OFFER, offerPayload);
+
+            // Phase 92: Bidding Window (Collect TASK_BIDs)
+            const BID_WINDOW_MS = 1000;
+            const bids: { sender: string; load: number }[] = [];
+
+            const bidPromise = new Promise<string | null>((resolve) => {
+                const bidTimeout = setTimeout(() => {
+                    this.mesh.off('message', bidHandler);
+                    if (bids.length > 0) {
+                        // Sort by lowest load
+                        bids.sort((a, b) => a.load - b.load);
+                        resolve(bids[0].sender);
+                    } else {
+                        resolve(null);
+                    }
+                }, BID_WINDOW_MS);
+
+                const bidHandler = (msg: SwarmMessage) => {
+                    if (msg.type === SwarmMessageType.TASK_BID) {
+                        const bidPayload = msg.payload as any;
+                        if (bidPayload.originalTaskId === task.id && msg.target === this.mesh.nodeId) {
+                            bids.push({ sender: msg.sender, load: bidPayload.load || 0 });
+                        }
+                    }
+                };
+                this.mesh.on('message', bidHandler);
             });
 
-            // Wait for a TASK_RESULT from any agent
+            const winnerNodeId = await bidPromise;
+            if (!winnerNodeId) {
+                throw new Error('No agents bid on the task offer.');
+            }
+
+            console.log(`[SwarmOrchestrator] 🎯 Assigning task ${task.id.slice(0, 8)} to node ${winnerNodeId.slice(0, 8)}...`);
+            this.mesh.sendDirect(winnerNodeId, SwarmMessageType.TASK_ASSIGN, offerPayload);
+
+            // Wait for a TASK_RESULT from the winning agent
             const resultPromise = new Promise<{ result?: any, error?: string }>((resolve, reject) => {
                 const timeout = setTimeout(() => {
                     this.mesh.off('message', handler);
