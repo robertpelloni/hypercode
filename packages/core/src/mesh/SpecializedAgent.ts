@@ -3,6 +3,7 @@ import { MeshService, SwarmMessage, SwarmMessageType } from './MeshService.js';
 interface TaskOffer {
     task: string;
     requirements?: string[];
+    tools?: string[];
     [key: string]: unknown;
 }
 
@@ -61,7 +62,7 @@ export abstract class SpecializedAgent {
                 return;
             }
 
-            // 2. Handle Task Offers
+            // 2. Handle Task Offers (Bidding Phase)
             if (msg.type === SwarmMessageType.TASK_OFFER) {
                 const offer = parseTaskOffer(msg.payload);
                 if (!offer) {
@@ -70,22 +71,38 @@ export abstract class SpecializedAgent {
                 }
 
                 if (this.canHandle(offer)) {
-                    console.log(`[${this.role}] 🤝 Accepting Task Offer: ${offer.task}`);
-                    this.mesh.sendResponse(msg, SwarmMessageType.TASK_ACCEPT, { task: offer.task });
+                    console.log(`[${this.role}] ✋ Bidding for Task Offer: ${offer.task.slice(0, 30)}...`);
+                    this.mesh.sendResponse(msg, SwarmMessageType.TASK_BID, {
+                        task: offer.task,
+                        originalTaskId: msg.id,
+                        load: 0 // In the future, report actual CPU/Token load here 
+                    });
+                }
+                return;
+            }
 
-                    try {
-                        const result = await this.handleTask(offer);
-                        // Send Result as a Direct Message
-                        this.mesh.sendDirect(msg.sender, SwarmMessageType.TASK_RESULT, {
-                            originalTaskId: msg.id,
-                            result
-                        });
-                    } catch (e: unknown) {
-                        this.mesh.sendDirect(msg.sender, SwarmMessageType.TASK_RESULT, {
-                            originalTaskId: msg.id,
-                            error: getErrorMessage(e)
-                        });
-                    }
+            // 3. Handle Task Assignments (Execution Phase)
+            if (msg.type === SwarmMessageType.TASK_ASSIGN) {
+                if (msg.target !== this.nodeId) return; // Ignore if assigned to someone else
+
+                const offer = parseTaskOffer(msg.payload);
+                if (!offer) return;
+
+                console.log(`[${this.role}] 🤝 Accepted Task Assignment: ${offer.task.slice(0, 30)}...`);
+                this.mesh.sendResponse(msg, SwarmMessageType.TASK_ACCEPT, { task: offer.task });
+
+                try {
+                    const result = await this.handleTask(offer);
+                    // Send Result as a Direct Message
+                    this.mesh.sendDirect(msg.sender, SwarmMessageType.TASK_RESULT, {
+                        originalTaskId: offer.originalTaskId || msg.id, // Support the original ID being passed down
+                        result
+                    });
+                } catch (e: unknown) {
+                    this.mesh.sendDirect(msg.sender, SwarmMessageType.TASK_RESULT, {
+                        originalTaskId: offer.originalTaskId || msg.id,
+                        error: getErrorMessage(e)
+                    });
                 }
             }
         });

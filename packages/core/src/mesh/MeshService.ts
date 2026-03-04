@@ -8,7 +8,12 @@ export enum SwarmMessageType {
     TASK_OFFER = 'TASK_OFFER',
     TASK_ACCEPT = 'TASK_ACCEPT',
     TASK_RESULT = 'TASK_RESULT',
-    HEARTBEAT = 'HEARTBEAT'
+    VERIFY_OFFER = 'VERIFY_OFFER',
+    VERIFY_RESULT = 'VERIFY_RESULT',
+    HEARTBEAT = 'HEARTBEAT',
+    DIRECT_MESSAGE = 'DIRECT_MESSAGE',
+    TASK_BID = 'TASK_BID',
+    TASK_ASSIGN = 'TASK_ASSIGN'
 }
 
 export interface SwarmMessage {
@@ -93,9 +98,17 @@ function setupLocalFallback() {
     });
 }
 
+// Forward all mesh traffic to the central EventBus for SSE Visualization
+globalMeshBus.on('mesh_message_inbound', (msg: SwarmMessage) => {
+    if (global.mcpServerInstance?.eventBus) {
+        global.mcpServerInstance.eventBus.emitEvent('mesh:traffic', 'MeshService', msg);
+    }
+});
+
 export class MeshService extends EventEmitter {
     public readonly nodeId: string;
     private readonly knownNodes: Set<string> = new Set();
+    private readonly nodeCapabilities: Map<string, string[]> = new Map();
     private heartbeatInterval?: NodeJS.Timeout;
 
     constructor() {
@@ -110,8 +123,23 @@ export class MeshService extends EventEmitter {
 
     private startHeartbeat() {
         this.heartbeatInterval = setInterval(() => {
-            this.broadcast(SwarmMessageType.HEARTBEAT, { status: 'alive' });
+            // Include local capabilities in heartbeat (Phase 80)
+            const localTools = this.getLocalCapabilities();
+            this.broadcast(SwarmMessageType.HEARTBEAT, {
+                status: 'alive',
+                capabilities: localTools
+            });
         }, 15000);
+    }
+
+    private getLocalCapabilities(): string[] {
+        // Query the local MCPServer for registered tools if available
+        if (global.mcpServerInstance) {
+            // This is a simplified list of tool names
+            // In a better implementation, we'd pull the full schema from the registry
+            return ['fs', 'terminal', 'git', 'research', 'coder'];
+        }
+        return [];
     }
 
     private handleGlobalMessage(msg: SwarmMessage) {
@@ -120,6 +148,14 @@ export class MeshService extends EventEmitter {
 
         // Keep track of known peers
         this.knownNodes.add(msg.sender);
+
+        // Update capabilities registry on heartbeat
+        if (msg.type === SwarmMessageType.HEARTBEAT) {
+            const payload = msg.payload as any;
+            if (payload?.capabilities) {
+                this.nodeCapabilities.set(msg.sender, payload.capabilities);
+            }
+        }
 
         // If it's a direct message tailored to us, or a broadcast (no target)
         if (!msg.target || msg.target === this.nodeId) {
@@ -165,6 +201,20 @@ export class MeshService extends EventEmitter {
 
     public getPeers(): string[] {
         return Array.from(this.knownNodes);
+    }
+
+    /**
+     * Returns a map of all known nodes and their advertised capabilities.
+     * Phase 80: Dynamic capability discovery.
+     */
+    public getMeshCapabilities(): Record<string, string[]> {
+        const result: Record<string, string[]> = {};
+        this.nodeCapabilities.forEach((caps, id) => {
+            result[id] = caps;
+        });
+        // Also include our own
+        result[this.nodeId] = this.getLocalCapabilities();
+        return result;
     }
 
     public destroy() {

@@ -1,0 +1,10 @@
+C:\Users\hyper\workspace\borg\agents\openchamber\packages\desktop\src-tauri\target\release\deps\toml_datetime-b3c383c11ae8087f.d: C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\lib.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\datetime.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\de.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\ser.rs
+
+C:\Users\hyper\workspace\borg\agents\openchamber\packages\desktop\src-tauri\target\release\deps\libtoml_datetime-b3c383c11ae8087f.rlib: C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\lib.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\datetime.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\de.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\ser.rs
+
+C:\Users\hyper\workspace\borg\agents\openchamber\packages\desktop\src-tauri\target\release\deps\libtoml_datetime-b3c383c11ae8087f.rmeta: C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\lib.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\datetime.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\de.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\ser.rs
+
+C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\lib.rs:
+C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\datetime.rs:
+C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\de.rs:
+C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\toml_datetime-0.7.3\src\ser.rs:

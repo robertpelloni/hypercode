@@ -56,3 +56,7 @@ export type {
     MemorySearchOptions,
     MemoryServiceOptions,
 } from './AgentMemoryService.js';
+
+// Phase 80: Swarm Missions
+export { MissionService } from './MissionService.js';
+export type { SwarmMission } from './MissionService.js';

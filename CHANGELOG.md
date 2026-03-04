@@ -4,6 +4,74 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.51] - 2026-03-01
+### Added
+- **Phase 91: Swarm Agent Tool Execution (MCP)**: Empowered Swarm Worker Agents with full MCP Tool Execution capabilities. Created `McpWorkerAgent.ts` which dynamically maps requested tools (e.g., `read_file`, `browser_screenshot`) to LLM Function Calling JSON schemas, executing tools autonomously in a feedback loop until the sub-task is complete. Updated the Swarm Dashboard UI to allow users to specify a comma-separated list of `tools` to inject into the `TASK_OFFER` mesh broadcast.
+
+## [2.7.50] - 2026-03-01
+### Added
+- **Phase 90: Swarm Shared Context (Stateful Missions)**: Introduced a mission-level JSON Key-Value store to enable context sharing between independently operating Swarm Tasks. `SwarmOrchestrator` now injects `mission.context` into `TASK_OFFER` payloads. Agents can mutate global mission state by returning `_contextUpdate` in their JSON output, allowing cascading task flows. The Swarm Dashboard now features an interactive `<details>` JSON viewer summarizing `Shared Mission Context` per mission.
+
+## [2.7.49] - 2026-03-01
+### Added
+- **Phase 89: Swarm Dynamic Resource Allocation**: Implemented dynamic priority quotas inside `SwarmOrchestrator.ts`. The main execution loop now scans the global `MissionService` state, aggressively throttling the local instance batch size (e.g. down to 20%) if higher-priority tasks are active from other missions. This guarantees critical high-priority missions are never starved by massive backlogs of low-priority tasks.
+
+## [2.7.48] - 2026-03-01
+### Added
+- **Phase 88: Swarm Consensus Voting (v2)**: Implemented multi-agent verification workflows within `SwarmOrchestrator`. Tasks now transition to a `verifying` state and emit a `VERIFY_OFFER` over the Node Mesh. A peer agent verifies the task result, returning a `VERIFY_RESULT`. Failed verifications result in task slashing (`slashed: true`) and retries. Updated Swarm Dashboard to visualize the new `verifying` status and slashing events.
+
+## [2.7.47] - 2026-03-01
+### Added
+- **Phase 87: Swarm Inter-Agent Communication**: Added `DIRECT_MESSAGE` routing to the `MeshService`. Added a `sendDirectMessage` mutation to the tRPC swarm router and implemented a testing UI inside the Swarm Dashboard Telemetry panel for targeted peer-to-peer payload delivery.
+
+## [2.7.46] - 2026-03-01
+### Added
+- **Phase 86: Swarm Adaptive Rate Limiting**: 
+- Added `RateLimiter.ts` employing a token bucket algorithm to pace Mesh network API requests based on estimated tokens per minute (TPM) and requests per minute (RPM).
+- Integrated adaptive backoff into `SwarmOrchestrator` to catch provider 429s and pause execution gracefully. Added pulsing "THROTTLED" status to Swarm Dashboard.
+
+## [2.7.45] - 2026-03-01
+### Added
+- **Phase 85: Swarm Resource Awareness**: Implemented real-time token and memory usage tracking for tasks and missions. Added resource limit enforcement (max tokens per mission) and usage visualization in the Swarm Dashboard.
+
+## [2.7.44] - 2026-02-28
+### Added
+- **Phase 83: Swarm Self-Correction (Missions)**
+- Implemented automatic retry logic in `SwarmOrchestrator` (max 3 retries).
+- Integrated `HealerService` for automated repair of failed swarm tasks.
+- Updated Swarm Dashboard with retry badges and "healing" status pulse.
+
+## [2.7.42] - 2026-02-28
+### Added
+- **Phase 82: Recursive Swarm Decomposition**
+- Implemented hierarchical mission support with `parentId` and `subMissionId`.
+- Added recursive task "explosion" logic to `SwarmOrchestrator`.
+- Updated Swarm Dashboard with "Explode" buttons and nested mission labels.
+- Added `awaiting_subtask` status for parent tasks in hierarchical workflows.
+
+## [2.7.41] - 2026-02-28
+### Added
+- **Phase 81: Swarm Task Recovery & Manual Intervention**
+- Implemented `resumeMission` in `MissionService` to recover failed swarm goals.
+- Added HITL (Human-in-the-Loop) gating for sensitive tasks (delete, deploy, etc.).
+- Integrated manual "Approve/Reject" controls into the Swarm Dashboard.
+- Added active orchestrator tracking in `swarmRouter` for live mission interaction.
+
+## [2.7.40] - 2026-02-28
+### Added
+- **Phase 80: Swarm Mission Persistence & Capabilities**
+- Implemented `MissionService` for JSON-backed persistent storage of high-level goals.
+- Enabled mesh-wide "Capability Advertisement" in heartbeats for tool discovery.
+- Added "Missions" history tab to the Swarm Dashboard.
+- Integrated `MissionService` lifecycle events into the Telemetry feed.
+
+## [2.7.39] - 2026-02-28
+### Added
+- **Phase 79: Swarm Event Visualization Engine**
+- Integrated real-time P2P traffic monitoring via SSE over port 3001.
+- Added a high-fidelity "Telemetry" dashboard in `@borg/web` with Framer Motion animations.
+- Wired internal `MeshService` traffic to the central `MCPServer` `eventBus` for visualization.
+
 ## [2.7.38] - 2026-02-28
 
 ### Added
@@ -525,7 +593,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - **Canonical documentation/version synchronization**:
-  - Promoted canonical version to `2.6.3` in `VERSION.md`.
+  - Promoted canonical version to `2.7.44` in `VERSION.md`.
   - Reconciled roadmap/todo/handoff status language with current Phase 63 execution state.
   - Replaced `docs/SUBMODULE_DASHBOARD.md` placeholder content with governance-focused dashboard guidance that points to `SUBMODULES.md` as the generated source of truth.
 - **Backend service exposure hardening**:

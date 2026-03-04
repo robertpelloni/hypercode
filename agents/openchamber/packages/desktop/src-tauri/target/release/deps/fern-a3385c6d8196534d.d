@@ -1,0 +1,11 @@
+C:\Users\hyper\workspace\borg\agents\openchamber\packages\desktop\src-tauri\target\release\deps\fern-a3385c6d8196534d.d: C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\lib.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\builders.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\errors.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\log_impl.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\meta.rs
+
+C:\Users\hyper\workspace\borg\agents\openchamber\packages\desktop\src-tauri\target\release\deps\libfern-a3385c6d8196534d.rlib: C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\lib.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\builders.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\errors.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\log_impl.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\meta.rs
+
+C:\Users\hyper\workspace\borg\agents\openchamber\packages\desktop\src-tauri\target\release\deps\libfern-a3385c6d8196534d.rmeta: C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\lib.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\builders.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\errors.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\log_impl.rs C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\meta.rs
+
+C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\lib.rs:
+C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\builders.rs:
+C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\errors.rs:
+C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\log_impl.rs:
+C:\Users\hyper\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\fern-0.7.1\src\meta.rs:

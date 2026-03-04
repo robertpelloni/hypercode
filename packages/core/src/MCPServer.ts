@@ -34,12 +34,13 @@ import { ClaudeAgent } from "./agents/ClaudeAgent.js";
 import { MetaArchitectAgent } from "./agents/MetaArchitectAgent.js";
 import { CoderAgent } from "./agents/CoderAgent.js";
 import { ResearcherAgent } from "./agents/ResearcherAgent.js";
+import { McpWorkerAgent } from "./agents/McpWorkerAgent.js";
 import { ConfigManager } from "./config/ConfigManager.js";
 import { AutoTestService } from "./services/AutoTestService.js";
 import { ShellService } from "./services/ShellService.js";
 import { SandboxService } from "./security/SandboxService.js";
 import { SquadService } from "./orchestrator/SquadService.js";
-// import { MeshService } from './services/MeshService.js';
+import { MeshService } from './mesh/MeshService.js';
 import { GitWorktreeManager } from "./orchestrator/GitWorktreeManager.js";
 import { AuditService } from "./security/AuditService.js";
 import { GitService } from "./services/GitService.js";
@@ -74,6 +75,7 @@ import { AutoTestReactor } from "./reactors/AutoTestReactor.js";
 import { HealerReactor } from "./reactors/HealerReactor.js";
 import { SessionManager } from "./services/SessionManager.js";
 import { ProjectTracker } from "./services/ProjectTracker.js";
+import { MissionService } from "./services/MissionService.js";
 
 console.log("[MCPServer] ✓ SkillRegistry");
 
@@ -219,7 +221,8 @@ export class MCPServer {
     public sessionManager: SessionManager; // Phase 57: State Persistence
 
     public projectTracker: ProjectTracker; // Phase 59: Autonomous Loop
-    // public meshService: MeshService | undefined; // Phase 60: P2P Mesh
+    public missionService: MissionService; // Phase 80: Swarm Persistence
+    public meshService: MeshService | undefined; // Phase 60: P2P Mesh
     public mcpConfigService: McpConfigService;
 
     // Sensors (Phase 43)
@@ -247,6 +250,7 @@ export class MCPServer {
     public metaArchitectAgent: MetaArchitectAgent;
     public coderAgent: CoderAgent;
     public researcherAgent: ResearcherAgent;
+    public mcpWorkerAgent: McpWorkerAgent;
     public council: Council;
     public supervisor: Supervisor;
 
@@ -312,6 +316,7 @@ export class MCPServer {
         // SkillRegistry initialized later with correct paths
         this.sessionManager = new SessionManager(process.cwd()); // Phase 57: State Persistence
         this.projectTracker = new ProjectTracker(process.cwd()); // Phase 59: Autonomous Loop
+        this.missionService = new MissionService(process.cwd()); // Phase 80: Swarm Persistence
         this.director = new Director(this);
         this.council = new Council(this.modelSelector);
         this.permissionManager = new PermissionManager('high'); // Default to HIGH AUTONOMY as requested
@@ -396,6 +401,7 @@ export class MCPServer {
         // Initialize Specialized Agents
         this.coderAgent = new CoderAgent(this.llmService);
         this.researcherAgent = new ResearcherAgent(this.deepResearchService);
+        this.mcpWorkerAgent = new McpWorkerAgent(this.llmService, this);
 
         // Initialize Council with Agents
         this.council = new Council(this.modelSelector);
@@ -444,11 +450,9 @@ export class MCPServer {
         this.gitWorktreeManager = new GitWorktreeManager(process.cwd());
 
         // Phase 60: Mesh Service
-        /*
         if (!options.skipMesh) {
             this.meshService = new MeshService();
         }
-        */
 
         // Phase 65: Marketplace (Depends on Mesh)
         this.marketplaceService = new MarketplaceService(
@@ -483,13 +487,58 @@ export class MCPServer {
 
         if (!options.skipWebsocket) {
             const PORT = 3001;
-            console.log(`[MCPServer] Starting WebSocket Server on port ${PORT}...`);
-            this.wssInstance = new WebSocketServer({ port: PORT });
+            console.log(`[MCPServer] Starting WebSocket/HTTP Server on port ${PORT}...`);
+
+            // Create an explicit HTTP server so we can handle SSE routes alongside WebSockets
+            const httpServer = http.createServer((req, res) => {
+                // SSE Endpoint for Mesh Visualization
+                if (req.method === 'GET' && req.url === '/api/mesh/stream') {
+                    res.writeHead(200, {
+                        'Content-Type': 'text/event-stream',
+                        'Cache-Control': 'no-cache',
+                        'Connection': 'keep-alive',
+                        'Access-Control-Allow-Origin': '*'
+                    });
+                    res.write('data: {"type":"CONNECTED"}\n\n');
+
+                    // Dynamically import the emitter to avoid circular deps during boot
+                    import('./mesh/MeshService.js').then((module) => {
+                        // Normally this is not exported, we need a way to hook into globalMeshBus
+                        // Wait, we need to export globalMeshBus or use the EventBus. 
+                        // Actually, I should use this.eventBus and forward mesh messages there inside MeshService.ts.
+                        // For now, let's just create a generic eventBus hook "mesh_stream"
+                    });
+
+                    const safeSend = (data: any) => {
+                        try {
+                            res.write(`data: ${JSON.stringify(data)}\n\n`);
+                        } catch (e) {
+                            // client disconnected
+                        }
+                    };
+
+                    const handleMeshMessage = (msg: any) => safeSend(msg);
+                    this.eventBus.on('mesh:traffic', handleMeshMessage);
+
+                    req.on('close', () => {
+                        this.eventBus.off('mesh:traffic', handleMeshMessage);
+                    });
+                    return;
+                }
+
+                // 404 for any other HTTP hit
+                res.writeHead(404);
+                res.end();
+            });
+
+            this.wssInstance = new WebSocketServer({ server: httpServer });
 
             const transport = new WebSocketServerTransport(this.wssInstance);
             this.wsServer!.connect(transport);
 
-            console.log(`[MCPServer] 🔌 WebSocket Bridge active on port ${PORT}`);
+            httpServer.listen(PORT, () => {
+                console.log(`[MCPServer] 🔌 WebSocket & SSE Bridge active on port ${PORT}`);
+            });
         } else {
             this.wsServer = null;
             this.wssInstance = null;
@@ -1881,7 +1930,7 @@ export class MCPServer {
                                     throw new Error(`Tool execution failed: ${e.message}`);
                                 }
                             } else {
-                                throw aggErr; 
+                                throw aggErr;
                             }
                         }
                     }
@@ -1947,7 +1996,7 @@ export class MCPServer {
         }
     }
 
-    private async getNativeTools(): Promise<Tool[]> {
+    public async getNativeTools(): Promise<Tool[]> {
         const internalTools: any[] = [
             {
                 name: "router_status",
