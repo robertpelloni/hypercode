@@ -4,6 +4,10 @@ interface TaskOffer {
     task: string;
     requirements?: string[];
     tools?: string[];
+    toolPolicy?: {
+        allow?: string[];
+        deny?: string[];
+    };
     [key: string]: unknown;
 }
 
@@ -26,6 +30,32 @@ function parseTaskOffer(payload: unknown): TaskOffer | null {
         (!Array.isArray(record.requirements) || !record.requirements.every(req => typeof req === 'string'))
     ) {
         return null;
+    }
+
+    if (record.tools !== undefined && (!Array.isArray(record.tools) || !record.tools.every(tool => typeof tool === 'string'))) {
+        return null;
+    }
+
+    const toolPolicy = record.toolPolicy;
+    if (toolPolicy !== undefined) {
+        if (!toolPolicy || typeof toolPolicy !== 'object') {
+            return null;
+        }
+
+        const toolPolicyRecord = toolPolicy as Record<string, unknown>;
+        if (
+            toolPolicyRecord.allow !== undefined &&
+            (!Array.isArray(toolPolicyRecord.allow) || !toolPolicyRecord.allow.every(tool => typeof tool === 'string'))
+        ) {
+            return null;
+        }
+
+        if (
+            toolPolicyRecord.deny !== undefined &&
+            (!Array.isArray(toolPolicyRecord.deny) || !toolPolicyRecord.deny.every(tool => typeof tool === 'string'))
+        ) {
+            return null;
+        }
     }
 
     return record as TaskOffer;

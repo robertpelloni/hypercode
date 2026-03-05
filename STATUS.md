@@ -1,32 +1,32 @@
 # Borg Project — Comprehensive Status Report
 
-> **Updated**: 2026-02-24 (Post-Submodule Audit & Feature Gap Audit)
-> **Version**: 2.7.22 (canonical from `VERSION.md`)
-> **Primary Phase**: 64 — Release Readiness
+> **Updated**: 2026-03-04 (Post-Phase 95 Documentation Sync)
+> **Version**: 2.7.56 (canonical from `VERSION`/`VERSION.md`)
+> **Primary Phase**: 95 — Swarm Git Worktree Isolation (Completed)
 
 ---
 
 ## 1. Executive Summary
 
-Borg has reached a **high level of resource density** but requires **structural consolidation** and **UI closure** before the v0.8.0-rc1 release.
+Borg has reached a **high level of operational density** with Swarm phases through **95 completed**, and now requires continued consolidation and parity work for long-tail modules and dashboards.
 
-- **Integrity**: The git tree was repaired this session, resolving fatal submodule mapping errors. 932 submodules are now correctly indexed and automated tools are functional.
-- **Redundancy**: Extreme submodule redundancy was discovered (932 submodules, many pointing to the same URLs in different paths). Consolidation is a high-priority task for disk and build efficiency.
-- **Gap Analysis**: A deep audit of 47 backend tRPC routers against the frontend revealed 7 major "Dark Features" (functional backend services for Mesh, Policies, and Audit that lack any UI control surface).
+- **Integrity**: Version and handoff artifacts are synchronized at `2.7.56`.
+- **Delivery**: Swarm phases 91–95 are documented as completed (`MCP tools`, `P2P dispatch`, `artifact federation`, `sub-agent routing`, `git worktree isolation`).
+- **Remaining Focus**: Continue feature parity closure and governance automation for the large submodule ecosystem.
 
 **Overall Health**: 🟢 Git Index Healthy, 🟡 UI Coverage Gaps, 🔴 Submodule Bloat
 
 | Metric | Current Snapshot |
 |--------|------------------|
-| Total Submodules | 932 (Verified via Git) |
+| Total Submodules | 786+ (See `SUBMODULES.md` canonical dashboard) |
 | Redundancy Rate | High (up to 6 paths per repo) |
-| Registered tRPC Routers | 49 (Fully Mapped) |
-| Dark Features (No UI) | 6 (Policies, Audit, Browser, LSP, Namespaces, Symbols) |
-| Master Index Health | Synchronized (699 Unique Links) |
+| Registered tRPC Routers | Broadly mapped (see `packages/core/src/trpc/routers`) |
+| Swarm Phase Completion | 95/100 planned phases entered (95 complete, 96+ pending) |
+| Master Index Health | Active (tracked in `BORG_MASTER_INDEX.jsonc`) |
 
 ---
 
-## 2. Session Delta — 2026-02-24 (What changed)
+## 2. Session Delta — 2026-03-04 (What changed)
 
 ### 2.1 Git Tree & Submodule Repair (completed)
 - **Resolved Mapping Errors**: Restored 7 missing submodule mappings in `.gitmodules` for orphaned directories.

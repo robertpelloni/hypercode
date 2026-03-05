@@ -1,6 +1,6 @@
 # Submodule Dashboard — Governance View
 
-> **Version Context**: 2.7.28  
+> **Version Context**: 2.7.56  
 > **Canonical Inventory Source**: `SUBMODULES.md` (auto-generated)  
 > **Purpose**: Operator-facing map for triage, ownership, and synchronization policy.
 

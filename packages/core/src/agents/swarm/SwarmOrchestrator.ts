@@ -19,6 +19,54 @@ import { MissionService, SwarmMission } from '../../services/MissionService.js';
 import { RateLimiter } from './RateLimiter.js';
 import { GitWorktreeManager } from '../../orchestrator/GitWorktreeManager.js';
 
+export interface SwarmToolPolicy {
+    allow?: string[];
+    deny?: string[];
+}
+
+export interface NormalizedSwarmToolPolicy {
+    effectivePolicy?: SwarmToolPolicy;
+    warnings: string[];
+}
+
+export function normalizeSwarmToolPolicy(policy?: SwarmToolPolicy): NormalizedSwarmToolPolicy {
+    if (!policy) {
+        return { effectivePolicy: undefined, warnings: [] };
+    }
+
+    const allow = Array.from(new Set((policy.allow || []).map(v => String(v).trim()).filter(Boolean)));
+    const deny = Array.from(new Set((policy.deny || []).map(v => String(v).trim()).filter(Boolean)));
+    const warnings: string[] = [];
+
+    if (allow.length === 0 && deny.length === 0) {
+        return { effectivePolicy: undefined, warnings };
+    }
+
+    const denySet = new Set(deny);
+    const overlapping = allow.filter(tool => denySet.has(tool));
+    const effectiveAllow = allow.filter(tool => !denySet.has(tool));
+
+    if (overlapping.length > 0) {
+        warnings.push(`toolPolicy overlap detected; deny wins for: ${overlapping.join(', ')}`);
+    }
+
+    const effectivePolicy: SwarmToolPolicy = {};
+    if (effectiveAllow.length > 0) effectivePolicy.allow = effectiveAllow;
+    if (deny.length > 0) effectivePolicy.deny = deny;
+
+    if (!effectivePolicy.allow && !effectivePolicy.deny) {
+        return { effectivePolicy: undefined, warnings };
+    }
+
+    return { effectivePolicy, warnings };
+}
+
+export interface SwarmToolDenyEvent {
+    tool: string;
+    reason: string;
+    timestamp: number;
+}
+
 export interface SwarmTask {
     id: string;
     description: string;
@@ -43,6 +91,10 @@ export interface SwarmTask {
 
     // Phase 91: MCP Tool integration
     tools?: string[];
+
+    // Phase 96: Mission-level tool permission boundaries
+    toolPolicy?: SwarmToolPolicy;
+    deniedToolEvents?: SwarmToolDenyEvent[];
 
     // Phase 94: Sub-Agent Task Routing
     requirements?: string[];
@@ -141,7 +193,7 @@ export class SwarmOrchestrator extends EventEmitter {
         console.log(`[Swarm] Recursively decomposing task: ${task.description}`);
 
         // Use the council to decompose this specific task description
-        const subTasks = await this.decomposeGoal(`SUB-TASK: ${task.description}`);
+        const subTasks = await this.decomposeGoal(`SUB-TASK: ${task.description}`, task.tools, task.toolPolicy);
 
         // Link the sub-mission to the parent
         const subMission = this.missionService.createMission(
@@ -169,8 +221,15 @@ export class SwarmOrchestrator extends EventEmitter {
      * task breakdown via multi-model consensus. Falls back to a simple
      * three-phase split if the council is unreachable.
      */
-    public async decomposeGoal(masterPrompt: string, tools?: string[]): Promise<SwarmTask[]> {
+    public async decomposeGoal(masterPrompt: string, tools?: string[], toolPolicy?: SwarmToolPolicy): Promise<SwarmTask[]> {
         console.log(`[Swarm] Decomposing: ${masterPrompt}`);
+        const { effectivePolicy, warnings } = normalizeSwarmToolPolicy(toolPolicy);
+
+        if (warnings.length > 0) {
+            for (const warning of warnings) {
+                console.warn(`[Swarm] Tool policy normalization warning: ${warning}`);
+            }
+        }
 
         let subTasks: SwarmTask[] = [];
 
@@ -195,7 +254,7 @@ export class SwarmOrchestrator extends EventEmitter {
                     || debateResult?.result
                     || '';
 
-                const parsed = this.extractTasksFromLLMResponse(consensusText, masterPrompt, tools);
+                const parsed = this.extractTasksFromLLMResponse(consensusText, masterPrompt, tools, effectivePolicy);
                 if (parsed.length > 0) {
                     subTasks = parsed;
                     console.log(`[Swarm] Council decomposed goal into ${subTasks.length} real tasks`);
@@ -208,9 +267,9 @@ export class SwarmOrchestrator extends EventEmitter {
         // Fallback: basic three-phase decomposition if council didn't return tasks
         if (subTasks.length === 0) {
             subTasks = [
-                { id: uuidv4(), description: `Analyze and plan: ${masterPrompt}`, status: 'pending', priority: 5, tools: tools || [] },
-                { id: uuidv4(), description: `Implement core logic for: ${masterPrompt}`, status: 'pending', priority: 3, tools: tools || [] },
-                { id: uuidv4(), description: `Verify and test: ${masterPrompt}`, status: 'pending', priority: 4, tools: tools || [] }
+                { id: uuidv4(), description: `Analyze and plan: ${masterPrompt}`, status: 'pending', priority: 5, tools: tools || [], toolPolicy: effectivePolicy },
+                { id: uuidv4(), description: `Implement core logic for: ${masterPrompt}`, status: 'pending', priority: 3, tools: tools || [], toolPolicy: effectivePolicy },
+                { id: uuidv4(), description: `Verify and test: ${masterPrompt}`, status: 'pending', priority: 4, tools: tools || [], toolPolicy: effectivePolicy }
             ];
             console.log(`[Swarm] Using fallback decomposition (${subTasks.length} tasks)`);
         }
@@ -221,6 +280,17 @@ export class SwarmOrchestrator extends EventEmitter {
         if (this.missionService) {
             const mission = this.missionService.createMission(masterPrompt, subTasks);
             this.currentMissionId = mission.id;
+
+            if (effectivePolicy || warnings.length > 0) {
+                this.missionService.updateMissionContext(mission.id, {
+                    _swarmPolicy: {
+                        effectiveToolPolicy: effectivePolicy,
+                        policyWarnings: warnings,
+                        capturedAt: Date.now()
+                    }
+                });
+            }
+
             console.log(`[Swarm] Persistent mission created: ${this.currentMissionId}`);
         }
 
@@ -230,7 +300,7 @@ export class SwarmOrchestrator extends EventEmitter {
     /**
      * Attempts to extract a JSON array of tasks from an LLM response string.
      */
-    private extractTasksFromLLMResponse(text: string, fallbackPrompt: string, tools?: string[]): SwarmTask[] {
+    private extractTasksFromLLMResponse(text: string, fallbackPrompt: string, tools?: string[], toolPolicy?: SwarmToolPolicy): SwarmTask[] {
         if (!text || typeof text !== 'string') return [];
         const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
         const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
@@ -260,6 +330,7 @@ export class SwarmOrchestrator extends EventEmitter {
                         status: 'pending' as const,
                         priority: item.priority || 3,
                         tools: tools || [],
+                        toolPolicy,
                         requirements: reqs // Attach to task object
                     };
                 });
@@ -417,6 +488,7 @@ export class SwarmOrchestrator extends EventEmitter {
                 task: task.description,
                 requirements: task.requirements || [], // Phase 94: Pass requirements to the Mesh
                 tools: task.tools, // Phase 91/92: Add tools array to payload
+                toolPolicy: task.toolPolicy, // Phase 96: Permission boundaries for delegated task tools
                 missionId: this.currentMissionId,
                 originalTaskId: task.id,
                 context: Object.keys(globalContext).length > 0 ? globalContext : undefined, // Phase 90
@@ -491,6 +563,45 @@ export class SwarmOrchestrator extends EventEmitter {
                     this.missionService.updateMissionContext(this.currentMissionId, meshResult.result._contextUpdate);
                     // Optionally strip it so it doesn't clutter the task result
                     delete meshResult.result._contextUpdate;
+                }
+
+                // Phase 96: Capture denied-tool telemetry from worker and persist on task/mission history
+                const telemetry = (meshResult.result as any)._swarmTelemetry;
+                const deniedTools = telemetry?.deniedTools;
+                if (Array.isArray(deniedTools) && deniedTools.length > 0) {
+                    const normalizedDeniedTools = deniedTools
+                        .filter((item: any) => item && typeof item.tool === 'string' && typeof item.reason === 'string')
+                        .map((item: any) => ({
+                            tool: item.tool,
+                            reason: item.reason,
+                            timestamp: typeof item.timestamp === 'number' ? item.timestamp : Date.now()
+                        }));
+
+                    if (normalizedDeniedTools.length > 0) {
+                        task.deniedToolEvents = [...(task.deniedToolEvents || []), ...normalizedDeniedTools];
+
+                        this.emit('task:tool_denied', {
+                            taskId: task.id,
+                            missionId: this.currentMissionId,
+                            deniedTools: normalizedDeniedTools
+                        });
+
+                        if (global.mcpServerInstance?.eventBus) {
+                            global.mcpServerInstance.eventBus.emitEvent('mesh:traffic', 'SwarmOrchestrator', {
+                                id: uuidv4(),
+                                type: 'SWARM_TOOL_DENIED',
+                                sender: 'SwarmOrchestrator',
+                                timestamp: Date.now(),
+                                payload: {
+                                    missionId: this.currentMissionId,
+                                    taskId: task.id,
+                                    deniedTools: normalizedDeniedTools
+                                }
+                            });
+                        }
+                    }
+
+                    delete (meshResult.result as any)._swarmTelemetry;
                 }
             }
 
@@ -575,6 +686,7 @@ export class SwarmOrchestrator extends EventEmitter {
                     result: task.result,
                     error: task.error,
                     usage: task.usage,
+                    deniedToolEvents: task.deniedToolEvents,
                     slashed: task.slashed,
                     verifiedBy: task.verifiedBy
                 });
@@ -639,7 +751,11 @@ export class SwarmOrchestrator extends EventEmitter {
 
         // Final persistence update
         if (this.missionService && this.currentMissionId) {
-            this.missionService.updateMissionTask(this.currentMissionId, task.id, { status: task.status, result: task.result });
+            this.missionService.updateMissionTask(this.currentMissionId, task.id, {
+                status: task.status,
+                result: task.result,
+                deniedToolEvents: task.deniedToolEvents
+            });
         }
 
         this.emit('task:completed', task);

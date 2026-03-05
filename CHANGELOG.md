@@ -4,6 +4,180 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.80] - 2026-03-05
+### Added
+- **Phase 119: Filter-Scoped Health Confidence Uncertainty Signals**
+  - Extended `swarm.getMissionRiskFacets.health.confidence` with `uncertaintyMargin` and `scoreRange` to indicate confidence precision bounds.
+  - Added Missions facets uncertainty rendering (`±margin` and score range) for clearer operator interpretation.
+  - Preserved filter-scoped behavior so uncertainty signals remain aligned to active governance filters.
+
+## [2.7.79] - 2026-03-05
+### Added
+- **Phase 118: Filter-Scoped Health Confidence Inputs**
+  - Extended `swarm.getMissionRiskFacets.health.confidence` with `inputs` (`missionCount`, `healthReasonCount`, `freshnessBucket`, `evaluatedAt`) to expose scoring provenance.
+  - Added Missions facets confidence-input rendering for direct operator visibility into confidence context.
+  - Kept confidence input values filter-scoped so provenance remains aligned to active governance filters.
+
+## [2.7.78] - 2026-03-05
+### Added
+- **Phase 117: Filter-Scoped Health Confidence Components**
+  - Extended `swarm.getMissionRiskFacets.health.confidence` with `components` (`sampleSizePenalty`, `freshnessPenalty`, `signalCongestionPenalty`, `totalPenalty`) for transparent confidence scoring.
+  - Added Missions facets confidence-component rendering so operators can inspect penalty breakdowns behind confidence level.
+  - Preserved filter-scoped semantics so confidence component values are aligned to active governance filters.
+
+## [2.7.77] - 2026-03-05
+### Added
+- **Phase 116: Filter-Scoped Health Confidence Drivers**
+  - Extended `swarm.getMissionRiskFacets.health.confidence` with `drivers` to explain confidence conditions (sample size, freshness, signal congestion).
+  - Added Missions facets confidence-driver rendering so operators can see why confidence is high/medium/low.
+  - Preserved filter-scoped semantics so confidence explanations track the exact active governance filter set.
+
+## [2.7.76] - 2026-03-05
+### Added
+- **Phase 115: Filter-Scoped Health Confidence Signal**
+  - Extended `swarm.getMissionRiskFacets.health` with `confidence` metadata (`score`, `level`) computed from risk-signal convergence.
+  - Added Missions facets health confidence rendering to expose trust level for current health assessment.
+  - Kept confidence outputs filter-scoped so health certainty remains aligned with active governance query filters.
+
+## [2.7.75] - 2026-03-05
+### Added
+- **Phase 114: Filter-Scoped Health Recommended Action Signal**
+  - Extended `swarm.getMissionRiskFacets.health` with `recommendedAction` guidance derived from current severity drivers.
+  - Added Missions facets health panel action guidance rendering for faster operator response.
+  - Kept action recommendations scoped to active governance filters and current telemetry context.
+
+## [2.7.74] - 2026-03-05
+### Added
+- **Phase 113: Filter-Scoped Facets Health Signal**
+  - Extended `swarm.getMissionRiskFacets` with `health` metadata (`severity`, `score`, `reasons`) derived from freshness, failed-share, risk-band dominance, and denied-event momentum.
+  - Added Missions "Filtered Risk Facets" health section with severity badge, health score, and top reasons.
+  - Preserved filter-scoped semantics so health reflects the same active mission subset as other facets.
+
+## [2.7.73] - 2026-03-05
+### Added
+- **Phase 112: Filter-Scoped Facet Freshness Signals**
+  - Extended `swarm.getMissionRiskFacets` with freshness metadata (`generatedAt`, `latestMissionUpdatedAt`, `latestUpdateAgeSeconds`, `freshnessBucket`).
+  - Added Missions facets UI section showing freshness bucket, age, and generation/update timestamps.
+  - Preserved filter-scoped behavior so freshness reflects the same mission set as current governance facets.
+
+## [2.7.72] - 2026-03-05
+### Added
+- **Phase 111: Filter-Scoped Risk Status Distribution Facets**
+  - Extended `swarm.getMissionRiskFacets` with filter-scoped status distribution counts and percentages.
+  - Added Missions facets rendering for active/completed/failed/paused distribution under current governance filters.
+  - Preserved server-driven interpretation by deriving status distribution from the same filtered mission set used by facets.
+
+## [2.7.71] - 2026-03-05
+### Added
+- **Phase 110: Filter-Scoped Denied-Event Momentum Signals**
+  - Extended `swarm.getMissionRiskFacets` with denied-event activity momentum (`last24h`, `prev24h`, `delta`, `deltaPct`, `trend`).
+  - Added Missions "Filtered Risk Facets" momentum section for fast directional governance context (up/down/flat).
+  - Kept momentum analytics scoped to active governance filters (`statusFilter`, `minRisk`) for operator-consistent interpretation.
+
+## [2.7.70] - 2026-03-05
+### Added
+- **Phase 109: Normalized Risk Band Percentages & Dominant Band Signal**
+  - Extended `swarm.getMissionRiskFacets` with normalized `bandPercentages` (`low/medium/high`) and `dominantBand`.
+  - Updated Missions "Filtered Risk Facets" card to show both counts and percentages per band.
+  - Added dominant risk-band indicator for faster filter-aware governance interpretation.
+
+## [2.7.69] - 2026-03-05
+### Added
+- **Phase 108: Filter-Scoped Risk Facets Analytics**
+  - Added `swarm.getMissionRiskFacets` API returning filter-scoped aggregates: mission count, average/min/max risk, and low/medium/high risk-band distribution.
+  - Scoped facets by current governance filters (`statusFilter`, `minRisk`) for operator-consistent analytics.
+  - Added Missions UI "Filtered Risk Facets" card to surface real-time aggregate context alongside mission triage controls.
+
+## [2.7.68] - 2026-03-04
+### Added
+- **Phase 107: Configurable High-Risk Threshold Control (Server-Driven)**
+  - Added a configurable Missions risk threshold input (`0..100`) with preset chips (`30/50/70`) for triage tuning.
+  - Updated high-risk mode labeling to reflect the active threshold dynamically.
+  - Kept filtering server-enforced by passing the configured threshold to `swarm.getMissionRiskRows.minRisk`.
+
+## [2.7.67] - 2026-03-04
+### Added
+- **Phase 106: High-Risk Mission Focus Filter (Server-Enforced)**
+  - Extended `swarm.getMissionRiskRows` with optional `minRisk` filtering (`0-100`) for backend-enforced governance triage.
+  - Added Missions UI toggle for **High-Risk Only (≥50)** that drives API query filtering instead of local-only filtering.
+  - Preserved compatibility with existing status/sort controls while improving deterministic cross-client mission ordering.
+
+## [2.7.66] - 2026-03-04
+### Added
+- **Phase 105: Server-Backed Mission Risk Rows for Governance Triage**
+  - Added `swarm.getMissionRiskRows` API with server-side `statusFilter`, `sortBy` (`risk`/`recent`), and `limit` controls.
+  - Added mission-level derived risk payloads (`missionRiskScore`, `deniedEventCount`, `deniedEventsLast24h`) for deterministic triage views.
+  - Updated Missions UI to consume backend risk rows, removing duplicated local sorting/filter derivation logic.
+
+## [2.7.65] - 2026-03-04
+### Added
+- **Phase 104: Mission Risk Triage Ordering & Filtering UX**
+  - Added mission-level governance triage controls in Swarm Missions: status filter (`all/active/completed/failed/paused`) and risk-first vs recent-first ordering.
+  - Added per-mission derived governance indicators (`Risk <score>`, `24h <denied-count>`) to accelerate operator prioritization.
+  - Added filter-aware empty-state messaging when no missions match current governance controls.
+
+## [2.7.64] - 2026-03-04
+### Added
+- **Phase 103: Swarm Mission Risk Trend & Status Analytics**
+  - Extended `swarm.getMissionRiskSummary` with `statusBreakdown`, `deniedEventsLast24h`, and `deniedEventsByHour24` for time-window governance analytics.
+  - Updated the Swarm Missions dashboard to show 24-hour denied-event totals, mission status distribution, and a 24-hour denied-event trend sparkline.
+
+## [2.7.63] - 2026-03-04
+### Added
+- **Phase 102: Swarm Governance Severity & Top Denied Tools Analytics**
+  - Extended `swarm.getMissionRiskSummary` with normalized `severityScore` and `topDeniedTools` aggregates.
+  - Added Missions UI severity meter and top denied-tools chips for faster governance triage.
+
+## [2.7.62] - 2026-03-04
+### Added
+- **Phase 101: Swarm Mission Risk Summary API & Dashboard Strip**
+  - Added `swarm.getMissionRiskSummary` query with mission-level denied-event aggregation.
+  - Added Missions risk summary metrics strip (total missions, missions with denials, total denied events, top-risk mission).
+
+## [2.7.61] - 2026-03-04
+### Added
+- **Phase 100: Swarm Denied-Event Governance Filter & Aggregation UI**
+  - Added mission-level denied-tool event aggregation badge in the Missions panel.
+  - Added “Show Denied-Only Tasks” filter toggle for rapid audit triage.
+  - Added empty-filter state message when no tasks match denied-only mode.
+
+## [2.7.60] - 2026-03-04
+### Added
+- **Phase 99: Persistent Mission Policy Context & UI Summary**
+  - Persisted normalized swarm policy metadata into mission context (`_swarmPolicy`) at mission creation.
+  - Added mission-level UI summary block for effective tool policy and policy warnings in the Swarm Missions panel.
+
+## [2.7.59] - 2026-03-04
+### Added
+- **Phase 98: Swarm Dashboard Policy & Denial Telemetry UI**
+  - Added `toolPolicy` allow/deny input controls to the Swarm launch panel.
+  - Added launch feedback rendering for `effectiveToolPolicy`, `policyWarnings`, `missionId`, and `taskCount`.
+  - Added mission task-level denied-tool telemetry display (`deniedToolEvents`) with counts and recent event details.
+
+## [2.7.58] - 2026-03-04
+### Added
+- **Phase 97: Swarm Tool Policy Normalization & Contract Feedback**
+  - Added canonical policy normalization (`normalizeSwarmToolPolicy`) with trim/dedupe behavior and deny-overrides-allow semantics.
+  - Added overlap warnings for contradictory allow/deny entries.
+  - `startSwarm` now returns `effectiveToolPolicy` and `policyWarnings` for UI/client visibility into applied execution constraints.
+
+## [2.7.57] - 2026-03-04
+### Added
+- **Phase 96: Swarm Tool Permission Boundaries**
+  - Added mission-level tool policy support (`allow` / `deny`) to swarm start input and task decomposition flow.
+  - Propagated tool policy through `SwarmOrchestrator` task offers and recursive sub-mission decomposition.
+  - Enforced allow/deny boundaries in `McpWorkerAgent` tool-call loop with explicit deny reasons.
+  - Added denied-tool telemetry capture (`deniedToolEvents`) on tasks and mission history persistence.
+  - Emitted swarm telemetry events for denied tools (`SWARM_TOOL_DENIED`) to improve operator visibility.
+
+## [2.7.56] - 2026-03-04
+### Changed
+- **Documentation and version synchronization pass**:
+  - Synced canonical version references across `VERSION`, `VERSION.md`, and top-level operational docs.
+  - Updated `ROADMAP.md`, `TODO.md`, and `STATUS.md` headers to reflect Phase 95 completion and current release context.
+  - Updated `docs/SUBMODULE_DASHBOARD.md` version context to align with the canonical release.
+  - Updated `AGENTS.md` quick-link version reference and refreshed `HANDOFF_ANTIGRAVITY.md` with this session delta.
+
 ## [2.7.55] - 2026-03-04
 ### Added
 - **Phase 95: Swarm Git Worktree Isolation**

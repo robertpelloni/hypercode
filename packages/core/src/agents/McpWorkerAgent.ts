@@ -17,10 +17,23 @@ export class McpWorkerAgent extends SpecializedAgent {
     public async handleTask(offer: any): Promise<any> {
         console.log(`[McpWorkerAgent] 🧠 Analyzing task: "${offer.task}"`);
 
-        // 1. Resolve requested tools
-        const requestedTools: string[] = offer.tools || [];
+        // 1. Resolve requested tools and mission-level policy (Phase 96)
+        const requestedTools: string[] = Array.isArray(offer.tools) ? offer.tools : [];
+        const policyAllow: string[] = Array.isArray(offer?.toolPolicy?.allow) ? offer.toolPolicy.allow : [];
+        const policyDeny: string[] = Array.isArray(offer?.toolPolicy?.deny) ? offer.toolPolicy.deny : [];
+        const deniedToolEvents: Array<{ tool: string; reason: string; timestamp: number }> = [];
+
         const nativeTools = await this.mcpServer.getNativeTools();
-        const availableTools = nativeTools.filter(t => requestedTools.includes(t.name));
+
+        const explicitAllowList = [...new Set([...(requestedTools || []), ...(policyAllow || [])])];
+        const hasExplicitAllowList = explicitAllowList.length > 0;
+        const denySet = new Set(policyDeny);
+
+        const availableTools = nativeTools.filter((tool) => {
+            if (denySet.has(tool.name)) return false;
+            if (!hasExplicitAllowList) return true;
+            return explicitAllowList.includes(tool.name);
+        });
 
         const toolDescriptions = availableTools.map(t => ({
             name: t.name,
@@ -35,7 +48,7 @@ You have access to the following tools:
 ${JSON.stringify(toolDescriptions, null, 2)}
 
 Mission Context (Global State shared across the swarm):
-${JSON.stringify(offer.missionContext || {}, null, 2)}
+${JSON.stringify(offer.context || offer.missionContext || {}, null, 2)}
 
 To use a tool, you MUST reply with a JSON object in this exact format, and nothing else:
 { "tool": "tool_name", "args": { ... } }
@@ -80,6 +93,14 @@ Think step by step, but ALWAYS ensure your entire response is a single valid JSO
 
                 if (action.result) {
                     console.log(`[McpWorkerAgent] ✅ Task Complete.`);
+
+                    if (deniedToolEvents.length > 0) {
+                        action._swarmTelemetry = {
+                            ...(action._swarmTelemetry || {}),
+                            deniedTools: deniedToolEvents
+                        };
+                    }
+
                     return action; // Returns { result: "...", _contextUpdate: "..." }
                 } else if (action.tool) {
                     console.log(`[McpWorkerAgent] 🛠️ Calling tool ${action.tool}...`);
@@ -87,7 +108,17 @@ Think step by step, but ALWAYS ensure your entire response is a single valid JSO
 
                     // Verify tool is in the allowed list
                     if (!availableTools.find(t => t.name === action.tool)) {
-                        currentPrompt = `Tool '${action.tool}' is not available or not permitted for this task. Available tools: ${availableTools.map(t => t.name).join(', ')}`;
+                        const deniedReason = denySet.has(action.tool)
+                            ? `Tool '${action.tool}' denied by mission tool policy (deny list).`
+                            : `Tool '${action.tool}' is not allowed for this task (allow list constraint).`;
+
+                        deniedToolEvents.push({
+                            tool: action.tool,
+                            reason: deniedReason,
+                            timestamp: Date.now()
+                        });
+
+                        currentPrompt = `${deniedReason} Available tools: ${availableTools.map(t => t.name).join(', ')}`;
                         continue;
                     }
 

@@ -1,6 +1,6 @@
 # Borg — Master TODO List (Implementor Edition)
 
-> **Updated**: 2026-02-28 | **Version**: 2.7.39 | **Phase**: 79 (Swarm Event Visualization Engine — COMPLETED)
+> **Updated**: 2026-03-04 | **Version**: 2.7.56 | **Phase**: 95 (Swarm Git Worktree Isolation — COMPLETED)
 > **Execution Order**: P0 (must close before release) → P1 (critical feature parity) → P2 (quality/polish) → P3 (future)
 
 ---
@@ -56,7 +56,7 @@
 ### 2) Shared UI `@ts-ignore` reduction pass
 - [x] **Remove remaining `@ts-ignore` in user-facing components**
 
-### Borg - v2.7.39 (canonical) - Phase 79 Completedncy hardening
+### Borg - v2.7.56 (canonical) - Phase 95 Documentation and consistency hardening
 - [x] **Keep `ROADMAP.md`, `TODO.md`, `STATUS.md`, `HANDOFF.md`, `CHANGELOG.md` synchronized after each merged fix batch**
 
 ---

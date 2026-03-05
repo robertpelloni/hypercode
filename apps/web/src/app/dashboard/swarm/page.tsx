@@ -40,6 +40,25 @@ interface SwarmTask {
     // Phase 88
     verifiedBy?: string;
     slashed?: boolean;
+
+    // Phase 96/98
+    deniedToolEvents?: Array<{
+        tool: string;
+        reason: string;
+        timestamp: number;
+    }>;
+}
+
+interface SwarmToolPolicy {
+    allow?: string[];
+    deny?: string[];
+}
+
+interface StartSwarmFeedback {
+    missionId?: string;
+    taskCount?: number;
+    effectiveToolPolicy?: SwarmToolPolicy;
+    policyWarnings?: string[];
 }
 
 interface SwarmMission {
@@ -55,6 +74,117 @@ interface SwarmMission {
     updatedAt: string;
 }
 
+interface SwarmPolicyContext {
+    effectiveToolPolicy?: {
+        allow?: string[];
+        deny?: string[];
+    };
+    policyWarnings?: string[];
+    capturedAt?: number;
+}
+
+interface MissionRiskSummary {
+    totalMissions: number;
+    missionsWithDeniedEvents: number;
+    totalDeniedEvents: number;
+    topRiskMission: {
+        missionId: string;
+        deniedEventCount: number;
+    } | null;
+    severityScore: number;
+    topDeniedTools: Array<{ tool: string; count: number }>;
+    statusBreakdown: {
+        active: number;
+        completed: number;
+        failed: number;
+        paused: number;
+    };
+    deniedEventsLast24h: number;
+    deniedEventsByHour24: Array<{ hourOffset: number; count: number }>;
+}
+
+type MissionStatusFilter = 'all' | SwarmMission['status'];
+
+interface MissionRiskRow {
+    mission: SwarmMission;
+    deniedEventCount: number;
+    deniedEventsLast24h: number;
+    missionRiskScore: number;
+}
+
+interface MissionRiskFacets {
+    missionCount: number;
+    averageRisk: number;
+    maxRisk: number;
+    minObservedRisk: number;
+    dominantBand: 'low' | 'medium' | 'high';
+    health: {
+        severity: 'good' | 'warn' | 'critical';
+        score: number;
+        reasons: string[];
+        recommendedAction: string;
+        confidence: {
+            score: number;
+            level: 'high' | 'medium' | 'low';
+            drivers: string[];
+            inputs: {
+                missionCount: number;
+                healthReasonCount: number;
+                freshnessBucket: 'fresh' | 'recent' | 'stale' | 'unknown';
+                evaluatedAt: number;
+            };
+            components: {
+                sampleSizePenalty: number;
+                freshnessPenalty: number;
+                signalCongestionPenalty: number;
+                totalPenalty: number;
+            };
+            uncertaintyMargin: number;
+            scoreRange: {
+                min: number;
+                max: number;
+            };
+        };
+    };
+    activity: {
+        deniedLast24h: number;
+        deniedPrev24h: number;
+        deniedDelta: number;
+        deniedDeltaPct: number;
+        deniedTrend: 'up' | 'down' | 'flat';
+    };
+    freshness: {
+        generatedAt: number;
+        latestMissionUpdatedAt: number | null;
+        latestUpdateAgeSeconds: number | null;
+        freshnessBucket: 'fresh' | 'recent' | 'stale' | 'unknown';
+    };
+    statusDistribution: {
+        counts: {
+            active: number;
+            completed: number;
+            failed: number;
+            paused: number;
+        };
+        percentages: {
+            active: number;
+            completed: number;
+            failed: number;
+            paused: number;
+        };
+    };
+    bands: {
+        low: number;
+        medium: number;
+        high: number;
+    };
+    bandPercentages: {
+        low: number;
+        medium: number;
+        high: number;
+    };
+}
+
 export default function SwarmDashboard() {
     const [activeTab, setActiveTab] = useState<'swarm' | 'debate' | 'consensus' | 'telemetry' | 'missions'>('swarm');
 
@@ -66,6 +196,9 @@ export default function SwarmDashboard() {
     // Persistence & Capabilities (Phase 80)
     const missionHistoryQuery = (trpc.swarm as any).getMissionHistory.useQuery(undefined, {
         refetchInterval: 5000 // Poll for updates
+    });
+    const missionRiskSummaryQuery = (trpc.swarm as any).getMissionRiskSummary.useQuery(undefined, {
+        refetchInterval: 5000
     });
     const meshCapabilitiesQuery = (trpc.swarm as any).getMeshCapabilities.useQuery(undefined, {
         refetchInterval: 10000
@@ -91,6 +224,31 @@ export default function SwarmDashboard() {
     const [selectedModel, setSelectedModel] = useState("gpt-4o-mini");
     const [missionPriority, setMissionPriority] = useState(3);
     const [requestedTools, setRequestedTools] = useState("");
+    const [policyAllowInput, setPolicyAllowInput] = useState("");
+    const [policyDenyInput, setPolicyDenyInput] = useState("");
+    const [lastLaunchFeedback, setLastLaunchFeedback] = useState<StartSwarmFeedback | null>(null);
+    const [showDeniedOnly, setShowDeniedOnly] = useState(false);
+    const [sortMissionsByRisk, setSortMissionsByRisk] = useState(true);
+    const [missionStatusFilter, setMissionStatusFilter] = useState<MissionStatusFilter>('all');
+    const [showHighRiskOnly, setShowHighRiskOnly] = useState(false);
+    const [riskThresholdInput, setRiskThresholdInput] = useState('50');
+    const parsedRiskThreshold = Number.parseInt(riskThresholdInput, 10);
+    const riskThreshold = Number.isFinite(parsedRiskThreshold)
+        ? Math.max(0, Math.min(100, parsedRiskThreshold))
+        : 50;
+    const missionRiskRowsQuery = (trpc.swarm as any).getMissionRiskRows.useQuery({
+        statusFilter: missionStatusFilter,
+        sortBy: sortMissionsByRisk ? 'risk' : 'recent',
+        minRisk: showHighRiskOnly ? riskThreshold : undefined
+    }, {
+        refetchInterval: 5000
+    });
+    const missionRiskFacetsQuery = (trpc.swarm as any).getMissionRiskFacets.useQuery({
+        statusFilter: missionStatusFilter,
+        minRisk: showHighRiskOnly ? riskThreshold : undefined
+    }, {
+        refetchInterval: 5000
+    });
 
     // Initial SSE Connection
     useEffect(() => {
@@ -119,7 +277,10 @@ export default function SwarmDashboard() {
         onSuccess: () => missionHistoryQuery.refetch()
     });
     const launchMutation = trpc.swarm.startSwarm.useMutation({
-        onSuccess: () => missionHistoryQuery.refetch()
+        onSuccess: (data: StartSwarmFeedback) => {
+            setLastLaunchFeedback(data);
+            missionHistoryQuery.refetch();
+        }
     });
 
     // Debate State
@@ -167,6 +328,12 @@ export default function SwarmDashboard() {
             alert('Payload must be valid JSON');
         }
     };
+
+    const riskSummary = missionRiskSummaryQuery.data as MissionRiskSummary | undefined;
+    const hourlyDenied = riskSummary?.deniedEventsByHour24 ?? [];
+    const maxHourlyDenied = hourlyDenied.reduce((max, point) => Math.max(max, point.count), 0) || 1;
+    const missionCards = (missionRiskRowsQuery.data ?? []) as MissionRiskRow[];
+    const riskFacets = missionRiskFacetsQuery.data as MissionRiskFacets | undefined;
 
     return (
         <div className="flex flex-col h-full bg-slate-950 text-slate-100 p-6 space-y-6 overflow-hidden">
@@ -247,18 +414,65 @@ export default function SwarmDashboard() {
                                             className="bg-slate-950 border-slate-800 text-sm font-mono text-emerald-400 placeholder-emerald-900/50"
                                         />
                                     </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Tool Policy: Allow (Optional)</label>
+                                        <Input
+                                            value={policyAllowInput}
+                                            onChange={e => setPolicyAllowInput(e.target.value)}
+                                            placeholder="e.g. read_file, browser_get_history"
+                                            className="bg-slate-950 border-slate-800 text-sm font-mono text-cyan-400 placeholder-cyan-900/50"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Tool Policy: Deny (Optional)</label>
+                                        <Input
+                                            value={policyDenyInput}
+                                            onChange={e => setPolicyDenyInput(e.target.value)}
+                                            placeholder="e.g. run_shell_command"
+                                            className="bg-slate-950 border-slate-800 text-sm font-mono text-rose-400 placeholder-rose-900/50"
+                                        />
+                                    </div>
                                     <Button
                                         className="bg-amber-600 hover:bg-amber-500 text-black font-bold h-12"
-                                        onClick={() => launchMutation.mutate({
+                                        onClick={() => (launchMutation.mutate as any)({
                                             masterPrompt,
                                             model: selectedModel,
                                             priority: missionPriority,
-                                            tools: requestedTools.split(',').map(t => t.trim()).filter(Boolean)
+                                            tools: requestedTools.split(',').map(t => t.trim()).filter(Boolean),
+                                            toolPolicy: {
+                                                allow: policyAllowInput.split(',').map(t => t.trim()).filter(Boolean),
+                                                deny: policyDenyInput.split(',').map(t => t.trim()).filter(Boolean)
+                                            }
                                         })}
                                         disabled={launchMutation.isPending || !masterPrompt}
                                     >
                                         {launchMutation.isPending ? 'DECOMPOSING...' : 'INITIATE SWARM'}
                                     </Button>
+                                    {lastLaunchFeedback && (
+                                        <div className="space-y-2 rounded border border-slate-800 bg-slate-950 p-2">
+                                            <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Last Launch Feedback</div>
+                                            <div className="text-[10px] text-slate-300">
+                                                Mission: <span className="font-mono text-cyan-400">{lastLaunchFeedback.missionId || 'n/a'}</span>
+                                            </div>
+                                            <div className="text-[10px] text-slate-300">
+                                                Task Count: <span className="font-mono text-amber-400">{lastLaunchFeedback.taskCount ?? 'n/a'}</span>
+                                            </div>
+                                            {lastLaunchFeedback.effectiveToolPolicy && (
+                                                <pre className="text-[9px] text-cyan-300 bg-black/40 p-2 rounded border border-cyan-900/40 overflow-x-auto">
+                                                    {JSON.stringify(lastLaunchFeedback.effectiveToolPolicy, null, 2)}
+                                                </pre>
+                                            )}
+                                            {Array.isArray(lastLaunchFeedback.policyWarnings) && lastLaunchFeedback.policyWarnings.length > 0 && (
+                                                <div className="space-y-1">
+                                                    {lastLaunchFeedback.policyWarnings.map((warning, idx) => (
+                                                        <div key={idx} className="text-[9px] text-rose-300 bg-rose-900/20 border border-rose-500/30 rounded px-2 py-1">
+                                                            {warning}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                     <div className="flex gap-4 items-center">
                                         <div className="flex flex-col gap-1">
                                             <label className="text-[10px] text-amber-500/50 uppercase font-bold">Priority Level</label>
@@ -340,12 +554,348 @@ export default function SwarmDashboard() {
                             exit={{ opacity: 0, x: -20 }}
                             className="flex flex-col h-full space-y-4 overflow-y-auto"
                         >
-                            {missionHistoryQuery.data?.length === 0 ? (
+                            {missionCards.length === 0 ? (
                                 <div className="flex h-60 items-center justify-center text-slate-600 italic">
-                                    No persistent missions found in historical records.
+                                    No missions match the current governance filters.
                                 </div>
                             ) : (
-                                missionHistoryQuery.data?.map((mission: SwarmMission) => (
+                                <>
+                                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                                        <Card className="bg-slate-900 border-slate-800">
+                                            <CardContent className="pt-4 pb-4">
+                                                <div className="text-[9px] uppercase tracking-widest text-slate-500">Total Missions</div>
+                                                <div className="text-lg font-mono text-cyan-400">{riskSummary?.totalMissions ?? 0}</div>
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="bg-slate-900 border-slate-800">
+                                            <CardContent className="pt-4 pb-4">
+                                                <div className="text-[9px] uppercase tracking-widest text-slate-500">Missions with Denials</div>
+                                                <div className="text-lg font-mono text-rose-400">{riskSummary?.missionsWithDeniedEvents ?? 0}</div>
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="bg-slate-900 border-slate-800">
+                                            <CardContent className="pt-4 pb-4">
+                                                <div className="text-[9px] uppercase tracking-widest text-slate-500">Total Denied Events</div>
+                                                <div className="text-lg font-mono text-rose-300">{riskSummary?.totalDeniedEvents ?? 0}</div>
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="bg-slate-900 border-slate-800">
+                                            <CardContent className="pt-4 pb-4">
+                                                <div className="text-[9px] uppercase tracking-widest text-slate-500">Denied (Last 24h)</div>
+                                                <div className="text-lg font-mono text-orange-300">{riskSummary?.deniedEventsLast24h ?? 0}</div>
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="bg-slate-900 border-slate-800">
+                                            <CardContent className="pt-4 pb-4">
+                                                <div className="text-[9px] uppercase tracking-widest text-slate-500">Top Risk Mission</div>
+                                                <div className="text-[10px] font-mono text-amber-400 truncate" title={riskSummary?.topRiskMission?.missionId || ''}>
+                                                    {riskSummary?.topRiskMission
+                                                        ? `${riskSummary.topRiskMission.missionId.slice(0, 8)}... (${riskSummary.topRiskMission.deniedEventCount})`
+                                                        : 'None'}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+
+                                    <Card className="bg-slate-900 border-slate-800">
+                                        <CardContent className="pt-4 pb-4 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-[9px] uppercase tracking-widest text-slate-500">Governance Severity</div>
+                                                <div className="text-xs font-mono text-rose-300">
+                                                    {riskSummary?.severityScore ?? 0}/100
+                                                </div>
+                                            </div>
+                                            <div className="h-2 rounded bg-slate-800 overflow-hidden">
+                                                <div
+                                                    className="h-full bg-rose-500 transition-all"
+                                                    style={{ width: `${riskSummary?.severityScore ?? 0}%` }}
+                                                />
+                                            </div>
+
+                                            <div className="text-[9px] uppercase tracking-widest text-slate-500 mt-2">Mission Status Breakdown</div>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
+                                                {[
+                                                    { key: 'active', color: 'text-cyan-300 border-cyan-500/30 bg-cyan-500/10' },
+                                                    { key: 'completed', color: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10' },
+                                                    { key: 'failed', color: 'text-rose-300 border-rose-500/30 bg-rose-500/10' },
+                                                    { key: 'paused', color: 'text-amber-300 border-amber-500/30 bg-amber-500/10' }
+                                                ].map(item => (
+                                                    <div key={item.key} className={`text-[9px] font-mono rounded border px-1.5 py-1 ${item.color}`}>
+                                                        {item.key}: {(riskSummary?.statusBreakdown?.[item.key as keyof MissionRiskSummary['statusBreakdown']] ?? 0)}
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="text-[9px] uppercase tracking-widest text-slate-500 mt-2">Denied Events Trend (24h)</div>
+                                            <div className="h-14 rounded border border-slate-800 bg-slate-950/60 p-1 flex items-end gap-[2px]">
+                                                {hourlyDenied.length > 0 ? (
+                                                    hourlyDenied.map((point) => (
+                                                        <div
+                                                            key={`hour-${point.hourOffset}`}
+                                                            title={`${point.hourOffset}h ago: ${point.count}`}
+                                                            className="flex-1 bg-rose-500/70 rounded-t"
+                                                            style={{ height: `${Math.max(8, Math.round((point.count / maxHourlyDenied) * 100))}%` }}
+                                                        />
+                                                    ))
+                                                ) : (
+                                                    <div className="text-[9px] text-slate-500 italic w-full text-center my-auto">
+                                                        No denied-event trend data yet.
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="text-[9px] uppercase tracking-widest text-slate-500 mt-2">Top Denied Tools</div>
+                                            <div className="flex flex-wrap gap-1">
+                                                {(riskSummary?.topDeniedTools || []).length > 0 ? (
+                                                    (riskSummary?.topDeniedTools || []).map((item: { tool: string; count: number }) => (
+                                                        <span
+                                                            key={`${item.tool}-${item.count}`}
+                                                            className="text-[9px] font-mono bg-rose-500/20 text-rose-300 border border-rose-500/40 px-1.5 py-0.5 rounded"
+                                                        >
+                                                            {item.tool} ×{item.count}
+                                                        </span>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-[9px] text-slate-500 italic">No denied tools recorded.</span>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className="bg-slate-900 border-slate-800">
+                                        <CardContent className="pt-4 pb-4 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-[9px] uppercase tracking-widest text-slate-500">Filtered Risk Facets</div>
+                                                <div className="text-[10px] font-mono text-cyan-300">
+                                                    {riskFacets?.missionCount ?? 0} missions
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-cyan-300 border-cyan-500/30 bg-cyan-500/10">
+                                                    avg: {riskFacets?.averageRisk ?? 0}
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-amber-300 border-amber-500/30 bg-amber-500/10">
+                                                    max: {riskFacets?.maxRisk ?? 0}
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-slate-300 border-slate-500/30 bg-slate-500/10">
+                                                    min: {riskFacets?.minObservedRisk ?? 0}
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-orange-300 border-orange-500/30 bg-orange-500/10">
+                                                    threshold: {showHighRiskOnly ? riskThreshold : 0}
+                                                </div>
+                                            </div>
+                                            <div className="text-[9px] uppercase tracking-widest text-slate-500 mt-2">Risk Bands</div>
+                                            <div className="grid grid-cols-3 gap-1">
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-emerald-300 border-emerald-500/30 bg-emerald-500/10">
+                                                    low (&lt;40): {riskFacets?.bands?.low ?? 0} ({riskFacets?.bandPercentages?.low ?? 0}%)
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-amber-300 border-amber-500/30 bg-amber-500/10">
+                                                    med (40-69): {riskFacets?.bands?.medium ?? 0} ({riskFacets?.bandPercentages?.medium ?? 0}%)
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-rose-300 border-rose-500/30 bg-rose-500/10">
+                                                    high (≥70): {riskFacets?.bands?.high ?? 0} ({riskFacets?.bandPercentages?.high ?? 0}%)
+                                                </div>
+                                            </div>
+                                            <div className="text-[9px] font-mono text-slate-400 mt-1">
+                                                dominant: <span className="text-cyan-300">{riskFacets?.dominantBand ?? 'low'}</span>
+                                            </div>
+                                            <div className="text-[9px] uppercase tracking-widest text-slate-500 mt-2">Facet Health</div>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
+                                                <div className={`text-[9px] font-mono rounded border px-1.5 py-1 ${
+                                                    riskFacets?.health?.severity === 'critical'
+                                                        ? 'text-rose-300 border-rose-500/30 bg-rose-500/10'
+                                                        : riskFacets?.health?.severity === 'warn'
+                                                            ? 'text-amber-300 border-amber-500/30 bg-amber-500/10'
+                                                            : 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10'
+                                                    }`}>
+                                                    severity: {riskFacets?.health?.severity ?? 'good'}
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-cyan-300 border-cyan-500/30 bg-cyan-500/10">
+                                                    score: {riskFacets?.health?.score ?? 100}
+                                                </div>
+                                                <div className={`text-[9px] font-mono rounded border px-1.5 py-1 ${
+                                                    riskFacets?.health?.confidence?.level === 'low'
+                                                        ? 'text-rose-300 border-rose-500/30 bg-rose-500/10'
+                                                        : riskFacets?.health?.confidence?.level === 'medium'
+                                                            ? 'text-amber-300 border-amber-500/30 bg-amber-500/10'
+                                                            : 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10'
+                                                    }`}>
+                                                    confidence: {riskFacets?.health?.confidence?.level ?? 'high'} ({riskFacets?.health?.confidence?.score ?? 100})
+                                                </div>
+                                            </div>
+                                            {(riskFacets?.health?.confidence?.drivers?.length || 0) > 0 && (
+                                                <div className="space-y-1 mt-1">
+                                                    {(riskFacets?.health?.confidence?.drivers || []).slice(0, 3).map((driver, idx) => (
+                                                        <div key={`confidence-driver-${idx}`} className="text-[8px] text-cyan-200 bg-cyan-950/20 border border-cyan-500/20 rounded px-1.5 py-1">
+                                                            confidence driver: {driver}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-1 mt-1">
+                                                <div className="text-[8px] font-mono rounded border px-1.5 py-1 text-slate-300 border-slate-500/30 bg-slate-500/10">
+                                                    sample penalty: {riskFacets?.health?.confidence?.components?.sampleSizePenalty ?? 0}
+                                                </div>
+                                                <div className="text-[8px] font-mono rounded border px-1.5 py-1 text-slate-300 border-slate-500/30 bg-slate-500/10">
+                                                    freshness penalty: {riskFacets?.health?.confidence?.components?.freshnessPenalty ?? 0}
+                                                </div>
+                                                <div className="text-[8px] font-mono rounded border px-1.5 py-1 text-slate-300 border-slate-500/30 bg-slate-500/10">
+                                                    signal penalty: {riskFacets?.health?.confidence?.components?.signalCongestionPenalty ?? 0}
+                                                </div>
+                                                <div className="text-[8px] font-mono rounded border px-1.5 py-1 text-amber-300 border-amber-500/30 bg-amber-500/10">
+                                                    total penalty: {riskFacets?.health?.confidence?.components?.totalPenalty ?? 0}
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-1 mt-1">
+                                                <div className="text-[8px] font-mono rounded border px-1.5 py-1 text-cyan-300 border-cyan-500/30 bg-cyan-500/10">
+                                                    sample n: {riskFacets?.health?.confidence?.inputs?.missionCount ?? 0}
+                                                </div>
+                                                <div className="text-[8px] font-mono rounded border px-1.5 py-1 text-cyan-300 border-cyan-500/30 bg-cyan-500/10">
+                                                    reason count: {riskFacets?.health?.confidence?.inputs?.healthReasonCount ?? 0}
+                                                </div>
+                                                <div className="text-[8px] font-mono rounded border px-1.5 py-1 text-cyan-300 border-cyan-500/30 bg-cyan-500/10">
+                                                    source freshness: {riskFacets?.health?.confidence?.inputs?.freshnessBucket ?? 'unknown'}
+                                                </div>
+                                                <div className="text-[8px] font-mono rounded border px-1.5 py-1 text-cyan-300 border-cyan-500/30 bg-cyan-500/10">
+                                                    eval: {riskFacets?.health?.confidence?.inputs?.evaluatedAt ? new Date(riskFacets.health.confidence.inputs.evaluatedAt).toLocaleTimeString() : 'n/a'}
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-1 mt-1">
+                                                <div className="text-[8px] font-mono rounded border px-1.5 py-1 text-amber-300 border-amber-500/30 bg-amber-500/10">
+                                                    uncertainty: ±{riskFacets?.health?.confidence?.uncertaintyMargin ?? 0}
+                                                </div>
+                                                <div className="text-[8px] font-mono rounded border px-1.5 py-1 text-amber-300 border-amber-500/30 bg-amber-500/10 col-span-1 md:col-span-2">
+                                                    score range: {riskFacets?.health?.confidence?.scoreRange?.min ?? 0} - {riskFacets?.health?.confidence?.scoreRange?.max ?? 100}
+                                                </div>
+                                            </div>
+                                            <div className="text-[8px] text-cyan-200 bg-cyan-950/20 border border-cyan-500/20 rounded px-1.5 py-1 mt-1">
+                                                action: {riskFacets?.health?.recommendedAction ?? 'Continue monitoring current mission mix'}
+                                            </div>
+                                            {(riskFacets?.health?.reasons?.length || 0) > 0 && (
+                                                <div className="space-y-1 mt-1">
+                                                    {(riskFacets?.health?.reasons || []).slice(0, 3).map((reason, idx) => (
+                                                        <div key={`health-reason-${idx}`} className="text-[8px] text-slate-300 bg-slate-950/60 border border-slate-700 rounded px-1.5 py-1">
+                                                            {reason}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <div className="text-[9px] uppercase tracking-widest text-slate-500 mt-2">Denied Event Momentum (24h vs prior 24h)</div>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-rose-300 border-rose-500/30 bg-rose-500/10">
+                                                    last24h: {riskFacets?.activity?.deniedLast24h ?? 0}
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-slate-300 border-slate-500/30 bg-slate-500/10">
+                                                    prev24h: {riskFacets?.activity?.deniedPrev24h ?? 0}
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-amber-300 border-amber-500/30 bg-amber-500/10">
+                                                    Δ: {riskFacets?.activity?.deniedDelta ?? 0} ({riskFacets?.activity?.deniedDeltaPct ?? 0}%)
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-cyan-300 border-cyan-500/30 bg-cyan-500/10">
+                                                    trend: {riskFacets?.activity?.deniedTrend ?? 'flat'}
+                                                </div>
+                                            </div>
+                                            <div className="text-[9px] uppercase tracking-widest text-slate-500 mt-2">Facet Freshness</div>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-cyan-300 border-cyan-500/30 bg-cyan-500/10">
+                                                    bucket: {riskFacets?.freshness?.freshnessBucket ?? 'unknown'}
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-slate-300 border-slate-500/30 bg-slate-500/10">
+                                                    age(s): {riskFacets?.freshness?.latestUpdateAgeSeconds ?? 'n/a'}
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-amber-300 border-amber-500/30 bg-amber-500/10">
+                                                    generated: {riskFacets?.freshness?.generatedAt ? new Date(riskFacets.freshness.generatedAt).toLocaleTimeString() : 'n/a'}
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-emerald-300 border-emerald-500/30 bg-emerald-500/10">
+                                                    latest mission: {riskFacets?.freshness?.latestMissionUpdatedAt ? new Date(riskFacets.freshness.latestMissionUpdatedAt).toLocaleTimeString() : 'n/a'}
+                                                </div>
+                                            </div>
+                                            <div className="text-[9px] uppercase tracking-widest text-slate-500 mt-2">Status Distribution (Filtered)</div>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-cyan-300 border-cyan-500/30 bg-cyan-500/10">
+                                                    active: {riskFacets?.statusDistribution?.counts?.active ?? 0} ({riskFacets?.statusDistribution?.percentages?.active ?? 0}%)
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-emerald-300 border-emerald-500/30 bg-emerald-500/10">
+                                                    completed: {riskFacets?.statusDistribution?.counts?.completed ?? 0} ({riskFacets?.statusDistribution?.percentages?.completed ?? 0}%)
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-rose-300 border-rose-500/30 bg-rose-500/10">
+                                                    failed: {riskFacets?.statusDistribution?.counts?.failed ?? 0} ({riskFacets?.statusDistribution?.percentages?.failed ?? 0}%)
+                                                </div>
+                                                <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-amber-300 border-amber-500/30 bg-amber-500/10">
+                                                    paused: {riskFacets?.statusDistribution?.counts?.paused ?? 0} ({riskFacets?.statusDistribution?.percentages?.paused ?? 0}%)
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    <div className="flex flex-wrap justify-end gap-2 items-center">
+                                        <select
+                                            value={missionStatusFilter}
+                                            onChange={(e) => setMissionStatusFilter(e.target.value as MissionStatusFilter)}
+                                            className="h-8 rounded border border-slate-700 bg-slate-900 text-[10px] uppercase tracking-wider text-slate-300 px-2"
+                                        >
+                                            <option value="all">All Statuses</option>
+                                            <option value="active">Active</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="failed">Failed</option>
+                                            <option value="paused">Paused</option>
+                                        </select>
+                                        <Button
+                                            size="sm"
+                                            variant={sortMissionsByRisk ? 'default' : 'ghost'}
+                                            className={sortMissionsByRisk ? 'bg-amber-600 hover:bg-amber-500 text-black font-bold' : 'text-slate-400'}
+                                            onClick={() => setSortMissionsByRisk(prev => !prev)}
+                                        >
+                                            {sortMissionsByRisk ? 'Risk-First Order' : 'Recent-First Order'}
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant={showHighRiskOnly ? 'default' : 'ghost'}
+                                            className={showHighRiskOnly ? 'bg-orange-600 hover:bg-orange-500 text-white font-bold' : 'text-slate-400'}
+                                            onClick={() => setShowHighRiskOnly(prev => !prev)}
+                                        >
+                                            {showHighRiskOnly ? `High-Risk Only (≥${riskThreshold})` : `Show High-Risk Only (≥${riskThreshold})`}
+                                        </Button>
+                                        <div className="flex items-center gap-1 rounded border border-slate-700 bg-slate-900 px-1.5 py-1">
+                                            <span className="text-[9px] uppercase tracking-wider text-slate-500">Risk ≥</span>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={100}
+                                                value={riskThresholdInput}
+                                                onChange={(e) => setRiskThresholdInput(e.target.value)}
+                                                onBlur={() => setRiskThresholdInput(String(riskThreshold))}
+                                                className="w-12 h-6 rounded bg-slate-950 border border-slate-700 text-[10px] text-orange-300 font-mono px-1"
+                                            />
+                                            <div className="flex gap-1">
+                                                {[30, 50, 70].map((preset) => (
+                                                    <button
+                                                        key={preset}
+                                                        onClick={() => setRiskThresholdInput(String(preset))}
+                                                        className={`text-[8px] px-1.5 py-0.5 rounded border ${riskThreshold === preset
+                                                            ? 'bg-orange-500/30 border-orange-400/50 text-orange-200'
+                                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-orange-500/40'
+                                                            }`}
+                                                    >
+                                                        {preset}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant={showDeniedOnly ? 'default' : 'ghost'}
+                                            className={showDeniedOnly ? 'bg-rose-600 hover:bg-rose-500 text-white' : 'text-slate-400'}
+                                            onClick={() => setShowDeniedOnly(prev => !prev)}
+                                        >
+                                            {showDeniedOnly ? 'Showing Denied-Only Tasks' : 'Show Denied-Only Tasks'}
+                                        </Button>
+                                    </div>
+                                    {missionCards.map(({ mission, deniedEventCount, deniedEventsLast24h, missionRiskScore }) => {
+                                        const visibleTasks = showDeniedOnly
+                                            ? mission.tasks.filter(task => Array.isArray(task.deniedToolEvents) && task.deniedToolEvents.length > 0)
+                                            : mission.tasks;
+
+                                        return (
                                     <Card key={mission.id} className="bg-slate-900 border-slate-800 hover:border-amber-500/30 transition-colors">
                                         <CardHeader className="pb-2">
                                             <div className="flex justify-between items-start">
@@ -367,6 +917,20 @@ export default function SwarmDashboard() {
                                                             <ServerIcon className="w-2 h-2" />
                                                             {((mission.usage?.estimatedMemory || 0) / 1024 / 1024).toFixed(1)}MB RAM
                                                         </span>
+                                                        {deniedEventCount > 0 && (
+                                                            <span className="text-[8px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded border border-rose-500/40 flex items-center gap-1 font-bold">
+                                                                <ShieldIcon className="w-2 h-2" />
+                                                                {deniedEventCount} denied tool event{deniedEventCount === 1 ? '' : 's'}
+                                                            </span>
+                                                        )}
+                                                        <span className="text-[8px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/40 font-mono">
+                                                            Risk {missionRiskScore}
+                                                        </span>
+                                                        {deniedEventsLast24h > 0 && (
+                                                            <span className="text-[8px] bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded border border-orange-500/40 font-mono">
+                                                                24h {deniedEventsLast24h}
+                                                            </span>
+                                                        )}
                                                         {mission.parentId && (
                                                             <span className="text-[10px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/20">
                                                                 Sub-mission of {mission.parentId.slice(0, 8)}...
@@ -394,6 +958,31 @@ export default function SwarmDashboard() {
                                             )}
                                         </CardHeader>
                                         <CardContent>
+                                            {(() => {
+                                                const swarmPolicy = (mission.context?._swarmPolicy || null) as SwarmPolicyContext | null;
+                                                if (!swarmPolicy) return null;
+
+                                                return (
+                                                    <div className="mb-4 p-2 rounded border border-cyan-500/20 bg-cyan-950/10 space-y-2">
+                                                        <div className="text-[9px] uppercase tracking-widest text-cyan-400 font-bold">Mission Tool Policy</div>
+                                                        {swarmPolicy.effectiveToolPolicy && (
+                                                            <pre className="text-[9px] text-cyan-300 bg-black/30 p-2 rounded border border-cyan-900/40 overflow-x-auto">
+                                                                {JSON.stringify(swarmPolicy.effectiveToolPolicy, null, 2)}
+                                                            </pre>
+                                                        )}
+                                                        {Array.isArray(swarmPolicy.policyWarnings) && swarmPolicy.policyWarnings.length > 0 && (
+                                                            <div className="space-y-1">
+                                                                {swarmPolicy.policyWarnings.map((warning, idx) => (
+                                                                    <div key={idx} className="text-[8px] text-rose-300 bg-rose-900/20 border border-rose-500/30 rounded px-2 py-1">
+                                                                        {warning}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+
                                             {/* Phase 90: Mission Context Viewer */}
                                             {mission.context && Object.keys(mission.context).length > 0 && (
                                                 <div className="mb-4">
@@ -409,7 +998,7 @@ export default function SwarmDashboard() {
                                             )}
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-                                                {mission.tasks.map((task: SwarmTask) => (
+                                                {visibleTasks.map((task: SwarmTask) => (
                                                     <div key={task.id} className="p-2 bg-slate-950 border border-slate-800 rounded text-[10px]">
                                                         <div className="flex justify-between items-center mb-1">
                                                             <div className="flex items-center gap-1 truncate mr-2">
@@ -440,6 +1029,12 @@ export default function SwarmDashboard() {
                                                             {(task.retryCount ?? 0) > 0 && (
                                                                 <span className="text-[8px] bg-rose-500/20 text-rose-400 px-1 rounded border border-rose-500/30 font-bold">
                                                                     RETRY {task.retryCount}/3
+                                                                </span>
+                                                            )}
+
+                                                            {Array.isArray(task.deniedToolEvents) && task.deniedToolEvents.length > 0 && (
+                                                                <span className="text-[8px] bg-rose-500/20 text-rose-300 px-1 rounded border border-rose-500/40 font-bold">
+                                                                    DENIED TOOLS: {task.deniedToolEvents.length}
                                                                 </span>
                                                             )}
 
@@ -503,8 +1098,25 @@ export default function SwarmDashboard() {
                                                                 <div className="text-slate-600 italic truncate">{task.result}</div>
                                                             )
                                                         }
+                                                        {Array.isArray(task.deniedToolEvents) && task.deniedToolEvents.length > 0 && (
+                                                            <div className="mt-2 border-t border-rose-500/20 pt-2 space-y-1">
+                                                                <div className="text-[8px] uppercase tracking-wide text-rose-400 font-bold">Denied Tool Events</div>
+                                                                {task.deniedToolEvents.slice(-3).map((event, idx) => (
+                                                                    <div key={`${event.tool}-${event.timestamp}-${idx}`} className="text-[8px] text-rose-300/90 bg-rose-950/20 border border-rose-500/20 rounded px-1.5 py-1">
+                                                                        <div className="font-mono text-rose-200">{event.tool}</div>
+                                                                        <div className="text-rose-300/80">{event.reason}</div>
+                                                                        <div className="text-rose-400/60">{new Date(event.timestamp).toLocaleTimeString()}</div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
+                                                {visibleTasks.length === 0 && (
+                                                    <div className="col-span-full text-center text-slate-600 italic py-4 text-xs">
+                                                        No tasks match the current filter.
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="mt-4 flex justify-between items-center text-[10px] text-slate-500 italic">
                                                 <span>Created: {new Date(mission.createdAt).toLocaleString()}</span>
@@ -512,7 +1124,8 @@ export default function SwarmDashboard() {
                                             </div>
                                         </CardContent>
                                     </Card>
-                                ))
+                                )})}
+                                </>
                             )}
                         </motion.div>
                     )}
