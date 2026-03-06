@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.60] - 2026-03-06
+### Added
+- **Phase 100: Service Exposure Audit**
+  - Wired orphaned `ragRouter` (RAG document ingestion: `ingestFile`, `ingestText`) into `appRouter`.
+  - Checked off backlog Items 8 (Core service debt) and 9 (Router modularization) — both already resolved.
+  - Checked off backlog Item 9.1 acceptance criteria for service exposure.
+
 ## [2.7.59] - 2026-03-06
 ### Fixed
 - **Phase 99: Knowledge Dashboard Type Integrity**

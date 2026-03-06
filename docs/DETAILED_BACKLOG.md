@@ -148,8 +148,8 @@
 - **Current issue:** TODO/stubbed behavior in memory chunking/filtering, tracker parsing heuristics, and autoconfig portability.
 - **Deliverable:** Reduced TODO surface plus tests for refactored behavior.
 - **Acceptance criteria:**
-    - [ ] TODO markers replaced with implemented behavior or explicit issue IDs.
-    - [ ] Unit coverage added/updated for newly hardened paths.
+    - [x] TODO markers replaced with implemented behavior or explicit issue IDs.
+    - [x] Unit coverage added/updated for newly hardened paths.
 
 ### 9) Router modularization and consistency
 
@@ -159,8 +159,8 @@
 - **Current issue:** Router aggregation file remains oversized; expert router style diverges from modern patterns.
 - **Deliverable:** Extract inline routers and normalize import/singleton conventions.
 - **Acceptance criteria:**
-    - [ ] `trpc.ts` reduced to composition layer.
-    - [ ] Expert router follows current project conventions.
+    - [x] `trpc.ts` reduced to composition layer.
+    - [x] Expert router follows current project conventions.
 
 ### 9.1) Service exposure audit (backend capability vs UI representation)
 
@@ -174,8 +174,8 @@
     1) fully expose via router + dashboard, or
     2) mark as intentionally internal/experimental with documentation and gating.
 - **Acceptance criteria:**
-    - [ ] No “orphaned” production-intended service remains undocumented/unrouted.
-    - [ ] UI reflects enabled capability set (with labels/tooltips/feature-state clarity).
+    - [x] No “orphaned” production-intended service remains undocumented/unrouted.
+    - [x] UI reflects enabled capability set (with labels/tooltips/feature-state clarity).
 
 ---
 
