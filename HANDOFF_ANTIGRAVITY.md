@@ -2,8 +2,8 @@
 
 ## Current State
 - **Project**: Borg - Neural Operating System
-- **Current Phase**: Phase 100: Service Exposure Audit (COMPLETED)
-- **Version**: 2.7.60
+- **Current Phase**: Phase 104: Browser Extension Env-Safe URLs (COMPLETED)
+- **Version**: 2.7.64
 
 ## Recent Accomplishments
 - **Phase 94**: Sub-Agent Task Routing. `MeshCoderAgent` and `MeshResearcherAgent` bid on classified tasks.
@@ -40,8 +40,20 @@
 - **Phase 122**: Filter-Scoped Health Confidence Alert Signals. Added confidence alert outputs and rendered confidence alerts in Missions facets for explicit confidence risk warnings.
 - **Phase 123**: Filter-Scoped Health Confidence Alert Level Signal. Added confidence alert-level output (`none|warn|critical`) and rendered alert-level badge in Missions facets for rapid confidence-alert severity triage.
 
+### Antigravity Backlog Completion Sprint (2026-03-06)
+- **Backlog Phase 98**: Environment-Safe Endpoint Strategy. Replaced all hardcoded `localhost` references in `swarm/page.tsx`, `autopilot/page.tsx`, `infrastructure/page.tsx`, and `DirectorConfig.tsx` with env vars. Created `apps/web/.env.example`.
+- **Backlog Phase 99**: Knowledge Dashboard Type Integrity. Removed `ExpertTrpc` type hack and `as unknown as` cast. Fixed implicit `any` lint.
+- **Backlog Phase 100**: Service Exposure Audit. Wired orphaned `ragRouter` into `appRouter`. Checked off backlog Items 8, 9, 9.1.
+- **Backlog Phase 101**: Documentation Governance. Synced `STATUS.md` to v2.7.60. Added archival headers to `HANDOFF_LOG.md`.
+- **Backlog Phase 102**: Placeholder Regression Checks. Created `scripts/check-placeholders.mjs` CI scanner.
+- **Backlog Phase 103**: Extension Parity Matrix. Created `docs/EXTENSION_PARITY_MATRIX.md` with 30+ capabilities mapped.
+- **Backlog Phase 104**: Browser Extension Env-Safe URLs. Replaced hardcoded `localhost:3001` with configurable `chrome.storage.sync` keys.
+- **Result**: All 12 DETAILED_BACKLOG items (P0-P3) are now checked off.
+
 ## Next Steps
-- Continue with roadmap implementation for Borg, prioritizing **Phase 124** and ongoing UI/documentation parity closure.
+- Continue Extension Parity Milestone 2 (Cross-Surface Intelligence).
+- Address placeholder scanner findings (171 critical markers for tracked reduction).
+- Continue roadmap implementation for Borg.
 
 ## Technical Notes
 - **Verification**: The P2P Mesh architecture is fully operational inside a single process via `globalMeshBus` fallback, but is designed for multi-node distribution via `redis`. Tests should use this architecture.
