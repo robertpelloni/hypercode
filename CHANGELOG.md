@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.64] - 2026-03-06
+### Fixed
+- **Phase 104: Browser Extension Env-Safe URLs**
+  - Replaced hardcoded `localhost:3001` in `background.ts` with configurable `chrome.storage.sync` keys (`borgCoreUrl`, `borgWsUrl`).
+  - WebSocket auto-reconnects when storage values change.
+  - Updated Extension Parity Matrix Milestone 1 items.
+
 ## [2.7.63] - 2026-03-06
 ### Added
 - **Phase 103: Extension Parity Matrix**

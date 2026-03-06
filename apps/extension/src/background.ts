@@ -1,8 +1,18 @@
 
 // Background Service Worker
-// Proxies requests from Content Script (Web Page) to Local Borg Core (localhost:3000)
+// Proxies requests from Content Script (Web Page) to Local Borg Core
 
-const CORE_URL = 'http://localhost:3001';
+// Default URLs — overridable via extension options/storage
+let CORE_URL = 'http://localhost:3001';
+let WS_URL = 'ws://localhost:3001';
+
+// Load configured URLs from chrome.storage (set via options page or popup)
+chrome.storage.sync.get(['borgCoreUrl', 'borgWsUrl'], (result) => {
+    if (result.borgCoreUrl) CORE_URL = result.borgCoreUrl;
+    if (result.borgWsUrl) WS_URL = result.borgWsUrl;
+    // Reconnect WebSocket with potentially new URL
+    if (ws) { ws.close(); } else { connectWebSocket(); }
+});
 
 // Keep-alive setup for Service Worker
 const keepAlive = () => setInterval(chrome.runtime.getPlatformInfo, 20e3);
@@ -67,7 +77,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // WebSocket Connection to Core
 let ws: WebSocket | null = null;
-const WS_URL = 'ws://localhost:3001'; // Default WS port for Borg Core
 
 function connectWebSocket() {
     if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;

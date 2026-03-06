@@ -52,8 +52,8 @@ This document tracks capability parity across the three Borg client surfaces: **
 ## Parity Milestones
 
 ### Milestone 1: Extension Hardening (P2)
-- [ ] Replace hardcoded `localhost:3001` in browser extension `background.ts` with configurable URL
-- [ ] Add configurable WS URL to browser extension (matching VS Code's `borg.coreUrl` config)
+- [x] Replace hardcoded `localhost:3001` in browser extension `background.ts` with configurable URL
+- [x] Add configurable WS URL to browser extension (matching VS Code's `borg.coreUrl` config)
 - [ ] Add error boundary / offline UI to browser extension popup
 
 ### Milestone 2: Cross-Surface Intelligence (P3)
