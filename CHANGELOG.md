@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.63] - 2026-03-06
+### Added
+- **Phase 103: Extension Parity Matrix**
+  - Created `docs/EXTENSION_PARITY_MATRIX.md` — comprehensive capability matrix across Dashboard, Browser Extension, and VS Code Extension.
+  - 30+ capabilities mapped with shipped/partial/not-started status.
+  - Defined 3 parity milestones (Hardening, Cross-Surface Intelligence, Full Parity).
+  - All 12 DETAILED_BACKLOG items now checked off (P0 through P3 complete).
+
 ## [2.7.62] - 2026-03-06
 ### Added
 - **Phase 102: Placeholder Regression Checks**

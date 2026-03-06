@@ -211,8 +211,8 @@
 - **Current issue:** Browser extension appears scaffold-level; VS Code extension compiles but requires parity map against roadmap commitments.
 - **Deliverable:** Capability matrix + minimum viable parity milestones across dashboard, VS Code observer, and browser extension.
 - **Acceptance criteria:**
-    - [ ] Documented parity matrix checked into docs.
-    - [ ] Each extension capability tagged as shipped/partial/not started with owner task links.
+    - [x] Documented parity matrix checked into docs.
+    - [x] Each extension capability tagged as shipped/partial/not started with owner task links.
 
 ---
 
