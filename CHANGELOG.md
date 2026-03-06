@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.62] - 2026-03-06
+### Added
+- **Phase 102: Placeholder Regression Checks**
+  - Created `scripts/check-placeholders.mjs` — CI-oriented scanner for TODO/FIXME/PLACEHOLDER/STUB/@ts-ignore/unsafe cast patterns.
+  - Supports `--strict` mode that exits non-zero on CRITICAL markers (CI gating).
+  - Scans `apps/web/src` and `packages/core/src` with severity levels (CRITICAL/WARNING/INFO).
+  - Baseline scan: 198 markers (171 critical, 26 warning, 1 info) — documented for tracked reduction.
+
 ## [2.7.61] - 2026-03-06
 ### Fixed
 - **Phase 101: Documentation Governance**

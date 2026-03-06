@@ -201,7 +201,7 @@
 - **Current issue:** Placeholder/no-op behavior can silently re-enter production during quick stabilization cycles.
 - **Deliverable:** CI script/checklist that flags known placeholder patterns.
 - **Acceptance criteria:**
-    - [ ] Release process blocks on unresolved critical placeholder markers.
+    - [x] Release process blocks on unresolved critical placeholder markers.
 
 ### 12) Extension surfaces parity plan
 
