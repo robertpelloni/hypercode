@@ -7,7 +7,7 @@ export default function AutopilotDashboardPage() {
     // Assuming Autopilot server serves its web UI at this port/path
     // If it's pure API, we might need a custom UI construction here.
     // Based on README, it has a "Web Dashboard". Let's assume root or specific path.
-    const autopilotUrl = "http://localhost:3847";
+    const autopilotUrl = process.env.NEXT_PUBLIC_AUTOPILOT_DASHBOARD_URL || "http://localhost:3847";
 
     return (
         <div className="w-full h-full flex flex-col">

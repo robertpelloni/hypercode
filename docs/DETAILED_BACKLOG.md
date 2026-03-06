@@ -136,8 +136,8 @@
 - **Current issue:** Hardcoded endpoint `http://localhost:4000/trpc`.
 - **Deliverable:** Env-driven URL resolution supporting local/dev/prod.
 - **Acceptance criteria:**
-    - [ ] No hardcoded localhost endpoint in production path.
-    - [ ] Clear fallback and validation error messaging.
+    - [x] No hardcoded localhost endpoint in production path.
+    - [x] Clear fallback and validation error messaging.
 
 ### 8) Core service debt cleanup pass
 

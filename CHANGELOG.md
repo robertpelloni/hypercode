@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.7.58] - 2026-03-06
+### Fixed
+- **Phase 98: Environment-Safe Endpoint Strategy**
+  - Replaced hardcoded `localhost:3001` SSE URL in `swarm/page.tsx` with `NEXT_PUBLIC_CORE_SSE_URL`.
+  - Replaced hardcoded `localhost:3847` in `autopilot/page.tsx` with `NEXT_PUBLIC_AUTOPILOT_DASHBOARD_URL`.
+  - Replaced hardcoded `localhost:3000` iframe in `infrastructure/page.tsx` with `NEXT_PUBLIC_MCPENETES_URL`.
+  - Replaced hardcoded `localhost:1234` LMStudio link in `DirectorConfig.tsx` with `NEXT_PUBLIC_LMSTUDIO_URL`.
+  - Created `apps/web/.env.example` documenting all `NEXT_PUBLIC_*` environment variables.
+
+## [2.7.84] - 2026-03-06
+### Added
+- **Phase 123: Filter-Scoped Health Confidence Alert Level Signal**
+  - Extended `swarm.getMissionRiskFacets.health.confidence` with `alertLevel` (`none`, `warn`, `critical`) for confidence alert urgency.
+  - Added Missions facets confidence alert-level badge rendering for immediate risk-severity scanning.
+  - Preserved filter-scoped semantics so alert levels reflect the active governance filter scope.
+
+## [2.7.83] - 2026-03-06
+### Added
+- **Phase 122: Filter-Scoped Health Confidence Alert Signals**
+  - Extended `swarm.getMissionRiskFacets.health.confidence` with `alerts` describing high-risk confidence conditions (low confidence, volatility, stale telemetry, low sample size).
+  - Added Missions facets confidence-alert rendering for explicit operator warning visibility.
+  - Preserved filter-scoped semantics so alert signals remain aligned to active governance filters.
+
 ## [2.7.57] - 2026-03-05
 ### Added
 - **Phase 97: External Link Ingestion Telemetry**

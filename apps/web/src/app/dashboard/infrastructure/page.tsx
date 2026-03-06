@@ -139,7 +139,7 @@ export default function InfrastructureDashboardPage() {
                     <div className="rounded-lg border border-zinc-800/70 bg-black overflow-hidden relative" style={{ height: '500px' }}>
                         {status?.installed ? (
                             <iframe
-                                src="http://localhost:3000"
+                                src={process.env.NEXT_PUBLIC_MCPENETES_URL || "http://localhost:3000"}
                                 className="w-full h-full border-none pointer-events-auto"
                                 title="mcpenetes Dashboard"
                             />

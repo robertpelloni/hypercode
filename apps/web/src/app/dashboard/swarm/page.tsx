@@ -144,6 +144,12 @@ interface MissionRiskFacets {
                 min: number;
                 max: number;
             };
+            stability: 'stable' | 'watch' | 'volatile';
+            advice: string;
+            alertLevel: 'none' | 'warn' | 'critical';
+            alertCount: number;
+            hasCriticalAlert: boolean;
+            alerts: string[];
         };
     };
     activity: {
@@ -253,7 +259,9 @@ export default function SwarmDashboard() {
     // Initial SSE Connection
     useEffect(() => {
         // Core SSE port is 3001
-        const eventSource = new EventSource('http://localhost:3001/api/mesh/stream');
+        // Resolve SSE endpoint from environment, falling back to local dev default.
+        const sseBase = process.env.NEXT_PUBLIC_CORE_SSE_URL || 'http://localhost:3001';
+        const eventSource = new EventSource(`${sseBase}/api/mesh/stream`);
 
         eventSource.onopen = () => setStreamStatus('online');
         eventSource.onerror = () => setStreamStatus('offline');
@@ -700,8 +708,7 @@ export default function SwarmDashboard() {
                                             </div>
                                             <div className="text-[9px] uppercase tracking-widest text-slate-500 mt-2">Facet Health</div>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
-                                                <div className={`text-[9px] font-mono rounded border px-1.5 py-1 ${
-                                                    riskFacets?.health?.severity === 'critical'
+                                                <div className={`text-[9px] font-mono rounded border px-1.5 py-1 ${riskFacets?.health?.severity === 'critical'
                                                         ? 'text-rose-300 border-rose-500/30 bg-rose-500/10'
                                                         : riskFacets?.health?.severity === 'warn'
                                                             ? 'text-amber-300 border-amber-500/30 bg-amber-500/10'
@@ -712,8 +719,7 @@ export default function SwarmDashboard() {
                                                 <div className="text-[9px] font-mono rounded border px-1.5 py-1 text-cyan-300 border-cyan-500/30 bg-cyan-500/10">
                                                     score: {riskFacets?.health?.score ?? 100}
                                                 </div>
-                                                <div className={`text-[9px] font-mono rounded border px-1.5 py-1 ${
-                                                    riskFacets?.health?.confidence?.level === 'low'
+                                                <div className={`text-[9px] font-mono rounded border px-1.5 py-1 ${riskFacets?.health?.confidence?.level === 'low'
                                                         ? 'text-rose-300 border-rose-500/30 bg-rose-500/10'
                                                         : riskFacets?.health?.confidence?.level === 'medium'
                                                             ? 'text-amber-300 border-amber-500/30 bg-amber-500/10'
@@ -766,7 +772,46 @@ export default function SwarmDashboard() {
                                                 <div className="text-[8px] font-mono rounded border px-1.5 py-1 text-amber-300 border-amber-500/30 bg-amber-500/10 col-span-1 md:col-span-2">
                                                     score range: {riskFacets?.health?.confidence?.scoreRange?.min ?? 0} - {riskFacets?.health?.confidence?.scoreRange?.max ?? 100}
                                                 </div>
+                                                <div className={`text-[8px] font-mono rounded border px-1.5 py-1 ${riskFacets?.health?.confidence?.stability === 'volatile'
+                                                        ? 'text-rose-300 border-rose-500/30 bg-rose-500/10'
+                                                        : riskFacets?.health?.confidence?.stability === 'watch'
+                                                            ? 'text-amber-300 border-amber-500/30 bg-amber-500/10'
+                                                            : 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10'
+                                                    }`}>
+                                                    stability: {riskFacets?.health?.confidence?.stability ?? 'stable'}
+                                                </div>
                                             </div>
+                                            <div className="text-[8px] text-indigo-200 bg-indigo-950/20 border border-indigo-500/20 rounded px-1.5 py-1 mt-1">
+                                                confidence advice: {riskFacets?.health?.confidence?.advice ?? 'Confidence is stable; proceed while continuing standard monitoring cadence.'}
+                                            </div>
+                                            <div className={`text-[8px] rounded px-1.5 py-1 mt-1 border font-mono ${riskFacets?.health?.confidence?.alertLevel === 'critical'
+                                                    ? 'text-rose-200 bg-rose-950/20 border-rose-500/30'
+                                                    : riskFacets?.health?.confidence?.alertLevel === 'warn'
+                                                        ? 'text-amber-200 bg-amber-950/20 border-amber-500/30'
+                                                        : 'text-emerald-200 bg-emerald-950/20 border-emerald-500/30'
+                                                }`}>
+                                                confidence alert level: {riskFacets?.health?.confidence?.alertLevel ?? 'none'}
+                                            </div>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-1 mt-1">
+                                                <div className="text-[8px] font-mono rounded border px-1.5 py-1 text-rose-200 bg-rose-950/20 border-rose-500/30">
+                                                    alert count: {riskFacets?.health?.confidence?.alertCount ?? 0}
+                                                </div>
+                                                <div className={`text-[8px] font-mono rounded border px-1.5 py-1 ${riskFacets?.health?.confidence?.hasCriticalAlert
+                                                        ? 'text-rose-200 bg-rose-950/20 border-rose-500/30'
+                                                        : 'text-emerald-200 bg-emerald-950/20 border-emerald-500/30'
+                                                    }`}>
+                                                    critical present: {riskFacets?.health?.confidence?.hasCriticalAlert ? 'yes' : 'no'}
+                                                </div>
+                                            </div>
+                                            {(riskFacets?.health?.confidence?.alerts?.length || 0) > 0 && (
+                                                <div className="space-y-1 mt-1">
+                                                    {(riskFacets?.health?.confidence?.alerts || []).slice(0, 3).map((alert, idx) => (
+                                                        <div key={`confidence-alert-${idx}`} className="text-[8px] text-rose-200 bg-rose-950/20 border border-rose-500/20 rounded px-1.5 py-1">
+                                                            confidence alert: {alert}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                             <div className="text-[8px] text-cyan-200 bg-cyan-950/20 border border-cyan-500/20 rounded px-1.5 py-1 mt-1">
                                                 action: {riskFacets?.health?.recommendedAction ?? 'Continue monitoring current mission mix'}
                                             </div>
@@ -896,235 +941,236 @@ export default function SwarmDashboard() {
                                             : mission.tasks;
 
                                         return (
-                                    <Card key={mission.id} className="bg-slate-900 border-slate-800 hover:border-amber-500/30 transition-colors">
-                                        <CardHeader className="pb-2">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <CardTitle className="text-lg text-amber-500 font-bold">{mission.goal.slice(0, 100)}...</CardTitle>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <CardDescription className="text-[10px] font-mono opacity-50">{mission.id}</CardDescription>
-                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded border ${mission.priority >= 4 ? 'bg-rose-500/10 text-rose-400 border-rose-500/30 font-bold' :
-                                                            mission.priority <= 2 ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
-                                                                'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                                                            }`}>
-                                                            P{mission.priority}
-                                                        </span>
-                                                        <span className="text-[8px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700 flex items-center gap-1">
-                                                            <ActivityIcon className="w-2 h-2" />
-                                                            {mission.usage?.tokens.toLocaleString()} tokens
-                                                        </span>
-                                                        <span className="text-[8px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700 flex items-center gap-1">
-                                                            <ServerIcon className="w-2 h-2" />
-                                                            {((mission.usage?.estimatedMemory || 0) / 1024 / 1024).toFixed(1)}MB RAM
-                                                        </span>
-                                                        {deniedEventCount > 0 && (
-                                                            <span className="text-[8px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded border border-rose-500/40 flex items-center gap-1 font-bold">
-                                                                <ShieldIcon className="w-2 h-2" />
-                                                                {deniedEventCount} denied tool event{deniedEventCount === 1 ? '' : 's'}
-                                                            </span>
-                                                        )}
-                                                        <span className="text-[8px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/40 font-mono">
-                                                            Risk {missionRiskScore}
-                                                        </span>
-                                                        {deniedEventsLast24h > 0 && (
-                                                            <span className="text-[8px] bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded border border-orange-500/40 font-mono">
-                                                                24h {deniedEventsLast24h}
-                                                            </span>
-                                                        )}
-                                                        {mission.parentId && (
-                                                            <span className="text-[10px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/20">
-                                                                Sub-mission of {mission.parentId.slice(0, 8)}...
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${mission.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                    mission.status === 'failed' ? 'bg-rose-500/20 text-rose-400' :
-                                                        mission.status === 'paused' ? 'bg-amber-500/20 text-amber-400 animate-pulse' :
-                                                            'bg-cyan-500/20 text-cyan-400'
-                                                    }`}>
-                                                    {mission.status}
-                                                </div>
-                                            </div>
-                                            {mission.status === 'failed' && (
-                                                <Button
-                                                    size="sm"
-                                                    className="w-full mt-2 h-7 text-[10px] bg-amber-600 hover:bg-amber-500 text-white"
-                                                    onClick={() => resumeMissionMutation.mutate({ missionId: mission.id })}
-                                                    disabled={resumeMissionMutation.isPending}
-                                                >
-                                                    RESUME MISSION
-                                                </Button>
-                                            )}
-                                        </CardHeader>
-                                        <CardContent>
-                                            {(() => {
-                                                const swarmPolicy = (mission.context?._swarmPolicy || null) as SwarmPolicyContext | null;
-                                                if (!swarmPolicy) return null;
-
-                                                return (
-                                                    <div className="mb-4 p-2 rounded border border-cyan-500/20 bg-cyan-950/10 space-y-2">
-                                                        <div className="text-[9px] uppercase tracking-widest text-cyan-400 font-bold">Mission Tool Policy</div>
-                                                        {swarmPolicy.effectiveToolPolicy && (
-                                                            <pre className="text-[9px] text-cyan-300 bg-black/30 p-2 rounded border border-cyan-900/40 overflow-x-auto">
-                                                                {JSON.stringify(swarmPolicy.effectiveToolPolicy, null, 2)}
-                                                            </pre>
-                                                        )}
-                                                        {Array.isArray(swarmPolicy.policyWarnings) && swarmPolicy.policyWarnings.length > 0 && (
-                                                            <div className="space-y-1">
-                                                                {swarmPolicy.policyWarnings.map((warning, idx) => (
-                                                                    <div key={idx} className="text-[8px] text-rose-300 bg-rose-900/20 border border-rose-500/30 rounded px-2 py-1">
-                                                                        {warning}
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })()}
-
-                                            {/* Phase 90: Mission Context Viewer */}
-                                            {mission.context && Object.keys(mission.context).length > 0 && (
-                                                <div className="mb-4">
-                                                    <details className="group">
-                                                        <summary className="cursor-pointer text-xs font-bold text-amber-500 hover:text-amber-400 select-none flex items-center gap-1 uppercase tracking-wider mb-2">
-                                                            <ActivityIcon className="w-3 h-3" /> Shared Mission Context
-                                                        </summary>
-                                                        <pre className="text-[10px] text-amber-300 bg-black/50 p-2 rounded border border-amber-900/50 mt-1 overflow-x-auto">
-                                                            {JSON.stringify(mission.context, null, 2)}
-                                                        </pre>
-                                                    </details>
-                                                </div>
-                                            )}
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-                                                {visibleTasks.map((task: SwarmTask) => (
-                                                    <div key={task.id} className="p-2 bg-slate-950 border border-slate-800 rounded text-[10px]">
-                                                        <div className="flex justify-between items-center mb-1">
-                                                            <div className="flex items-center gap-1 truncate mr-2">
-                                                                <span className={`text-[8px] px-1 rounded border shrink-0 ${task.priority >= 4 ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
-                                                                    'bg-slate-800 text-slate-500 border-slate-700'
+                                            <Card key={mission.id} className="bg-slate-900 border-slate-800 hover:border-amber-500/30 transition-colors">
+                                                <CardHeader className="pb-2">
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <CardTitle className="text-lg text-amber-500 font-bold">{mission.goal.slice(0, 100)}...</CardTitle>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <CardDescription className="text-[10px] font-mono opacity-50">{mission.id}</CardDescription>
+                                                                <span className={`text-[10px] px-1.5 py-0.5 rounded border ${mission.priority >= 4 ? 'bg-rose-500/10 text-rose-400 border-rose-500/30 font-bold' :
+                                                                    mission.priority <= 2 ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
+                                                                        'bg-amber-500/10 text-amber-400 border-amber-500/30'
                                                                     }`}>
-                                                                    P{task.priority || 3}
+                                                                    P{mission.priority}
                                                                 </span>
-                                                                <span className="font-bold text-slate-500 truncate">{task.description}</span>
+                                                                <span className="text-[8px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700 flex items-center gap-1">
+                                                                    <ActivityIcon className="w-2 h-2" />
+                                                                    {mission.usage?.tokens.toLocaleString()} tokens
+                                                                </span>
+                                                                <span className="text-[8px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700 flex items-center gap-1">
+                                                                    <ServerIcon className="w-2 h-2" />
+                                                                    {((mission.usage?.estimatedMemory || 0) / 1024 / 1024).toFixed(1)}MB RAM
+                                                                </span>
+                                                                {deniedEventCount > 0 && (
+                                                                    <span className="text-[8px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded border border-rose-500/40 flex items-center gap-1 font-bold">
+                                                                        <ShieldIcon className="w-2 h-2" />
+                                                                        {deniedEventCount} denied tool event{deniedEventCount === 1 ? '' : 's'}
+                                                                    </span>
+                                                                )}
+                                                                <span className="text-[8px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/40 font-mono">
+                                                                    Risk {missionRiskScore}
+                                                                </span>
+                                                                {deniedEventsLast24h > 0 && (
+                                                                    <span className="text-[8px] bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded border border-orange-500/40 font-mono">
+                                                                        24h {deniedEventsLast24h}
+                                                                    </span>
+                                                                )}
+                                                                {mission.parentId && (
+                                                                    <span className="text-[10px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/20">
+                                                                        Sub-mission of {mission.parentId.slice(0, 8)}...
+                                                                    </span>
+                                                                )}
                                                             </div>
-                                                            <span className={`px-1.5 py-0.5 rounded uppercase shrink-0 ${task.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                                task.status === 'failed' ? 'bg-rose-500/20 text-rose-400' :
-                                                                    task.status === 'running' ? 'bg-blue-500/20 text-blue-400 animate-pulse' :
-                                                                        task.status === 'pending_approval' ? 'bg-amber-500/20 text-amber-400' :
-                                                                            task.status === 'awaiting_subtask' ? 'bg-indigo-500/20 text-indigo-400 animate-pulse' :
-                                                                                task.status === 'healing' ? 'bg-fuchsia-500/20 text-fuchsia-400 animate-pulse' :
-                                                                                    task.status === 'throttled' ? 'bg-orange-500/20 text-orange-400 animate-pulse' :
-                                                                                        task.status === 'verifying' ? 'bg-purple-500/20 text-purple-400 animate-pulse' :
-                                                                                            'bg-slate-800 text-slate-500'
-                                                                }`}>
-                                                                {task.status}
-                                                            </span>
                                                         </div>
-                                                        <div className="flex gap-1 mt-1 items-center flex-wrap">
-                                                            {task.slashed && (
-                                                                <span className="text-[10px] text-red-500 font-bold mr-1" title="Agent Slashed">🔪</span>
-                                                            )}
-                                                            {(task.retryCount ?? 0) > 0 && (
-                                                                <span className="text-[8px] bg-rose-500/20 text-rose-400 px-1 rounded border border-rose-500/30 font-bold">
-                                                                    RETRY {task.retryCount}/3
-                                                                </span>
-                                                            )}
-
-                                                            {Array.isArray(task.deniedToolEvents) && task.deniedToolEvents.length > 0 && (
-                                                                <span className="text-[8px] bg-rose-500/20 text-rose-300 px-1 rounded border border-rose-500/40 font-bold">
-                                                                    DENIED TOOLS: {task.deniedToolEvents.length}
-                                                                </span>
-                                                            )}
-
-                                                            {/* Dynamic Priority Adjuster for Pending Tasks */}
-                                                            {task.status === 'pending' && (
-                                                                <div className="flex gap-0.5 mr-2">
-                                                                    {[1, 2, 3, 4, 5].map(p => (
-                                                                        <button
-                                                                            key={p}
-                                                                            onClick={() => updateTaskPriorityMutation.mutate({ missionId: mission.id, taskId: task.id, priority: p })}
-                                                                            className={`w-3 h-3 text-[6px] rounded-full border transition-all flex items-center justify-center ${task.priority === p
-                                                                                ? 'bg-amber-500 border-amber-400 text-black'
-                                                                                : 'bg-slate-900 border-slate-700 text-slate-500 hover:border-amber-500/40'
-                                                                                }`}
-                                                                        >
-                                                                            {p}
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-
-                                                            {!task.subMissionId && task.status !== 'completed' && task.status !== 'healing' && task.status !== 'throttled' && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    className="h-5 text-[8px] text-cyan-500 hover:text-cyan-400 hover:bg-cyan-500/10 p-0 px-1 border border-cyan-500/20"
-                                                                    onClick={() => decomposeTaskMutation.mutate({ missionId: mission.id, taskId: task.id })}
-                                                                    disabled={decomposeTaskMutation.isPending}
-                                                                >
-                                                                    EXPLODE
-                                                                </Button>
-                                                            )}
-                                                            {task.subMissionId && (
-                                                                <span className="text-[8px] text-indigo-400 font-mono">
-                                                                    → VIEW SUB-MISSION
-                                                                </span>
-                                                            )}
+                                                        <div className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${mission.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
+                                                            mission.status === 'failed' ? 'bg-rose-500/20 text-rose-400' :
+                                                                mission.status === 'paused' ? 'bg-amber-500/20 text-amber-400 animate-pulse' :
+                                                                    'bg-cyan-500/20 text-cyan-400'
+                                                            }`}>
+                                                            {mission.status}
                                                         </div>
-                                                        {
-                                                            task.status === 'pending_approval' && (
-                                                                <div className="flex gap-1 mt-2 mb-1">
-                                                                    <Button
-                                                                        size="sm"
-                                                                        className="flex-1 h-6 text-[8px] bg-emerald-700 hover:bg-emerald-600"
-                                                                        onClick={() => approveTaskMutation.mutate({ missionId: mission.id, taskId: task.id, approved: true })}
-                                                                    >
-                                                                        APPROVE
-                                                                    </Button>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        className="flex-1 h-6 text-[8px] bg-rose-700 hover:bg-rose-600"
-                                                                        onClick={() => approveTaskMutation.mutate({ missionId: mission.id, taskId: task.id, approved: false })}
-                                                                    >
-                                                                        REJECT
-                                                                    </Button>
-                                                                </div>
-                                                            )
-                                                        }
-                                                        {
-                                                            task.result && task.status !== 'pending_approval' && (
-                                                                <div className="text-slate-600 italic truncate">{task.result}</div>
-                                                            )
-                                                        }
-                                                        {Array.isArray(task.deniedToolEvents) && task.deniedToolEvents.length > 0 && (
-                                                            <div className="mt-2 border-t border-rose-500/20 pt-2 space-y-1">
-                                                                <div className="text-[8px] uppercase tracking-wide text-rose-400 font-bold">Denied Tool Events</div>
-                                                                {task.deniedToolEvents.slice(-3).map((event, idx) => (
-                                                                    <div key={`${event.tool}-${event.timestamp}-${idx}`} className="text-[8px] text-rose-300/90 bg-rose-950/20 border border-rose-500/20 rounded px-1.5 py-1">
-                                                                        <div className="font-mono text-rose-200">{event.tool}</div>
-                                                                        <div className="text-rose-300/80">{event.reason}</div>
-                                                                        <div className="text-rose-400/60">{new Date(event.timestamp).toLocaleTimeString()}</div>
+                                                    </div>
+                                                    {mission.status === 'failed' && (
+                                                        <Button
+                                                            size="sm"
+                                                            className="w-full mt-2 h-7 text-[10px] bg-amber-600 hover:bg-amber-500 text-white"
+                                                            onClick={() => resumeMissionMutation.mutate({ missionId: mission.id })}
+                                                            disabled={resumeMissionMutation.isPending}
+                                                        >
+                                                            RESUME MISSION
+                                                        </Button>
+                                                    )}
+                                                </CardHeader>
+                                                <CardContent>
+                                                    {(() => {
+                                                        const swarmPolicy = (mission.context?._swarmPolicy || null) as SwarmPolicyContext | null;
+                                                        if (!swarmPolicy) return null;
+
+                                                        return (
+                                                            <div className="mb-4 p-2 rounded border border-cyan-500/20 bg-cyan-950/10 space-y-2">
+                                                                <div className="text-[9px] uppercase tracking-widest text-cyan-400 font-bold">Mission Tool Policy</div>
+                                                                {swarmPolicy.effectiveToolPolicy && (
+                                                                    <pre className="text-[9px] text-cyan-300 bg-black/30 p-2 rounded border border-cyan-900/40 overflow-x-auto">
+                                                                        {JSON.stringify(swarmPolicy.effectiveToolPolicy, null, 2)}
+                                                                    </pre>
+                                                                )}
+                                                                {Array.isArray(swarmPolicy.policyWarnings) && swarmPolicy.policyWarnings.length > 0 && (
+                                                                    <div className="space-y-1">
+                                                                        {swarmPolicy.policyWarnings.map((warning, idx) => (
+                                                                            <div key={idx} className="text-[8px] text-rose-300 bg-rose-900/20 border border-rose-500/30 rounded px-2 py-1">
+                                                                                {warning}
+                                                                            </div>
+                                                                        ))}
                                                                     </div>
-                                                                ))}
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })()}
+
+                                                    {/* Phase 90: Mission Context Viewer */}
+                                                    {mission.context && Object.keys(mission.context).length > 0 && (
+                                                        <div className="mb-4">
+                                                            <details className="group">
+                                                                <summary className="cursor-pointer text-xs font-bold text-amber-500 hover:text-amber-400 select-none flex items-center gap-1 uppercase tracking-wider mb-2">
+                                                                    <ActivityIcon className="w-3 h-3" /> Shared Mission Context
+                                                                </summary>
+                                                                <pre className="text-[10px] text-amber-300 bg-black/50 p-2 rounded border border-amber-900/50 mt-1 overflow-x-auto">
+                                                                    {JSON.stringify(mission.context, null, 2)}
+                                                                </pre>
+                                                            </details>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+                                                        {visibleTasks.map((task: SwarmTask) => (
+                                                            <div key={task.id} className="p-2 bg-slate-950 border border-slate-800 rounded text-[10px]">
+                                                                <div className="flex justify-between items-center mb-1">
+                                                                    <div className="flex items-center gap-1 truncate mr-2">
+                                                                        <span className={`text-[8px] px-1 rounded border shrink-0 ${task.priority >= 4 ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
+                                                                            'bg-slate-800 text-slate-500 border-slate-700'
+                                                                            }`}>
+                                                                            P{task.priority || 3}
+                                                                        </span>
+                                                                        <span className="font-bold text-slate-500 truncate">{task.description}</span>
+                                                                    </div>
+                                                                    <span className={`px-1.5 py-0.5 rounded uppercase shrink-0 ${task.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
+                                                                        task.status === 'failed' ? 'bg-rose-500/20 text-rose-400' :
+                                                                            task.status === 'running' ? 'bg-blue-500/20 text-blue-400 animate-pulse' :
+                                                                                task.status === 'pending_approval' ? 'bg-amber-500/20 text-amber-400' :
+                                                                                    task.status === 'awaiting_subtask' ? 'bg-indigo-500/20 text-indigo-400 animate-pulse' :
+                                                                                        task.status === 'healing' ? 'bg-fuchsia-500/20 text-fuchsia-400 animate-pulse' :
+                                                                                            task.status === 'throttled' ? 'bg-orange-500/20 text-orange-400 animate-pulse' :
+                                                                                                task.status === 'verifying' ? 'bg-purple-500/20 text-purple-400 animate-pulse' :
+                                                                                                    'bg-slate-800 text-slate-500'
+                                                                        }`}>
+                                                                        {task.status}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex gap-1 mt-1 items-center flex-wrap">
+                                                                    {task.slashed && (
+                                                                        <span className="text-[10px] text-red-500 font-bold mr-1" title="Agent Slashed">🔪</span>
+                                                                    )}
+                                                                    {(task.retryCount ?? 0) > 0 && (
+                                                                        <span className="text-[8px] bg-rose-500/20 text-rose-400 px-1 rounded border border-rose-500/30 font-bold">
+                                                                            RETRY {task.retryCount}/3
+                                                                        </span>
+                                                                    )}
+
+                                                                    {Array.isArray(task.deniedToolEvents) && task.deniedToolEvents.length > 0 && (
+                                                                        <span className="text-[8px] bg-rose-500/20 text-rose-300 px-1 rounded border border-rose-500/40 font-bold">
+                                                                            DENIED TOOLS: {task.deniedToolEvents.length}
+                                                                        </span>
+                                                                    )}
+
+                                                                    {/* Dynamic Priority Adjuster for Pending Tasks */}
+                                                                    {task.status === 'pending' && (
+                                                                        <div className="flex gap-0.5 mr-2">
+                                                                            {[1, 2, 3, 4, 5].map(p => (
+                                                                                <button
+                                                                                    key={p}
+                                                                                    onClick={() => updateTaskPriorityMutation.mutate({ missionId: mission.id, taskId: task.id, priority: p })}
+                                                                                    className={`w-3 h-3 text-[6px] rounded-full border transition-all flex items-center justify-center ${task.priority === p
+                                                                                        ? 'bg-amber-500 border-amber-400 text-black'
+                                                                                        : 'bg-slate-900 border-slate-700 text-slate-500 hover:border-amber-500/40'
+                                                                                        }`}
+                                                                                >
+                                                                                    {p}
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+
+                                                                    {!task.subMissionId && task.status !== 'completed' && task.status !== 'healing' && task.status !== 'throttled' && (
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="ghost"
+                                                                            className="h-5 text-[8px] text-cyan-500 hover:text-cyan-400 hover:bg-cyan-500/10 p-0 px-1 border border-cyan-500/20"
+                                                                            onClick={() => decomposeTaskMutation.mutate({ missionId: mission.id, taskId: task.id })}
+                                                                            disabled={decomposeTaskMutation.isPending}
+                                                                        >
+                                                                            EXPLODE
+                                                                        </Button>
+                                                                    )}
+                                                                    {task.subMissionId && (
+                                                                        <span className="text-[8px] text-indigo-400 font-mono">
+                                                                            → VIEW SUB-MISSION
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                {
+                                                                    task.status === 'pending_approval' && (
+                                                                        <div className="flex gap-1 mt-2 mb-1">
+                                                                            <Button
+                                                                                size="sm"
+                                                                                className="flex-1 h-6 text-[8px] bg-emerald-700 hover:bg-emerald-600"
+                                                                                onClick={() => approveTaskMutation.mutate({ missionId: mission.id, taskId: task.id, approved: true })}
+                                                                            >
+                                                                                APPROVE
+                                                                            </Button>
+                                                                            <Button
+                                                                                size="sm"
+                                                                                className="flex-1 h-6 text-[8px] bg-rose-700 hover:bg-rose-600"
+                                                                                onClick={() => approveTaskMutation.mutate({ missionId: mission.id, taskId: task.id, approved: false })}
+                                                                            >
+                                                                                REJECT
+                                                                            </Button>
+                                                                        </div>
+                                                                    )
+                                                                }
+                                                                {
+                                                                    task.result && task.status !== 'pending_approval' && (
+                                                                        <div className="text-slate-600 italic truncate">{task.result}</div>
+                                                                    )
+                                                                }
+                                                                {Array.isArray(task.deniedToolEvents) && task.deniedToolEvents.length > 0 && (
+                                                                    <div className="mt-2 border-t border-rose-500/20 pt-2 space-y-1">
+                                                                        <div className="text-[8px] uppercase tracking-wide text-rose-400 font-bold">Denied Tool Events</div>
+                                                                        {task.deniedToolEvents.slice(-3).map((event, idx) => (
+                                                                            <div key={`${event.tool}-${event.timestamp}-${idx}`} className="text-[8px] text-rose-300/90 bg-rose-950/20 border border-rose-500/20 rounded px-1.5 py-1">
+                                                                                <div className="font-mono text-rose-200">{event.tool}</div>
+                                                                                <div className="text-rose-300/80">{event.reason}</div>
+                                                                                <div className="text-rose-400/60">{new Date(event.timestamp).toLocaleTimeString()}</div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                        {visibleTasks.length === 0 && (
+                                                            <div className="col-span-full text-center text-slate-600 italic py-4 text-xs">
+                                                                No tasks match the current filter.
                                                             </div>
                                                         )}
                                                     </div>
-                                                ))}
-                                                {visibleTasks.length === 0 && (
-                                                    <div className="col-span-full text-center text-slate-600 italic py-4 text-xs">
-                                                        No tasks match the current filter.
+                                                    <div className="mt-4 flex justify-between items-center text-[10px] text-slate-500 italic">
+                                                        <span>Created: {new Date(mission.createdAt).toLocaleString()}</span>
+                                                        <span>Updated: {new Date(mission.updatedAt).toLocaleString()}</span>
                                                     </div>
-                                                )}
-                                            </div>
-                                            <div className="mt-4 flex justify-between items-center text-[10px] text-slate-500 italic">
-                                                <span>Created: {new Date(mission.createdAt).toLocaleString()}</span>
-                                                <span>Updated: {new Date(mission.updatedAt).toLocaleString()}</span>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )})}
+                                                </CardContent>
+                                            </Card>
+                                        )
+                                    })}
                                 </>
                             )}
                         </motion.div>

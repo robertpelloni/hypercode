@@ -340,7 +340,7 @@ export default function DirectorConfig() {
                     <h3 className="text-gray-400 font-medium border-b border-gray-800 pb-2">Diagnostics</h3>
                     <div className="flex gap-4">
                         <button
-                            onClick={() => window.open('http://localhost:1234', '_blank')}
+                            onClick={() => window.open(process.env.NEXT_PUBLIC_LMSTUDIO_URL || 'http://localhost:1234', '_blank')}
                             className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-xs text-white rounded border border-zinc-700"
                         >
                             Open LMStudio Web UI
