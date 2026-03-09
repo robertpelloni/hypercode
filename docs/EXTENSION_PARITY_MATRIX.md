@@ -1,7 +1,7 @@
 # Extension Surfaces Parity Matrix
 
-> **Updated**: 2026-03-06 (Phase 146)
-> **Version**: 2.7.108
+> **Updated**: 2026-03-06 (Phase 103)
+> **Version**: 2.7.62
 
 This document tracks capability parity across the three Borg client surfaces: **Web Dashboard**, **Browser Extension**, and **VS Code Extension**.
 
@@ -16,33 +16,30 @@ This document tracks capability parity across the three Borg client surfaces: **
 | Status bar indicator | N/A | N/A | ✅ StatusBarItem | 🟢 Shipped |
 | Auto-reconnect | ✅ TRPCProvider | ✅ 5s retry | ✅ 5s retry | 🟢 Shipped |
 | **Memory & Knowledge** | | | | |
-| Page/context ingestion | ✅ Knowledge dashboard + browser activity feed | ✅ `ABSORB_PAGE` (Readability→Markdown) | ✅ `AIOS: Remember Selection` | 🟢 Shipped |
-| URL ingestion | ✅ `knowledge.ingest` | ✅ Popup URL input → Core compatibility endpoint | ✅ Command + mini-dashboard action → Core compatibility endpoint | 🟢 Shipped |
+| Page/context ingestion | ✅ Knowledge dashboard | ✅ `ABSORB_PAGE` (Readability→Markdown) | ❌ — | 🟡 Partial |
+| URL ingestion | ✅ `knowledge.ingest` | ❌ — | ❌ — | 🟡 Partial |
 | RAG file ingestion | ✅ `rag.ingestFile` | ❌ — | ❌ — | 🟡 Partial |
-| RAG text/page ingestion | ✅ `rag.ingestText` + browser activity feed | ✅ Popup action → Core compatibility endpoint | ✅ `AIOS: Ingest Selection to RAG` | 🟢 Shipped |
-| Memory save from context | ✅ Live core ingestion pipeline | ✅ `SAVE_CONTEXT` to Core | ✅ `aios.rememberSelection` | 🟢 Shipped |
+| Memory save from context | ❌ — | ✅ `SAVE_CONTEXT` to Core | ❌ — | 🟡 Partial |
 | **Agent Interaction** | | | | |
-| Research agent dispatch | ✅ `expert.research` | ❌ — | ✅ Sidebar + `AIOS: Run Agent` | 🟡 Partial |
-| Coder agent dispatch | ✅ `expert.code` | ❌ — | ✅ Sidebar + `AIOS: Run Agent` | 🟡 Partial |
+| Research agent dispatch | ✅ `expert.research` | ❌ — | ❌ — | 🟡 Dashboard-only |
+| Coder agent dispatch | ✅ `expert.code` | ❌ — | ❌ — | 🟡 Dashboard-only |
 | Chat paste/submit | N/A | ✅ `PASTE_INTO_CHAT` | ✅ `PASTE_INTO_CHAT` (anti-hijack) | 🟢 Shipped |
-| Chat history scraping | N/A | ✅ `SCRAPE_CHAT` (DOM) | ✅ Interaction-backed history + best-effort editor snapshot | 🟡 Partial |
+| Chat history scraping | N/A | ✅ `SCRAPE_CHAT` (DOM) | ⚠️ Heuristic only | 🟡 Partial |
 | Tool execution proxy | N/A | ✅ `EXECUTE_TOOL` | ✅ `VSCODE_COMMAND` | 🟢 Shipped |
 | **Monitoring** | | | | |
-| Console log capture | ✅ Traffic Inspector live stream + filters | ✅ Interceptor + buffer | ✅ Output channel + live inspector mirror | 🟢 Shipped |
-| CDP debug event stream | ✅ Traffic Inspector live stream + filters | ✅ `chrome.debugger.onEvent` relay | N/A | 🟢 Shipped |
-| User activity tracking | N/A | ✅ Focus/click/keydown/scroll activity bridge | ✅ Selection + Document changes | 🟢 Shipped |
-| Tab mirroring (screenshots) | ✅ Dedicated Browser dashboard mirror panel | ✅ JPEG mirror stream | ❌ — | 🟢 Shipped |
+| Console log capture | ✅ Traffic Inspector | ✅ Interceptor + buffer | ❌ — | 🟡 Partial |
+| User activity tracking | N/A | ❌ — | ✅ Selection + Document changes | 🟡 Partial |
+| Tab mirroring (screenshots) | ❌ — | ✅ JPEG mirror stream | ❌ — | 🟡 Browser-only |
 | **Browser-Specific** | | | | |
-| Page scraping (Readability) | ✅ Dedicated Browser dashboard scrape panel | ✅ Full pipeline | N/A | 🟢 Shipped |
-| Screenshot capture | ✅ Dedicated Browser dashboard screenshot panel | ✅ `captureVisibleTab` | N/A | 🟢 Shipped |
-| Browser history search | ✅ Dedicated Browser dashboard search panel | ✅ `chrome.history` API | N/A | 🟢 Shipped |
-| CDP debug proxy | ✅ Dedicated Browser dashboard CDP panel + inspector events | ✅ Attach/detach/command | N/A | 🟢 Shipped |
-| Proxy fetch | ✅ Dedicated Browser dashboard request panel | ✅ `browser_proxy_fetch` | N/A | 🟢 Shipped |
+| Page scraping (Readability) | ❌ — | ✅ Full pipeline | N/A | 🟡 Browser-only |
+| Screenshot capture | ❌ — | ✅ `captureVisibleTab` | N/A | 🟡 Browser-only |
+| Browser history search | ❌ — | ✅ `chrome.history` API | N/A | 🟡 Browser-only |
+| CDP debug proxy | ❌ — | ✅ Attach/detach/command | N/A | 🟡 Browser-only |
+| Proxy fetch | ❌ — | ✅ `browser_proxy_fetch` | N/A | 🟡 Browser-only |
 | **VS Code–Specific** | | | | |
 | Active editor info | ❌ — | N/A | ✅ `GET_STATUS` | 🟡 VSCode-only |
 | Text selection extraction | ❌ — | N/A | ✅ `GET_SELECTION` | 🟡 VSCode-only |
-| Terminal name reporting | ❌ — | N/A | ✅ `GET_TERMINAL` | 🟢 Shipped |
-| Terminal content reading | ❌ — | N/A | ✅ Rolling buffer via terminal write event | 🟢 Shipped |
+| Terminal name reporting | ❌ — | N/A | ✅ `GET_TERMINAL` | 🟡 VSCode-only |
 | Anti-hijack paste guard | N/A | N/A | ✅ 2s activity check | 🟢 Shipped |
 | **Infrastructure** | | | | |
 | Swarm orchestration | ✅ Full UI | ❌ — | ❌ — | 🟡 Dashboard-only |
@@ -57,18 +54,18 @@ This document tracks capability parity across the three Borg client surfaces: **
 ### Milestone 1: Extension Hardening (P2)
 - [x] Replace hardcoded `localhost:3001` in browser extension `background.ts` with configurable URL
 - [x] Add configurable WS URL to browser extension (matching VS Code's `borg.coreUrl` config)
-- [x] Add error boundary / offline UI to browser extension popup
+- [ ] Add error boundary / offline UI to browser extension popup
 
 ### Milestone 2: Cross-Surface Intelligence (P3)
-- [x] Forward RAG ingestion capability to browser extension (ingest current page via Core compatibility endpoint)
-- [x] Add research/code agent dispatch UI to VS Code sidebar
-- [x] Surface console log buffer from browser extension in dashboard Traffic Inspector
-- [x] Add terminal content reading to VS Code extension (beyond name-only)
+- [ ] Forward RAG ingestion capability to browser extension (ingest current page via tRPC)
+- [ ] Add research/code agent dispatch UI to VS Code sidebar
+- [ ] Surface console log buffer from browser extension in dashboard Traffic Inspector
+- [ ] Add terminal content reading to VS Code extension (beyond name-only)
 
 ### Milestone 3: Full Parity (P4)
-- [x] Unified WebSocket protocol specification document
-- [x] Browser extension options page for URL/port configuration
-- [x] VS Code webview panel for mini-dashboard (status, recent tasks, quick actions)
+- [ ] Unified WebSocket protocol specification document
+- [ ] Browser extension options page for URL/port configuration
+- [ ] VS Code webview panel for mini-dashboard (status, recent tasks, quick actions)
 
 ---
 

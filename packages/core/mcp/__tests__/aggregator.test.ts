@@ -50,4 +50,52 @@ describe('MCP master router aggregation', () => {
             ['memory', 'connected', 1],
         ]);
     });
+
+    it('keeps a server connected after a tool-level failure', async () => {
+        const configPath = createConfigPath({
+            github: { command: 'node', args: ['github.js'], enabled: true },
+        });
+
+        const aggregator = new MCPAggregator({
+            configPath,
+            createClient: createClientFactory({
+                github: new FakeMCPClient(
+                    [{ name: 'search_issues', description: 'Search GitHub issues' }],
+                    () => {
+                        throw new Error('tool input invalid');
+                    },
+                ),
+            }),
+        });
+
+        await aggregator.initialize();
+
+        await expect(
+            aggregator.executeTool('github__search_issues', { owner: 'borg' }),
+        ).rejects.toThrow('tool input invalid');
+
+        const servers = await aggregator.listServers();
+        expect(servers).toEqual([
+            expect.objectContaining({
+                name: 'github',
+                status: 'connected',
+                lastError: 'tool input invalid',
+            }),
+        ]);
+
+        expect(aggregator.getTrafficEvents()).toEqual([
+            expect.objectContaining({
+                server: 'github',
+                method: 'tools/list',
+                success: true,
+            }),
+            expect.objectContaining({
+                server: 'github',
+                method: 'tools/call',
+                success: false,
+                error: 'tool input invalid',
+                toolName: 'search_issues',
+            }),
+        ]);
+    });
 });

@@ -1,69 +1,68 @@
-import { describe, test, expect } from 'bun:test';
-import { EventEmitter } from 'events';
-import { McpProxyManager } from '../src/managers/McpProxyManager.js';
-import { createLoggingMiddleware } from '../src/middleware/logging-middleware.js';
+import { describe, expect, test, vi, afterEach } from 'vitest';
 
-type ProxyCtorArgs = ConstructorParameters<typeof McpProxyManager>;
-
-interface PolicyServiceLike {
-  evaluate(ctx: unknown): { allowed: boolean; reason?: string };
-}
-
-interface SavedScriptServiceLike {
-  getAllScripts(): unknown[];
-}
-
-interface LogEntry {
-  type?: string;
-  args?: {
-    namespaceId?: string;
-    endpointPath?: string;
-  };
-}
-
-class MockMcpManager extends EventEmitter {
-  getClient(_name: string) {
-    return null;
-  }
-  getAllServers() {
-    return [];
-  }
-}
-
-class MockLogManager {
-  entries: LogEntry[] = [];
-  log(entry: LogEntry) {
-    this.entries.push(entry);
-  }
-  calculateCost() {
-    return 0;
-  }
-}
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('proxy logging middleware', () => {
-  test('logs include namespaceId and endpointPath', async () => {
-    const logManager = new MockLogManager();
+  test('denies tool calls rejected by an attached policy id', async () => {
+    const { createPolicyMiddleware } = await import('../src/services/metamcp-middleware/policy.functional.js');
+    const { policyService } = await import('../src/services/stubs/policy.service.stub.js');
 
-    const policyService: PolicyServiceLike = { evaluate: () => ({ allowed: true }) };
-    const savedScriptService: SavedScriptServiceLike = { getAllScripts: () => [] };
+    const next = vi.fn().mockResolvedValue({
+      content: [{ type: 'text', text: 'ok' }],
+    });
 
-    const proxy = new McpProxyManager(
-      new MockMcpManager() as unknown as ProxyCtorArgs[0],
-      logManager as unknown as ProxyCtorArgs[1],
-      { policyService, savedScriptService } as unknown as ProxyCtorArgs[2]
+    vi.spyOn(policyService, 'getPolicy').mockResolvedValue({ id: 'policy-1' } as never);
+    vi.spyOn(policyService, 'evaluateAccess').mockReturnValue(false);
+
+    const middleware = createPolicyMiddleware({ enabled: true });
+    const handler = middleware(next);
+    const request = {
+      method: 'tools/call',
+      params: {
+        name: 'github__create_issue',
+        arguments: { title: 'Bug' },
+        _meta: { policyId: 'policy-1' },
+      },
+    };
+    const context: MetaMCPHandlerContext = {
+      namespaceUuid: 'ns1',
+      sessionId: 'session-1',
+    };
+
+    await expect(handler(request as never, context)).rejects.toThrow(
+      "Access denied to tool 'github__create_issue' by policy 'policy-1'.",
     );
+    expect(next).not.toHaveBeenCalled();
+  });
 
-    proxy.useCallToolMiddleware(createLoggingMiddleware({ enabled: true, logManager }));
+  test('passes through when no policy id is attached', async () => {
+    const { createPolicyMiddleware } = await import('../src/services/metamcp-middleware/policy.functional.js');
 
-    await proxy.start();
+    const next = vi.fn().mockResolvedValue({
+      content: [{ type: 'text', text: 'ok' }],
+    });
 
-    proxy.setNamespaceForSession('s', 'ns1');
-    proxy.setEndpointForSession('s', '/api/mcp/coding');
+    const middleware = createPolicyMiddleware({ enabled: true });
+    const handler = middleware(next);
+    const request = {
+      method: 'tools/call',
+      params: {
+        name: 'github__create_issue',
+        arguments: { title: 'Bug' },
+      },
+    };
+    const context: MetaMCPHandlerContext = {
+      namespaceUuid: 'ns1',
+      sessionId: 'session-1',
+    };
 
-    await proxy.callTool('namespace_get', {}, 's');
+    const result = await handler(request as never, context);
 
-    const requestLog = logManager.entries.find(e => e.type === 'request');
-    expect(requestLog.args.namespaceId).toBe('ns1');
-    expect(requestLog.args.endpointPath).toBe('/api/mcp/coding');
+    expect(next).toHaveBeenCalledWith(request, context);
+    expect(result).toEqual({
+      content: [{ type: 'text', text: 'ok' }],
+    });
   });
 });

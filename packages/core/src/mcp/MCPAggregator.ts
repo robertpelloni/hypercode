@@ -263,6 +263,12 @@ export class MCPAggregator {
 
         try {
             const result = await client.callTool(toolName, args);
+            const state = this.serverStates.get(serverName);
+            if (state) {
+                state.status = 'connected';
+                state.lastError = undefined;
+            }
+
             this.trafficInspector.record({
                 server: serverName,
                 method: 'tools/call',
@@ -276,7 +282,6 @@ export class MCPAggregator {
         } catch (error) {
             const state = this.serverStates.get(serverName);
             if (state) {
-                state.status = 'error';
                 state.lastError = error instanceof Error ? error.message : String(error);
             }
 
