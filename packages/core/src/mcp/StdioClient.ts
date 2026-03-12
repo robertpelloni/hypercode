@@ -51,13 +51,16 @@ export class StdioClient {
         }
     }
 
-    public async listTools(): Promise<any[]> {
+    public async listTools(options?: { throwOnError?: boolean }): Promise<any[]> {
         if (!this.client) return [];
         try {
             const result = await this.client.listTools();
             return result.tools;
         } catch (error) {
             console.error(`[StdioClient:${this.name}] Failed to list tools:`, error);
+            if (options?.throwOnError) {
+                throw error;
+            }
             return [];
         }
     }

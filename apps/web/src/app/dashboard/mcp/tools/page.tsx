@@ -24,7 +24,12 @@ export default function ToolsRegistryDashboard() {
 
             {/* Quick Links Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0">
-                <Link href="/dashboard/mcp/tool-sets" className="group">
+                <Link
+                    href="/dashboard/mcp/tool-sets"
+                    title="Open Tool Sets to manage curated capability bundles per agent persona"
+                    aria-label="Open MCP Tool Sets dashboard"
+                    className="group"
+                >
                     <Card className="bg-zinc-900 border-zinc-800 hover:border-indigo-500/50 transition-colors h-full overflow-hidden relative">
                         <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <CardHeader className="pb-2">
@@ -42,7 +47,12 @@ export default function ToolsRegistryDashboard() {
                     </Card>
                 </Link>
 
-                <Link href="/dashboard/browser" className="group">
+                <Link
+                    href="/dashboard/browser"
+                    title="Open Semantic Browser service controls and active viewport sessions"
+                    aria-label="Open Semantic Browser dashboard"
+                    className="group"
+                >
                     <Card className="bg-zinc-900 border-zinc-800 hover:border-blue-500/50 transition-colors h-full overflow-hidden relative">
                         <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <CardHeader className="pb-2">
@@ -60,7 +70,12 @@ export default function ToolsRegistryDashboard() {
                     </Card>
                 </Link>
 
-                <Link href="/dashboard/marketplace" className="group">
+                <Link
+                    href="/dashboard/marketplace"
+                    title="Open Extensions Marketplace to discover and audit installable tools"
+                    aria-label="Open Extensions Marketplace dashboard"
+                    className="group"
+                >
                     <Card className="bg-zinc-900 border-zinc-800 hover:border-emerald-500/50 transition-colors h-full overflow-hidden relative">
                         <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <CardHeader className="pb-2">

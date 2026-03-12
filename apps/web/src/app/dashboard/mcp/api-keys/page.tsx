@@ -17,7 +17,7 @@ export default function ApiKeysDashboard() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white">API Keys</h1>
                     <p className="text-zinc-500">
-                        Manage authentication keys for accessing managed endpoints
+                        Manage authentication keys for accessing Borg-managed MCP traffic
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -68,7 +68,8 @@ function ApiKeyCard({ apiKey, onUpdate }: { apiKey: any; onUpdate: () => void })
         // If the key IS available (e.g. for display purposes in this internal dashboard), we copy it.
         // Usually we only show it on creation. 
         // For now, let's assume we copy the ID or a placeholder if actual key isn't stored in plain text (it shouldn't be).
-        // METAMCP pattern: key is stored hashed? Or is it retrievable?
+        // Borg stores API key metadata for dashboard display; the raw secret should only be
+        // available at creation time. This view mostly copies the visible identifier/prefix.
         // Checked api-keys.repo.ts -> findPublicApiKeys.
         // If it returns full key, that's a security risk, but for MVP/Internal usage might be acceptable or it returns a masked version.
         setCopied(true);

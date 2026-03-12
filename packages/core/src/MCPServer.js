@@ -68,53 +68,53 @@ var fs_1 = require("fs");
 console.log("[MCPServer] ✓ path/url/fs");
 var Router_js_1 = require("./Router.js");
 console.log("[MCPServer] ✓ Router");
-var ai_1 = require("@borg/ai");
+    console.error("[MCPServer] Starting imports...");
 console.log("[MCPServer] ✓ ModelSelector");
-var ws_1 = require("ws");
+    console.error("[MCPServer] ✓ @modelcontextprotocol/sdk");
 var WebSocketServerTransport_js_1 = require("./transports/WebSocketServerTransport.js");
-var http_1 = require("http");
+    console.error("[MCPServer] ✓ path/url/fs");
 console.log("[MCPServer] ✓ ws/http");
-var McpmInstaller_js_1 = require("./skills/McpmInstaller.js");
+    console.error("[MCPServer] ✓ Router");
 var agents_1 = require("@borg/agents");
-var agents_2 = require("@borg/agents");
+    console.error("[MCPServer] ✓ ModelSelector");
 var GeminiAgent_js_1 = require("./agents/GeminiAgent.js");
-var ClaudeAgent_js_1 = require("./agents/ClaudeAgent.js");
+    console.error("[MCPServer] ✓ ws/http");
 var MetaArchitectAgent_js_1 = require("./agents/MetaArchitectAgent.js");
-var CoderAgent_js_1 = require("./agents/CoderAgent.js");
+    console.error("[MCPServer] ✓ Phase 51/53 Infrastructure");
 var ResearcherAgent_js_1 = require("./agents/ResearcherAgent.js");
-var McpWorkerAgent_js_1 = require("./agents/McpWorkerAgent.js");
+    console.error("[MCPServer] ✓ SkillRegistry");
 var MeshCoderAgent_js_1 = require("./agents/MeshCoderAgent.js");
-var MeshResearcherAgent_js_1 = require("./agents/MeshResearcherAgent.js");
+    console.error("[MCPServer] ✓ SpawnerService");
 var ConfigManager_js_1 = require("./config/ConfigManager.js");
-var AutoTestService_js_1 = require("./services/AutoTestService.js");
+    console.error("[MCPServer] ✓ All Tools & ChainExecutor");
 var ShellService_js_1 = require("./services/ShellService.js");
-var SandboxService_js_1 = require("./security/SandboxService.js");
+    console.error("[MCPServer] ✓ All Tools & ChainExecutor");
 var SquadService_js_1 = require("./orchestrator/SquadService.js");
-var MeshService_js_1 = require("./mesh/MeshService.js");
+    console.error("[MCPServer] ✓ Council");
 var GitWorktreeManager_js_1 = require("./orchestrator/GitWorktreeManager.js");
-var AuditService_js_1 = require("./security/AuditService.js");
+    console.error("[MCPServer] ✓ Commands");
 var GitService_js_1 = require("./services/GitService.js");
-var agents_3 = require("@borg/agents");
+    console.error("[MCPServer] ✓ PermissionManager");
 var SkillRegistry_js_1 = require("./skills/SkillRegistry.js");
-var SuggestionService_js_1 = require("./suggestions/SuggestionService.js");
-var ResearchService_js_1 = require("./services/ResearchService.js");
-var HealerService_js_1 = require("./services/HealerService.js");
-var DarwinService_js_1 = require("./services/DarwinService.js");
-var MetricsService_js_1 = require("./services/MetricsService.js");
-var PolicyService_js_1 = require("./security/PolicyService.js");
-var PromptRegistry_js_1 = require("./prompts/PromptRegistry.js");
-var WebSearchTool_js_1 = require("./tools/WebSearchTool.js");
-var DiagnosticTools_js_1 = require("./tools/DiagnosticTools.js");
-var LSPTools_js_1 = require("./tools/LSPTools.js");
-var LSPService_js_1 = require("./services/LSPService.js");
-var PlanService_js_1 = require("./services/PlanService.js");
-var CodeModeService_js_1 = require("./services/CodeModeService.js");
-var WorkflowEngine_js_1 = require("./orchestrator/WorkflowEngine.js");
-var AgentMemoryService_js_1 = require("./services/AgentMemoryService.js");
-var MemoryManager_js_1 = require("./services/MemoryManager.js"); // Use legacy MemoryManager
-console.log("[MCPServer] ✓ Phase 51/53 Infrastructure");
-var SkillAssimilationService_js_1 = require("./services/SkillAssimilationService.js");
-var MarketplaceService_js_1 = require("./services/MarketplaceService.js");
+    console.error("[MCPServer] All imports complete!");
+        console.error("[MCPServer] Loaded persistent config.");
+        console.error("[MCPServer] Lazy-loading memory system (MemoryManager)...");
+            console.error("[MCPServer] Triggering Recursive Research: ".concat(topic));
+            console.error("[MCPServer] No Browser Extension. Falling back to Native Reader...");
+                console.error("[MCPServer] Browser Timed Out. Falling back to Native Reader...");
+            console.error("[MCPServer] Delegating tool handling to MetaMCPController...");
+            console.error("[MCPServer] Loading Skills...");
+            console.error("[MCPServer] 🚀 Borg Core ready.");
+            console.error("[MCPServer] Connecting Stdio...");
+                console.error("[MCPServer] Starting WebSocket Server...");
+                console.error("[MCPServer] Skipping WebSocket (No wsServer instance).");
+            console.error("[MCPServer] Connecting to Supervisor...");
+            console.error("[MCPServer] DEBUG __dirname: ".concat(__dirname));
+            console.error("[MCPServer] DEBUG rootDir: ".concat(rootDir));
+            console.error("[MCPServer] Supervisor Path Resolved: ".concat(supervisorPath));
+            console.error("[MCPServer] Google Workspace Server Path: ".concat(workspacePath));
+            console.error("[MCPServer] Connecting internal WS transport...");
+            console.error("[MCPServer] Start Complete.");
 var MCPAggregator_js_1 = require("./mcp/MCPAggregator.js");
 var SubmoduleManager_js_1 = require("./mcp/SubmoduleManager.js");
 var SubmoduleService_js_1 = require("./services/SubmoduleService.js");
@@ -347,7 +347,9 @@ var MCPServer = /** @class */ (function () {
         );
         global.mcpServerInstance = this;
         // Standard Server (Stdio)
-        this.server = this.createServerInstance();
+        var primaryServer = this.createServerInstance();
+        this.server = primaryServer.server;
+        this.serverSetupPromise = primaryServer.ready;
         // Phase 55: MetaMCP Controller Initialization
         // This attaches the proxy middleware to the server instance
         // Native tools are passed to be wrapped/exposed
@@ -407,6 +409,7 @@ var MCPServer = /** @class */ (function () {
                 res.end();
             });
             this.wssInstance = new ws_1.WebSocketServer({ server: httpServer });
+            this.wsServerSetupPromise = Promise.resolve();
             var transport = new WebSocketServerTransport_js_1.WebSocketServerTransport(this.wssInstance);
             this.wsServer.connect(transport);
             httpServer.listen(PORT_1, function () {
@@ -416,6 +419,7 @@ var MCPServer = /** @class */ (function () {
         else {
             this.wsServer = null;
             this.wssInstance = null;
+            this.wsServerSetupPromise = null;
         }
     }
     Object.defineProperty(MCPServer.prototype, "activeAgentsMap", {
@@ -483,8 +487,8 @@ var MCPServer = /** @class */ (function () {
     };
     MCPServer.prototype.createServerInstance = function () {
         var s = new index_js_1.Server({ name: "borg-core", version: "0.1.0" }, { capabilities: { tools: {} } });
-        this.setupHandlers(s);
-        return s;
+        var ready = this.setupHandlers(s);
+        return { server: s, ready: ready };
     };
     MCPServer.prototype.broadcastRequestAndAwait = function (messageType, payload) {
         var _this = this;
@@ -3020,225 +3024,155 @@ var MCPServer = /** @class */ (function () {
             });
         });
     };
-    MCPServer.prototype.start = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var stdioTransport, PORT_2, httpServer, wss_1, wsTransport, rootDir, supervisorPath, workspacePath, e_17, wsTransport;
+    MCPServer.prototype.start = async function () {
+        console.error("[MCPServer] Loading Skills...");
+        this.mcpAggregator.initialize().catch(function (e) { return console.error("[MCPServer] Aggregator Init Failed:", e); });
+        this.autoTestService.repoGraph.buildGraph().catch(function (e) { return console.error("Graph build failed", e); });
+
+        console.error("[MCPServer] 🚀 Borg Core ready.");
+        console.error("[MCPServer] Preparing request handlers...");
+        await this.serverSetupPromise;
+
+        console.error("[MCPServer] Connecting Stdio...");
+        var stdioTransport = new stdio_js_1.StdioServerTransport();
+        await this.server.connect(stdioTransport);
+        console.error("Borg Core: Stdio Transport Active");
+
+        if (this.wsServer && !this.wssInstance) {
+            console.error("[MCPServer] Starting WebSocket Server...");
+            var PORT_2 = 3001;
             var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        console.log("[MCPServer] Loading Skills...");
-                        // Non-blocking initialization of aggregator to prevent stalling Stdio/WS start
-                        this.mcpAggregator.initialize().catch(function (e) { return console.error("[MCPServer] Aggregator Init Failed:", e); });
-                        // Start Services
-                        // this.director.startChatDaemon(); // Removed, auto-drive handles this
-                        // Build Graph in Background
-                        this.autoTestService.repoGraph.buildGraph().catch(function (e) { return console.error("Graph build failed", e); });
-                        console.log("[MCPServer] \uD83D\uDE80 Borg Core ready.");
-                        // 1. Start Stdio (for local CLI usage)
-                        console.log("[MCPServer] Connecting Stdio...");
-                        stdioTransport = new stdio_js_1.StdioServerTransport();
-                        return [4 /*yield*/, this.server.connect(stdioTransport)];
-                    case 1:
-                        _a.sent();
-                        console.error("Borg Core: Stdio Transport Active");
-                        // 2. Start WebSocket (for Extension/Web usage)
-                        if (this.wsServer) {
-                            console.log("[MCPServer] Starting WebSocket Server...");
-                            PORT_2 = 3001;
-                            httpServer = http_1.default.createServer(function (req, res) { return __awaiter(_this, void 0, void 0, function () {
-                                var servers, body_1;
-                                var _this = this;
-                                return __generator(this, function (_a) {
-                                    switch (_a.label) {
-                                        case 0:
-                                            if (!(req.url === '/health')) return [3 /*break*/, 1];
-                                            res.writeHead(200, { 'Content-Type': 'application/json' });
-                                            res.end(JSON.stringify({
-                                                status: 'online',
-                                                uptime: process.uptime(),
-                                                timestamp: Date.now(),
-                                                version: '0.1.0'
-                                            }));
-                                            return [3 /*break*/, 4];
-                                        case 1:
-                                            if (!(req.url === '/mcp/servers')) return [3 /*break*/, 3];
-                                            return [4 /*yield*/, this.mcpAggregator.listServers()];
-                                        case 2:
-                                            servers = _a.sent();
-                                            res.writeHead(200, {
-                                                'Content-Type': 'application/json',
-                                                'Access-Control-Allow-Origin': '*' // Allow Web UI access
-                                            });
-                                            res.end(JSON.stringify(servers));
-                                            return [3 /*break*/, 4];
-                                        case 3:
-                                            if (req.method === 'POST') {
-                                                body_1 = '';
-                                                req.on('data', function (chunk) { return body_1 += chunk; });
-                                                req.on('end', function () { return __awaiter(_this, void 0, void 0, function () {
-                                                    var data, result, result, e_18;
-                                                    return __generator(this, function (_a) {
-                                                        switch (_a.label) {
-                                                            case 0:
-                                                                _a.trys.push([0, 6, , 7]);
-                                                                data = JSON.parse(body_1);
-                                                                res.writeHead(200, {
-                                                                    'Content-Type': 'application/json',
-                                                                    'Access-Control-Allow-Origin': '*'
-                                                                });
-                                                                if (!(req.url === '/director.chat')) return [3 /*break*/, 2];
-                                                                return [4 /*yield*/, this.director.executeTask(data.message)];
-                                                            case 1:
-                                                                result = _a.sent();
-                                                                res.end(JSON.stringify({ result: { data: result } }));
-                                                                return [3 /*break*/, 5];
-                                                            case 2:
-                                                                if (!(req.url === '/tool/execute')) return [3 /*break*/, 4];
-                                                                return [4 /*yield*/, this.executeTool(data.name, data.args)];
-                                                            case 3:
-                                                                result = _a.sent();
-                                                                res.end(JSON.stringify({ result: { data: result } }));
-                                                                return [3 /*break*/, 5];
-                                                            case 4:
-                                                                // Forward to TRPC-like structure if needed, or 404
-                                                                res.writeHead(404);
-                                                                res.end(JSON.stringify({ error: 'Endpoint not found' }));
-                                                                _a.label = 5;
-                                                            case 5: return [3 /*break*/, 7];
-                                                            case 6:
-                                                                e_18 = _a.sent();
-                                                                res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-                                                                res.end(JSON.stringify({ error: e_18.message }));
-                                                                return [3 /*break*/, 7];
-                                                            case 7: return [2 /*return*/];
-                                                        }
-                                                    });
-                                                }); });
-                                            }
-                                            else {
-                                                res.writeHead(404);
-                                                res.end();
-                                            }
-                                            _a.label = 4;
-                                        case 4: return [2 /*return*/];
-                                    }
-                                });
-                            }); });
-                            wss_1 = new ws_1.WebSocketServer({ server: httpServer });
-                            this.wssInstance = wss_1;
-                            wsTransport = new WebSocketServerTransport_js_1.WebSocketServerTransport(wss_1);
-                            httpServer.on('error', function (err) {
-                                console.error("[Borg Core] \u274C WebSocket Server Error (Port ".concat(PORT_2, "):"), err.message);
-                            });
-                            httpServer.listen(PORT_2, function () {
-                                console.error("Borg Core: WebSocket Transport Active on ws://localhost:".concat(PORT_2));
-                            });
-                            // 2.5 Setup WS Message Handling mechanism
-                            wss_1.on('connection', function (ws) {
-                                ws.on('message', function (data) {
-                                    try {
-                                        var msg = JSON.parse(data.toString());
-                                        // Robust Response Handling: Any message with a requestId should resolve a pending promise
-                                        if (msg.requestId && _this.pendingRequests.has(msg.requestId)) {
-                                            var resolve = _this.pendingRequests.get(msg.requestId);
-                                            if (resolve) {
-                                                // If it's a STATUS_UPDATE, we unpack .status for legacy parity
-                                                // Otherwise we pass the whole message so the caller can extract what they need (e.g. .history, .logs)
-                                                if (msg.type === 'STATUS_UPDATE') {
-                                                    resolve(msg.status);
-                                                }
-                                                else {
-                                                    resolve(msg);
-                                                }
-                                                _this.pendingRequests.delete(msg.requestId);
-                                            }
-                                        }
-                                        // Special handling for legacy/specific types if needed (though the above handles most)
-                                        if (msg.type === 'BROWSER_MIRROR_UPDATE') {
-                                            // Relay to all other clients (Web UI)
-                                            wss_1.clients.forEach(function (client) {
-                                                if (client !== ws && client.readyState === 1) {
-                                                    client.send(data.toString());
-                                                }
-                                            });
-                                        }
-                                        if (msg.type === 'USER_ACTIVITY') {
-                                            _this.lastUserActivityTime = Math.max(_this.lastUserActivityTime, msg.lastActivityTime);
-                                            if (msg.activeEditor) {
-                                                _this.suggestionService.processContext({
-                                                    type: 'editor',
-                                                    path: msg.activeEditor.uri,
-                                                    content: '' // Could retrieve content if needed
-                                                });
-                                            }
-                                        }
-                                        if (msg.type === 'BROWSER_LOG') {
-                                            var icon = msg.level === 'error' ? '🔴' : msg.level === 'warn' ? '🟡' : '🔵';
-                                            console.log("[Browser] ".concat(icon, " ").concat(msg.content, " (").concat(msg.url, ")"));
-                                            if (msg.level === 'error') {
-                                                _this.auditService.log('BROWSER_ERROR', { url: msg.url, error: msg.content }, 'ERROR');
-                                                // TRIGGER HEALER
-                                                _this.healerService.heal(msg.content, "URL: ".concat(msg.url, ", Timestamp: ").concat(msg.timestamp))
-                                                    .catch(function (e) { return console.error("Healer Error:", e); });
-                                            }
-                                        }
-                                    }
-                                    catch (e) {
-                                        // Ignore non-JSON
-                                    }
-                                });
-                            });
-                        }
-                        else {
-                            console.log("[MCPServer] Skipping WebSocket (No wsServer instance).");
-                        }
-                        // 3. Connect to Supervisor (Native Automation)
-                        console.log("[MCPServer] Connecting to Supervisor...");
-                        _a.label = 2;
-                    case 2:
-                        _a.trys.push([2, 8, , 9]);
-                        console.log("[MCPServer] DEBUG __dirname: ".concat(__dirname));
-                        rootDir = this.findMonorepoRoot(__dirname);
-                        console.log("[MCPServer] DEBUG rootDir: ".concat(rootDir));
-                        if (!rootDir) return [3 /*break*/, 6];
-                        supervisorPath = path_1.default.join(rootDir, 'packages', 'borg-supervisor', 'dist', 'index.js');
-                        console.log("[MCPServer] Supervisor Path Resolved: ".concat(supervisorPath));
-                        return [4 /*yield*/, this.router.connectToServer('borg-supervisor', 'node', [supervisorPath])];
-                    case 3:
-                        _a.sent();
-                        console.error("Borg Core: Connected to Supervisor at ".concat(supervisorPath));
-                        workspacePath = path_1.default.join(rootDir, 'external', 'mcp-servers', 'workspace', 'workspace-server', 'dist', 'index.js');
-                        console.log("[MCPServer] Google Workspace Server Path: ".concat(workspacePath));
-                        if (!fs_1.default.existsSync(workspacePath)) return [3 /*break*/, 5];
-                        return [4 /*yield*/, this.router.connectToServer('google-workspace', 'node', [workspacePath])];
-                    case 4:
-                        _a.sent();
-                        console.error("Borg Core: Connected to Google Workspace Server (GMail/Calendar)");
-                        _a.label = 5;
-                    case 5: return [3 /*break*/, 7];
-                    case 6:
-                        console.error("[MCPServer] Failed to locate Monorepo Root. Skipping Supervisor.");
-                        _a.label = 7;
-                    case 7: return [3 /*break*/, 9];
-                    case 8:
-                        e_17 = _a.sent();
-                        console.error("Borg Core: Failed to connect to Supervisor. Native automation disabled.", e_17.message);
-                        return [3 /*break*/, 9];
-                    case 9:
-                        if (!(this.wsServer && this.wssInstance)) return [3 /*break*/, 11];
-                        console.log("[MCPServer] Connecting internal WS transport...");
-                        wsTransport = new WebSocketServerTransport_js_1.WebSocketServerTransport(this.wssInstance);
-                        return [4 /*yield*/, this.wsServer.connect(wsTransport)];
-                    case 10:
-                        _a.sent();
-                        _a.label = 11;
-                    case 11:
-                        console.log("[MCPServer] Start Complete.");
-                        return [2 /*return*/];
+            var httpServer = http_1.default.createServer(async function (req, res) {
+                if (req.url === '/health') {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        status: 'online',
+                        uptime: process.uptime(),
+                        timestamp: Date.now(),
+                        version: '0.1.0'
+                    }));
+                    return;
                 }
+
+                if (req.url === '/mcp/servers') {
+                    var servers = await _this.mcpAggregator.listServers();
+                    res.writeHead(200, {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    });
+                    res.end(JSON.stringify(servers));
+                    return;
+                }
+
+                if (req.method === 'POST') {
+                    var body_1 = '';
+                    req.on('data', function (chunk) { return body_1 += chunk; });
+                    req.on('end', async function () {
+                        try {
+                            var data = JSON.parse(body_1);
+                            res.writeHead(200, {
+                                'Content-Type': 'application/json',
+                                'Access-Control-Allow-Origin': '*'
+                            });
+
+                            if (req.url === '/director.chat') {
+                                var result = await _this.director.executeTask(data.message);
+                                res.end(JSON.stringify({ result: { data: result } }));
+                                return;
+                            }
+
+                            if (req.url === '/tool/execute') {
+                                var toolResult = await _this.executeTool(data.name, data.args);
+                                res.end(JSON.stringify({ result: { data: toolResult } }));
+                                return;
+                            }
+
+                            res.writeHead(404);
+                            res.end(JSON.stringify({ error: 'Endpoint not found' }));
+                        }
+                        catch (e) {
+                            res.writeHead(500, {
+                                'Content-Type': 'application/json',
+                                'Access-Control-Allow-Origin': '*'
+                            });
+                            res.end(JSON.stringify({ error: e.message }));
+                        }
+                    });
+                    return;
+                }
+
+                res.writeHead(404);
+                res.end();
             });
-        });
+
+            var wss_1 = new ws_1.WebSocketServer({ server: httpServer });
+            this.wssInstance = wss_1;
+
+            httpServer.on('error', function (err) {
+                console.error("[Borg Core] ❌ WebSocket Server Error (Port ".concat(PORT_2, "):"), err.message);
+            });
+
+            httpServer.listen(PORT_2, function () {
+                console.error("Borg Core: WebSocket Transport Active on ws://localhost:".concat(PORT_2));
+            });
+
+            wss_1.on('connection', function (ws) {
+                ws.on('message', function (data) {
+                    try {
+                        var msg = JSON.parse(data.toString());
+                        if (msg.requestId && _this.pendingRequests.has(msg.requestId)) {
+                            var resolve = _this.pendingRequests.get(msg.requestId);
+                            if (resolve) {
+                                resolve(msg.type === 'STATUS_UPDATE' ? msg.status : msg);
+                                _this.pendingRequests.delete(msg.requestId);
+                            }
+                        }
+                    }
+                    catch (_a) {
+                    }
+                });
+            });
+        }
+        else {
+            console.error("[MCPServer] Skipping WebSocket (No wsServer instance).");
+        }
+
+        console.error("[MCPServer] Connecting to Supervisor...");
+        try {
+            console.error("[MCPServer] DEBUG __dirname: ".concat(__dirname));
+            var rootDir = this.findMonorepoRoot(__dirname);
+            console.error("[MCPServer] DEBUG rootDir: ".concat(rootDir));
+            if (rootDir) {
+                var supervisorPath = path_1.default.join(rootDir, 'packages', 'borg-supervisor', 'dist', 'index.js');
+                console.error("[MCPServer] Supervisor Path Resolved: ".concat(supervisorPath));
+                await this.router.connectToServer('borg-supervisor', 'node', [supervisorPath]);
+                console.error("Borg Core: Connected to Supervisor at ".concat(supervisorPath));
+
+                var workspacePath = path_1.default.join(rootDir, 'external', 'mcp-servers', 'workspace', 'workspace-server', 'dist', 'index.js');
+                console.error("[MCPServer] Google Workspace Server Path: ".concat(workspacePath));
+                if (fs_1.default.existsSync(workspacePath)) {
+                    await this.router.connectToServer('google-workspace', 'node', [workspacePath]);
+                    console.error("Borg Core: Connected to Google Workspace Server (GMail/Calendar)");
+                }
+            }
+            else {
+                console.error("[MCPServer] Failed to locate Monorepo Root. Skipping Supervisor.");
+            }
+        }
+        catch (e) {
+            console.error("Borg Core: Failed to connect to Supervisor. Native automation disabled.", e.message);
+        }
+
+        if (this.wsServer && this.wssInstance) {
+            console.error("[MCPServer] Connecting internal WS transport...");
+            if (this.wsServerSetupPromise) {
+                await this.wsServerSetupPromise;
+            }
+            var wsTransport = new WebSocketServerTransport_js_1.WebSocketServerTransport(this.wssInstance);
+            await this.wsServer.connect(wsTransport);
+        }
+
+        console.error("[MCPServer] Start Complete.");
     };
     MCPServer.prototype.findMonorepoRoot = function (startDir) {
         var current = startDir;

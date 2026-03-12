@@ -6,9 +6,13 @@ import { trpc } from '@/utils/trpc';
 
 interface Packet {
     id: string;
-    type: 'TOOL_CALL_START' | 'TOOL_CALL_END' | 'BROWSER_LOG' | 'KNOWLEDGE_CAPTURED' | 'BROWSER_DEBUG_EVENT' | 'MCP_TRAFFIC';
+    type: 'TOOL_CALL_START' | 'TOOL_CALL_END' | 'BROWSER_LOG' | 'KNOWLEDGE_CAPTURED' | 'BROWSER_DEBUG_EVENT' | 'BROWSER_CHAT_SURFACE' | 'MCP_TRAFFIC';
     tool?: string;
     args?: any;
+    contextPreview?: string;
+    contextMatchedPaths?: string[];
+    contextObservationCount?: number;
+    contextSummaryCount?: number;
     result?: string;
     duration?: number;
     success?: boolean;
@@ -23,6 +27,20 @@ interface Packet {
     params?: unknown;
     tabId?: number | null;
     server?: string;
+    trigger?: string;
+    snapshot?: {
+        adapterId?: string;
+        adapterName?: string;
+        url?: string;
+        title?: string;
+        messageCount?: number;
+        toolCallCount?: number;
+        toolCalls?: Array<{ name?: string; source?: string; preview?: string; parameters?: Array<{ name?: string; value?: string }> }>;
+        functionResultCount?: number;
+        functionResults?: Array<{ name?: string; source?: string; preview?: string; status?: string; summary?: string; fields?: Array<{ name?: string; value?: string }> }>;
+        executions?: Array<{ id?: string; name?: string; state?: string; isStreaming?: boolean; callSource?: string; resultSource?: string; status?: string; summary?: string; parameters?: Array<{ name?: string; value?: string }>; fields?: Array<{ name?: string; value?: string }> }>;
+        latestMessages?: Array<{ id?: string; sourceId?: string; text?: string; role?: string; isStreaming?: boolean }>;
+    };
 }
 
 type PacketTypeFilter = Packet['type'] | 'ALL';
@@ -34,6 +52,7 @@ const PACKET_TYPE_FILTERS: Array<{ value: PacketTypeFilter; label: string }> = [
     { value: 'TOOL_CALL_END', label: 'Tool results' },
     { value: 'MCP_TRAFFIC', label: 'MCP traffic' },
     { value: 'BROWSER_LOG', label: 'Logs' },
+    { value: 'BROWSER_CHAT_SURFACE', label: 'Chat surface' },
     { value: 'BROWSER_DEBUG_EVENT', label: 'CDP events' },
     { value: 'KNOWLEDGE_CAPTURED', label: 'Knowledge' },
 ];
@@ -49,6 +68,8 @@ function getPacketSearchText(packet: Packet): string {
     return [
         packet.type,
         packet.tool,
+        packet.contextPreview,
+        JSON.stringify(packet.contextMatchedPaths ?? []),
         packet.result,
         packet.content,
         packet.url,
@@ -57,6 +78,7 @@ function getPacketSearchText(packet: Packet): string {
         packet.preview,
         packet.method,
         typeof packet.params === 'string' ? packet.params : JSON.stringify(packet.params ?? {}),
+        JSON.stringify(packet.snapshot?.executions ?? []),
     ].filter(Boolean).join(' ').toLowerCase();
 }
 
@@ -73,8 +95,8 @@ export function TrafficInspector() {
     const reconnectPolicy = createReconnectPolicy();
 
     useEffect(() => {
-        // Prefer custom URL if set, otherwise fallback to env
-        const targetUrl = customWsUrl || process.env.NEXT_PUBLIC_CORE_WS_URL || 'ws://localhost:3000';
+        // Prefer custom URL if set, otherwise let the shared endpoint resolver pick the canonical core WS target.
+        const targetUrl = customWsUrl || process.env.NEXT_PUBLIC_CORE_WS_URL;
         const wsUrl = resolveCoreWsUrl(targetUrl);
 
         console.log(`[TrafficInspector] Connecting to: ${wsUrl}`);
@@ -151,6 +173,20 @@ export function TrafficInspector() {
                             params: payload.params,
                             tabId: typeof payload.tabId === 'number' ? payload.tabId : null,
                         });
+                    } else if (msg.type === 'BROWSER_CHAT_SURFACE') {
+                        const payload = msg.payload ?? msg;
+                        const timestamp = Number(payload.timestamp) || Date.now();
+                        const snapshot = typeof payload.snapshot === 'object' && payload.snapshot !== null ? payload.snapshot : {};
+                        addPacket({
+                            id: `browser-chat-surface-${snapshot.adapterId ?? 'unknown'}-${timestamp}`,
+                            type: 'BROWSER_CHAT_SURFACE',
+                            timestamp,
+                            source: String(payload.source ?? 'browser_extension'),
+                            trigger: String(payload.trigger ?? 'mutation'),
+                            snapshot: snapshot as Packet['snapshot'],
+                            content: `${String(snapshot.adapterName ?? 'Unknown surface')} · ${Number(snapshot.messageCount ?? 0)} messages · ${Number(snapshot.toolCallCount ?? 0)} tool calls · ${Number(snapshot.functionResultCount ?? 0)} results`,
+                            url: typeof snapshot.url === 'string' ? snapshot.url : undefined,
+                        });
                     }
                 } catch (e) { }
             };
@@ -225,7 +261,7 @@ export function TrafficInspector() {
                         type="text"
                         value={customWsUrl}
                         onChange={(e) => setCustomWsUrl(e.target.value)}
-                        placeholder="ws://localhost:3000"
+                        placeholder="ws://localhost:3001"
                         className="flex-1 bg-black/50 border border-zinc-800 rounded px-2 py-1 text-xs font-mono text-zinc-400 focus:border-blue-500 outline-none"
                     />
                     <button
@@ -363,6 +399,90 @@ function PacketRow({ packet }: { packet: Packet }) {
         );
     }
 
+    if (packet.type === 'BROWSER_CHAT_SURFACE') {
+        const toolCalls = packet.snapshot?.toolCalls ?? [];
+        const functionResults = packet.snapshot?.functionResults ?? [];
+        const executions = packet.snapshot?.executions ?? [];
+        const latestMessages = packet.snapshot?.latestMessages ?? [];
+
+        return (
+            <div className="p-3 rounded border border-cyan-900/30 bg-cyan-900/10 transition-all hover:bg-zinc-800/50">
+                <div className="flex justify-between items-start gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <span className="font-bold text-cyan-400">💬</span>
+                        <span className="text-zinc-200 font-bold">CHAT SURFACE</span>
+                        <span className="text-xs text-cyan-300 uppercase">{packet.snapshot?.adapterName ?? 'unknown'}</span>
+                        <span className="text-xs text-zinc-500 uppercase">{packet.trigger ?? 'mutation'}</span>
+                        <span className="text-xs text-emerald-400/80 uppercase">{packet.source ?? 'browser_extension'}</span>
+                    </div>
+                    <span className="text-xs text-zinc-600 whitespace-nowrap">
+                        {new Date(packet.timestamp).toLocaleTimeString().split(' ')[0]}
+                    </span>
+                </div>
+                <div className="mt-2 pl-6 text-xs text-zinc-300 break-all">
+                    {packet.content}
+                    {packet.url ? <div className="mt-1 text-zinc-500">{packet.url}</div> : null}
+                </div>
+                {toolCalls.length > 0 ? (
+                    <div className="mt-2 pl-6 text-xs text-cyan-200/90 break-all">
+                        Tool calls: {toolCalls.map((tool) => {
+                            const parameterSummary = tool.parameters?.length
+                                ? ` [${tool.parameters.map((parameter) => `${parameter.name ?? 'value'}=${parameter.value ?? ''}`).join(', ')}]`
+                                : '';
+                            return `${tool.name ?? 'unknown'} (${tool.source ?? 'unknown'})${parameterSummary}`;
+                        }).join(', ')}
+                    </div>
+                ) : null}
+                {functionResults.length > 0 ? (
+                    <div className="mt-2 pl-6 text-xs text-emerald-200/90 break-all">
+                        Function results: {functionResults.map((result) => {
+                            const statusSummary = result.status ? ` [${result.status}]` : '';
+                            const fieldSummary = result.fields?.length
+                                ? ` {${result.fields.map((field) => `${field.name ?? 'value'}=${field.value ?? ''}`).join(', ')}}`
+                                : '';
+                            const summary = result.summary ? ` — ${result.summary}` : '';
+                            return `${result.name ?? 'unknown'} (${result.source ?? 'unknown'})${statusSummary}${fieldSummary}${summary}`;
+                        }).join(', ')}
+                    </div>
+                ) : null}
+                {executions.length > 0 ? (
+                    <div className="mt-2 pl-6 text-xs text-violet-200/90 space-y-1">
+                        <div className="text-violet-300">Execution timeline:</div>
+                        {executions.map((execution) => {
+                            const parameterSummary = execution.parameters?.length
+                                ? ` [${execution.parameters.map((parameter) => `${parameter.name ?? 'value'}=${parameter.value ?? ''}`).join(', ')}]`
+                                : '';
+                            const fieldSummary = execution.fields?.length
+                                ? ` {${execution.fields.map((field) => `${field.name ?? 'value'}=${field.value ?? ''}`).join(', ')}}`
+                                : '';
+                            const statusSummary = execution.status ? ` [${execution.status}]` : '';
+                            const sourceSummary = [execution.callSource, execution.resultSource].filter(Boolean).join(' → ');
+                            const sourceSuffix = sourceSummary ? ` (${sourceSummary})` : '';
+                            const summary = execution.summary ? ` — ${execution.summary}` : '';
+                            return (
+                                <div key={execution.id ?? `${execution.name ?? 'unknown'}-${execution.state ?? 'unknown'}`} className="break-all">
+                                    • <span className="text-violet-100">{execution.name ?? 'unknown'}</span> <span className="uppercase text-[10px] text-violet-400">{execution.state ?? 'unknown'}</span>{execution.isStreaming ? <span className="ml-2 uppercase text-[10px] px-1.5 py-0.5 rounded bg-amber-950/60 text-amber-300 border border-amber-800/60">streaming</span> : null}{sourceSuffix}{statusSummary}{parameterSummary}{fieldSummary}{summary}
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : null}
+                {latestMessages.length > 0 ? (
+                    <div className="mt-2 pl-6 text-xs text-zinc-400 space-y-1">
+                        {latestMessages.slice(-2).map((message) => (
+                            <div key={message.id ?? message.text} className="break-all flex items-center gap-2">
+                                <span>•</span>
+                                {message.role ? <span className="uppercase text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-cyan-300 border border-zinc-700">{message.role}</span> : null}
+                                {message.isStreaming ? <span className="uppercase text-[10px] px-1.5 py-0.5 rounded bg-amber-950/60 text-amber-300 border border-amber-800/60">streaming</span> : null}
+                                <span>{message.text}</span>
+                            </div>
+                        ))}
+                    </div>
+                ) : null}
+            </div>
+        );
+    }
+
     if (packet.type === 'MCP_TRAFFIC') {
         const borderColor = packet.success ? 'border-violet-900/30 bg-violet-900/10' : 'border-red-900/30 bg-red-900/10';
         const iconColor = packet.success ? 'text-violet-400' : 'text-red-400';
@@ -414,6 +534,14 @@ function PacketRow({ packet }: { packet: Packet }) {
                 {isStart ? (
                     <div className="text-zinc-400 break-all text-xs">
                         Args: <span className="text-blue-300/80">{JSON.stringify(packet.args).substring(0, 200)}</span>
+                        {packet.contextPreview ? (
+                            <div className="mt-1 text-cyan-300/90">
+                                {packet.contextPreview}
+                                {(packet.contextMatchedPaths?.length ?? 0) > 0 ? (
+                                    <span className="text-zinc-500"> · {packet.contextMatchedPaths?.join(', ')}</span>
+                                ) : null}
+                            </div>
+                        ) : null}
                     </div>
                 ) : (
                     <div className="text-zinc-400 break-all text-xs">

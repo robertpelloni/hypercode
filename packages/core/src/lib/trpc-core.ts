@@ -150,6 +150,17 @@ export type AgentMemoryServiceRuntime = {
     getStats: () => unknown;
     search: (query: string, options?: Record<string, unknown>) => Promise<unknown[]>;
     add: (content: string, type?: unknown, source?: string, metadata?: Record<string, unknown>) => Promise<void>;
+    recordObservation?: (input: Record<string, unknown>) => Promise<unknown>;
+    captureSessionSummary?: (input: Record<string, unknown>) => Promise<unknown>;
+    getRecentObservations?: (limit?: number, options?: Record<string, unknown>) => unknown[];
+    searchObservations?: (query: string, options?: Record<string, unknown>) => Promise<unknown[]>;
+    getRecentSessionSummaries?: (limit?: number) => unknown[];
+    searchSessionSummaries?: (query: string, limit?: number) => Promise<unknown[]>;
+    getSessionBootstrap?: (options?: { activeGoal?: string | null; lastObjective?: string | null }) => unknown;
+    getToolContext?: (input: { toolName: string; args?: unknown; activeGoal?: string | null; lastObjective?: string | null }) => unknown;
+    captureUserPrompt?: (input: Record<string, unknown>) => Promise<unknown>;
+    getRecentUserPrompts?: (limit?: number, options?: Record<string, unknown>) => unknown[];
+    searchUserPrompts?: (query: string, options?: Record<string, unknown>) => Promise<unknown[]>;
 };
 
 export type SymbolPinServiceRuntime = {
@@ -237,6 +248,76 @@ export type SessionManagerRuntime = {
     touch: () => void;
 };
 
+export type SessionSupervisorLogRuntime = {
+    timestamp: number;
+    stream: 'stdout' | 'stderr' | 'system';
+    message: string;
+};
+
+export type SessionSupervisorSessionRuntime = {
+    id: string;
+    name: string;
+    cliType: string;
+    command: string;
+    args: string[];
+    env: Record<string, string>;
+    requestedWorkingDirectory: string;
+    workingDirectory: string;
+    worktreePath?: string;
+    autoRestart: boolean;
+    isolateWorktree: boolean;
+    status: 'created' | 'starting' | 'running' | 'stopping' | 'stopped' | 'restarting' | 'error';
+    createdAt: number;
+    startedAt?: number;
+    stoppedAt?: number;
+    scheduledRestartAt?: number;
+    lastActivityAt: number;
+    restartCount: number;
+    maxRestartAttempts: number;
+    lastExitCode?: number;
+    lastExitSignal?: string;
+    lastError?: string;
+    metadata: Record<string, unknown>;
+    logs: SessionSupervisorLogRuntime[];
+};
+
+export type SessionSupervisorRuntime = {
+    listSessions: () => SessionSupervisorSessionRuntime[];
+    getSession: (id: string) => SessionSupervisorSessionRuntime | undefined;
+    createSession: (input: Record<string, unknown>) => Promise<SessionSupervisorSessionRuntime>;
+    startSession: (id: string) => Promise<SessionSupervisorSessionRuntime>;
+    updateSessionMetadata: (id: string, metadataPatch: Record<string, unknown>) => SessionSupervisorSessionRuntime;
+    stopSession: (id: string, options?: { force?: boolean }) => Promise<SessionSupervisorSessionRuntime>;
+    restartSession: (id: string) => Promise<SessionSupervisorSessionRuntime>;
+    getSessionLogs: (id: string, limit?: number) => SessionSupervisorLogRuntime[];
+    getAttachInfo: (id: string) => {
+        id: string;
+        pid?: number;
+        command: string;
+        args: string[];
+        cwd: string;
+        status: string;
+        attachable: boolean;
+    };
+    getSessionHealth: (id: string) => {
+        status: string;
+        lastCheck: number;
+        consecutiveFailures: number;
+        restartCount: number;
+        lastRestartAt?: number;
+        nextRestartAt?: number;
+        lastExitCode?: number;
+        lastExitSignal?: string;
+        errorMessage?: string;
+    };
+    restoreSessions: () => SessionSupervisorSessionRuntime[];
+    getRestoreStatus: () => {
+        lastRestoreAt?: number;
+        restoredSessionCount: number;
+        autoResumeCount: number;
+    };
+};
+
 export type QuotaUsageRuntime = {
     provider: string;
     cost: number;
@@ -273,7 +354,7 @@ export type ModelInfoRuntime = {
 export type ModelSelectorRuntime = {
     getQuotaService: () => QuotaServiceRuntime;
     getAvailableModels?: () => ModelInfoRuntime[];
-    getFallbackChain?: () => ModelInfoRuntime[];
+    getFallbackChain?: (options?: { routingTaskType?: string }) => ModelInfoRuntime[];
 };
 
 export type CostStatsRuntime = {
@@ -353,8 +434,30 @@ export type MCPAggregatorRuntime = {
     getTrafficEvents?: () => unknown[];
     addServerConfig?: (name: string, config: { command: string; args: string[]; env?: Record<string, string>; enabled?: boolean }) => Promise<void>;
     removeServerConfig?: (name: string) => Promise<void>;
+    getInitializationStatus?: () => {
+        inProgress: boolean;
+        initialized: boolean;
+        lastStartedAt?: number;
+        lastCompletedAt?: number;
+        lastSuccessAt?: number;
+        lastError?: string;
+        connectedClientCount: number;
+        configuredServerCount: number;
+    };
     clients?: Map<string, { close?: () => Promise<void> | void }>;
     configPath?: string;
+};
+
+export type McpConfigServiceRuntime = {
+    getStatus: () => {
+        inProgress: boolean;
+        lastStartedAt?: number;
+        lastCompletedAt?: number;
+        lastSuccessAt?: number;
+        lastError?: string;
+        lastServerCount: number;
+        lastToolCount: number;
+    };
 };
 
 export type SubmoduleServiceRuntime = {
@@ -565,6 +668,10 @@ export function getSessionManager(): SessionManagerRuntime {
     return getMcpServer().sessionManager as SessionManagerRuntime;
 }
 
+export function getSessionSupervisor(): SessionSupervisorRuntime {
+    return getMcpServer().sessionSupervisor as SessionSupervisorRuntime;
+}
+
 export function getLLMService(): LLMServiceRuntime {
     return getMcpServer().llmService as LLMServiceRuntime;
 }
@@ -607,6 +714,10 @@ export function getSkillAssimilationService(): SkillAssimilationServiceRuntime |
 
 export function getBrowserService(): BrowserServiceRuntime | undefined {
     return getMcpServer().browserService as BrowserServiceRuntime | undefined;
+}
+
+export function getMcpConfigService(): McpConfigServiceRuntime | undefined {
+    return getMcpServer().mcpConfigService as McpConfigServiceRuntime | undefined;
 }
 
 /*

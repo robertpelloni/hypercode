@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import { DashboardHomeClient } from './DashboardHomeClient';
 
 export default function DashboardIndexPage() {
-    redirect('/dashboard/mcp');
+    return <DashboardHomeClient />;
 }

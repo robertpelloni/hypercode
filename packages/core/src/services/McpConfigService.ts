@@ -1,32 +1,50 @@
 
 import * as fs from 'fs/promises';
-import * as path from 'path';
 import { mcpServersRepository } from '../db/repositories/mcp-servers.repo.js';
-import { McpServerTypeEnum } from '../types/metamcp/index.js';
+import { toolsRepository } from '../db/repositories/tools.repo.js';
+import { loadBorgMcpConfig } from '../mcp/mcpJsonConfig.js';
 
 export class McpConfigService {
-    private static MCP_JSON_PATH = path.resolve(process.cwd(), 'mcp.json');
+    private syncState: {
+        inProgress: boolean;
+        lastStartedAt?: number;
+        lastCompletedAt?: number;
+        lastSuccessAt?: number;
+        lastError?: string;
+        lastServerCount: number;
+        lastToolCount: number;
+    } = {
+        inProgress: false,
+        lastServerCount: 0,
+        lastToolCount: 0,
+    };
 
     /**
-     * Reads mcp.json and updates the database to match.
-     * This makes mcp.json the authoritative source for config entry existence/content.
+     * Reads Borg's mcp.jsonc (falling back to mcp.json) and updates the database to match.
+     * This makes Borg's config file the authoritative source for config entry existence/content.
      */
     async syncWithDatabase() {
-        console.log('[McpConfigService] Syncing Database with mcp.json...');
+        console.log('[McpConfigService] Syncing Database with mcp.jsonc...');
+        this.syncState.inProgress = true;
+        this.syncState.lastStartedAt = Date.now();
+        this.syncState.lastError = undefined;
+
         try {
-            let fileContent;
             try {
-                fileContent = await fs.readFile(McpConfigService.MCP_JSON_PATH, 'utf-8');
+                await fs.access(process.cwd());
             } catch (e: any) {
                 if (e.code === 'ENOENT') {
-                    console.log('[McpConfigService] mcp.json not found. Skipping sync.');
+                    console.log('[McpConfigService] Workspace not available. Skipping sync.');
+                    this.syncState.lastCompletedAt = Date.now();
+                    this.syncState.inProgress = false;
                     return;
                 }
                 throw e;
             }
 
-            const config = JSON.parse(fileContent);
+            const config = await loadBorgMcpConfig();
             const servers = config.mcpServers || {};
+            this.syncState.lastServerCount = Object.keys(servers).length;
 
             for (const [name, serverConfig] of Object.entries(servers)) {
                 // Determine type
@@ -40,33 +58,73 @@ export class McpConfigService {
 
                 if (existing) {
                     // Update
-                    await mcpServersRepository.update({
+                    const updatedServer = await mcpServersRepository.update({
                         uuid: existing.uuid,
                         name: name, // shouldn't change
                         command: (serverConfig as any).command,
                         args: (serverConfig as any).args,
                         env: (serverConfig as any).env,
                         url: (serverConfig as any).url,
+                        description: (serverConfig as any).description,
                         // Preserve other fields
-                    }, { skipSync: true });
+                    }, { skipSync: true, skipDiscovery: true });
+                    await this.syncStoredMetadataTools(updatedServer.uuid, serverConfig);
                     console.log(`[McpConfigService] Updated server: ${name}`);
                 } else {
                     // Create
-                    await mcpServersRepository.create({
+                    const createdServer = await mcpServersRepository.create({
                         name: name,
                         type: type,
                         command: (serverConfig as any).command,
                         args: (serverConfig as any).args,
                         env: (serverConfig as any).env,
                         url: (serverConfig as any).url,
-                    }, { skipSync: true });
+                        description: (serverConfig as any).description,
+                    }, { skipSync: true, skipDiscovery: true });
+                    await this.syncStoredMetadataTools(createdServer.uuid, serverConfig);
                     console.log(`[McpConfigService] Created server: ${name}`);
                 }
             }
+
+            this.syncState.lastToolCount = (await toolsRepository.findAll()).length;
+            this.syncState.lastCompletedAt = Date.now();
+            this.syncState.lastSuccessAt = this.syncState.lastCompletedAt;
             console.log('[McpConfigService] Sync complete.');
 
         } catch (error) {
+            this.syncState.lastCompletedAt = Date.now();
+            this.syncState.lastError = error instanceof Error ? error.message : String(error);
             console.error('[McpConfigService] Sync failed:', error);
+        } finally {
+            this.syncState.inProgress = false;
         }
+    }
+
+    getStatus() {
+        return { ...this.syncState };
+    }
+
+    private async syncStoredMetadataTools(serverUuid: string, serverConfig: unknown): Promise<void> {
+        const metadataTools = Array.isArray((serverConfig as { _meta?: { tools?: unknown[] } })?._meta?.tools)
+            ? (serverConfig as { _meta?: { tools?: Array<Record<string, unknown>> } })._meta?.tools ?? []
+            : [];
+
+        await toolsRepository.syncTools({
+            mcpServerUuid: serverUuid,
+            tools: metadataTools
+                .filter((tool): tool is Record<string, unknown> => Boolean(tool && typeof tool === 'object' && typeof tool.name === 'string'))
+                .map((tool) => ({
+                    name: String(tool.name),
+                    description: typeof tool.description === 'string' ? tool.description : undefined,
+                    inputSchema: tool.inputSchema && typeof tool.inputSchema === 'object'
+                        ? {
+                            properties: (tool.inputSchema as { properties?: Record<string, unknown> }).properties,
+                            required: Array.isArray((tool.inputSchema as { required?: unknown[] }).required)
+                                ? (tool.inputSchema as { required: unknown[] }).required.filter((value): value is string => typeof value === 'string')
+                                : undefined,
+                        }
+                        : undefined,
+                })),
+        });
     }
 }

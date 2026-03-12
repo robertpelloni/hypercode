@@ -451,6 +451,7 @@ export const McpServerCreateInputSchema = z.object({
     bearerToken: z.string().nullable().optional(),
     headers: z.record(z.string()).optional(),
     user_id: z.string().nullable().optional(),
+    metadataStrategy: z.enum(['auto', 'binary', 'cache']).optional(),
 });
 
 export const McpServerUpdateInputSchema = z.object({
@@ -475,6 +476,7 @@ export const McpServerUpdateInputSchema = z.object({
     bearerToken: z.string().nullable().optional(),
     headers: z.record(z.string()).optional(),
     user_id: z.string().nullable().optional(),
+    metadataStrategy: z.enum(['auto', 'binary', 'cache']).optional(),
 });
 
 export type McpServerCreateInput = z.infer<typeof McpServerCreateInputSchema>;

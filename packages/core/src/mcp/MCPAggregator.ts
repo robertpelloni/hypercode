@@ -23,6 +23,17 @@ export class MCPAggregator {
     private readonly now: () => number;
     private readonly serverStates: Map<string, MCPServerState> = new Map();
     private readonly trafficInspector: MCPTrafficInspector;
+    private initializationState: {
+        inProgress: boolean;
+        initialized: boolean;
+        lastStartedAt?: number;
+        lastCompletedAt?: number;
+        lastSuccessAt?: number;
+        lastError?: string;
+    } = {
+        inProgress: false,
+        initialized: false,
+    };
 
     constructor(options?: string | MCPAggregatorOptions) {
         const normalizedOptions = typeof options === 'string'
@@ -41,6 +52,9 @@ export class MCPAggregator {
     }
 
     public async initialize(): Promise<void> {
+        this.initializationState.inProgress = true;
+        this.initializationState.lastStartedAt = this.now();
+        this.initializationState.lastError = undefined;
         try {
             const config = this.configStore.readAll();
             for (const [name, serverCfg] of Object.entries(config)) {
@@ -56,9 +70,24 @@ export class MCPAggregator {
                     await this.connectToServer(name, serverCfg);
                 }
             }
+            this.initializationState.initialized = true;
+            this.initializationState.lastCompletedAt = this.now();
+            this.initializationState.lastSuccessAt = this.initializationState.lastCompletedAt;
         } catch (error) {
+            this.initializationState.lastCompletedAt = this.now();
+            this.initializationState.lastError = error instanceof Error ? error.message : String(error);
             console.error('[MCPAggregator] Failed to load config:', error);
+        } finally {
+            this.initializationState.inProgress = false;
         }
+    }
+
+    public getInitializationStatus() {
+        return {
+            ...this.initializationState,
+            connectedClientCount: this.clients.size,
+            configuredServerCount: this.serverStates.size,
+        };
     }
 
     public async connectToServer(name: string, config: MCPServerConfig): Promise<void> {

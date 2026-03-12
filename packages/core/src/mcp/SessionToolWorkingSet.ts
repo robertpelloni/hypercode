@@ -10,7 +10,7 @@ export interface LoadedToolState {
     lastHydratedAt: number | null;
 }
 
-export const DEFAULT_MAX_LOADED_TOOLS = 24;
+export const DEFAULT_MAX_LOADED_TOOLS = 16;
 export const DEFAULT_MAX_HYDRATED_SCHEMAS = 8;
 
 export class SessionToolWorkingSet {
@@ -18,19 +18,35 @@ export class SessionToolWorkingSet {
     private readonly maxHydratedSchemas: number;
     private readonly loadedTools = new Map<string, number>();
     private readonly hydratedTools = new Map<string, number>();
+    private readonly alwaysLoadedTools = new Set<string>();
 
     constructor(options: SessionToolWorkingSetOptions = {}) {
         this.maxLoadedTools = options.maxLoadedTools ?? DEFAULT_MAX_LOADED_TOOLS;
         this.maxHydratedSchemas = options.maxHydratedSchemas ?? DEFAULT_MAX_HYDRATED_SCHEMAS;
     }
 
+    private touch(map: Map<string, number>, name: string, timestamp: number): boolean {
+        if (!map.has(name)) {
+            return false;
+        }
+
+        map.delete(name);
+        map.set(name, timestamp);
+        return true;
+    }
+
     loadTool(name: string): string[] {
-        const evicted: string[] = [];
+        if (this.alwaysLoadedTools.has(name)) {
+            return [];
+        }
+
         const timestamp = Date.now();
 
-        if (this.loadedTools.has(name)) {
-            this.loadedTools.delete(name);
+        if (this.touch(this.loadedTools, name, timestamp)) {
+            return [];
         }
+
+        const evicted: string[] = [];
 
         while (this.loadedTools.size >= this.maxLoadedTools) {
             const oldest = this.loadedTools.keys().next().value;
@@ -71,14 +87,27 @@ export class SessionToolWorkingSet {
         return evicted;
     }
 
+    touchTool(name: string): boolean {
+        const timestamp = Date.now();
+        const touchedLoaded = this.alwaysLoadedTools.has(name)
+            ? true
+            : this.touch(this.loadedTools, name, timestamp);
+        const touchedHydrated = this.touch(this.hydratedTools, name, timestamp);
+        return touchedLoaded || touchedHydrated;
+    }
+
     unloadTool(name: string): boolean {
+        if (this.alwaysLoadedTools.has(name)) {
+            return this.hydratedTools.delete(name);
+        }
+
         const removedLoaded = this.loadedTools.delete(name);
         const removedHydrated = this.hydratedTools.delete(name);
         return removedLoaded || removedHydrated;
     }
 
     isLoaded(name: string): boolean {
-        return this.loadedTools.has(name);
+        return this.alwaysLoadedTools.has(name) || this.loadedTools.has(name);
     }
 
     isHydrated(name: string): boolean {
@@ -86,7 +115,10 @@ export class SessionToolWorkingSet {
     }
 
     getLoadedToolNames(): string[] {
-        return Array.from(this.loadedTools.keys());
+        return [
+            ...this.alwaysLoadedTools,
+            ...Array.from(this.loadedTools.keys()).filter((name) => !this.alwaysLoadedTools.has(name)),
+        ];
     }
 
     listLoadedTools(): LoadedToolState[] {
@@ -103,5 +135,18 @@ export class SessionToolWorkingSet {
             maxLoadedTools: this.maxLoadedTools,
             maxHydratedSchemas: this.maxHydratedSchemas,
         };
+    }
+
+    setAlwaysLoadedTools(names: string[]): void {
+        this.alwaysLoadedTools.clear();
+        for (const name of names) {
+            this.alwaysLoadedTools.add(name);
+        }
+
+        for (const loadedName of Array.from(this.loadedTools.keys())) {
+            if (this.alwaysLoadedTools.has(loadedName)) {
+                this.loadedTools.delete(loadedName);
+            }
+        }
     }
 }

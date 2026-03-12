@@ -1,4 +1,4 @@
-import { DatabaseMcpServer, ServerParameters } from "../types/metamcp/index.js";
+import { DatabaseMcpServer, ServerParameters } from "../types/mcp-admin/index.js";
 import { oauthSessionsRepository } from "../db/repositories/index.js";
 
 export type IOType = "overlapped" | "pipe" | "ignore" | "inherit";

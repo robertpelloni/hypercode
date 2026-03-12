@@ -42,8 +42,11 @@ export class Supervisor {
         `;
 
         try {
-            const model = await this.server.modelSelector.selectModel({ taskComplexity: 'medium' });
-            const response = await this.llmService.generateText(model.provider, model.modelId, "Supervisor Planning", prompt);
+            const model = await this.server.modelSelector.selectModel({ taskComplexity: 'medium', routingTaskType: 'planning' });
+            const response = await this.llmService.generateText(model.provider, model.modelId, "Supervisor Planning", prompt, {
+                taskComplexity: 'medium',
+                routingTaskType: 'planning',
+            });
 
             // Extract JSON
             let jsonStr = response.content.replace(/```json/g, '').replace(/```/g, '').trim();

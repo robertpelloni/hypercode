@@ -1,7 +1,7 @@
 import { eq, and } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { db } from "../index.js";
-import { toolSetsTable, toolSetItemsTable } from "../metamcp-schema.js";
+import { toolSetsTable, toolSetItemsTable } from "../mcp-admin-schema.js";
 import { ToolSet } from "../../types/metamcp/tool-sets.zod.js";
 
 type ToolSetRow = typeof toolSetsTable.$inferSelect;
@@ -37,6 +37,30 @@ export class ToolSetsRepository {
         }
 
         return this.hydrate(set);
+    }
+
+    async update(input: { uuid: string; name?: string; description?: string | null; tools?: string[]; user_id?: string | null }): Promise<ToolSet | undefined> {
+        const [existing] = await db.select().from(toolSetsTable).where(eq(toolSetsTable.uuid, input.uuid));
+        if (!existing) {
+            return undefined;
+        }
+
+        const [updatedSet] = await db
+            .update(toolSetsTable)
+            .set({
+                name: input.name ?? existing.name,
+                description: input.description === undefined ? existing.description : input.description,
+                user_id: input.user_id === undefined ? existing.user_id : input.user_id,
+            })
+            .where(eq(toolSetsTable.uuid, input.uuid))
+            .returning();
+
+        if (input.tools) {
+            await db.delete(toolSetItemsTable).where(eq(toolSetItemsTable.tool_set_uuid, input.uuid));
+            await this.addTools(input.uuid, Array.from(new Set(input.tools)));
+        }
+
+        return this.hydrate(updatedSet);
     }
 
     async deleteByUuid(uuid: string): Promise<void> {

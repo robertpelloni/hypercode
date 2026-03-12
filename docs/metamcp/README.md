@@ -1,10 +1,10 @@
-# MetaMCP Integration Guide
+# Borg MCP Bridge Guide
 
-> **MetaMCP**: MCP Aggregator, Orchestrator, Middleware, and Gateway integrated into Borg
+> Borg's MCP router can delegate bridge responsibilities to an upstream MetaMCP-backed layer for aggregation, middleware, and gateway behavior.
 
 ## Overview
 
-MetaMCP functionality has been migrated into Borg Core (Phase 10), providing a unified MCP proxy that dynamically aggregates MCP servers into a single unified endpoint with middleware support. This enables:
+This guide covers the upstream bridge layer that Borg can use behind its MCP router control plane. The bridge functionality originated in MetaMCP and now serves as an implementation detail within Borg's broader router architecture. This enables:
 
 - **Progressive Tool Disclosure**: Minimize context window usage by exposing only meta-tools
 - **Semantic Tool Search**: "Tool RAG" using embeddings for intelligent tool discovery

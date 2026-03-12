@@ -121,12 +121,16 @@ export class Researcher {
                 }
             `;
 
-            const model = await this.server.llmService.modelSelector.selectModel({ taskComplexity: 'high' });
+            const model = await this.server.llmService.modelSelector.selectModel({ taskComplexity: 'high', routingTaskType: 'research' });
             const llmResult = await this.server.llmService.generateText(
                 model.provider,
                 model.modelId,
                 'You are a tool research analyst. Output valid JSON only.',
                 prompt,
+                {
+                    taskComplexity: 'high',
+                    routingTaskType: 'research',
+                },
             );
 
             const modelText = llmResult?.content?.trim() || '';

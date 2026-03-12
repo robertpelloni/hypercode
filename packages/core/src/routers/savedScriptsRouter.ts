@@ -40,14 +40,7 @@ export const savedScriptsRouter = t.router({
                 description: input.description,
                 // userId is not stored in local config currently
             };
-            await jsonConfigProvider.saveScript(script);
-            return script; // UUID will be generated/attached if we reload? 
-            // Ideally saveScript should return the saved object or we reload it.
-            // For now, let's just return what we have. 
-            // Actually saveScript doesn't return the enriched object.
-            // I should update saveScript signature or just reload.
-            const saved = (await jsonConfigProvider.loadScripts()).find(s => s.name === input.name);
-            return saved;
+            return await jsonConfigProvider.saveScript(script);
         }),
 
     update: publicProcedure
@@ -64,8 +57,7 @@ export const savedScriptsRouter = t.router({
                 code: input.code ?? existing.code,
             };
 
-            await jsonConfigProvider.saveScript(updated);
-            return updated;
+            return await jsonConfigProvider.saveScript(updated);
         }),
 
     delete: publicProcedure

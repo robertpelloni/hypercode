@@ -265,7 +265,8 @@ export class Council {
                     // 1. Select Model
                     const selection = await this.modelSelector.selectModel({
                         taskComplexity: 'high', // Council members should be smart
-                        provider: 'anthropic' // Prefer Claude for reasoning, but selector will handle fallback
+                        provider: 'anthropic', // Prefer Claude for reasoning, but selector will handle fallback
+                        routingTaskType: 'planning'
                     });
 
                     // 2. Generate
@@ -273,7 +274,11 @@ export class Council {
                         selection.provider,
                         selection.modelId,
                         systemPrompt,
-                        instruction + "\nPlease provide your input."
+                        instruction + "\nPlease provide your input.",
+                        {
+                            taskComplexity: 'high',
+                            routingTaskType: 'planning',
+                        }
                     );
 
                     return response.content;

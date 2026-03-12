@@ -1,30 +1,27 @@
-import fs from 'fs/promises';
-import path from 'path';
-import crypto from 'crypto';
-import { IConfigProvider, McpServerConfig, SavedScriptConfig } from '../../interfaces/IConfigProvider.js';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { IConfigProvider, McpServerConfig, SavedScriptConfig, SavedToolSetConfig } from '../../interfaces/IConfigProvider.js';
+import { BorgMcpJsonConfig, getBorgConfigDir, loadBorgMcpConfig, writeBorgMcpConfig } from '../../mcp/mcpJsonConfig.js';
+import { buildToolPreferenceSettings, readToolPreferencesFromSettings } from '../../routers/mcp-tool-preferences.js';
 
 export class JsonConfigProvider implements IConfigProvider {
-    private configPath: string;
-    private config: {
-        mcpServers: Record<string, any>,
-        scripts?: SavedScriptConfig[],
-        settings?: Record<string, any>
-    } = { mcpServers: {} };
+    private configDir: string;
+    private config: BorgMcpJsonConfig = { mcpServers: {} };
 
-    constructor(workspaceRoot: string = process.cwd()) {
-        this.configPath = path.join(workspaceRoot, 'mcp.json');
+    constructor(configDir: string = getBorgConfigDir()) {
+        this.configDir = configDir;
     }
 
     async init(): Promise<void> {
         try {
-            const data = await fs.readFile(this.configPath, 'utf-8');
-            this.config = JSON.parse(data);
+            this.config = await loadBorgMcpConfig(this.configDir);
         } catch (error: any) {
             if (error.code === 'ENOENT') {
                 // File doesn't exist, create default
                 await this.saveConfig();
             } else {
-                console.error(`Failed to load mcp.json from ${this.configPath}:`, error);
+                console.error(`Failed to load mcp.jsonc from ${this.configDir}:`, error);
                 throw error;
             }
         }
@@ -59,11 +56,14 @@ export class JsonConfigProvider implements IConfigProvider {
     }
 
     async saveMcpServers(servers: McpServerConfig[]): Promise<void> {
+        await this.init();
         const newMcpServers: Record<string, any> = {};
+        const existingServers = this.config.mcpServers || {};
 
         for (const server of servers) {
             if (server.type === 'stdio') {
                 newMcpServers[server.name] = {
+                    ...(existingServers[server.name] || {}),
                     command: server.command,
                     args: server.args,
                     env: server.env,
@@ -71,6 +71,7 @@ export class JsonConfigProvider implements IConfigProvider {
                 };
             } else if (server.type === 'sse') {
                 newMcpServers[server.name] = {
+                    ...(existingServers[server.name] || {}),
                     url: server.url,
                     disabled: server.disabled
                 };
@@ -86,12 +87,54 @@ export class JsonConfigProvider implements IConfigProvider {
         return this.config;
     }
 
+    async loadAlwaysVisibleTools(): Promise<string[]> {
+        await this.init();
+        const fromSettings = readToolPreferencesFromSettings(
+            this.config.settings?.toolSelection as { importantTools?: unknown; alwaysLoadedTools?: unknown } | undefined,
+        ).alwaysLoadedTools;
+
+        if (fromSettings.length > 0) {
+            return fromSettings;
+        }
+
+        return Array.isArray(this.config.alwaysVisibleTools)
+            ? [...this.config.alwaysVisibleTools]
+            : [];
+    }
+
+    async saveAlwaysVisibleTools(toolNames: string[]): Promise<string[]> {
+        await this.init();
+        const normalized = Array.from(
+            new Set(
+                toolNames
+                    .filter((toolName): toolName is string => typeof toolName === 'string')
+                    .map((toolName) => toolName.trim())
+                    .filter((toolName) => toolName.length > 0),
+            ),
+        );
+
+        this.config.settings = buildToolPreferenceSettings(
+            this.config.settings && typeof this.config.settings === 'object'
+                ? this.config.settings as Record<string, unknown>
+                : {},
+            {
+                ...readToolPreferencesFromSettings(
+                    this.config.settings?.toolSelection as { importantTools?: unknown; alwaysLoadedTools?: unknown } | undefined,
+                ),
+                alwaysLoadedTools: normalized,
+            },
+        );
+        this.config.alwaysVisibleTools = normalized;
+        await this.saveConfig();
+        return normalized;
+    }
+
     async loadScripts(): Promise<SavedScriptConfig[]> {
         await this.init();
         return this.config.scripts || [];
     }
 
-    async saveScript(script: SavedScriptConfig): Promise<void> {
+    async saveScript(script: SavedScriptConfig): Promise<SavedScriptConfig> {
         await this.init();
         if (!this.config.scripts) {
             this.config.scripts = [];
@@ -113,6 +156,9 @@ export class JsonConfigProvider implements IConfigProvider {
         }
 
         await this.saveConfig();
+        return existingIndex >= 0
+            ? this.config.scripts[existingIndex]
+            : this.config.scripts[this.config.scripts.length - 1];
     }
 
     async deleteScript(nameOrUuid: string): Promise<void> {
@@ -123,9 +169,53 @@ export class JsonConfigProvider implements IConfigProvider {
         await this.saveConfig();
     }
 
+    async loadToolSets(): Promise<SavedToolSetConfig[]> {
+        await this.init();
+        return this.config.toolSets || [];
+    }
+
+    async saveToolSet(toolSet: SavedToolSetConfig): Promise<SavedToolSetConfig> {
+        await this.init();
+        if (!this.config.toolSets) {
+            this.config.toolSets = [];
+        }
+
+        if (!toolSet.uuid) {
+            toolSet.uuid = crypto.randomUUID();
+        }
+
+        const normalizedToolSet: SavedToolSetConfig = {
+            ...toolSet,
+            tools: Array.from(new Set(toolSet.tools)),
+        };
+
+        const existingIndex = this.config.toolSets.findIndex((set: SavedToolSetConfig) =>
+            set.name === normalizedToolSet.name || (set.uuid && set.uuid === normalizedToolSet.uuid)
+        );
+
+        if (existingIndex >= 0) {
+            this.config.toolSets[existingIndex] = { ...this.config.toolSets[existingIndex], ...normalizedToolSet };
+        } else {
+            this.config.toolSets.push(normalizedToolSet);
+        }
+
+        await this.saveConfig();
+        return existingIndex >= 0
+            ? this.config.toolSets[existingIndex]
+            : this.config.toolSets[this.config.toolSets.length - 1];
+    }
+
+    async deleteToolSet(nameOrUuid: string): Promise<void> {
+        await this.init();
+        if (!this.config.toolSets) return;
+
+        this.config.toolSets = this.config.toolSets.filter(set => set.name !== nameOrUuid && set.uuid !== nameOrUuid);
+        await this.saveConfig();
+    }
+
     private async saveConfig(): Promise<void> {
-        await fs.writeFile(this.configPath, JSON.stringify(this.config, null, 2), 'utf-8');
+        await writeBorgMcpConfig(this.config, this.configDir);
     }
 }
 
-export const jsonConfigProvider = new JsonConfigProvider(process.cwd());
+export const jsonConfigProvider = new JsonConfigProvider();

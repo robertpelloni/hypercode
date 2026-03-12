@@ -18,12 +18,12 @@ import {
     DatabaseEndpointWithNamespace,
     EndpointCreateInput,
     EndpointUpdateInput,
-} from "../../types/metamcp/index.js";
+} from "../../types/mcp-admin/index.js";
 import { and, desc, eq, isNull, or } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 
 import { db } from "../index.js";
-import { endpointsTable, namespacesTable } from "../metamcp-schema.js";
+import { endpointsTable, namespacesTable } from "../mcp-admin-schema.js";
 
 type EndpointRow = typeof endpointsTable.$inferSelect;
 type EndpointInsert = typeof endpointsTable.$inferInsert;

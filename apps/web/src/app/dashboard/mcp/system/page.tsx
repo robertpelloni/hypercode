@@ -6,9 +6,24 @@ import { Activity, Server, Cpu, HardDrive, Network, Globe, Radio } from "lucide-
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
 import type { ComponentType } from 'react';
+import { buildSystemStartupChecks } from './system-status-helpers';
+
+function formatUptime(ms: number): string {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60) % 60;
+    const hours = Math.floor(seconds / 3600) % 24;
+    const days = Math.floor(seconds / 86400);
+
+    const parts: string[] = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    parts.push(`${minutes}m`);
+    return parts.join(' ');
+}
 
 export default function SystemStatusDashboard() {
     const { data: status, refetch } = trpc.mcp.getStatus.useQuery();
+    const { data: startupStatus, refetch: refetchStartup } = trpc.startupStatus.useQuery(undefined, { refetchInterval: 5000 });
     const { data: browserStatus, refetch: refetchBrowser } = trpc.browser.status.useQuery(undefined, { refetchInterval: 5000 });
 
     const closeAllPages = trpc.browser.closeAll.useMutation({
@@ -21,8 +36,11 @@ export default function SystemStatusDashboard() {
 
     const handleRefresh = () => {
         void refetch();
+        void refetchStartup();
         void refetchBrowser();
     };
+
+    const startupChecks = startupStatus ? buildSystemStartupChecks(startupStatus) : [];
 
     return (
         <div className="p-8 space-y-8 h-full overflow-y-auto">
@@ -50,14 +68,14 @@ export default function SystemStatusDashboard() {
                     status="Connected"
                     icon={HardDrive}
                     color="text-green-500"
-                    detail="PostgreSQL 15.4"
+                    detail="SQLite (local)"
                 />
                 <StatusCard
-                    title="Redis Cache"
-                    status="Connected"
+                    title="Event Bus"
+                    status={startupStatus?.ready ? 'Active' : 'Starting'}
                     icon={Cpu}
-                    color="text-green-500"
-                    detail="241 keys"
+                    color={startupStatus?.ready ? 'text-green-500' : 'text-yellow-500'}
+                    detail="In-process pub/sub"
                 />
                 <StatusCard
                     title="Network"
@@ -65,6 +83,13 @@ export default function SystemStatusDashboard() {
                     icon={Network}
                     color="text-blue-500"
                     detail="Port 3000 / 3001"
+                />
+                <StatusCard
+                    title="Startup Readiness"
+                    status={startupStatus?.ready ? 'Ready' : 'Warming'}
+                    icon={Radio}
+                    color={startupStatus?.ready ? 'text-green-500' : 'text-yellow-500'}
+                    detail={startupStatus ? `${startupChecks.filter((check) => check.status === 'Operational').length}/${startupChecks.length} phases ready` : 'Loading startup state'}
                 />
             </div>
 
@@ -124,6 +149,21 @@ export default function SystemStatusDashboard() {
 
                 <Card className="bg-zinc-900 border-zinc-800">
                     <CardContent className="p-6">
+                        <h3 className="text-lg font-medium text-white mb-4">Startup Phases</h3>
+                        <div className="space-y-4">
+                            {startupChecks.length === 0 ? (
+                                <div className="rounded border border-zinc-800 bg-zinc-950 p-4 text-sm text-zinc-500">
+                                    Loading startup status from Borg Core…
+                                </div>
+                            ) : startupChecks.map((check) => (
+                                <HealthRow key={check.name} name={check.name} status={check.status} latency={check.latency} detail={check.detail} />
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-zinc-900 border-zinc-800">
+                    <CardContent className="p-6">
                         <h3 className="text-lg font-medium text-white mb-4">Environment</h3>
                         <div className="space-y-2 font-mono text-sm text-zinc-400">
                             <div className="flex justify-between border-b border-zinc-800 pb-2">
@@ -136,11 +176,11 @@ export default function SystemStatusDashboard() {
                             </div>
                             <div className="flex justify-between border-b border-zinc-800 pb-2 pt-2">
                                 <span>UPTIME</span>
-                                <span className="text-white">4d 2h 15m</span>
+                                <span className="text-white">{startupStatus?.uptime ? formatUptime(startupStatus.uptime) : '—'}</span>
                             </div>
                             <div className="flex justify-between pt-2">
                                 <span>VERSION</span>
-                                <span className="text-blue-400">v0.5.0-beta</span>
+                                <span className="text-blue-400">v0.9.0-beta</span>
                             </div>
                         </div>
                     </CardContent>
@@ -165,13 +205,16 @@ function StatusCard({ title, status, icon: Icon, color, detail }: { title: strin
     );
 }
 
-function HealthRow({ name, status, latency }: { name: string; status: string; latency: string }) {
+function HealthRow({ name, status, latency, detail }: { name: string; status: string; latency: string; detail?: string }) {
     const isHealthy = status === 'Operational' || status === 'Healthy' || status === 'Active';
     return (
         <div className="flex items-center justify-between p-3 bg-zinc-950 rounded border border-zinc-800">
             <div className="flex items-center gap-3">
                 <div className={`h-2 w-2 rounded-full ${isHealthy ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]'}`} />
-                <span className="text-zinc-200 font-medium">{name}</span>
+                <div>
+                    <span className="text-zinc-200 font-medium">{name}</span>
+                    {detail ? <div className="text-xs text-zinc-500 mt-1">{detail}</div> : null}
+                </div>
             </div>
             <div className="flex items-center gap-4 text-sm">
                 <span className="text-zinc-500">{latency}</span>

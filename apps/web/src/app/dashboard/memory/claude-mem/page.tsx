@@ -1,181 +1,369 @@
 "use client";
 
-import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge, ScrollArea } from "@borg/ui";
-import { Loader2, Brain, Search, Trash2, Database, Network, Plus, Server, Code } from "lucide-react";
+import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, ScrollArea, Tabs, TabsContent, TabsList, TabsTrigger } from '@borg/ui';
 import { trpc } from '@/utils/trpc';
-import { toast } from 'sonner';
+import { AlertTriangle, ArrowRight, BookOpenText, BrainCircuit, CheckCircle2, FileCode2, Layers3, Loader2, RefreshCw, Route } from 'lucide-react';
 
-export default function ClaudeMemDashboard() {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [newVectorText, setNewVectorText] = useState('');
+import { CLAUDE_MEM_CAPABILITIES, CLAUDE_MEM_IMPLEMENTATION_FILES, getClaudeMemOperatorGuidance, getClaudeMemStatusSummary, type ClaudeMemCapabilityStatus } from './claude-mem-status';
 
-    // Attempt to query the memory backend
-    const { data: results, isLoading, refetch } = trpc.memory.searchAgentMemory.useQuery({
-        query: searchQuery,
-        type: 'long_term',
-        limit: 50
-    }, { enabled: true });
+type ClaudeMemStoreStatus = {
+	exists: boolean;
+	storePath: string;
+	totalEntries: number;
+	sectionCount: number;
+	defaultSectionCount: number;
+	presentDefaultSectionCount: number;
+	populatedSectionCount: number;
+	missingSections: string[];
+	runtimePipeline: {
+		configuredMode: string;
+		providerNames: string[];
+		providerCount: number;
+		claudeMemEnabled: boolean;
+	};
+	sections: Array<{
+		section: string;
+		entryCount: number;
+	}>;
+	lastUpdatedAt: string | null;
+};
 
-    // Mock mutation for now since claude-mem TRPC mapping might be internal
-    const addFactMutation = trpc.memory.addFact.useMutation({
-        onSuccess: () => {
-            toast.success("Vector context injected successfully!");
-            setNewVectorText('');
-            refetch();
-        },
-        onError: (err) => {
-            toast.error(`Failed to push vector: ${err.message}`);
-        }
-    });
+function getStatusClasses(status: ClaudeMemCapabilityStatus): string {
+	if (status === 'shipped') {
+		return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300';
+	}
 
-    const handleInject = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newVectorText.trim()) return;
-        addFactMutation.mutate({ content: newVectorText, type: 'long_term' });
-    };
+	if (status === 'partial') {
+		return 'border-amber-500/30 bg-amber-500/10 text-amber-300';
+	}
 
-    return (
-        <div className="p-8 space-y-8 h-full flex flex-col bg-black text-white">
-            <div className="flex justify-between items-center shrink-0">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-emerald-400 flex items-center gap-3">
-                        <Network className="h-8 w-8 text-emerald-500" />
-                        Claude-Mem Vector DB
-                    </h1>
-                    <p className="text-zinc-500 mt-2">
-                        Direct low-level manipulation of the Claude-Mem ChromaDB instance and persistent string contexts.
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    <Badge className="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 px-3 py-1.5 border border-emerald-500/30">
-                        <Server className="w-3.5 h-3.5 mr-2" />
-                        ChromaDB Active
-                    </Badge>
-                </div>
-            </div>
+	return 'border-rose-500/30 bg-rose-500/10 text-rose-300';
+}
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-1 min-h-0">
-                {/* Injection Control Tool */}
-                <div className="lg:col-span-1 space-y-6">
-                    <Card className="bg-zinc-900 border-zinc-800 border-l-4 border-l-emerald-600">
-                        <CardHeader className="pb-3 border-b border-zinc-800/50">
-                            <CardTitle className="text-sm font-bold text-zinc-100 uppercase tracking-wide flex items-center gap-2">
-                                <Code className="h-4 w-4 text-emerald-500" />
-                                Vector Injection
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-4 space-y-4">
-                            <p className="text-xs text-zinc-500 leading-relaxed">
-                                Insert raw string representations directly into the high-dimensional Vector index. These facts will be natively retrieved by all core AI nodes.
-                            </p>
-                            <form onSubmit={handleInject} className="space-y-3">
-                                <textarea
-                                    value={newVectorText}
-                                    onChange={e => setNewVectorText(e.target.value)}
-                                    className="w-full bg-black border border-zinc-800 rounded-md p-3 text-sm text-emerald-50 h-32 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none font-mono"
-                                    placeholder="Enter structural memory or context payload here..."
-                                />
-                                <Button
-                                    type="submit"
-                                    disabled={addFactMutation.isPending || !newVectorText.trim()}
-                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium"
-                                >
-                                    {addFactMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
-                                    Inject Vector String
-                                </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
+export default function ClaudeMemDashboardPage() {
+	const startupStatusQuery = trpc.startupStatus.useQuery(undefined, { refetchInterval: 10000 });
+	const [claudeMemStatus, setClaudeMemStatus] = useState<ClaudeMemStoreStatus | null>(null);
+	const [claudeMemStatusLoading, setClaudeMemStatusLoading] = useState(true);
+	const [claudeMemStatusError, setClaudeMemStatusError] = useState<string | null>(null);
+	const summary = getClaudeMemStatusSummary(startupStatusQuery.data ?? null);
+	const operatorGuidance = getClaudeMemOperatorGuidance(claudeMemStatus);
+	const upstreamGaps = CLAUDE_MEM_CAPABILITIES.filter((item) => item.status === 'missing');
 
-                    <Card className="bg-zinc-900 border-zinc-800">
-                        <CardHeader className="pb-3 border-b border-zinc-800/50">
-                            <CardTitle className="text-sm font-bold text-zinc-400 uppercase tracking-wide flex items-center gap-2">
-                                <Database className="h-4 w-4" />
-                                DB Statistics
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-4 space-y-4">
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-zinc-500">Total Vectors</span>
-                                    <span className="text-zinc-200 font-mono">{(results as any)?.length || 0}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-zinc-500">Dimensions</span>
-                                    <span className="text-zinc-200 font-mono">1536</span>
-                                </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-zinc-500">Collections</span>
-                                    <span className="text-zinc-200 font-mono">1</span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+	const fetchClaudeMemStatus = useCallback(async () => {
+		setClaudeMemStatusLoading(true);
+		setClaudeMemStatusError(null);
 
-                {/* Vector Query Explorer */}
-                <Card className="lg:col-span-3 bg-zinc-900 border-zinc-800 flex flex-col shadow-2xl overflow-hidden">
-                    <CardHeader className="border-b border-zinc-800 bg-black/40 pb-4">
-                        <div className="relative group">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-600/50 group-focus-within:text-emerald-500 transition-colors" />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                placeholder="Semantic search across embedded vectors..."
-                                className="w-full bg-black border border-zinc-800 rounded-lg pl-10 pr-4 py-3 text-sm text-emerald-50 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500 outline-none transition-all placeholder:text-zinc-600"
-                            />
-                        </div>
-                    </CardHeader>
-                    <CardContent className="flex-1 p-0 overflow-hidden flex flex-col bg-black/20">
-                        <ScrollArea className="flex-1">
-                            {isLoading ? (
-                                <div className="p-16 flex flex-col items-center justify-center text-emerald-500/60 gap-4">
-                                    <Loader2 className="h-10 w-10 animate-spin" />
-                                    <p className="text-sm font-mono tracking-widest uppercase">Querying ChromaDB Clusters...</p>
-                                </div>
-                            ) : !results || results.length === 0 ? (
-                                <div className="p-24 text-center text-zinc-600">
-                                    <Network className="h-16 w-16 mx-auto mb-6 opacity-20" />
-                                    <p className="text-xl font-medium text-zinc-400">Empty Vector Space</p>
-                                    <p className="text-sm mt-2 text-zinc-500">No semantic matches found for the current query.</p>
-                                </div>
-                            ) : (
-                                <div className="divide-y divide-zinc-800/50">
-                                    {results.map((memory: any, idx: number) => (
-                                        <div key={idx} className="p-5 hover:bg-zinc-800/30 transition-colors group flex flex-col gap-3">
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex items-center gap-3">
-                                                    <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider border-emerald-500/30 text-emerald-500 bg-emerald-500/5">
-                                                        VEC-{memory.id?.substring(0, 8) || String(idx).padStart(8, '0')}
-                                                    </Badge>
-                                                    <span className="text-[11px] font-mono text-zinc-500">
-                                                        {new Date(memory.timestamp || Date.now()).toLocaleString()}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="secondary" className="bg-zinc-800 text-zinc-400 group-hover:bg-zinc-700 transition-colors font-mono text-[10px]">
-                                                        Sim: {(memory.score || Math.random() * 0.2 + 0.8).toFixed(4)}
-                                                    </Badge>
-                                                    <Button size="icon" variant="ghost" className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-400 transition-all text-zinc-500">
-                                                        <Trash2 className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                            <div className="bg-black/50 border border-zinc-800/50 rounded-md p-3">
-                                                <p className="text-sm font-mono text-zinc-300 leading-relaxed whitespace-pre-wrap">
-                                                    {memory.content}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </ScrollArea>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-    );
+		try {
+			const response = await fetch('/api/trpc/memory.getClaudeMemStatus');
+			const payload = await response.json();
+			setClaudeMemStatus((payload?.result?.data ?? null) as ClaudeMemStoreStatus | null);
+		} catch (error) {
+			setClaudeMemStatusError(error instanceof Error ? error.message : 'Failed to read claude-mem store status');
+		} finally {
+			setClaudeMemStatusLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		void fetchClaudeMemStatus();
+	}, [fetchClaudeMemStatus]);
+
+	return (
+		<div className="w-full h-full flex flex-col">
+			<div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900">
+				<div>
+					<h1 className="text-xl font-bold text-white flex items-center gap-2">
+						<BrainCircuit className="w-5 h-5 text-cyan-400" /> claude-mem Status
+					</h1>
+					<p className="text-gray-400 text-sm">
+						Honest parity surface for Borg&apos;s current claude-mem assimilation: real adapter today, full hook/runtime parity later.
+					</p>
+				</div>
+				<div className="flex gap-2 items-center">
+					{startupStatusQuery.isLoading ? (
+						<Badge variant="outline" className="border-blue-600 text-blue-400">
+							<Loader2 className="w-3 h-3 mr-1 animate-spin" /> Loading
+						</Badge>
+					) : null}
+					{claudeMemStatusLoading ? (
+						<Badge variant="outline" className="border-cyan-600 text-cyan-400">
+							<Loader2 className="w-3 h-3 mr-1 animate-spin" /> Store status
+						</Badge>
+					) : null}
+					{startupStatusQuery.isError ? (
+						<Badge variant="outline" className="border-rose-600 text-rose-400">
+							<AlertTriangle className="w-3 h-3 mr-1" /> Partial data
+						</Badge>
+					) : null}
+					{claudeMemStatusError ? (
+						<Badge variant="outline" className="border-rose-600 text-rose-400">
+							<AlertTriangle className="w-3 h-3 mr-1" /> Store unreadable
+						</Badge>
+					) : null}
+					<Badge variant="outline" className={summary.stage === 'compatibility-layer' ? 'border-amber-500/30 text-amber-300' : 'border-emerald-500/30 text-emerald-300'}>
+						<Layers3 className="w-3 h-3 mr-1" /> {summary.stageLabel}
+					</Badge>
+					<Badge variant="outline" className={summary.coreStatusTone === 'ready' ? 'border-emerald-500/30 text-emerald-300' : summary.coreStatusTone === 'pending' ? 'border-amber-500/30 text-amber-300' : 'border-zinc-700 text-zinc-300'}>
+						<CheckCircle2 className="w-3 h-3 mr-1" /> {summary.coreStatusLabel}
+					</Badge>
+					<Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => {
+						void startupStatusQuery.refetch();
+						void fetchClaudeMemStatus();
+					}}>
+						<RefreshCw className="w-3 h-3 mr-1" /> Refresh
+					</Button>
+				</div>
+			</div>
+
+			<div className="flex-1 p-6 overflow-auto">
+				<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2 text-sm">
+								<CheckCircle2 className="w-4 h-4 text-emerald-400" /> Shipped now
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="text-3xl font-bold text-white">{summary.shippedCount}</div>
+							<p className="text-xs text-gray-400 mt-1">Concrete Borg capabilities already backed by source code</p>
+						</CardContent>
+					</Card>
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2 text-sm">
+								<Route className="w-4 h-4 text-amber-400" /> Partial
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="text-3xl font-bold text-white">{summary.partialCount}</div>
+							<p className="text-xs text-gray-400 mt-1">Adjacent memory foundations that help, but do not equal upstream parity</p>
+						</CardContent>
+					</Card>
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2 text-sm">
+								<AlertTriangle className="w-4 h-4 text-rose-400" /> Missing
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="text-3xl font-bold text-white">{summary.missingCount}</div>
+							<p className="text-xs text-gray-400 mt-1">Major upstream differentiators still absent from Borg today</p>
+						</CardContent>
+					</Card>
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2 text-sm">
+								<BookOpenText className="w-4 h-4 text-cyan-400" /> Adapter store
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="text-2xl font-bold text-white">{claudeMemStatus?.exists ? `${claudeMemStatus.totalEntries} entries` : 'No store yet'}</div>
+							<p className="text-xs text-gray-400 mt-1">{claudeMemStatus?.exists
+								? claudeMemStatus.runtimePipeline?.claudeMemEnabled
+									? `${claudeMemStatus.sectionCount} section buckets under Borg-managed claude_mem.json`
+									: 'Existing claude_mem.json detected, but the active runtime pipeline is not currently writing through claude-mem'
+								: 'The adapter file has not been created yet for this workspace'}</p>
+							{claudeMemStatus ? (
+								<div className="mt-2">
+									<Badge variant="outline" className={claudeMemStatus.runtimePipeline?.claudeMemEnabled ? 'border-emerald-500/30 text-emerald-300' : 'border-amber-500/30 text-amber-300'}>
+										{claudeMemStatus.runtimePipeline?.claudeMemEnabled ? 'Runtime active' : 'Runtime inactive'}
+									</Badge>
+								</div>
+							) : null}
+						</CardContent>
+					</Card>
+				</div>
+
+				<div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">
+					<Card>
+						<CardHeader>
+							<CardTitle>What changed here</CardTitle>
+							<CardDescription>
+								This route used to forward directly to the generic vector explorer. It now states the current claude-mem assimilation truth plainly.
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="space-y-3 text-sm text-zinc-300">
+							<p>
+								Borg already has a real `ClaudeMemAdapter` plus a `RedundantMemoryManager`, which means there is meaningful source-level work in place.
+							</p>
+							<p>
+								But upstream claude-mem parity still requires hook registration, structured observation compression, progressive-disclosure context injection, observation search/timeline tools, and transcript compression. Tiny dashboard, big honesty. We like that in a control plane.
+							</p>
+							<div className="flex flex-wrap gap-2 pt-1">
+								<Link href="/dashboard/memory/vector" className="inline-flex items-center gap-2 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-200 hover:bg-cyan-500/15">
+									Open vector memory explorer <ArrowRight className="h-3.5 w-3.5" />
+								</Link>
+							</div>
+						</CardContent>
+					</Card>
+
+					<Card>
+						<CardHeader>
+							<CardTitle>Live adapter state</CardTitle>
+							<CardDescription>
+								Actual Borg-managed claude-mem store status from core.
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="space-y-3 text-sm text-zinc-300">
+							<div className="rounded border border-zinc-800 bg-zinc-950 px-3 py-3">
+								<div className="text-xs text-zinc-500">Store path</div>
+								<div className="text-[11px] font-mono text-cyan-400 mt-1 break-all">{claudeMemStatus?.storePath ?? '.borg/claude_mem.json'}</div>
+							</div>
+							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+								<div className="rounded border border-zinc-800 bg-zinc-950 px-3 py-3">
+									<div className="text-xs text-zinc-500">Last updated</div>
+									<div className="text-sm text-white mt-1">{claudeMemStatus?.lastUpdatedAt ? new Date(claudeMemStatus.lastUpdatedAt).toLocaleString() : 'No entries yet'}</div>
+								</div>
+								<div className="rounded border border-zinc-800 bg-zinc-950 px-3 py-3">
+									<div className="text-xs text-zinc-500">Default buckets</div>
+									<div className="text-sm text-white mt-1">
+										{`${claudeMemStatus?.presentDefaultSectionCount ?? 0}/${claudeMemStatus?.defaultSectionCount ?? 0} present`}
+									</div>
+									<div className="text-[11px] text-zinc-500 mt-1">
+										{`${claudeMemStatus?.populatedSectionCount ?? 0} populated · ${claudeMemStatus?.missingSections?.length ?? 0} missing`}
+									</div>
+								</div>
+							</div>
+							<div className="rounded border border-zinc-800 bg-zinc-950 px-3 py-3">
+								<div className="text-xs text-zinc-500">Runtime pipeline</div>
+								<div className="text-sm text-white mt-1">{claudeMemStatus?.runtimePipeline?.configuredMode ?? 'unknown'}</div>
+								<div className="text-[11px] text-zinc-500 mt-1">
+									{claudeMemStatus?.runtimePipeline?.providerNames?.length
+										? claudeMemStatus.runtimePipeline.providerNames.join(', ')
+										: 'No active provider detail reported'}
+								</div>
+								<div className="mt-2">
+									<Badge variant="outline" className={claudeMemStatus?.runtimePipeline?.claudeMemEnabled ? 'border-emerald-500/30 text-emerald-300' : 'border-amber-500/30 text-amber-300'}>
+										{claudeMemStatus?.runtimePipeline?.claudeMemEnabled ? 'claude-mem active' : 'claude-mem inactive'}
+									</Badge>
+								</div>
+							</div>
+							{claudeMemStatus?.missingSections?.length ? (
+								<div className="rounded border border-amber-500/20 bg-amber-950/10 px-3 py-3">
+									<div className="text-xs text-zinc-500">Missing default buckets</div>
+									<div className="text-[11px] font-mono text-amber-300 mt-1 break-words">{claudeMemStatus.missingSections.join(', ')}</div>
+								</div>
+							) : null}
+							<div className={operatorGuidance.tone === 'ready'
+								? 'rounded border border-emerald-500/20 bg-emerald-950/10 px-3 py-3'
+								: operatorGuidance.tone === 'warming'
+									? 'rounded border border-zinc-700 bg-zinc-950 px-3 py-3'
+									: 'rounded border border-amber-500/20 bg-amber-950/10 px-3 py-3'}>
+								<div className="font-medium text-white">{operatorGuidance.title}</div>
+								<div className="text-xs text-gray-400 mt-2">{operatorGuidance.detail}</div>
+							</div>
+							<div className="rounded border border-cyan-500/20 bg-cyan-950/10 px-3 py-3">
+								<div className="font-medium text-white">Recommended engineering next slice</div>
+								<div className="text-xs text-gray-400 mt-2">
+									Build a Borg-native observation search/timeline layer so this adapter moves from raw persistence compatibility into real workflow parity.
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+				</div>
+
+				<Tabs defaultValue="matrix" className="w-full mt-4">
+					<TabsList>
+						<TabsTrigger value="matrix">Parity matrix</TabsTrigger>
+						<TabsTrigger value="evidence">Implementation evidence</TabsTrigger>
+						<TabsTrigger value="gaps">Upstream gaps</TabsTrigger>
+					</TabsList>
+
+					<TabsContent value="matrix" className="mt-4">
+						<Card>
+							<CardHeader>
+								<CardTitle>Current Borg vs claude-mem parity</CardTitle>
+								<CardDescription>Each row maps to a concrete current capability or a known missing upstream differentiator.</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<ScrollArea className="h-[520px]">
+									<div className="space-y-3">
+										{CLAUDE_MEM_CAPABILITIES.map((item) => (
+											<div key={item.title} className="rounded border border-zinc-800 bg-zinc-900/50 px-3 py-3">
+												<div className="flex items-start justify-between gap-3">
+													<div>
+														<div className="font-medium text-white">{item.title}</div>
+														<div className="text-xs text-gray-400 mt-2">{item.note}</div>
+														<div className="text-[11px] text-cyan-400 mt-2 font-mono">{item.evidence}</div>
+													</div>
+													<Badge variant="outline" className={getStatusClasses(item.status)}>
+														{item.status === 'shipped' ? 'Shipped' : item.status === 'partial' ? 'Partial' : 'Missing'}
+													</Badge>
+												</div>
+											</div>
+										))}
+									</div>
+								</ScrollArea>
+							</CardContent>
+						</Card>
+					</TabsContent>
+
+					<TabsContent value="evidence" className="mt-4">
+						<Card>
+							<CardHeader>
+								<CardTitle>Files that currently define the Borg side</CardTitle>
+								<CardDescription>Useful jumping-off points for the next claude-mem slice.</CardDescription>
+							</CardHeader>
+							<CardContent className="space-y-3">
+								{CLAUDE_MEM_IMPLEMENTATION_FILES.map((item) => (
+									<div key={item.path} className="rounded border border-zinc-800 bg-zinc-900/50 px-3 py-3">
+										<div className="flex items-start gap-3">
+											<FileCode2 className="h-4 w-4 text-cyan-400 mt-0.5" />
+											<div>
+												<div className="font-medium text-white">{item.label}</div>
+												<div className="text-[11px] font-mono text-cyan-400 mt-1">{item.path}</div>
+												<div className="text-xs text-gray-400 mt-2">{item.note}</div>
+											</div>
+										</div>
+									</div>
+								))}
+								{claudeMemStatus?.sections?.length ? (
+									<div className="rounded border border-zinc-800 bg-zinc-950 px-3 py-3">
+										<div className="font-medium text-white">Current section counts</div>
+										<div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
+											{claudeMemStatus.sections.map((section) => (
+												<div key={section.section} className="rounded border border-zinc-800 bg-zinc-900/60 px-3 py-2 flex items-center justify-between gap-3">
+													<span className="text-xs text-zinc-300 font-mono">{section.section}</span>
+													<Badge variant="outline" className="border-cyan-500/30 text-cyan-300">{section.entryCount}</Badge>
+												</div>
+											))}
+										</div>
+									</div>
+								) : null}
+							</CardContent>
+						</Card>
+					</TabsContent>
+
+					<TabsContent value="gaps" className="mt-4">
+						<Card>
+							<CardHeader>
+								<CardTitle>Still missing from upstream claude-mem</CardTitle>
+								<CardDescription>These are the major parity gaps that still separate Borg from a full claude-mem replacement.</CardDescription>
+							</CardHeader>
+							<CardContent className="space-y-3">
+								{upstreamGaps.map((item) => (
+									<div key={item.title} className="rounded border border-rose-500/20 bg-rose-950/10 px-3 py-3">
+										<div className="flex items-start justify-between gap-3">
+											<div>
+												<div className="font-medium text-white">{item.title}</div>
+												<div className="text-xs text-gray-400 mt-2">{item.note}</div>
+											</div>
+											<Badge variant="outline" className="border-rose-500/30 bg-rose-500/10 text-rose-300">
+												Missing
+											</Badge>
+										</div>
+									</div>
+								))}
+								<div className="rounded border border-zinc-800 bg-zinc-950 px-3 py-3 text-xs text-zinc-400">
+									Short version: Borg has the adapter shell and surrounding memory primitives, but not yet the claude-mem hook, worker, search, or transcript-compression machinery. That distinction matters.
+								</div>
+							</CardContent>
+						</Card>
+					</TabsContent>
+				</Tabs>
+			</div>
+		</div>
+	);
 }

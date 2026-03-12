@@ -1,12 +1,29 @@
 
-import { MCPServer } from './MCPServer.js';
+function redirectProtocolUnsafeConsoleMethods(): void {
+    const stderr = console.error.bind(console);
+
+    console.log = stderr;
+    console.info = stderr;
+    console.debug = stderr;
+    console.trace = stderr;
+    console.dir = ((...args: unknown[]) => stderr(...args)) as typeof console.dir;
+}
 
 async function main() {
-    // Redirect console.log to stderr to keep stdout clean for MCP JSON-RPC
-    const originalLog = console.log;
-    console.log = console.error;
+    // MCP stdio requires stdout to remain pristine JSON-RPC output only.
+    redirectProtocolUnsafeConsoleMethods();
+
+    process.on('unhandledRejection', (reason) => {
+        console.error('[Borg Core] Unhandled promise rejection:', reason);
+    });
+
+    process.on('uncaughtException', (error) => {
+        console.error('[Borg Core] Uncaught exception:', error);
+        process.exit(1);
+    });
 
     try {
+        const { MCPServer } = await import('./MCPServer.js');
         const mcp = new MCPServer({ skipWebsocket: true });
         await mcp.start();
         console.error("[Borg Core] MCP Server Stdio Entry Point Started.");

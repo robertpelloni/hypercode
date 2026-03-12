@@ -1,9 +1,29 @@
 
 import { EventBus } from '../services/EventBus.js';
 
+function shouldIgnoreInternalDiagnostic(message: string): boolean {
+    const trimmed = message.trim();
+
+    if (!trimmed) {
+        return true;
+    }
+
+    const internalPrefixes = [
+        '[HealerReactor]',
+        '[TerminalSensor]',
+        '[FileSensor]',
+        '[EventBus]',
+        '[Borg Core] Unhandled promise rejection:',
+        '[Borg Core] Uncaught exception:',
+    ];
+
+    return internalPrefixes.some((prefix) => trimmed.startsWith(prefix));
+}
+
 export class TerminalSensor {
     private eventBus: EventBus;
     private originalStderrWrite: typeof process.stderr.write | null = null;
+    private isInterceptingStderr = false;
 
     constructor(eventBus: EventBus) {
         this.eventBus = eventBus;
@@ -21,18 +41,32 @@ export class TerminalSensor {
          * Why: preserves normal stderr behavior while enabling lightweight telemetry without unsafe casts.
          */
         const patchedWrite: typeof process.stderr.write = (chunk, encoding?, callback?) => {
+            if (this.isInterceptingStderr) {
+                if (!this.originalStderrWrite) {
+                    return false;
+                }
+
+                return this.originalStderrWrite(chunk, encoding as never, callback as never);
+            }
+
             const str = chunk.toString();
+            this.isInterceptingStderr = true;
 
-            // Heuristic to detect ACTUAL errors vs warnings
-            if (str.toLowerCase().includes('error') || str.toLowerCase().includes('exception') || str.includes('❌')) {
-                this.eventBus.emitEvent('terminal:error', 'TerminalSensor', { message: str });
-            }
+            try {
+                // Heuristic to detect ACTUAL errors vs warnings
+                if (!shouldIgnoreInternalDiagnostic(str) && (str.toLowerCase().includes('error') || str.toLowerCase().includes('exception') || str.includes('❌'))) {
+                    this.eventBus.emitEvent('terminal:error', 'TerminalSensor', { message: str });
+                }
 
-            // Pass through to original stderr
-            if (!this.originalStderrWrite) {
-                return false;
+                // Pass through to original stderr
+                if (!this.originalStderrWrite) {
+                    return false;
+                }
+
+                return this.originalStderrWrite(chunk, encoding as never, callback as never);
+            } finally {
+                this.isInterceptingStderr = false;
             }
-            return this.originalStderrWrite(chunk, encoding as never, callback as never);
         };
 
         process.stderr.write = patchedWrite;

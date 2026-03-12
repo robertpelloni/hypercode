@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 console.clear = () => { };
 
 const repoRoot = path.resolve(fileURLToPath(new URL("../..", import.meta.url)));
+const appSrcRoot = fileURLToPath(new URL("./src", import.meta.url));
 const isDevelopment = process.env.NODE_ENV !== "production";
 
 if (process.platform === "win32" && !process.env.NAPI_RS_NATIVE_LIBRARY_PATH) {
@@ -34,6 +35,15 @@ const nextConfig: NextConfig = {
     root: repoRoot,
   },
   transpilePackages: ["@borg/ui"],
+  webpack: (config) => {
+    config.resolve ??= {};
+    config.resolve.alias = {
+      ...(config.resolve.alias as Record<string, string> | undefined),
+      "@": appSrcRoot,
+    };
+
+    return config;
+  },
   serverExternalPackages: [
     "better-sqlite3",
     "hyperswarm",

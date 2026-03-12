@@ -44,8 +44,11 @@ Return JSON with:
 Output ONLY valid JSON.`;
 
         try {
-            const model = await this.llm.modelSelector.selectModel({ taskComplexity: 'high' });
-            const completion = await this.llm.generateText(model.provider, model.modelId, 'You are an expert software engineer.', prompt);
+            const model = await this.llm.modelSelector.selectModel({ taskComplexity: 'high', routingTaskType: 'coding' });
+            const completion = await this.llm.generateText(model.provider, model.modelId, 'You are an expert software engineer.', prompt, {
+                taskComplexity: 'high',
+                routingTaskType: 'coding',
+            });
             const response = completion.content;
 
             let plan;

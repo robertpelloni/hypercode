@@ -19,24 +19,52 @@ import {
     McpServerCreateInput,
     McpServerErrorStatusEnum,
     McpServerUpdateInput,
-} from "../../types/metamcp/index.js";
+} from "../../types/mcp-admin/index.js";
 import { and, eq, isNull, or } from "drizzle-orm";
 // import { DatabaseError } from "pg"; // Generic error handling preferred for dual-db support
 import { z } from "zod";
 
 import { randomUUID } from "node:crypto";
-import * as fs from "fs/promises";
-import * as path from "path";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { StdioClient } from "../../mcp/StdioClient.js";
+import {
+    BorgMcpServerDiscoveryMetadata,
+    BorgMcpJsonConfig,
+    BorgMcpToolMetadata,
+    loadBorgMcpConfig,
+    writeBorgMcpConfig,
+} from "../../mcp/mcpJsonConfig.js";
+import {
+    buildBaseServerMetadata,
+    buildBinaryDiscoveryMetadata,
+    buildFailureDiscoveryMetadata,
+    hasReusableMetadataCache,
+    hydrateMetadataFromCache,
+    type MetadataReloadStrategy,
+} from "../../mcp/serverMetadataCache.js";
+import { toolsRepository } from "./tools.repo.js";
 
 
 // Keep console-backed logger until centralized logger wiring is introduced in this package.
 const logger = console;
 
 import { db } from "../index.js";
-import { mcpServersTable } from "../metamcp-schema.js";
+import { mcpServersTable } from "../mcp-admin-schema.js";
 
 type McpServerRow = typeof mcpServersTable.$inferSelect;
 type McpServerInsert = typeof mcpServersTable.$inferInsert;
+
+type DiscoveryResult = {
+    metadata: BorgMcpServerDiscoveryMetadata;
+    tools: BorgMcpToolMetadata[];
+};
+
+type MetadataResolutionOptions = {
+    strategy?: MetadataReloadStrategy;
+};
 
 function normalizeErrorStatus(
     status: z.infer<typeof McpServerErrorStatusEnum>,
@@ -76,7 +104,7 @@ function handleDatabaseError(
 }
 
 export class McpServersRepository {
-    async create(input: McpServerCreateInput, options?: { skipSync?: boolean }): Promise<DatabaseMcpServer> {
+    async create(input: McpServerCreateInput, options?: { skipSync?: boolean; skipDiscovery?: boolean; metadataStrategy?: MetadataReloadStrategy }): Promise<DatabaseMcpServer> {
         try {
             const payload: McpServerInsert = {
                 uuid: randomUUID(),
@@ -97,8 +125,16 @@ export class McpServersRepository {
                 .values(payload)
                 .returning();
 
+            const discovery = await this.resolveDiscoveryResult(createdServer, {
+                strategy: this.resolveMetadataStrategy(options),
+            });
+
+            if (discovery && this.shouldPersistDiscoveredTools(discovery.metadata)) {
+                await this.persistDiscoveredTools(createdServer.uuid, discovery.tools);
+            }
+
             if (!options?.skipSync) {
-                await this.syncToMcpJson();
+                await this.syncToMcpJson(discovery ? { [createdServer.name]: discovery.metadata } : {});
             }
             return createdServer;
         } catch (error) {
@@ -222,7 +258,7 @@ export class McpServersRepository {
         return deletedServer;
     }
 
-    async update(input: McpServerUpdateInput, options?: { skipSync?: boolean }): Promise<DatabaseMcpServer> {
+    async update(input: McpServerUpdateInput, options?: { skipSync?: boolean; skipDiscovery?: boolean; metadataStrategy?: MetadataReloadStrategy }): Promise<DatabaseMcpServer> {
         try {
             const { uuid, user_id, ...updates } = input;
             const payload: Partial<McpServerInsert> = {
@@ -242,13 +278,83 @@ export class McpServersRepository {
                 throw new Error(`MCP Server with UUID ${input.uuid} not found.`);
             }
 
+            const discovery = await this.resolveDiscoveryResult(updatedServer, {
+                strategy: this.resolveMetadataStrategy(options),
+            });
+
+            if (discovery && this.shouldPersistDiscoveredTools(discovery.metadata)) {
+                await this.persistDiscoveredTools(updatedServer.uuid, discovery.tools);
+            }
+
             if (!options?.skipSync) {
-                await this.syncToMcpJson();
+                await this.syncToMcpJson(discovery ? { [updatedServer.name]: discovery.metadata } : {});
             }
             return updatedServer;
         } catch (error) {
             handleDatabaseError(error, "update", input.name);
         }
+    }
+
+    async reloadMetadata(
+        serverUuid: string,
+        strategy: Exclude<MetadataReloadStrategy, 'skip'> = 'binary',
+    ): Promise<{ server: DatabaseMcpServer; metadata: BorgMcpServerDiscoveryMetadata; toolCount: number }> {
+        const server = await this.findByUuid(serverUuid);
+        if (!server) {
+            throw new Error(`MCP Server with UUID ${serverUuid} not found.`);
+        }
+
+        const discovery = await this.resolveDiscoveryResult(server, { strategy });
+        if (!discovery) {
+            throw new Error(`No metadata was produced for server ${server.name}.`);
+        }
+
+        if (this.shouldPersistDiscoveredTools(discovery.metadata)) {
+            await this.persistDiscoveredTools(server.uuid, discovery.tools);
+        }
+
+        await this.syncToMcpJson({ [server.name]: discovery.metadata });
+
+        return {
+            server,
+            metadata: discovery.metadata,
+            toolCount: discovery.metadata.toolCount,
+        };
+    }
+
+    async clearMetadataCache(
+        serverUuid: string,
+    ): Promise<{ server: DatabaseMcpServer; metadata: BorgMcpServerDiscoveryMetadata; toolCount: number }> {
+        const server = await this.findByUuid(serverUuid);
+        if (!server) {
+            throw new Error(`MCP Server with UUID ${serverUuid} not found.`);
+        }
+
+        await toolsRepository.deleteObsoleteTools(server.uuid, []);
+
+        const clearedAt = new Date().toISOString();
+        const metadata: BorgMcpServerDiscoveryMetadata = {
+            ...buildBaseServerMetadata(server),
+            status: 'pending',
+            metadataVersion: 2,
+            metadataSource: 'derived',
+            discoveredAt: undefined,
+            lastAttemptedBinaryLoadAt: undefined,
+            lastSuccessfulBinaryLoadAt: undefined,
+            cacheHydratedAt: undefined,
+            reloadableFromCache: false,
+            toolCount: 0,
+            tools: [],
+            error: `Cache cleared at ${clearedAt}`,
+        };
+
+        await this.syncToMcpJson({ [server.name]: metadata });
+
+        return {
+            server,
+            metadata,
+            toolCount: 0,
+        };
     }
 
     async updateErrorStatus(
@@ -269,21 +375,10 @@ export class McpServersRepository {
         servers: McpServerCreateInput[],
     ): Promise<DatabaseMcpServer[]> {
         try {
-            const payload: McpServerInsert[] = servers.map((server) => ({
-                uuid: randomUUID(),
-                name: server.name,
-                description: server.description ?? null,
-                type: server.type,
-                command: server.command ?? null,
-                args: server.args ?? [],
-                env: server.env ?? {},
-                url: server.url ?? null,
-                bearerToken: server.bearerToken ?? null,
-                headers: server.headers ?? {},
-                user_id: server.user_id ?? "system",
-            }));
-
-            const result = await db.insert(mcpServersTable).values(payload).returning();
+            const result: DatabaseMcpServer[] = [];
+            for (const server of servers) {
+                result.push(await this.create(server, { skipSync: true }));
+            }
             await this.syncToMcpJson();
             return result;
         } catch (error: unknown) {
@@ -311,10 +406,32 @@ export class McpServersRepository {
         return updatedServer;
     }
 
-    public async syncToMcpJson(): Promise<void> {
+    public async syncToMcpJson(metadataOverrides: Record<string, BorgMcpServerDiscoveryMetadata> = {}): Promise<void> {
         try {
-            const allServers = await this.findAll();
-            const jsonOutput: Record<string, any> = { mcpServers: {} };
+            const [allServers, allTools, existingConfig] = await Promise.all([
+                this.findAll(),
+                toolsRepository.findAll(),
+                loadBorgMcpConfig(),
+            ]);
+
+            const jsonOutput: BorgMcpJsonConfig = {
+                ...existingConfig,
+                mcpServers: {},
+            };
+
+            const toolsByServerUuid = new Map<string, BorgMcpToolMetadata[]>();
+            for (const tool of allTools) {
+                const toolList = toolsByServerUuid.get(tool.mcp_server_uuid) ?? [];
+                toolList.push({
+                    name: tool.name,
+                    description: tool.description,
+                    inputSchema: {
+                        properties: tool.toolSchema?.properties,
+                        required: tool.toolSchema?.required,
+                    },
+                });
+                toolsByServerUuid.set(tool.mcp_server_uuid, toolList);
+            }
 
             for (const server of allServers) {
                 // Skip if name is invalid or missing
@@ -336,16 +453,291 @@ export class McpServersRepository {
                     config.url = server.url;
                 }
 
+                config.description = server.description;
+                config.type = server.type;
+
+                const existingServerConfig = existingConfig.mcpServers?.[server.name];
+                const tools = toolsByServerUuid.get(server.uuid) ?? [];
+                const overrideMetadata = metadataOverrides[server.name];
+                const metadata = overrideMetadata ?? {
+                    ...(existingServerConfig?._meta ?? {}),
+                    ...buildBaseServerMetadata(server),
+                    status: tools.length > 0
+                        ? 'ready'
+                        : existingServerConfig?._meta?.status ?? 'pending',
+                    metadataVersion: existingServerConfig?._meta?.metadataVersion ?? 2,
+                    metadataSource: existingServerConfig?._meta?.metadataSource ?? (tools.length > 0 ? 'derived' : undefined),
+                    discoveredAt: existingServerConfig?._meta?.discoveredAt,
+                    lastAttemptedBinaryLoadAt: existingServerConfig?._meta?.lastAttemptedBinaryLoadAt,
+                    lastSuccessfulBinaryLoadAt: existingServerConfig?._meta?.lastSuccessfulBinaryLoadAt,
+                    cacheHydratedAt: existingServerConfig?._meta?.cacheHydratedAt,
+                    error: existingServerConfig?._meta?.error,
+                    reloadableFromCache: existingServerConfig?._meta?.reloadableFromCache ?? tools.length > 0,
+                    toolCount: tools.length,
+                    tools,
+                };
+
+                if (overrideMetadata && overrideMetadata.tools.length === 0 && tools.length > 0) {
+                    metadata.tools = tools;
+                    metadata.toolCount = tools.length;
+                }
+
+                config._meta = metadata;
+
                 // If specialized type, might iterate on schema
                 // For now, mapping simplified 'stdio' style config
                 jsonOutput.mcpServers[server.name] = config;
             }
 
-            const mcpJsonPath = path.resolve(process.cwd(), "mcp.json");
-            await fs.writeFile(mcpJsonPath, JSON.stringify(jsonOutput, null, 2), "utf-8");
+            await writeBorgMcpConfig(jsonOutput);
         } catch (error) {
-            console.error("Failed to sync mcp.json:", error);
+            console.error("Failed to sync mcp.jsonc:", error);
             // Don't throw, as DB operation succeeded
+        }
+    }
+
+    private async persistDiscoveredTools(serverUuid: string, tools: BorgMcpToolMetadata[]): Promise<void> {
+        await toolsRepository.syncTools({
+            mcpServerUuid: serverUuid,
+            tools: tools.map((tool) => ({
+                name: tool.name,
+                description: tool.description ?? undefined,
+                inputSchema: tool.inputSchema && typeof tool.inputSchema === 'object'
+                    ? {
+                        properties: (tool.inputSchema as { properties?: Record<string, unknown> }).properties,
+                        required: Array.isArray((tool.inputSchema as { required?: unknown[] }).required)
+                            ? (tool.inputSchema as { required: unknown[] }).required.filter((value): value is string => typeof value === 'string')
+                            : undefined,
+                    }
+                    : undefined,
+            })),
+        });
+    }
+
+    private resolveMetadataStrategy(options?: { skipDiscovery?: boolean; metadataStrategy?: MetadataReloadStrategy }): MetadataReloadStrategy {
+        if (options?.metadataStrategy) {
+            return options.metadataStrategy;
+        }
+
+        return options?.skipDiscovery ? 'skip' : 'auto';
+    }
+
+    private shouldPersistDiscoveredTools(metadata: BorgMcpServerDiscoveryMetadata): boolean {
+        return metadata.status === 'ready';
+    }
+
+    private async resolveDiscoveryResult(
+        server: DatabaseMcpServer,
+        options?: MetadataResolutionOptions,
+    ): Promise<DiscoveryResult | undefined> {
+        const strategy = options?.strategy ?? 'auto';
+        if (strategy === 'skip') {
+            return undefined;
+        }
+
+        const config = await loadBorgMcpConfig();
+        const cachedMetadata = config.mcpServers?.[server.name]?._meta;
+
+        if (strategy === 'cache') {
+            if (!cachedMetadata) {
+                throw new Error(`No cached metadata exists yet for MCP server ${server.name}.`);
+            }
+
+            const hydratedMetadata = hydrateMetadataFromCache(cachedMetadata, server, new Date().toISOString());
+            return {
+                metadata: hydratedMetadata,
+                tools: hydratedMetadata.tools,
+            };
+        }
+
+        if (strategy === 'auto' && hasReusableMetadataCache(cachedMetadata, server)) {
+            const hydratedMetadata = hydrateMetadataFromCache(cachedMetadata!, server, new Date().toISOString());
+            return {
+                metadata: hydratedMetadata,
+                tools: hydratedMetadata.tools,
+            };
+        }
+
+        return await this.discoverServerTools(server);
+    }
+
+    private async discoverServerTools(server: DatabaseMcpServer): Promise<DiscoveryResult> {
+        const DISCOVERY_TIMEOUT_MS = 30_000;
+
+        // Validate that the server has enough config to attempt discovery
+        if (server.type === 'STDIO' || !server.type) {
+            if (!server.command) {
+                return {
+                    metadata: buildFailureDiscoveryMetadata(
+                        server,
+                        'failed',
+                        new Date().toISOString(),
+                        'STDIO server is missing a command, so Borg could not discover tools.',
+                    ),
+                    tools: [],
+                };
+            }
+        } else if (server.type === 'SSE' || server.type === 'STREAMABLE_HTTP') {
+            if (!server.url) {
+                return {
+                    metadata: buildFailureDiscoveryMetadata(
+                        server,
+                        'failed',
+                        new Date().toISOString(),
+                        `${server.type} server is missing a URL, so Borg could not discover tools.`,
+                    ),
+                    tools: [],
+                };
+            }
+        } else {
+            return {
+                metadata: buildFailureDiscoveryMetadata(
+                    server,
+                    'unsupported',
+                    new Date().toISOString(),
+                    `Discovery is not implemented for server type '${server.type}'.`,
+                ),
+                tools: [],
+            };
+        }
+
+        // For STDIO servers, use the existing StdioClient which handles env merging
+        if (server.type === 'STDIO' || !server.type) {
+            const stdioClient = new StdioClient(server.name, {
+                command: server.command!,
+                args: server.args ?? [],
+                env: server.env ?? {},
+                enabled: true,
+            });
+
+            try {
+                const connectPromise = (async () => {
+                    await stdioClient.connect();
+                    return await stdioClient.listTools({ throwOnError: true });
+                })();
+
+                const rawTools = await Promise.race([
+                    connectPromise,
+                    new Promise<never>((_, reject) =>
+                        setTimeout(() => reject(new Error(`Discovery timed out after ${DISCOVERY_TIMEOUT_MS / 1000}s`)), DISCOVERY_TIMEOUT_MS),
+                    ),
+                ]);
+
+                const discoveredAt = new Date().toISOString();
+                const metadata = buildBinaryDiscoveryMetadata(server, rawTools, discoveredAt);
+
+                return {
+                    metadata,
+                    tools: metadata.tools,
+                };
+            } catch (error) {
+                return {
+                    metadata: buildFailureDiscoveryMetadata(
+                        server,
+                        'failed',
+                        new Date().toISOString(),
+                        error instanceof Error ? error.message : String(error),
+                    ),
+                    tools: [],
+                };
+            } finally {
+                await stdioClient.close().catch(() => undefined);
+            }
+        }
+
+        // For SSE and STREAMABLE_HTTP servers, use the MCP SDK transports directly
+        let client: Client | null = null;
+        let transport: import("@modelcontextprotocol/sdk/shared/transport.js").Transport | null = null;
+
+        try {
+            const url = server.url!;
+
+            // Build auth headers
+            const headers: Record<string, string> = {};
+            if (server.headers && typeof server.headers === 'object') {
+                for (const [key, value] of Object.entries(server.headers)) {
+                    if (typeof value === 'string') {
+                        headers[key] = value;
+                    }
+                }
+            }
+            if (server.bearerToken) {
+                headers['Authorization'] = `Bearer ${server.bearerToken}`;
+            }
+
+            const hasHeaders = Object.keys(headers).length > 0;
+
+            if (server.type === 'SSE') {
+                if (!hasHeaders) {
+                    transport = new SSEClientTransport(new URL(url));
+                } else {
+                    transport = new SSEClientTransport(new URL(url), {
+                        eventSourceInit: {
+                            fetch: (
+                                fetchUrl: Parameters<typeof fetch>[0],
+                                init?: Parameters<typeof fetch>[1],
+                            ) => {
+                                const mergedHeaders: HeadersInit = {
+                                    ...(init?.headers
+                                        ? Object.fromEntries(new Headers(init.headers).entries())
+                                        : {}),
+                                    ...headers,
+                                };
+                                return fetch(fetchUrl, { ...init, headers: mergedHeaders });
+                            },
+                        },
+                        requestInit: { headers },
+                    });
+                }
+            } else {
+                // STREAMABLE_HTTP
+                transport = new StreamableHTTPClientTransport(new URL(url), {
+                    requestInit: hasHeaders ? { headers } : undefined,
+                });
+            }
+
+            client = new Client(
+                { name: `borg-discovery-${server.name}`, version: '1.0.0' },
+                { capabilities: {} },
+            );
+
+            const connectPromise = (async () => {
+                await client!.connect(transport!);
+                const result = await client!.listTools();
+                return result.tools;
+            })();
+
+            const rawTools = await Promise.race([
+                connectPromise,
+                new Promise<never>((_, reject) =>
+                    setTimeout(() => reject(new Error(`Discovery timed out after ${DISCOVERY_TIMEOUT_MS / 1000}s`)), DISCOVERY_TIMEOUT_MS),
+                ),
+            ]);
+
+            const discoveredAt = new Date().toISOString();
+            const metadata = buildBinaryDiscoveryMetadata(server, rawTools, discoveredAt);
+
+            return {
+                metadata,
+                tools: metadata.tools,
+            };
+        } catch (error) {
+            return {
+                metadata: buildFailureDiscoveryMetadata(
+                    server,
+                    'failed',
+                    new Date().toISOString(),
+                    error instanceof Error ? error.message : String(error),
+                ),
+                tools: [],
+            };
+        } finally {
+            try {
+                if (transport) await transport.close();
+            } catch { /* ignore cleanup errors */ }
+            try {
+                if (client) await client.close();
+            } catch { /* ignore cleanup errors */ }
         }
     }
 }

@@ -20,7 +20,7 @@ import {
     DatabaseNamespaceWithServers,
     NamespaceCreateInput,
     NamespaceUpdateInput,
-} from "../../types/metamcp/index.js";
+} from "../../types/mcp-admin/index.js";
 import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
 
 import { db } from "../index.js";
@@ -30,7 +30,7 @@ import {
     namespacesTable,
     namespaceToolMappingsTable,
     toolsTable,
-} from "../metamcp-schema.js";
+} from "../mcp-admin-schema.js";
 import { randomUUID } from "node:crypto";
 import { namespaceMappingsRepository } from "./namespace-mappings.repo.js";
 

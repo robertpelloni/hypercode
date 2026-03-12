@@ -1,4 +1,4 @@
-import { ServerParameters } from "../types/metamcp/index.js";
+import { ServerParameters } from "../types/mcp-admin/index.js";
 
 import { configService } from "./config.service.js";
 import { autoReconnectService } from "./auto-reconnect.service.js";

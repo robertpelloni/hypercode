@@ -2,10 +2,21 @@ import { IMemoryProvider, Memory } from '../../interfaces/IMemoryProvider.js';
 import { JsonMemoryProvider } from './JsonMemoryProvider.js';
 import { RedundantMemoryManager } from './RedundantMemoryManager.js';
 
+export type MemoryProviderMode = 'json' | 'postgres' | 'redundant';
+
+export type MemoryPipelineSummary = {
+    configuredMode: MemoryProviderMode;
+    providerNames: string[];
+    providerCount: number;
+    claudeMemEnabled: boolean;
+};
+
 export class MemoryManager implements IMemoryProvider {
     private provider: IMemoryProvider;
+    private readonly providerType: MemoryProviderMode;
 
-    constructor(workspaceRoot: string, providerType: 'json' | 'postgres' | 'redundant' = 'redundant') {
+    constructor(workspaceRoot: string, providerType: MemoryProviderMode = 'redundant') {
+        this.providerType = providerType;
         // Provider selection:
         // - 'redundant' (default): Fan-out to ALL providers (JSON + claude-mem + future vector).
         //   This ensures maximum data durability and search recall.
@@ -16,6 +27,25 @@ export class MemoryManager implements IMemoryProvider {
         } else {
             this.provider = new JsonMemoryProvider(workspaceRoot);
         }
+    }
+
+    getPipelineSummary(): MemoryPipelineSummary {
+        if (this.provider instanceof RedundantMemoryManager) {
+            const providerNames = this.provider.getProviderNames();
+            return {
+                configuredMode: this.providerType,
+                providerNames,
+                providerCount: providerNames.length,
+                claudeMemEnabled: providerNames.includes('claude-mem'),
+            };
+        }
+
+        return {
+            configuredMode: this.providerType,
+            providerNames: ['json'],
+            providerCount: 1,
+            claudeMemEnabled: false,
+        };
     }
 
     async init(): Promise<void> {

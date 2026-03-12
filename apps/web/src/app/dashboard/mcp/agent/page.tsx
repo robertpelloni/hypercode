@@ -7,9 +7,9 @@ import { Loader2, Send, Bot, User, Terminal } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
 
-export default function AgentPlayground() {
+export default function AgentPlayground(): React.JSX.Element {
     const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', content: string, tools?: any[] }>>([
-        { role: 'assistant', content: "Hello! I'm your MetaMCP Agent. I have access to all your connected tools. How can I help you today?" }
+        { role: 'assistant', content: "Hello! I'm your Borg MCP agent. I can work with the tools currently exposed through your router and session working set. What would you like to do?" }
     ]);
     const [input, setInput] = useState('');
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -34,7 +34,7 @@ export default function AgentPlayground() {
         }
     }, [messages]);
 
-    const handleSend = (e: React.FormEvent) => {
+    const handleSend = (e: React.FormEvent): void => {
         e.preventDefault();
         if (!input.trim() || chatMutation.isPending) return;
 
@@ -51,7 +51,7 @@ export default function AgentPlayground() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white">Agent Playground</h1>
                     <p className="text-zinc-500">
-                        Chat with an agent capable of using your tools
+                        Chat with an agent that can use the tools currently exposed through your Borg MCP router session
                     </p>
                 </div>
             </div>

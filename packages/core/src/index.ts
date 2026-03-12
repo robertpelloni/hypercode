@@ -27,4 +27,6 @@ export * from './services/SymbolPinService.js';
 export * from './services/AutoDevService.js';
 export * from './security/PermissionManager.js';
 export * from './services/MemoryManager.js';
+export * from './providers/index.js';
+export * from './supervisor/index.js';
 

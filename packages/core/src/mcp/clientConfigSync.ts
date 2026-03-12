@@ -2,7 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import type { DatabaseMcpServer } from '../types/metamcp/index.js';
+import type { DatabaseMcpServer } from '../types/mcp-admin/index.js';
 
 export const SUPPORTED_MCP_CLIENTS = ['claude-desktop', 'cursor', 'vscode'] as const;
 

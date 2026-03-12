@@ -1,4 +1,4 @@
-import { DatabaseMcpServer, McpServer } from "../../types/metamcp/index.js";
+import { DatabaseMcpServer, McpServer } from "../../types/mcp-admin/index.js";
 
 export class McpServersSerializer {
     static serializeMcpServer(dbServer: DatabaseMcpServer): McpServer {

@@ -1,5 +1,38 @@
 # Borg Handoff (Synchronized)
 
+## Session Update — 2026-03-10 (Tabby-Ready Dev Startup Warmup)
+
+### Completed in this session
+1. **Root dev readiness widened to real dashboard surfaces**
+   - Updated `scripts/dev_tabby_ready.mjs` so readiness now checks the dashboard-facing browser and session routes in addition to the existing core bridge, MCP, memory, and extension bundle checks.
+   - Added post-ready warmup calls for MCP search/list/status plus memory, browser, and session routes so `pnpm run dev` lands in a more hydrated state for Tabby-driven workflows.
+   - Added automatic dashboard opening to `/dashboard` once the stack is confirmed ready (disable with `BORG_DEV_READY_OPEN_BROWSER=0`).
+
+2. **Canonical core startup snapshot added**
+   - Added `startupStatus` to `packages/core/src/routers/systemProcedures.ts` as a single boot-time readiness summary for MCP aggregator, memory, browser service, session supervisor, and extension bridge state.
+   - Updated `scripts/dev_tabby_ready.mjs` to prefer this snapshot as its primary readiness contract, while still surfacing granular route failures when the snapshot is unavailable.
+
+3. **Startup snapshot upgraded from presence checks to boot-state reporting**
+   - Added lightweight status getters to `McpConfigService`, `SessionSupervisor`, and `MCPAggregator` so startup reporting can surface real initialization progress.
+   - `startupStatus` now includes config-sync completion/error state, persisted MCP server/tool inventory counts, aggregator initialization state, and session restore summaries.
+   - This makes the readiness contract more honest for Tabby-style startup automation: Borg can now tell the difference between services merely existing and startup work actually having completed.
+
+4. **Validation**
+   - `node --check scripts/dev_tabby_ready.mjs` → passing.
+   - `pnpm -C packages/core exec tsc --noEmit` → passing.
+
+5. **Notes for next implementor**
+   - The readiness wrapper is still a root-level coordinator, not the source of truth for core service health.
+   - Prefer extending `startupStatus` for future boot guarantees before adding more bespoke probe logic to wrapper scripts.
+   - Next sensible step: surface the richer `startupStatus` payload directly in the dashboard so operators can see which boot phase is lagging without reading launcher logs.
+
+6. **Dashboard startup visibility completed**
+   - Wired `trpc.startupStatus` into `apps/web/src/app/dashboard/DashboardHomeClient.tsx` and exposed the resulting readiness checklist in `dashboard-home-view.tsx`.
+   - Updated `apps/web/src/app/dashboard/mcp/system/page.tsx` to show startup readiness plus per-phase detail for config sync, router inventory, session restore, and extension bridge state.
+   - Validation completed with focused dashboard tests passing and `pnpm -C apps/web exec tsc --noEmit --pretty false` returning cleanly.
+
+---
+
 ## Session Update — 2026-02-23 (Turbo Lint Output Noise Reduction)
 
 ### Completed in this session

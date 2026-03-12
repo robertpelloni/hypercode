@@ -146,4 +146,58 @@ describe('AgentMemoryService', () => {
         const foundPizza = results.find(r => r.content.includes('pizza'));
         expect(foundPizza).toBeDefined();
     });
+
+    test('should record structured observations with dedupe metadata', async () => {
+        const first = await memoryService.recordObservation({
+            toolName: 'apply_patch',
+            narrative: 'Patched the billing router fallback to preserve the active provider chain.',
+            facts: ['Updated fallback ordering', 'Preserved active provider chain'],
+            concepts: ['billing', 'fallback'],
+            filesModified: ['packages/core/src/routers/billingRouter.ts'],
+            metadata: { source: 'unit-test' },
+        });
+
+        const second = await memoryService.recordObservation({
+            toolName: 'apply_patch',
+            narrative: 'Patched the billing router fallback to preserve the active provider chain.',
+            facts: ['Updated fallback ordering', 'Preserved active provider chain'],
+            concepts: ['billing', 'fallback'],
+            filesModified: ['packages/core/src/routers/billingRouter.ts'],
+            metadata: { source: 'unit-test' },
+        });
+
+        expect(first.id).toBe(second.id);
+        expect(first.type).toBe('working');
+        expect(first.metadata.observationType).toBe('fix');
+        expect(first.metadata.structuredObservation).toBeDefined();
+
+        const stats = memoryService.getStats();
+        expect(stats.observationCount).toBe(1);
+        expect(stats.uniqueObservationCount).toBe(1);
+        expect(stats.fix).toBe(1);
+    });
+
+    test('should search and list recent structured observations', async () => {
+        await memoryService.recordObservation({
+            toolName: 'grep_search',
+            narrative: 'Inspected the observation pipeline and identified the missing structured storage seam.',
+            concepts: ['observation-pipeline', 'search'],
+            filesRead: ['packages/core/src/services/AgentMemoryService.ts'],
+        });
+
+        await memoryService.recordObservation({
+            toolName: 'apply_patch',
+            narrative: 'Implemented structured observation recording for Borg memory ingestion.',
+            concepts: ['observation-pipeline', 'implementation'],
+            filesModified: ['packages/core/src/services/AgentMemoryService.ts'],
+        });
+
+        const recent = memoryService.getRecentObservations(5);
+        expect(recent.length).toBe(2);
+        expect(recent[0].metadata.structuredObservation).toBeDefined();
+
+        const searchResults = await memoryService.searchObservations('structured observation', { limit: 5 });
+        expect(searchResults.length).toBeGreaterThanOrEqual(1);
+        expect(searchResults.some(result => result.content.includes('Implemented structured observation'))).toBe(true);
+    });
 });

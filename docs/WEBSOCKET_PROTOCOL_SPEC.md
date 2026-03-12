@@ -583,6 +583,93 @@ Relays Chrome debugger events.
 
 ---
 
+### `BROWSER_CHAT_SURFACE`
+
+**Direction**: Browser Extension → Core
+
+Relays adapter-observed chat-surface snapshots from supported web AI interfaces.
+
+```json
+{
+  "type": "BROWSER_CHAT_SURFACE",
+  "trigger": "mutation",
+  "timestamp": 1741220000000,
+  "source": "browser_extension",
+  "snapshot": {
+    "adapterId": "chatgpt",
+    "adapterName": "ChatGPT",
+    "url": "https://chatgpt.com/",
+    "title": "ChatGPT",
+    "messageCount": 6,
+    "toolCallCount": 1,
+    "toolCalls": [
+      {
+        "name": "browser.search",
+        "source": "text",
+        "preview": "<invoke name=\"browser.search\">..."
+      }
+    ],
+    "functionResults": [
+      {
+        "name": "browser.search",
+        "source": "xml",
+        "status": "ok",
+        "summary": "3 results returned",
+        "fields": [
+          {
+            "name": "count",
+            "value": "3"
+          }
+        ]
+      }
+    ],
+    "executions": [
+      {
+        "id": "msg-1-1234abcd",
+        "name": "browser.search",
+        "state": "completed",
+        "isStreaming": true,
+        "callSource": "text",
+        "resultSource": "xml",
+        "status": "ok",
+        "summary": "3 results returned",
+        "parameters": [
+          {
+            "name": "query",
+            "value": "borg"
+          }
+        ],
+        "fields": [
+          {
+            "name": "count",
+            "value": "3"
+          }
+        ]
+      }
+    ],
+    "latestMessages": [
+      {
+        "id": "dom:chatgpt:data-testid:conversation-turn-42",
+        "sourceId": "dom:chatgpt:data-testid:conversation-turn-42",
+        "text": "Assistant: calling browser.search",
+        "role": "assistant",
+        "isStreaming": true
+      }
+    ]
+  }
+}
+```
+
+Core behavior:
+- rebroadcasts as dashboard-friendly `BROWSER_CHAT_SURFACE` event with `payload`
+- makes supported chat-surface observation visible in the live traffic inspector
+- current parsers understand XML, JSON, complete or still-streaming fenced markdown blocks, and unfenced plain-text `tool_name:` / `status:` style blocks seen during streamed chat rendering
+- latest message snapshots may also include best-effort DOM-derived `role` (`user`, `assistant`, `system`, `tool`, `unknown`) and `isStreaming` hints for operator visibility
+- latest message snapshots prefer stable DOM-backed `id` / `sourceId` values when the surface exposes message identifiers, which reduces timeline churn during streaming updates
+- execution timeline entries may also include `isStreaming` so operators can tell whether a pending or recently matched tool run is still rendering in the chat surface
+
+---
+
 ## Core rebroadcast events
 
 These are messages Core emits to attached clients after ingesting or transforming extension-originated telemetry.
@@ -618,6 +705,32 @@ Core rebroadcast shape:
     "source": "browser_extension",
     "timestamp": 1741220000000,
     "preview": "..."
+  }
+}
+```
+
+---
+
+### `BROWSER_CHAT_SURFACE`
+
+```json
+{
+  "type": "BROWSER_CHAT_SURFACE",
+  "payload": {
+    "timestamp": 1741220000000,
+    "trigger": "mutation",
+    "source": "browser_extension",
+    "snapshot": {
+      "adapterId": "chatgpt",
+      "adapterName": "ChatGPT",
+      "messageCount": 6,
+      "toolCallCount": 1,
+      "toolCalls": [],
+      "functionResultCount": 1,
+      "functionResults": [],
+      "executions": [],
+      "latestMessages": []
+    }
   }
 }
 ```

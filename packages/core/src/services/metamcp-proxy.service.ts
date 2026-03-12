@@ -29,7 +29,7 @@ import { configImportService } from "./config-import.service.js";
 import { configService } from "./config.service.js";
 import { toolSetService } from "./tool-set.service.js";
 import { ConnectedClient } from "./mcp-client.service.js";
-import { getMcpServers } from "./fetch-metamcp.service.js";
+import { getMcpServers } from "./mcp-config-discovery.service.js";
 import { mcpServerPool } from "./mcp-server-pool.service.js";
 import { toolsSyncCache } from "./tools-sync-cache.service.js";
 import { parseToolName } from "./tool-name-parser.service.js";
@@ -62,6 +62,7 @@ import {
     executeSearchToolsCompatibility,
     executeUnloadToolCompatibility,
 } from "../mcp/toolLoadingCompatibility.js";
+import { rankToolSearchCandidates } from "../mcp/toolSearchRanking.js";
 import { executeSavedScriptTool, listSavedScriptTools } from "../mcp/savedScriptExecution.js";
 import {
     executeCompatibleListToolSets,
@@ -73,20 +74,20 @@ import {
 import {
     createFilterCallToolMiddleware,
     createFilterListToolsMiddleware,
-} from "./metamcp-middleware/filter-tools.functional.js";
-import { createPolicyMiddleware } from "./metamcp-middleware/policy.functional.js";
+} from "./legacy-proxy-middleware/filter-tools.functional.js";
+import { createPolicyMiddleware } from "./legacy-proxy-middleware/policy.functional.js";
 import {
     CallToolHandler,
     compose,
     ListToolsHandler,
     MetaMCPHandlerContext,
-} from "./metamcp-middleware/functional-middleware.js";
-import { createLoggingMiddleware } from "./metamcp-middleware/logging.functional.js";
+} from "./legacy-proxy-middleware/functional-middleware.js";
+import { createLoggingMiddleware } from "./legacy-proxy-middleware/logging.functional.js";
 import {
     createToolOverridesCallToolMiddleware,
     createToolOverridesListToolsMiddleware,
     mapOverrideNameToOriginal,
-} from "./metamcp-middleware/tool-overrides.functional.js";
+} from "./legacy-proxy-middleware/tool-overrides.functional.js";
 
 const toolsImplementations = {
     create: async ({
@@ -114,25 +115,35 @@ const agentService = {
         return await runner.runAgent(task, toolCallback, policyId);
     },
 };
-const toolSearchService = {
-    searchTools: async (query: string, limit: number = 10) => {
-        const q = query.trim().toLowerCase();
-        const all = toolRegistry.getAllTools(); // Use registry
-        const filtered = all
-            .filter((rt) => {
-                const name = String(rt.tool.name ?? '').toLowerCase();
-                const description = String(rt.tool.description ?? '').toLowerCase();
-                return name.includes(q) || description.includes(q);
-            })
-            .slice(0, Math.max(1, limit));
-
-        return filtered.map((rt) => ({
-            name: rt.tool.name,
-            description: rt.tool.description,
-            mcpServerUuid: rt.mcpServerUuid,
-        }));
+function searchRegisteredTools(
+    query: string,
+    limit: number,
+    options?: {
+        isLoaded?: (toolName: string) => boolean;
+        isHydrated?: (toolName: string) => boolean;
     },
-};
+): Array<ReturnType<typeof rankToolSearchCandidates>[number] & { rank: number; mcpServerUuid?: string }> {
+    const all = toolRegistry.getAllTools();
+    const serverUuidByToolName = new Map(all.map((registeredTool) => [registeredTool.tool.name, registeredTool.mcpServerUuid]));
+
+    return rankToolSearchCandidates(
+        all.map((registeredTool) => ({
+            name: registeredTool.tool.name,
+            description: registeredTool.tool.description ?? '',
+            serverName: registeredTool.serverName,
+            originalName: parseToolName(registeredTool.tool.name)?.originalToolName,
+            loaded: options?.isLoaded?.(registeredTool.tool.name) ?? false,
+            hydrated: options?.isHydrated?.(registeredTool.tool.name) ?? !registeredTool.isDeferred,
+            deferred: registeredTool.isDeferred ?? false,
+        })),
+        query,
+        limit,
+    ).map((result, index) => ({
+        ...result,
+        rank: index + 1,
+        mcpServerUuid: serverUuidByToolName.get(result.name),
+    }));
+}
 
 const savedScriptService = {
     listScripts: async (): Promise<SavedScriptConfig[]> => {
@@ -148,8 +159,7 @@ const savedScriptService = {
             code,
             description: description ?? null,
         };
-        await jsonConfigProvider.saveScript(script);
-        return script;
+        return await jsonConfigProvider.saveScript(script);
     },
 };
 
@@ -232,6 +242,14 @@ export const attachTo = async (
     const deferredSchemaMode = process.env.MCP_DEFER_TOOL_SCHEMAS === 'true'
         || process.env.MCP_PROGRESSIVE_MODE === 'true';
     const registerDiscoveryHandlers = options.registerDiscoveryHandlers ?? true;
+    const getAlwaysVisibleTools = async (): Promise<string[]> => {
+        try {
+            return await jsonConfigProvider.loadAlwaysVisibleTools();
+        } catch (error) {
+            console.error("Error loading always-visible tools", error);
+            return [];
+        }
+    };
 
     // Helper function to detect if a server is the same instance
     const isSameServerInstance = (
@@ -272,6 +290,7 @@ export const attachTo = async (
                     search_tools: "Semantically search for available tools across all connected MCP servers. Use this to find tools for a specific task.",
                     load_tool: "Load a specific tool by name into your context so you can use it. In progressive mode this loads lightweight metadata first; use get_tool_schema to hydrate the full parameter schema when needed.",
                     get_tool_schema: "Explicitly fetch and hydrate the full JSON schema for a deferred tool after search/load, reducing default token overhead for sub-agents.",
+                    get_tool_context: "Fetch compact Borg memory context before calling a downstream tool so the model can reuse recent observations, summaries, and file-specific learnings.",
                     unload_tool: "Remove a previously loaded tool from the current session working set so it no longer appears in the exposed tool list.",
                     list_loaded_tools: "List tools currently loaded into the session working set, including whether their full schemas are hydrated.",
                 },
@@ -421,6 +440,12 @@ export const attachTo = async (
         );
 
         const resultTools = [...metaTools];
+        const alwaysVisibleTools = new Set(await getAlwaysVisibleTools());
+        toolWorkingSet.setAlwaysLoadedTools(
+            allAvailableTools
+                .filter((tool) => alwaysVisibleTools.has(tool.name))
+                .map((tool) => tool.name),
+        );
 
         allAvailableTools.forEach(tool => {
             if (toolWorkingSet.isLoaded(tool.name)) {
@@ -496,7 +521,13 @@ export const attachTo = async (
 
         // 1. Meta Tools
         if (name === "search_tools") {
-            return formatResult(await executeSearchToolsCompatibility(args, (query, limit) => toolSearchService.searchTools(query, limit)));
+            return formatResult(await executeSearchToolsCompatibility(
+                args,
+                (query, limit) => searchRegisteredTools(query, limit, {
+                    isLoaded: (toolName) => toolWorkingSet.isLoaded(toolName),
+                    isHydrated: (toolName) => toolWorkingSet.isHydrated(toolName),
+                }),
+            ));
         }
 
         if (name === "load_tool") {
@@ -523,6 +554,33 @@ export const attachTo = async (
                     }
                 },
             ));
+        }
+
+        if (name === "get_tool_context") {
+            const toolName = typeof args?.name === 'string' ? args.name : '';
+            if (!toolName) {
+                return {
+                    content: [{ type: 'text', text: 'Tool context lookup requires a downstream tool name.' }],
+                    isError: true,
+                };
+            }
+
+            const service = getAgentMemoryService();
+            const payload = service?.getToolContext?.({
+                toolName,
+                args: typeof args?.arguments === 'object' && args.arguments !== null ? args.arguments : undefined,
+            }) ?? {
+                toolName,
+                query: toolName,
+                matchedPaths: [],
+                observationCount: 0,
+                summaryCount: 0,
+                prompt: `JIT tool context for ${toolName}:\nNo relevant prior memory was found.`,
+            };
+
+            return formatResult({
+                content: [{ type: 'text', text: JSON.stringify(payload) }],
+            });
         }
 
         if (name === "unload_tool") {
@@ -709,6 +767,7 @@ export const attachTo = async (
         if (!parsed) throw new Error(`Invalid tool name: ${name}`);
 
         try {
+            toolWorkingSet.touchTool(name);
             const abortController = new AbortController();
             const mcpRequestOptions: RequestOptions = {
                 signal: abortController.signal,

@@ -71,7 +71,24 @@ export class SessionManager {
         this.save();
     }
 
+    public disableAutoDriveRestore() {
+        this.state = {
+            ...this.state,
+            isAutoDriveActive: false,
+            activeGoal: null,
+            lastHeartbeat: Date.now(),
+        };
+        this.save();
+    }
+
     public touch() {
         this.state.lastHeartbeat = Date.now();
+    }
+
+    public dispose() {
+        if (this.saveInterval) {
+            clearInterval(this.saveInterval);
+            this.saveInterval = null;
+        }
     }
 }

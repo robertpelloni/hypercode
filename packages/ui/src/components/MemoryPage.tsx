@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { ScrollArea } from "./ui/scroll-area";
 import { Search, Database, RefreshCw, HardDrive, Trash2 } from 'lucide-react';
 import { toast } from "sonner";
-import { trpc } from '@/utils/trpc';
+import { trpc } from '../utils/trpc';
 import {
     Dialog,
     DialogContent,

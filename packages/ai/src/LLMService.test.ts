@@ -2,11 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { LLMService } from './LLMService.js';
 
 describe('LLMService', () => {
-    it('falls back to the next selector candidate on recoverable provider errors', async () => {
+    it('falls back to the next selector candidate on recoverable provider errors while preserving routing intent', async () => {
         const quota = {
             trackUsage: vi.fn(),
             getSessionTotal: vi.fn().mockReturnValue(0.25)
         };
+
+        const rateLimitError = new Error('429 Rate limit exceeded');
 
         const selector = {
             getQuotaService: () => quota,
@@ -22,7 +24,7 @@ describe('LLMService', () => {
         (llm as any).openaiClient = {
             chat: {
                 completions: {
-                    create: vi.fn().mockRejectedValue(new Error('429 Rate limit exceeded'))
+                    create: vi.fn().mockRejectedValue(rateLimitError)
                 }
             }
         };
@@ -40,13 +42,19 @@ describe('LLMService', () => {
         };
 
         const response = await llm.generateText('openai', 'gpt-4o', 'system prompt', 'user prompt', {
-            taskComplexity: 'medium'
+            taskComplexity: 'medium',
+            taskType: 'supervisor',
+            routingTaskType: 'planning',
+            routingStrategy: 'best'
         });
 
         expect(response.content).toBe('fallback success');
-        expect(selector.reportFailure).toHaveBeenCalledWith('openai', 'gpt-4o');
+        expect(selector.reportFailure).toHaveBeenCalledWith('openai', 'gpt-4o', rateLimitError);
         expect(selector.selectModel).toHaveBeenCalledWith({
             taskComplexity: 'medium',
+            taskType: 'supervisor',
+            routingTaskType: 'planning',
+            routingStrategy: 'best',
             provider: undefined,
             exclude: ['openai:gpt-4o']
         });

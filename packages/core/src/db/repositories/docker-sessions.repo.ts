@@ -14,7 +14,7 @@
 import { eq } from "drizzle-orm"; // Removed desc
 
 import { db } from "../index.js";
-import { dockerSessionsTable } from "../metamcp-schema.js";
+import { dockerSessionsTable } from "../mcp-admin-schema.js";
 import { randomUUID } from "node:crypto";
 
 type DockerSessionRow = typeof dockerSessionsTable.$inferSelect;

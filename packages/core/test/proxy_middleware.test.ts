@@ -15,7 +15,7 @@ vi.mock('../src/db/index.js', () => ({
 
 describe('proxy middleware', () => {
     test('blocks tool calls outside the dynamic allowedTools whitelist', async () => {
-        const { createFilterCallToolMiddleware } = await import('../src/services/metamcp-middleware/filter-tools.functional.js');
+        const { createFilterCallToolMiddleware } = await import('../src/services/legacy-proxy-middleware/filter-tools.functional.js');
 
         const next = vi.fn().mockResolvedValue({
             content: [{ type: 'text', text: 'should not run' }],
@@ -42,7 +42,7 @@ describe('proxy middleware', () => {
     });
 
     test('permits tool calls that are explicitly whitelisted in allowedTools', async () => {
-        const { createFilterCallToolMiddleware } = await import('../src/services/metamcp-middleware/filter-tools.functional.js');
+        const { createFilterCallToolMiddleware } = await import('../src/services/legacy-proxy-middleware/filter-tools.functional.js');
 
         const next = vi.fn().mockResolvedValue({
             content: [{ type: 'text', text: 'ok' }],

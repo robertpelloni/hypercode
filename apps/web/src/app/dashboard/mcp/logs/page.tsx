@@ -1,31 +1,33 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@borg/ui";
+import { Suspense, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Card } from "@borg/ui";
 import { Button } from "@borg/ui";
-import { Loader2, Activity, Play, Pause, Trash2, Filter } from "lucide-react";
+import { Activity, Play, Pause, Trash2 } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
 
-export default function LogsDashboard() {
+function LogsDashboardContent() {
+    const searchParams = useSearchParams();
     const [isLive, setIsLive] = useState(true);
-    const [logs, setLogs] = useState<any[]>([]);
+    const serverFilter = searchParams.get('server')?.trim() ?? '';
 
     // Polling for live logs
     const { data: latestLogs, error } = trpc.logs.list.useQuery(
-        { limit: 100 },
+        { limit: 100, serverName: serverFilter || undefined },
         {
             refetchInterval: isLive ? 2000 : false,
-            // On each fetch, merge/update logs. simple replace for now.
         }
     );
 
     const clearMutation = trpc.logs.clear.useMutation({
         onSuccess: () => {
             toast.success("Logs cleared");
-            setLogs([]);
         },
     });
+
+    const filteredLogs = useMemo(() => latestLogs || [], [latestLogs]);
 
     return (
         <div className="p-8 space-y-8 h-full flex flex-col">
@@ -35,6 +37,11 @@ export default function LogsDashboard() {
                     <p className="text-zinc-500">
                         Real-time stream of MCP tool executions and system events
                     </p>
+                    {serverFilter ? (
+                        <p className="mt-2 text-xs uppercase tracking-wider text-cyan-300">
+                            Filtered by server: {serverFilter}
+                        </p>
+                    ) : null}
                 </div>
                 <div className="flex gap-2">
                     <Button
@@ -61,19 +68,32 @@ export default function LogsDashboard() {
                         <Activity className="h-3 w-3" />
                         <span>Stream attached</span>
                     </div>
-                    <span>{latestLogs?.length || 0} entries</span>
+                    <span>{filteredLogs.length} entries</span>
                 </div>
                 <div className="flex-1 overflow-auto p-4 font-mono text-sm space-y-1">
-                    {(latestLogs || []).length === 0 ? (
-                        <div className="h-full flex items-center justify-center text-zinc-600 italic">
-                            No logs captured
+                    {error ? (
+                        <div className="mb-3 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-red-300">
+                            Failed to load logs. {error.message}
                         </div>
-                    ) : (latestLogs || []).map((log: any) => (
+                    ) : null}
+                    {filteredLogs.length === 0 ? (
+                        <div className="h-full flex items-center justify-center text-zinc-600 italic">
+                            {serverFilter ? 'No logs captured for this server yet' : 'No logs captured'}
+                        </div>
+                    ) : filteredLogs.map((log: any) => (
                         <LogEntry key={log.id} log={log} />
                     ))}
                 </div>
             </Card>
         </div>
+    );
+}
+
+export default function LogsDashboard() {
+    return (
+        <Suspense fallback={<div className="p-8 text-sm text-zinc-500">Loading logs…</div>}>
+            <LogsDashboardContent />
+        </Suspense>
     );
 }
 
@@ -88,6 +108,11 @@ function LogEntry({ log }: { log: any }) {
                 </div>
                 <div className="flex-1 space-y-1 min-w-0">
                     <div className="flex items-center gap-2">
+                        {log.serverName ? (
+                            <span className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] uppercase tracking-wide text-cyan-300">
+                                {log.serverName}
+                            </span>
+                        ) : null}
                         <span className={`font-semibold ${isError ? 'text-red-400' : 'text-blue-400'}`}>
                             {log.toolName || 'System'}
                         </span>

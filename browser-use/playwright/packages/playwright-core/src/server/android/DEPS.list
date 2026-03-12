@@ -1,8 +1,0 @@
-[*]
-../
-../../protocol/
-../../utils/isomorphic/
-../../utilsBundle.ts
-../chromium/
-../utils
-../registry/

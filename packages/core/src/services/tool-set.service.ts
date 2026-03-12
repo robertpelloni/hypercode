@@ -2,7 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 
 import { db } from "../db/index.js";
-import { toolSetItemsTable, toolSetsTable, toolsTable } from "../db/metamcp-schema.js";
+import { toolSetItemsTable, toolSetsTable, toolsTable } from "../db/mcp-admin-schema.js";
 
 export interface ToolSet {
     uuid: string;

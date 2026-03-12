@@ -2,6 +2,7 @@ export interface ModelSelectionRequest {
     provider?: string;
     taskComplexity?: 'low' | 'medium' | 'high';
     taskType?: 'worker' | 'supervisor';
+    routingTaskType?: 'coding' | 'planning' | 'research' | 'general' | 'worker' | 'supervisor';
 }
 export interface SelectedModel {
     provider: string;

@@ -1,6 +1,6 @@
 {
-  "isAutoDriveActive": true,
+  "isAutoDriveActive": false,
   "activeGoal": null,
   "lastObjective": null,
-  "lastHeartbeat": 1770680717833
+  "lastHeartbeat": 1773275535301
 }

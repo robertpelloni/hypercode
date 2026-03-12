@@ -5,7 +5,7 @@ import {
     Namespace,
     NamespaceTool,
     NamespaceWithServers,
-} from "../../types/metamcp/index.js";
+} from "../../types/mcp-admin/index.js";
 
 export class NamespacesSerializer {
     static serializeNamespace(dbNamespace: DatabaseNamespace): Namespace {

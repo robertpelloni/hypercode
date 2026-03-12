@@ -10,11 +10,11 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 
 import type { ConnectedClient } from '../services/mcp-client.service.js';
-import { getMcpServers } from '../services/fetch-metamcp.service.js';
+import { getMcpServers } from '../services/mcp-config-discovery.service.js';
 import { mcpServerPool } from '../services/mcp-server-pool.service.js';
 import { parseToolName } from '../services/tool-name-parser.service.js';
 import { sanitizeName } from '../services/common-utils.js';
-import type { ServerParameters } from '../types/metamcp/index.js';
+import type { ServerParameters } from '../types/mcp-admin/index.js';
 
 export interface DownstreamDiscoveryContext {
     namespaceUuid: string;

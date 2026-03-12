@@ -6,8 +6,8 @@ import path from 'node:path';
 import {
     McpServerCreateInputSchema,
     McpServerUpdateInputSchema
-} from '../types/metamcp/index.js';
-import { metaMCPBridge } from '../services/MetaMCPBridgeService.js';
+} from '../types/mcp-admin/index.js';
+import { loadBorgMcpConfig } from '../mcp/mcpJsonConfig.js';
 import { clientConfigSyncService, SUPPORTED_MCP_CLIENTS } from '../mcp/clientConfigSync.js';
 
 const MASTER_INDEX_PATH = path.join(process.cwd(), 'BORG_MASTER_INDEX.jsonc');
@@ -39,26 +39,63 @@ function getContextUserId(ctx: unknown): string | undefined {
 export const mcpServersRouter = t.router({
     list: publicProcedure.query(async ({ ctx }) => {
         const userId = getContextUserId(ctx);
-        return await mcpServersRepository.findAll(userId);
+        const [servers, config] = await Promise.all([
+            mcpServersRepository.findAll(userId),
+            loadBorgMcpConfig(),
+        ]);
+
+        return servers.map((server) => ({
+            ...server,
+            _meta: config.mcpServers?.[server.name]?._meta ?? null,
+        }));
     }),
 
     get: publicProcedure
         .input(z.object({ uuid: z.string() }))
         .query(async ({ input }) => {
-            return await mcpServersRepository.findByUuid(input.uuid);
+            const [server, config] = await Promise.all([
+                mcpServersRepository.findByUuid(input.uuid),
+                loadBorgMcpConfig(),
+            ]);
+
+            if (!server) {
+                return undefined;
+            }
+
+            return {
+                ...server,
+                _meta: config.mcpServers?.[server.name]?._meta ?? null,
+            };
         }),
 
     create: adminProcedure
         .input(McpServerCreateInputSchema)
         .mutation(async ({ input }) => {
-            return await mcpServersRepository.create(input);
+            const { metadataStrategy, ...serverInput } = input;
+            return await mcpServersRepository.create(serverInput, { metadataStrategy });
         }),
 
     update: adminProcedure
         .input(McpServerUpdateInputSchema)
         .mutation(async ({ input }) => {
             if (!input.uuid) throw new Error("UUID required for update");
-            return await mcpServersRepository.update(input);
+            const { metadataStrategy, ...serverInput } = input;
+            return await mcpServersRepository.update(serverInput, { metadataStrategy });
+        }),
+
+    reloadMetadata: adminProcedure
+        .input(z.object({
+            uuid: z.string(),
+            mode: z.enum(['auto', 'binary', 'cache']).default('binary'),
+        }))
+        .mutation(async ({ input }) => {
+            return await mcpServersRepository.reloadMetadata(input.uuid, input.mode);
+        }),
+
+    clearMetadataCache: adminProcedure
+        .input(z.object({ uuid: z.string() }))
+        .mutation(async ({ input }) => {
+            return await mcpServersRepository.clearMetadataCache(input.uuid);
         }),
 
     delete: adminProcedure
@@ -161,49 +198,4 @@ export const mcpServersRouter = t.router({
         }
     }),
 
-    /**
-     * Lists MCP servers from the running MetaMCP backend (port 12009).
-     * Returns an empty array gracefully if MetaMCP is not running.
-     */
-    listFromMetaMCP: publicProcedure.query(async () => {
-        return await metaMCPBridge.listServers();
-    }),
-
-    /**
-     * Returns the availability status of the MetaMCP backend.
-     */
-    metamcpStatus: publicProcedure.query(async () => {
-        const available = await metaMCPBridge.isAvailable();
-        return { available, url: 'http://localhost:12009' };
-    }),
-
-    /**
-     * Registers a new MCP server in MetaMCP's database via the bridge.
-     * MetaMCP handles connection management automatically.
-     */
-    createInMetaMCP: adminProcedure
-        .input(z.object({
-            name: z.string().min(1),
-            description: z.string().optional(),
-            type: z.enum(['STDIO', 'SSE', 'STREAMABLE_HTTP']),
-            command: z.string().optional(),
-            args: z.array(z.string()).optional(),
-            url: z.string().optional(),
-            env: z.record(z.string()).optional(),
-        }))
-        .mutation(async ({ input }) => {
-            const result = await metaMCPBridge.createServer(input);
-            if (!result) throw new Error('MetaMCP backend unavailable or request failed');
-            return result;
-        }),
-
-    /**
-     * Removes an MCP server from MetaMCP's database via the bridge.
-     */
-    deleteFromMetaMCP: adminProcedure
-        .input(z.object({ uuid: z.string() }))
-        .mutation(async ({ input }) => {
-            const ok = await metaMCPBridge.deleteServer(input.uuid);
-            return { success: ok };
-        }),
 });

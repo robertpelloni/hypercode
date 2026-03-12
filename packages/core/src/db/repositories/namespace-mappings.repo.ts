@@ -13,7 +13,7 @@ import {
     NamespaceServerStatusUpdate,
     NamespaceToolOverridesUpdate,
     NamespaceToolStatusUpdate,
-} from "../../types/metamcp/index.js";
+} from "../../types/mcp-admin/index.js";
 import { and, eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 
@@ -21,7 +21,7 @@ import { db } from "../index.js";
 import {
     namespaceServerMappingsTable,
     namespaceToolMappingsTable,
-} from "../metamcp-schema.js";
+} from "../mcp-admin-schema.js";
 
 type NamespaceServerMappingRow = typeof namespaceServerMappingsTable.$inferSelect;
 type NamespaceToolMappingRow = typeof namespaceToolMappingsTable.$inferSelect;

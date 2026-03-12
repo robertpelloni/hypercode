@@ -84,6 +84,28 @@ type PaletteItem = {
     description?: string;
 };
 
+function buildFallbackDescription(title: string, section: string, href?: string): string {
+    const normalized = title.toLowerCase();
+
+    if (normalized.includes('dashboard')) return `Open ${title} to view high-level system status, active services, and operational summaries.`;
+    if (normalized.includes('director')) return `Open ${title} to manage autonomous orchestration policy, run loops, and execution controls.`;
+    if (normalized.includes('council')) return `Open ${title} to review multi-model consensus sessions, votes, and recommendations.`;
+    if (normalized.includes('memory')) return `Open ${title} to inspect stored context, retrieval behavior, and memory lifecycle data.`;
+    if (normalized.includes('research')) return `Open ${title} to run or review research workflows, evidence, and generated findings.`;
+    if (normalized.includes('security')) return `Open ${title} to review policies, controls, and security posture signals.`;
+    if (normalized.includes('settings') || normalized.includes('config')) return `Open ${title} to configure platform behavior, routing options, and runtime preferences.`;
+    if (normalized.includes('mcp')) return `Open ${title} to manage MCP routing, aggregation, server status, and tool catalog behavior.`;
+    if (normalized.includes('tools')) return `Open ${title} to browse tool metadata, invocation options, and execution diagnostics.`;
+    if (normalized.includes('logs') || normalized.includes('events') || normalized.includes('inspector')) return `Open ${title} to inspect runtime events, logs, and trace-level diagnostics.`;
+
+    const location = href ?? 'its route';
+    return `Open ${title} (${section}) at ${location} to access this subsystem's controls, status, and detailed operational data.`;
+}
+
+function getNavDescription(item: { title: string; href?: string; description?: string }, section: string): string {
+    return item.description?.trim() || buildFallbackDescription(item.title, section, item.href);
+}
+
 export function Sidebar({ className }: SidebarProps) {
     const router = useRouter();
     const pathname = usePathname();
@@ -168,7 +190,7 @@ export function Sidebar({ className }: SidebarProps) {
     const normalizedQuery = query.trim().toLowerCase();
 
     const allItemsByHref = useMemo(() => {
-        const map = new Map<string, { title: string; href: string; icon: any }>();
+        const map = new Map<string, { title: string; href: string; icon: any; description?: string }>();
         for (const section of SIDEBAR_SECTIONS) {
             for (const item of section.items) {
                 map.set(item.href, item);
@@ -197,7 +219,7 @@ export function Sidebar({ className }: SidebarProps) {
     const favoriteSet = useMemo(() => new Set(favorites), [favorites]);
 
     const paletteItems = useMemo<PaletteItem[]>(() => {
-        const routeMeta = new Map<string, { title: string; href: string; icon: any; section: string }>();
+        const routeMeta = new Map<string, { title: string; href: string; icon: any; description?: string; section: string }>();
         for (const section of SIDEBAR_SECTIONS) {
             for (const item of section.items) {
                 routeMeta.set(item.href, {
@@ -216,10 +238,10 @@ export function Sidebar({ className }: SidebarProps) {
         const actions: PaletteItem[] = [
             {
                 kind: 'action' as const,
-                id: 'open-metamcp',
-                title: 'Open MetaMCP Dashboard',
+                    id: 'open-mcp-router',
+                title: 'Open MCP Router Dashboard',
                 section: 'Actions',
-                description: 'Go to /dashboard/mcp',
+                description: 'Go to Borg\'s MCP router control plane',
                 icon: Command,
             },
             {
@@ -260,6 +282,7 @@ export function Sidebar({ className }: SidebarProps) {
             return (
                 item.title.toLowerCase().includes(q) ||
                 item.href.toLowerCase().includes(q) ||
+                (item.description ?? '').toLowerCase().includes(q) ||
                 item.section.toLowerCase().includes(q)
             );
         });
@@ -291,24 +314,28 @@ export function Sidebar({ className }: SidebarProps) {
     const favoriteItems = useMemo(() => {
         return favorites
             .map((href) => allItemsByHref.get(href))
-            .filter((item): item is { title: string; href: string; icon: any } => Boolean(item))
+            .filter((item): item is { title: string; href: string; icon: any; description?: string } => Boolean(item))
             .filter((item) => {
                 if (!normalizedQuery) {
                     return true;
                 }
-                return item.title.toLowerCase().includes(normalizedQuery) || item.href.toLowerCase().includes(normalizedQuery);
+                return item.title.toLowerCase().includes(normalizedQuery)
+                    || item.href.toLowerCase().includes(normalizedQuery)
+                    || (item.description ?? '').toLowerCase().includes(normalizedQuery);
             });
     }, [allItemsByHref, favorites, normalizedQuery]);
 
     const recentItems = useMemo(() => {
         return recentRoutes
             .map((href) => allItemsByHref.get(href))
-            .filter((item): item is { title: string; href: string; icon: any } => Boolean(item))
+            .filter((item): item is { title: string; href: string; icon: any; description?: string } => Boolean(item))
             .filter((item) => {
                 if (!normalizedQuery) {
                     return true;
                 }
-                return item.title.toLowerCase().includes(normalizedQuery) || item.href.toLowerCase().includes(normalizedQuery);
+                return item.title.toLowerCase().includes(normalizedQuery)
+                    || item.href.toLowerCase().includes(normalizedQuery)
+                    || (item.description ?? '').toLowerCase().includes(normalizedQuery);
             });
     }, [allItemsByHref, normalizedQuery, recentRoutes]);
 
@@ -374,7 +401,7 @@ export function Sidebar({ className }: SidebarProps) {
     };
 
     const runPaletteAction = (id: string) => {
-        if (id === 'open-metamcp') {
+        if (id === 'open-mcp-router') {
             closePalette();
             router.push('/dashboard/mcp');
             return;
@@ -656,6 +683,8 @@ export function Sidebar({ className }: SidebarProps) {
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Search pages... ( / )"
+                                title="Search navigation by page name, route path, or section context"
+                                aria-label="Search navigation pages"
                                 className="w-full h-9 rounded-md border border-zinc-800 bg-zinc-900 pl-9 pr-3 text-xs text-zinc-200 placeholder:text-zinc-500 outline-none focus:border-zinc-600"
                             />
                         </div>
@@ -765,6 +794,8 @@ export function Sidebar({ className }: SidebarProps) {
                                     <Link
                                         key={item.href}
                                         href={item.href}
+                                        title={`${item.title} • ${getNavDescription(item, 'Recent')}`}
+                                        aria-label={`Navigate to ${item.title}`}
                                         className={cn(
                                             "flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-800 hover:text-white transition-colors",
                                             isActive(item.href) ? "bg-zinc-800 text-white" : "text-zinc-300"
@@ -787,6 +818,8 @@ export function Sidebar({ className }: SidebarProps) {
                                     type="button"
                                     onClick={() => toggleSection(section.title)}
                                     className="w-full px-4 mb-1 text-[11px] uppercase tracking-wider text-zinc-500 flex items-center justify-between hover:text-zinc-300 transition-colors"
+                                    title={`${isCollapsed ? 'Expand' : 'Collapse'} ${section.title} section`}
+                                    aria-label={`${isCollapsed ? 'Expand' : 'Collapse'} ${section.title} section`}
                                 >
                                     <span>{section.title}</span>
                                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isCollapsed ? "-rotate-90" : "rotate-0")} />
@@ -797,6 +830,8 @@ export function Sidebar({ className }: SidebarProps) {
                                             <div key={item.href} className="group flex items-center gap-1">
                                                 <Link
                                                     href={item.href}
+                                                    title={`${item.title} • ${getNavDescription(item, section.title)}`}
+                                                    aria-label={`Navigate to ${item.title}`}
                                                     className={cn(
                                                         "flex-1 flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-800 hover:text-white transition-colors",
                                                         isActive(item.href) ? "bg-zinc-800 text-white" : "text-zinc-400",
@@ -846,6 +881,8 @@ export function Sidebar({ className }: SidebarProps) {
                                 value={paletteQuery}
                                 onChange={(e) => setPaletteQuery(e.target.value)}
                                 placeholder="Jump to page, tool, or route..."
+                                title="Command palette search across routes and quick actions"
+                                aria-label="Command palette search"
                                 className="flex-1 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500"
                             />
                             <span className="text-[10px] text-zinc-500 border border-zinc-700 rounded px-1.5 py-0.5">Esc</span>
@@ -922,7 +959,11 @@ export function Sidebar({ className }: SidebarProps) {
                                                     </div>
                                                     <div className="text-[11px] text-zinc-500 truncate mt-0.5">
                                                         {item.section}
-                                                        {item.kind === 'route' ? ` • ${item.href}` : item.description ? ` • ${item.description}` : ''}
+                                                        {item.kind === 'route'
+                                                            ? ` • ${getNavDescription(item, item.section)}`
+                                                            : item.description
+                                                                ? ` • ${item.description}`
+                                                                : ''}
                                                     </div>
                                                 </div>
                                             </div>
@@ -943,7 +984,7 @@ function FavoriteNavRow({
     active,
     onToggleFavorite,
 }: {
-    item: { title: string; href: string; icon: any };
+    item: { title: string; href: string; icon: any; description?: string };
     active: boolean;
     onToggleFavorite: (href: string) => void;
 }) {
@@ -965,6 +1006,8 @@ function FavoriteNavRow({
         >
             <Link
                 href={item.href}
+                title={`${item.title} • ${item.description ?? buildFallbackDescription(item.title, 'Favorites', item.href)}`}
+                aria-label={`Navigate to ${item.title}`}
                 className={cn(
                     "flex-1 flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-800 hover:text-white transition-colors",
                     active ? "bg-zinc-800 text-white" : "text-zinc-300"

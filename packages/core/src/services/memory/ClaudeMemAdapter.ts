@@ -26,6 +26,14 @@ import path from 'path';
 import { IMemoryProvider, Memory } from '../../interfaces/IMemoryProvider.js';
 import { v4 as uuidv4 } from 'uuid';
 
+export const CLAUDE_MEM_DEFAULT_SECTIONS = [
+    'project_context',
+    'user_facts',
+    'style_preferences',
+    'commands',
+    'general',
+] as const;
+
 // The claude-mem schema sections
 interface ClaudeMemSection {
     section: string;          // e.g. "project_context", "user_facts", "style"
@@ -68,13 +76,7 @@ export class ClaudeMemAdapter implements IMemoryProvider {
                 // Initialize with default sections inspired by claude-mem
                 this.store = {
                     version: '1.0.0',
-                    sections: [
-                        { section: 'project_context', entries: [] },
-                        { section: 'user_facts', entries: [] },
-                        { section: 'style_preferences', entries: [] },
-                        { section: 'commands', entries: [] },
-                        { section: 'general', entries: [] },
-                    ],
+                    sections: [...CLAUDE_MEM_DEFAULT_SECTIONS].map((section) => ({ section, entries: [] })),
                 };
                 await this.persist();
             } else {

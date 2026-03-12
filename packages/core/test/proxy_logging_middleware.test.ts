@@ -6,7 +6,7 @@ afterEach(() => {
 
 describe('proxy logging middleware', () => {
   test('denies tool calls rejected by an attached policy id', async () => {
-    const { createPolicyMiddleware } = await import('../src/services/metamcp-middleware/policy.functional.js');
+    const { createPolicyMiddleware } = await import('../src/services/legacy-proxy-middleware/policy.functional.js');
     const { policyService } = await import('../src/services/stubs/policy.service.stub.js');
 
     const next = vi.fn().mockResolvedValue({
@@ -38,7 +38,7 @@ describe('proxy logging middleware', () => {
   });
 
   test('passes through when no policy id is attached', async () => {
-    const { createPolicyMiddleware } = await import('../src/services/metamcp-middleware/policy.functional.js');
+    const { createPolicyMiddleware } = await import('../src/services/legacy-proxy-middleware/policy.functional.js');
 
     const next = vi.fn().mockResolvedValue({
       content: [{ type: 'text', text: 'ok' }],

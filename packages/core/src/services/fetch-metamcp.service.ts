@@ -2,7 +2,7 @@ import {
     McpServerErrorStatusEnum,
     McpServerStatusEnum,
     ServerParameters,
-} from "../types/metamcp/index.js";
+} from "../types/mcp-admin/index.js";
 import { jsonConfigProvider } from "./config/JsonConfigProvider.js";
 import { getDefaultEnvironment, IOType } from "./common-utils.js";
 import { v5 as uuidv5 } from 'uuid';

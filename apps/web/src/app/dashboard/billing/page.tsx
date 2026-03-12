@@ -4,16 +4,70 @@ import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@borg/ui';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
-import { Loader2, DollarSign, Activity, Settings, Key, Zap, AlertCircle, Database, Shield } from 'lucide-react';
+import { Loader2, DollarSign, Activity, Settings, Key, Zap, AlertCircle, Database, Shield, ExternalLink, WalletCards } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+    formatRoutingStrategyLabel,
+    formatTaskRoutingLabel,
+    getPortalBadgeClasses,
+    getProviderPortalCards,
+    getRoutingStrategyBadgeClasses,
+    ROUTING_STRATEGY_OPTIONS,
+    type BillingRoutingStrategy,
+    type BillingTaskRoutingRuleSummary,
+    type BillingProviderQuotaSummary,
+} from './billing-portal-data';
+
+const FALLBACK_TASK_OPTIONS: BillingTaskRoutingRuleSummary['taskType'][] = ['general', 'coding', 'planning', 'research', 'worker', 'supervisor'];
 
 export default function ProviderAuthBillingMatrix() {
     const [historyDays, setHistoryDays] = useState(30);
+    const [fallbackTaskType, setFallbackTaskType] = useState<BillingTaskRoutingRuleSummary['taskType']>('general');
+    const utils = trpc.useUtils();
 
     const { data: status, isLoading: isStatusLoading } = trpc.billing.getStatus.useQuery();
     const { data: quotas, isLoading: isQuotasLoading } = trpc.billing.getProviderQuotas.useQuery();
     const { data: costHistory, isLoading: isHistoryLoading } = trpc.billing.getCostHistory.useQuery({ days: historyDays });
     const { data: pricing, isLoading: isPricingLoading } = trpc.billing.getModelPricing.useQuery();
-    const { data: fallback, isLoading: isFallbackLoading } = trpc.billing.getFallbackChain.useQuery();
+    const { data: fallback, isLoading: isFallbackLoading } = trpc.billing.getFallbackChain.useQuery({ taskType: fallbackTaskType });
+    const { data: taskRouting, isLoading: isTaskRoutingLoading } = trpc.billing.getTaskRoutingRules.useQuery();
+    const setRoutingStrategyMutation = trpc.billing.setRoutingStrategy.useMutation({
+        onSuccess: async () => {
+            toast.success('Default provider routing updated');
+            await utils.billing.getTaskRoutingRules.invalidate();
+        },
+        onError: (error) => {
+            toast.error(`Routing update failed: ${error.message}`);
+        },
+    });
+    const setTaskRoutingRuleMutation = trpc.billing.setTaskRoutingRule.useMutation({
+        onSuccess: async (_result, variables) => {
+            if (variables) {
+                toast.success(`${formatTaskRoutingLabel(variables.taskType)} routing updated`);
+            }
+            await utils.billing.getTaskRoutingRules.invalidate();
+        },
+        onError: (error) => {
+            toast.error(`Task routing update failed: ${error.message}`);
+        },
+    });
+    const providerPortalCards = getProviderPortalCards(quotas as BillingProviderQuotaSummary[] | undefined);
+    const routingRules = (taskRouting?.rules ?? []) as BillingTaskRoutingRuleSummary[];
+    const activeRoutingMutationTask = setTaskRoutingRuleMutation.variables && 'taskType' in setTaskRoutingRuleMutation.variables
+        ? setTaskRoutingRuleMutation.variables.taskType
+        : undefined;
+
+    const handleDefaultStrategyChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        setRoutingStrategyMutation.mutate({ strategy: event.target.value as BillingRoutingStrategy });
+    };
+
+    const handleTaskStrategyChange = (taskType: BillingTaskRoutingRuleSummary['taskType'], event: React.ChangeEvent<HTMLSelectElement>) => {
+        const nextValue = event.target.value as BillingRoutingStrategy | 'default';
+        setTaskRoutingRuleMutation.mutate({
+            taskType,
+            strategy: nextValue === 'default' ? null : nextValue,
+        });
+    };
 
     const renderCostChart = () => {
         if (isHistoryLoading) return <div className="h-48 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>;
@@ -57,9 +111,13 @@ export default function ProviderAuthBillingMatrix() {
                     </p>
                 </div>
                 <div className="flex gap-3">
-                    <Button variant="outline" className="border-emerald-500/20 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 transition-colors">
+                    <Button
+                        variant="outline"
+                        className="border-emerald-500/20 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 transition-colors"
+                        onClick={() => document.getElementById('provider-portals')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                    >
                         <DollarSign className="w-4 h-4 mr-2" />
-                        Manage Budget Limits
+                        Open Provider Portals
                     </Button>
                 </div>
             </div>
@@ -114,17 +172,32 @@ export default function ProviderAuthBillingMatrix() {
                     {/* Routing Fallback Chain */}
                     <Card className="bg-zinc-900 border-zinc-800 shadow-xl">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                                <Zap className="h-4 w-4 text-amber-500" />
-                                Execution Fallback Chain
-                            </CardTitle>
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <CardTitle className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                                    <Zap className="h-4 w-4 text-amber-500" />
+                                    Execution Fallback Chain
+                                </CardTitle>
+                                <select
+                                    value={fallbackTaskType}
+                                    onChange={(event) => setFallbackTaskType(event.target.value as BillingTaskRoutingRuleSummary['taskType'])}
+                                    className="rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-amber-500"
+                                    aria-label="Inspect fallback chain for task type"
+                                >
+                                    {FALLBACK_TASK_OPTIONS.map((taskType) => (
+                                        <option key={taskType} value={taskType}>{formatTaskRoutingLabel(taskType)}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </CardHeader>
                         <CardContent className="pt-2">
                             {isFallbackLoading ? (
                                 <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>
                             ) : (
                                 <div className="space-y-3">
-                                    {fallback?.chain.map((link: any, idx: number) => (
+                                    <div className="rounded-lg border border-zinc-800/60 bg-black/30 px-3 py-2 text-[11px] text-zinc-500">
+                                        Ranked providers for <span className="font-semibold text-zinc-300">{formatTaskRoutingLabel(fallback?.selectedTaskType ?? fallbackTaskType)}</span> work.
+                                    </div>
+                                    {fallback?.chain.length ? fallback.chain.map((link: any, idx: number) => (
                                         <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-zinc-800/50">
                                             <div className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-xs shrink-0 border border-amber-500/20">
                                                 {link.priority}
@@ -135,6 +208,88 @@ export default function ProviderAuthBillingMatrix() {
                                                     {link.model && <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-zinc-800 text-zinc-400 border-zinc-700 truncate">{link.model}</Badge>}
                                                 </div>
                                                 <div className="text-xs text-zinc-500 mt-0.5 truncate">{link.reason}</div>
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <div className="rounded-lg border border-dashed border-zinc-800 bg-black/20 px-3 py-4 text-sm text-zinc-500">
+                                            No ranked providers are currently available for {formatTaskRoutingLabel(fallbackTaskType).toLowerCase()} work.
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-zinc-900 border-zinc-800 shadow-xl">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                                <Settings className="h-4 w-4 text-cyan-400" />
+                                Task Routing Matrix
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-2">
+                            {isTaskRoutingLoading ? (
+                                <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <div className="rounded-lg border border-zinc-800/60 bg-black/30 px-3 py-3 text-xs text-zinc-500 space-y-3">
+                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                            <div>
+                                                Default routing strategy: <span className="font-semibold text-zinc-300">{formatRoutingStrategyLabel(taskRouting?.defaultStrategy ?? 'best')}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {setRoutingStrategyMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400" /> : null}
+                                                <select
+                                                    value={taskRouting?.defaultStrategy ?? 'best'}
+                                                    onChange={handleDefaultStrategyChange}
+                                                    disabled={setRoutingStrategyMutation.isPending || setTaskRoutingRuleMutation.isPending}
+                                                    className="rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-cyan-500"
+                                                    aria-label="Default provider routing strategy"
+                                                >
+                                                    {ROUTING_STRATEGY_OPTIONS.map((option) => (
+                                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="text-[11px] text-zinc-500">
+                                            Changes apply to the next model-selection decision immediately, so you can tune cost vs quality without restarting Borg.
+                                        </div>
+                                    </div>
+                                    {routingRules.map((rule) => (
+                                        <div key={rule.taskType} className="rounded-lg border border-zinc-800/50 bg-black/40 p-3">
+                                            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <span className="font-semibold text-zinc-200">{formatTaskRoutingLabel(rule.taskType)}</span>
+                                                    <Badge variant="outline" className={`text-[10px] capitalize ${getRoutingStrategyBadgeClasses(rule.strategy)}`}>
+                                                        {rule.strategy}
+                                                    </Badge>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    {setTaskRoutingRuleMutation.isPending && activeRoutingMutationTask === rule.taskType ? <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400" /> : null}
+                                                    <select
+                                                        value={rule.strategy}
+                                                        onChange={(event) => handleTaskStrategyChange(rule.taskType, event)}
+                                                        disabled={setRoutingStrategyMutation.isPending || setTaskRoutingRuleMutation.isPending}
+                                                        className="rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-cyan-500"
+                                                        aria-label={`${formatTaskRoutingLabel(rule.taskType)} routing strategy`}
+                                                    >
+                                                        {ROUTING_STRATEGY_OPTIONS.map((option) => (
+                                                            <option key={`${rule.taskType}-${option.value}`} value={option.value}>{option.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {rule.fallbackPreview.length > 0 ? rule.fallbackPreview.map((candidate, index) => (
+                                                    <div key={`${rule.taskType}-${candidate.provider}-${candidate.model ?? index}`} className="rounded-md border border-zinc-800 bg-zinc-950/80 px-2.5 py-2 text-xs text-zinc-300">
+                                                        <div className="font-medium capitalize">{candidate.provider}</div>
+                                                        {candidate.model ? <div className="mt-0.5 font-mono text-[10px] text-zinc-500">{candidate.model}</div> : null}
+                                                        {candidate.reason ? <div className="mt-1 text-[10px] uppercase tracking-wide text-zinc-500">{candidate.reason.replace(/_/g, ' ')}</div> : null}
+                                                    </div>
+                                                )) : (
+                                                    <span className="text-xs text-zinc-500">No ranked providers available for this task yet.</span>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
@@ -195,14 +350,28 @@ export default function ProviderAuthBillingMatrix() {
                                     ) : quotas?.map((q: any) => (
                                         <tr key={q.provider} className="hover:bg-white/[0.02] transition-colors">
                                             <td className="px-6 py-4 font-medium text-zinc-200 capitalize">
-                                                {q.name}
+                                                <div>
+                                                    <div>{q.name}</div>
+                                                    <div className="mt-1 text-[10px] uppercase tracking-wide text-zinc-500">{(q.availability ?? 'unknown').replace(/_/g, ' ')}</div>
+                                                    {q.lastError ? (
+                                                        <div className="mt-1 flex items-center gap-1 text-[10px] text-amber-400">
+                                                            <AlertCircle className="h-3 w-3" />
+                                                            <span className="truncate max-w-[18rem]">{q.lastError}</span>
+                                                        </div>
+                                                    ) : null}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                {q.configured ? (
-                                                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]">VERIFIED</Badge>
-                                                ) : (
-                                                    <Badge variant="outline" className="bg-zinc-800 text-zinc-500 border-zinc-700 text-[10px]">MISSING KEY</Badge>
-                                                )}
+                                                <div className="flex flex-col items-center gap-1">
+                                                    {q.authenticated ? (
+                                                        <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]">CONNECTED</Badge>
+                                                    ) : q.configured ? (
+                                                        <Badge variant="outline" className="bg-amber-500/10 text-amber-300 border-amber-500/20 text-[10px]">CONFIGURED</Badge>
+                                                    ) : (
+                                                        <Badge variant="outline" className="bg-zinc-800 text-zinc-500 border-zinc-700 text-[10px]">MISSING AUTH</Badge>
+                                                    )}
+                                                    <span className="text-[10px] uppercase tracking-wide text-zinc-500">{(q.authMethod ?? 'none').replace(/_/g, ' ')}</span>
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`text-xs px-2 py-0.5 rounded capitalize ${q.tier === 'free' ? 'text-zinc-400 bg-zinc-800' :
@@ -231,6 +400,65 @@ export default function ProviderAuthBillingMatrix() {
                                     ))}
                                 </tbody>
                             </table>
+                        </CardContent>
+                    </Card>
+
+                    <Card id="provider-portals" className="bg-zinc-900 border-zinc-800 shadow-xl overflow-hidden">
+                        <CardHeader className="bg-black/20 border-b border-white/5 pb-4">
+                            <CardTitle className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                                <WalletCards className="h-4 w-4 text-cyan-400" />
+                                Provider Portals & Subscriptions
+                            </CardTitle>
+                            <p className="text-sm text-zinc-500 mt-2">
+                                Jump straight to API keys, usage dashboards, billing consoles, and plan-management pages for the providers Borg knows about.
+                            </p>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+                                {providerPortalCards.map((portal) => (
+                                    <div key={portal.id} className="rounded-xl border border-zinc-800 bg-black/30 p-4 shadow-sm">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <h3 className="text-sm font-semibold text-zinc-100">{portal.label}</h3>
+                                                <p className="mt-1 text-xs text-zinc-500">{portal.notes}</p>
+                                            </div>
+                                            <Badge variant="outline" className={`text-[10px] ${getPortalBadgeClasses(portal.statusTone)}`}>
+                                                {portal.statusLabel}
+                                            </Badge>
+                                        </div>
+
+                                        <div className="mt-3 grid gap-1 text-[11px] text-zinc-400">
+                                            <div>
+                                                <span className="text-zinc-500">Auth:</span> {portal.authLabel}
+                                            </div>
+                                            <div>
+                                                <span className="text-zinc-500">Availability:</span> {portal.availabilityLabel}
+                                            </div>
+                                            {portal.errorLabel ? (
+                                                <div className="flex items-start gap-1 text-amber-400">
+                                                    <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                                    <span>{portal.errorLabel}</span>
+                                                </div>
+                                            ) : null}
+                                        </div>
+
+                                        <div className="mt-4 flex flex-wrap gap-2">
+                                            {portal.actions.map((action) => (
+                                                <a
+                                                    key={`${portal.id}-${action.label}`}
+                                                    href={action.href}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-800/60 px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-cyan-500/40 hover:text-cyan-200"
+                                                >
+                                                    {action.label}
+                                                    <ExternalLink className="h-3 w-3" />
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </CardContent>
                     </Card>
 

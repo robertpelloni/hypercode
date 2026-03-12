@@ -13,3 +13,6 @@
 [submodule "submodules/litellm"]
 	path = submodules/litellm
 	url = https://github.com/BerriAI/litellm
+[submodule "external/claude-mem"]
+	path = external/claude-mem
+	url = https://github.com/robertpelloni/claude-mem

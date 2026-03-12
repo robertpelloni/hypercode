@@ -1,4 +1,4 @@
-import { DatabaseTool, Tool } from "../../types/metamcp/index.js";
+import { DatabaseTool, Tool } from "../../types/mcp-admin/index.js";
 
 export class ToolsSerializer {
     static serializeTool(dbTool: DatabaseTool): Tool {

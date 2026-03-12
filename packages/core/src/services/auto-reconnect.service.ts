@@ -2,7 +2,7 @@ import {
     McpServerErrorStatusEnum,
     McpServerStatusEnum,
     ServerParameters,
-} from "../types/metamcp/index.js";
+} from "../types/mcp-admin/index.js";
 
 import { mcpServersRepository } from "../db/repositories/index.js";
 import { configService } from "./config.service.js";

@@ -25,6 +25,8 @@ import { IMemoryProvider, Memory } from '../../interfaces/IMemoryProvider.js';
 import { JsonMemoryProvider } from './JsonMemoryProvider.js';
 import { ClaudeMemAdapter } from './ClaudeMemAdapter.js';
 
+export type RedundantMemoryProviderName = 'json' | 'claude-mem';
+
 export class RedundantMemoryManager implements IMemoryProvider {
     private providers: IMemoryProvider[] = [];
 
@@ -40,6 +42,20 @@ export class RedundantMemoryManager implements IMemoryProvider {
      */
     addProvider(provider: IMemoryProvider): void {
         this.providers.push(provider);
+    }
+
+    getProviderNames(): RedundantMemoryProviderName[] {
+        return this.providers.flatMap((provider) => {
+            if (provider instanceof JsonMemoryProvider) {
+                return ['json'];
+            }
+
+            if (provider instanceof ClaudeMemAdapter) {
+                return ['claude-mem'];
+            }
+
+            return [];
+        });
     }
 
     async init(): Promise<void> {

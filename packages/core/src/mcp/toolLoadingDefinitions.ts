@@ -1,6 +1,6 @@
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
-type ToolLoadingName = 'search_tools' | 'load_tool' | 'get_tool_schema' | 'unload_tool' | 'list_loaded_tools';
+type ToolLoadingName = 'search_tools' | 'load_tool' | 'get_tool_schema' | 'get_tool_context' | 'unload_tool' | 'list_loaded_tools';
 
 interface ToolLoadingDefinitionOverrides {
     descriptions?: Partial<Record<ToolLoadingName, string>>;
@@ -9,7 +9,7 @@ interface ToolLoadingDefinitionOverrides {
 const baseDefinitions: Record<ToolLoadingName, Tool> = {
     search_tools: {
         name: 'search_tools',
-        description: 'Search Borg-managed downstream MCP tools without exposing every schema at once.',
+        description: 'Search Borg-managed downstream MCP tools and return compact ranked matches with why each result matched, whether it is already loaded, and whether full schema hydration is still needed.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -21,7 +21,7 @@ const baseDefinitions: Record<ToolLoadingName, Tool> = {
     },
     load_tool: {
         name: 'load_tool',
-        description: 'Load a downstream MCP tool into the current Borg session working set.',
+        description: 'Load a downstream MCP tool into the current Borg session working set so it becomes visible for use without hydrating every schema up front.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -32,11 +32,23 @@ const baseDefinitions: Record<ToolLoadingName, Tool> = {
     },
     get_tool_schema: {
         name: 'get_tool_schema',
-        description: 'Hydrate the full schema for a loaded downstream tool in the current Borg session.',
+        description: 'Hydrate the full schema for a loaded downstream tool when deferred search/load metadata is not enough to execute it safely.',
         inputSchema: {
             type: 'object',
             properties: {
                 name: { type: 'string', description: 'Full tool name to hydrate.' },
+            },
+            required: ['name'],
+        },
+    },
+    get_tool_context: {
+        name: 'get_tool_context',
+        description: 'Retrieve compact, JIT memory context that may be relevant before calling a downstream tool, based on recent observations, summaries, and touched files.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                name: { type: 'string', description: 'Full downstream tool name, for example github__create_issue.' },
+                arguments: { type: 'object', description: 'Optional downstream tool arguments used to match recent file and task context.' },
             },
             required: ['name'],
         },
@@ -66,6 +78,7 @@ const toolLoadingOrder: ToolLoadingName[] = [
     'search_tools',
     'load_tool',
     'get_tool_schema',
+    'get_tool_context',
     'unload_tool',
     'list_loaded_tools',
 ];

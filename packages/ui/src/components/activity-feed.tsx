@@ -10,12 +10,12 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
 import { formatDistanceToNow, isValid, parseISO } from 'date-fns';
-import { Send, Archive, ArchiveRestore, Code, Terminal, ChevronDown, ChevronRight, Play, GitBranch, GitPullRequest, MoreVertical, Book, ArrowUp, ArrowDown, Download, Copy, Check } from 'lucide-react';
+import { Send, Archive, ArchiveRestore, Code, Terminal, ChevronDown, ChevronRight, Play, GitBranch, GitPullRequest, MoreVertical, Book, ArrowUp, ArrowDown, Download, Copy, Check, Printer } from 'lucide-react';
 import { archiveSession, unarchiveSession, isSessionArchived } from '../lib/archive';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { BashOutput } from './ui/bash-output';
 import { NewSessionDialog } from './new-session-dialog';
+import { buildActivityExportContent, buildPrintableTranscriptHtml, getActivityExportMetadata, type ActivityExportFormat } from './activity-feed-export';
+import { ActivityContent, getCopyableActivityContent, hasVisibleActivityContent } from './activity-content';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +26,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "./ui/dropdown-menu";
-import { PlanContent } from './plan-content';
 
 interface ActivityFeedProps {
   session: Session;
@@ -64,50 +63,6 @@ export function ActivityFeed({ session, onArchive, showCodeDiffs, onToggleCodeDi
     } catch {
       return 'Unknown date';
     }
-  };
-
-  const formatContent = (content: string, metadata?: Record<string, unknown>) => {
-    // 1. Handle Placeholders
-    if (content === '[userMessaged]' || content === '[agentMessaged]') {
-        // Try to recover content from metadata if available
-        const realContent = metadata?.original_content || metadata?.message || metadata?.text;
-        if (realContent && typeof realContent === 'string') {
-             // If we found real content, recursively format it
-             return formatContent(realContent, undefined);
-        }
-
-        if (content === '[userMessaged]') return <span className="text-white/50 italic">Message sent</span>;
-        if (content === '[agentMessaged]') return <span className="text-white/50 italic">Agent working...</span>;
-    }
-
-    // 2. Try JSON Parsing
-    if (content.startsWith('{') || content.startsWith('[')) {
-        try {
-          const parsed = JSON.parse(content);
-
-          // Handle Empty JSON
-          if (typeof parsed === 'object' && parsed !== null) {
-             if (Array.isArray(parsed) && parsed.length === 0) return null;
-             if (!Array.isArray(parsed) && Object.keys(parsed).length === 0) return null;
-          }
-
-          // Handle Plan Content
-          if (Array.isArray(parsed) || (parsed.steps && Array.isArray(parsed.steps))) {
-            return <PlanContent content={parsed} />;
-          }
-
-          return <pre className="text-[11px] overflow-x-auto font-mono bg-muted/50 p-2 rounded">{JSON.stringify(parsed, null, 2)}</pre>;
-        } catch {
-          // Fall through to markdown
-        }
-    }
-
-    // 3. Render as Markdown
-    return (
-        <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:text-xs prose-p:leading-relaxed prose-p:break-words prose-headings:text-xs prose-headings:font-semibold prose-headings:mb-1 prose-headings:mt-2 prose-ul:text-xs prose-ol:text-xs prose-li:text-xs prose-li:my-0.5 prose-code:text-[11px] prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:break-all prose-pre:text-[11px] prose-pre:bg-muted prose-pre:p-2 prose-pre:overflow-x-auto prose-blockquote:text-xs prose-blockquote:border-l-primary prose-strong:font-semibold">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-        </div>
-    );
   };
 
   const loadActivities = useCallback(async (isInitialLoad = true) => {
@@ -242,22 +197,22 @@ export function ActivityFeed({ session, onArchive, showCodeDiffs, onToggleCodeDi
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleExport = (format: 'json' | 'txt' | 'md') => {
-    let content = '';
-    const filename = `session-${session.id.substring(0, 8)}.${format}`;
+  const handlePrintTranscript = () => {
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700');
+    if (!printWindow) return;
 
-    if (format === 'json') {
-      content = JSON.stringify(activities, null, 2);
-    } else {
-      content = activities.map(a => {
-        const header = `[${formatDate(a.createdAt)}] ${a.role.toUpperCase()} (${a.type})`;
-        return format === 'md'
-          ? `### ${header}\n\n${a.content}\n\n`
-          : `${header}\n${a.content}\n\n-------------------\n\n`;
-      }).join('');
-    }
+    printWindow.document.write(buildPrintableTranscriptHtml(session, activities, formatDate));
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
 
-    const blob = new Blob([content], { type: 'text/plain' });
+  const handleExport = (format: ActivityExportFormat) => {
+    const metadata = getActivityExportMetadata(format);
+    const filename = `session-${session.id.substring(0, 8)}.${metadata.extension}`;
+    const content = buildActivityExportContent(format, activities, formatDate);
+
+    const blob = new Blob([content], { type: metadata.mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -320,27 +275,7 @@ export function ActivityFeed({ session, onArchive, showCodeDiffs, onToggleCodeDi
 
   const filteredActivities = activities.filter((activity) => {
     if (activity.bashOutput || activity.diff || activity.media) return true;
-    const content = activity.content?.trim();
-    if (!content) return false;
-
-    // Aggressive filter for empty JSON/Arrays (including whitespace)
-    const cleanContent = content.replace(/\s/g, '');
-    if (cleanContent === '{}' || cleanContent === '[]') return false;
-
-    // Filter empty parsed JSON objects
-    if (content.startsWith('{') || content.startsWith('[')) {
-      try {
-        const parsed = JSON.parse(content);
-        if (typeof parsed === 'object' && parsed !== null) {
-          if (Array.isArray(parsed) && parsed.length === 0) return false;
-          if (!Array.isArray(parsed) && Object.keys(parsed).length === 0) return false;
-        }
-      } catch {
-        // Not valid JSON, process as text
-      }
-    }
-
-    return true;
+    return hasVisibleActivityContent(activity.content, activity.metadata);
   });
 
   const latestActivity = filteredActivities.length > 0 ? filteredActivities[filteredActivities.length - 1] : null;
@@ -421,8 +356,11 @@ export function ActivityFeed({ session, onArchive, showCodeDiffs, onToggleCodeDi
                     <Download className="mr-2 h-3.5 w-3.5" /> Export Chat
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="bg-zinc-950 border-white/10 text-white/80">
+                    <DropdownMenuItem onClick={handlePrintTranscript} className="text-xs cursor-pointer">
+                      <Printer className="mr-2 h-3.5 w-3.5" /> PDF Print
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleExport('md')} className="text-xs cursor-pointer">Markdown</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport('txt')} className="text-xs cursor-pointer">Text</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('txt')} className="text-xs cursor-pointer">TXT</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleExport('json')} className="text-xs cursor-pointer">JSON</DropdownMenuItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
@@ -504,7 +442,7 @@ export function ActivityFeed({ session, onArchive, showCodeDiffs, onToggleCodeDi
                 if (Array.isArray(item)) {
                   const firstActivity = item[0];
                   // Filter nulls (empty JSONs that slipped)
-                  const validItems = item.filter(a => formatContent(a.content, a.metadata) !== null);
+                  const validItems = item.filter((activity) => hasVisibleActivityContent(activity.content, activity.metadata));
                   if (validItems.length === 0) return null;
 
                   return (
@@ -519,7 +457,9 @@ export function ActivityFeed({ session, onArchive, showCodeDiffs, onToggleCodeDi
                           <div className="space-y-2">
                             {validItems.map((activity, idx) => (
                               <div key={activity.id} className={idx > 0 ? 'pt-2 border-t border-white/[0.08]' : ''}>
-                                <div className="text-[11px] leading-relaxed text-white/90 break-words">{formatContent(activity.content, activity.metadata)}</div>
+                                <div className="text-[11px] leading-relaxed text-white/90 break-words">
+                                  <ActivityContent content={activity.content} metadata={activity.metadata} />
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -530,62 +470,73 @@ export function ActivityFeed({ session, onArchive, showCodeDiffs, onToggleCodeDi
                 }
 
                 const activity = item;
-                const contentNode = formatContent(activity.content, activity.metadata);
+                const copyableContent = getCopyableActivityContent(activity.content, activity.metadata);
                 // Allow rendering if media is present, even if content is empty (though activity filter handles this)
-                if (contentNode === null && !activity.media) return null;
+                if (!hasVisibleActivityContent(activity.content, activity.metadata) && !activity.media) return null;
 
                 // Only show approve button if session is waiting for approval AND this is the latest plan AND not archived
                 const showApprove = !isArchived && activity.type === 'plan' && session.status === 'awaiting_approval';
 
                 return (
-                  <div key={activity.id} className={`flex gap-2.5 ${activity.role === 'user' ? 'flex-row-reverse' : ''} ${newActivityIds.has(activity.id) ? 'animate-in fade-in slide-in-from-bottom-2 duration-500' : ''}`}>
+                  <div key={activity.id} className={`group/message flex gap-2.5 ${activity.role === 'user' ? 'flex-row-reverse' : ''} ${newActivityIds.has(activity.id) ? 'animate-in fade-in slide-in-from-bottom-2 duration-500' : ''}`}>
                     <Avatar className="h-6 w-6 shrink-0 mt-0.5 bg-zinc-900 border border-white/10">{getActivityIcon(activity)}</Avatar>
-                    <Card className={`flex-1 border-white/[0.08] ${activity.role === 'user' ? 'bg-purple-950/20 border-purple-500/20' : 'bg-zinc-950/50'}`}>
-                      <CardContent className="p-3 group/card relative">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className={`text-[9px] h-4 px-1.5 font-mono uppercase tracking-wider ${getActivityTypeColor(activity.type)} border-transparent text-black font-bold`}>{activity.type}</Badge>
-                          <span className="text-[9px] font-mono text-white/40 tracking-wide">{formatDate(activity.createdAt)}</span>
+                    <div className={`flex-1 min-w-0 flex flex-col ${activity.role === 'user' ? 'items-end' : ''}`}>
+                      <Card className={`w-full border-white/[0.08] ${activity.role === 'user' ? 'bg-purple-950/20 border-purple-500/20' : 'bg-zinc-950/50'}`}>
+                        <CardContent className="p-3 relative">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline" className={`text-[9px] h-4 px-1.5 font-mono uppercase tracking-wider ${getActivityTypeColor(activity.type)} border-transparent text-black font-bold`}>{activity.type}</Badge>
+                            <span className="text-[9px] font-mono text-white/40 tracking-wide">{formatDate(activity.createdAt)}</span>
+                          </div>
+
+                          {activity.media && activity.media.data && (
+                             <div className="mb-2 rounded overflow-hidden border border-white/10">
+                                <img
+                                  src={`data:${activity.media.mimeType};base64,${activity.media.data}`}
+                                  alt="Generated Artifact"
+                                  className="max-w-full h-auto block"
+                                />
+                             </div>
+                          )}
+
+                          <div className="text-[11px] leading-relaxed text-white/90 break-words">
+                            <ActivityContent content={activity.content} metadata={activity.metadata} />
+                          </div>
+
+                          {activity.bashOutput && (
+                            <div className="mt-3 pt-3 border-t border-white/[0.08]">
+                              <button onClick={() => toggleBashOutput(activity.id)} className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-green-400 hover:text-green-300 transition-colors mb-2">
+                                {expandedBashOutputs.has(activity.id) ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                                <Terminal className="h-3.5 w-3.5" />
+                                <span>Command Output</span>
+                              </button>
+                              {expandedBashOutputs.has(activity.id) && <BashOutput output={activity.bashOutput} />}
+                            </div>
+                          )}
+                          {showApprove && (
+                            <div className="mt-3 pt-3 border-t border-white/[0.08]">
+                              <Button onClick={handleApprovePlan} disabled={approvingPlan} size="sm" className="h-7 px-3 text-[9px] font-mono uppercase tracking-widest bg-purple-600 hover:bg-purple-500 text-white border-0">
+                                {approvingPlan ? 'Approving...' : 'Approve Plan'}
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      {copyableContent && (
+                        <div className={`mt-1 flex items-center gap-1 px-1 opacity-0 transition-opacity group-hover/message:opacity-100 focus-within:opacity-100 ${activity.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-4 w-4 ml-auto opacity-0 group-hover/card:opacity-100 transition-opacity"
-                            onClick={() => handleCopy(activity.content, activity.id)}
+                            aria-label="Copy message"
+                            title="Copy message"
+                            className="h-6 w-6 text-white/40 hover:text-white/80 hover:bg-white/5"
+                            onClick={() => handleCopy(copyableContent, activity.id)}
                           >
-                            {copiedId === activity.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-white/40" />}
+                            {copiedId === activity.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                           </Button>
                         </div>
-
-                        {activity.media && activity.media.data && (
-                           <div className="mb-2 rounded overflow-hidden border border-white/10">
-                              <img
-                                src={`data:${activity.media.mimeType};base64,${activity.media.data}`}
-                                alt="Generated Artifact"
-                                className="max-w-full h-auto block"
-                              />
-                           </div>
-                        )}
-
-                        <div className="text-[11px] leading-relaxed text-white/90 break-words">{contentNode}</div>
-
-                        {activity.bashOutput && (
-                          <div className="mt-3 pt-3 border-t border-white/[0.08]">
-                            <button onClick={() => toggleBashOutput(activity.id)} className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-green-400 hover:text-green-300 transition-colors mb-2">
-                              {expandedBashOutputs.has(activity.id) ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                              <Terminal className="h-3.5 w-3.5" />
-                              <span>Command Output</span>
-                            </button>
-                            {expandedBashOutputs.has(activity.id) && <BashOutput output={activity.bashOutput} />}
-                          </div>
-                        )}
-                        {showApprove && (
-                          <div className="mt-3 pt-3 border-t border-white/[0.08]">
-                            <Button onClick={handleApprovePlan} disabled={approvingPlan} size="sm" className="h-7 px-3 text-[9px] font-mono uppercase tracking-widest bg-purple-600 hover:bg-purple-500 text-white border-0">
-                              {approvingPlan ? 'Approving...' : 'Approve Plan'}
-                            </Button>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
+                      )}
+                    </div>
                   </div>
                 );
               });

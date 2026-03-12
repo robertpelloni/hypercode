@@ -14,8 +14,9 @@ Borg is being stabilized toward a focused `1.0` release around four core capabil
 This repository is in an active cleanup/stabilization phase.
 
 - Root `pnpm install` was verified successfully on Windows in this repo state.
-- The Docker Compose file parses cleanly.
-- Full container boot requires a running Docker engine/Desktop.
+- `docker compose up -d --build` was verified successfully on Windows with Docker Desktop running.
+- The dashboard responded at `http://localhost:3001` and the current default route resolved to `http://localhost:3001/dashboard/mcp`.
+- The first full Docker build is substantial; on this Windows workstation it completed in about 8.6 minutes.
 
 ## Quick start
 
@@ -44,6 +45,11 @@ Expected URLs once the stack is up:
 - Dashboard: `http://localhost:3001`
 - Core API: `http://localhost:3000`
 
+Notes:
+
+- The current app redirects into the dashboard experience, which presently lands on `http://localhost:3001/dashboard/mcp`.
+- The first image build can take several minutes because it builds the core packages and the Next.js dashboard inside Docker.
+
 ### Windows note
 
 If Docker reports an error like:
@@ -66,6 +72,17 @@ It is intended to:
 - supervise external agent/CLI sessions
 - manage provider/model selection and fallback
 - expose system state through a practical dashboard
+
+## Borg 1.0 focus
+
+The repository still contains legacy and experimental surfaces, but the current product focus is intentionally narrow:
+
+- **MCP Master Router**
+- **Model Fallback & Provider Routing**
+- **Session Supervisor**
+- **Web Dashboard**
+
+If a change does not make those workflows more reliable, more testable, or easier for a new user to run in five minutes, it is probably not a Borg 1.0 priority.
 
 ## Repository layout
 

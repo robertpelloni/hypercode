@@ -1,0 +1,62 @@
+{
+  "mcpServers": {
+    "test_stdio_import": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "description": null,
+      "type": "STDIO"
+    },
+    "robertpelloni-com": {
+      "url": "https://example.com/sse",
+      "description": null,
+      "type": "SSE"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem@latest",
+        "C:\\Users\\hyper\\workspace\\"
+      ],
+      "description": null,
+      "type": "STDIO"
+    },
+    "github": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "description": null,
+      "type": "STREAMABLE_HTTP"
+    },
+    "dbhub": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@bytebase/dbhub@latest",
+        "--transport",
+        "stdio",
+        "--dsn",
+        "postgres://user:password@localhost:5432/dbname"
+      ],
+      "description": null,
+      "type": "STDIO"
+    },
+    "supabase": {
+      "url": "https://mcp.supabase.com/mcp?project_ref=qqnannkelftsgavibczq",
+      "description": null,
+      "type": "STREAMABLE_HTTP"
+    },
+    "anyquery": {
+      "command": "C:\\Users\\hyper\\AppData\\Local\\Microsoft\\WinGet\\Packages\\JulienCagniart.anyquery_Microsoft.Winget.Source_8wekyb3d8bbwe\\anyquery.exe",
+      "args": [
+        "mcp",
+        "--stdio",
+        "--database",
+        "sqlite.db"
+      ],
+      "description": null,
+      "type": "STDIO"
+    }
+  }
+}

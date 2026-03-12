@@ -1,5 +1,33 @@
 import { z } from 'zod';
-import { t, publicProcedure, getLLMService } from '../lib/trpc-core.js';
+import { adminProcedure, t, publicProcedure, getLLMService } from '../lib/trpc-core.js';
+import type { ProviderRoutingStrategy, ProviderTaskType } from '../providers/types.js';
+
+interface ProviderQuotaRuntime {
+    provider: string;
+    name: string;
+    configured: boolean;
+    authenticated: boolean;
+    authMethod: string;
+    tier: string;
+    limit: number | null;
+    used: number;
+    remaining: number | null;
+    resetDate: string | null;
+    rateLimitRpm: number | null;
+    availability: string;
+    lastError?: string;
+}
+
+interface BillingSelectorRuntime {
+    getAvailableModels?: () => BillingModelRuntime[];
+    getFallbackChain?: (options?: { routingTaskType?: ProviderTaskType }) => FallbackEntryRuntime[];
+    getProviderSnapshots?: () => ProviderQuotaRuntime[];
+    getRoutingStrategy?: () => ProviderRoutingStrategy;
+    setRoutingStrategy?: (strategy: ProviderRoutingStrategy) => void;
+    getTaskRoutingRules?: () => Record<ProviderTaskType, ProviderRoutingStrategy>;
+    setTaskRoutingStrategy?: (taskType: ProviderTaskType, strategy: ProviderRoutingStrategy) => void;
+    resetTaskRoutingStrategy?: (taskType: ProviderTaskType) => void;
+}
 
 interface BillingModelRuntime {
     id: string;
@@ -16,6 +44,25 @@ interface FallbackEntryRuntime {
     provider: string;
     model?: string;
     reason?: string;
+}
+
+export const TASK_TYPE_VALUES = ['coding', 'planning', 'research', 'general', 'worker', 'supervisor'] as const satisfies readonly ProviderTaskType[];
+const TASK_TYPES: ProviderTaskType[] = [...TASK_TYPE_VALUES];
+
+export function buildFallbackChainResponse(
+    selector: BillingSelectorRuntime,
+    taskType?: ProviderTaskType,
+) {
+    const chain = (selector.getFallbackChain?.(taskType ? { routingTaskType: taskType } : undefined) ?? []) as FallbackEntryRuntime[];
+    return {
+        selectedTaskType: taskType ?? null,
+        chain: chain.map((entry, index: number) => ({
+            priority: index + 1,
+            provider: entry.provider,
+            model: entry.model,
+            reason: entry.reason ?? 'configured',
+        })),
+    };
 }
 
 export const billingRouter = t.router({
@@ -54,6 +101,26 @@ export const billingRouter = t.router({
     getProviderQuotas: publicProcedure.query(async () => {
         const llm = getLLMService();
         const quota = llm.modelSelector.getQuotaService();
+        const selector = llm.modelSelector as typeof llm.modelSelector & BillingSelectorRuntime;
+
+        const normalized = selector.getProviderSnapshots?.();
+        if (normalized && normalized.length > 0) {
+            return normalized.map((provider) => ({
+                provider: provider.provider,
+                name: provider.name,
+                configured: provider.configured,
+                authenticated: provider.authenticated,
+                authMethod: provider.authMethod,
+                tier: provider.tier,
+                limit: provider.limit,
+                used: provider.used,
+                remaining: provider.remaining,
+                resetDate: provider.resetDate,
+                rateLimitRpm: provider.rateLimitRpm,
+                availability: provider.availability,
+                lastError: provider.lastError ?? null,
+            }));
+        }
 
         // Build quota info for each configured provider
         const providers = [
@@ -73,12 +140,16 @@ export const billingRouter = t.router({
                 provider: p.id,
                 name: p.name,
                 configured: !!process.env[`${p.id.toUpperCase()}_API_KEY`],
+                authenticated: !!process.env[`${p.id.toUpperCase()}_API_KEY`],
+                authMethod: !!process.env[`${p.id.toUpperCase()}_API_KEY`] ? 'api_key' : 'none',
                 tier: quotaInfo?.tier ?? 'unknown',
                 limit: quotaInfo?.limit ?? null,
                 used: quotaInfo?.used ?? 0,
                 remaining: quotaInfo?.remaining ?? null,
                 resetDate: quotaInfo?.resetDate ?? null,
                 rateLimitRpm: quotaInfo?.rateLimitRpm ?? null,
+                availability: !!process.env[`${p.id.toUpperCase()}_API_KEY`] ? 'available' : 'missing_config',
+                lastError: null,
             };
         });
     }),
@@ -113,7 +184,8 @@ export const billingRouter = t.router({
 
     /** Get model-level pricing and efficiency data */
     getModelPricing: publicProcedure.query(async () => {
-        const selector = getLLMService().modelSelector;
+        const llm = getLLMService();
+        const selector = llm.modelSelector as typeof llm.modelSelector & BillingSelectorRuntime;
 
         // Get available models with their pricing info
         const models = (selector.getAvailableModels?.() ?? []) as BillingModelRuntime[];
@@ -132,16 +204,91 @@ export const billingRouter = t.router({
     }),
 
     /** Get current fallback chain configuration */
-    getFallbackChain: publicProcedure.query(async () => {
-        const selector = getLLMService().modelSelector;
-        const chain = (selector.getFallbackChain?.() ?? []) as FallbackEntryRuntime[];
+    getFallbackChain: publicProcedure
+        .input(z.object({
+            taskType: z.enum(TASK_TYPE_VALUES).optional(),
+        }).optional())
+        .query(async ({ input }) => {
+        const llm = getLLMService();
+        const selector = llm.modelSelector as typeof llm.modelSelector & BillingSelectorRuntime;
+        return buildFallbackChainResponse(selector, input?.taskType);
+    }),
+
+    /** Get task-specific routing rules and top-ranked fallback previews */
+    getTaskRoutingRules: publicProcedure.query(async () => {
+        const llm = getLLMService();
+        const selector = llm.modelSelector as typeof llm.modelSelector & BillingSelectorRuntime;
+        const taskRules = selector.getTaskRoutingRules?.() ?? {
+            coding: 'cheapest',
+            planning: 'best',
+            research: 'best',
+            general: 'round-robin',
+            worker: 'cheapest',
+            supervisor: 'best',
+        } satisfies Record<ProviderTaskType, ProviderRoutingStrategy>;
+
+        const defaultStrategy = selector.getRoutingStrategy?.() ?? 'best';
+
         return {
-            chain: chain.map((entry, index: number) => ({
-                priority: index + 1,
-                provider: entry.provider,
-                model: entry.model,
-                reason: entry.reason ?? 'configured',
+            defaultStrategy,
+            rules: TASK_TYPES.map((taskType) => ({
+                taskType,
+                strategy: taskRules[taskType] ?? defaultStrategy,
+                fallbackPreview: (selector.getFallbackChain?.({ routingTaskType: taskType }) ?? [])
+                    .slice(0, 3)
+                    .map((entry) => ({
+                        provider: entry.provider,
+                        model: entry.model,
+                        reason: entry.reason ?? 'configured',
+                    })),
             })),
         };
     }),
+
+    setRoutingStrategy: adminProcedure
+        .input(z.object({
+            strategy: z.enum(['cheapest', 'best', 'round-robin']),
+        }))
+        .mutation(async ({ input }) => {
+            const llm = getLLMService();
+            const selector = llm.modelSelector as typeof llm.modelSelector & BillingSelectorRuntime;
+
+            selector.setRoutingStrategy?.(input.strategy);
+
+            return {
+                ok: true,
+                strategy: selector.getRoutingStrategy?.() ?? input.strategy,
+            };
+        }),
+
+    setTaskRoutingRule: adminProcedure
+        .input(z.object({
+            taskType: z.enum(TASK_TYPE_VALUES),
+            strategy: z.enum(['cheapest', 'best', 'round-robin']).nullable(),
+        }))
+        .mutation(async ({ input }) => {
+            const llm = getLLMService();
+            const selector = llm.modelSelector as typeof llm.modelSelector & BillingSelectorRuntime;
+
+            if (input.strategy) {
+                selector.setTaskRoutingStrategy?.(input.taskType, input.strategy);
+            } else {
+                selector.resetTaskRoutingStrategy?.(input.taskType);
+            }
+
+            const rules = selector.getTaskRoutingRules?.() ?? {
+                coding: 'cheapest',
+                planning: 'best',
+                research: 'best',
+                general: 'round-robin',
+                worker: 'cheapest',
+                supervisor: 'best',
+            } satisfies Record<ProviderTaskType, ProviderRoutingStrategy>;
+
+            return {
+                ok: true,
+                taskType: input.taskType,
+                strategy: rules[input.taskType],
+            };
+        }),
 });

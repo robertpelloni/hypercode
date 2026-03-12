@@ -1,4 +1,4 @@
-import { ConfigKey, ConfigKeyEnum } from "../types/metamcp/index.js";
+import { ConfigKey, ConfigKeyEnum } from "../types/mcp-admin/index.js";
 import { configRepo } from "../db/repositories/index.js";
 
 export const configService = {

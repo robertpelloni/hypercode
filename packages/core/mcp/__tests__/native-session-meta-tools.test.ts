@@ -20,7 +20,14 @@ describe('NativeSessionMetaTools', () => {
 
         const search = await manager.handleToolCall('search_tools', { query: 'github' });
         expect(search?.isError).toBeFalsy();
-        expect(search?.content[0].text).toContain('github__create_issue');
+        const parsedSearch = JSON.parse(search?.content[0].text ?? '[]');
+        expect(parsedSearch[0]).toMatchObject({
+            name: 'github__create_issue',
+            matchReason: 'tool name prefix match',
+            loaded: false,
+            hydrated: false,
+            requiresSchemaHydration: true,
+        });
 
         expect(manager.getVisibleLoadedTools()).toEqual([]);
 

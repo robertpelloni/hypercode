@@ -1,8 +1,0 @@
-[*]
-../mcp/browser/
-../mcp/sdk/
-../mcp/test/
-../common/
-
-[generateAgents.ts]
-../mcp/test/

@@ -17,6 +17,21 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { MemoryManager } from './MemoryManager.js';
+import {
+    buildSessionSummaryContent,
+    buildStructuredSessionSummary,
+    getStructuredSessionSummary,
+    type SessionSummaryInput,
+} from './sessionSummaryMemory.js';
+import { buildSessionBootstrapPrompt } from './sessionBootstrapMemory.js';
+import { buildToolContextPayload } from './toolContextMemory.js';
+import {
+    buildStructuredUserPrompt,
+    buildUserPromptContent,
+    getStructuredUserPrompt,
+    type UserPromptInput,
+    type UserPromptRole,
+} from './sessionPromptMemory.js';
 
 // Memory types
 export type MemoryType = 'session' | 'working' | 'long_term';
@@ -71,6 +86,250 @@ export interface MemoryServiceOptions {
     consolidationThreshold?: number;  // Access count to promote to long-term
     maxSessionMemories?: number;
     maxWorkingMemories?: number;
+}
+
+export type ObservationType = 'discovery' | 'decision' | 'progress' | 'warning' | 'fix';
+
+export interface StructuredObservation {
+    type: ObservationType;
+    title: string;
+    subtitle?: string;
+    narrative: string;
+    facts: string[];
+    concepts: string[];
+    filesRead: string[];
+    filesModified: string[];
+    toolName?: string;
+    contentHash: string;
+    recordedAt: number;
+}
+
+export interface ObservationInput {
+    toolName?: string;
+    title?: string;
+    subtitle?: string;
+    narrative?: string;
+    rawInput?: unknown;
+    rawOutput?: unknown;
+    facts?: string[];
+    concepts?: string[];
+    filesRead?: string[];
+    filesModified?: string[];
+    type?: ObservationType;
+    namespace?: MemoryNamespace;
+    metadata?: MemoryMetadata;
+}
+
+export interface ObservationSearchOptions {
+    namespace?: MemoryNamespace;
+    type?: ObservationType;
+    limit?: number;
+    tags?: string[];
+}
+
+export interface ToolContextInput {
+    toolName: string;
+    args?: unknown;
+    activeGoal?: string | null;
+    lastObjective?: string | null;
+}
+
+export interface UserPromptSearchOptions {
+    role?: UserPromptRole;
+    limit?: number;
+}
+
+const OBSERVATION_DEDUP_WINDOW_MS = 30_000;
+const OBSERVATION_MAX_FACTS = 5;
+const OBSERVATION_MAX_CONCEPTS = 8;
+
+function uniqueStrings(values: Array<string | undefined | null>, maxItems?: number): string[] {
+    const seen = new Set<string>();
+    const normalized: string[] = [];
+
+    for (const value of values) {
+        if (typeof value !== 'string') continue;
+        const trimmed = value.trim();
+        if (!trimmed) continue;
+        const key = trimmed.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        normalized.push(trimmed);
+
+        if (typeof maxItems === 'number' && normalized.length >= maxItems) {
+            break;
+        }
+    }
+
+    return normalized;
+}
+
+function safeJsonStringify(value: unknown): string {
+    const seen = new WeakSet<object>();
+
+    return JSON.stringify(value, (_key, currentValue) => {
+        if (typeof currentValue === 'object' && currentValue !== null) {
+            if (seen.has(currentValue)) {
+                return '[Circular]';
+            }
+            seen.add(currentValue);
+        }
+
+        return currentValue;
+    }, 2);
+}
+
+function normalizeText(value: unknown, maxLength: number = 800): string {
+    if (typeof value === 'string') {
+        return value.trim().slice(0, maxLength);
+    }
+
+    if (value == null) {
+        return '';
+    }
+
+    const serialized = safeJsonStringify(value);
+    return serialized.trim().slice(0, maxLength);
+}
+
+function sanitizeSentence(value: string, maxLength: number = 140): string {
+    return value.replace(/\s+/g, ' ').trim().slice(0, maxLength);
+}
+
+function firstUsefulSentence(value: string): string {
+    const sentence = value.split(/(?<=[.!?])\s+/).find(part => part.trim().length > 0) ?? value;
+    return sanitizeSentence(sentence);
+}
+
+function extractFacts(text: string, providedFacts: string[] = []): string[] {
+    if (providedFacts.length > 0) {
+        return uniqueStrings(providedFacts, OBSERVATION_MAX_FACTS);
+    }
+
+    const lineFacts = text
+        .split(/\r?\n/)
+        .map(line => line.replace(/^[-*\d.\s]+/, '').trim())
+        .filter(line => line.length >= 12);
+
+    if (lineFacts.length > 0) {
+        return uniqueStrings(lineFacts, OBSERVATION_MAX_FACTS);
+    }
+
+    const sentenceFacts = text
+        .split(/(?<=[.!?])\s+/)
+        .map(sentence => sanitizeSentence(sentence, 180))
+        .filter(sentence => sentence.length >= 12);
+
+    return uniqueStrings(sentenceFacts, OBSERVATION_MAX_FACTS);
+}
+
+function inferObservationType(toolName: string | undefined, narrative: string, providedType?: ObservationType): ObservationType {
+    if (providedType) {
+        return providedType;
+    }
+
+    const loweredTool = (toolName ?? '').toLowerCase();
+    const loweredNarrative = narrative.toLowerCase();
+
+    if (/(error|failed|exception|warning|timeout)/.test(loweredNarrative)) {
+        return 'warning';
+    }
+
+    if (/(fix|patch|repair|resolve)/.test(loweredTool) || /(fixed|resolved|patched)/.test(loweredNarrative)) {
+        return 'fix';
+    }
+
+    if (/(read|grep|search|inspect|list|query)/.test(loweredTool)) {
+        return 'discovery';
+    }
+
+    if (/(decide|choose|select|plan)/.test(loweredNarrative)) {
+        return 'decision';
+    }
+
+    return 'progress';
+}
+
+function buildObservationTitle(toolName: string | undefined, narrative: string, providedTitle?: string): string {
+    if (providedTitle?.trim()) {
+        return sanitizeSentence(providedTitle);
+    }
+
+    if (toolName?.trim()) {
+        return sanitizeSentence(`${toolName}: ${firstUsefulSentence(narrative)}`);
+    }
+
+    return firstUsefulSentence(narrative) || 'Recorded observation';
+}
+
+function buildObservationConcepts(
+    toolName: string | undefined,
+    type: ObservationType,
+    metadata: MemoryMetadata,
+    providedConcepts: string[] = [],
+): string[] {
+    const tagValues = Array.isArray(metadata.tags) ? metadata.tags : [];
+    const toolTokens = (toolName ?? '')
+        .split(/[^a-zA-Z0-9]+/)
+        .map(token => token.trim().toLowerCase())
+        .filter(token => token.length >= 3);
+
+    return uniqueStrings([
+        ...providedConcepts,
+        ...tagValues,
+        ...toolTokens,
+        type,
+    ], OBSERVATION_MAX_CONCEPTS);
+}
+
+function normalizeFileList(values: string[] = []): string[] {
+    return uniqueStrings(values.map(value => value.replace(/\\/g, '/')), 20);
+}
+
+function buildObservationContent(observation: StructuredObservation): string {
+    const factsBlock = observation.facts.length > 0
+        ? `\nFacts:\n${observation.facts.map(fact => `- ${fact}`).join('\n')}`
+        : '';
+    const filesBlock = observation.filesRead.length > 0 || observation.filesModified.length > 0
+        ? `\nFiles:\n${[
+            ...observation.filesRead.map(file => `- read: ${file}`),
+            ...observation.filesModified.map(file => `- modified: ${file}`),
+        ].join('\n')}`
+        : '';
+
+    return `${observation.title}\n${observation.narrative}${factsBlock}${filesBlock}`.trim();
+}
+
+function getStructuredObservation(metadata: MemoryMetadata): StructuredObservation | null {
+    const candidate = metadata.structuredObservation;
+
+    if (!candidate || typeof candidate !== 'object') {
+        return null;
+    }
+
+    const observation = candidate as Partial<StructuredObservation>;
+    if (typeof observation.title !== 'string' || typeof observation.narrative !== 'string' || typeof observation.contentHash !== 'string') {
+        return null;
+    }
+
+    const type = observation.type;
+    if (type !== 'discovery' && type !== 'decision' && type !== 'progress' && type !== 'warning' && type !== 'fix') {
+        return null;
+    }
+
+    return {
+        type,
+        title: observation.title,
+        subtitle: typeof observation.subtitle === 'string' ? observation.subtitle : undefined,
+        narrative: observation.narrative,
+        facts: Array.isArray(observation.facts) ? observation.facts.filter((fact): fact is string => typeof fact === 'string') : [],
+        concepts: Array.isArray(observation.concepts) ? observation.concepts.filter((concept): concept is string => typeof concept === 'string') : [],
+        filesRead: Array.isArray(observation.filesRead) ? observation.filesRead.filter((file): file is string => typeof file === 'string') : [],
+        filesModified: Array.isArray(observation.filesModified) ? observation.filesModified.filter((file): file is string => typeof file === 'string') : [],
+        toolName: typeof observation.toolName === 'string' ? observation.toolName : undefined,
+        contentHash: observation.contentHash,
+        recordedAt: typeof observation.recordedAt === 'number' ? observation.recordedAt : Date.now(),
+    };
 }
 
 /**
@@ -394,6 +653,318 @@ export class AgentMemoryService {
     }
 
     /**
+     * Record a structured observation inspired by the claude-mem observation pipeline.
+     * This is intentionally heuristic for now: it normalizes raw tool output into a typed,
+     * deduplicated working-memory record that Borg can search immediately.
+     */
+    async recordObservation(input: ObservationInput): Promise<Memory> {
+        const namespace = input.namespace ?? 'project';
+        const metadata = input.metadata ?? {};
+        const rawInputText = normalizeText(input.rawInput, 400);
+        const rawOutputText = normalizeText(input.rawOutput, 1200);
+        const narrative = sanitizeSentence(
+            input.narrative
+            ?? rawOutputText
+            ?? rawInputText
+            ?? input.title
+            ?? 'Recorded observation',
+            600,
+        );
+        const type = inferObservationType(input.toolName, narrative, input.type);
+        const title = buildObservationTitle(input.toolName, narrative, input.title);
+        const facts = extractFacts(rawOutputText || narrative, input.facts);
+        const concepts = buildObservationConcepts(input.toolName, type, metadata, input.concepts);
+        const filesRead = normalizeFileList(input.filesRead);
+        const filesModified = normalizeFileList(input.filesModified);
+
+        const contentHash = crypto.createHash('sha256').update(safeJsonStringify({
+            toolName: input.toolName ?? null,
+            title,
+            narrative,
+            rawInput: rawInputText,
+            rawOutput: rawOutputText,
+            facts,
+            concepts,
+            filesRead,
+            filesModified,
+            type,
+        })).digest('hex');
+
+        const existing = Array.from(this.memories.values()).find(memory => {
+            const observation = getStructuredObservation(memory.metadata);
+            if (!observation) return false;
+            if (observation.contentHash !== contentHash) return false;
+            return Date.now() - memory.createdAt.getTime() <= OBSERVATION_DEDUP_WINDOW_MS;
+        });
+
+        if (existing) {
+            existing.accessedAt = new Date();
+            existing.accessCount += 1;
+            this.dirty = true;
+            this.scheduleSave();
+            return existing;
+        }
+
+        const observation: StructuredObservation = {
+            type,
+            title,
+            subtitle: input.subtitle ? sanitizeSentence(input.subtitle) : undefined,
+            narrative,
+            facts,
+            concepts,
+            filesRead,
+            filesModified,
+            toolName: input.toolName,
+            contentHash,
+            recordedAt: Date.now(),
+        };
+
+        const memoryMetadata: MemoryMetadata = {
+            ...metadata,
+            source: metadata.source ?? input.toolName ?? 'observation',
+            tags: uniqueStrings([...(metadata.tags ?? []), ...concepts]),
+            structuredObservation: observation,
+            observationType: type,
+            observationHash: contentHash,
+            toolName: input.toolName,
+            filesRead,
+            filesModified,
+            rawInput: rawInputText || undefined,
+            rawOutput: rawOutputText || undefined,
+        };
+
+        return await this.add(buildObservationContent(observation), 'working', namespace, memoryMetadata);
+    }
+
+    async captureSessionSummary(input: SessionSummaryInput): Promise<Memory> {
+        const metadata = (input.metadata ?? {}) as MemoryMetadata;
+        const logTail = uniqueStrings((input.logTail ?? []).map((line) => sanitizeSentence(line, 240)), 12);
+        const structuredSummary = buildStructuredSessionSummary(input, Date.now(), logTail);
+
+        const existing = Array.from(this.memories.values()).find((memory) => {
+            const summary = getStructuredSessionSummary(memory.metadata);
+            if (!summary) return false;
+            if (summary.contentHash !== structuredSummary.contentHash) return false;
+            return Date.now() - memory.createdAt.getTime() <= OBSERVATION_DEDUP_WINDOW_MS;
+        });
+
+        if (existing) {
+            existing.accessedAt = new Date();
+            existing.accessCount += 1;
+            this.dirty = true;
+            this.scheduleSave();
+            return existing;
+        }
+
+        return await this.add(buildSessionSummaryContent(structuredSummary), 'long_term', 'project', {
+            ...metadata,
+            source: metadata.source ?? 'session_summary',
+            section: metadata.section ?? 'general',
+            tags: uniqueStrings([...(Array.isArray(metadata.tags) ? metadata.tags : []), 'session-summary', structuredSummary.cliType, structuredSummary.status]),
+            sessionId: structuredSummary.sessionId,
+            structuredSessionSummary: structuredSummary,
+            memoryKind: 'session_summary',
+        });
+    }
+
+    async captureUserPrompt(input: UserPromptInput & { metadata?: MemoryMetadata }): Promise<Memory> {
+        const metadata = input.metadata ?? {};
+        const content = normalizeText(input.content, 400);
+        const role = input.role ?? 'prompt';
+        const contentHash = crypto.createHash('sha256').update(safeJsonStringify({
+            content,
+            role,
+            sessionId: input.sessionId ?? null,
+            activeGoal: input.activeGoal ?? null,
+            lastObjective: input.lastObjective ?? null,
+        })).digest('hex');
+
+        const existing = Array.from(this.memories.values()).find((memory) => {
+            const prompt = getStructuredUserPrompt(memory.metadata);
+            if (!prompt) return false;
+            if (prompt.contentHash !== contentHash) return false;
+            return Date.now() - memory.createdAt.getTime() <= OBSERVATION_DEDUP_WINDOW_MS;
+        });
+
+        if (existing) {
+            existing.accessedAt = new Date();
+            existing.accessCount += 1;
+            this.dirty = true;
+            this.scheduleSave();
+            return existing;
+        }
+
+        const promptNumber = this.getRecentUserPrompts(100).length + 1;
+        const structuredPrompt = buildStructuredUserPrompt({
+            ...input,
+            content,
+            role,
+            promptNumber,
+            recordedAt: Date.now(),
+            contentHash,
+        });
+
+        return await this.add(buildUserPromptContent(structuredPrompt), 'long_term', 'project', {
+            ...metadata,
+            source: metadata.source ?? 'user_prompt',
+            sessionId: structuredPrompt.sessionId,
+            tags: uniqueStrings([...(Array.isArray(metadata.tags) ? metadata.tags : []), 'user-prompt', role]),
+            structuredUserPrompt: structuredPrompt,
+            memoryKind: 'user_prompt',
+            promptRole: role,
+        });
+    }
+
+    async searchSessionSummaries(query: string, limit: number = 10): Promise<Memory[]> {
+        const results = await this.search(query, {
+            limit,
+            namespace: 'project',
+            type: 'long_term',
+            tags: ['session-summary'],
+        });
+
+        return results.filter((memory) => getStructuredSessionSummary(memory.metadata) !== null);
+    }
+
+    getRecentSessionSummaries(limit: number = 10): Memory[] {
+        return Array.from(this.memories.values())
+            .filter((memory) => memory.type === 'long_term' && getStructuredSessionSummary(memory.metadata) !== null)
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+            .slice(0, limit);
+    }
+
+    getSessionBootstrap(options: { activeGoal?: string | null; lastObjective?: string | null } = {}) {
+        const summaries = this.getRecentSessionSummaries(3);
+        const observations = this.getRecentObservations(5);
+
+        return buildSessionBootstrapPrompt({
+            activeGoal: options.activeGoal,
+            lastObjective: options.lastObjective,
+            summaries: summaries.map((memory) => ({ content: memory.content })),
+            observations: observations.map((memory) => {
+                const observation = getStructuredObservation(memory.metadata);
+                return {
+                    title: observation?.title,
+                    narrative: observation?.narrative,
+                    type: observation?.type,
+                    toolName: observation?.toolName,
+                    content: memory.content,
+                };
+            }),
+        });
+    }
+
+    async searchUserPrompts(query: string, options: UserPromptSearchOptions = {}): Promise<Memory[]> {
+        const results = await this.search(query, {
+            limit: options.limit,
+            namespace: 'project',
+            type: 'long_term',
+            tags: ['user-prompt'],
+        });
+
+        return results.filter((memory) => {
+            const prompt = getStructuredUserPrompt(memory.metadata);
+            if (!prompt) return false;
+            if (options.role && prompt.role !== options.role) return false;
+            return true;
+        });
+    }
+
+    getRecentUserPrompts(limit: number = 10, options: UserPromptSearchOptions = {}): Memory[] {
+        return Array.from(this.memories.values())
+            .filter((memory) => {
+                if (memory.type !== 'long_term' || memory.namespace !== 'project') {
+                    return false;
+                }
+                const prompt = getStructuredUserPrompt(memory.metadata);
+                if (!prompt) return false;
+                if (options.role && prompt.role !== options.role) return false;
+                return true;
+            })
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+            .slice(0, limit);
+    }
+
+    getToolContext(input: ToolContextInput) {
+        const observations = Array.from(this.memories.values())
+            .map((memory) => {
+                const observation = getStructuredObservation(memory.metadata);
+                if (!observation) {
+                    return null;
+                }
+
+                return {
+                    title: observation.title,
+                    narrative: observation.narrative,
+                    content: memory.content,
+                    type: observation.type,
+                    toolName: observation.toolName,
+                    concepts: observation.concepts,
+                    filesRead: observation.filesRead,
+                    filesModified: observation.filesModified,
+                    recordedAt: observation.recordedAt,
+                };
+            })
+            .filter((observation): observation is NonNullable<typeof observation> => observation !== null);
+
+        const summaries = Array.from(this.memories.values())
+            .map((memory) => {
+                const summary = getStructuredSessionSummary(memory.metadata);
+                if (!summary) {
+                    return null;
+                }
+
+                return {
+                    content: memory.content,
+                    cliType: summary.cliType,
+                    status: summary.status,
+                    sessionId: summary.sessionId,
+                    recordedAt: summary.stoppedAt ?? memory.createdAt.getTime(),
+                };
+            })
+            .filter((summary): summary is NonNullable<typeof summary> => summary !== null);
+
+        return buildToolContextPayload({
+            toolName: input.toolName,
+            args: input.args,
+            activeGoal: input.activeGoal,
+            lastObjective: input.lastObjective,
+            observations,
+            summaries,
+        });
+    }
+
+    async searchObservations(query: string, options: ObservationSearchOptions = {}): Promise<Memory[]> {
+        const results = await this.search(query, {
+            namespace: options.namespace,
+            limit: options.limit,
+            tags: options.tags,
+            type: 'working',
+        });
+
+        return results.filter(memory => {
+            const observation = getStructuredObservation(memory.metadata);
+            if (!observation) return false;
+            if (options.type && observation.type !== options.type) return false;
+            if (options.namespace && memory.namespace !== options.namespace) return false;
+            return true;
+        });
+    }
+
+    getRecentObservations(limit: number = 10, options: ObservationSearchOptions = {}): Memory[] {
+        return Array.from(this.memories.values())
+            .filter(memory => {
+                const observation = getStructuredObservation(memory.metadata);
+                if (!observation) return false;
+                if (options.namespace && memory.namespace !== options.namespace) return false;
+                if (options.type && observation.type !== options.type) return false;
+                return true;
+            })
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+            .slice(0, limit);
+    }
+
+    /**
      * Check if memory should be consolidated to long-term
      */
     private async checkConsolidation(memory: Memory): Promise<void> {
@@ -476,18 +1047,43 @@ export class AgentMemoryService {
     getStats(): Record<string, number> {
         const byType: Record<string, number> = { session: 0, working: 0, long_term: 0 };
         const byNamespace: Record<string, number> = { user: 0, agent: 0, project: 0 };
+        const byObservationType: Record<ObservationType, number> = {
+            discovery: 0,
+            decision: 0,
+            progress: 0,
+            warning: 0,
+            fix: 0,
+        };
+        let observationCount = 0;
+        let promptCount = 0;
+        const observationHashes = new Set<string>();
 
         for (const memory of this.memories.values()) {
             byType[memory.type]++;
             byNamespace[memory.namespace]++;
+
+            const observation = getStructuredObservation(memory.metadata);
+            if (observation) {
+                observationCount++;
+                byObservationType[observation.type]++;
+                observationHashes.add(observation.contentHash);
+            }
+
+            if (getStructuredUserPrompt(memory.metadata)) {
+                promptCount++;
+            }
         }
 
         // We could also mix in stats from memoryManager if needed
 
         return {
             sessionCount: this.memories.size,
+            observationCount,
+            uniqueObservationCount: observationHashes.size,
+            promptCount,
             ...byType,
             ...byNamespace,
+            ...byObservationType,
         };
     }
 

@@ -13,7 +13,6 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
             links: [
                 httpBatchLink({
                     url: resolveTrpcHttpUrl(process.env.NEXT_PUBLIC_TRPC_URL),
-                    methodOverride: 'POST',
                 }),
             ],
         })

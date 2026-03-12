@@ -2,18 +2,37 @@
 
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, ScrollArea } from "@borg/ui";
-import { Loader2, Brain, Search, Trash2, Database, History, Zap, Filter, Plus, Save, Download, Upload } from "lucide-react";
+import { Loader2, Brain, Search, Database, History, Zap, Filter, Plus, Save, Download, Upload, RefreshCw } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
+
+type MemoryInterchangeFormat = 'json' | 'csv' | 'jsonl' | 'json-provider' | 'claude-mem-store';
+
+const MEMORY_FORMAT_OPTIONS: Array<{ value: MemoryInterchangeFormat; label: string }> = [
+    { value: 'json', label: 'Canonical JSON' },
+    { value: 'csv', label: 'Canonical CSV' },
+    { value: 'jsonl', label: 'Canonical JSONL' },
+    { value: 'json-provider', label: 'Borg JSON Provider' },
+    { value: 'claude-mem-store', label: 'Claude-Mem Store' },
+];
 
 export default function MemoryDashboard() {
     const [searchQuery, setSearchQuery] = useState('');
     const [memoryType, setMemoryType] = useState<'session' | 'working' | 'long_term'>('working');
     const [newFact, setNewFact] = useState('');
-    const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'jsonl'>('json');
+    const [exportFormat, setExportFormat] = useState<MemoryInterchangeFormat>('json');
+    const [convertToFormat, setConvertToFormat] = useState<MemoryInterchangeFormat>('claude-mem-store');
     const [importing, setImporting] = useState(false);
+    const [converting, setConverting] = useState(false);
 
     const { data: stats } = trpc.memory.getAgentStats.useQuery(undefined, { refetchInterval: 10000 });
+    const recentObservationsQuery = trpc.memory.getRecentObservations.useQuery({
+        limit: 6,
+        namespace: 'project',
+    }, { refetchInterval: 10000 });
+    const recentPromptsQuery = trpc.memory.getRecentUserPrompts.useQuery({
+        limit: 5,
+    }, { refetchInterval: 10000 });
     const { data: results, isLoading, refetch } = trpc.memory.searchAgentMemory.useQuery({
         query: searchQuery,
         type: memoryType,
@@ -53,6 +72,8 @@ export default function MemoryDashboard() {
                     <StatCard label="Session" value={(stats as any)?.sessionCount || 0} icon={<History className="h-3 w-3" />} />
                     <StatCard label="Working" value={(stats as any)?.workingCount || 0} icon={<Zap className="h-3 w-3" />} />
                     <StatCard label="Long Term" value={(stats as any)?.longTermCount || 0} icon={<Database className="h-3 w-3" />} />
+                    <StatCard label="Observations" value={(stats as any)?.observationCount || 0} icon={<RefreshCw className="h-3 w-3" />} />
+                    <StatCard label="Prompts" value={(stats as any)?.promptCount || 0} icon={<Brain className="h-3 w-3" />} />
                 </div>
             </div>
 
@@ -119,12 +140,12 @@ export default function MemoryDashboard() {
                                 <label className="text-[10px] font-bold text-zinc-600 uppercase">Format</label>
                                 <select
                                     value={exportFormat}
-                                    onChange={e => setExportFormat(e.target.value as 'json' | 'csv' | 'jsonl')}
+                                    onChange={e => setExportFormat(e.target.value as MemoryInterchangeFormat)}
                                     className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 text-xs text-white focus:ring-1 focus:ring-cyan-500 outline-none"
                                 >
-                                    <option value="json">JSON</option>
-                                    <option value="csv">CSV</option>
-                                    <option value="jsonl">JSONL</option>
+                                    {MEMORY_FORMAT_OPTIONS.map((option) => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
                                 </select>
                             </div>
                             <Button
@@ -135,14 +156,15 @@ export default function MemoryDashboard() {
                                         const res = await fetch(`/api/trpc/memory.exportMemories?input=${encodeURIComponent(JSON.stringify({ userId: 'default', format: exportFormat }))}`);
                                         const json = await res.json();
                                         const content = json?.result?.data?.data || '';
-                                        const blob = new Blob([content], { type: 'text/plain' });
+                                        const extension = exportFormat === 'csv' ? 'csv' : exportFormat === 'jsonl' ? 'jsonl' : 'json';
+                                        const blob = new Blob([content], { type: extension === 'csv' ? 'text/csv' : 'application/json' });
                                         const url = URL.createObjectURL(blob);
                                         const a = document.createElement('a');
                                         a.href = url;
-                                        a.download = `borg-memories.${exportFormat}`;
+                                        a.download = `borg-memories.${extension}`;
                                         a.click();
                                         URL.revokeObjectURL(url);
-                                        toast.success(`Exported as ${exportFormat.toUpperCase()}`);
+                                        toast.success(`Exported as ${MEMORY_FORMAT_OPTIONS.find(option => option.value === exportFormat)?.label || exportFormat}`);
                                     } catch (err: any) {
                                         toast.error(`Export failed: ${err.message}`);
                                     }
@@ -163,11 +185,10 @@ export default function MemoryDashboard() {
                                         setImporting(true);
                                         try {
                                             const text = await file.text();
-                                            const ext = file.name.split('.').pop() as 'json' | 'csv' | 'jsonl';
                                             const res = await fetch('/api/trpc/memory.importMemories', {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ userId: 'default', format: ext, data: text })
+                                                body: JSON.stringify({ userId: 'default', format: exportFormat, data: text })
                                             });
                                             const result = await res.json();
                                             toast.success(`Imported ${result?.result?.data?.imported || 0} memories`);
@@ -186,6 +207,140 @@ export default function MemoryDashboard() {
                                     </div>
                                 )}
                             </div>
+                            <div className="border-t border-zinc-800 pt-3 space-y-2">
+                                <label className="text-[10px] font-bold text-zinc-600 uppercase block">Convert Export</label>
+                                <select
+                                    value={convertToFormat}
+                                    onChange={e => setConvertToFormat(e.target.value as MemoryInterchangeFormat)}
+                                    className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 text-xs text-white focus:ring-1 focus:ring-cyan-500 outline-none"
+                                >
+                                    {MEMORY_FORMAT_OPTIONS.filter((option) => option.value !== exportFormat).map((option) => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
+                                </select>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={converting || convertToFormat === exportFormat}
+                                    className="w-full border-zinc-700 hover:bg-zinc-800 text-cyan-300 text-xs"
+                                    onClick={async () => {
+                                        setConverting(true);
+                                        try {
+                                            const exportResponse = await fetch(`/api/trpc/memory.exportMemories?input=${encodeURIComponent(JSON.stringify({ userId: 'default', format: exportFormat }))}`);
+                                            const exportJson = await exportResponse.json();
+                                            const sourceData = exportJson?.result?.data?.data || '';
+
+                                            const convertResponse = await fetch('/api/trpc/memory.convertMemories', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    userId: 'default',
+                                                    fromFormat: exportFormat,
+                                                    toFormat: convertToFormat,
+                                                    data: sourceData,
+                                                }),
+                                            });
+                                            const convertJson = await convertResponse.json();
+                                            const convertedData = convertJson?.result?.data?.data || '';
+                                            const extension = convertToFormat === 'csv' ? 'csv' : convertToFormat === 'jsonl' ? 'jsonl' : 'json';
+                                            const blob = new Blob([convertedData], { type: extension === 'csv' ? 'text/csv' : 'application/json' });
+                                            const url = URL.createObjectURL(blob);
+                                            const a = document.createElement('a');
+                                            a.href = url;
+                                            a.download = `borg-memory-converted.${extension}`;
+                                            a.click();
+                                            URL.revokeObjectURL(url);
+                                            toast.success(`Converted ${exportFormat} → ${convertToFormat}`);
+                                        } catch (err: any) {
+                                            toast.error(`Conversion failed: ${err.message}`);
+                                        } finally {
+                                            setConverting(false);
+                                        }
+                                    }}
+                                >
+                                    {converting ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <RefreshCw className="h-3 w-3 mr-2" />}
+                                    Convert & Download
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-zinc-900 border-zinc-800 border-l-4 border-l-emerald-600">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                                <RefreshCw className="h-4 w-4" />
+                                Runtime Observations
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3 text-xs text-zinc-300">
+                            {recentObservationsQuery.isLoading ? (
+                                <div className="flex items-center gap-2 text-zinc-500">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    Loading observations…
+                                </div>
+                            ) : !(recentObservationsQuery.data ?? []).length ? (
+                                <p className="text-zinc-500">No runtime observations have been captured yet.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {(recentObservationsQuery.data as any[]).map((memory, index) => {
+                                        const observation = memory.metadata?.structuredObservation;
+                                        return (
+                                            <div key={memory.id ?? `observation-${index}`} className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3">
+                                                <div className="mb-1 flex items-center justify-between gap-2">
+                                                    <Badge variant="outline" className="border-emerald-500/30 text-emerald-300">
+                                                        {observation?.type ?? 'observation'}
+                                                    </Badge>
+                                                    {observation?.toolName ? (
+                                                        <span className="font-mono text-[10px] text-zinc-500">{observation.toolName}</span>
+                                                    ) : null}
+                                                </div>
+                                                <p className="text-sm font-medium text-white">{observation?.title ?? 'Untitled observation'}</p>
+                                                <p className="mt-1 line-clamp-3 whitespace-pre-wrap break-words text-[11px] text-zinc-400">
+                                                    {observation?.narrative ?? memory.content}
+                                                </p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-zinc-900 border-zinc-800 border-l-4 border-l-violet-600">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                                <Brain className="h-4 w-4" />
+                                Captured Prompts
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3 text-xs text-zinc-300">
+                            {recentPromptsQuery.isLoading ? (
+                                <div className="flex items-center gap-2 text-zinc-500">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    Loading prompt history…
+                                </div>
+                            ) : !(recentPromptsQuery.data ?? []).length ? (
+                                <p className="text-zinc-500">No prompt captures have been recorded yet.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {(recentPromptsQuery.data as any[]).map((memory, index) => {
+                                        const prompt = memory.metadata?.structuredUserPrompt;
+                                        return (
+                                            <div key={memory.id ?? `prompt-${index}`} className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3">
+                                                <div className="mb-1 flex items-center justify-between gap-2">
+                                                    <Badge variant="outline" className="border-violet-500/30 text-violet-300">
+                                                        {prompt?.role ?? 'prompt'}
+                                                    </Badge>
+                                                    <span className="text-[10px] text-zinc-500">#{prompt?.promptNumber ?? '?'}</span>
+                                                </div>
+                                                <p className="line-clamp-3 whitespace-pre-wrap break-words text-[11px] text-zinc-300">
+                                                    {prompt?.content ?? memory.content}
+                                                </p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

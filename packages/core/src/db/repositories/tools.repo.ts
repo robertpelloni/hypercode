@@ -19,14 +19,14 @@ import {
     DatabaseTool,
     ToolCreateInput,
     ToolUpsertInput,
-} from "../../types/metamcp/index.js";
+} from "../../types/mcp-admin/index.js";
 import { and, eq, notInArray, sql } from "drizzle-orm";
 
 // import { descriptionEnhancerService } from "../../lib/ai/description-enhancer.service";
 // import { toolSearchService } from "../../lib/ai/tool-search.service";
 
 import { db } from "../index.js";
-import { toolsTable } from "../metamcp-schema.js";
+import { toolsTable } from "../mcp-admin-schema.js";
 import { randomUUID } from "node:crypto";
 
 type ToolRow = typeof toolsTable.$inferSelect;

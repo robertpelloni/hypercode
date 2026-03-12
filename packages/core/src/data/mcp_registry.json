@@ -71,10 +71,6 @@
   ],
   "orchestration": [
     {
-      "name": "MetaMCP",
-      "url": "https://github.com/robertpelloni/metamcp"
-    },
-    {
       "name": "A2A",
       "url": "https://github.com/a2aproject/A2A"
     },

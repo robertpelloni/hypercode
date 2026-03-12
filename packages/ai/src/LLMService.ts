@@ -13,8 +13,28 @@ export interface LLMResponse {
     };
 }
 
-import { ModelSelector } from "./ModelSelector.js";
+export interface GenerateTextOptions {
+    timeout?: number;
+    taskComplexity?: 'low' | 'medium' | 'high';
+    taskType?: 'worker' | 'supervisor';
+    routingTaskType?: 'coding' | 'planning' | 'research' | 'general' | 'worker' | 'supervisor';
+    routingStrategy?: 'cheapest' | 'best' | 'round-robin';
+    images?: { base64: string; mimeType: string }[];
+    history?: { role: string; content: string }[];
+}
+
+import { ModelSelector, type ModelSelectionRequest, type SelectedModel } from "./ModelSelector.js";
 import { ForgeService } from "./ForgeService.js";
+
+type ExtendedModelSelectionRequest = ModelSelectionRequest & {
+    routingTaskType?: GenerateTextOptions['routingTaskType'];
+    routingStrategy?: GenerateTextOptions['routingStrategy'];
+};
+
+type RoutingAwareModelSelector = ModelSelector & {
+    reportFailure(provider: string, modelId: string, cause?: unknown): void;
+    selectModel(request: ExtendedModelSelectionRequest): Promise<SelectedModel>;
+};
 
 export class LLMService {
     private googleClient?: GoogleGenerativeAI;
@@ -22,10 +42,10 @@ export class LLMService {
     private anthropicClient?: Anthropic;
     private forgeClient?: ForgeService;
     private totalUsage = { inputTokens: 0, outputTokens: 0, estimatedCostUSD: 0 };
-    public modelSelector: ModelSelector;
+    public modelSelector: RoutingAwareModelSelector;
 
-    constructor(modelSelector?: ModelSelector) {
-        this.modelSelector = modelSelector || new ModelSelector();
+    constructor(modelSelector?: RoutingAwareModelSelector) {
+        this.modelSelector = modelSelector || new ModelSelector() as RoutingAwareModelSelector;
         if (process.env.GOOGLE_API_KEY) {
             this.googleClient = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
         }
@@ -109,7 +129,7 @@ export class LLMService {
         this.totalUsage.estimatedCostUSD = this.modelSelector.getQuotaService().getSessionTotal();
     }
 
-    async generateText(initialProvider: string, initialModelId: string, systemPrompt: string, userPrompt: string, options?: { timeout?: number, taskComplexity?: 'low' | 'medium' | 'high', images?: { base64: string, mimeType: string }[], history?: { role: string, content: string }[] }): Promise<LLMResponse> {
+    async generateText(initialProvider: string, initialModelId: string, systemPrompt: string, userPrompt: string, options?: GenerateTextOptions): Promise<LLMResponse> {
         let provider = initialProvider;
         let modelId = initialModelId;
 
@@ -351,12 +371,15 @@ export class LLMService {
                     console.warn(`[LLMService] ⚠️ Provider ${provider} failed (${error.message}). Switching models...`);
 
                     // 1. Report Failure
-                    this.modelSelector.reportFailure(provider, modelId);
+                    this.modelSelector.reportFailure(provider, modelId, error);
 
                     // 2. Select Next Model
                     // Use options.taskComplexity if available, else 'medium'
                     const next = await this.modelSelector.selectModel({
                         taskComplexity: options?.taskComplexity || 'medium',
+                        taskType: options?.taskType,
+                        routingTaskType: options?.routingTaskType,
+                        routingStrategy: options?.routingStrategy,
                         provider: undefined, // Clear preference, force automatic selection
                         exclude: [`${provider}:${modelId}`]
                     });

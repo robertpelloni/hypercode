@@ -1,4 +1,4 @@
-import { ApiKeyType } from "../../types/metamcp/index.js";
+import { ApiKeyType } from "../../types/mcp-admin/index.js";
 
 export class ApiKeysSerializer {
     static serializeApiKey(dbApiKey: {

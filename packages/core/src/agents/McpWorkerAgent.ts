@@ -70,8 +70,12 @@ Think step by step, but ALWAYS ensure your entire response is a single valid JSO
             console.log(`[McpWorkerAgent] 🔄 Step ${step}/${this.maxSteps}`);
 
             try {
-                const model = await this.llm.modelSelector.selectModel({ taskComplexity: 'high' });
-                const completion = await this.llm.generateText(model.provider, model.modelId, systemPrompt, currentPrompt, { history });
+                const model = await this.llm.modelSelector.selectModel({ taskComplexity: 'high', routingTaskType: 'worker' });
+                const completion = await this.llm.generateText(model.provider, model.modelId, systemPrompt, currentPrompt, {
+                    history,
+                    taskComplexity: 'high',
+                    routingTaskType: 'worker',
+                });
                 let responseText = completion.content.trim();
 
                 // Strip markdown code blocks if present

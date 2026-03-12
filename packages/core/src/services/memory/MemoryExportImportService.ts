@@ -1,23 +1,67 @@
 /**
- * MemoryExportImportService – Export and import memories in multiple formats
+ * MemoryExportImportService – canonical and provider-native memory interchange
  *
  * Supports:
- * - JSON: Full fidelity export/import, preserves all metadata.
- * - CSV: Spreadsheet-friendly; columns = uuid, content, userId, agentId, createdAt, metadata (JSON string).
- * - JSONL: Streaming-friendly; one JSON object per line.
- *
- * Accepts either IMemoryProvider (listMemories/saveMemory) or
- * MemoryManagerRuntime (listContexts/saveContext) as the backend.
+ * - Canonical exports: JSON, CSV, JSONL
+ * - Provider-native snapshots: Borg JSON provider, claude-mem store
+ * - Conversion between all supported formats via a canonical intermediate form
  */
+
+import crypto from 'node:crypto';
+import fs from 'fs/promises';
+import path from 'path';
 
 import { Memory } from '../../interfaces/IMemoryProvider.js';
+import { CLAUDE_MEM_DEFAULT_SECTIONS } from './ClaudeMemAdapter.js';
 
-export type ExportFormat = 'json' | 'csv' | 'jsonl';
+export type CanonicalMemoryFormat = 'json' | 'csv' | 'jsonl';
+export type ProviderMemoryFormat = 'json-provider' | 'claude-mem-store';
+export type MemoryInterchangeFormat = CanonicalMemoryFormat | ProviderMemoryFormat;
 
-/**
- * Flexible backend interface that works with both IMemoryProvider and
- * MemoryManagerRuntime so the service can be used in either context.
- */
+export const MEMORY_INTERCHANGE_FORMATS: Array<{
+    id: MemoryInterchangeFormat;
+    label: string;
+    kind: 'canonical' | 'provider';
+    extension: 'json' | 'csv' | 'jsonl';
+    description: string;
+}> = [
+    {
+        id: 'json',
+        label: 'Canonical JSON',
+        kind: 'canonical',
+        extension: 'json',
+        description: 'Portable Borg memory export with metadata preserved.',
+    },
+    {
+        id: 'csv',
+        label: 'Canonical CSV',
+        kind: 'canonical',
+        extension: 'csv',
+        description: 'Spreadsheet-friendly memory export.',
+    },
+    {
+        id: 'jsonl',
+        label: 'Canonical JSONL',
+        kind: 'canonical',
+        extension: 'jsonl',
+        description: 'Streaming-friendly newline-delimited memory export.',
+    },
+    {
+        id: 'json-provider',
+        label: 'Borg JSON Provider',
+        kind: 'provider',
+        extension: 'json',
+        description: 'Native snapshot of Borg\'s flat-file memory provider.',
+    },
+    {
+        id: 'claude-mem-store',
+        label: 'Claude-Mem Store',
+        kind: 'provider',
+        extension: 'json',
+        description: 'Native claude-mem-style sectioned memory snapshot.',
+    },
+];
+
 interface MemoryBackend {
     listMemories?: (userId: string, limit?: number, offset?: number) => Promise<Memory[]>;
     listContexts?: () => Promise<unknown[]>;
@@ -27,73 +71,42 @@ interface MemoryBackend {
 
 export class MemoryExportImportService {
     private backend: MemoryBackend;
+    private workspaceRoot?: string;
 
-    constructor(backend: MemoryBackend) {
+    constructor(backend: MemoryBackend, options?: { workspaceRoot?: string }) {
         this.backend = backend;
+        this.workspaceRoot = options?.workspaceRoot;
     }
 
-    // ---- Export ----
-
-    async exportAll(userId: string, format: ExportFormat): Promise<string> {
-        // Fetch all memories (large limit to capture everything)
-        let memories: any[] = [];
-        if (this.backend.listMemories) {
-            memories = await this.backend.listMemories(userId, 100000, 0);
-        } else if (this.backend.listContexts) {
-            memories = await this.backend.listContexts();
-        }
-
-        switch (format) {
-            case 'json':
-                return JSON.stringify(memories, null, 2);
-            case 'csv':
-                return this.toCSV(memories);
-            case 'jsonl':
-                return memories.map(m => JSON.stringify(m)).join('\n');
-            default:
-                throw new Error(`Unsupported export format: ${format}`);
-        }
+    getSupportedFormats() {
+        return MEMORY_INTERCHANGE_FORMATS;
     }
 
-    // ---- Import ----
-
-    async importBulk(data: string, format: ExportFormat, userId: string): Promise<{ imported: number; errors: number }> {
-        let records: any[];
-
-        switch (format) {
-            case 'json':
-                records = JSON.parse(data);
-                break;
-            case 'csv':
-                records = this.fromCSV(data);
-                break;
-            case 'jsonl':
-                records = data
-                    .split('\n')
-                    .filter(line => line.trim())
-                    .map(line => JSON.parse(line));
-                break;
-            default:
-                throw new Error(`Unsupported import format: ${format}`);
+    async exportAll(userId: string, format: MemoryInterchangeFormat): Promise<string> {
+        if (format === 'json-provider') {
+            return this.exportJsonProvider(userId);
         }
 
+        const memories = await this.readCanonicalMemories(userId);
+
+        if (format === 'claude-mem-store') {
+            return JSON.stringify(this.toClaudeMemStore(memories), null, 2);
+        }
+
+        return this.serializeCanonical(memories, format);
+    }
+
+    async importBulk(data: string, format: MemoryInterchangeFormat, userId: string): Promise<{ imported: number; errors: number }> {
+        const records = this.parseToCanonical(data, format, userId);
         let imported = 0;
         let errors = 0;
 
         for (const record of records) {
             try {
                 if (this.backend.saveMemory) {
-                    await this.backend.saveMemory(
-                        record.content || '',
-                        record.metadata || {},
-                        userId,
-                        record.agentId
-                    );
+                    await this.backend.saveMemory(record.content, record.metadata, userId, record.agentId);
                 } else if (this.backend.saveContext) {
-                    await this.backend.saveContext(
-                        record.content || '',
-                        record.metadata
-                    );
+                    await this.backend.saveContext(record.content, record.metadata);
                 }
                 imported++;
             } catch {
@@ -104,42 +117,265 @@ export class MemoryExportImportService {
         return { imported, errors };
     }
 
-    // ---- Helpers ----
+    async convert(data: string, from: MemoryInterchangeFormat, to: MemoryInterchangeFormat, userId: string): Promise<string> {
+        const records = this.parseToCanonical(data, from, userId);
 
-    private toCSV(memories: any[]): string {
+        if (to === 'claude-mem-store') {
+            return JSON.stringify(this.toClaudeMemStore(records), null, 2);
+        }
+
+        if (to === 'json-provider') {
+            return JSON.stringify(this.toJsonProvider(records), null, 2);
+        }
+
+        return this.serializeCanonical(records, to);
+    }
+
+    private async readCanonicalMemories(userId: string): Promise<Memory[]> {
+        const providerSnapshot = await this.tryReadJsonProviderSnapshot();
+        if (providerSnapshot) {
+            return this.parseJsonProvider(providerSnapshot, userId);
+        }
+
+        if (this.backend.listMemories) {
+            return this.backend.listMemories(userId, 100000, 0);
+        }
+
+        if (this.backend.listContexts) {
+            const contexts = await this.backend.listContexts();
+            return contexts.map((context: any, index) => this.normalizeMemory({
+                uuid: context?.uuid ?? context?.id ?? `context-${index + 1}`,
+                content: context?.content ?? '',
+                metadata: context?.metadata ?? {},
+                createdAt: context?.createdAt,
+                agentId: context?.agentId,
+            }, userId));
+        }
+
+        return [];
+    }
+
+    private async exportJsonProvider(userId: string): Promise<string> {
+        const providerSnapshot = await this.tryReadJsonProviderSnapshot();
+        if (providerSnapshot) {
+            return providerSnapshot;
+        }
+
+        const memories = await this.readCanonicalMemories(userId);
+        return JSON.stringify(this.toJsonProvider(memories), null, 2);
+    }
+
+    private async tryReadJsonProviderSnapshot(): Promise<string | null> {
+        if (!this.workspaceRoot) {
+            return null;
+        }
+
+        try {
+            return await fs.readFile(path.join(this.workspaceRoot, 'memory.json'), 'utf-8');
+        } catch (error: unknown) {
+            const code = typeof error === 'object' && error !== null && 'code' in error
+                ? String((error as { code?: unknown }).code)
+                : '';
+            if (code === 'ENOENT') {
+                return null;
+            }
+            throw error;
+        }
+    }
+
+    private parseToCanonical(data: string, format: MemoryInterchangeFormat, userId: string): Memory[] {
+        switch (format) {
+            case 'json':
+                return this.parseCanonicalJson(data, userId);
+            case 'csv':
+                return this.fromCSV(data, userId);
+            case 'jsonl':
+                return data
+                    .split('\n')
+                    .filter(line => line.trim())
+                    .map(line => this.normalizeMemory(JSON.parse(line), userId));
+            case 'json-provider':
+                return this.parseJsonProvider(data, userId);
+            case 'claude-mem-store':
+                return this.parseClaudeMemStore(data, userId);
+            default:
+                throw new Error(`Unsupported memory format: ${format}`);
+        }
+    }
+
+    private serializeCanonical(memories: Memory[], format: CanonicalMemoryFormat): string {
+        switch (format) {
+            case 'json':
+                return JSON.stringify(this.toJsonProvider(memories), null, 2);
+            case 'csv':
+                return this.toCSV(memories);
+            case 'jsonl':
+                return memories.map(memory => JSON.stringify(this.toSerializableMemory(memory))).join('\n');
+            default:
+                throw new Error(`Unsupported export format: ${format}`);
+        }
+    }
+
+    private parseCanonicalJson(data: string, userId: string): Memory[] {
+        const parsed = JSON.parse(data);
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
+
+        return parsed.map(record => this.normalizeMemory(record, userId));
+    }
+
+    private parseJsonProvider(data: string, userId: string): Memory[] {
+        return this.parseCanonicalJson(data, userId);
+    }
+
+    private parseClaudeMemStore(data: string, userId: string): Memory[] {
+        const parsed = JSON.parse(data) as {
+            sections?: Array<{
+                section?: string;
+                entries?: Array<{
+                    uuid?: string;
+                    content?: string;
+                    tags?: string[];
+                    createdAt?: string;
+                    source?: string;
+                }>;
+            }>;
+        };
+
+        const sections = Array.isArray(parsed.sections) ? parsed.sections : [];
+        const memories: Memory[] = [];
+
+        for (const section of sections) {
+            const sectionName = typeof section?.section === 'string' && section.section.trim().length > 0
+                ? section.section
+                : 'general';
+            const entries = Array.isArray(section?.entries) ? section.entries : [];
+
+            for (const entry of entries) {
+                memories.push(this.normalizeMemory({
+                    uuid: entry?.uuid,
+                    content: entry?.content,
+                    createdAt: entry?.createdAt,
+                    metadata: {
+                        section: sectionName,
+                        tags: Array.isArray(entry?.tags) ? entry.tags : [],
+                        source: entry?.source ?? 'user',
+                        provider: 'claude-mem',
+                    },
+                }, userId));
+            }
+        }
+
+        return memories;
+    }
+
+    private normalizeMemory(record: any, userId: string): Memory {
+        const metadata = typeof record?.metadata === 'object' && record?.metadata !== null
+            ? record.metadata
+            : {};
+
+        return {
+            uuid: String(record?.uuid ?? record?.id ?? crypto.randomUUID()),
+            content: String(record?.content ?? ''),
+            metadata,
+            userId: typeof record?.userId === 'string' && record.userId.length > 0 ? record.userId : userId,
+            agentId: typeof record?.agentId === 'string' && record.agentId.length > 0 ? record.agentId : undefined,
+            createdAt: record?.createdAt ? new Date(record.createdAt) : new Date(),
+        };
+    }
+
+    private toSerializableMemory(memory: Memory) {
+        return {
+            ...memory,
+            createdAt: memory.createdAt.toISOString(),
+        };
+    }
+
+    private toJsonProvider(memories: Memory[]) {
+        return memories.map(memory => this.toSerializableMemory(memory));
+    }
+
+    private toClaudeMemStore(memories: Memory[]) {
+        const sections = new Map<string, Array<{
+            uuid: string;
+            content: string;
+            tags: string[];
+            createdAt: string;
+            source: string;
+        }>>();
+
+        for (const defaultSection of CLAUDE_MEM_DEFAULT_SECTIONS) {
+            sections.set(defaultSection, []);
+        }
+
+        for (const memory of memories) {
+            const sectionName = typeof memory.metadata?.section === 'string' && memory.metadata.section.trim().length > 0
+                ? memory.metadata.section
+                : 'general';
+            const entries = sections.get(sectionName) ?? [];
+            entries.push({
+                uuid: memory.uuid,
+                content: memory.content,
+                tags: Array.isArray(memory.metadata?.tags)
+                    ? memory.metadata.tags.map((tag: unknown) => String(tag))
+                    : [],
+                createdAt: memory.createdAt.toISOString(),
+                source: typeof memory.metadata?.source === 'string'
+                    ? memory.metadata.source
+                    : (memory.agentId ? 'agent' : 'user'),
+            });
+            sections.set(sectionName, entries);
+        }
+
+        return {
+            version: '1.0.0',
+            sections: Array.from(sections.entries()).map(([section, entries]) => ({ section, entries })),
+        };
+    }
+
+    private toCSV(memories: Memory[]): string {
         const header = 'uuid,content,userId,agentId,createdAt,metadata';
-        const rows = memories.map(m => {
-            const escapedContent = `"${(m.content || '').replace(/"/g, '""')}"`;
-            const escapedMeta = `"${JSON.stringify(m.metadata || {}).replace(/"/g, '""')}"`;
+        const rows = memories.map(memory => {
+            const escapedContent = `"${(memory.content || '').replace(/"/g, '""')}"`;
+            const escapedMeta = `"${JSON.stringify(memory.metadata || {}).replace(/"/g, '""')}"`;
             return [
-                m.uuid || m.id || '',
+                memory.uuid,
                 escapedContent,
-                m.userId || '',
-                m.agentId || '',
-                m.createdAt instanceof Date ? m.createdAt.toISOString() : String(m.createdAt || new Date()),
+                memory.userId || '',
+                memory.agentId || '',
+                memory.createdAt.toISOString(),
                 escapedMeta,
             ].join(',');
         });
+
         return [header, ...rows].join('\n');
     }
 
-    private fromCSV(csv: string): any[] {
-        const lines = csv.split('\n').filter(l => l.trim());
-        if (lines.length < 2) return []; // header only or empty
+    private fromCSV(csv: string, userId: string): Memory[] {
+        const lines = csv.split('\n').filter(line => line.trim());
+        if (lines.length < 2) {
+            return [];
+        }
 
-        // Skip header
-        const dataLines = lines.slice(1);
-        return dataLines.map(line => {
-            // Simple CSV parsing (handles quoted fields with embedded commas)
+        return lines.slice(1).map(line => {
             const fields = this.parseCSVLine(line);
-            return {
+            return this.normalizeMemory({
                 uuid: fields[0],
                 content: fields[1],
-                userId: fields[2],
+                userId: fields[2] || userId,
                 agentId: fields[3] || undefined,
                 createdAt: fields[4] ? new Date(fields[4]) : new Date(),
-                metadata: fields[5] ? (() => { try { return JSON.parse(fields[5]); } catch { return {}; } })() : {},
-            };
+                metadata: fields[5]
+                    ? (() => {
+                        try {
+                            return JSON.parse(fields[5]);
+                        } catch {
+                            return {};
+                        }
+                    })()
+                    : {},
+            }, userId);
         });
     }
 
@@ -153,7 +389,7 @@ export class MemoryExportImportService {
             if (char === '"') {
                 if (inQuotes && line[i + 1] === '"') {
                     current += '"';
-                    i++; // skip escaped quote
+                    i++;
                 } else {
                     inQuotes = !inQuotes;
                 }
@@ -164,6 +400,7 @@ export class MemoryExportImportService {
                 current += char;
             }
         }
+
         result.push(current);
         return result;
     }

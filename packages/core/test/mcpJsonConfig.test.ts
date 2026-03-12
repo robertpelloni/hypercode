@@ -5,7 +5,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { JsonConfigProvider } from '../src/services/config/JsonConfigProvider.ts';
-import { loadBorgMcpConfig, writeBorgMcpConfig } from '../src/mcp/mcpJsonConfig.ts';
+import { loadBorgMcpConfig, stripJsonComments, writeBorgMcpConfig } from '../src/mcp/mcpJsonConfig.ts';
 
 const tempDirs: string[] = [];
 
@@ -20,6 +20,33 @@ afterEach(async () => {
 });
 
 describe('mcp jsonc persistence', () => {
+        it('preserves quoted URLs while removing jsonc comments', async () => {
+                const workspaceRoot = await makeTempDir();
+                const rawJsonc = `// top-level comment
+{
+    "mcpServers": {
+        "mindsdb": {
+            "type": "SSE",
+            "url": "http://localhost:47334/mcp/sse", // trailing comment should be removed
+            /* keep the URL above intact while removing this block comment */
+            "description": "Local MindsDB"
+        }
+    }
+}
+`;
+
+                await fs.writeFile(path.join(workspaceRoot, 'mcp.jsonc'), rawJsonc, 'utf-8');
+
+                const stripped = stripJsonComments(rawJsonc);
+                const parsed = await loadBorgMcpConfig(workspaceRoot);
+
+                expect(stripped).toContain('"url": "http://localhost:47334/mcp/sse"');
+                expect(stripped).not.toContain('top-level comment');
+                expect(stripped).not.toContain('trailing comment should be removed');
+                expect(parsed.mcpServers.mindsdb.url).toBe('http://localhost:47334/mcp/sse');
+                expect(parsed.mcpServers.mindsdb.description).toBe('Local MindsDB');
+        });
+
     it('writes metadata to mcp.jsonc while keeping mcp.json compatibility clean', async () => {
         const workspaceRoot = await makeTempDir();
 

@@ -61,6 +61,46 @@ const PROVIDER_LABELS: Record<CloudDevProvider, string> = {
     custom: "Custom",
 };
 
+function getSafeLocalStorage(): Storage | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    try {
+        const storage = window.localStorage;
+        void storage.length;
+        return storage;
+    } catch {
+        return null;
+    }
+}
+
+function safeStorageGet(key: string): string | null {
+    const storage = getSafeLocalStorage();
+    if (!storage) {
+        return null;
+    }
+
+    try {
+        return storage.getItem(key);
+    } catch {
+        return null;
+    }
+}
+
+function safeStorageSet(key: string, value: string): void {
+    const storage = getSafeLocalStorage();
+    if (!storage) {
+        return;
+    }
+
+    try {
+        storage.setItem(key, value);
+    } catch {
+        // Ignore storage access errors in restricted contexts.
+    }
+}
+
 export default function CloudDevDashboardPage() {
     const [sessions, setSessions] = useState<CloudDevSession[]>([]);
     const [providers] = useState<ProviderInfo[]>([
@@ -82,7 +122,7 @@ export default function CloudDevDashboardPage() {
         // For now, load from localStorage as a client-side store.
         setLoading(true);
         try {
-            const stored = localStorage.getItem("borg-cloud-dev-sessions");
+            const stored = safeStorageGet("borg-cloud-dev-sessions");
             if (stored) {
                 setSessions(JSON.parse(stored));
             }
@@ -98,7 +138,7 @@ export default function CloudDevDashboardPage() {
 
     const persistSessions = useCallback((updated: CloudDevSession[]) => {
         setSessions(updated);
-        localStorage.setItem("borg-cloud-dev-sessions", JSON.stringify(updated));
+        safeStorageSet("borg-cloud-dev-sessions", JSON.stringify(updated));
     }, []);
 
     const createSession = useCallback(() => {

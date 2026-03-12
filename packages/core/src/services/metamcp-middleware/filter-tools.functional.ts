@@ -1,17 +1,40 @@
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { and, eq } from "drizzle-orm";
 
-import { db } from "../../db/index.js";
-import {
-    mcpServersTable,
-    namespaceToolMappingsTable,
-    toolsTable,
-} from "../../db/schema.js";
+import { getAllowedToolsMetadataGuardResult } from "../../mcp/toolAccessGuards.js";
 import { parseToolName } from "../tool-name-parser.service.js";
 import {
     CallToolMiddleware,
     ListToolsMiddleware,
 } from "./functional-middleware.js";
+
+type DbModule = typeof import("../../db/index.js");
+type SchemaModule = typeof import("../../db/schema.js");
+
+type DbBindings = {
+    db: DbModule["db"];
+    mcpServersTable: SchemaModule["mcpServersTable"];
+    namespaceToolMappingsTable: SchemaModule["namespaceToolMappingsTable"];
+    toolsTable: SchemaModule["toolsTable"];
+};
+
+let dbBindingsPromise: Promise<DbBindings> | null = null;
+
+async function loadDbBindings(): Promise<DbBindings> {
+    if (!dbBindingsPromise) {
+        dbBindingsPromise = Promise.all([
+            import("../../db/index.js"),
+            import("../../db/schema.js"),
+        ]).then(([dbModule, schemaModule]) => ({
+            db: dbModule.db,
+            mcpServersTable: schemaModule.mcpServersTable,
+            namespaceToolMappingsTable: schemaModule.namespaceToolMappingsTable,
+            toolsTable: schemaModule.toolsTable,
+        }));
+    }
+
+    return await dbBindingsPromise;
+}
 
 /**
  * Configuration for the filter middleware
@@ -106,6 +129,12 @@ async function getToolStatus(
     }
 
     try {
+        const {
+            db,
+            namespaceToolMappingsTable,
+            toolsTable,
+        } = await loadDbBindings();
+
         // Query database for tool status
         const [toolMapping] = await db
             .select({
@@ -114,13 +143,13 @@ async function getToolStatus(
             .from(namespaceToolMappingsTable)
             .innerJoin(
                 toolsTable,
-                eq(toolsTable.uuid, namespaceToolMappingsTable.tool_uuid),
+                eq(toolsTable.uuid as any, namespaceToolMappingsTable.tool_uuid),
             )
             .where(
                 and(
-                    eq(namespaceToolMappingsTable.namespace_uuid, namespaceUuid),
-                    eq(toolsTable.name, toolName),
-                    eq(namespaceToolMappingsTable.mcp_server_uuid, serverUuid),
+                    eq(namespaceToolMappingsTable.namespace_uuid as any, namespaceUuid),
+                    eq(toolsTable.name as any, toolName),
+                    eq(namespaceToolMappingsTable.mcp_server_uuid as any, serverUuid),
                 ),
             );
 
@@ -146,10 +175,12 @@ async function getToolStatus(
  */
 async function getServerUuidByName(serverName: string): Promise<string | null> {
     try {
+        const { db, mcpServersTable } = await loadDbBindings();
+
         const [server] = await db
             .select({ uuid: mcpServersTable.uuid })
             .from(mcpServersTable)
-            .where(eq(mcpServersTable.name, serverName));
+            .where(eq(mcpServersTable.name as any, serverName));
 
         return server?.uuid || null;
     } catch (error) {
@@ -308,14 +339,12 @@ export function createFilterCallToolMiddleware(
             };
 
             // Check for dynamic tool whitelist in _meta (from Agent/Subagent context)
-            const allowedTools = paramsWithMeta._meta?.allowedTools;
-            if (allowedTools && Array.isArray(allowedTools)) {
-                if (!allowedTools.includes(toolName)) {
-                    return {
-                        content: [{ type: "text", text: `Access denied: Tool '${toolName}' is not in the allowed tools list for this agent.` }],
-                        isError: true
-                    };
-                }
+            const metadataGuardResult = getAllowedToolsMetadataGuardResult(
+                toolName,
+                paramsWithMeta._meta,
+            );
+            if (metadataGuardResult) {
+                return metadataGuardResult;
             }
 
             // We need to get serverUuid somehow - this would need to be passed through context

@@ -3,7 +3,7 @@ import {
     DatabaseEndpointWithNamespace,
     Endpoint,
     EndpointWithNamespace,
-} from "../../types/metamcp/index.js";
+} from "../../types/mcp-admin/index.js";
 
 export class EndpointsSerializer {
     static serializeEndpoint(dbEndpoint: DatabaseEndpoint): Endpoint {

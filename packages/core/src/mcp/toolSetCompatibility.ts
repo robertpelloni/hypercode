@@ -9,14 +9,14 @@ interface ToolSetSessionLike {
 
 interface ToolSetStoreLike {
     loadToolSets(): Promise<SavedToolSetConfig[]>;
-    saveToolSet(toolSet: SavedToolSetConfig): Promise<void>;
+    saveToolSet(toolSet: SavedToolSetConfig): Promise<unknown>;
 }
 
 export async function saveToolSetCompatibility(
     name: string,
     description: string | null,
     session: Pick<ToolSetSessionLike, 'getLoadedToolNames'>,
-    saveToolSet: (toolSet: SavedToolSetConfig) => Promise<void>,
+    saveToolSet: (toolSet: SavedToolSetConfig) => Promise<unknown>,
 ): Promise<CallToolResult> {
     const tools = session.getLoadedToolNames();
     if (tools.length === 0) {

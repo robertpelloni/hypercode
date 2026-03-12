@@ -13,12 +13,12 @@
 import {
     OAuthSessionCreateInput,
     // OAuthSessionUpdateInput, // Unused
-} from "../../types/metamcp/index.js";
+} from "../../types/mcp-admin/index.js";
 import { desc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 
 import { db } from "../index.js";
-import { oauthSessionsTable } from "../metamcp-schema.js";
+import { oauthSessionsTable } from "../mcp-admin-schema.js";
 
 type OAuthSessionRow = typeof oauthSessionsTable.$inferSelect;
 type OAuthSessionInsert = typeof oauthSessionsTable.$inferInsert;

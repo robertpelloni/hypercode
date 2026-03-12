@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { t, publicProcedure, adminProcedure } from '../lib/trpc-core.js';
 import { toolRegistry, RegisteredTool } from '../services/ToolRegistry.js';
+import { detectCliHarnesses } from '../services/cli-harness-detection.js';
+import { detectInstallSurfaceArtifacts } from '../services/install-surface-detection.js';
 import {
     ToolCreateInputSchema,
     ToolUpsertInputSchema
@@ -64,6 +66,14 @@ export const toolsRouter = t.router({
             });
             return filtered.slice(0, input.limit).map(rt => serializeTool(rt));
         }),
+
+    detectCliHarnesses: publicProcedure.query(async () => {
+        return detectCliHarnesses();
+    }),
+
+    detectInstallSurfaces: publicProcedure.query(async () => {
+        return detectInstallSurfaceArtifacts();
+    }),
 
     get: publicProcedure
         .input(z.object({ uuid: z.string() }))

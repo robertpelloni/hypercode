@@ -38,8 +38,6 @@ import { submoduleRouter } from './routers/submoduleRouter.js';
 import { expertRouter } from './routers/expertRouter.js';
 import { systemProcedures } from './routers/systemProcedures.js';
 import { mcpServersRouter } from './routers/mcpServersRouter.js';
-import { namespacesRouter } from './routers/namespacesRouter.js';
-import { endpointsRouter } from './routers/endpointsRouter.js';
 import { apiKeysRouter } from './routers/apiKeysRouter.js';
 import { toolsRouter } from './routers/toolsRouter.js';
 import { toolSetsRouter } from './routers/toolSetsRouter.js';
@@ -99,8 +97,6 @@ export const appRouter = t.router({
     submodule: submoduleRouter,
     expert: expertRouter,
     mcpServers: mcpServersRouter,
-    namespaces: namespacesRouter,
-    endpoints: endpointsRouter,
     apiKeys: apiKeysRouter,
     tools: toolsRouter,
     toolSets: toolSetsRouter,

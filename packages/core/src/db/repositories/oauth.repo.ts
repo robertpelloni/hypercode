@@ -20,7 +20,7 @@ import {
     OAuthAuthorizationCodeCreateInput,
     OAuthClient,
     OAuthClientCreateInput,
-} from "../../types/metamcp/index.js";
+} from "../../types/mcp-admin/index.js";
 import { eq, lt } from "drizzle-orm"; // Removed unused 'and', 'desc'
 
 import { db } from "../index.js";
@@ -28,7 +28,7 @@ import {
     oauthAccessTokensTable,
     oauthAuthorizationCodesTable,
     oauthClientsTable,
-} from "../metamcp-schema.js";
+} from "../mcp-admin-schema.js";
 
 type OAuthClientInsert = typeof oauthClientsTable.$inferInsert;
 type OAuthAuthorizationCodeInsert = typeof oauthAuthorizationCodesTable.$inferInsert;

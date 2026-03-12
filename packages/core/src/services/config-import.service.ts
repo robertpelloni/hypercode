@@ -1,4 +1,4 @@
-import { McpServerCreateInput, McpServerTypeEnum } from "../types/metamcp/index.js";
+import { McpServerCreateInput, McpServerTypeEnum } from "../types/mcp-admin/index.js";
 import { mcpServersRepository } from "../db/repositories/mcp-servers.repo.js";
 
 interface ClaudeMcpServerDefinition {

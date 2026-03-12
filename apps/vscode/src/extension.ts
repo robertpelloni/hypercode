@@ -18,6 +18,26 @@ const MAX_ACTIVITY_ITEMS = 12;
 const MAX_CHAT_HISTORY_ITEMS = 24;
 const chatHistoryFeed: ChatHistoryEntry[] = [];
 
+const VSCODE_BRIDGE_CAPABILITIES = [
+    'bridge.websocket',
+    'memory.capture',
+    'rag.ingest',
+    'chat.inject',
+    'command.execute',
+    'editor.selection.read',
+    'terminal.buffer.read',
+];
+
+const VSCODE_BRIDGE_HOOK_PHASES = [
+    'session.start',
+    'user.activity',
+    'context.capture',
+    'memory.capture',
+    'chat.submit',
+    'editor.selection',
+    'terminal.output',
+];
+
 const DASHBOARD_ROUTES = {
     home: '/dashboard',
     memory: '/dashboard/memory',
@@ -785,6 +805,14 @@ async function connectToCore() {
                 clearTimeout(reconnectTimer);
                 reconnectTimer = null;
             }
+            socket?.send(JSON.stringify({
+                type: 'BORG_CLIENT_HELLO',
+                clientType: 'vscode-extension',
+                clientName: 'Borg VS Code Bridge',
+                platform: `${vscode.env.appName} ${vscode.version}`,
+                capabilities: VSCODE_BRIDGE_CAPABILITIES,
+                hookPhases: VSCODE_BRIDGE_HOOK_PHASES,
+            }));
             addActivity('status', 'Connected to Borg Core', url);
             void sidebarProvider?.refreshSnapshot();
         });
@@ -1163,6 +1191,16 @@ async function architectMode() {
 }
 
 async function handleMessage(msg: Record<string, unknown>) {
+    if (msg.type === 'BORG_CORE_MANIFEST') {
+        const manifest = msg.manifest as { connectedClients?: Array<{ clientName?: string }>; supportedHookPhases?: string[] } | undefined;
+        addActivity(
+            'system',
+            'Core bridge manifest received',
+            `${manifest?.connectedClients?.length ?? 0} registered clients · ${manifest?.supportedHookPhases?.length ?? 0} hook phases advertised.`,
+        );
+        return;
+    }
+
     if (msg.type === 'GET_USER_ACTIVITY') {
         sendResponse(String(msg.requestId ?? ''), {
             lastActivityTime,

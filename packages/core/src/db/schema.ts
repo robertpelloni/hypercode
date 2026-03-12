@@ -1,2 +1,2 @@
-export * from "./metamcp-schema.js";
+export * from "./mcp-admin-schema.js";
 

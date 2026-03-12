@@ -185,12 +185,16 @@ export class DeepResearchService {
         const prompt = `Generate 3 specific web search queries to deeply research the topic: "${topic}". Return only the queries, one per line.`;
 
         try {
-            const model = await this.llm.modelSelector.selectModel({ taskComplexity: 'low' });
+            const model = await this.llm.modelSelector.selectModel({ taskComplexity: 'low', routingTaskType: 'research' });
             const response = await this.llm.generateText(
                 model.provider,
                 model.modelId,
                 "You are a research assistant.",
-                prompt
+                prompt,
+                {
+                    taskComplexity: 'low',
+                    routingTaskType: 'research',
+                }
             );
             return response.content.split('\n').filter(l => l.trim().length > 0);
         } catch (e) {
@@ -221,12 +225,16 @@ export class DeepResearchService {
         `;
 
         try {
-            const model = await this.llm.modelSelector.selectModel({ taskComplexity: 'high' });
+            const model = await this.llm.modelSelector.selectModel({ taskComplexity: 'high', routingTaskType: 'research' });
             const response = await this.llm.generateText(
                 model.provider,
                 model.modelId,
                 "You are a helpful research assistant. Output valid JSON only.",
-                prompt
+                prompt,
+                {
+                    taskComplexity: 'high',
+                    routingTaskType: 'research',
+                }
             );
             const cleanJson = response.content.replace(/```json\n?|\n?```/g, '').trim();
             const result = JSON.parse(cleanJson) as ResearchResult;

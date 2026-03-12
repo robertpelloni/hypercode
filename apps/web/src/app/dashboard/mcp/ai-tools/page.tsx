@@ -1,17 +1,33 @@
 "use client";
 
 import { useMemo, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@borg/ui';
-import { Bot, CheckCircle2, KeyRound, Loader2, Search, Server, Wrench, XCircle } from 'lucide-react';
+import Link from 'next/link';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@borg/ui';
+import { Bot, CheckCircle2, Database, ExternalLink, KeyRound, Loader2, RefreshCw, Search, Server, TerminalSquare, Wrench, XCircle } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
+import { toast } from 'sonner';
+
+import { getCliHarnessCards, getProviderDirectoryCards, getStatusBadgeClasses } from './ai-tool-directory';
+import { getPortalBadgeClasses } from '../../billing/billing-portal-data';
 
 export default function AIToolsDashboard() {
     const [query, setQuery] = useState('');
     const [healthServerUuid, setHealthServerUuid] = useState('');
+    const mcpServersClient = trpc.mcpServers as any;
+    const toolsClient = trpc.tools as any;
 
-    const { data: tools, isLoading: loadingTools } = trpc.tools.list.useQuery();
-    const { data: servers, isLoading: loadingServers } = trpc.mcpServers.list.useQuery();
-    const { data: apiKeys, isLoading: loadingKeys } = trpc.apiKeys.list.useQuery();
+    const toolsQuery = trpc.tools.list.useQuery();
+    const serversQuery = trpc.mcpServers.list.useQuery();
+    const apiKeysQuery = trpc.apiKeys.list.useQuery();
+    const cliDetectionsQuery = toolsClient.detectCliHarnesses.useQuery();
+    const providerQuotasQuery = trpc.billing.getProviderQuotas.useQuery();
+    const sessionsQuery = trpc.session.list.useQuery();
+    const { data: tools, isLoading: loadingTools } = toolsQuery;
+    const { data: servers, isLoading: loadingServers } = serversQuery;
+    const { data: apiKeys, isLoading: loadingKeys } = apiKeysQuery;
+    const { data: cliDetections, isLoading: loadingCliDetections } = cliDetectionsQuery;
+    const { data: providerQuotas } = providerQuotasQuery;
+    const { data: sessions } = sessionsQuery;
     const { data: expertStatus } = trpc.expert.getStatus.useQuery();
     const { data: sessionState } = trpc.session.getState.useQuery();
     const { data: memoryStats } = trpc.agentMemory.stats.useQuery();
@@ -20,6 +36,30 @@ export default function AIToolsDashboard() {
         { serverUuid: healthServerUuid },
         { enabled: healthServerUuid.trim().length > 0 }
     );
+    const reloadMetadataMutation = mcpServersClient.reloadMetadata.useMutation({
+        onSuccess: async (result: any) => {
+            toast.success(`Reloaded metadata for ${result.server.name} from ${result.metadata.metadataSource ?? 'metadata cache'}.`);
+            await Promise.all([
+                toolsQuery.refetch(),
+                serversQuery.refetch(),
+            ]);
+        },
+        onError: (error: any) => {
+            toast.error(error.message);
+        },
+    });
+    const clearMetadataCacheMutation = mcpServersClient.clearMetadataCache.useMutation({
+        onSuccess: async (result: any) => {
+            toast.success(`Cleared cached metadata for ${result.server.name}. Auto mode will rediscover from the binary next time.`);
+            await Promise.all([
+                toolsQuery.refetch(),
+                serversQuery.refetch(),
+            ]);
+        },
+        onError: (error: any) => {
+            toast.error(error.message);
+        },
+    });
 
     const normalized = query.trim().toLowerCase();
 
@@ -52,21 +92,139 @@ export default function AIToolsDashboard() {
         return (apiKeys ?? []).filter((key: any) => Boolean(key?.is_active));
     }, [apiKeys]);
 
-    const loading = loadingTools || loadingServers || loadingKeys;
+    const normalizedSessions = useMemo(() => {
+        return (sessions ?? [])
+            .filter((session: any) => typeof session?.cliType === 'string')
+            .map((session: any) => ({
+                cliType: String(session.cliType),
+                status: String(session.status ?? 'unknown'),
+            }));
+    }, [sessions]);
+
+    const cliHarnessCards = useMemo(() => getCliHarnessCards(cliDetections, normalizedSessions), [cliDetections, normalizedSessions]);
+    const providerDirectoryCards = useMemo(() => getProviderDirectoryCards(providerQuotas), [providerQuotas]);
+    const connectedProviders = useMemo(() => providerDirectoryCards.filter((card) => card.statusTone === 'success'), [providerDirectoryCards]);
+    const detectedHarnesses = useMemo(() => cliHarnessCards.filter((card) => card.installed), [cliHarnessCards]);
+
+    const loading = loadingTools || loadingServers || loadingKeys || loadingCliDetections;
 
     return (
         <div className="p-8 space-y-8 h-full overflow-y-auto">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white">AI Tools</h1>
-                    <p className="text-zinc-500">Unified operational view of tool inventory, server health, and key readiness.</p>
+                    <p className="text-zinc-500">Unified operational view of CLI harness detection, provider connectivity, tool inventory, and MCP readiness.</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Link href="/dashboard/billing" className="inline-flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 hover:border-zinc-600 hover:bg-zinc-800">
+                        Provider billing
+                        <ExternalLink className="h-4 w-4" />
+                    </Link>
+                    <Link href="/dashboard/session" className="inline-flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 hover:border-zinc-600 hover:bg-zinc-800">
+                        Session control
+                        <ExternalLink className="h-4 w-4" />
+                    </Link>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
                 <StatCard title="Tools Indexed" value={String(tools?.length ?? 0)} icon={Wrench} tone="text-blue-400" />
                 <StatCard title="Active Servers" value={`${activeServers.length}/${servers?.length ?? 0}`} icon={Server} tone="text-emerald-400" />
                 <StatCard title="Active API Keys" value={`${activeKeys.length}/${apiKeys?.length ?? 0}`} icon={KeyRound} tone="text-yellow-400" />
+                <StatCard title="Detected Harnesses" value={`${detectedHarnesses.length}/${cliHarnessCards.length}`} icon={TerminalSquare} tone="text-violet-400" />
+                <StatCard title="Connected Providers" value={`${connectedProviders.length}/${providerDirectoryCards.length}`} icon={Bot} tone="text-cyan-400" />
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <Card className="bg-zinc-900 border-zinc-800">
+                    <CardHeader>
+                        <CardTitle className="text-white">CLI Harness Directory</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {cliHarnessCards.length === 0 ? (
+                            <div className="rounded border border-dashed border-zinc-800 bg-zinc-950/40 p-6 text-sm text-zinc-500">
+                                No CLI harness detections available yet.
+                            </div>
+                        ) : (
+                            cliHarnessCards.map((card) => (
+                                <div key={card.id} className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4 space-y-3">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-semibold text-white">{card.name}</span>
+                                                <span className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide ${getStatusBadgeClasses(card.statusTone)}`}>
+                                                    {card.statusLabel}
+                                                </span>
+                                            </div>
+                                            <div className="mt-1 text-xs text-zinc-400 font-mono">{card.command}</div>
+                                        </div>
+                                        <div className="flex gap-2 text-xs">
+                                            <a href={card.homepage} target="_blank" rel="noreferrer" className="text-blue-300 hover:text-blue-200">Homepage</a>
+                                            <a href={card.docsUrl} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white">Docs</a>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-zinc-300">
+                                        <div>
+                                            <div className="text-zinc-500 uppercase tracking-wide text-[10px]">Version</div>
+                                            <div className="mt-1 break-all">{card.version ?? 'Not detected'}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-zinc-500 uppercase tracking-wide text-[10px]">Sessions</div>
+                                            <div className="mt-1">{card.runningSessions} running / {card.activeSessions} total</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-zinc-500 uppercase tracking-wide text-[10px]">Binary</div>
+                                            <div className="mt-1 break-all">{card.resolvedPath ?? card.installHint}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-zinc-900 border-zinc-800">
+                    <CardHeader>
+                        <CardTitle className="text-white">Provider Directory</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {providerDirectoryCards.length === 0 ? (
+                            <div className="rounded border border-dashed border-zinc-800 bg-zinc-950/40 p-6 text-sm text-zinc-500">
+                                Provider quota data has not been discovered yet.
+                            </div>
+                        ) : (
+                            providerDirectoryCards.map((card) => (
+                                <div key={card.provider} className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4 space-y-3">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-semibold text-white">{card.label}</span>
+                                                <span className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide ${getPortalBadgeClasses(card.statusTone)}`}>
+                                                    {card.statusLabel}
+                                                </span>
+                                            </div>
+                                            <div className="mt-1 text-xs text-zinc-400">{card.authLabel} • {card.availabilityLabel}</div>
+                                        </div>
+                                        <a href={card.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-300 hover:text-blue-200">
+                                            Open portal
+                                            <ExternalLink className="h-3.5 w-3.5" />
+                                        </a>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-zinc-300">
+                                        <div>
+                                            <div className="text-zinc-500 uppercase tracking-wide text-[10px]">Usage</div>
+                                            <div className="mt-1">{card.usageLabel}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-zinc-500 uppercase tracking-wide text-[10px]">Reset</div>
+                                            <div className="mt-1 break-all">{card.resetLabel}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </CardContent>
+                </Card>
             </div>
 
             <Card className="bg-zinc-900 border-zinc-800">
@@ -141,10 +299,79 @@ export default function AIToolsDashboard() {
 
             <Card className="bg-zinc-900 border-zinc-800">
                 <CardHeader>
-                    <CardTitle className="text-white">Namespace Coverage (Live)</CardTitle>
+                    <CardTitle className="text-white">MCP metadata cache</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    {(servers ?? []).length === 0 ? (
+                        <div className="rounded border border-dashed border-zinc-800 bg-zinc-950/40 p-6 text-sm text-zinc-500">
+                            No MCP servers are available yet.
+                        </div>
+                    ) : (
+                        (servers ?? []).map((server: any) => {
+                            const metadata = server?._meta;
+                            const pending = reloadMetadataMutation.isPending && reloadMetadataMutation.variables?.uuid === server.uuid;
+
+                            return (
+                                <div key={server.uuid} className="rounded border border-zinc-800 bg-zinc-950/50 p-3">
+                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2 text-white">
+                                                <Database className="h-4 w-4 text-cyan-400" />
+                                                <span className="font-medium">{server.name}</span>
+                                            </div>
+                                            <div className="mt-2 grid gap-1 text-xs text-zinc-400">
+                                                <div>cache status: {String(metadata?.status ?? 'pending')}</div>
+                                                <div>source: {String(metadata?.metadataSource ?? 'none')}</div>
+                                                <div>tools cached: {String(metadata?.toolCount ?? 0)}</div>
+                                                <div className="break-all">last binary load: {String(metadata?.lastSuccessfulBinaryLoadAt ?? 'never')}</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={pending || clearMetadataCacheMutation.isPending}
+                                                onClick={() => clearMetadataCacheMutation.mutate({ uuid: server.uuid })}
+                                            >
+                                                {clearMetadataCacheMutation.isPending && clearMetadataCacheMutation.variables?.uuid === server.uuid ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Database className="mr-2 h-3.5 w-3.5" />}
+                                                Clear cache
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={pending}
+                                                onClick={() => reloadMetadataMutation.mutate({ uuid: server.uuid, mode: 'cache' })}
+                                            >
+                                                {pending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Database className="mr-2 h-3.5 w-3.5" />}
+                                                Reload cache
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={pending}
+                                                onClick={() => reloadMetadataMutation.mutate({ uuid: server.uuid, mode: 'binary' })}
+                                            >
+                                                {pending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-2 h-3.5 w-3.5" />}
+                                                Refresh binary
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card className="bg-zinc-900 border-zinc-800">
+                <CardHeader>
+                    <CardTitle className="text-white">Operational Coverage (Live)</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                    <NamespaceCard
+                    <CoverageCard
                         title="expert.getStatus"
                         lines={[
                             `researcher: ${String(expertStatus?.researcher ?? 'unknown')}`,
@@ -152,7 +379,7 @@ export default function AIToolsDashboard() {
                         ]}
                     />
 
-                    <NamespaceCard
+                    <CoverageCard
                         title="session.getState"
                         lines={[
                             `autoDrive: ${String((sessionState as any)?.isAutoDriveActive ?? false)}`,
@@ -160,7 +387,7 @@ export default function AIToolsDashboard() {
                         ]}
                     />
 
-                    <NamespaceCard
+                    <CoverageCard
                         title="agentMemory.stats"
                         lines={[
                             `session: ${String(memoryStats?.session ?? 0)}`,
@@ -192,7 +419,7 @@ export default function AIToolsDashboard() {
                         )}
                     </div>
 
-                    <NamespaceCard
+                    <CoverageCard
                         title="shell.getSystemHistory"
                         lines={[
                             `entries: ${String(shellHistory?.length ?? 0)}`,
@@ -207,7 +434,7 @@ export default function AIToolsDashboard() {
     );
 }
 
-function NamespaceCard({ title, lines }: { title: string; lines: string[] }) {
+function CoverageCard({ title, lines }: { title: string; lines: string[] }) {
     return (
         <div className="rounded border border-zinc-800 bg-zinc-950/50 p-3">
             <div className="text-sm text-zinc-200 font-medium mb-2">{title}</div>

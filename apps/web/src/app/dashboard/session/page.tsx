@@ -2,12 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@borg/ui";
-import { Loader2, Activity, Play, Square, Target, Crosshair, HelpCircle, ActivitySquare } from "lucide-react";
+import { Loader2, Activity, Play, Square, Target, Crosshair, HelpCircle, ActivitySquare, RotateCcw } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
 
+import { SessionCreateDialog } from './session-create-dialog';
+import { SessionDetailsDialog, type SessionDetailsDialogSession } from './session-details-dialog';
+import { formatRelativeTimestamp, formatRestartCountdown, getSessionTone } from './session-dashboard-utils';
+
 export default function SessionDashboard() {
+    const utils = trpc.useUtils();
     const { data: sessionState, isLoading, refetch } = trpc.session.getState.useQuery(undefined, { refetchInterval: 3000 });
+    const sessionsQuery = trpc.session.list.useQuery(undefined, { refetchInterval: 3000 });
+    const catalogQuery = trpc.session.catalog.useQuery(undefined, { refetchInterval: 15000 });
     const updateMutation = trpc.session.updateState.useMutation({
         onSuccess: () => {
             toast.success("Session state updated");
@@ -23,6 +30,59 @@ export default function SessionDashboard() {
             toast.success("Session state cleared");
             refetch();
         }
+    });
+
+    const [pendingSessionActionId, setPendingSessionActionId] = useState<string | null>(null);
+    const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
+
+    useEffect(() => {
+        const interval = window.setInterval(() => setCurrentTimestamp(Date.now()), 30_000);
+        return () => window.clearInterval(interval);
+    }, []);
+
+    const refreshSessions = async () => {
+        await Promise.all([
+            sessionsQuery.refetch(),
+            catalogQuery.refetch(),
+            utils.session.list.invalidate(),
+            utils.session.catalog.invalidate(),
+        ]);
+    };
+
+    const startSessionMutation = trpc.session.start.useMutation({
+        onSuccess: async () => {
+            toast.success('Session started');
+            setPendingSessionActionId(null);
+            await refreshSessions();
+        },
+        onError: (error) => {
+            toast.error(`Start failed: ${error.message}`);
+            setPendingSessionActionId(null);
+        },
+    });
+
+    const stopSessionMutation = trpc.session.stop.useMutation({
+        onSuccess: async () => {
+            toast.success('Session stopped');
+            setPendingSessionActionId(null);
+            await refreshSessions();
+        },
+        onError: (error) => {
+            toast.error(`Stop failed: ${error.message}`);
+            setPendingSessionActionId(null);
+        },
+    });
+
+    const restartSessionMutation = trpc.session.restart.useMutation({
+        onSuccess: async () => {
+            toast.success('Session restarted');
+            setPendingSessionActionId(null);
+            await refreshSessions();
+        },
+        onError: (error) => {
+            toast.error(`Restart failed: ${error.message}`);
+            setPendingSessionActionId(null);
+        },
     });
 
     const [goalInput, setGoalInput] = useState("");
@@ -49,6 +109,11 @@ export default function SessionDashboard() {
         updateMutation.mutate({ isAutoDriveActive: !sessionState.isAutoDriveActive });
     };
 
+    const sessions = sessionsQuery.data ?? [];
+    const catalog = catalogQuery.data ?? [];
+    const installedHarnessCount = catalog.filter((entry) => entry.installed).length;
+    const runningSessionCount = sessions.filter((session) => session.status === 'running').length;
+
     if (isLoading) {
         return <div className="p-8 flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-zinc-500" /></div>;
     }
@@ -62,10 +127,11 @@ export default function SessionDashboard() {
                         Execution Session Control
                     </h1>
                     <p className="text-zinc-500 mt-2">
-                        Manage global execution state, Auto-Drive toggles, and system goals.
+                        Manage supervised CLI sessions, Auto-Drive toggles, and the active operator objective.
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    <SessionCreateDialog catalog={catalog} onCreated={refreshSessions} />
                     <Button variant="outline" onClick={() => clearMutation.mutate()} className="border-red-500/20 text-red-500 hover:bg-red-500/10">
                         Reset Session
                     </Button>
@@ -154,6 +220,127 @@ export default function SessionDashboard() {
                                 </Button>
                             </div>
                         </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-zinc-900 border-zinc-800 shadow-xl md:col-span-2">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-lg font-bold flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 text-cyan-400">
+                                <ActivitySquare className="h-5 w-5" />
+                                Supervised CLI Sessions
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-zinc-400">
+                                <Badge variant="secondary">{runningSessionCount}/{sessions.length} running</Badge>
+                                <Badge variant="secondary">{installedHarnessCount}/{catalog.length} harnesses detected</Badge>
+                            </div>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 pt-4">
+                        {sessions.length === 0 ? (
+                            <div className="rounded-lg border border-dashed border-zinc-800 bg-black/40 p-6 text-sm text-zinc-400">
+                                No supervised sessions exist yet. Create one to launch Aider, Claude Code, Gemini CLI, Codex, or OpenCode under Borg supervision.
+                            </div>
+                        ) : sessions.map((session) => {
+                            const latestLog = session.logs[session.logs.length - 1];
+                            const isPending = pendingSessionActionId === session.id;
+                            const canStart = session.status === 'created' || session.status === 'stopped' || session.status === 'error';
+                            const canStop = session.status === 'starting' || session.status === 'running' || session.status === 'restarting';
+                            const sessionDetails: SessionDetailsDialogSession = {
+                                id: session.id ?? '',
+                                name: session.name ?? 'Unnamed session',
+                                cliType: session.cliType ?? 'cli',
+                                workingDirectory: session.workingDirectory ?? '',
+                                worktreePath: session.worktreePath,
+                                autoRestart: session.autoRestart,
+                                status: session.status ?? 'created',
+                                restartCount: session.restartCount ?? 0,
+                                maxRestartAttempts: session.maxRestartAttempts ?? 0,
+                                scheduledRestartAt: session.scheduledRestartAt,
+                                lastActivityAt: session.lastActivityAt ?? currentTimestamp,
+                                lastError: session.lastError,
+                                metadata: (session.metadata ?? {}) as SessionDetailsDialogSession['metadata'],
+                            };
+
+                            return (
+                                <div key={session.id} className="rounded-xl border border-zinc-800 bg-black/50 p-4">
+                                    <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-start">
+                                        <div className="min-w-0 flex-1 space-y-3">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <h3 className="text-base font-semibold text-white">{session.name}</h3>
+                                                <Badge className={getSessionTone(session.status)}>{session.status}</Badge>
+                                                <Badge variant="outline" className="border-zinc-700 text-zinc-300">{session.cliType}</Badge>
+                                            </div>
+                                            <p className="break-all font-mono text-xs text-zinc-500">{session.worktreePath ?? session.workingDirectory}</p>
+                                            <p className="text-xs text-zinc-500">
+                                                Last activity {formatRelativeTimestamp(session.lastActivityAt, currentTimestamp)} · Restarts {session.restartCount}/{session.maxRestartAttempts}
+                                            </p>
+                                            {session.autoRestart === false ? (
+                                                <p className="text-xs text-amber-300">
+                                                    Manual restart only · Auto-restart is disabled for this session.
+                                                </p>
+                                            ) : null}
+                                            {session.status === 'restarting' && session.scheduledRestartAt ? (
+                                                <p className="text-xs text-amber-300">
+                                                    Restart queued {formatRestartCountdown(session.scheduledRestartAt, currentTimestamp)}
+                                                </p>
+                                            ) : null}
+                                            {latestLog ? (
+                                                <div className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-3">
+                                                    <div className="mb-2 flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+                                                        <span>Latest {latestLog.stream}</span>
+                                                        <span>{formatRelativeTimestamp(latestLog.timestamp, currentTimestamp)}</span>
+                                                    </div>
+                                                    <p className="whitespace-pre-wrap break-words text-sm text-zinc-300 line-clamp-4">{latestLog.message}</p>
+                                                </div>
+                                            ) : null}
+                                            {session.lastError ? (
+                                                <p className="text-sm text-red-300">{session.lastError}</p>
+                                            ) : null}
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-2">
+                                            <SessionDetailsDialog session={sessionDetails} currentTimestamp={currentTimestamp} />
+                                            <Button
+                                                onClick={() => {
+                                                    setPendingSessionActionId(session.id);
+                                                    startSessionMutation.mutate({ id: session.id });
+                                                }}
+                                                disabled={!canStart || isPending}
+                                                className="bg-emerald-700 hover:bg-emerald-600 text-white"
+                                            >
+                                                {isPending && canStart ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                                                Start
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => {
+                                                    setPendingSessionActionId(session.id);
+                                                    stopSessionMutation.mutate({ id: session.id });
+                                                }}
+                                                disabled={!canStop || isPending}
+                                                className="border-zinc-700 text-zinc-200 hover:bg-zinc-800"
+                                            >
+                                                {isPending && canStop ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Square className="mr-2 h-4 w-4" />}
+                                                Stop
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => {
+                                                    setPendingSessionActionId(session.id);
+                                                    restartSessionMutation.mutate({ id: session.id });
+                                                }}
+                                                disabled={isPending}
+                                                className="border-cyan-500/30 text-cyan-200 hover:bg-cyan-500/10"
+                                            >
+                                                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
+                                                Restart
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </CardContent>
                 </Card>
             </div>

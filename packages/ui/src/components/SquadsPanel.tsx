@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ScrollArea } from "./ui/scroll-area";
 import { Users, Plus, Trash2, Terminal, GitBranch, Activity, RefreshCw, MessageSquare } from 'lucide-react';
 import { toast } from "sonner";
-import { trpc } from '@/utils/trpc';
+import { trpc } from '../utils/trpc';
 import { useRouter } from 'next/navigation';
 
 export function SquadsPanel() {

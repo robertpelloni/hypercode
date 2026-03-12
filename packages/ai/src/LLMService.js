@@ -288,9 +288,12 @@ export class LLMService {
                 const isRecoverable = this.isRecoverableError(error);
                 if (this.modelSelector && isRecoverable && attempt < maxAttempts) {
                     console.warn(`[LLMService] ⚠️ Provider ${provider} failed (${error.message}). Switching models...`);
-                    this.modelSelector.reportFailure(provider, modelId);
+                    this.modelSelector.reportFailure(provider, modelId, error);
                     const next = await this.modelSelector.selectModel({
                         taskComplexity: options?.taskComplexity || 'medium',
+                        taskType: options?.taskType,
+                        routingTaskType: options?.routingTaskType,
+                        routingStrategy: options?.routingStrategy,
                         provider: undefined,
                         exclude: [`${provider}:${modelId}`]
                     });

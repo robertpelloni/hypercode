@@ -128,7 +128,7 @@ export class AutoTestService {
         });
 
         let output = '';
-        p.stdout?.on('data', (d) => { output += d.toString(); process.stdout.write(d); });
+        p.stdout?.on('data', (d) => { output += d.toString(); process.stderr.write(d); });
         p.stderr?.on('data', (d) => { output += d.toString(); process.stderr.write(d); });
 
         p.on('close', (code) => {

@@ -7,14 +7,14 @@ export const logsRouter = t.router({
     list: publicProcedure
         .input(GetLogsRequestSchema)
         .query(async ({ input }) => {
-            return await logsRepository.findAll(input.limit);
+            return await logsRepository.findAll(input);
         }),
 
     summary: publicProcedure
         .input(z.object({ limit: z.number().min(1).max(5000).default(1000) }).optional())
         .query(async ({ input }) => {
             const limit = input?.limit ?? 1000;
-            const logs = await logsRepository.findAll(limit);
+            const logs = await logsRepository.findAll({ limit });
 
             const entries = Array.isArray(logs) ? logs : [];
             const totalCalls = entries.length;

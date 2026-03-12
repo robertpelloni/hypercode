@@ -2,7 +2,6 @@
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
 import { Map } from 'lucide-react';
@@ -23,7 +22,7 @@ export function RoadmapWidget({ content }: RoadmapWidgetProps) {
             <CardContent>
                 <ScrollArea className="h-[300px] w-full pr-4">
                     <div className="prose prose-invert prose-sm max-w-none">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        <ReactMarkdown>
                             {content}
                         </ReactMarkdown>
                     </div>

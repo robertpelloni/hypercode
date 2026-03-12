@@ -1,30 +1,36 @@
 
-console.log("[MCPServer] Starting imports...");
+console.error("[MCPServer] Starting imports...");
 import './debug_marker.js';
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
     CallToolRequestSchema,
+    GetPromptRequestSchema,
+    ListPromptsRequestSchema,
+    ListResourcesRequestSchema,
+    ListResourceTemplatesRequestSchema,
     ListToolsRequestSchema,
+    ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-console.log("[MCPServer] ✓ @modelcontextprotocol/sdk");
+console.error("[MCPServer] ✓ @modelcontextprotocol/sdk");
 
 import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs';
-console.log("[MCPServer] ✓ path/url/fs");
+console.error("[MCPServer] ✓ path/url/fs");
 
 import { Router } from "./Router.js";
-console.log("[MCPServer] ✓ Router");
+console.error("[MCPServer] ✓ Router");
 
 import { ModelSelector, LLMService } from "@borg/ai";
-console.log("[MCPServer] ✓ ModelSelector");
+import { CoreModelSelector } from './providers/CoreModelSelector.js';
+console.error("[MCPServer] ✓ ModelSelector");
 
 import { WebSocketServer } from 'ws';
 import { WebSocketServerTransport } from './transports/WebSocketServerTransport.js';
 import http from 'http';
-console.log("[MCPServer] ✓ ws/http");
+console.error("[MCPServer] ✓ ws/http");
 
 import { McpmInstaller } from "./skills/McpmInstaller.js";
 import { Director } from "@borg/agents";
@@ -64,11 +70,14 @@ import { CodeModeService } from "./services/CodeModeService.js";
 import { WorkflowEngine } from "./orchestrator/WorkflowEngine.js";
 import { AgentMemoryService } from "./services/AgentMemoryService.js";
 import { MemoryManager } from "./services/MemoryManager.js"; // Use legacy MemoryManager
-console.log("[MCPServer] ✓ Phase 51/53 Infrastructure");
+console.error("[MCPServer] ✓ Phase 51/53 Infrastructure");
 import { SkillAssimilationService } from "./services/SkillAssimilationService.js";
 import { MarketplaceService } from "./services/MarketplaceService.js";
 import { registerSystemWorkflows } from "./orchestrator/SystemWorkflows.js";
 import { MCPAggregator } from "./mcp/MCPAggregator.js";
+import { createDirectModeAgentRunner, getDirectModeCompatibilityTools, getDirectModeMetadataGuardResult, getDirectModeSavedScriptTools, tryHandleDirectModeCompatibilityTool } from './mcp/directModeCompatibility.js';
+import { getDownstreamPrompt, listDownstreamPrompts, listDownstreamResources, listDownstreamResourceTemplates, readDownstreamResource } from './mcp/downstreamDiscovery.js';
+import { isToolNotFoundError, shouldPreferAggregatorExecution } from "./mcp/legacyProxyMode.js";
 import { SubmoduleManager } from "./mcp/SubmoduleManager.js";
 import { SubmoduleService } from "./services/SubmoduleService.js";
 import { FileSensor } from "./sensors/FileSensor.js";
@@ -76,13 +85,24 @@ import { TerminalSensor } from "./sensors/TerminalSensor.js";
 import { AutoTestReactor } from "./reactors/AutoTestReactor.js";
 import { HealerReactor } from "./reactors/HealerReactor.js";
 import { SessionManager } from "./services/SessionManager.js";
+import { SessionSupervisor } from "./supervisor/SessionSupervisor.js";
 import { ProjectTracker } from "./services/ProjectTracker.js";
 import { MissionService } from "./services/MissionService.js";
+import { buildToolObservationInput } from './services/toolObservationMemory.js';
+import { loadBorgMcpConfig } from './mcp/mcpJsonConfig.js';
+import {
+    buildAutomaticToolContextFingerprint,
+    buildAutomaticToolContextMemory,
+    buildAutomaticToolContextStartPayload,
+    shouldPersistAutomaticToolContext,
+    shouldResolveAutomaticToolContext,
+} from './services/toolContextInjection.js';
+import { readToolPreferencesFromSettings } from './routers/mcp-tool-preferences.js';
 
-console.log("[MCPServer] ✓ SkillRegistry");
+console.error("[MCPServer] ✓ SkillRegistry");
 
 import { SpawnerService } from "./agents/SpawnerService.js";
-console.log("[MCPServer] ✓ SpawnerService");
+console.error("[MCPServer] ✓ SpawnerService");
 
 import {
     FileSystemTools,
@@ -101,19 +121,19 @@ import {
     ChainExecutor,
     type ChainRequest
 } from "@borg/tools";
-console.log("[MCPServer] ✓ All Tools & ChainExecutor");
+console.error("[MCPServer] ✓ All Tools & ChainExecutor");
 
-console.log("[MCPServer] ✓ All Tools & ChainExecutor");
+console.error("[MCPServer] ✓ All Tools & ChainExecutor");
 
 // Council and Director already imported above
-console.log("[MCPServer] ✓ Council");
+console.error("[MCPServer] ✓ Council");
 
 import { CommandRegistry } from "./commands/CommandRegistry.js";
 import { GitCommand } from "./commands/lib/GitCommands.js";
 import { HelpCommand, VersionCommand, DirectorCommand } from "./commands/lib/SystemCommands.js";
 import { ContextCommand } from "./commands/lib/ContextCommands.js";
 import { UndoCommand, DiffCommand, StashCommand, FixCommand } from "./commands/lib/WorkflowCommands.js";
-console.log("[MCPServer] ✓ Commands");
+console.error("[MCPServer] ✓ Commands");
 
 import { ContextManager } from "./context/ContextManager.js";
 import { SymbolPinService } from "./services/SymbolPinService.js";
@@ -132,8 +152,18 @@ import { BrowserTool } from "@borg/tools";
 import { SearchService } from "@borg/search";
 import { CouncilService } from "./services/CouncilService.js";
 import { BrowserService } from "./services/BrowserService.js";
+import type { ConnectedClient } from './services/mcp-client.service.js';
 import { createCouncilTools } from "./mcp/tools/council_tools.js";
-console.log("[MCPServer] ✓ PermissionManager");
+import { NativeSessionMetaTools } from "./mcp/NativeSessionMetaTools.js";
+import { jsonConfigProvider } from './services/config/JsonConfigProvider.js';
+import { configImportService } from './services/config-import.service.js';
+import {
+    applyBridgeClientHello,
+    buildBridgeManifest,
+    createDefaultBridgeClient,
+    type RegisteredBridgeClient,
+} from './bridge/bridge-manifest.js';
+console.error("[MCPServer] ✓ PermissionManager");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -145,9 +175,8 @@ const __dirname = path.dirname(__filename);
 import { AgentAdapter } from "./orchestrator/AgentAdapter.js";
 import { ClaudeAdapter } from "./orchestrator/adapters/ClaudeAdapter.js";
 import { GeminiAdapter } from "./orchestrator/adapters/GeminiAdapter.js";
-import { MetaMCPController } from "./services/MetaMCPController.js";
-import { executeProxiedTool } from "./services/metamcp-proxy.service.js";
 import { Tool, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { ToolContextPayload } from './services/toolContextMemory.js';
 
 interface ToolRequest {
     params: {
@@ -165,7 +194,7 @@ interface TextContentEnvelope {
     content?: Array<{ text?: string }>;
 }
 
-console.log("[MCPServer] All imports complete!");
+console.error("[MCPServer] All imports complete!");
 
 declare global {
     var mcpServerInstance: MCPServer;
@@ -173,7 +202,9 @@ declare global {
 
 export class MCPServer {
     private server: Server; // Stdio Server
+    private serverSetupPromise: Promise<void>;
     private wsServer: Server | null = null; // WebSocket Server
+    private wsServerSetupPromise: Promise<void> | null = null;
     private router: Router;
     public modelSelector: ModelSelector;
     public llmService: LLMService;
@@ -223,6 +254,7 @@ export class MCPServer {
     public browserService: BrowserService;
     public marketplaceService: MarketplaceService; // Phase 65: Decentralized Marketplace
     public sessionManager: SessionManager; // Phase 57: State Persistence
+    public sessionSupervisor: SessionSupervisor;
 
     public projectTracker: ProjectTracker; // Phase 59: Autonomous Loop
     public missionService: MissionService; // Phase 80: Swarm Persistence
@@ -243,6 +275,11 @@ export class MCPServer {
     public workflowEngine: WorkflowEngine;
     public lspTools: LSPTools;
     public agentMemoryService: AgentMemoryService;
+    private readonly nativeSessionMetaTools: NativeSessionMetaTools;
+    private readonly promptToClient: Record<string, ConnectedClient> = {};
+    private readonly resourceToClient: Record<string, ConnectedClient> = {};
+    private readonly bridgeClients: Map<any, RegisteredBridgeClient> = new Map();
+    private readonly recentToolContextFingerprints: Map<string, number> = new Map();
 
     // Core Integrations (Phase 5 & 6)
     public browserTool: BrowserTool;
@@ -287,6 +324,19 @@ export class MCPServer {
         return this.memoryInitialized;
     }
 
+    public getBridgeStatus() {
+        const connectedClients = Array.from(this.bridgeClients.values()).sort((left, right) => left.clientName.localeCompare(right.clientName));
+        const manifest = buildBridgeManifest(connectedClients);
+
+        return {
+            ready: Boolean(this.wssInstance),
+            clientCount: Number(this.wssInstance?.clients?.size ?? 0),
+            clients: connectedClients,
+            supportedCapabilities: manifest.supportedCapabilities,
+            supportedHookPhases: manifest.supportedHookPhases,
+        };
+    }
+
     /**
      * Reason: tool definitions originate from mixed internal/external registries with loose typing.
      * What: runtime guard for tool objects that expose an executable `handler(args)` function.
@@ -315,12 +365,104 @@ export class MCPServer {
         return typeof first?.text === 'string' ? first.text : null;
     }
 
+    /**
+     * Reason: Borg now captures session-start and stop-time memory, but still needs
+     * post-tool lifecycle observations without wiring every caller individually.
+     * What: best-effort bridge from centralized tool execution into structured memory observations.
+     * Why: keeps claude-mem-style lifecycle capture native to Borg while never blocking tool execution.
+     */
+    private async captureToolObservation(event: {
+        toolName: string;
+        args: unknown;
+        result?: unknown;
+        error?: unknown;
+        durationMs: number;
+    }): Promise<void> {
+        const observation = buildToolObservationInput(event);
+        if (!observation || !this.agentMemoryService?.recordObservation) {
+            return;
+        }
+
+        try {
+            await this.agentMemoryService.recordObservation(observation);
+        } catch (error) {
+            console.error('[MCPServer] Failed to capture tool observation:', error);
+        }
+    }
+
+    /**
+     * Reason: Borg can already rank relevant memories for a tool call, but until now
+     * that JIT context stayed behind an explicit helper instead of being used automatically.
+     * What: resolves compact pre-tool context using current session goal/objective state,
+     * broadcasts a short preview to the inspector, and stores deduped session memory.
+     * Why: gives Borg a native PreToolUse-style lifecycle seam without mutating downstream schemas.
+     */
+    private async resolveAutomaticToolContext(toolName: string, args: unknown): Promise<ToolContextPayload | null> {
+        if (!shouldResolveAutomaticToolContext(toolName) || !this.agentMemoryService?.getToolContext) {
+            return null;
+        }
+
+        const sessionState = this.sessionManager?.getState?.();
+        const payload = this.agentMemoryService.getToolContext({
+            toolName,
+            args,
+            activeGoal: sessionState?.activeGoal ?? null,
+            lastObjective: sessionState?.lastObjective ?? null,
+        }) as ToolContextPayload | null;
+
+        if (!shouldPersistAutomaticToolContext(payload)) {
+            return payload;
+        }
+
+        const fingerprint = buildAutomaticToolContextFingerprint(payload);
+        const now = Date.now();
+
+        for (const [key, timestamp] of this.recentToolContextFingerprints.entries()) {
+            if (now - timestamp > 30_000) {
+                this.recentToolContextFingerprints.delete(key);
+            }
+        }
+
+        if (this.recentToolContextFingerprints.has(fingerprint)) {
+            return payload;
+        }
+
+        this.recentToolContextFingerprints.set(fingerprint, now);
+
+        try {
+            const memory = buildAutomaticToolContextMemory(payload);
+            await this.agentMemoryService.add(memory.content, 'session', 'project', memory.metadata);
+        } catch (error) {
+            console.error('[MCPServer] Failed to capture automatic tool context:', error);
+        }
+
+        return payload;
+    }
+
+    private async syncNativeToolPreferences(): Promise<void> {
+        try {
+            const config = await loadBorgMcpConfig();
+            const settings = config.settings as { toolSelection?: { importantTools?: unknown; alwaysLoadedTools?: unknown } } | undefined;
+            const preferences = readToolPreferencesFromSettings(settings?.toolSelection);
+            this.nativeSessionMetaTools.setAlwaysLoadedTools(preferences.alwaysLoadedTools);
+        } catch {
+            this.nativeSessionMetaTools.setAlwaysLoadedTools([]);
+        }
+    }
+
+    public setAlwaysLoadedTools(toolNames: string[]): void {
+        this.nativeSessionMetaTools.setAlwaysLoadedTools(toolNames);
+    }
+
     constructor(options: { skipWebsocket?: boolean, skipAutoDrive?: boolean, skipMesh?: boolean, inputTools?: InputTools, systemStatusTool?: SystemStatusTool, processRegistry?: ProcessRegistry } = {}) {
         this.router = new Router();
-        this.modelSelector = new ModelSelector();
+        this.modelSelector = new CoreModelSelector();
         this.llmService = new LLMService(this.modelSelector);
         // SkillRegistry initialized later with correct paths
         this.sessionManager = new SessionManager(process.cwd()); // Phase 57: State Persistence
+        if (options.skipAutoDrive) {
+            this.sessionManager.disableAutoDriveRestore();
+        }
         this.projectTracker = new ProjectTracker(process.cwd()); // Phase 59: Autonomous Loop
         this.missionService = new MissionService(process.cwd()); // Phase 80: Swarm Persistence
         this.director = new Director(this);
@@ -330,6 +472,10 @@ export class MCPServer {
         this.shellService = new ShellService();
         this.gitService = new GitService(process.cwd()); // Phase 30
         this.gitWorktreeManager = new GitWorktreeManager(process.cwd());
+        this.sessionSupervisor = new SessionSupervisor({
+            rootDir: process.cwd(),
+            worktreeManager: this.gitWorktreeManager,
+        });
         this.metricsService = new MetricsService(); // Phase 31
         this.metricsService.startMonitoring();
         this.policyService = new PolicyService(process.cwd()); // Phase 32
@@ -342,6 +488,7 @@ export class MCPServer {
         this.spawnerService = SpawnerService.getInstance();
         this.configManager = new ConfigManager();
         this.mcpConfigService = new McpConfigService();
+        this.nativeSessionMetaTools = new NativeSessionMetaTools();
         // Fire and forget config sync
         this.mcpConfigService.syncWithDatabase().catch(err => console.error("[MCPServer] Config Sync Failed:", err));
 
@@ -398,6 +545,7 @@ export class MCPServer {
         // Phase 5 & 6 Init
         this.browserTool = new BrowserTool();
         this.searchService = new SearchService();
+        this.nativeSessionMetaTools.setToolContextResolver((input) => this.agentMemoryService?.getToolContext?.(input) ?? null);
 
         // Initialize Core Agents
         this.geminiAgent = new GeminiAgent(this.llmService, this.promptRegistry);
@@ -419,7 +567,7 @@ export class MCPServer {
         // Load persistent config
         const savedConfig = this.configManager.loadConfig();
         if (savedConfig) {
-            console.log("[MCPServer] Loaded persistent config.");
+            console.error("[MCPServer] Loaded persistent config.");
             this.directorConfig = { ...this.directorConfig, ...savedConfig };
             // Ensure nested merge for council
             if (savedConfig.council) {
@@ -492,85 +640,24 @@ export class MCPServer {
         global.mcpServerInstance = this;
 
         // Standard Server (Stdio)
-        this.server = this.createServerInstance();
-
-        // Phase 55: MetaMCP Controller Initialization
-        // This attaches the proxy middleware to the server instance
-        // Native tools are passed to be wrapped/exposed
-        // Note: We use a placeholder handler because native tools are handled by the SDK's own addTool logic.
-        // MetaMCP might want to wrap them. attachTo expects a handler.
-        // Fitting into the existing pattern.
-
-        // Define native tools array (this needs to be populated from the registered tools)
-        // MCPServer registers tools via `this.server.tool(...)` later in `registerTools`.
-        // We might need to hook into that or pass a reference.
-        // For the purpose of this refactor, we just ensure the controller is up.
-
-        import('./services/MetaMCPController.js').then(({ MetaMCPController }) => {
-            MetaMCPController.getInstance().initialize(
-                this.server,
-                [], // TODO: Pass native tools if needed
-                async (name, args) => { return { content: [] }; } // Placeholder handler
-            ).catch(e => console.error("MetaMCP Init Failed:", e));
-        });
+        const primaryServer = this.createServerInstance();
+        this.server = primaryServer.server;
+        this.serverSetupPromise = primaryServer.ready;
 
         if (!options.skipWebsocket) {
             const PORT = 3001;
-            console.log(`[MCPServer] Starting WebSocket/HTTP Server on port ${PORT}...`);
+            console.log(`[MCPServer] Preparing WebSocket/HTTP bridge for port ${PORT}...`);
 
-            // Create an explicit HTTP server so we can handle SSE routes alongside WebSockets
-            const httpServer = http.createServer((req, res) => {
-                // SSE Endpoint for Mesh Visualization
-                if (req.method === 'GET' && req.url === '/api/mesh/stream') {
-                    res.writeHead(200, {
-                        'Content-Type': 'text/event-stream',
-                        'Cache-Control': 'no-cache',
-                        'Connection': 'keep-alive',
-                        'Access-Control-Allow-Origin': '*'
-                    });
-                    res.write('data: {"type":"CONNECTED"}\n\n');
-
-                    // Dynamically import the emitter to avoid circular deps during boot
-                    import('./mesh/MeshService.js').then((module) => {
-                        // Normally this is not exported, we need a way to hook into globalMeshBus
-                        // Wait, we need to export globalMeshBus or use the EventBus. 
-                        // Actually, I should use this.eventBus and forward mesh messages there inside MeshService.ts.
-                        // For now, let's just create a generic eventBus hook "mesh_stream"
-                    });
-
-                    const safeSend = (data: any) => {
-                        try {
-                            res.write(`data: ${JSON.stringify(data)}\n\n`);
-                        } catch (e) {
-                            // client disconnected
-                        }
-                    };
-
-                    const handleMeshMessage = (msg: any) => safeSend(msg);
-                    this.eventBus.on('mesh:traffic', handleMeshMessage);
-
-                    req.on('close', () => {
-                        this.eventBus.off('mesh:traffic', handleMeshMessage);
-                    });
-                    return;
-                }
-
-                // 404 for any other HTTP hit
-                res.writeHead(404);
-                res.end();
-            });
-
-            this.wssInstance = new WebSocketServer({ server: httpServer });
-
-            const transport = new WebSocketServerTransport(this.wssInstance);
-            this.wsServer!.connect(transport);
-
-            httpServer.listen(PORT, () => {
-                console.log(`[MCPServer] 🔌 WebSocket & SSE Bridge active on port ${PORT}`);
-            });
+            // Create a dedicated MCP server instance for websocket transport.
+            // Without this, `this.wsServer` stays null and `.connect()` throws
+            // during boot (`Cannot read properties of null (reading 'connect')`).
+            const secondaryServer = this.createServerInstance();
+            this.wsServer = secondaryServer.server;
+            this.wsServerSetupPromise = secondaryServer.ready;
         } else {
             this.wsServer = null;
             this.wssInstance = null;
+            this.wsServerSetupPromise = null;
         }
     }
 
@@ -581,7 +668,7 @@ export class MCPServer {
     public async initializeMemorySystem() {
         if (this.memoryInitialized) return;
 
-        console.log("[MCPServer] Lazy-loading memory system (MemoryManager)...");
+        console.error("[MCPServer] Lazy-loading memory system (MemoryManager)...");
         // this.memoryManager is instantiated in constructor but lazily initialized internally
         // Actually, we should instantiate it here or in constructor?
         // Let's rely on internal lazy loading of MemoryManager, but trigger it here to be safe
@@ -593,13 +680,19 @@ export class MCPServer {
         this.memoryInitialized = true;
     }
 
-    private createServerInstance(): Server {
+    private createServerInstance(): { server: Server; ready: Promise<void> } {
         const s = new Server(
             { name: "borg-core", version: "0.1.0" },
-            { capabilities: { tools: {} } }
+            {
+                capabilities: {
+                    tools: {},
+                    prompts: {},
+                    resources: {},
+                },
+            }
         );
-        this.setupHandlers(s);
-        return s;
+        const ready = this.setupHandlers(s);
+        return { server: s, ready };
     }
 
     private broadcastRequestAndAwait(messageType: string, payload: any = {}): Promise<any> {
@@ -668,6 +761,7 @@ export class MCPServer {
         console.log(`[DEBUG] executeTool called with: '${name}' (len: ${name.length})`);
         const callId = Math.random().toString(36).substring(7);
         const startTime = Date.now();
+        const toolContext = await this.resolveAutomaticToolContext(name, args);
 
         // Broadcast Start
         if (this.wssInstance) {
@@ -676,13 +770,19 @@ export class MCPServer {
                     type: 'TOOL_CALL_START',
                     id: callId,
                     tool: name,
-                    args: args
+                    args: args,
+                    ...buildAutomaticToolContextStartPayload(toolContext),
                 }));
             });
         }
 
         // Emit Pulse Event
-        this.eventBus.emitEvent('tool:call', 'MCPServer', { tool: name, args, callId });
+        this.eventBus.emitEvent('tool:call', 'MCPServer', {
+            tool: name,
+            args,
+            callId,
+            toolContextPreview: buildAutomaticToolContextStartPayload(toolContext).contextPreview,
+        });
 
         // Audit Start
         try {
@@ -1337,7 +1437,7 @@ export class MCPServer {
             else if (name === "read_page") {
                 if (!this.wssInstance || this.wssInstance.clients.size === 0) {
                     // FALLBACK: Use Native Reader (ReaderTools)
-                    console.log("[MCPServer] No Browser Extension. Falling back to Native Reader...");
+                    console.error("[MCPServer] No Browser Extension. Falling back to Native Reader...");
                     const nativeReader = ReaderTools.find(t => t.name === "read_page");
                     if (nativeReader && this.isToolWithHandler(nativeReader)) {
                         result = await nativeReader.handler(args);
@@ -1350,7 +1450,7 @@ export class MCPServer {
                         const timeout = setTimeout(() => {
                             this.pendingRequests.delete(requestId);
                             // TIMEOUT FALLBACK to Native Reader
-                            console.log("[MCPServer] Browser Timed Out. Falling back to Native Reader...");
+                            console.error("[MCPServer] Browser Timed Out. Falling back to Native Reader...");
                             const nativeReader = ReaderTools.find(t => t.name === "read_page");
                             if (nativeReader && this.isToolWithHandler(nativeReader)) {
                                 Promise.resolve(nativeReader.handler(args))
@@ -1966,35 +2066,46 @@ export class MCPServer {
                         }
                     }
                 } else {
-                    // Try MetaMCP Proxy First (True Proxy Architecture path)
-                    if (executeProxiedTool) {
-                        try {
-                            result = await executeProxiedTool(name, args);
-                        } catch (proxyErr: any) {
-                            if (proxyErr.message.includes('Unknown tool')) {
-                                // 2. Fallback to Legacy Router if tool isn't in proxy (Safety net)
-                                try {
-                                    result = await this.router.callTool(name, args);
-                                } catch (e: any) {
-                                    throw new Error(`MetaMCP Proxy tool '${name}' not found, and fallback router failed: ${e.message}`);
-                                }
-                            } else {
-                                throw new Error(`MetaMCP Proxy execution failed: ${proxyErr.message}`);
-                            }
-                        }
+                    const directMetaResult = await this.handleDirectMetaTool(name, args);
+
+                    if (directMetaResult) {
+                        result = directMetaResult;
                     } else {
-                        // Boot-time fallback if proxy isn't attached yet
-                        try {
-                            result = await this.mcpAggregator.executeTool(name, args);
-                        } catch (aggErr: any) {
-                            if (aggErr.message.includes('No provider found')) {
-                                try {
-                                    result = await this.router.callTool(name, args);
-                                } catch (e: any) {
-                                    throw new Error(`Tool execution failed: ${e.message}`);
+                        const aggregatedTools = await this.mcpAggregator.listAggregatedTools();
+                        const prefersAggregatorExecution = shouldPreferAggregatorExecution(name, aggregatedTools);
+
+                        if (prefersAggregatorExecution) {
+                            try {
+                                this.nativeSessionMetaTools.touchLoadedTool(name);
+                                result = await this.mcpAggregator.executeTool(name, args);
+                            } catch (aggErr: any) {
+                                if (isToolNotFoundError(aggErr)) {
+                                    try {
+                                        result = await this.router.callTool(name, args);
+                                    } catch (e: any) {
+                                        throw new Error(`Tool execution failed: ${e.message}`);
+                                    }
+                                } else {
+                                    throw aggErr;
                                 }
-                            } else {
-                                throw aggErr;
+                            }
+
+                            // Skip proxy routing once the Borg-native aggregator path has run.
+                        } else {
+                            // Borg-native fallback path for unscoped tools.
+                            try {
+                                this.nativeSessionMetaTools.touchLoadedTool(name);
+                                result = await this.mcpAggregator.executeTool(name, args);
+                            } catch (aggErr: any) {
+                                if (isToolNotFoundError(aggErr)) {
+                                    try {
+                                        result = await this.router.callTool(name, args);
+                                    } catch (e: any) {
+                                        throw new Error(`Tool execution failed: ${e.message}`);
+                                    }
+                                } else {
+                                    throw aggErr;
+                                }
                             }
                         }
                     }
@@ -2017,6 +2128,13 @@ export class MCPServer {
                     }));
                 });
             }
+
+            await this.captureToolObservation({
+                toolName: name,
+                args,
+                result,
+                durationMs: Date.now() - startTime,
+            });
 
             // ENGAGEMENT MODULE: Suggestion Trigger
             if ((name === "read_file" || name === "view_file") && result) {
@@ -2052,6 +2170,14 @@ export class MCPServer {
                     }));
                 });
             }
+
+            await this.captureToolObservation({
+                toolName: name,
+                args,
+                error: e,
+                durationMs: Date.now() - startTime,
+            });
+
             // Return Error as Content (Don't throw, it kills the MCP stream)
             return {
                 isError: true,
@@ -2808,24 +2934,178 @@ export class MCPServer {
     }
 
     private async setupHandlers(serverInstance: Server) {
-        // Initialize MetaMCP Controller which wraps the server
-        console.log("[MCPServer] Delegating tool handling to MetaMCPController...");
-        const nativeTools = await this.getNativeTools();
+        console.error("[MCPServer] Using Borg-native MCP handlers.");
+        await this.setupDirectHandlers(serverInstance);
+    }
 
-        await MetaMCPController.getInstance().initialize(
-            serverInstance,
-            nativeTools,
-            async (name, args) => {
-                this.lastUserActivityTime = Date.now();
-                return await this.executeTool(name, args);
+    private async setupDirectHandlers(serverInstance: Server): Promise<void> {
+        this.setupDirectDiscoveryHandlers(serverInstance);
+
+        serverInstance.setRequestHandler(ListToolsRequestSchema, async () => {
+            const visibleTools = await this.getDirectModeTools();
+            return {
+                tools: visibleTools,
+            };
+        });
+
+        serverInstance.setRequestHandler(CallToolRequestSchema, async (request) => {
+            const meta = (request.params._meta && typeof request.params._meta === 'object' && !Array.isArray(request.params._meta))
+                ? request.params._meta as Record<string, unknown>
+                : undefined;
+            const metadataGuardResult = getDirectModeMetadataGuardResult(
+                request.params.name,
+                meta,
+            );
+
+            if (metadataGuardResult) {
+                return metadataGuardResult;
             }
+
+            const directMetaResult = await this.handleDirectMetaTool(
+                request.params.name,
+                (request.params.arguments ?? {}) as Record<string, unknown>,
+                meta,
+            );
+
+            if (directMetaResult) {
+                return directMetaResult;
+            }
+
+            return await this.executeTool(request.params.name, request.params.arguments ?? {});
+        });
+    }
+
+    private setupDirectDiscoveryHandlers(serverInstance: Server): void {
+        const context = {
+            namespaceUuid: 'borg-core-namespace',
+            sessionId: 'borg-core-session',
+            includeInactiveServers: false,
+        };
+
+        serverInstance.setRequestHandler(ListPromptsRequestSchema, async (request) => {
+            return await listDownstreamPrompts({
+                context,
+                cursor: request.params?.cursor,
+                meta: request.params?._meta,
+                promptToClient: this.promptToClient,
+            });
+        });
+
+        serverInstance.setRequestHandler(GetPromptRequestSchema, async (request) => {
+            return await getDownstreamPrompt({
+                name: request.params.name,
+                arguments: request.params.arguments ?? {},
+                meta: request.params._meta,
+                promptToClient: this.promptToClient,
+            });
+        });
+
+        serverInstance.setRequestHandler(ListResourcesRequestSchema, async (request) => {
+            return await listDownstreamResources({
+                context,
+                cursor: request.params?.cursor,
+                meta: request.params?._meta,
+                resourceToClient: this.resourceToClient,
+            });
+        });
+
+        serverInstance.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+            return await readDownstreamResource({
+                uri: request.params.uri,
+                meta: request.params._meta,
+                resourceToClient: this.resourceToClient,
+            });
+        });
+
+        serverInstance.setRequestHandler(ListResourceTemplatesRequestSchema, async (request) => {
+            return await listDownstreamResourceTemplates({
+                context,
+                cursor: request.params?.cursor,
+                meta: request.params?._meta,
+            });
+        });
+    }
+
+    private async getDirectModeTools(): Promise<Tool[]> {
+        const aggregatedTools = await this.mcpAggregator.listAggregatedTools();
+        this.nativeSessionMetaTools.refreshCatalog(aggregatedTools as Tool[]);
+        await this.syncNativeToolPreferences();
+
+        const allNativeTools = await this.getNativeTools();
+        const aggregatedToolNames = new Set(aggregatedTools.map((tool) => tool.name));
+        const baseTools = allNativeTools.filter((tool) => !aggregatedToolNames.has(tool.name));
+        const savedScriptTools = await getDirectModeSavedScriptTools(jsonConfigProvider);
+
+        return [
+            ...this.nativeSessionMetaTools.listToolDefinitions(),
+            ...getDirectModeCompatibilityTools(),
+            ...baseTools,
+            ...savedScriptTools,
+            ...this.nativeSessionMetaTools.getVisibleLoadedTools(),
+        ];
+    }
+
+    private async handleDirectMetaTool(
+        name: string,
+        args: Record<string, unknown>,
+        meta?: Record<string, unknown>,
+    ): Promise<CallToolResult | null> {
+        await this.syncNativeToolPreferences();
+
+        const metadataGuardResult = getDirectModeMetadataGuardResult(name, meta);
+        if (metadataGuardResult) {
+            return metadataGuardResult;
+        }
+
+        const compatibilityArgs =
+            name === 'run_agent' && typeof args.policyId !== 'string' && typeof meta?.policyId === 'string'
+                ? { ...args, policyId: meta.policyId }
+                : args;
+
+        const compatibilityResult = await tryHandleDirectModeCompatibilityTool(
+            name,
+            compatibilityArgs,
+            this.codeModeService,
+            this.sandboxService,
+            this.agentMemoryService,
+            jsonConfigProvider,
+            jsonConfigProvider,
+            this.nativeSessionMetaTools,
+            createDirectModeAgentRunner(this.llmService),
+            async (toolName, toolArgs, delegatedMeta) => {
+                const effectiveMeta = delegatedMeta;
+                const delegatedGuardResult = getDirectModeMetadataGuardResult(toolName, effectiveMeta);
+                if (delegatedGuardResult) {
+                    return delegatedGuardResult;
+                }
+
+                const directResult = await this.handleDirectMetaTool(toolName, toolArgs, effectiveMeta);
+                if (directResult) {
+                    return directResult;
+                }
+
+                return await this.executeTool(toolName, toolArgs);
+            },
+            configImportService,
         );
+        if (compatibilityResult) {
+            return compatibilityResult;
+        }
+
+        const aggregatedTools = await this.mcpAggregator.listAggregatedTools();
+        this.nativeSessionMetaTools.refreshCatalog(aggregatedTools as Tool[]);
+        return await this.nativeSessionMetaTools.handleToolCall(name, args);
     }
 
     async start() {
-        console.log("[MCPServer] Loading Skills...");
+        console.error("[MCPServer] Loading Skills...");
         // Non-blocking initialization of aggregator to prevent stalling Stdio/WS start
         this.mcpAggregator.initialize().catch(e => console.error("[MCPServer] Aggregator Init Failed:", e));
+
+        // Startup readiness should only report memory as ready once the runtime flag
+        // is actually set. The current memory bootstrap is lightweight, so we prime
+        // it during core startup instead of advertising a false-positive ready state.
+        await this.initializeMemorySystem();
 
         // Start Services
         // this.director.startChatDaemon(); // Removed, auto-drive handles this
@@ -2834,19 +3114,44 @@ export class MCPServer {
         this.autoTestService.repoGraph.buildGraph().catch(e => console.error("Graph build failed", e));
 
         console.log(`[MCPServer] 🚀 Borg Core ready.`);
+        console.error("[MCPServer] Preparing request handlers...");
+        await this.serverSetupPromise;
 
         // 1. Start Stdio (for local CLI usage)
-        console.log("[MCPServer] Connecting Stdio...");
+        console.error("[MCPServer] Connecting Stdio...");
         const stdioTransport = new StdioServerTransport();
         await this.server.connect(stdioTransport);
         console.error("Borg Core: Stdio Transport Active");
 
         // 2. Start WebSocket (for Extension/Web usage)
-        if (this.wsServer) {
-            console.log("[MCPServer] Starting WebSocket Server...");
+        if (this.wsServer && !this.wssInstance) {
+            console.error("[MCPServer] Starting WebSocket Server...");
             const PORT = 3001;
             const httpServer = http.createServer(async (req, res) => {
-                if (req.url === '/health') {
+                if (req.method === 'GET' && req.url === '/api/mesh/stream') {
+                    res.writeHead(200, {
+                        'Content-Type': 'text/event-stream',
+                        'Cache-Control': 'no-cache',
+                        'Connection': 'keep-alive',
+                        'Access-Control-Allow-Origin': '*'
+                    });
+                    res.write('data: {"type":"CONNECTED"}\n\n');
+
+                    const safeSend = (data: any) => {
+                        try {
+                            res.write(`data: ${JSON.stringify(data)}\n\n`);
+                        } catch (e) {
+                            // client disconnected
+                        }
+                    };
+
+                    const handleMeshMessage = (msg: any) => safeSend(msg);
+                    this.eventBus.on('mesh:traffic', handleMeshMessage);
+
+                    req.on('close', () => {
+                        this.eventBus.off('mesh:traffic', handleMeshMessage);
+                    });
+                } else if (req.url === '/health') {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({
                         status: 'online',
@@ -3052,9 +3357,14 @@ export class MCPServer {
                     res.end();
                 }
             });
+
+            httpServer.on('close', () => {
+                if (this.wssInstance?.options?.server === httpServer) {
+                    this.wssInstance = null;
+                }
+            });
             const wss = new WebSocketServer({ server: httpServer });
             this.wssInstance = wss;
-            const wsTransport = new WebSocketServerTransport(wss);
 
             httpServer.on('error', (err: any) => {
                 console.error(`[Borg Core] ❌ WebSocket Server Error (Port ${PORT}):`, err.message);
@@ -3066,9 +3376,30 @@ export class MCPServer {
 
             // 2.5 Setup WS Message Handling mechanism
             wss.on('connection', (ws: any) => {
+                const clientId = `bridge-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+                this.bridgeClients.set(ws, createDefaultBridgeClient(clientId));
+
+                ws.on('close', () => {
+                    this.bridgeClients.delete(ws);
+                });
+
                 ws.on('message', async (data: any) => {
                     try {
                         const msg = JSON.parse(data.toString());
+                        if (msg.type === 'BORG_CLIENT_HELLO') {
+                            const existing = this.bridgeClients.get(ws) ?? createDefaultBridgeClient(clientId);
+                            const updated = applyBridgeClientHello(existing, msg, Date.now());
+                            this.bridgeClients.set(ws, updated);
+
+                            if (ws.readyState === 1) {
+                                ws.send(JSON.stringify({
+                                    type: 'BORG_CORE_MANIFEST',
+                                    manifest: buildBridgeManifest(Array.from(this.bridgeClients.values())),
+                                }));
+                            }
+                            return;
+                        }
+
                         // Robust Response Handling: Any message with a requestId should resolve a pending promise
                         if (msg.requestId && this.pendingRequests.has(msg.requestId)) {
                             const resolve = this.pendingRequests.get(msg.requestId);
@@ -3146,6 +3477,22 @@ export class MCPServer {
                             }, ws);
                         }
 
+                        if (msg.type === 'BROWSER_CHAT_SURFACE') {
+                            const timestamp = Number(msg.timestamp) || Date.now();
+                            const trigger = String(msg.trigger ?? 'mutation');
+                            const snapshot = typeof msg.snapshot === 'object' && msg.snapshot !== null ? msg.snapshot : {};
+
+                            this.broadcastWebSocketMessage({
+                                type: 'BROWSER_CHAT_SURFACE',
+                                payload: {
+                                    timestamp,
+                                    trigger,
+                                    snapshot,
+                                    source: String(msg.source ?? 'browser_extension'),
+                                }
+                            }, ws);
+                        }
+
                         if (msg.type === 'KNOWLEDGE_CAPTURE') {
                             const content = String(msg.content ?? '').trim();
                             const title = String(msg.title ?? 'Captured Page');
@@ -3161,6 +3508,8 @@ export class MCPServer {
                                         status: { success: false, error: 'No content provided for knowledge capture.' }
                                     }));
                                 }
+                            } else if (this.wsServer && this.wssInstance) {
+                                console.error('[MCPServer] WebSocket/SSE bridge already active (constructor bootstrap), skipping duplicate bind.');
                                 return;
                             }
 
@@ -3200,26 +3549,26 @@ export class MCPServer {
                 });
             });
         } else {
-            console.log("[MCPServer] Skipping WebSocket (No wsServer instance).");
+            console.error("[MCPServer] Skipping WebSocket (No wsServer instance).");
         }
 
         // 3. Connect to Supervisor (Native Automation)
-        console.log("[MCPServer] Connecting to Supervisor...");
+        console.error("[MCPServer] Connecting to Supervisor...");
 
         try {
-            console.log(`[MCPServer] DEBUG __dirname: ${__dirname}`);
+            console.error(`[MCPServer] DEBUG __dirname: ${__dirname}`);
             const rootDir = this.findMonorepoRoot(__dirname);
-            console.log(`[MCPServer] DEBUG rootDir: ${rootDir}`);
+            console.error(`[MCPServer] DEBUG rootDir: ${rootDir}`);
             if (rootDir) {
                 const supervisorPath = path.join(rootDir, 'packages', 'borg-supervisor', 'dist', 'index.js');
-                console.log(`[MCPServer] Supervisor Path Resolved: ${supervisorPath}`);
+                console.error(`[MCPServer] Supervisor Path Resolved: ${supervisorPath}`);
 
                 await this.router.connectToServer('borg-supervisor', 'node', [supervisorPath]);
                 console.error(`Borg Core: Connected to Supervisor at ${supervisorPath}`);
 
                 // Phase 16: Google Workspace Integration
                 const workspacePath = path.join(rootDir, 'external', 'mcp-servers', 'workspace', 'workspace-server', 'dist', 'index.js');
-                console.log(`[MCPServer] Google Workspace Server Path: ${workspacePath}`);
+                console.error(`[MCPServer] Google Workspace Server Path: ${workspacePath}`);
                 if (fs.existsSync(workspacePath)) {
                     await this.router.connectToServer('google-workspace', 'node', [workspacePath]);
                     console.error("Borg Core: Connected to Google Workspace Server (GMail/Calendar)");
@@ -3232,11 +3581,14 @@ export class MCPServer {
         }
 
         if (this.wsServer && this.wssInstance) {
-            console.log("[MCPServer] Connecting internal WS transport...");
+            console.error("[MCPServer] Connecting internal WS transport...");
+            if (this.wsServerSetupPromise) {
+                await this.wsServerSetupPromise;
+            }
             const wsTransport = new WebSocketServerTransport(this.wssInstance);
             await this.wsServer.connect(wsTransport);
         }
-        console.log("[MCPServer] Start Complete.");
+        console.error("[MCPServer] Start Complete.");
     }
 
     private findMonorepoRoot(startDir: string): string | null {
@@ -3264,5 +3616,45 @@ export class MCPServer {
         });
     }
 }
+
+function redirectProtocolUnsafeConsoleMethodsForDirectExecution(): void {
+    const stderr = console.error.bind(console);
+
+    console.log = stderr;
+    console.info = stderr;
+    console.debug = stderr;
+    console.trace = stderr;
+    console.dir = ((...args: unknown[]) => stderr(...args)) as typeof console.dir;
+}
+
+async function startDirectlyIfExecuted(): Promise<void> {
+    const entryArg = process.argv[1] ? path.resolve(process.argv[1]) : null;
+
+    if (!entryArg || entryArg !== __filename) {
+        return;
+    }
+
+    redirectProtocolUnsafeConsoleMethodsForDirectExecution();
+
+    process.on('unhandledRejection', (reason) => {
+        console.error('[Borg Core] Unhandled promise rejection:', reason);
+    });
+
+    process.on('uncaughtException', (error) => {
+        console.error('[Borg Core] Uncaught exception:', error);
+        process.exit(1);
+    });
+
+    try {
+        const mcp = new MCPServer({ skipWebsocket: true });
+        await mcp.start();
+        console.error('[Borg Core] MCPServer direct entrypoint started.');
+    } catch (error) {
+        console.error('[Borg Core] Failed to start direct MCP entrypoint:', error);
+        process.exit(1);
+    }
+}
+
+void startDirectlyIfExecuted();
 
 

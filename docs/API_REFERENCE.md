@@ -294,13 +294,13 @@ Common error codes:
 
 ---
 
-## MetaMCP Integration
+## Borg MCP Router Bridge
 
-Borg integrates MetaMCP functionality for advanced MCP server orchestration, multi-transport support, and sandboxed code execution.
+Borg's MCP router uses an upstream MetaMCP-backed bridge for advanced server orchestration, multi-transport support, and sandboxed code execution. Borg remains the primary operator surface; the MetaMCP pieces documented below are the underlying bridge implementation details.
 
 ### Documentation
 
-For comprehensive MetaMCP documentation, see:
+For the bridge-specific reference material, see:
 
 | Document | Description |
 |----------|-------------|

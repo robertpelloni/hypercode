@@ -1,7 +1,6 @@
 import {
     Server,
     LayoutDashboard,
-    Box,
     Globe,
     Key,
     Layers,
@@ -42,12 +41,14 @@ import {
     Network,
     ShoppingBag,
     Code2,
+    Puzzle,
 } from "lucide-react";
 
 export interface NavItem {
     title: string;
     href: string;
     icon: any;
+    description?: string;
     variant: "default" | "ghost";
 }
 
@@ -56,175 +57,191 @@ export interface NavSection {
     items: NavItem[];
 }
 
-export const META_MCP_NAV: NavItem[] = [
+export const MCP_CONTROL_PLANE_NAV: NavItem[] = [
     {
-        title: "MetaMCP Dashboard",
+        title: "MCP Router",
         href: "/dashboard/mcp",
         icon: Server,
+        description: "Control plane for MCP routing, server health, and aggregation status.",
         variant: "default",
-    },
-    {
-        title: "MetaMCP Servers",
-        href: "/dashboard/mcp/metamcp",
-        icon: Network,
-        variant: "ghost",
-    },
-    {
-        title: "Namespaces",
-        href: "/dashboard/mcp/namespaces",
-        icon: Box,
-        variant: "ghost",
-    },
-    {
-        title: "Endpoints",
-        href: "/dashboard/mcp/endpoints",
-        icon: Globe,
-        variant: "ghost",
     },
     {
         title: "API Keys",
         href: "/dashboard/mcp/api-keys",
         icon: Key,
+        description: "Review and manage API keys and auth tokens for MCP integrations.",
         variant: "ghost",
     },
     {
         title: "Tool Sets",
         href: "/dashboard/mcp/tool-sets",
         icon: Layers,
+        description: "Create reusable bundles of tools for specific workflows and contexts.",
         variant: "ghost",
     },
     {
         title: "Policies",
         href: "/dashboard/mcp/policies",
         icon: Shield,
+        description: "Define access and execution policies for tools, routes, and agents.",
         variant: "ghost",
     },
     {
         title: "Internal Scripts",
         href: "/dashboard/mcp/scripts",
         icon: FileCode,
+        description: "Inspect and manage built-in operational scripts used by Borg MCP.",
         variant: "ghost",
     },
     {
         title: "System Audit",
         href: "/dashboard/mcp/audit",
         icon: FileText,
+        description: "Audit trail for critical operations, changes, and policy decisions.",
         variant: "ghost",
     },
     {
         title: "Logs",
         href: "/dashboard/mcp/logs",
         icon: Activity,
+        description: "Browse runtime logs for MCP servers, routing, and execution events.",
         variant: "ghost",
     },
     {
         title: "Observability",
         href: "/dashboard/mcp/observability",
         icon: Zap,
-        variant: "ghost",
-    },
-    {
-        title: "Inspector",
-        href: "/dashboard/mcp/inspector",
-        icon: Wrench,
-        variant: "ghost",
-    },
-    {
-        title: "Agent Playground",
-        href: "/dashboard/mcp/agent",
-        icon: Bot,
-        variant: "ghost",
-    },
-    {
-        title: "AI Tools",
-        href: "/dashboard/mcp/ai-tools",
-        icon: Sparkles,
+        description: "Real-time observability, latency telemetry, and performance indicators.",
         variant: "ghost",
     },
     {
         title: "System",
         href: "/dashboard/mcp/system",
         icon: Activity,
-        variant: "ghost",
-    },
-    {
-        title: "Search",
-        href: "/dashboard/mcp/search",
-        icon: Search,
-        variant: "ghost",
-    },
-    {
-        title: "Jules",
-        href: "/dashboard/jules",
-        icon: Rocket,
+        description: "System-level MCP runtime diagnostics and environment status.",
         variant: "ghost",
     },
     {
         title: "Registry",
         href: "/dashboard/mcp/registry",
         icon: Download,
-        variant: "ghost",
-    },
-    {
-        title: "Tool Catalog",
-        href: "/dashboard/mcp/catalog",
-        icon: Search,
+        description: "Server registry and installation pipeline for MCP integrations.",
         variant: "ghost",
     },
     {
         title: "Documentation",
         href: "/dashboard/mcp/docs",
         icon: BookOpen,
+        description: "MCP feature documentation, usage guides, and protocol references.",
         variant: "ghost",
     },
     {
         title: "Configuration",
         href: "/dashboard/mcp/settings",
         icon: Settings,
+        description: "Fine-grained MCP settings for routing, discovery, and behavior.",
         variant: "ghost",
     },
 ];
 
+export const MCP_TESTING_NAV: NavItem[] = [
+    {
+        title: "Testing Lab",
+        href: "/dashboard/mcp/testing",
+        icon: FlaskConical,
+        description: "Sandbox for validating MCP connectivity, calls, and tool behavior.",
+        variant: "default",
+    },
+    {
+        title: "Search",
+        href: "/dashboard/mcp/search",
+        icon: Search,
+        description: "Semantic tool discovery with ranking, loading, and telemetry.",
+        variant: "ghost",
+    },
+    {
+        title: "Inspector",
+        href: "/dashboard/mcp/inspector",
+        icon: Wrench,
+        description: "Interactive inspector for tool schemas, args, responses, and traces.",
+        variant: "ghost",
+    },
+    {
+        title: "Agent Playground",
+        href: "/dashboard/mcp/agent",
+        icon: Bot,
+        description: "Experiment with agent-assisted MCP execution and orchestration flows.",
+        variant: "ghost",
+    },
+    {
+        title: "AI Tools",
+        href: "/dashboard/mcp/ai-tools",
+        icon: Sparkles,
+        description: "AI-enhanced tooling utilities and automation helpers for MCP workflows.",
+        variant: "ghost",
+    },
+    {
+        title: "Tool Catalog",
+        href: "/dashboard/mcp/catalog",
+        icon: Search,
+        description: "Catalog view of available tools with metadata and filtering support.",
+        variant: "ghost",
+    },
+];
+
+export const META_MCP_NAV: NavItem[] = [
+    ...MCP_CONTROL_PLANE_NAV,
+    ...MCP_TESTING_NAV,
+];
+
 export const INTEGRATIONS_NAV: NavItem[] = [
+    {
+        title: "Integration Hub",
+        href: "/dashboard/integrations",
+        icon: Puzzle,
+        description: "Install/connect Borg across browser, editor, and MCP client environments from one operator surface.",
+        variant: "default",
+    },
     {
         title: "Open-WebUI",
         href: "/dashboard/webui",
         icon: Bot,
+        description: "Integration status and controls for Open-WebUI connections.",
         variant: "default",
-    },
-    {
-        title: "MetaMCP UI",
-        href: "/dashboard/metamcp",
-        icon: Network,
-        variant: "ghost",
     },
     {
         title: "OpenCode Autopilot",
         href: "/dashboard/autopilot",
         icon: Sparkles,
+        description: "Legacy autopilot integration panel (migration in progress).",
         variant: "ghost",
     },
     {
         title: "Jules",
         href: "/dashboard/jules",
         icon: Rocket,
+        description: "Jules integration dashboard and remote orchestration controls.",
         variant: "ghost",
     },
     {
         title: "DeerFlow Harness",
         href: "/dashboard/deer-flow",
         icon: Network,
+        description: "Harness view for DeerFlow-compatible execution paths.",
         variant: "ghost",
     },
     {
-        title: "Claude-Mem",
-        href: "/dashboard/memory/claude-mem",
+        title: "Memory Explorer",
+        href: "/dashboard/memory/vector",
         icon: Network,
+        description: "Explore vector memory collections, embeddings, and retrieval health.",
         variant: "ghost",
     },
 ];
 
 export const MAIN_DASHBOARD_NAV: NavItem[] = [
+    { title: "Mission Control", href: "/", icon: LayoutDashboard, variant: "ghost" },
+    { title: "Documentation", href: "/docs", icon: BookOpen, variant: "ghost" },
     { title: "Dashboard Home", href: "/dashboard", icon: LayoutDashboard, variant: "ghost" },
     { title: "Director", href: "/dashboard/director", icon: Bot, variant: "ghost" },
     { title: "Council", href: "/dashboard/council", icon: Users, variant: "ghost" },
@@ -268,8 +285,12 @@ export const MAIN_DASHBOARD_NAV: NavItem[] = [
 
 export const SIDEBAR_SECTIONS: NavSection[] = [
     {
-        title: "MetaMCP Tools",
-        items: META_MCP_NAV,
+        title: "MCP Control Plane",
+        items: MCP_CONTROL_PLANE_NAV,
+    },
+    {
+        title: "MCP Testing Lab",
+        items: MCP_TESTING_NAV,
     },
     {
         title: "Integrations",

@@ -166,7 +166,7 @@ var AutoTestService = /** @class */ (function () {
             stdio: 'pipe' // Pipe to capture output
         });
         var output = '';
-        (_a = p.stdout) === null || _a === void 0 ? void 0 : _a.on('data', function (d) { output += d.toString(); process.stdout.write(d); });
+        (_a = p.stdout) === null || _a === void 0 ? void 0 : _a.on('data', function (d) { output += d.toString(); process.stderr.write(d); });
         (_b = p.stderr) === null || _b === void 0 ? void 0 : _b.on('data', function (d) { output += d.toString(); process.stderr.write(d); });
         p.on('close', function (code) {
             if (code === 0) {

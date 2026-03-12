@@ -9,13 +9,12 @@ import {
     executeSearchToolsCompatibility,
     executeUnloadToolCompatibility,
 } from './toolLoadingCompatibility.js';
-
-interface SearchToolResult {
-    name: string;
-    description: string;
-    loaded: boolean;
-    hydrated: boolean;
-}
+import {
+    pickAutoLoadCandidate,
+    rankToolSearchCandidates,
+    type RankedToolSearchResult,
+} from './toolSearchRanking.js';
+import type { ToolContextPayload } from '../services/toolContextMemory.js';
 
 function createTextResult(text: string, isError = false): CallToolResult {
     return {
@@ -27,9 +26,22 @@ function createTextResult(text: string, isError = false): CallToolResult {
 export class NativeSessionMetaTools {
     private readonly workingSet: SessionToolWorkingSet;
     private readonly catalog = new Map<string, Tool>();
+    private toolContextResolver?: (input: { toolName: string; args?: Record<string, unknown> }) => ToolContextPayload | null;
 
-    constructor(workingSet: SessionToolWorkingSet = new SessionToolWorkingSet()) {
+    constructor(
+        workingSet: SessionToolWorkingSet = new SessionToolWorkingSet(),
+        options: {
+            toolContextResolver?: (input: { toolName: string; args?: Record<string, unknown> }) => ToolContextPayload | null;
+        } = {},
+    ) {
         this.workingSet = workingSet;
+        this.toolContextResolver = options.toolContextResolver;
+    }
+
+    public setToolContextResolver(
+        resolver?: (input: { toolName: string; args?: Record<string, unknown> }) => ToolContextPayload | null,
+    ): void {
+        this.toolContextResolver = resolver;
     }
 
     public refreshCatalog(tools: Tool[]): void {
@@ -64,6 +76,10 @@ export class NativeSessionMetaTools {
         return this.workingSet.getLoadedToolNames();
     }
 
+    public setAlwaysLoadedTools(names: string[]): void {
+        this.workingSet.setAlwaysLoadedTools(names.filter((name) => this.catalog.has(name)));
+    }
+
     public hasTool(name: string): boolean {
         return this.catalog.has(name);
     }
@@ -77,6 +93,10 @@ export class NativeSessionMetaTools {
             loaded: true,
             evicted: this.workingSet.loadTool(name),
         };
+    }
+
+    public touchLoadedTool(name: string): boolean {
+        return this.workingSet.touchTool(name);
     }
 
     public async handleToolCall(name: string, args: Record<string, unknown>): Promise<CallToolResult | null> {
@@ -102,6 +122,33 @@ export class NativeSessionMetaTools {
             );
         }
 
+        if (name === 'get_tool_context') {
+            const toolName = typeof args.name === 'string' ? args.name : '';
+            if (!toolName) {
+                return createTextResult('Tool context lookup requires a downstream tool name.', true);
+            }
+
+            if (!this.toolContextResolver) {
+                return createTextResult('Tool context resolver is not available in this Borg session.', true);
+            }
+
+            const payload = this.toolContextResolver({
+                toolName,
+                args: typeof args.arguments === 'object' && args.arguments !== null
+                    ? args.arguments as Record<string, unknown>
+                    : undefined,
+            });
+
+            return createTextResult(JSON.stringify(payload ?? {
+                toolName,
+                query: toolName,
+                matchedPaths: [],
+                observationCount: 0,
+                summaryCount: 0,
+                prompt: `JIT tool context for ${toolName}:\nNo relevant prior memory was found.`,
+            }));
+        }
+
         if (name === 'unload_tool') {
             return await executeUnloadToolCompatibility(args, this.workingSet);
         }
@@ -113,25 +160,48 @@ export class NativeSessionMetaTools {
         return null;
     }
 
-    private searchTools(query: string, limit: number): SearchToolResult[] {
-        const normalizedQuery = query.trim().toLowerCase();
-        const matches = Array.from(this.catalog.values())
-            .filter((tool) => {
-                if (!normalizedQuery) {
-                    return true;
-                }
+    private searchTools(query: string, limit: number): RankedToolSearchResult[] {
+        const rankedResults = rankToolSearchCandidates(
+            Array.from(this.catalog.values()).map((tool) => ({
+                name: tool.name,
+                description: tool.description ?? '',
+                loaded: this.workingSet.isLoaded(tool.name),
+                hydrated: this.workingSet.isHydrated(tool.name),
+                deferred: !this.workingSet.isHydrated(tool.name),
+            })),
+            query,
+            limit,
+        );
 
-                const haystack = `${tool.name} ${tool.description ?? ''}`.toLowerCase();
-                return haystack.includes(normalizedQuery);
-            })
-            .slice(0, Math.max(1, limit));
+        const autoLoadDecision = pickAutoLoadCandidate(rankedResults, query);
+        if (!autoLoadDecision) {
+            return rankedResults;
+        }
 
-        return matches.map((tool) => ({
-            name: tool.name,
-            description: tool.description ?? '',
-            loaded: this.workingSet.isLoaded(tool.name),
-            hydrated: this.workingSet.isHydrated(tool.name),
-        }));
+        const { loaded, evicted } = this.loadToolIntoSession(autoLoadDecision.toolName);
+        if (!loaded) {
+            return rankedResults;
+        }
+
+        return rankedResults.map((result) => {
+            if (result.name === autoLoadDecision.toolName) {
+                return {
+                    ...result,
+                    loaded: true,
+                    autoLoaded: true,
+                    matchReason: `${result.matchReason}; ${autoLoadDecision.reason}`,
+                };
+            }
+
+            if (evicted.includes(result.name)) {
+                return {
+                    ...result,
+                    loaded: false,
+                };
+            }
+
+            return result;
+        });
     }
 
     private toMinimalTool(tool: Tool): Tool {

@@ -5,16 +5,31 @@ import type { SavedScriptConfig, SavedToolSetConfig } from '../interfaces/IConfi
 
 export type BorgMcpToolMetadata = {
     name: string;
+    title?: string | null;
     description?: string | null;
-    inputSchema?: {
-        properties?: Record<string, unknown>;
-        required?: string[];
-    } | null;
+    inputSchema?: Record<string, unknown> | null;
+    outputSchema?: Record<string, unknown> | null;
+    annotations?: Record<string, unknown> | null;
+    raw?: Record<string, unknown> | null;
 };
 
 export type BorgMcpServerDiscoveryMetadata = {
     status: 'ready' | 'failed' | 'unsupported' | 'pending';
+    metadataVersion?: number;
+    metadataSource?: 'binary' | 'cache' | 'derived';
     discoveredAt?: string;
+    lastAttemptedBinaryLoadAt?: string;
+    lastSuccessfulBinaryLoadAt?: string;
+    cacheHydratedAt?: string;
+    configFingerprint?: string;
+    transportType?: 'STDIO' | 'SSE' | 'STREAMABLE_HTTP';
+    serverName?: string;
+    command?: string | null;
+    args?: string[];
+    envKeys?: string[];
+    url?: string | null;
+    headerKeys?: string[];
+    reloadableFromCache?: boolean;
     toolCount: number;
     tools: BorgMcpToolMetadata[];
     error?: string;
@@ -33,24 +48,105 @@ export type BorgMcpServerEntry = {
 
 export type BorgMcpJsonConfig = {
     mcpServers: Record<string, BorgMcpServerEntry>;
+    alwaysVisibleTools?: string[];
     scripts?: SavedScriptConfig[];
     toolSets?: SavedToolSetConfig[];
     settings?: Record<string, any>;
     [key: string]: unknown;
 };
 
+import os from 'node:os';
+
 const JSONC_HEADER = `// Borg MCP configuration\n// This file is Borg-owned and may include cached server metadata under mcpServers.<name>._meta.\n`;
 
-export function getBorgMcpJsoncPath(workspaceRoot: string = process.cwd()): string {
-    return path.join(workspaceRoot, 'mcp.jsonc');
+export function getBorgConfigDir(): string {
+    return path.join(os.homedir(), '.borg');
 }
 
-export function getCompatibilityMcpJsonPath(workspaceRoot: string = process.cwd()): string {
-    return path.join(workspaceRoot, 'mcp.json');
+export function getBorgMcpJsoncPath(configDir: string = getBorgConfigDir()): string {
+    return path.join(configDir, 'mcp.jsonc');
+}
+
+export function getBorgMcpJsonPath(configDir: string = getBorgConfigDir()): string {
+    return path.join(configDir, 'mcp.json');
 }
 
 export function stripJsonComments(content: string): string {
-    return content.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g, (match, group) => group ? '' : match);
+    let result = '';
+    let inString = false;
+    let stringDelimiter = '"';
+    let isEscaped = false;
+    let inLineComment = false;
+    let inBlockComment = false;
+
+    for (let index = 0; index < content.length; index += 1) {
+        const current = content[index];
+        const next = content[index + 1];
+
+        if (inLineComment) {
+            if (current === '\n' || current === '\r') {
+                inLineComment = false;
+                result += current;
+            }
+            continue;
+        }
+
+        if (inBlockComment) {
+            if (current === '*' && next === '/') {
+                inBlockComment = false;
+                index += 1;
+                continue;
+            }
+
+            if (current === '\n' || current === '\r') {
+                result += current;
+            }
+            continue;
+        }
+
+        if (inString) {
+            result += current;
+
+            if (isEscaped) {
+                isEscaped = false;
+                continue;
+            }
+
+            if (current === '\\') {
+                isEscaped = true;
+                continue;
+            }
+
+            if (current === stringDelimiter) {
+                inString = false;
+            }
+
+            continue;
+        }
+
+        if (current === '"' || current === "'") {
+            inString = true;
+            stringDelimiter = current;
+            result += current;
+            continue;
+        }
+
+        if (current === '/' && next === '/') {
+            inLineComment = true;
+            index += 1;
+            continue;
+        }
+
+        if (current === '/' && next === '*') {
+            inBlockComment = true;
+            index += 1;
+            continue;
+        }
+
+        result += current;
+    }
+
+    return result;
 }
 
 function normalizeConfigShape(config: unknown): BorgMcpJsonConfig {
@@ -64,6 +160,9 @@ function normalizeConfigShape(config: unknown): BorgMcpJsonConfig {
         mcpServers: candidate.mcpServers && typeof candidate.mcpServers === 'object'
             ? candidate.mcpServers
             : {},
+        alwaysVisibleTools: Array.isArray(candidate.alwaysVisibleTools)
+            ? candidate.alwaysVisibleTools.filter((toolName): toolName is string => typeof toolName === 'string')
+            : undefined,
         scripts: Array.isArray(candidate.scripts)
             ? candidate.scripts as SavedScriptConfig[]
             : undefined,
@@ -76,19 +175,33 @@ function normalizeConfigShape(config: unknown): BorgMcpJsonConfig {
     };
 }
 
-export async function loadBorgMcpConfig(workspaceRoot: string = process.cwd()): Promise<BorgMcpJsonConfig> {
-    const jsoncPath = getBorgMcpJsoncPath(workspaceRoot);
-    const jsonPath = getCompatibilityMcpJsonPath(workspaceRoot);
+function toCompatibilityConfig(config: BorgMcpJsonConfig): Record<string, unknown> {
+    const compatibilityServers = Object.fromEntries(
+        Object.entries(config.mcpServers || {}).map(([name, server]) => {
+            const { _meta: _ignoredMeta, ...serverWithoutMeta } = server;
+            return [name, serverWithoutMeta];
+        }),
+    );
 
-    for (const filePath of [jsoncPath, jsonPath]) {
-        try {
-            const raw = await fs.readFile(filePath, 'utf-8');
-            return normalizeConfigShape(JSON.parse(stripJsonComments(raw)));
-        } catch (error) {
-            const errorCode = (error as NodeJS.ErrnoException).code;
-            if (errorCode === 'ENOENT') {
-                continue;
-            }
+    const compatibilityConfig: Record<string, unknown> = {
+        ...config,
+        mcpServers: compatibilityServers,
+    };
+
+    delete compatibilityConfig.settings;
+
+    return compatibilityConfig;
+}
+
+export async function loadBorgMcpConfig(configDir?: string): Promise<BorgMcpJsonConfig> {
+    const jsoncPath = getBorgMcpJsoncPath(configDir);
+
+    try {
+        const raw = await fs.readFile(jsoncPath, 'utf-8');
+        return normalizeConfigShape(JSON.parse(stripJsonComments(raw)));
+    } catch (error) {
+        const errorCode = (error as NodeJS.ErrnoException).code;
+        if (errorCode !== 'ENOENT') {
             throw error;
         }
     }
@@ -96,46 +209,16 @@ export async function loadBorgMcpConfig(workspaceRoot: string = process.cwd()): 
     return { mcpServers: {} };
 }
 
-export function toCompatibilityMcpJson(config: BorgMcpJsonConfig): { mcpServers: Record<string, Record<string, unknown>> } {
-    const plainServers: Record<string, Record<string, unknown>> = {};
-
-    for (const [name, server] of Object.entries(config.mcpServers ?? {})) {
-        const plainEntry: Record<string, unknown> = {};
-
-        if (server.command) {
-            plainEntry.command = server.command;
-        }
-        if (server.args && server.args.length > 0) {
-            plainEntry.args = server.args;
-        }
-        if (server.env && Object.keys(server.env).length > 0) {
-            plainEntry.env = server.env;
-        }
-        if (server.url) {
-            plainEntry.url = server.url;
-        }
-        if (server.disabled !== undefined) {
-            plainEntry.disabled = server.disabled;
-        }
-
-        plainServers[name] = plainEntry;
-    }
-
-    return { mcpServers: plainServers };
-}
-
-export async function writeBorgMcpConfig(config: BorgMcpJsonConfig, workspaceRoot: string = process.cwd()): Promise<void> {
+export async function writeBorgMcpConfig(config: BorgMcpJsonConfig, configDir?: string): Promise<void> {
     const normalized = normalizeConfigShape(config);
-    const jsoncPath = getBorgMcpJsoncPath(workspaceRoot);
-    const jsonPath = getCompatibilityMcpJsonPath(workspaceRoot);
+    const jsoncPath = getBorgMcpJsoncPath(configDir);
+    const jsonPath = getBorgMcpJsonPath(configDir);
 
     await fs.mkdir(path.dirname(jsoncPath), { recursive: true });
 
     const jsoncBody = `${JSONC_HEADER}${JSON.stringify(normalized, null, 2)}\n`;
-    const jsonBody = `${JSON.stringify(toCompatibilityMcpJson(normalized), null, 2)}\n`;
-
-    await Promise.all([
-        fs.writeFile(jsoncPath, jsoncBody, 'utf-8'),
-        fs.writeFile(jsonPath, jsonBody, 'utf-8'),
-    ]);
+    const jsonBody = `${JSON.stringify(toCompatibilityConfig(normalized), null, 2)}\n`;
+    await fs.writeFile(jsoncPath, jsoncBody, 'utf-8');
+    await fs.writeFile(jsonPath, jsonBody, 'utf-8');
 }
+

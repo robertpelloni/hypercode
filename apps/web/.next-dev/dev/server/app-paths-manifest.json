@@ -1,6 +1,0 @@
-{
-  "/api/trpc/[trpc]/route": "app/api/trpc/[trpc]/route.js",
-  "/page": "app/page.js",
-  "/dashboard/mcp/page": "app/dashboard/mcp/page.js",
-  "/dashboard/autopilot/page": "app/dashboard/autopilot/page.js"
-}

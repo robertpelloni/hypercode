@@ -42,12 +42,12 @@ interface AgentMemoryServiceLike {
 
 interface SavedScriptStoreLike {
     loadScripts(): Promise<SavedScriptConfig[]>;
-    saveScript(script: SavedScriptConfig): Promise<void>;
+    saveScript(script: SavedScriptConfig): Promise<unknown>;
 }
 
 interface ToolSetStoreLike {
     loadToolSets(): Promise<SavedToolSetConfig[]>;
-    saveToolSet(toolSet: SavedToolSetConfig): Promise<void>;
+    saveToolSet(toolSet: SavedToolSetConfig): Promise<unknown>;
 }
 
 interface NativeSessionCompatibilityLike {

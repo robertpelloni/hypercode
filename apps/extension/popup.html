@@ -3,11 +3,13 @@
   <head>
     <title>borg Bridge</title>
     <style>
-      body { width: 320px; padding: 12px; font-family: Inter, Arial, sans-serif; background: #111827; color: #e5e7eb; }
+      body { width: 360px; padding: 12px; font-family: Inter, Arial, sans-serif; background: #111827; color: #e5e7eb; }
       h3 { margin: 0 0 8px; }
+      h4 { margin: 0; font-size: 13px; }
       .status { font-weight: 700; }
       .card { background: #1f2937; border: 1px solid #374151; border-radius: 10px; padding: 12px; }
       .muted { color: #9ca3af; font-size: 12px; }
+      .subtle { color: #cbd5e1; font-size: 12px; }
       .input { width: 100%; box-sizing: border-box; padding: 9px 10px; margin-top: 8px; border-radius: 6px; border: 1px solid #4b5563; background: #111827; color: #e5e7eb; }
       .btn { width: 100%; padding: 9px; cursor: pointer; color: white; border: none; border-radius: 6px; margin-top: 8px; }
       .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -15,6 +17,15 @@
       .primary { background: #2563eb; }
       .success { background: #059669; }
       .ghost { background: #4b5563; }
+      .section { margin-top: 12px; padding-top: 12px; border-top: 1px solid #374151; }
+      .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+      .pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; font-size: 11px; border: 1px solid #4b5563; background: #111827; color: #cbd5e1; }
+      .pill.ok { border-color: #14532d; background: rgba(20, 83, 45, 0.35); color: #86efac; }
+      .pill.warn { border-color: #92400e; background: rgba(146, 64, 14, 0.28); color: #fbbf24; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+      .metric { border: 1px solid #374151; border-radius: 8px; background: #111827; padding: 8px; }
+      .metric-label { color: #9ca3af; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+      .metric-value { color: #f8fafc; font-size: 18px; font-weight: 700; margin-top: 4px; }
     </style>
   </head>
   <body>
@@ -23,6 +34,30 @@
       <p>Status: <span id="status" class="status">Connecting...</span></p>
       <p id="detail" class="muted">Checking local Borg Core…</p>
       <p id="endpoints" class="muted">HTTP http://localhost:3001 • WS ws://localhost:3001</p>
+      <div class="section">
+        <h4>Current Surface</h4>
+        <p id="surfaceSummary" class="subtle">Checking active tab…</p>
+        <div id="surfaceTags" class="pill-row"></div>
+      </div>
+      <div class="section">
+        <h4>MCP-SA Migration Slice</h4>
+        <p class="muted">Borg now mounts the bridge on the same browser chat surface footprint while adapter-grade DOM automation is assimilated incrementally.</p>
+        <div class="grid">
+          <div class="metric">
+            <div class="metric-label">Supported surfaces</div>
+            <div id="supportedCount" class="metric-value">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Live bridge features</div>
+            <div id="featureCount" class="metric-value">0</div>
+          </div>
+        </div>
+        <div id="platformTags" class="pill-row"></div>
+      </div>
+      <div class="section">
+        <h4>Live Bridge Features</h4>
+        <div id="featureTags" class="pill-row"></div>
+      </div>
       <input id="urlInput" class="input" type="url" placeholder="https://example.com/docs" />
       <button id="ingestUrlBtn" class="btn success">Ingest URL to Knowledge</button>
       <button id="saveBtn" class="btn ghost">Absorb Page (Markdown)</button>

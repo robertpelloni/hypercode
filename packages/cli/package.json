@@ -7,8 +7,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch --clear-screen=false src/index.ts start --port 3100",
-    "dev:server": "tsx watch --clear-screen=false src/index.ts start --port 3100",
+    "dev": "tsx src/index.ts start --port 3100",
+    "dev:server": "tsx src/index.ts start --port 3100",
     "start": "node dist/index.js",
     "lint": "eslint --no-eslintrc --parser @typescript-eslint/parser \"src/**/*.{ts,tsx,js,mjs,cjs}\"",
     "type-check": "tsc --noEmit"

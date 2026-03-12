@@ -1,4 +1,4 @@
-import { McpServerErrorStatusEnum } from "../types/metamcp/index.js";
+import { McpServerErrorStatusEnum } from "../types/mcp-admin/index.js";
 import { mcpServersRepository } from "../db/repositories/index.js";
 import { configService } from "./config.service.js";
 

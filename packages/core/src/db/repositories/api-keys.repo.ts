@@ -14,12 +14,12 @@ import {
     ApiKeyCreateInput,
     ApiKeyType,
     ApiKeyUpdateInput,
-} from "../../types/metamcp/index.js";
+} from "../../types/mcp-admin/index.js";
 import { and, desc, eq, isNull, or } from "drizzle-orm";
 import { customAlphabet } from "nanoid";
 
 import { db } from "../index.js";
-import { apiKeysTable } from "../metamcp-schema.js";
+import { apiKeysTable } from "../mcp-admin-schema.js";
 import { randomUUID } from "node:crypto";
 
 type ApiKeyRow = typeof apiKeysTable.$inferSelect;

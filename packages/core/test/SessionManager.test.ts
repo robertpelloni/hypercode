@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+import { SessionManager } from '../src/services/SessionManager.ts';
 
 describe('SessionManager (Agent Persistence)', () => {
   const testDir = path.join(process.cwd(), 'test-agent-sessions');
@@ -144,6 +145,35 @@ describe('SessionManager (Agent Persistence)', () => {
 
       const loaded = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as AgentSession;
       expect(loaded.messages).toEqual([]);
+    });
+  });
+
+  describe('SessionManager runtime state', () => {
+    it('disables persisted auto-drive restore without deleting the whole session file', () => {
+      const manager = new SessionManager(testDir);
+
+      manager.updateState({
+        isAutoDriveActive: true,
+        activeGoal: 'Finish startup',
+        lastObjective: 'boot cleanly',
+      });
+      manager.save();
+
+      const reloaded = new SessionManager(testDir);
+      expect(reloaded.getState().isAutoDriveActive).toBe(true);
+      expect(reloaded.getState().activeGoal).toBe('Finish startup');
+
+      reloaded.disableAutoDriveRestore();
+
+      const finalManager = new SessionManager(testDir);
+      const finalState = finalManager.getState();
+      expect(finalState.isAutoDriveActive).toBe(false);
+      expect(finalState.activeGoal).toBeNull();
+      expect(finalState.lastObjective).toBe('boot cleanly');
+
+      manager.dispose();
+      reloaded.dispose();
+      finalManager.dispose();
     });
   });
 });

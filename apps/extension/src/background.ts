@@ -6,6 +6,24 @@
 let CORE_URL = 'http://localhost:3001';
 let WS_URL = 'ws://localhost:3001';
 
+const BROWSER_BRIDGE_CAPABILITIES = [
+    'bridge.websocket',
+    'memory.capture',
+    'rag.ingest',
+    'chat.inject',
+    'browser.page.capture',
+    'browser.history.read',
+    'browser.debug.cdp',
+];
+
+const BROWSER_BRIDGE_HOOK_PHASES = [
+    'user.activity',
+    'memory.capture',
+    'browser.page.absorb',
+    'browser.chat.surface',
+    'chat.submit',
+];
+
 function applyStoredUrls(result: { borgCoreUrl?: string; borgWsUrl?: string }) {
     if (result.borgCoreUrl) CORE_URL = result.borgCoreUrl;
     if (result.borgWsUrl) WS_URL = result.borgWsUrl;
@@ -185,6 +203,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: true });
         return true;
     }
+
+    if (message.type === 'CHAT_SURFACE_EVENT') {
+        emitCoreEvent({
+            type: 'BROWSER_CHAT_SURFACE',
+            trigger: String(message.trigger || 'mutation'),
+            snapshot: message.snapshot,
+            timestamp: Date.now(),
+            source: 'browser_extension',
+        });
+        sendResponse({ success: true });
+        return true;
+    }
 });
 
 
@@ -198,12 +228,24 @@ function connectWebSocket() {
 
     ws.onopen = () => {
         console.log('[Borg Ext] WS Connected');
+        ws?.send(JSON.stringify({
+            type: 'BORG_CLIENT_HELLO',
+            clientType: 'browser-extension',
+            clientName: 'Borg Browser Bridge',
+            version: chrome.runtime.getManifest().version,
+            platform: 'browser-extension',
+            capabilities: BROWSER_BRIDGE_CAPABILITIES,
+            hookPhases: BROWSER_BRIDGE_HOOK_PHASES,
+        }));
     };
 
     ws.onmessage = (event) => {
         try {
             const data = JSON.parse(event.data);
-            if (data.type === 'PASTE_INTO_CHAT') {
+            if (data.type === 'BORG_CORE_MANIFEST') {
+                console.log('[Borg Ext] Core manifest received:', data.manifest);
+            }
+            else if (data.type === 'PASTE_INTO_CHAT') {
                 // Determine active tab
                 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                     if (tabs[0]?.id) {

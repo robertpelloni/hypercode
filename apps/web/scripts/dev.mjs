@@ -8,6 +8,7 @@ const FALLBACK_PORTS = [3000, 3010, 3020, 3030, 3040];
 const WILDCARD_NEXT_DEV_TYPES = ".next-dev-*/types/**/*.ts";
 const WILDCARD_NEXT_DEV_DEV_TYPES = ".next-dev-*/dev/types/**/*.ts";
 const SPECIFIC_NEXT_DEV_TYPES_PATTERN = /^\.next-dev-\d+\/(types|dev\/types)\/\*\*\/\*\.ts$/;
+const WEB_DEV_PORT_MARKER = ".borg-dev-port.json";
 
 function normalizeTsconfigIncludes() {
   try {
@@ -115,6 +116,45 @@ function resolveDevLockPath(distDir) {
   return path.resolve(scriptDir, "..", distDir, "dev", "lock");
 }
 
+function resolveWebDevPortMarkerPath() {
+  const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+  return path.resolve(scriptDir, "..", WEB_DEV_PORT_MARKER);
+}
+
+function writeWebDevPortMarker(port, distDir) {
+  try {
+    const markerPath = resolveWebDevPortMarkerPath();
+    const payload = {
+      port: Number(port),
+      distDir,
+      pid: process.pid,
+      writtenAt: new Date().toISOString(),
+    };
+    fs.writeFileSync(markerPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  } catch {
+    // Best-effort marker only.
+  }
+}
+
+function removeWebDevPortMarker(port) {
+  try {
+    const markerPath = resolveWebDevPortMarkerPath();
+    if (!fs.existsSync(markerPath)) {
+      return;
+    }
+
+    const raw = fs.readFileSync(markerPath, "utf8");
+    const parsed = JSON.parse(raw);
+    if (Number(parsed?.port) !== Number(port)) {
+      return;
+    }
+
+    fs.rmSync(markerPath, { force: true });
+  } catch {
+    // Best-effort cleanup only.
+  }
+}
+
 function removeDevLockIfPresent(lockPath) {
   try {
     if (fs.existsSync(lockPath)) {
@@ -160,17 +200,19 @@ async function main() {
     console.log(`[web dev] Port ${requestedPort} busy, falling back to ${selectedPort}`);
   }
 
-  // Use a single stable development dist directory.
-  // Reason: Next.js mutates tsconfig includes based on distDir; when distDir changes per port,
-  // stale explicit include entries can accumulate and later break type-check/build runs.
-  // Keeping distDir stable eliminates that drift while still separating dev from production `.next`.
-  const distDir = process.env.NEXT_DIST_DIR || ".next-dev";
+  // Use a per-port development dist directory.
+  // Reason: multiple dev servers (or a stale previous instance plus a new one) can race on the
+  // same `.next-dev` folder and crash with filesystem errors like ENOTEMPTY while Next is cleaning
+  // generated server assets. We keep tsconfig includes stable via wildcard normalization above,
+  // so isolating each port's dist output is now the safer default.
+  const distDir = process.env.NEXT_DIST_DIR || `.next-dev-${selectedPort}`;
   const env = {
     ...process.env,
     NEXT_DIST_DIR: distDir,
   };
 
   await cleanupStaleDevLockIfSafe(selectedPort, distDir);
+  writeWebDevPortMarker(selectedPort, distDir);
 
   console.log(`[web dev] PORT=${selectedPort} NEXT_DIST_DIR=${distDir}`);
 
@@ -186,12 +228,14 @@ async function main() {
   });
 
   child.on("error", (error) => {
+    removeWebDevPortMarker(selectedPort);
     normalizeTsconfigIncludes();
     console.error(`[web dev] ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   });
 
   child.on("exit", (code, signal) => {
+    removeWebDevPortMarker(selectedPort);
     normalizeTsconfigIncludes();
 
     if (signal) {

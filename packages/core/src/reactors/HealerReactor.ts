@@ -2,6 +2,21 @@
 import { EventBus, SystemEvent } from '../services/EventBus.js';
 import { HealerService } from '../services/HealerService.js';
 
+function shouldIgnoreExpectedStartupError(errorLog: string): boolean {
+    const normalized = errorLog.toLowerCase();
+
+    const ignoredFragments = [
+        'openai api key not configured',
+        'bad control character in string literal in json',
+        'failed to load mcp.jsonc',
+        'error fetching saved scripts',
+        'error fetching mcp servers from config',
+        'sqliteerror: no such table: config',
+    ];
+
+    return ignoredFragments.some((fragment) => normalized.includes(fragment));
+}
+
 function getErrorLog(payload: unknown): string {
     if (!payload || typeof payload !== 'object') {
         return '';
@@ -32,6 +47,11 @@ export class HealerReactor {
 
     private async handleError(event: SystemEvent) {
         const errorLog = getErrorLog(event.payload);
+
+        if (shouldIgnoreExpectedStartupError(errorLog)) {
+            console.log('[HealerReactor] ℹ️ Ignoring expected startup/configuration error.');
+            return;
+        }
 
         // Prevent reaction loops (e.g., if the healer itself causes an error)
         const now = Date.now();

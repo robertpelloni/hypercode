@@ -20,7 +20,7 @@ interface AgentMemoryServiceLike {
 }
 
 interface SavedScriptStoreLike {
-    saveScript(script: SavedScriptConfig): Promise<void>;
+    saveScript(script: SavedScriptConfig): Promise<unknown>;
 }
 
 interface ConfigImportServiceLike {

@@ -6,7 +6,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 // Assuming it prevails based on active imports.
 
 import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { ServerParameters } from "../types/metamcp/index.js";
+import { ServerParameters } from "../types/mcp-admin/index.js";
 
 import {
     ProcessManagedStdioTransport,

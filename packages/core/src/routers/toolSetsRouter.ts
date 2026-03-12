@@ -10,6 +10,14 @@ const CreateToolSetInput = z.object({
     user_id: z.string().nullable().optional(),
 });
 
+const UpdateToolSetInput = z.object({
+    uuid: z.string(),
+    name: z.string().optional(),
+    description: z.string().nullable().optional(),
+    tools: z.array(z.string()).optional(),
+    user_id: z.string().nullable().optional(),
+});
+
 export const toolSetsRouter = t.router({
     list: publicProcedure.query(async () => {
         return await toolSetsRepository.findAll();
@@ -25,6 +33,16 @@ export const toolSetsRouter = t.router({
         .input(CreateToolSetInput)
         .mutation(async ({ input }) => {
             return await toolSetsRepository.create(input);
+        }),
+
+    update: adminProcedure
+        .input(UpdateToolSetInput)
+        .mutation(async ({ input }) => {
+            const updated = await toolSetsRepository.update(input);
+            if (!updated) {
+                throw new Error("Tool set not found");
+            }
+            return updated;
         }),
 
     delete: adminProcedure

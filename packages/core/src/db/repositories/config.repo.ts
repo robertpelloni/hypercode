@@ -13,7 +13,7 @@
 import { eq } from "drizzle-orm";
 
 import { db } from "../index.js";
-import { configTable } from "../metamcp-schema.js";
+import { configTable } from "../mcp-admin-schema.js";
 
 export class ConfigRepository {
     async get(key: string): Promise<string | null> {

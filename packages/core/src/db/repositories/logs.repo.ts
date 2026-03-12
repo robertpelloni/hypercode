@@ -1,10 +1,9 @@
-import { desc } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { db } from "../index.js";
-import { toolCallLogsTable } from "../metamcp-schema.js";
+import { mcpServersTable, toolCallLogsTable } from "../mcp-admin-schema.js";
 import { MetaMcpLogEntry } from "../../types/metamcp/logs.zod.js";
 
-type ToolCallLogRow = typeof toolCallLogsTable.$inferSelect;
 type ToolCallLogInsert = typeof toolCallLogsTable.$inferInsert;
 
 export class LogsRepository {
@@ -12,7 +11,7 @@ export class LogsRepository {
         toolName: string;
         level: "error" | "info" | "warn";
         message: string;
-        serverName?: string;
+        mcpServerUuid?: string;
         error?: string | null;
         arguments?: Record<string, unknown>;
         result?: Record<string, unknown>;
@@ -23,44 +22,52 @@ export class LogsRepository {
         const payload: ToolCallLogInsert = {
             uuid: randomUUID(),
             tool_name: input.toolName,
-            // level: input.level, // Schema doesn't have level/message?
-            // Wait, schema has 'error', 'args', 'result', 'duration_ms'.
-            // 'message' and 'level' are in Zod but not in DB schema shown in Step 6596?
-            // Let's check schema again. Step 6596 lines 553-579.
-            // fields: uuid, tool_name, mcp_server_uuid, namespace_uuid, endpoint_uuid, args, result, error, duration_ms, session_id, parent_call_uuid, created_at.
-            // NO 'message' or 'level'.
-            // So DB stores structured tool call logs.
-            // Zod 'MetaMcpLogEntrySchema' has 'message', 'level'.
-            // Maybe this repo is only for Tool Call Logs?
-            // And system logs go elsewhere?
-            // I will map input to schema fields.
-            // input.message -> maybe mostly implicit?
-            // I'll stick to DB schema fields.
-
             args: input.arguments,
             result: input.result,
             error: input.error,
             duration_ms: input.durationMs,
             session_id: input.sessionId,
             parent_call_uuid: input.parentCallUuid,
-
-            // Missing: mcp_server_uuid, namespace_uuid, endpoint_uuid.
-            // I should accept them if available.
+            mcp_server_uuid: input.mcpServerUuid,
         };
 
         await db.insert(toolCallLogsTable).values(payload);
     }
 
-    async findAll(limit = 100): Promise<MetaMcpLogEntry[]> {
+    async findAll(input?: {
+        limit?: number;
+        sessionId?: string;
+        serverName?: string;
+    }): Promise<MetaMcpLogEntry[]> {
+        const limit = input?.limit ?? 100;
+        const filters = [
+            input?.sessionId ? eq(toolCallLogsTable.session_id, input.sessionId) : undefined,
+            input?.serverName ? eq(mcpServersTable.name, input.serverName) : undefined,
+        ].filter((value): value is NonNullable<typeof value> => Boolean(value));
+
         const logs = await db
-            .select()
+            .select({
+                uuid: toolCallLogsTable.uuid,
+                created_at: toolCallLogsTable.created_at,
+                tool_name: toolCallLogsTable.tool_name,
+                error: toolCallLogsTable.error,
+                args: toolCallLogsTable.args,
+                result: toolCallLogsTable.result,
+                duration_ms: toolCallLogsTable.duration_ms,
+                session_id: toolCallLogsTable.session_id,
+                parent_call_uuid: toolCallLogsTable.parent_call_uuid,
+                server_name: mcpServersTable.name,
+            })
             .from(toolCallLogsTable)
+            .leftJoin(mcpServersTable, eq(toolCallLogsTable.mcp_server_uuid, mcpServersTable.uuid))
+            .where(filters.length > 0 ? and(...filters) : undefined)
             .orderBy(desc(toolCallLogsTable.created_at))
             .limit(limit);
 
-        return logs.map((log: ToolCallLogRow) => ({
+        return logs.map((log) => ({
             id: log.uuid,
             timestamp: new Date(log.created_at),
+            serverName: log.server_name ?? undefined,
             level: log.error ? "error" : "info",
             message: `Tool call: ${log.tool_name}`,
             toolName: log.tool_name,

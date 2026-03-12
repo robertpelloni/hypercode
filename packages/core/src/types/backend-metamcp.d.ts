@@ -31,7 +31,10 @@ declare module "backend/metamcp" {
         sessionId: string,
         nativeTools: Tool[],
         nativeHandler: (name: string, args: unknown) => Promise<CallToolResult>,
-        includeInactiveServers?: boolean
+        includeInactiveServers?: boolean,
+        options?: {
+            registerDiscoveryHandlers?: boolean;
+        }
     ): Promise<{ cleanup: () => Promise<void> }>;
 
     /**
