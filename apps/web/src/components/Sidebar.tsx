@@ -10,6 +10,7 @@ import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@d
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { SIDEBAR_SECTIONS } from "./mcp/nav-config";
+import { validateSidebarSections } from "./mcp/nav-validation";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
@@ -535,6 +536,19 @@ export function Sidebar({ className }: SidebarProps) {
             return next;
         });
     }, [allItemsByHref, pathname]);
+
+    useEffect(() => {
+        if (process.env.NODE_ENV === 'production') {
+            return;
+        }
+
+        const diagnostics = validateSidebarSections(SIDEBAR_SECTIONS);
+        if (diagnostics.duplicateWithinSection.length === 0 && diagnostics.duplicateAcrossSections.length === 0) {
+            return;
+        }
+
+        console.warn('[Sidebar] Navigation integrity diagnostics detected duplicate routes.', diagnostics);
+    }, []);
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {

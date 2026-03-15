@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.200] — 2026-03-15
+
+- feat(web/navigation): added shared `validateSidebarSections(...)` utility in `apps/web/src/components/mcp/nav-validation.ts` to centralize duplicate-route diagnostics across sidebar sections.
+- changed(web/sidebar): `apps/web/src/components/Sidebar.tsx` now runs dev-only nav integrity diagnostics and warns in the console when duplicate routes are detected, improving local feedback before runtime regressions reach production.
+- changed(web/navigation): expanded `apps/web/src/components/mcp/nav-config.test.ts` to validate both per-section and cross-section `href` uniqueness via the shared validation utility.
+
 ## [2.7.199] — 2026-03-15
 
 - test(web/navigation): added `apps/web/src/components/mcp/nav-config.test.ts` to assert each `SIDEBAR_SECTIONS` section has unique `href` values, preventing duplicate-route regressions.
