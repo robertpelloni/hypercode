@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.184] — 2026-03-15
+
+- feat(web/cloud-dev): broadcast preview skip diagnostics now suggest statuses that were excluded due to `status_filter_mismatch`, each with one-click add actions.
+- changed(web/cloud-dev): added `Add all suggested` helper to quickly widen target filters from sampled skip diagnostics instead of manual multi-toggle.
+- changed(web/cloud-dev): status suggestion ordering now follows canonical cloud-dev status order for more predictable operator scanning.
+
 ## [2.7.183] — 2026-03-15
 
 - changed(core/cloud-dev): `previewBroadcastRecipients` and `broadcastMessage` now include `skippedSessionsSampled` metadata so UIs can distinguish full vs sampled skip diagnostics.

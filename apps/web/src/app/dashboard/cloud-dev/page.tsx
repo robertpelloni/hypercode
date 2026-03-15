@@ -132,6 +132,16 @@ const PROVIDER_LABELS: Record<CloudDevProvider, string> = {
     custom: "Custom",
 };
 
+const BROADCAST_STATUS_ORDER: SessionStatus[] = [
+    "pending",
+    "active",
+    "paused",
+    "awaiting_approval",
+    "completed",
+    "failed",
+    "cancelled",
+];
+
 const TERMINAL: Set<SessionStatus> = new Set(["completed", "failed", "cancelled"]);
 
 function SessionPanel({
@@ -431,6 +441,16 @@ export default function CloudDevDashboardPage() {
         () => (showAllPreviewRecipients ? previewRecipients : previewRecipients.slice(0, 8)),
         [previewRecipients, showAllPreviewRecipients]
     );
+    const skippedStatusSuggestions = useMemo(() => {
+        if (!broadcastPreview) return [] as SessionStatus[];
+        const statuses = new Set<SessionStatus>();
+        broadcastPreview.skippedSessions.forEach((session) => {
+            if (session.reason === "status_filter_mismatch") {
+                statuses.add(session.status);
+            }
+        });
+        return BROADCAST_STATUS_ORDER.filter((status) => statuses.has(status));
+    }, [broadcastPreview]);
 
     const activeSessions = useMemo(() => sessions.filter((s) => s.status === "active").length, [sessions]);
     const pendingSessions = useMemo(() => sessions.filter((s) => s.status === "pending").length, [sessions]);
@@ -639,6 +659,41 @@ export default function CloudDevDashboardPage() {
                                                         Showing sampled skipped sessions. Expand filters or retry with Force for full coverage.
                                                     </div>
                                                 )}
+                                            </div>
+                                        )}
+                                        {skippedStatusSuggestions.length > 0 && (
+                                            <div className="space-y-1">
+                                                <div className="text-[10px] text-zinc-500">Add suggested skipped statuses:</div>
+                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                    {skippedStatusSuggestions.map((status) => (
+                                                        <button
+                                                            key={`add-suggested-status-${status}`}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setBroadcastStatusFilter((current) =>
+                                                                    current.includes(status) ? current : [...current, status]
+                                                                );
+                                                            }}
+                                                            className="rounded border border-purple-700/70 bg-purple-900/35 px-2 py-0.5 text-[10px] text-purple-200 hover:bg-purple-900/55"
+                                                        >
+                                                            + {status.replace("_", " ")}
+                                                        </button>
+                                                    ))}
+                                                    {skippedStatusSuggestions.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setBroadcastStatusFilter((current) => {
+                                                                    const merged = new Set<SessionStatus>([...current, ...skippedStatusSuggestions]);
+                                                                    return BROADCAST_STATUS_ORDER.filter((status) => merged.has(status));
+                                                                });
+                                                            }}
+                                                            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-300 hover:bg-zinc-800"
+                                                        >
+                                                            Add all suggested
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
