@@ -10,7 +10,7 @@ import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@d
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { SIDEBAR_SECTIONS } from "./mcp/nav-config";
-import { buildNavItemsByNormalizedHref, extractStringArray, getNavDescription, hasNavValidationIssues, isNavHrefActive, matchesNavQuery, normalizeNavHref, normalizeNavHrefList, sanitizeCollapsedSections, sanitizeNavPreferences, sanitizeRecentSearches, validateSidebarSections } from "./mcp/nav-validation";
+import { buildNavItemsByNormalizedHref, buildRecentRouteHistory, extractStringArray, getNavDescription, hasNavValidationIssues, isNavHrefActive, matchesNavQuery, normalizeNavHref, normalizeNavHrefList, sanitizeCollapsedSections, sanitizeNavPreferences, sanitizeRecentSearches, validateSidebarSections } from "./mcp/nav-validation";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
@@ -485,7 +485,7 @@ export function Sidebar({ className }: SidebarProps) {
         }
 
         setRecentRoutes((current) => {
-            const next = [normalizedPathname, ...current.filter((href) => href !== normalizedPathname)].slice(0, MAX_RECENT_ROUTES);
+            const next = buildRecentRouteHistory(current, normalizedPathname, MAX_RECENT_ROUTES);
             safeStorageSet(SIDEBAR_RECENT_STORAGE_KEY, JSON.stringify(next));
             return next;
         });

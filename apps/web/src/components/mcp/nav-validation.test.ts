@@ -5,6 +5,7 @@ import {
     buildFallbackNavDescription,
     buildNavItemsByHref,
     buildNavItemsByNormalizedHref,
+    buildRecentRouteHistory,
     extractStringArray,
     getNavDescription,
     hasNavValidationIssues,
@@ -124,6 +125,20 @@ describe('sanitizeNavPreferences', () => {
             recentRoutes: [],
             recentSearches: [],
         });
+    });
+});
+
+describe('buildRecentRouteHistory', () => {
+    it('prepends the newest route, canonicalizes aliases, deduplicates, and limits length', () => {
+        expect(buildRecentRouteHistory([
+            '/dashboard/tools',
+            '/dashboard/library/',
+            '/dashboard/settings',
+        ], '/dashboard/library?tab=overview', 3)).toEqual([
+            '/dashboard/library',
+            '/dashboard/tools',
+            '/dashboard/settings',
+        ]);
     });
 });
 

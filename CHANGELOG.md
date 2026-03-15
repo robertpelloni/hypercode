@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.217] — 2026-03-15
+
+- changed(web/navigation): added shared `buildRecentRouteHistory(...)` in `apps/web/src/components/mcp/nav-validation.ts` so recent-route recency shaping now reuses one canonical helper for normalization, deduplication, newest-first ordering, and length capping.
+- refactor(web/sidebar): pathname-driven recent-route updates in `Sidebar.tsx` now use the shared history builder instead of maintaining a separate in-effect ordering path.
+- test(web/navigation): expanded `apps/web/src/components/mcp/nav-validation.test.ts` with recent-route history coverage and revalidated focused nav suites (`28` tests passing).
+
 ## [2.7.216] — 2026-03-15
 
 - changed(web/navigation): added shared `buildFallbackNavDescription(...)` and `getNavDescription(...)` helpers in `apps/web/src/components/mcp/nav-validation.ts` so nav tooltip/fallback copy now comes from one reusable source of truth.

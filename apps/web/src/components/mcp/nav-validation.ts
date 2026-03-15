@@ -149,6 +149,13 @@ export function sanitizeNavPreferences(
     };
 }
 
+export function buildRecentRouteHistory(currentRoutes: string[], nextHref: string, limit: number): string[] {
+    return normalizeNavHrefList([
+        nextHref,
+        ...currentRoutes,
+    ]).slice(0, limit);
+}
+
 export function buildFallbackNavDescription(title: string, section: string, href?: string): string {
     const normalized = title.toLowerCase();
 
