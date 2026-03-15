@@ -148,6 +148,75 @@ export class CoreModelSelector extends ModelSelector {
         };
     }
 
+    /**
+     * Returns a snapshot of currently blocked or cooling-down provider/model entries.
+     *
+     * Overrides the base class which reads from internal `modelStates` (never set here).
+     * Instead, we combine:
+     * 1. Per-(provider, model) cooldowns from `reportFailure` transient backoff.
+     * 2. Provider-wide quota states (`rate_limited`, `quota_exhausted`, `cooldown`) from
+     *    `NormalizedQuotaService`.
+     *
+     * The billing dashboard "Blocked / Cooling-Down Models" card consumes this via
+     * `trpc.billing.getDepletedModels`.
+     */
+    public override getDepletedModels(): Array<{
+        key: string;
+        provider: string;
+        modelId: string;
+        depletedAt: number;
+        retryAfter: number;
+        isPermanent: boolean;
+        coolsDownAt: string;
+    }> {
+        const now = Date.now();
+        const result: ReturnType<CoreModelSelector['getDepletedModels']> = [];
+        const coveredProviders = new Set<string>();
+
+        // Per-model transient cooldowns from failed individual calls.
+        for (const [key, cooldownUntil] of this.candidateCooldowns) {
+            if (cooldownUntil <= now) continue; // already expired, will be cleaned up on next isCandidateReady check
+            const separatorIdx = key.indexOf(':');
+            const provider = separatorIdx !== -1 ? key.slice(0, separatorIdx) : key;
+            const modelId = separatorIdx !== -1 ? key.slice(separatorIdx + 1) : '';
+            coveredProviders.add(provider);
+            result.push({
+                key,
+                provider,
+                modelId,
+                depletedAt: cooldownUntil - 60_000, // approximate start time (60s backoff)
+                retryAfter: cooldownUntil,
+                isPermanent: false,
+                coolsDownAt: new Date(cooldownUntil).toLocaleTimeString(),
+            });
+        }
+
+        // Provider-wide quota states (rate_limited, quota_exhausted, cooldown).
+        for (const snapshot of this.quotaTracker.getAllQuotas()) {
+            const { availability, provider, retryAfter } = snapshot;
+            if (availability === 'available' || availability === 'missing_auth') continue;
+            // Avoid duplicating a provider already represented by a per-model entry.
+            if (coveredProviders.has(provider)) continue;
+            const retryAfterMs = retryAfter ? new Date(retryAfter).getTime() : Infinity;
+            const isPermanent = retryAfterMs === Infinity;
+            result.push({
+                key: `${provider}:quota`,
+                provider,
+                modelId: '*',
+                depletedAt: now,
+                retryAfter: retryAfterMs,
+                isPermanent,
+                coolsDownAt: isPermanent
+                    ? 'session end'
+                    : retryAfter
+                        ? new Date(retryAfter).toLocaleTimeString()
+                        : 'unknown',
+            });
+        }
+
+        return result;
+    }
+
     public override reportFailure(provider: string, modelId: string, cause?: unknown) {
         const cooldownUntil = Date.now() + 60_000;
         this.candidateCooldowns.set(this.getCooldownKey(provider, modelId), cooldownUntil);

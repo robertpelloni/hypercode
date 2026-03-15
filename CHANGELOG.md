@@ -4,6 +4,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.230] — 2026-03-15
+
+- fix(core/providers): `CoreModelSelector` now overrides `getDepletedModels()` to read from `candidateCooldowns` (per-model transient backoffs) and `NormalizedQuotaService.getAllQuotas()` (provider-wide quota states) — the billing dashboard "Blocked / Cooling-Down Models" card now populates when providers are rate-limited or quota-exhausted instead of always showing empty.
+- feat(core/providers): `NormalizedQuotaService` now supports a configurable pre-emptive quota threshold (default 95%); when a provider's cumulative cost crosses the threshold `trackUsage` marks it `cooldown` so `CoreModelSelector` skips it and promotes the next fallback candidate before a mid-call hard failure.
+- feat(core/providers): added `NormalizedQuotaService.getNearQuotaWarnings()` returning providers in the 95–99% band for dashboard exposure of approaching quota limits.
+- test(core/providers): added `CoreModelSelector.test.ts` with 11 tests covering `getDepletedModels()` (empty/per-model/provider-rate-limit/quota-exhausted/deduplication paths) and pre-emptive threshold behaviour (`cooldown` vs `available`, `quota_exhausted` at 100%, `getNearQuotaWarnings` inclusion/exclusion).
+
 ## [2.7.229] — 2026-03-15
 
 - changed(web/navigation): added shared `comparePaletteRoutes(...)` in `apps/web/src/components/mcp/nav-validation.ts` so quick-switch route ranking now has one reusable contract for favorite priority, recency priority, and stable title fallback ordering.

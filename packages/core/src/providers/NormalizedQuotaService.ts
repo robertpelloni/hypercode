@@ -24,6 +24,14 @@ export class NormalizedQuotaService extends QuotaService {
         monthlyBudgetUsd: 100,
         providerLimits: {},
     };
+    /**
+     * Fraction of provider quota at which routing is pre-emptively paused to avoid
+     * mid-call failures. When `trackUsage` detects that a provider's usage-to-limit
+     * ratio crosses this threshold the provider is marked `cooldown` so `rankCandidates`
+     * will skip it and promote the next fallback candidate before the quota is fully
+     * exhausted (default 0.95 = 95%).
+     */
+    private preEmptiveThreshold: number = 0.95;
     private readonly snapshots = new Map<string, ProviderQuotaSnapshot>();
 
     constructor(registry: ProviderRegistry, balanceService: ProviderBalanceService = new ProviderBalanceService()) {
@@ -33,7 +41,7 @@ export class NormalizedQuotaService extends QuotaService {
         this.refreshAuthStates();
     }
 
-    public override setConfig(config: QuotaConfig) {
+    public override setConfig(config: QuotaConfig & { preEmptiveSwitchThreshold?: number }) {
         this.configState = {
             ...this.configState,
             ...config,
@@ -42,6 +50,10 @@ export class NormalizedQuotaService extends QuotaService {
                 ...(config.providerLimits ?? {}),
             },
         };
+        if (typeof config.preEmptiveSwitchThreshold === 'number') {
+            // Clamp to a sane range (50%–100%) to avoid pathological configs.
+            this.preEmptiveThreshold = Math.max(0.5, Math.min(1.0, config.preEmptiveSwitchThreshold));
+        }
         this.refreshAuthStates();
     }
 
@@ -82,16 +94,54 @@ export class NormalizedQuotaService extends QuotaService {
         });
 
         const snapshot = this.snapshots.get(provider);
-        if (snapshot) {
-            const nextUsed = snapshot.used + costUsd;
-            const limit = snapshot.limit;
-            this.snapshots.set(provider, {
-                ...snapshot,
-                used: nextUsed,
-                remaining: typeof limit === 'number' ? Math.max(limit - nextUsed, 0) : null,
-                availability: typeof limit === 'number' && nextUsed >= limit ? 'quota_exhausted' : snapshot.availability,
-            });
+        if (!snapshot) return;
+
+        const nextUsed = snapshot.used + costUsd;
+        const limit = snapshot.limit;
+        const usageRatio = typeof limit === 'number' && limit > 0 ? nextUsed / limit : 0;
+
+        // Determine next availability state, preserving existing non-available states.
+        let nextAvailability = snapshot.availability;
+        let nextRetryAfter: string | null = snapshot.retryAfter ?? null;
+        let nextResetDate: string | null = snapshot.resetDate ?? null;
+        let nextLastError: string | undefined = snapshot.lastError;
+
+        if (typeof limit === 'number') {
+            if (nextUsed >= limit && snapshot.availability !== 'quota_exhausted') {
+                // Hard exhaustion: pause until reset.
+                const retryDate = snapshot.resetDate
+                    ? new Date(snapshot.resetDate)
+                    : new Date(Date.now() + DEFAULT_RETRY_MS);
+                nextAvailability = 'quota_exhausted';
+                nextRetryAfter = retryDate.toISOString();
+                nextResetDate = retryDate.toISOString();
+                nextLastError = 'Provider quota exhausted — routing paused until reset.';
+            } else if (
+                usageRatio >= this.preEmptiveThreshold &&
+                usageRatio < 1 &&
+                snapshot.availability === 'available'
+            ) {
+                // Pre-emptive pause: usage is within threshold band (e.g. 95–99%).
+                // Use the known reset date when available so we recover at the right time;
+                // otherwise fall back to a short re-check window.
+                const retryDate = snapshot.resetDate
+                    ? new Date(snapshot.resetDate)
+                    : new Date(Date.now() + 5 * 60_000);
+                nextAvailability = 'cooldown';
+                nextRetryAfter = retryDate.toISOString();
+                nextLastError = `Provider at ${Math.round(usageRatio * 100)}% quota — routing paused pre-emptively to avoid mid-call failure.`;
+            }
         }
+
+        this.snapshots.set(provider, {
+            ...snapshot,
+            used: nextUsed,
+            remaining: typeof limit === 'number' ? Math.max(limit - nextUsed, 0) : null,
+            availability: nextAvailability,
+            retryAfter: nextRetryAfter,
+            resetDate: nextResetDate,
+            lastError: nextLastError,
+        });
     }
 
     public override getSessionTotal(): number {
@@ -166,6 +216,26 @@ export class NormalizedQuotaService extends QuotaService {
 
     public markQuotaExceeded(provider: string, resetDate: number | Date = Date.now() + DEFAULT_RETRY_MS, message = 'Provider quota exhausted.') {
         this.updateAvailability(provider, 'quota_exhausted', resetDate, message);
+    }
+
+    /**
+     * Returns providers that are within the pre-emptive threshold band but not yet
+     * fully exhausted.  Useful for dashboard warnings that inform operators their
+     * quota is running low on a given provider.
+     */
+    public getNearQuotaWarnings(): Array<{ provider: string; usedPercent: number }> {
+        const warnings: Array<{ provider: string; usedPercent: number }> = [];
+        for (const snapshot of this.snapshots.values()) {
+            if (typeof snapshot.limit !== 'number' || snapshot.limit <= 0) continue;
+            const usedPercent = snapshot.used / snapshot.limit;
+            if (usedPercent >= this.preEmptiveThreshold && usedPercent < 1) {
+                warnings.push({
+                    provider: snapshot.provider,
+                    usedPercent: Math.round(usedPercent * 100),
+                });
+            }
+        }
+        return warnings;
     }
 
     public markProviderHealthy(provider: string) {
