@@ -788,6 +788,31 @@ export default function CloudDevDashboardPage() {
                                                 </div>
                                             </div>
                                         )}
+                                        {broadcastPreview.skippedSessionIds.length > 0 && lastBroadcastPayload?.content && (
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                                <button
+                                                    type="button"
+                                                    disabled={broadcastMutation.isPending}
+                                                    onClick={() => retryLastBroadcastToSessionIds(broadcastPreview.skippedSessionIds, false)}
+                                                    className="rounded border border-cyan-500/60 bg-cyan-700/35 px-2 py-0.5 text-[10px] text-cyan-100 hover:bg-cyan-700/55 disabled:opacity-50"
+                                                >
+                                                    Retry last to preview skipped only
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={broadcastMutation.isPending}
+                                                    onClick={() => retryLastBroadcastToSessionIds(broadcastPreview.skippedSessionIds, true)}
+                                                    className="rounded border border-amber-500/60 bg-amber-700/35 px-2 py-0.5 text-[10px] text-amber-100 hover:bg-amber-700/55 disabled:opacity-50"
+                                                >
+                                                    Retry preview skipped only + Force
+                                                </button>
+                                                {broadcastPreview.skippedSessionsSampled && (
+                                                    <span className="text-[10px] text-zinc-500">
+                                                        Skipped rows are sampled, but retry targets full skipped ID set.
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -824,6 +849,7 @@ export default function CloudDevDashboardPage() {
                                                 content: lastBroadcastPayload.content,
                                                 force: true,
                                                 statusFilter: lastBroadcastPayload.statusFilter,
+                                                sessionIds: lastBroadcastPayload.sessionIds,
                                             });
                                         }}
                                         className="rounded border border-amber-500/60 bg-amber-700/40 px-2 py-0.5 text-[10px] text-amber-100 hover:bg-amber-700/60 disabled:opacity-50"

@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.190] — 2026-03-15
+
+- feat(web/cloud-dev): preview skip diagnostics in `/dashboard/cloud-dev` now include one-click `Retry last to preview skipped only` and `Retry preview skipped only + Force` actions.
+- changed(web/cloud-dev): skipped-only preview retries target full `skippedSessionIds` from preview telemetry (not just sampled skip rows), improving precision on large session sets.
+- fix(web/cloud-dev): `Retry last broadcast with Force` now preserves prior session-scoped targeting (`sessionIds`) so force retries do not unintentionally widen scope.
+
 ## [2.7.189] — 2026-03-15
 
 - feat(core/cloud-dev): `broadcastMessage` and `previewBroadcastRecipients` now accept optional `sessionIds` targeting and return full `skippedSessionIds` arrays for precise follow-up retries.
