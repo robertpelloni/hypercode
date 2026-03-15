@@ -4,6 +4,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.228] — 2026-03-15
+
+- refactor(web/sidebar): added shared `safeStorageGetJson(...)` in `apps/web/src/components/Sidebar.tsx` so stored navigation preference hydration now reads and parses localStorage payloads through one helper instead of repeating inline `safeStorageGet(...)` + `JSON.parse(...)` flows.
+- changed(web/sidebar): collapsed sections, favorites, recent routes, and recent searches now hydrate through the same storage-read path, reducing parse drift and keeping malformed stored payload handling consistent across Sidebar preference surfaces.
+- refactor(web/sidebar): removed the unused component-local `persistRecentRoutes(...)` helper so Sidebar no longer keeps an unreferenced older recent-route persistence path around.
+- test(web/navigation): reran focused nav validation/config suites after the Sidebar storage-read convergence cleanup (`37` tests passing).
+
 ## [2.7.227] — 2026-03-15
 
 - refactor(web/sidebar): added shared `safeStorageRemoveMany(...)` in `apps/web/src/components/Sidebar.tsx` so reset and clear actions now remove persisted navigation preference keys through one helper instead of repeating inline storage deletes.

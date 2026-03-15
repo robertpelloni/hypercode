@@ -49,6 +49,19 @@ function safeStorageGet(key: string): string | null {
     }
 }
 
+function safeStorageGetJson<T>(key: string): T | null {
+    const raw = safeStorageGet(key);
+    if (!raw) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(raw) as T;
+    } catch {
+        return null;
+    }
+}
+
 function safeStorageSet(key: string, value: string): void {
     const storage = getSafeLocalStorage();
     if (!storage) {
@@ -112,55 +125,39 @@ export function Sidebar({ className }: SidebarProps) {
     const paletteInputRef = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
-        try {
-            const raw = safeStorageGet(SIDEBAR_COLLAPSE_STORAGE_KEY);
-            if (!raw) {
-                return;
-            }
-            const parsed = JSON.parse(raw);
-            setCollapsedSections(sanitizeCollapsedSections(parsed, sectionTitles));
-        } catch {
-            // ignore invalid stored state
+        const parsed = safeStorageGetJson<unknown>(SIDEBAR_COLLAPSE_STORAGE_KEY);
+        if (parsed === null) {
+            return;
         }
+
+        setCollapsedSections(sanitizeCollapsedSections(parsed, sectionTitles));
     }, [sectionTitles]);
 
     useEffect(() => {
-        try {
-            const raw = safeStorageGet(SIDEBAR_FAVORITES_STORAGE_KEY);
-            if (!raw) {
-                return;
-            }
-            const parsed = JSON.parse(raw);
-            setFavorites(sanitizeFavoriteRoutes(parsed, allowedNavHrefs));
-        } catch {
-            // ignore invalid stored state
+        const parsed = safeStorageGetJson<unknown>(SIDEBAR_FAVORITES_STORAGE_KEY);
+        if (parsed === null) {
+            return;
         }
+
+        setFavorites(sanitizeFavoriteRoutes(parsed, allowedNavHrefs));
     }, [allowedNavHrefs]);
 
     useEffect(() => {
-        try {
-            const raw = safeStorageGet(SIDEBAR_RECENT_STORAGE_KEY);
-            if (!raw) {
-                return;
-            }
-            const parsed = JSON.parse(raw);
-            setRecentRoutes(sanitizeRecentRoutes(parsed, allowedNavHrefs, MAX_RECENT_ROUTES));
-        } catch {
-            // ignore invalid stored state
+        const parsed = safeStorageGetJson<unknown>(SIDEBAR_RECENT_STORAGE_KEY);
+        if (parsed === null) {
+            return;
         }
+
+        setRecentRoutes(sanitizeRecentRoutes(parsed, allowedNavHrefs, MAX_RECENT_ROUTES));
     }, [allowedNavHrefs]);
 
     useEffect(() => {
-        try {
-            const raw = safeStorageGet(SIDEBAR_RECENT_SEARCHES_STORAGE_KEY);
-            if (!raw) {
-                return;
-            }
-            const parsed = JSON.parse(raw);
-            setRecentSearches(sanitizeRecentSearches(parsed, MAX_RECENT_SEARCHES));
-        } catch {
-            // ignore invalid stored state
+        const parsed = safeStorageGetJson<unknown>(SIDEBAR_RECENT_SEARCHES_STORAGE_KEY);
+        if (parsed === null) {
+            return;
         }
+
+        setRecentSearches(sanitizeRecentSearches(parsed, MAX_RECENT_SEARCHES));
     }, []);
 
     const normalizedPathname = normalizeNavHref(pathname);
@@ -337,12 +334,6 @@ export function Sidebar({ className }: SidebarProps) {
             return;
         }
         persistFavorites([...favorites, normalizedHref]);
-    };
-
-    const persistRecentRoutes = (next: string[]) => {
-        const normalized = normalizeNavHrefList(next).slice(0, MAX_RECENT_ROUTES);
-        setRecentRoutes(normalized);
-        safeStorageSetJson(SIDEBAR_RECENT_STORAGE_KEY, normalized);
     };
 
     const persistRecentSearches = (next: string[]) => {
