@@ -4,6 +4,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.223] — 2026-03-15
+
+- changed(web/navigation): added shared `sanitizeFavoriteRoutes(...)` in `apps/web/src/components/mcp/nav-validation.ts` so unknown favorite payloads now reuse one canonical path for string extraction, href normalization, and config-aware filtering.
+- refactor(web/sidebar): `Sidebar.tsx` now uses the shared favorite-route sanitizer for both favorite hydration and persistence, keeping runtime favorites behavior aligned with imported nav preference filtering.
+- changed(web/navigation): `sanitizeNavPreferences(...)` now reuses the shared favorite-route sanitizer, keeping imported favorite cleanup behavior coupled to the same helper used at runtime.
+- test(web/navigation): expanded `apps/web/src/components/mcp/nav-validation.test.ts` with favorite-route sanitizer coverage and revalidated focused nav suites (`35` tests passing).
+
 ## [2.7.222] — 2026-03-15
 
 - fix(web/sidebar): corrected the initial `Sidebar.tsx` collapsed-section hydration path to pass the live section-title set into `sanitizeCollapsedSections(...)`, matching the import path and preventing stale collapse flags from surviving first load.

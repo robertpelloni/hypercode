@@ -16,6 +16,7 @@ import {
     normalizeNavHref,
     normalizeNavHrefList,
     sanitizeCollapsedSections,
+    sanitizeFavoriteRoutes,
     sanitizeNavPreferences,
     sanitizeRecentRoutes,
     sanitizeRecentSearches,
@@ -74,6 +75,24 @@ describe('filterNavHrefsByAllowedSet', () => {
             '/dashboard/library',
             '/dashboard/tools',
         ]);
+    });
+});
+
+describe('sanitizeFavoriteRoutes', () => {
+    it('keeps only allowed canonical favorites from unknown payloads', () => {
+        expect(sanitizeFavoriteRoutes([
+            '/dashboard/library/?tab=overview',
+            '/dashboard/unknown',
+            '/dashboard/library/',
+            '/dashboard/tools#top',
+        ], new Set(['/dashboard/library', '/dashboard/tools']))).toEqual([
+            '/dashboard/library',
+            '/dashboard/tools',
+        ]);
+    });
+
+    it('returns an empty list for malformed favorites payloads', () => {
+        expect(sanitizeFavoriteRoutes('not-an-array', new Set(['/dashboard/library']))).toEqual([]);
     });
 });
 

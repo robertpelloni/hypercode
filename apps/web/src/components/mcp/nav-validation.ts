@@ -91,6 +91,13 @@ export function filterNavHrefsByAllowedSet(values: string[], allowedHrefs: Reado
     return normalizeNavHrefList(values).filter((href) => allowedHrefs.has(href));
 }
 
+export function sanitizeFavoriteRoutes(
+    values: unknown,
+    allowedHrefs: ReadonlySet<string>,
+): string[] {
+    return filterNavHrefsByAllowedSet(extractStringArray(values), allowedHrefs);
+}
+
 export function sanitizeRecentRoutes(
     values: unknown,
     allowedHrefs: ReadonlySet<string>,
@@ -150,7 +157,7 @@ export function sanitizeNavPreferences(
     routeLimit: number,
     searchLimit: number,
 ): SanitizedNavPreferences {
-    const favorites = filterNavHrefsByAllowedSet(extractStringArray(value.favorites), allowedHrefs);
+    const favorites = sanitizeFavoriteRoutes(value.favorites, allowedHrefs);
     const recentRoutes = sanitizeRecentRoutes(value.recentRoutes, allowedHrefs, routeLimit);
 
     return {
