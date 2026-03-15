@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent } from "@borg/ui";
 import { Button } from "@borg/ui";
-import { Loader2, Play, Wrench, Search, ChevronRight, Layers, Database, ExternalLink, Link2, Activity, ArrowDownToLine, Sparkles, Trash2 } from "lucide-react";
+import { Loader2, Play, Wrench, Search, ChevronRight, Layers, Database, ExternalLink, Link2, Activity, ArrowDownToLine, Sparkles, Trash2, Clock, Zap, AlertTriangle } from "lucide-react";
 import { TrafficInspector } from '@/components/TrafficInspector';
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -22,6 +22,7 @@ type WorkingSetTool = {
     hydrated: boolean;
     lastLoadedAt: number;
     lastHydratedAt: number | null;
+    lastAccessedAt: number;
 };
 
 type ToolSelectionTelemetryEvent = {
@@ -29,26 +30,54 @@ type ToolSelectionTelemetryEvent = {
     type: 'search' | 'load' | 'hydrate' | 'unload';
     timestamp: number;
     query?: string;
+    profile?: string;
     source?: 'runtime-search' | 'cached-ranking' | 'live-aggregator';
     resultCount?: number;
     topResultName?: string;
     topMatchReason?: string;
+    topScore?: number;
+    secondResultName?: string;
+    secondScore?: number;
+    scoreGap?: number;
     toolName?: string;
     status: 'success' | 'error';
     message?: string;
     evictedTools?: string[];
+    latencyMs?: number;
+    autoLoadReason?: string;
+    autoLoadConfidence?: number;
+    autoLoadEvaluated?: boolean;
+    autoLoadOutcome?: 'loaded' | 'skipped' | 'not-applicable';
+    autoLoadSkipReason?: string;
+    autoLoadMinConfidence?: number;
+    autoLoadExecutionStatus?: 'success' | 'error' | 'not-attempted';
+    autoLoadExecutionError?: string;
+};
+
+type EvictionEvent = {
+    toolName: string;
+    timestamp: number;
+    tier: 'loaded' | 'hydrated';
+    idleEvicted: boolean;
+    idleDurationMs: number;
 };
 
 type ToolPreferences = {
     importantTools: string[];
     alwaysLoadedTools: string[];
     autoLoadMinConfidence: number;
+    maxLoadedTools?: number;
+    maxHydratedSchemas?: number;
+    idleEvictionThresholdMs?: number;
 };
 
 type ToolPreferenceMutationInput = {
     importantTools?: string[];
     alwaysLoadedTools?: string[];
     autoLoadMinConfidence?: number;
+    maxLoadedTools?: number;
+    maxHydratedSchemas?: number;
+    idleEvictionThresholdMs?: number;
 };
 
 type TelemetryFilter = 'all' | 'search' | 'load' | 'hydrate' | 'unload' | 'errors';
@@ -81,6 +110,7 @@ function InspectorDashboardContent() {
     const workingSetQuery = trpc.mcp.getWorkingSet.useQuery(undefined, { refetchInterval: 4000 });
     const telemetryQuery = trpc.mcp.getToolSelectionTelemetry.useQuery(undefined, { refetchInterval: 4000 });
     const preferencesQuery = trpc.mcp.getToolPreferences.useQuery();
+    const evictionHistoryQuery = trpc.mcp.getWorkingSetEvictionHistory.useQuery(undefined, { refetchInterval: 6000 });
     const dbToolsQuery = trpc.tools.list.useQuery();
 
     const [toolFilter, setToolFilter] = useState('');
@@ -185,6 +215,7 @@ function InspectorDashboardContent() {
 
     const workingSet = (workingSetQuery.data?.tools || []) as WorkingSetTool[];
     const telemetry = (telemetryQuery.data || []) as ToolSelectionTelemetryEvent[];
+    const evictionHistory = (evictionHistoryQuery.data || []) as EvictionEvent[];
     const preferences = (preferencesQuery.data as ToolPreferences | undefined) ?? {
         importantTools: [],
         alwaysLoadedTools: [],
@@ -224,6 +255,16 @@ function InspectorDashboardContent() {
         onSuccess: async () => {
             toast.success('Telemetry history cleared');
             await telemetryQuery.refetch();
+        },
+        onError: (error) => {
+            toast.error(error.message);
+        },
+    });
+
+    const clearEvictionHistoryMutation = trpc.mcp.clearWorkingSetEvictionHistory.useMutation({
+        onSuccess: async () => {
+            toast.success('Eviction history cleared');
+            await evictionHistoryQuery.refetch();
         },
         onError: (error) => {
             toast.error(error.message);
@@ -592,7 +633,16 @@ function InspectorDashboardContent() {
                     <CardContent className="p-0 flex-1 overflow-y-auto">
                         {workingSet.length > 0 ? (
                             <div className="divide-y divide-zinc-800/50">
-                                {workingSet.map((tool) => (
+                                {workingSet.map((tool) => {
+                                    const idleSecs = tool.lastAccessedAt
+                                        ? Math.max(0, Math.round((Date.now() - tool.lastAccessedAt) / 1000))
+                                        : null;
+                                    const idleLabel = idleSecs === null ? null
+                                        : idleSecs < 60 ? `${idleSecs}s idle`
+                                        : idleSecs < 3600 ? `${Math.round(idleSecs / 60)}m idle`
+                                        : `${Math.round(idleSecs / 3600)}h idle`;
+                                    const isLongIdle = idleSecs !== null && idleSecs > 300;
+                                    return (
                                     <div key={tool.name} className="p-3 space-y-2">
                                         <div className="font-mono text-xs text-zinc-200 break-all">{tool.name}</div>
                                         <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-wider">
@@ -602,6 +652,11 @@ function InspectorDashboardContent() {
                                             ) : null}
                                             {(alwaysLoadedTools.has(tool.name) || dbAlwaysOnTools.has(tool.name)) ? (
                                                 <span className="bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded text-cyan-300">always on</span>
+                                            ) : null}
+                                            {idleLabel ? (
+                                                <span className={`flex items-center gap-1 px-2 py-0.5 rounded ${isLongIdle ? 'bg-amber-500/10 border border-amber-500/20 text-amber-300' : 'bg-zinc-800 text-zinc-500'}`}>
+                                                    <Clock className="h-2.5 w-2.5" />{idleLabel}
+                                                </span>
                                             ) : null}
                                         </div>
                                         <div className="flex gap-2">
@@ -625,7 +680,8 @@ function InspectorDashboardContent() {
                                             </Button>
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="p-4 text-xs text-zinc-500 text-center">
@@ -694,12 +750,24 @@ function InspectorDashboardContent() {
                                         <span className="text-[10px] text-zinc-500">{formatRelativeTimestamp(event.timestamp)}</span>
                                     </div>
 
-                                    {event.query ? <div className="text-xs text-zinc-400 break-all">query: <span className="text-zinc-200">{event.query}</span></div> : null}
+                    {event.query ? <div className="text-xs text-zinc-400 break-all">query: <span className="text-zinc-200">{event.query}</span></div> : null}
                                     {event.toolName ? <div className="text-xs text-zinc-400 break-all">tool: <span className="font-mono text-zinc-200">{event.toolName}</span></div> : null}
                                     {typeof event.resultCount === 'number' ? <div className="text-xs text-zinc-400">results: <span className="text-zinc-200">{event.resultCount}</span></div> : null}
-                                    {event.topResultName ? <div className="text-xs text-zinc-400 break-all">top result: <span className="font-mono text-zinc-200">{event.topResultName}</span></div> : null}
+                                    {event.topResultName ? <div className="text-xs text-zinc-400 break-all">top result: <span className="font-mono text-zinc-200">{event.topResultName}</span>{typeof event.topScore === 'number' ? <span className="text-zinc-500 ml-1">score {event.topScore}</span> : null}</div> : null}
+                                    {typeof event.scoreGap === 'number' ? <div className="text-xs text-zinc-400">score gap: <span className="text-zinc-200">{event.scoreGap}</span></div> : null}
                                     {event.topMatchReason ? <div className="text-xs text-zinc-400">why: <span className="text-zinc-200">{event.topMatchReason}</span></div> : null}
+                                    {event.profile ? <div className="text-xs text-zinc-500">profile: {event.profile}</div> : null}
                                     {event.source ? <div className="text-xs text-zinc-500">source: {event.source}</div> : null}
+                                    {typeof event.latencyMs === 'number' ? <div className="text-xs text-zinc-500">latency: {event.latencyMs}ms</div> : null}
+                                    {/* Auto-load decision */}
+                                    {event.autoLoadEvaluated ? (
+                                        <div className={`flex items-center gap-1.5 text-xs rounded px-2 py-1 ${event.autoLoadOutcome === 'loaded' ? 'bg-emerald-500/10 text-emerald-300' : event.autoLoadOutcome === 'skipped' ? 'bg-amber-500/10 text-amber-300' : 'bg-zinc-800 text-zinc-500'}`}>
+                                            {event.autoLoadOutcome === 'loaded' ? <Zap className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
+                                            auto-load: {event.autoLoadOutcome}
+                                            {typeof event.autoLoadConfidence === 'number' ? <span className="opacity-70">({(event.autoLoadConfidence * 100).toFixed(0)}% conf)</span> : null}
+                                            {event.autoLoadSkipReason ? <span className="opacity-70 ml-1">— {event.autoLoadSkipReason}</span> : null}
+                                        </div>
+                                    ) : null}
                                     {event.evictedTools && event.evictedTools.length > 0 ? (
                                         <div className="text-xs text-amber-300 break-all">evicted: {event.evictedTools.join(', ')}</div>
                                     ) : null}
@@ -712,6 +780,62 @@ function InspectorDashboardContent() {
                             </div>
                         )}
                     </div>
+                </CardContent>
+            </Card>
+
+            {/* Eviction History */}
+            <Card className="bg-zinc-900 border-zinc-800 overflow-hidden">
+                <CardHeader className="pb-3 border-b border-zinc-800 flex flex-row items-center justify-between gap-3">
+                    <div>
+                        <CardTitle className="text-white text-base flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-amber-400" />
+                            Working-set eviction history
+                        </CardTitle>
+                        <p className="text-xs text-zinc-500 mt-1">Recent tool evictions from the session working set, annotated with idle duration and eviction reason.</p>
+                    </div>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={clearEvictionHistoryMutation.isPending || evictionHistory.length === 0}
+                        onClick={() => clearEvictionHistoryMutation.mutate()}
+                        title="Clear the eviction history ring buffer"
+                        aria-label="Clear working-set eviction history"
+                        className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                    >
+                        {clearEvictionHistoryMutation.isPending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Trash2 className="mr-2 h-3.5 w-3.5" />}
+                        Clear
+                    </Button>
+                </CardHeader>
+                <CardContent className="p-4">
+                    {evictionHistory.length > 0 ? (
+                        <div className="grid gap-2 lg:grid-cols-3">
+                            {evictionHistory.slice(0, 20).map((ev, i) => {
+                                const idleSecs = Math.round(ev.idleDurationMs / 1000);
+                                const idleLabel = idleSecs < 60 ? `${idleSecs}s` : idleSecs < 3600 ? `${Math.round(idleSecs / 60)}m` : `${Math.round(idleSecs / 3600)}h`;
+                                return (
+                                    <div key={`${ev.toolName}-${ev.timestamp}-${i}`} className={`rounded-lg border p-3 space-y-1 text-xs ${ev.idleEvicted ? 'border-amber-500/20 bg-amber-500/5' : 'border-zinc-800 bg-zinc-950/60'}`}>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className={`uppercase tracking-wider px-1.5 py-0.5 rounded text-[10px] ${ev.tier === 'loaded' ? 'bg-red-500/10 text-red-300' : 'bg-purple-500/10 text-purple-300'}`}>
+                                                {ev.tier}
+                                            </span>
+                                            <span className="text-zinc-500">{formatRelativeTimestamp(ev.timestamp)}</span>
+                                        </div>
+                                        <div className="font-mono text-zinc-200 break-all">{ev.toolName}</div>
+                                        <div className="flex items-center gap-1.5 text-zinc-400">
+                                            <Clock className="h-3 w-3" />
+                                            <span>idle {idleLabel}</span>
+                                            {ev.idleEvicted ? <span className="text-amber-300 ml-1">• idle eviction</span> : <span className="text-zinc-500 ml-1">• capacity eviction</span>}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="rounded-lg border border-dashed border-zinc-800 p-6 text-sm text-zinc-500 text-center">
+                            No evictions recorded yet in this session.
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
