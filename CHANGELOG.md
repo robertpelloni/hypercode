@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.182] — 2026-03-15
+
+- changed(web/cloud-dev): broadcast composer now stores the last submitted payload (message + status filter), enabling result-panel quick retry actions without retyping.
+- feat(web/cloud-dev): when the last send skipped terminal sessions, result UI now provides `Retry last broadcast with Force` for one-click forced resend.
+- changed(web/cloud-dev): force guidance button text clarified to distinguish toggling next-send state vs immediate forced resend.
+
 ## [2.7.181] — 2026-03-15
 
 - changed(web/cloud-dev): post-send broadcast results in `/dashboard/cloud-dev` now include sampled skipped session rows (provider/project/status/reason), not just summary counts.

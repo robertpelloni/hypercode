@@ -328,6 +328,11 @@ export default function CloudDevDashboardPage() {
     const [broadcastMsg, setBroadcastMsg] = useState("");
     const [broadcastForce, setBroadcastForce] = useState(false);
     const [broadcastStatusFilter, setBroadcastStatusFilter] = useState<SessionStatus[]>([]);
+    const [lastBroadcastPayload, setLastBroadcastPayload] = useState<{
+        content: string;
+        force: boolean;
+        statusFilter?: SessionStatus[];
+    } | null>(null);
     const [broadcastResult, setBroadcastResult] = useState<{
         delivered: number;
         skipped: number;
@@ -384,10 +389,16 @@ export default function CloudDevDashboardPage() {
 
     const handleBroadcast = useCallback(() => {
         if (!broadcastMsg.trim()) return;
-        broadcastMutation.mutate({
+        const payload = {
             content: broadcastMsg.trim(),
             force: broadcastForce,
-            statusFilter: broadcastStatusFilter.length > 0 ? broadcastStatusFilter : undefined,
+            statusFilter: broadcastStatusFilter.length > 0 ? [...broadcastStatusFilter] : undefined,
+        };
+        setLastBroadcastPayload(payload);
+        broadcastMutation.mutate({
+            content: payload.content,
+            force: payload.force,
+            statusFilter: payload.statusFilter,
         });
     }, [broadcastMsg, broadcastForce, broadcastMutation, broadcastStatusFilter]);
 
@@ -640,13 +651,31 @@ export default function CloudDevDashboardPage() {
                                     : ""}
                             </p>
                             {(broadcastResult.skippedByReason.terminal_requires_force ?? 0) > 0 && !broadcastForce && (
-                                <button
-                                    type="button"
-                                    onClick={() => setBroadcastForce(true)}
-                                    className="rounded border border-amber-700/60 bg-amber-900/30 px-2 py-0.5 text-[10px] text-amber-300 hover:bg-amber-900/50"
-                                >
-                                    Enable Force to include terminal sessions next send
-                                </button>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setBroadcastForce(true)}
+                                        className="rounded border border-amber-700/60 bg-amber-900/30 px-2 py-0.5 text-[10px] text-amber-300 hover:bg-amber-900/50"
+                                    >
+                                        Enable Force for next send
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={broadcastMutation.isPending || !lastBroadcastPayload}
+                                        onClick={() => {
+                                            if (!lastBroadcastPayload?.content) return;
+                                            setBroadcastForce(true);
+                                            broadcastMutation.mutate({
+                                                content: lastBroadcastPayload.content,
+                                                force: true,
+                                                statusFilter: lastBroadcastPayload.statusFilter,
+                                            });
+                                        }}
+                                        className="rounded border border-amber-500/60 bg-amber-700/40 px-2 py-0.5 text-[10px] text-amber-100 hover:bg-amber-700/60 disabled:opacity-50"
+                                    >
+                                        Retry last broadcast with Force
+                                    </button>
+                                </div>
                             )}
                             {broadcastResult.skippedSessions.length > 0 && (
                                 <div className="space-y-1">
