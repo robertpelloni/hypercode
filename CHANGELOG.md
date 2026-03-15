@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.169] — 2026-03-15
+
+- feat(web/mcp): added lifecycle `Server` filter axis in `/dashboard/mcp` timeline controls so incident triage can be narrowed to a specific downstream server UUID/name without switching dashboards.
+- feat(web/mcp): added `Top reason + server pairs` facet chips in lifecycle triage; each chip applies combined reason+server drilldown in one click.
+- changed(web/mcp): lifecycle filter URL/share state and summary copy now include server scope (`lsv`) for reproducible operator handoff of server-specific incidents.
+
 ## [2.7.168] — 2026-03-15
 
 - feat(web/mcp): added `Reason trend (window buckets)` mini-strip in `/dashboard/mcp` lifecycle timeline, surfacing per-bucket dominant reason codes across the current type/window/scope slice.

@@ -157,6 +157,7 @@ const LIFECYCLE_FILTER_PARAM_KEYS = {
     reason: 'lr',
     window: 'lw',
     scope: 'ls',
+    server: 'lsv',
 } as const;
 
 const LIFECYCLE_FILTER_DEFAULTS = {
@@ -164,6 +165,7 @@ const LIFECYCLE_FILTER_DEFAULTS = {
     reason: 'all',
     window: '15m',
     scope: 'all',
+    server: 'all',
 } as const;
 
 function parseLifecycleWindowFilter(value: string | null): '5m' | '15m' | '1h' | 'all' {
@@ -182,6 +184,14 @@ function parseLifecycleScopeFilter(value: string | null): 'all' | 'active-server
     return LIFECYCLE_FILTER_DEFAULTS.scope;
 }
 
+function parseLifecycleServerFilter(value: string | null): string {
+    if (!value || value === 'all') {
+        return LIFECYCLE_FILTER_DEFAULTS.server;
+    }
+
+    return value;
+}
+
 function applyLifecycleFiltersToUrl(
     url: URL,
     filters: {
@@ -189,6 +199,7 @@ function applyLifecycleFiltersToUrl(
         reason: string;
         window: '5m' | '15m' | '1h' | 'all';
         scope: 'all' | 'active-server';
+        server: string;
     },
 ) {
     const nextParams = [
@@ -196,6 +207,7 @@ function applyLifecycleFiltersToUrl(
         { key: LIFECYCLE_FILTER_PARAM_KEYS.reason, value: filters.reason, fallback: LIFECYCLE_FILTER_DEFAULTS.reason },
         { key: LIFECYCLE_FILTER_PARAM_KEYS.window, value: filters.window, fallback: LIFECYCLE_FILTER_DEFAULTS.window },
         { key: LIFECYCLE_FILTER_PARAM_KEYS.scope, value: filters.scope, fallback: LIFECYCLE_FILTER_DEFAULTS.scope },
+        { key: LIFECYCLE_FILTER_PARAM_KEYS.server, value: filters.server, fallback: LIFECYCLE_FILTER_DEFAULTS.server },
     ] as const;
 
     nextParams.forEach(({ key, value, fallback }) => {
@@ -805,6 +817,7 @@ export default function MCPDashboard(): React.JSX.Element {
     const [lifecycleReasonFilter, setLifecycleReasonFilter] = useState<string>('all');
     const [lifecycleScopeFilter, setLifecycleScopeFilter] = useState<'all' | 'active-server'>('all');
     const [lifecycleWindowFilter, setLifecycleWindowFilter] = useState<'5m' | '15m' | '1h' | 'all'>('15m');
+    const [lifecycleServerFilter, setLifecycleServerFilter] = useState<string>('all');
     const [hasHydratedLifecycleFiltersFromUrl, setHasHydratedLifecycleFiltersFromUrl] = useState(false);
     const [bulkRefreshState, setBulkRefreshState] = useState<BulkDiscoveryOperationState | null>(null);
     const reloadMetadataMutation = mcpServersClient.reloadMetadata.useMutation();
@@ -856,6 +869,21 @@ export default function MCPDashboard(): React.JSX.Element {
                 .filter((reason): reason is string => Boolean(reason)),
         )).sort();
     }, [lifecycleEvents]);
+    const lifecycleServerOptions = useMemo(() => {
+        const unique = new Map<string, string>();
+
+        lifecycleEvents.forEach((event) => {
+            if (!event.serverUuid) {
+                return;
+            }
+
+            unique.set(event.serverUuid, event.serverName ?? event.serverUuid);
+        });
+
+        return Array.from(unique.entries())
+            .map(([serverUuid, serverLabel]) => ({ serverUuid, serverLabel }))
+            .sort((left, right) => left.serverLabel.localeCompare(right.serverLabel));
+    }, [lifecycleEvents]);
     const scopedLifecycleEvents = useMemo(() => {
         const activeServerUuid = summary.pool?.currentActiveServerUuid ?? null;
         const now = Date.now();
@@ -865,15 +893,25 @@ export default function MCPDashboard(): React.JSX.Element {
                 ? 5 * 60 * 1000
                 : lifecycleWindowFilter === '15m'
                     ? 15 * 60 * 1000
-        return lifecycleEvents.filter((event) => {
+                    : 60 * 60 * 1000;
 
-        const scopedEvents = lifecycleEvents.filter((event) => {
+        return lifecycleEvents.filter((event) => {
             if (windowMs !== null && now - event.timestamp > windowMs) {
                 return false;
             }
 
             if (lifecycleTypeFilter !== 'all' && event.type !== lifecycleTypeFilter) {
                 return false;
+            }
+
+            if (lifecycleServerFilter !== 'all') {
+                if (!event.serverUuid) {
+                    return false;
+                }
+
+                if (event.serverUuid !== lifecycleServerFilter) {
+                    return false;
+                }
             }
 
             if (lifecycleScopeFilter === 'active-server') {
@@ -886,7 +924,7 @@ export default function MCPDashboard(): React.JSX.Element {
 
             return true;
         });
-    }, [lifecycleEvents, lifecycleScopeFilter, lifecycleTypeFilter, lifecycleWindowFilter, summary.pool?.currentActiveServerUuid]);
+    }, [lifecycleEvents, lifecycleScopeFilter, lifecycleServerFilter, lifecycleTypeFilter, lifecycleWindowFilter, summary.pool?.currentActiveServerUuid]);
 
     const lifecycleReasonFacetCounts = useMemo(() => {
         const counts = new Map<string, number>();
@@ -910,6 +948,51 @@ export default function MCPDashboard(): React.JSX.Element {
                 }
 
                 return left.reasonCode.localeCompare(right.reasonCode);
+            })
+            .slice(0, 6);
+    }, [scopedLifecycleEvents]);
+    const lifecycleReasonServerFacetCounts = useMemo(() => {
+        const counts = new Map<string, {
+            reasonCode: string;
+            serverUuid: string;
+            serverLabel: string;
+            count: number;
+        }>();
+
+        scopedLifecycleEvents.forEach((event) => {
+            if (!event.reasonCode || !event.serverUuid) {
+                return;
+            }
+
+            const serverLabel = event.serverName ?? event.serverUuid;
+            const key = `${event.reasonCode}::${event.serverUuid}`;
+            const existing = counts.get(key);
+
+            if (existing) {
+                existing.count += 1;
+                return;
+            }
+
+            counts.set(key, {
+                reasonCode: event.reasonCode,
+                serverUuid: event.serverUuid,
+                serverLabel,
+                count: 1,
+            });
+        });
+
+        return Array.from(counts.values())
+            .sort((left, right) => {
+                if (right.count !== left.count) {
+                    return right.count - left.count;
+                }
+
+                const leftReason = left.reasonCode.localeCompare(right.reasonCode);
+                if (leftReason !== 0) {
+                    return leftReason;
+                }
+
+                return left.serverLabel.localeCompare(right.serverLabel);
             })
             .slice(0, 6);
     }, [scopedLifecycleEvents]);
@@ -1010,13 +1093,30 @@ export default function MCPDashboard(): React.JSX.Element {
         const searchParams = new URLSearchParams(window.location.search);
         const initialType = searchParams.get(LIFECYCLE_FILTER_PARAM_KEYS.type) ?? LIFECYCLE_FILTER_DEFAULTS.type;
         const initialReason = searchParams.get(LIFECYCLE_FILTER_PARAM_KEYS.reason) ?? LIFECYCLE_FILTER_DEFAULTS.reason;
+        const initialServer = parseLifecycleServerFilter(searchParams.get(LIFECYCLE_FILTER_PARAM_KEYS.server));
 
         setLifecycleTypeFilter(initialType);
         setLifecycleReasonFilter(initialReason);
         setLifecycleWindowFilter(parseLifecycleWindowFilter(searchParams.get(LIFECYCLE_FILTER_PARAM_KEYS.window)));
         setLifecycleScopeFilter(parseLifecycleScopeFilter(searchParams.get(LIFECYCLE_FILTER_PARAM_KEYS.scope)));
+        setLifecycleServerFilter(initialServer);
         setHasHydratedLifecycleFiltersFromUrl(true);
     }, []);
+
+    useEffect(() => {
+        if (!hasHydratedLifecycleFiltersFromUrl) {
+            return;
+        }
+
+        if (lifecycleServerFilter === 'all') {
+            return;
+        }
+
+        const isKnownServer = lifecycleServerOptions.some((option) => option.serverUuid === lifecycleServerFilter);
+        if (!isKnownServer) {
+            setLifecycleServerFilter('all');
+        }
+    }, [hasHydratedLifecycleFiltersFromUrl, lifecycleServerFilter, lifecycleServerOptions]);
 
     useEffect(() => {
         if (!hasHydratedLifecycleFiltersFromUrl || typeof window === 'undefined') {
@@ -1029,6 +1129,7 @@ export default function MCPDashboard(): React.JSX.Element {
             reason: lifecycleReasonFilter,
             window: lifecycleWindowFilter,
             scope: lifecycleScopeFilter,
+            server: lifecycleServerFilter,
         });
 
         const nextRelativeUrl = `${url.pathname}${url.search}${url.hash}`;
@@ -1037,7 +1138,7 @@ export default function MCPDashboard(): React.JSX.Element {
         if (nextRelativeUrl !== currentRelativeUrl) {
             window.history.replaceState(window.history.state, '', nextRelativeUrl);
         }
-    }, [hasHydratedLifecycleFiltersFromUrl, lifecycleReasonFilter, lifecycleScopeFilter, lifecycleTypeFilter, lifecycleWindowFilter]);
+    }, [hasHydratedLifecycleFiltersFromUrl, lifecycleReasonFilter, lifecycleScopeFilter, lifecycleServerFilter, lifecycleTypeFilter, lifecycleWindowFilter]);
 
     async function refreshDashboardQueries() {
         await Promise.all([
@@ -1236,6 +1337,7 @@ export default function MCPDashboard(): React.JSX.Element {
             reason: lifecycleReasonFilter,
             window: lifecycleWindowFilter,
             scope: lifecycleScopeFilter,
+            server: lifecycleServerFilter,
         });
 
         try {
@@ -1266,6 +1368,7 @@ export default function MCPDashboard(): React.JSX.Element {
             `type=${lifecycleTypeFilter}`,
             `reason=${lifecycleReasonFilter}`,
             `scope=${lifecycleScopeFilter}`,
+            `server=${lifecycleServerFilter}`,
             `activeServer=${activeServerLabel}`,
             `matchingEvents=${filteredLifecycleEvents.length}`,
             `visibleEvents=${recentLifecycleEvents.length}`,
@@ -1292,6 +1395,7 @@ export default function MCPDashboard(): React.JSX.Element {
             setLifecycleReasonFilter('all');
             setLifecycleWindowFilter('15m');
             setLifecycleScopeFilter('all');
+            setLifecycleServerFilter('all');
             return;
         }
 
@@ -1300,6 +1404,7 @@ export default function MCPDashboard(): React.JSX.Element {
             setLifecycleReasonFilter('process-exit');
             setLifecycleWindowFilter('1h');
             setLifecycleScopeFilter('all');
+            setLifecycleServerFilter('all');
             return;
         }
 
@@ -1308,6 +1413,7 @@ export default function MCPDashboard(): React.JSX.Element {
             setLifecycleReasonFilter('single-active-policy');
             setLifecycleWindowFilter('15m');
             setLifecycleScopeFilter('all');
+            setLifecycleServerFilter('all');
             return;
         }
 
@@ -1315,12 +1421,13 @@ export default function MCPDashboard(): React.JSX.Element {
         setLifecycleReasonFilter('all');
         setLifecycleWindowFilter('1h');
         setLifecycleScopeFilter('all');
+        setLifecycleServerFilter('all');
     }
 
-    const isCrashPresetActive = lifecycleTypeFilter === 'server-crash' && lifecycleReasonFilter === 'process-exit' && lifecycleWindowFilter === '1h' && lifecycleScopeFilter === 'all';
-    const isSingleActivePresetActive = lifecycleTypeFilter === 'single-active-prune' && lifecycleReasonFilter === 'single-active-policy' && lifecycleWindowFilter === '15m' && lifecycleScopeFilter === 'all';
-    const isModePresetActive = lifecycleTypeFilter === 'mode-updated' && lifecycleWindowFilter === '1h' && lifecycleScopeFilter === 'all';
-    const isAllPresetActive = lifecycleTypeFilter === 'all' && lifecycleReasonFilter === 'all' && lifecycleWindowFilter === '15m' && lifecycleScopeFilter === 'all';
+    const isCrashPresetActive = lifecycleTypeFilter === 'server-crash' && lifecycleReasonFilter === 'process-exit' && lifecycleWindowFilter === '1h' && lifecycleScopeFilter === 'all' && lifecycleServerFilter === 'all';
+    const isSingleActivePresetActive = lifecycleTypeFilter === 'single-active-prune' && lifecycleReasonFilter === 'single-active-policy' && lifecycleWindowFilter === '15m' && lifecycleScopeFilter === 'all' && lifecycleServerFilter === 'all';
+    const isModePresetActive = lifecycleTypeFilter === 'mode-updated' && lifecycleWindowFilter === '1h' && lifecycleScopeFilter === 'all' && lifecycleServerFilter === 'all';
+    const isAllPresetActive = lifecycleTypeFilter === 'all' && lifecycleReasonFilter === 'all' && lifecycleWindowFilter === '15m' && lifecycleScopeFilter === 'all' && lifecycleServerFilter === 'all';
 
     return (
         <div className="p-4 sm:p-6 xl:p-8 space-y-8">
@@ -1463,7 +1570,7 @@ export default function MCPDashboard(): React.JSX.Element {
                                             showing <span className="font-semibold text-white">{recentLifecycleEvents.length}</span> of <span className="font-semibold text-white">{filteredLifecycleEvents.length}</span>
                                         </div>
                                     </div>
-                                    <div className="mt-2 grid gap-2 sm:grid-cols-4">
+                                    <div className="mt-2 grid gap-2 sm:grid-cols-5">
                                         <label className="flex flex-col gap-1 text-[10px] uppercase tracking-wider text-zinc-500">
                                             Event type
                                             <select
@@ -1522,6 +1629,21 @@ export default function MCPDashboard(): React.JSX.Element {
                                                 <option value="active-server" disabled={!summary.pool?.currentActiveServerUuid}>
                                                     Current active server only
                                                 </option>
+                                            </select>
+                                        </label>
+                                        <label className="flex flex-col gap-1 text-[10px] uppercase tracking-wider text-zinc-500">
+                                            Server
+                                            <select
+                                                value={lifecycleServerFilter}
+                                                onChange={(event) => setLifecycleServerFilter(event.target.value)}
+                                                title="Filter lifecycle timeline by server identity"
+                                                aria-label="Filter lifecycle timeline by server"
+                                                className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-[11px] text-zinc-200 outline-none focus:ring-1 focus:ring-blue-500"
+                                            >
+                                                <option value="all">All servers</option>
+                                                {lifecycleServerOptions.map((option) => (
+                                                    <option key={option.serverUuid} value={option.serverUuid}>{option.serverLabel}</option>
+                                                ))}
                                             </select>
                                         </label>
                                     </div>
@@ -1629,6 +1751,34 @@ export default function MCPDashboard(): React.JSX.Element {
                                                         {facet.reasonCode}
                                                         <span className="ml-1 rounded border border-zinc-700 bg-zinc-900 px-1 text-[10px] text-zinc-300">{facet.count}</span>
                                                         <span className="ml-1 text-[10px] text-zinc-400">{facet.sharePct}%</span>
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : null}
+                                    {lifecycleReasonServerFacetCounts.length > 0 ? (
+                                        <div className="mt-2 rounded border border-zinc-800 bg-zinc-900/50 p-2">
+                                            <div className="flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-zinc-500">
+                                                <span>Top reason + server pairs</span>
+                                                <span>{lifecycleReasonServerFacetCounts.length} pairs</span>
+                                            </div>
+                                            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                                {lifecycleReasonServerFacetCounts.map((facet) => (
+                                                    <Button
+                                                        key={`${facet.reasonCode}-${facet.serverUuid}`}
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setLifecycleReasonFilter(facet.reasonCode);
+                                                            setLifecycleServerFilter(facet.serverUuid);
+                                                        }}
+                                                        className={`h-7 border-zinc-700 px-2 text-[11px] ${lifecycleReasonFilter === facet.reasonCode && lifecycleServerFilter === facet.serverUuid ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-100' : 'text-zinc-300 hover:bg-zinc-800'}`}
+                                                        title={`Filter lifecycle timeline by ${facet.reasonCode} on ${facet.serverLabel}`}
+                                                        aria-label={`Filter lifecycle timeline by ${facet.reasonCode} on ${facet.serverLabel}`}
+                                                    >
+                                                        <span className="max-w-[140px] truncate">{facet.reasonCode} · {facet.serverLabel}</span>
+                                                        <span className="ml-1 rounded border border-zinc-700 bg-zinc-900 px-1 text-[10px] text-zinc-300">{facet.count}</span>
                                                     </Button>
                                                 ))}
                                             </div>
