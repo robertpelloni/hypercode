@@ -400,11 +400,21 @@ function InspectorDashboardContent() {
             : 0;
         const trend = telemetryTrendBuckets.map((bucket) => {
             const bucketEvents = sourceEvents.filter((event) => event.timestamp >= bucket.start && event.timestamp < bucket.end);
+            const bucketErrorEvents = bucketEvents.filter((event) => event.status === 'error');
+            // Compute which tool failed most in this bucket for tooltip hints
+            const toolCounts: Record<string, number> = {};
+            bucketErrorEvents.forEach((e) => {
+                if (e.toolName) toolCounts[e.toolName] = (toolCounts[e.toolName] ?? 0) + 1;
+            });
+            const topFailingTool = Object.entries(toolCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+            const topErrorMessage = bucketErrorEvents[0]?.message;
             return {
                 label: bucket.label,
                 total: bucketEvents.length,
                 successCount: bucketEvents.filter((event) => event.status === 'success').length,
                 errorCount: bucketEvents.filter((event) => event.status === 'error').length,
+                topFailingTool,
+                topErrorMessage,
             };
         });
 
@@ -1269,7 +1279,15 @@ function InspectorDashboardContent() {
                                                         const errorWidth = bucket.total > 0 ? Math.round((bucket.errorCount / bucket.total) * 100) : 0;
 
                                                         return (
-                                                            <div key={`inspector-source-trend-${source.value}-${bucket.label}`} title={`${source.label} • ${bucket.label} • ${bucket.successCount} ok / ${bucket.errorCount} err`}>
+                                                            <div
+                                                            key={`inspector-source-trend-${source.value}-${bucket.label}`}
+                                                            title={[
+                                                                `${source.label} • ${bucket.label}`,
+                                                                `${bucket.successCount} ok / ${bucket.errorCount} err`,
+                                                                bucket.topFailingTool ? `Top failing tool: ${bucket.topFailingTool}` : null,
+                                                                bucket.topErrorMessage ? `Error: ${bucket.topErrorMessage}` : null,
+                                                            ].filter(Boolean).join('\n')}
+                                                        >
                                                                 <div className="h-1.5 rounded border border-zinc-800/80 bg-zinc-900/80 overflow-hidden flex">
                                                                     <div className="h-full bg-emerald-500/70" style={{ width: `${successWidth}%` }} />
                                                                     <div className="h-full bg-red-500/75" style={{ width: `${errorWidth}%` }} />

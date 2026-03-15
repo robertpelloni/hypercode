@@ -4,6 +4,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.144] — 2026-03-14
+
+- feat(web/mcp): enriched per-source mini-trend bar tooltips in `/dashboard/mcp/inspector` to include top failing tool name and error message from that bucket, enabling instant triage without opening individual event cards.
+- changed(web/mcp): trend bucket derivation now computes `topFailingTool` and `topErrorMessage` per-bucket per-source by aggregating error events and ranking by frequency.
+
 ## [2.7.143] — 2026-03-14
 
 - feat(web/mcp): added per-source telemetry error-rate badges in `/dashboard/mcp/inspector` source trend breakdown so high-failure sources stand out immediately.
