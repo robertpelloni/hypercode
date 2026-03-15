@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.201] — 2026-03-15
+
+- changed(web/sidebar): route metadata hydration in `Sidebar.tsx` now keeps first-seen entries for duplicate `href` keys, preventing silent metadata overwrite when config drift introduces collisions.
+- test(web/navigation): added `apps/web/src/components/mcp/nav-validation.test.ts` to directly verify `validateSidebarSections(...)` behavior for both clean and duplicate nav datasets.
+- changed(web/navigation): sidebar dev diagnostics now reuse memoized nav validation output, keeping duplicate-route warnings consistent with shared test-time validation.
+
 ## [2.7.200] — 2026-03-15
 
 - feat(web/navigation): added shared `validateSidebarSections(...)` utility in `apps/web/src/components/mcp/nav-validation.ts` to centralize duplicate-route diagnostics across sidebar sections.

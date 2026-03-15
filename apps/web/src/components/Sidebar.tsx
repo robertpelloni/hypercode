@@ -190,11 +190,16 @@ export function Sidebar({ className }: SidebarProps) {
 
     const normalizedQuery = query.trim().toLowerCase();
 
+    const navDiagnostics = useMemo(() => validateSidebarSections(SIDEBAR_SECTIONS), []);
+
     const allItemsByHref = useMemo(() => {
         const map = new Map<string, { title: string; href: string; icon: any; description?: string }>();
         for (const section of SIDEBAR_SECTIONS) {
             for (const item of section.items) {
-                map.set(item.href, item);
+                // Keep the first-seen entry to avoid silent metadata drift when duplicate hrefs slip in.
+                if (!map.has(item.href)) {
+                    map.set(item.href, item);
+                }
             }
         }
         return map;
@@ -542,13 +547,12 @@ export function Sidebar({ className }: SidebarProps) {
             return;
         }
 
-        const diagnostics = validateSidebarSections(SIDEBAR_SECTIONS);
-        if (diagnostics.duplicateWithinSection.length === 0 && diagnostics.duplicateAcrossSections.length === 0) {
+        if (navDiagnostics.duplicateWithinSection.length === 0 && navDiagnostics.duplicateAcrossSections.length === 0) {
             return;
         }
 
-        console.warn('[Sidebar] Navigation integrity diagnostics detected duplicate routes.', diagnostics);
-    }, []);
+        console.warn('[Sidebar] Navigation integrity diagnostics detected duplicate routes.', navDiagnostics);
+    }, [navDiagnostics]);
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
