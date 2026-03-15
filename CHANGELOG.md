@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.227] — 2026-03-15
+
+- refactor(web/sidebar): added shared `safeStorageRemoveMany(...)` in `apps/web/src/components/Sidebar.tsx` so reset and clear actions now remove persisted navigation preference keys through one helper instead of repeating inline storage deletes.
+- changed(web/sidebar): full-reset, favorites-only, and recent-routes-only clear actions now share the same storage-removal path, keeping Sidebar delete behavior aligned with the shared storage-write helper introduced in the prior release.
+- test(web/navigation): reran focused nav validation/config suites after the Sidebar storage-remove convergence cleanup (`37` tests passing).
+
 ## [2.7.226] — 2026-03-15
 
 - refactor(web/sidebar): added shared `safeStorageSetJson(...)` in `apps/web/src/components/Sidebar.tsx` so persisted navigation preference writes now flow through one JSON-serialization helper instead of repeating inline `JSON.stringify(...)` calls.

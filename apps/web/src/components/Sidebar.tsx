@@ -79,6 +79,12 @@ function safeStorageRemove(key: string): void {
     }
 }
 
+function safeStorageRemoveMany(keys: string[]): void {
+    keys.forEach((key) => {
+        safeStorageRemove(key);
+    });
+}
+
 type PaletteItem = {
     kind: 'route' | 'action';
     title: string;
@@ -395,10 +401,12 @@ export function Sidebar({ className }: SidebarProps) {
         setFavorites([]);
         setRecentRoutes([]);
         setRecentSearches([]);
-        safeStorageRemove(SIDEBAR_COLLAPSE_STORAGE_KEY);
-        safeStorageRemove(SIDEBAR_FAVORITES_STORAGE_KEY);
-        safeStorageRemove(SIDEBAR_RECENT_STORAGE_KEY);
-        safeStorageRemove(SIDEBAR_RECENT_SEARCHES_STORAGE_KEY);
+        safeStorageRemoveMany([
+            SIDEBAR_COLLAPSE_STORAGE_KEY,
+            SIDEBAR_FAVORITES_STORAGE_KEY,
+            SIDEBAR_RECENT_STORAGE_KEY,
+            SIDEBAR_RECENT_SEARCHES_STORAGE_KEY,
+        ]);
         showNotice('Navigation preferences reset.');
     };
 
@@ -409,13 +417,13 @@ export function Sidebar({ className }: SidebarProps) {
 
     const resetFavoritesOnly = () => {
         setFavorites([]);
-        safeStorageRemove(SIDEBAR_FAVORITES_STORAGE_KEY);
+        safeStorageRemoveMany([SIDEBAR_FAVORITES_STORAGE_KEY]);
         showNotice('Favorites cleared.');
     };
 
     const clearRecentOnly = () => {
         setRecentRoutes([]);
-        safeStorageRemove(SIDEBAR_RECENT_STORAGE_KEY);
+        safeStorageRemoveMany([SIDEBAR_RECENT_STORAGE_KEY]);
         showNotice('Recent routes cleared.');
     };
 
