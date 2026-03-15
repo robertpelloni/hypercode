@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.207] — 2026-03-15
+
+- changed(web/sidebar): command-palette route metadata in `Sidebar.tsx` is now keyed by canonicalized hrefs and preserves first-seen entries, preventing alias routes from duplicating or shadowing quick-switch results.
+- changed(web/sidebar): section-row favorite indicators now compare normalized hrefs so pin/unpin UI state remains correct even when nav entries differ only by query/hash/trailing-slash aliases.
+- test(web/navigation): revalidated focused nav validation/config suites after canonical comparison hardening (`11` tests passing).
+
 ## [2.7.206] — 2026-03-15
 
 - changed(web/navigation): added `buildNavItemsByNormalizedHref(...)` in `nav-validation.ts` to build deterministic first-seen nav metadata keyed by canonicalized hrefs, preventing semantic alias collisions from overriding map entries.

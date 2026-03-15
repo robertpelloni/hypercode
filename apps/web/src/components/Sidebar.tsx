@@ -233,10 +233,14 @@ export function Sidebar({ className }: SidebarProps) {
         const routeMeta = new Map<string, { title: string; href: string; icon: any; description?: string; section: string }>();
         for (const section of SIDEBAR_SECTIONS) {
             for (const item of section.items) {
-                routeMeta.set(item.href, {
-                    ...item,
-                    section: section.title,
-                });
+                const normalizedHref = normalizeNavHref(item.href);
+                if (!routeMeta.has(normalizedHref)) {
+                    routeMeta.set(normalizedHref, {
+                        ...item,
+                        href: normalizedHref,
+                        section: section.title,
+                    });
+                }
             }
         }
 
@@ -858,7 +862,11 @@ export function Sidebar({ className }: SidebarProps) {
                                 </button>
                                 {!isCollapsed ? (
                                     <div className="space-y-1">
-                                        {section.items.map((item, itemIndex) => (
+                                        {section.items.map((item, itemIndex) => {
+                                            const normalizedItemHref = normalizeNavHref(item.href);
+                                            const isFavorited = favoriteSet.has(normalizedItemHref);
+
+                                            return (
                                             <div key={`${section.title}:${item.href}:${item.title}:${itemIndex}`} className="group flex items-center gap-1">
                                                 <Link
                                                     href={item.href}
@@ -878,15 +886,15 @@ export function Sidebar({ className }: SidebarProps) {
                                                     onClick={() => toggleFavorite(item.href)}
                                                     className={cn(
                                                         "h-8 w-8 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-900 transition-colors flex items-center justify-center",
-                                                        favoriteSet.has(item.href) ? "text-amber-300" : "text-zinc-600 group-hover:text-zinc-400"
+                                                        isFavorited ? "text-amber-300" : "text-zinc-600 group-hover:text-zinc-400"
                                                     )}
-                                                    title={favoriteSet.has(item.href) ? 'Unpin from favorites' : 'Pin to favorites'}
-                                                    aria-label={favoriteSet.has(item.href) ? `Unpin ${item.title}` : `Pin ${item.title}`}
+                                                    title={isFavorited ? 'Unpin from favorites' : 'Pin to favorites'}
+                                                    aria-label={isFavorited ? `Unpin ${item.title}` : `Pin ${item.title}`}
                                                 >
-                                                    {favoriteSet.has(item.href) ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                                                    {isFavorited ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
                                                 </button>
                                             </div>
-                                        ))}
+                                        )})}
                                     </div>
                                 ) : null}
                             </div>
