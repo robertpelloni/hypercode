@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.153] — 2026-03-15
+
+- feat(core/mcp): `mcp.getStatus` now returns downstream pool metrics (`idle`, `active`, `activeSessionCount`) and lifecycle mode flags (`lazySessionMode`, `singleActiveServerMode`) for operator visibility.
+- feat(web/mcp): router status card now surfaces live pool + lifecycle state in `/dashboard/mcp` (active/idle pool counts, active session count, lazy mode on/off, single-active on/off).
+- changed(web/mcp): status UI now makes the lazy hidden startup policy auditable without reading logs.
+
 ## [2.7.152] — 2026-03-15
 
 - fix(core/mcp): finalized `ProcessManagedStdioTransport` companion updates required by lazy lifecycle release (added `stdout` pass-through stream accessor used by log capture path).

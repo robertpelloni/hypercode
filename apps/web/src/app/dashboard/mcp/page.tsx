@@ -92,6 +92,15 @@ type StatusSummary = {
     serverCount: number;
     toolCount: number;
     connectedCount: number;
+    pool?: {
+        idle?: number;
+        active?: number;
+        activeSessionCount?: number;
+    };
+    lifecycle?: {
+        lazySessionMode?: boolean;
+        singleActiveServerMode?: boolean;
+    };
 };
 
 type QuickLinkCardProps = {
@@ -1026,6 +1035,14 @@ export default function MCPDashboard(): React.JSX.Element {
                             <div>
                                 <div className="text-xs uppercase tracking-wider text-zinc-500">Router status</div>
                                 <div className="mt-1 text-3xl font-semibold text-white">{summary.initialized ? 'Ready' : 'Cold'}</div>
+                                <div className="mt-2 space-y-1 text-[11px] text-zinc-400">
+                                    <div>
+                                        pool active <span className="font-semibold text-white">{summary.pool?.active ?? 0}</span> • idle <span className="font-semibold text-white">{summary.pool?.idle ?? 0}</span>
+                                    </div>
+                                    <div>
+                                        sessions <span className="font-semibold text-white">{summary.pool?.activeSessionCount ?? 0}</span> • lazy <span className="font-semibold text-white">{summary.lifecycle?.lazySessionMode === false ? 'off' : 'on'}</span> • single-active <span className="font-semibold text-white">{summary.lifecycle?.singleActiveServerMode === false ? 'off' : 'on'}</span>
+                                    </div>
+                                </div>
                             </div>
                             <Zap className="h-5 w-5 text-yellow-400" />
                         </div>

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import fs from 'node:fs/promises';
 import { t, publicProcedure, adminProcedure, getMcpAggregator, getMcpServer } from '../lib/trpc-core.js';
+import { mcpServerPool } from '../services/mcp-server-pool.service.js';
 import { getCachedToolInventory } from '../mcp/cachedToolInventory.js';
 import { parseNamespacedToolName } from '../mcp/namespaces.js';
 import { evaluateAutoLoadCandidate, rankToolSearchCandidates, type ToolSearchProfile } from '../mcp/toolSearchRanking.js';
@@ -1052,6 +1053,9 @@ export const mcpRouter = t.router({
     /** Get aggregator status and stats */
     getStatus: publicProcedure.query(async () => {
         const aggregator = getMcpAggregator();
+        const poolStatus = mcpServerPool.getPoolStatus();
+        const lazySessionMode = process.env.BORG_MCP_LAZY_SESSIONS !== 'false';
+        const singleActiveServerMode = process.env.BORG_MCP_SINGLE_ACTIVE_SERVER !== 'false';
 
         try {
             const [{ servers, tools }, liveServers, liveTools] = await Promise.all([
@@ -1072,9 +1076,32 @@ export const mcpRouter = t.router({
                 serverCount: effectiveServerCount,
                 toolCount: effectiveToolCount,
                 connectedCount: liveServers.filter((s) => s.status === 'connected').length,
+                pool: {
+                    idle: poolStatus.idle,
+                    active: poolStatus.active,
+                    activeSessionCount: poolStatus.activeSessionIds.length,
+                },
+                lifecycle: {
+                    lazySessionMode,
+                    singleActiveServerMode,
+                },
             };
         } catch {
-            return { initialized: false, serverCount: 0, toolCount: 0, connectedCount: 0 };
+            return {
+                initialized: false,
+                serverCount: 0,
+                toolCount: 0,
+                connectedCount: 0,
+                pool: {
+                    idle: poolStatus.idle,
+                    active: poolStatus.active,
+                    activeSessionCount: poolStatus.activeSessionIds.length,
+                },
+                lifecycle: {
+                    lazySessionMode,
+                    singleActiveServerMode,
+                },
+            };
         }
     }),
 
