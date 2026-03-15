@@ -4,6 +4,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.165] — 2026-03-15
+
+- feat(web/mcp): added a compact `Top reasons (current scope)` lifecycle facet in `/dashboard/mcp` that surfaces high-frequency `reasonCode` values with event counts for the active time/type/scope slice.
+- changed(web/mcp): lifecycle operators can now click reason facet pills to apply reason filters directly (plus one-click `all`), accelerating incident narrowing without opening the reason dropdown.
+
+## [2.7.164] — 2026-03-15
+
+- feat(web/mcp): lifecycle timeline filters in `/dashboard/mcp` now hydrate from URL query params (`lt`, `lr`, `lw`, `ls`) and keep URL state synchronized as operators adjust type, reason, window, and scope.
+- feat(web/mcp): added `Copy triage link` action in Router Status lifecycle controls so current incident-filter context can be shared as a reproducible dashboard URL.
+
 ## [2.7.163] — 2026-03-15
 
 - feat(web/mcp): added one-click lifecycle timeline triage presets in `/dashboard/mcp` (`Crash triage`, `Single-active prunes`, `Mode changes`, `Reset`) to jump to practical filter combinations instantly.

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ComponentType, FormEvent } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@borg/ui';
 import { trpc } from '@/utils/trpc';
@@ -151,6 +151,62 @@ type ManagedServerHealth = {
     crashCount?: number;
     maxAttempts?: number;
 };
+
+const LIFECYCLE_FILTER_PARAM_KEYS = {
+    type: 'lt',
+    reason: 'lr',
+    window: 'lw',
+    scope: 'ls',
+} as const;
+
+const LIFECYCLE_FILTER_DEFAULTS = {
+    type: 'all',
+    reason: 'all',
+    window: '15m',
+    scope: 'all',
+} as const;
+
+function parseLifecycleWindowFilter(value: string | null): '5m' | '15m' | '1h' | 'all' {
+    if (value === '5m' || value === '15m' || value === '1h' || value === 'all') {
+        return value;
+    }
+
+    return LIFECYCLE_FILTER_DEFAULTS.window;
+}
+
+function parseLifecycleScopeFilter(value: string | null): 'all' | 'active-server' {
+    if (value === 'active-server' || value === 'all') {
+        return value;
+    }
+
+    return LIFECYCLE_FILTER_DEFAULTS.scope;
+}
+
+function applyLifecycleFiltersToUrl(
+    url: URL,
+    filters: {
+        type: string;
+        reason: string;
+        window: '5m' | '15m' | '1h' | 'all';
+        scope: 'all' | 'active-server';
+    },
+) {
+    const nextParams = [
+        { key: LIFECYCLE_FILTER_PARAM_KEYS.type, value: filters.type, fallback: LIFECYCLE_FILTER_DEFAULTS.type },
+        { key: LIFECYCLE_FILTER_PARAM_KEYS.reason, value: filters.reason, fallback: LIFECYCLE_FILTER_DEFAULTS.reason },
+        { key: LIFECYCLE_FILTER_PARAM_KEYS.window, value: filters.window, fallback: LIFECYCLE_FILTER_DEFAULTS.window },
+        { key: LIFECYCLE_FILTER_PARAM_KEYS.scope, value: filters.scope, fallback: LIFECYCLE_FILTER_DEFAULTS.scope },
+    ] as const;
+
+    nextParams.forEach(({ key, value, fallback }) => {
+        if (!value || value === fallback) {
+            url.searchParams.delete(key);
+            return;
+        }
+
+        url.searchParams.set(key, value);
+    });
+}
 
 function maskValue(value?: string | null): string {
     if (!value) {
@@ -749,6 +805,7 @@ export default function MCPDashboard(): React.JSX.Element {
     const [lifecycleReasonFilter, setLifecycleReasonFilter] = useState<string>('all');
     const [lifecycleScopeFilter, setLifecycleScopeFilter] = useState<'all' | 'active-server'>('all');
     const [lifecycleWindowFilter, setLifecycleWindowFilter] = useState<'5m' | '15m' | '1h' | 'all'>('15m');
+    const [hasHydratedLifecycleFiltersFromUrl, setHasHydratedLifecycleFiltersFromUrl] = useState(false);
     const [bulkRefreshState, setBulkRefreshState] = useState<BulkDiscoveryOperationState | null>(null);
     const reloadMetadataMutation = mcpServersClient.reloadMetadata.useMutation();
     const clearMetadataCacheMutation = mcpServersClient.clearMetadataCache.useMutation();
@@ -799,6 +856,57 @@ export default function MCPDashboard(): React.JSX.Element {
                 .filter((reason): reason is string => Boolean(reason)),
         )).sort();
     }, [lifecycleEvents]);
+    const lifecycleReasonFacetCounts = useMemo(() => {
+        const activeServerUuid = summary.pool?.currentActiveServerUuid ?? null;
+        const now = Date.now();
+        const windowMs = lifecycleWindowFilter === 'all'
+            ? null
+            : lifecycleWindowFilter === '5m'
+                ? 5 * 60 * 1000
+                : lifecycleWindowFilter === '15m'
+                    ? 15 * 60 * 1000
+                    : 60 * 60 * 1000;
+
+        const scopedEvents = lifecycleEvents.filter((event) => {
+            if (windowMs !== null && now - event.timestamp > windowMs) {
+                return false;
+            }
+
+            if (lifecycleTypeFilter !== 'all' && event.type !== lifecycleTypeFilter) {
+                return false;
+            }
+
+            if (lifecycleScopeFilter === 'active-server') {
+                if (!activeServerUuid) {
+                    return false;
+                }
+
+                return event.serverUuid === activeServerUuid;
+            }
+
+            return true;
+        });
+
+        const counts = new Map<string, number>();
+        scopedEvents.forEach((event) => {
+            if (!event.reasonCode) {
+                return;
+            }
+
+            counts.set(event.reasonCode, (counts.get(event.reasonCode) ?? 0) + 1);
+        });
+
+        return Array.from(counts.entries())
+            .map(([reasonCode, count]) => ({ reasonCode, count }))
+            .sort((left, right) => {
+                if (right.count !== left.count) {
+                    return right.count - left.count;
+                }
+
+                return left.reasonCode.localeCompare(right.reasonCode);
+            })
+            .slice(0, 6);
+    }, [lifecycleEvents, lifecycleScopeFilter, lifecycleTypeFilter, lifecycleWindowFilter, summary.pool?.currentActiveServerUuid]);
     const filteredLifecycleEvents = useMemo(() => {
         const activeServerUuid = summary.pool?.currentActiveServerUuid ?? null;
         const now = Date.now();
@@ -840,6 +948,43 @@ export default function MCPDashboard(): React.JSX.Element {
     const allActionableCount = allDiscoveryTargetUuids.length;
     const unresolvedWithoutActionCount = Math.max(discoverySummary.unresolvedCount - unresolvedActionableCount, 0);
     const localCompatActive = discoverySummary.localCompatCount > 0;
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const searchParams = new URLSearchParams(window.location.search);
+        const initialType = searchParams.get(LIFECYCLE_FILTER_PARAM_KEYS.type) ?? LIFECYCLE_FILTER_DEFAULTS.type;
+        const initialReason = searchParams.get(LIFECYCLE_FILTER_PARAM_KEYS.reason) ?? LIFECYCLE_FILTER_DEFAULTS.reason;
+
+        setLifecycleTypeFilter(initialType);
+        setLifecycleReasonFilter(initialReason);
+        setLifecycleWindowFilter(parseLifecycleWindowFilter(searchParams.get(LIFECYCLE_FILTER_PARAM_KEYS.window)));
+        setLifecycleScopeFilter(parseLifecycleScopeFilter(searchParams.get(LIFECYCLE_FILTER_PARAM_KEYS.scope)));
+        setHasHydratedLifecycleFiltersFromUrl(true);
+    }, []);
+
+    useEffect(() => {
+        if (!hasHydratedLifecycleFiltersFromUrl || typeof window === 'undefined') {
+            return;
+        }
+
+        const url = new URL(window.location.href);
+        applyLifecycleFiltersToUrl(url, {
+            type: lifecycleTypeFilter,
+            reason: lifecycleReasonFilter,
+            window: lifecycleWindowFilter,
+            scope: lifecycleScopeFilter,
+        });
+
+        const nextRelativeUrl = `${url.pathname}${url.search}${url.hash}`;
+        const currentRelativeUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+        if (nextRelativeUrl !== currentRelativeUrl) {
+            window.history.replaceState(window.history.state, '', nextRelativeUrl);
+        }
+    }, [hasHydratedLifecycleFiltersFromUrl, lifecycleReasonFilter, lifecycleScopeFilter, lifecycleTypeFilter, lifecycleWindowFilter]);
 
     async function refreshDashboardQueries() {
         await Promise.all([
@@ -1023,6 +1168,33 @@ export default function MCPDashboard(): React.JSX.Element {
             toast.success(`${serverName} loaded and cached. Health: ${health.status}.`);
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Failed to load, test, and cache MCP server.';
+            toast.error(message);
+        }
+    }
+
+    async function handleCopyLifecycleTriageLink() {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const shareUrl = new URL(window.location.href);
+        applyLifecycleFiltersToUrl(shareUrl, {
+            type: lifecycleTypeFilter,
+            reason: lifecycleReasonFilter,
+            window: lifecycleWindowFilter,
+            scope: lifecycleScopeFilter,
+        });
+
+        try {
+            if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(shareUrl.toString());
+                toast.success('Copied lifecycle triage link to clipboard.');
+                return;
+            }
+
+            toast.error('Clipboard access is unavailable in this browser.');
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to copy lifecycle triage link.';
             toast.error(message);
         }
     }
@@ -1311,7 +1483,52 @@ export default function MCPDashboard(): React.JSX.Element {
                                         >
                                             Reset
                                         </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => void handleCopyLifecycleTriageLink()}
+                                            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                                            title="Copy a shareable link with the current lifecycle triage filters"
+                                            aria-label="Copy lifecycle triage link"
+                                        >
+                                            <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                                            Copy triage link
+                                        </Button>
                                     </div>
+                                    {lifecycleReasonFacetCounts.length > 0 ? (
+                                        <div className="mt-2 rounded border border-zinc-800 bg-zinc-900/50 p-2">
+                                            <div className="text-[10px] uppercase tracking-wider text-zinc-500">Top reasons (current scope)</div>
+                                            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setLifecycleReasonFilter('all')}
+                                                    className={`h-7 border-zinc-700 px-2 text-[11px] ${lifecycleReasonFilter === 'all' ? 'bg-zinc-700/40 text-white' : 'text-zinc-300 hover:bg-zinc-800'}`}
+                                                    title="Show events for all reason codes in the current scope"
+                                                    aria-label="Show all lifecycle reasons"
+                                                >
+                                                    all
+                                                </Button>
+                                                {lifecycleReasonFacetCounts.map((facet) => (
+                                                    <Button
+                                                        key={facet.reasonCode}
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setLifecycleReasonFilter(facet.reasonCode)}
+                                                        className={`h-7 border-zinc-700 px-2 text-[11px] ${lifecycleReasonFilter === facet.reasonCode ? 'border-cyan-500/40 bg-cyan-500/15 text-cyan-100' : 'text-zinc-300 hover:bg-zinc-800'}`}
+                                                        title={`Filter lifecycle timeline by reason ${facet.reasonCode}`}
+                                                        aria-label={`Filter lifecycle reason ${facet.reasonCode}`}
+                                                    >
+                                                        {facet.reasonCode}
+                                                        <span className="ml-1 rounded border border-zinc-700 bg-zinc-900 px-1 text-[10px] text-zinc-300">{facet.count}</span>
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : null}
                                     {recentLifecycleEvents.length > 0 ? (
                                         <div className="mt-2 space-y-1.5 text-[11px] text-zinc-400">
                                             {recentLifecycleEvents.map((event) => (
