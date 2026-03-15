@@ -421,6 +421,13 @@ export default function CloudDevDashboardPage() {
         );
     }, []);
 
+    const addBroadcastStatuses = useCallback((statuses: SessionStatus[]) => {
+        setBroadcastStatusFilter((current) => {
+            const merged = new Set<SessionStatus>([...current, ...statuses]);
+            return BROADCAST_STATUS_ORDER.filter((status) => merged.has(status));
+        });
+    }, []);
+
     useEffect(() => {
         setShowAllPreviewRecipients(false);
     }, [broadcastForce, broadcastStatusFilter]);
@@ -669,11 +676,7 @@ export default function CloudDevDashboardPage() {
                                                         <button
                                                             key={`add-suggested-status-${status}`}
                                                             type="button"
-                                                            onClick={() => {
-                                                                setBroadcastStatusFilter((current) =>
-                                                                    current.includes(status) ? current : [...current, status]
-                                                                );
-                                                            }}
+                                                            onClick={() => addBroadcastStatuses([status])}
                                                             className="rounded border border-purple-700/70 bg-purple-900/35 px-2 py-0.5 text-[10px] text-purple-200 hover:bg-purple-900/55"
                                                         >
                                                             + {status.replace("_", " ")}
@@ -682,15 +685,31 @@ export default function CloudDevDashboardPage() {
                                                     {skippedStatusSuggestions.length > 1 && (
                                                         <button
                                                             type="button"
-                                                            onClick={() => {
-                                                                setBroadcastStatusFilter((current) => {
-                                                                    const merged = new Set<SessionStatus>([...current, ...skippedStatusSuggestions]);
-                                                                    return BROADCAST_STATUS_ORDER.filter((status) => merged.has(status));
-                                                                });
-                                                            }}
+                                                            onClick={() => addBroadcastStatuses(skippedStatusSuggestions)}
                                                             className="rounded border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-300 hover:bg-zinc-800"
                                                         >
                                                             Add all suggested
+                                                        </button>
+                                                    )}
+                                                    {lastBroadcastPayload?.content && (
+                                                        <button
+                                                            type="button"
+                                                            disabled={broadcastMutation.isPending}
+                                                            onClick={() => {
+                                                                const baseFilter = lastBroadcastPayload.statusFilter ?? broadcastStatusFilter;
+                                                                const merged = new Set<SessionStatus>([...baseFilter, ...skippedStatusSuggestions]);
+                                                                const statusFilter = BROADCAST_STATUS_ORDER.filter((status) => merged.has(status));
+                                                                setBroadcastStatusFilter(statusFilter);
+                                                                setBroadcastForce(lastBroadcastPayload.force);
+                                                                broadcastMutation.mutate({
+                                                                    content: lastBroadcastPayload.content,
+                                                                    force: lastBroadcastPayload.force,
+                                                                    statusFilter: statusFilter.length > 0 ? statusFilter : undefined,
+                                                                });
+                                                            }}
+                                                            className="rounded border border-purple-500/60 bg-purple-700/40 px-2 py-0.5 text-[10px] text-purple-100 hover:bg-purple-700/60 disabled:opacity-50"
+                                                        >
+                                                            Retry last with suggested statuses
                                                         </button>
                                                     )}
                                                 </div>

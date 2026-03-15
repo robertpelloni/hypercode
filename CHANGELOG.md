@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.185] — 2026-03-15
+
+- feat(web/cloud-dev): skip-diagnostic suggestions in broadcast preview now include one-click `Retry last with suggested statuses`, reusing the last payload and merged suggested status filters.
+- changed(web/cloud-dev): individual suggested status actions now apply canonical cloud-dev status ordering to keep selected filters deterministic.
+- changed(web/cloud-dev): `Add all suggested` now shares the same canonical ordering helper used by single-status suggestions and retry actions.
+
 ## [2.7.184] — 2026-03-15
 
 - feat(web/cloud-dev): broadcast preview skip diagnostics now suggest statuses that were excluded due to `status_filter_mismatch`, each with one-click add actions.
