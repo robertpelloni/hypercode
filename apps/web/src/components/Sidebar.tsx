@@ -10,7 +10,7 @@ import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@d
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { SIDEBAR_SECTIONS } from "./mcp/nav-config";
-import { validateSidebarSections } from "./mcp/nav-validation";
+import { buildNavItemsByHref, validateSidebarSections } from "./mcp/nav-validation";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
@@ -192,18 +192,7 @@ export function Sidebar({ className }: SidebarProps) {
 
     const navDiagnostics = useMemo(() => validateSidebarSections(SIDEBAR_SECTIONS), []);
 
-    const allItemsByHref = useMemo(() => {
-        const map = new Map<string, { title: string; href: string; icon: any; description?: string }>();
-        for (const section of SIDEBAR_SECTIONS) {
-            for (const item of section.items) {
-                // Keep the first-seen entry to avoid silent metadata drift when duplicate hrefs slip in.
-                if (!map.has(item.href)) {
-                    map.set(item.href, item);
-                }
-            }
-        }
-        return map;
-    }, []);
+    const allItemsByHref = useMemo(() => buildNavItemsByHref(SIDEBAR_SECTIONS), []);
 
     const filteredSections = useMemo(() => {
         return SIDEBAR_SECTIONS

@@ -1,5 +1,7 @@
 import type { NavSection } from './nav-config';
 
+type NavItem = NavSection['items'][number];
+
 export interface NavDuplicateIssue {
     href: string;
     sections: string[];
@@ -11,6 +13,21 @@ export interface NavValidationResult {
         duplicates: string[];
     }>;
     duplicateAcrossSections: NavDuplicateIssue[];
+}
+
+export function buildNavItemsByHref(sections: NavSection[]): Map<string, NavItem> {
+    const map = new Map<string, NavItem>();
+
+    for (const section of sections) {
+        for (const item of section.items) {
+            // Preserve first-seen entries so duplicate href collisions cannot silently overwrite metadata.
+            if (!map.has(item.href)) {
+                map.set(item.href, item);
+            }
+        }
+    }
+
+    return map;
 }
 
 export function validateSidebarSections(sections: NavSection[]): NavValidationResult {

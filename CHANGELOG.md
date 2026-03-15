@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.202] — 2026-03-15
+
+- changed(web/navigation): extracted shared `buildNavItemsByHref(...)` helper in `apps/web/src/components/mcp/nav-validation.ts` so deterministic first-seen `href` metadata behavior is reusable beyond `Sidebar.tsx`.
+- changed(web/sidebar): `Sidebar.tsx` now consumes the shared nav-map builder instead of component-local map logic, aligning runtime behavior with centralized nav validation utilities.
+- test(web/navigation): expanded `apps/web/src/components/mcp/nav-validation.test.ts` with explicit first-seen collision coverage to prevent future silent metadata overwrite regressions.
+
 ## [2.7.201] — 2026-03-15
 
 - changed(web/sidebar): route metadata hydration in `Sidebar.tsx` now keeps first-seen entries for duplicate `href` keys, preventing silent metadata overwrite when config drift introduces collisions.

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { NavSection } from './nav-config';
-import { validateSidebarSections } from './nav-validation';
+import { buildNavItemsByHref, validateSidebarSections } from './nav-validation';
 
 describe('validateSidebarSections', () => {
     it('returns empty diagnostics when hrefs are unique', () => {
@@ -62,5 +62,27 @@ describe('validateSidebarSections', () => {
                 sections: ['One', 'Two'],
             },
         ]);
+    });
+
+    it('builds href map with first-seen metadata when duplicates exist', () => {
+        const sections: NavSection[] = [
+            {
+                title: 'One',
+                items: [
+                    { title: 'Original', href: '/same', icon: null, variant: 'ghost', description: 'first' },
+                ],
+            },
+            {
+                title: 'Two',
+                items: [
+                    { title: 'Shadowed', href: '/same', icon: null, variant: 'ghost', description: 'second' },
+                ],
+            },
+        ];
+
+        const map = buildNavItemsByHref(sections);
+
+        expect(map.get('/same')?.title).toBe('Original');
+        expect(map.get('/same')?.description).toBe('first');
     });
 });
