@@ -333,8 +333,10 @@ export default function CloudDevDashboardPage() {
         skipped: number;
         statuses: SessionStatus[];
         skippedByReason: Partial<Record<BroadcastSkipReason, number>>;
+        skippedSessions: BroadcastSkippedSession[];
     } | null>(null);
     const [showAllPreviewRecipients, setShowAllPreviewRecipients] = useState(false);
+    const [showAllResultSkippedSessions, setShowAllResultSkippedSessions] = useState(false);
 
     const sessionsQuery = trpc.cloudDev.listSessions.useQuery(undefined, { refetchInterval: 5000 });
     const statsQuery = trpc.cloudDev.stats.useQuery(undefined, { refetchInterval: 5000 });
@@ -360,6 +362,7 @@ export default function CloudDevDashboardPage() {
                 skipped: result.skipped,
                 statuses: Array.from(new Set((result.results ?? []).map((entry) => entry.status as SessionStatus))),
                 skippedByReason: (result.skippedByReason ?? {}) as Partial<Record<BroadcastSkipReason, number>>,
+                skippedSessions: (result.skippedSessions ?? []) as BroadcastSkippedSession[],
             });
             setBroadcastMsg("");
         },
@@ -397,6 +400,10 @@ export default function CloudDevDashboardPage() {
     useEffect(() => {
         setShowAllPreviewRecipients(false);
     }, [broadcastForce, broadcastStatusFilter]);
+
+    useEffect(() => {
+        setShowAllResultSkippedSessions(false);
+    }, [broadcastResult]);
 
     const sessions: SessionSummary[] = (sessionsQuery.data ?? []) as SessionSummary[];
     const broadcastPreview = (broadcastPreviewQuery.data ?? null) as BroadcastPreview | null;
@@ -623,14 +630,60 @@ export default function CloudDevDashboardPage() {
                         )}
                     </div>
                     {broadcastResult && (
-                        <p className="mt-2 text-xs text-emerald-400">
-                            Delivered to {broadcastResult.delivered} session{broadcastResult.delivered !== 1 ? "s" : ""}
-                            {broadcastResult.skipped > 0 ? `, skipped ${broadcastResult.skipped}` : ""}
-                            {broadcastResult.statuses.length > 0 ? ` (${broadcastResult.statuses.join(", ")})` : ""}.
-                            {Object.keys(broadcastResult.skippedByReason).length > 0
-                                ? ` Skip reasons: ${(Object.entries(broadcastResult.skippedByReason) as Array<[BroadcastSkipReason, number]>).map(([reason, count]) => `${BROADCAST_SKIP_REASON_LABELS[reason]}=${count}`).join(", ")}.`
-                                : ""}
-                        </p>
+                        <div className="mt-2 space-y-1">
+                            <p className="text-xs text-emerald-400">
+                                Delivered to {broadcastResult.delivered} session{broadcastResult.delivered !== 1 ? "s" : ""}
+                                {broadcastResult.skipped > 0 ? `, skipped ${broadcastResult.skipped}` : ""}
+                                {broadcastResult.statuses.length > 0 ? ` (${broadcastResult.statuses.join(", ")})` : ""}.
+                                {Object.keys(broadcastResult.skippedByReason).length > 0
+                                    ? ` Skip reasons: ${(Object.entries(broadcastResult.skippedByReason) as Array<[BroadcastSkipReason, number]>).map(([reason, count]) => `${BROADCAST_SKIP_REASON_LABELS[reason]}=${count}`).join(", ")}.`
+                                    : ""}
+                            </p>
+                            {(broadcastResult.skippedByReason.terminal_requires_force ?? 0) > 0 && !broadcastForce && (
+                                <button
+                                    type="button"
+                                    onClick={() => setBroadcastForce(true)}
+                                    className="rounded border border-amber-700/60 bg-amber-900/30 px-2 py-0.5 text-[10px] text-amber-300 hover:bg-amber-900/50"
+                                >
+                                    Enable Force to include terminal sessions next send
+                                </button>
+                            )}
+                            {broadcastResult.skippedSessions.length > 0 && (
+                                <div className="space-y-1">
+                                    <div className="text-[10px] uppercase tracking-wide text-zinc-500">Skipped sessions (last send)</div>
+                                    <div className="space-y-1">
+                                        {(showAllResultSkippedSessions
+                                            ? broadcastResult.skippedSessions
+                                            : broadcastResult.skippedSessions.slice(0, 6)).map((session) => (
+                                            <div
+                                                key={`result-skipped-session-${session.id}`}
+                                                className="flex flex-wrap items-center gap-1.5 rounded border border-zinc-800/80 bg-black/30 px-2 py-1 text-[10px] text-zinc-300"
+                                            >
+                                                <span className="rounded border border-zinc-700/70 bg-zinc-900 px-1.5 py-0.5 text-zinc-300">
+                                                    {PROVIDER_LABELS[session.provider]}
+                                                </span>
+                                                <span>{session.projectName}</span>
+                                                <span className="rounded border border-zinc-700/60 bg-zinc-900/70 px-1.5 py-0.5 text-zinc-300">
+                                                    {session.status.replace("_", " ")}
+                                                </span>
+                                                <span className="text-zinc-500">{BROADCAST_SKIP_REASON_LABELS[session.reason]}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {broadcastResult.skippedSessions.length > 6 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAllResultSkippedSessions((value) => !value)}
+                                            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-300 hover:bg-zinc-800"
+                                        >
+                                            {showAllResultSkippedSessions
+                                                ? "Show fewer skipped sessions"
+                                                : `Show all ${broadcastResult.skippedSessions.length} skipped sessions`}
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
             )}

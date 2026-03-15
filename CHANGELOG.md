@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.181] — 2026-03-15
+
+- changed(web/cloud-dev): post-send broadcast results in `/dashboard/cloud-dev` now include sampled skipped session rows (provider/project/status/reason), not just summary counts.
+- changed(web/cloud-dev): added progressive disclosure for skipped-session results (`Show all / Show fewer`) to keep large result sets readable.
+- changed(web/cloud-dev): when skips include `terminal requires Force`, result UI now offers a one-click `Enable Force` helper for the next send.
+
 ## [2.7.180] — 2026-03-15
 
 - feat(core/cloud-dev): broadcast preview and send responses now include structured skip diagnostics (`skippedByReason` plus sampled skipped session summaries) so operators can audit why sessions were excluded.
