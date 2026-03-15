@@ -1,6 +1,8 @@
 export interface SessionToolWorkingSetOptions {
     maxLoadedTools?: number;
     maxHydratedSchemas?: number;
+    /** Tools idle longer than this (ms) are preferred eviction candidates. Default: 5 minutes. */
+    idleEvictionThresholdMs?: number;
 }
 
 export interface LoadedToolState {
@@ -8,31 +10,53 @@ export interface LoadedToolState {
     hydrated: boolean;
     lastLoadedAt: number;
     lastHydratedAt: number | null;
+    /** Unix ms of the most recent load, hydrate, or touchTool call for this tool. */
+    lastAccessedAt: number;
 }
 
 export const DEFAULT_MAX_LOADED_TOOLS = 16;
 export const DEFAULT_MAX_HYDRATED_SCHEMAS = 8;
+const DEFAULT_IDLE_EVICTION_THRESHOLD_MS = 5 * 60 * 1000;
+
+/** Internal per-tool tracking entry. */
+interface ToolEntry {
+    loadedAt: number;
+    accessedAt: number;
+}
 
 export class SessionToolWorkingSet {
     private readonly maxLoadedTools: number;
     private readonly maxHydratedSchemas: number;
-    private readonly loadedTools = new Map<string, number>();
-    private readonly hydratedTools = new Map<string, number>();
+    private readonly idleEvictionThresholdMs: number;
+    private readonly loadedTools = new Map<string, ToolEntry>();
+    private readonly hydratedTools = new Map<string, ToolEntry>();
     private readonly alwaysLoadedTools = new Set<string>();
 
     constructor(options: SessionToolWorkingSetOptions = {}) {
         this.maxLoadedTools = options.maxLoadedTools ?? DEFAULT_MAX_LOADED_TOOLS;
         this.maxHydratedSchemas = options.maxHydratedSchemas ?? DEFAULT_MAX_HYDRATED_SCHEMAS;
+        this.idleEvictionThresholdMs = options.idleEvictionThresholdMs ?? DEFAULT_IDLE_EVICTION_THRESHOLD_MS;
     }
 
-    private touch(map: Map<string, number>, name: string, timestamp: number): boolean {
-        if (!map.has(name)) {
-            return false;
-        }
-
-        map.delete(name);
-        map.set(name, timestamp);
+    private touch(map: Map<string, ToolEntry>, name: string, timestamp: number): boolean {
+        const entry = map.get(name);
+        if (!entry) return false;
+        entry.accessedAt = timestamp;
         return true;
+    }
+
+    /** Returns the name of the tool least recently accessed (idle-aware LRU candidate). */
+    private pickEvictionCandidate(map: Map<string, ToolEntry>): string | undefined {
+        let candidate: string | undefined;
+        let minAccessedAt = Infinity;
+        for (const [name, entry] of map) {
+            if (this.alwaysLoadedTools.has(name)) continue;
+            if (entry.accessedAt < minAccessedAt) {
+                minAccessedAt = entry.accessedAt;
+                candidate = name;
+            }
+        }
+        return candidate;
     }
 
     loadTool(name: string): string[] {
@@ -49,17 +73,14 @@ export class SessionToolWorkingSet {
         const evicted: string[] = [];
 
         while (this.loadedTools.size >= this.maxLoadedTools) {
-            const oldest = this.loadedTools.keys().next().value;
-            if (!oldest) {
-                break;
-            }
-
-            this.loadedTools.delete(oldest);
-            this.hydratedTools.delete(oldest);
-            evicted.push(oldest);
+            const candidate = this.pickEvictionCandidate(this.loadedTools);
+            if (!candidate) break;
+            this.loadedTools.delete(candidate);
+            this.hydratedTools.delete(candidate);
+            evicted.push(candidate);
         }
 
-        this.loadedTools.set(name, timestamp);
+        this.loadedTools.set(name, { loadedAt: timestamp, accessedAt: timestamp });
         return evicted;
     }
 
@@ -70,20 +91,18 @@ export class SessionToolWorkingSet {
         const timestamp = Date.now();
 
         if (this.hydratedTools.has(name)) {
-            this.hydratedTools.delete(name);
+            this.touch(this.hydratedTools, name, timestamp);
+            return evicted;
         }
 
         while (this.hydratedTools.size >= this.maxHydratedSchemas) {
-            const oldest = this.hydratedTools.keys().next().value;
-            if (!oldest) {
-                break;
-            }
-
-            this.hydratedTools.delete(oldest);
-            evicted.push(oldest);
+            const candidate = this.pickEvictionCandidate(this.hydratedTools);
+            if (!candidate) break;
+            this.hydratedTools.delete(candidate);
+            evicted.push(candidate);
         }
 
-        this.hydratedTools.set(name, timestamp);
+        this.hydratedTools.set(name, { loadedAt: timestamp, accessedAt: timestamp });
         return evicted;
     }
 
@@ -122,18 +141,24 @@ export class SessionToolWorkingSet {
     }
 
     listLoadedTools(): LoadedToolState[] {
-        return this.getLoadedToolNames().map((name) => ({
-            name,
-            hydrated: this.isHydrated(name),
-            lastLoadedAt: this.loadedTools.get(name) ?? 0,
-            lastHydratedAt: this.hydratedTools.get(name) ?? null,
-        }));
+        return this.getLoadedToolNames().map((name) => {
+            const loadedEntry = this.loadedTools.get(name);
+            const hydratedEntry = this.hydratedTools.get(name);
+            return {
+                name,
+                hydrated: this.isHydrated(name),
+                lastLoadedAt: loadedEntry?.loadedAt ?? 0,
+                lastHydratedAt: hydratedEntry?.loadedAt ?? null,
+                lastAccessedAt: loadedEntry?.accessedAt ?? 0,
+            };
+        });
     }
 
-    getLimits(): { maxLoadedTools: number; maxHydratedSchemas: number } {
+    getLimits(): { maxLoadedTools: number; maxHydratedSchemas: number; idleEvictionThresholdMs: number } {
         return {
             maxLoadedTools: this.maxLoadedTools,
             maxHydratedSchemas: this.maxHydratedSchemas,
+            idleEvictionThresholdMs: this.idleEvictionThresholdMs,
         };
     }
 

@@ -1,6 +1,8 @@
 export interface SessionToolWorkingSetOptions {
     maxLoadedTools?: number;
     maxHydratedSchemas?: number;
+    /** Tools idle longer than this (ms) are preferred eviction candidates. Default: 5 minutes. */
+    idleEvictionThresholdMs?: number;
 }
 
 export interface LoadedToolState {
@@ -8,6 +10,8 @@ export interface LoadedToolState {
     hydrated: boolean;
     lastLoadedAt: number;
     lastHydratedAt: number | null;
+    /** Unix ms of the most recent load, hydrate, or touchTool call for this tool. */
+    lastAccessedAt: number;
 }
 
 /** A single eviction event recorded in the bounded history ring buffer. */
@@ -18,19 +22,34 @@ export interface WorkingSetEvictionEvent {
     /** Which tier was evicted — 'loaded' means both loaded+hydrated status lost;
      *  'hydrated' means only the full schema cache was dropped while metadata stays loaded. */
     tier: 'loaded' | 'hydrated';
+    /** True when the tool was evicted because it exceeded the idle threshold,
+     *  false when evicted purely by LRU capacity pressure. */
+    idleEvicted: boolean;
+    /** How long (ms) the tool had been idle at eviction time. */
+    idleDurationMs: number;
 }
 
 const DEFAULT_MAX_LOADED_TOOLS = 16;
 const DEFAULT_MAX_HYDRATED_SCHEMAS = 8;
+const DEFAULT_IDLE_EVICTION_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
 /** Maximum number of eviction events kept in the in-memory history ring. */
 const MAX_EVICTION_HISTORY = 20;
 
+/** Internal per-tool tracking entry stored in the loaded/hydrated maps. */
+interface ToolEntry {
+    /** Unix ms when the tool was first loaded/hydrated in this working set slot. */
+    loadedAt: number;
+    /** Unix ms of the most recent load, hydrate, or touchTool call. Used for LRU + idle eviction. */
+    accessedAt: number;
+}
+
 export class SessionToolWorkingSet {
     private maxLoadedTools: number;
     private maxHydratedSchemas: number;
-    private readonly loadedTools = new Map<string, number>();
-    private readonly hydratedTools = new Map<string, number>();
+    private idleEvictionThresholdMs: number;
+    private readonly loadedTools = new Map<string, ToolEntry>();
+    private readonly hydratedTools = new Map<string, ToolEntry>();
     private readonly alwaysLoadedTools = new Set<string>();
     /** Bounded ring buffer of the most recent eviction events. */
     private readonly evictionHistory: WorkingSetEvictionEvent[] = [];
@@ -38,6 +57,7 @@ export class SessionToolWorkingSet {
     constructor(options: SessionToolWorkingSetOptions = {}) {
         this.maxLoadedTools = options.maxLoadedTools ?? DEFAULT_MAX_LOADED_TOOLS;
         this.maxHydratedSchemas = options.maxHydratedSchemas ?? DEFAULT_MAX_HYDRATED_SCHEMAS;
+        this.idleEvictionThresholdMs = options.idleEvictionThresholdMs ?? DEFAULT_IDLE_EVICTION_THRESHOLD_MS;
     }
 
     /**
@@ -53,20 +73,60 @@ export class SessionToolWorkingSet {
         if (typeof options.maxHydratedSchemas === 'number') {
             this.maxHydratedSchemas = Math.max(2, Math.min(32, options.maxHydratedSchemas));
         }
+
+        if (typeof options.idleEvictionThresholdMs === 'number') {
+            this.idleEvictionThresholdMs = Math.max(10_000, options.idleEvictionThresholdMs);
+        }
     }
 
-    private touch(map: Map<string, number>, name: string, timestamp: number): boolean {
-        if (!map.has(name)) {
-            return false;
-        }
-
-        map.delete(name);
-        map.set(name, timestamp);
+    private touch(map: Map<string, ToolEntry>, name: string, timestamp: number): boolean {
+        const entry = map.get(name);
+        if (!entry) return false;
+        // Update accessedAt in-place (Map value is mutable; no re-insert needed for LRU
+        // since we select candidates by min accessedAt rather than insertion order).
+        entry.accessedAt = timestamp;
         return true;
     }
 
-    private recordEviction(toolName: string, tier: WorkingSetEvictionEvent['tier']): void {
-        this.evictionHistory.push({ toolName, timestamp: Date.now(), tier });
+    /**
+     * Pick the best eviction candidate from a map.
+     * Prefers tools idle longer than the configured threshold (true idle eviction),
+     * and falls back to plain LRU (min accessedAt) when nothing is idle.
+     */
+    private pickEvictionCandidate(map: Map<string, ToolEntry>): string | undefined {
+        const now = Date.now();
+        let candidate: string | undefined;
+        let candidateAccessedAt = Infinity;
+
+        for (const [name, entry] of map) {
+            // Skip always-loaded tools in the loaded map (shouldn't be there, but guard).
+            if (this.alwaysLoadedTools.has(name)) continue;
+            const idleDuration = now - entry.accessedAt;
+            // Prefer the most-idle tool beyond the threshold; among equally-idle tools
+            // pick the one loaded longest ago (loadedAt) as a tiebreaker.
+            if (entry.accessedAt < candidateAccessedAt) {
+                candidateAccessedAt = entry.accessedAt;
+                candidate = name;
+            }
+        }
+
+        return candidate;
+    }
+
+    private recordEviction(
+        toolName: string,
+        tier: WorkingSetEvictionEvent['tier'],
+        accessedAt: number,
+    ): void {
+        const now = Date.now();
+        const idleDurationMs = now - accessedAt;
+        this.evictionHistory.push({
+            toolName,
+            timestamp: now,
+            tier,
+            idleEvicted: idleDurationMs >= this.idleEvictionThresholdMs,
+            idleDurationMs,
+        });
 
         // Keep the ring buffer bounded.
         while (this.evictionHistory.length > MAX_EVICTION_HISTORY) {
@@ -88,18 +148,17 @@ export class SessionToolWorkingSet {
         const evicted: string[] = [];
 
         while (this.loadedTools.size >= this.maxLoadedTools) {
-            const oldest = this.loadedTools.keys().next().value;
-            if (!oldest) {
-                break;
-            }
+            const candidate = this.pickEvictionCandidate(this.loadedTools);
+            if (!candidate) break;
 
-            this.loadedTools.delete(oldest);
-            this.hydratedTools.delete(oldest);
-            evicted.push(oldest);
-            this.recordEviction(oldest, 'loaded');
+            const entry = this.loadedTools.get(candidate)!;
+            this.loadedTools.delete(candidate);
+            this.hydratedTools.delete(candidate);
+            evicted.push(candidate);
+            this.recordEviction(candidate, 'loaded', entry.accessedAt);
         }
 
-        this.loadedTools.set(name, timestamp);
+        this.loadedTools.set(name, { loadedAt: timestamp, accessedAt: timestamp });
         return evicted;
     }
 
@@ -110,21 +169,22 @@ export class SessionToolWorkingSet {
         const timestamp = Date.now();
 
         if (this.hydratedTools.has(name)) {
-            this.hydratedTools.delete(name);
+            // Already hydrated — just refresh access time.
+            this.touch(this.hydratedTools, name, timestamp);
+            return evicted;
         }
 
         while (this.hydratedTools.size >= this.maxHydratedSchemas) {
-            const oldest = this.hydratedTools.keys().next().value;
-            if (!oldest) {
-                break;
-            }
+            const candidate = this.pickEvictionCandidate(this.hydratedTools);
+            if (!candidate) break;
 
-            this.hydratedTools.delete(oldest);
-            evicted.push(oldest);
-            this.recordEviction(oldest, 'hydrated');
+            const entry = this.hydratedTools.get(candidate)!;
+            this.hydratedTools.delete(candidate);
+            evicted.push(candidate);
+            this.recordEviction(candidate, 'hydrated', entry.accessedAt);
         }
 
-        this.hydratedTools.set(name, timestamp);
+        this.hydratedTools.set(name, { loadedAt: timestamp, accessedAt: timestamp });
         return evicted;
     }
 
@@ -135,6 +195,14 @@ export class SessionToolWorkingSet {
             : this.touch(this.loadedTools, name, timestamp);
         const touchedHydrated = this.touch(this.hydratedTools, name, timestamp);
         return touchedLoaded || touchedHydrated;
+    }
+
+    /** Return how long (ms) since the tool was last accessed, or -1 if not loaded. */
+    getIdleDurationMs(name: string): number {
+        if (this.alwaysLoadedTools.has(name)) return 0;
+        const entry = this.loadedTools.get(name);
+        if (!entry) return -1;
+        return Date.now() - entry.accessedAt;
     }
 
     unloadTool(name: string): boolean {
@@ -163,18 +231,24 @@ export class SessionToolWorkingSet {
     }
 
     listLoadedTools(): LoadedToolState[] {
-        return this.getLoadedToolNames().map((name) => ({
-            name,
-            hydrated: this.isHydrated(name),
-            lastLoadedAt: this.loadedTools.get(name) ?? 0,
-            lastHydratedAt: this.hydratedTools.get(name) ?? null,
-        }));
+        return this.getLoadedToolNames().map((name) => {
+            const loadedEntry = this.loadedTools.get(name);
+            const hydratedEntry = this.hydratedTools.get(name);
+            return {
+                name,
+                hydrated: this.isHydrated(name),
+                lastLoadedAt: loadedEntry?.loadedAt ?? 0,
+                lastHydratedAt: hydratedEntry?.loadedAt ?? null,
+                lastAccessedAt: loadedEntry?.accessedAt ?? 0,
+            };
+        });
     }
 
-    getLimits(): { maxLoadedTools: number; maxHydratedSchemas: number } {
+    getLimits(): { maxLoadedTools: number; maxHydratedSchemas: number; idleEvictionThresholdMs: number } {
         return {
             maxLoadedTools: this.maxLoadedTools,
             maxHydratedSchemas: this.maxHydratedSchemas,
+            idleEvictionThresholdMs: this.idleEvictionThresholdMs,
         };
     }
 

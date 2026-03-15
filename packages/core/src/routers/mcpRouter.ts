@@ -173,7 +173,7 @@ async function readToolPreferences(): Promise<ToolPreferences> {
         const settings = config.settings as { toolSelection?: { importantTools?: unknown; alwaysLoadedTools?: unknown; autoLoadMinConfidence?: unknown; maxLoadedTools?: unknown; maxHydratedSchemas?: unknown } } | undefined;
         return readToolPreferencesFromSettings(settings?.toolSelection);
     } catch {
-        return { importantTools: [], alwaysLoadedTools: [], autoLoadMinConfidence: 0.85, maxLoadedTools: 16, maxHydratedSchemas: 8 };
+        return { importantTools: [], alwaysLoadedTools: [], autoLoadMinConfidence: 0.85, maxLoadedTools: 16, maxHydratedSchemas: 8, idleEvictionThresholdMs: 5 * 60 * 1000 };
     }
 }
 
@@ -658,6 +658,7 @@ export const mcpRouter = t.router({
         autoLoadMinConfidence: z.number().min(0.5).max(0.99).default(0.85),
         maxLoadedTools: z.number().int().min(4).max(64).default(16),
         maxHydratedSchemas: z.number().int().min(2).max(32).default(8),
+        idleEvictionThresholdMs: z.number().int().min(10_000).max(24 * 60 * 60 * 1000).default(5 * 60 * 1000),
     })).mutation(async ({ input }) => {
         const next = await writeToolPreferences({
             importantTools: input.importantTools,
@@ -665,6 +666,7 @@ export const mcpRouter = t.router({
             autoLoadMinConfidence: input.autoLoadMinConfidence,
             maxLoadedTools: input.maxLoadedTools,
             maxHydratedSchemas: input.maxHydratedSchemas,
+            idleEvictionThresholdMs: input.idleEvictionThresholdMs,
         });
         const server = getMcpServer();
         if (server) {
@@ -674,6 +676,7 @@ export const mcpRouter = t.router({
                 await server.executeTool('set_capacity', {
                     maxLoadedTools: next.maxLoadedTools,
                     maxHydratedSchemas: next.maxHydratedSchemas,
+                    idleEvictionThresholdMs: next.idleEvictionThresholdMs,
                 });
             } catch {
                 // Non-fatal: the working set will apply limits on the next load/hydrate call.

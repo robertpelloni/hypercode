@@ -6,6 +6,8 @@ export type ToolPreferences = {
     maxLoadedTools: number;
     /** Maximum number of hydrated schemas the session working set will hold before LRU eviction. Range: 2..32. Default 8. */
     maxHydratedSchemas: number;
+    /** Tools idle longer than this (ms) become prioritised eviction candidates. Range: 10s..24h. Default 5 minutes. */
+    idleEvictionThresholdMs: number;
 };
 
 type ToolSelectionSettings = {
@@ -14,6 +16,7 @@ type ToolSelectionSettings = {
     autoLoadMinConfidence?: unknown;
     maxLoadedTools?: unknown;
     maxHydratedSchemas?: unknown;
+    idleEvictionThresholdMs?: unknown;
 };
 
 type ToolPreferenceDisplayFields = {
@@ -61,13 +64,23 @@ function normalizeMaxHydratedSchemas(value: unknown): number {
     return Math.max(2, Math.min(32, Math.round(value)));
 }
 
-export function normalizeToolPreferences(value: { importantTools?: unknown; alwaysLoadedTools?: unknown; autoLoadMinConfidence?: unknown; maxLoadedTools?: unknown; maxHydratedSchemas?: unknown } | null | undefined): ToolPreferences {
+function normalizeIdleEvictionThresholdMs(value: unknown): number {
+    if (typeof value !== 'number' || Number.isNaN(value)) {
+        return 5 * 60 * 1000; // 5 minutes
+    }
+
+    // Clamp between 10 seconds and 24 hours
+    return Math.max(10_000, Math.min(24 * 60 * 60 * 1000, Math.round(value)));
+}
+
+export function normalizeToolPreferences(value: { importantTools?: unknown; alwaysLoadedTools?: unknown; autoLoadMinConfidence?: unknown; maxLoadedTools?: unknown; maxHydratedSchemas?: unknown; idleEvictionThresholdMs?: unknown } | null | undefined): ToolPreferences {
     return {
         importantTools: normalizeToolNames(value?.importantTools),
         alwaysLoadedTools: normalizeToolNames(value?.alwaysLoadedTools),
         autoLoadMinConfidence: normalizeAutoLoadMinConfidence(value?.autoLoadMinConfidence),
         maxLoadedTools: normalizeMaxLoadedTools(value?.maxLoadedTools),
         maxHydratedSchemas: normalizeMaxHydratedSchemas(value?.maxHydratedSchemas),
+        idleEvictionThresholdMs: normalizeIdleEvictionThresholdMs(value?.idleEvictionThresholdMs),
     };
 }
 
@@ -78,6 +91,7 @@ export function readToolPreferencesFromSettings(settings: ToolSelectionSettings 
         autoLoadMinConfidence: settings?.autoLoadMinConfidence,
         maxLoadedTools: settings?.maxLoadedTools,
         maxHydratedSchemas: settings?.maxHydratedSchemas,
+        idleEvictionThresholdMs: settings?.idleEvictionThresholdMs,
     });
 }
 
@@ -98,6 +112,7 @@ export function buildToolPreferenceSettings(
             autoLoadMinConfidence: normalized.autoLoadMinConfidence,
             maxLoadedTools: normalized.maxLoadedTools,
             maxHydratedSchemas: normalized.maxHydratedSchemas,
+            idleEvictionThresholdMs: normalized.idleEvictionThresholdMs,
         },
     };
 }
