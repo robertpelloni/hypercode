@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.179] — 2026-03-15
+
+- feat(core/cloud-dev): `previewBroadcastRecipients` now returns recipient summary records (id, provider, project name, status, updated time) so operator UIs can show who will receive a broadcast before sending.
+- changed(web/cloud-dev): broadcast preview panel in `/dashboard/cloud-dev` now renders a compact recipient list (provider/project/status/id) in addition to aggregate counts.
+- changed(web/cloud-dev): recipient preview supports progressive disclosure (`Show all / Show fewer`) to keep large target sets scannable while preserving full visibility on demand.
+
 ## [2.7.178] — 2026-03-15
 
 - changed(web/cloud-dev): `Auto-accept plan` toggle in `/dashboard/cloud-dev` now uses optimistic local state with mutation lifecycle handling, so checkbox changes are reflected immediately and no longer feel stale while list polling catches up.

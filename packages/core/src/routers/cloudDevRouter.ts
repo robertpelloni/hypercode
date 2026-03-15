@@ -427,6 +427,13 @@ export const cloudDevRouter = t.router({
                 skipped: sessions.length - targets.length,
                 byStatus,
                 sessionIds: targets.map((session) => session.id),
+                recipients: targets.map((session) => ({
+                    id: session.id,
+                    provider: session.provider,
+                    projectName: session.projectName,
+                    status: session.status,
+                    updatedAt: session.updatedAt,
+                })),
             };
         }),
 

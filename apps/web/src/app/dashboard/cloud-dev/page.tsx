@@ -65,6 +65,23 @@ interface LogEntry {
     timestamp: string;
 }
 
+interface BroadcastPreviewRecipient {
+    id: string;
+    provider: CloudDevProvider;
+    projectName: string;
+    status: SessionStatus;
+    updatedAt: string;
+}
+
+interface BroadcastPreview {
+    totalSessions: number;
+    targeted: number;
+    skipped: number;
+    byStatus: Partial<Record<SessionStatus, number>>;
+    sessionIds: string[];
+    recipients: BroadcastPreviewRecipient[];
+}
+
 const STATUS_COLORS: Record<SessionStatus, string> = {
     pending: "text-yellow-300 border-yellow-700/50 bg-yellow-950/20",
     active: "text-emerald-300 border-emerald-700/50 bg-emerald-950/20",
@@ -299,6 +316,7 @@ export default function CloudDevDashboardPage() {
         skipped: number;
         statuses: SessionStatus[];
     } | null>(null);
+    const [showAllPreviewRecipients, setShowAllPreviewRecipients] = useState(false);
 
     const sessionsQuery = trpc.cloudDev.listSessions.useQuery(undefined, { refetchInterval: 5000 });
     const statsQuery = trpc.cloudDev.stats.useQuery(undefined, { refetchInterval: 5000 });
@@ -357,9 +375,22 @@ export default function CloudDevDashboardPage() {
         );
     }, []);
 
+    useEffect(() => {
+        setShowAllPreviewRecipients(false);
+    }, [broadcastForce, broadcastStatusFilter]);
+
     const sessions: SessionSummary[] = (sessionsQuery.data ?? []) as SessionSummary[];
+    const broadcastPreview = (broadcastPreviewQuery.data ?? null) as BroadcastPreview | null;
     const stats = statsQuery.data;
     const providers = providersQuery.data ?? [];
+    const previewRecipients = useMemo(
+        () => broadcastPreview?.recipients ?? [],
+        [broadcastPreview]
+    );
+    const visiblePreviewRecipients = useMemo(
+        () => (showAllPreviewRecipients ? previewRecipients : previewRecipients.slice(0, 8)),
+        [previewRecipients, showAllPreviewRecipients]
+    );
 
     const activeSessions = useMemo(() => sessions.filter((s) => s.status === "active").length, [sessions]);
     const pendingSessions = useMemo(() => sessions.filter((s) => s.status === "pending").length, [sessions]);
@@ -486,18 +517,53 @@ export default function CloudDevDashboardPage() {
                     <div className="mt-2 rounded border border-purple-800/60 bg-purple-950/25 px-2 py-1.5 text-[11px] text-zinc-300">
                         {broadcastPreviewQuery.isLoading ? (
                             <span className="text-zinc-500">Calculating recipients…</span>
-                        ) : broadcastPreviewQuery.data ? (
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span>
-                                    Preview: targeting <span className="font-semibold text-purple-200">{broadcastPreviewQuery.data.targeted}</span>
-                                    {" "}of {broadcastPreviewQuery.data.totalSessions} sessions
-                                    {broadcastPreviewQuery.data.skipped > 0 ? ` (skipping ${broadcastPreviewQuery.data.skipped})` : ""}.
-                                </span>
-                                {Object.entries(broadcastPreviewQuery.data.byStatus).map(([status, count]) => (
-                                    <span key={`preview-status-${status}`} className="rounded border border-purple-700/60 bg-purple-900/40 px-1.5 py-0.5 text-[10px] text-purple-200">
+                        ) : broadcastPreview ? (
+                            <div className="space-y-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span>
+                                        Preview: targeting <span className="font-semibold text-purple-200">{broadcastPreview.targeted}</span>
+                                        {" "}of {broadcastPreview.totalSessions} sessions
+                                        {broadcastPreview.skipped > 0 ? ` (skipping ${broadcastPreview.skipped})` : ""}.
+                                    </span>
+                                    {Object.entries(broadcastPreview.byStatus).map(([status, count]) => (
+                                        <span key={`preview-status-${status}`} className="rounded border border-purple-700/60 bg-purple-900/40 px-1.5 py-0.5 text-[10px] text-purple-200">
                                         {status.replace("_", " ")}: {count}
                                     </span>
-                                ))}
+                                    ))}
+                                </div>
+                                {visiblePreviewRecipients.length > 0 && (
+                                    <div className="space-y-1">
+                                        <div className="text-[10px] uppercase tracking-wide text-purple-300/80">Recipient preview</div>
+                                        <div className="space-y-1">
+                                            {visiblePreviewRecipients.map((recipient) => (
+                                                <div
+                                                    key={`preview-recipient-${recipient.id}`}
+                                                    className="flex flex-wrap items-center gap-1.5 rounded border border-purple-900/80 bg-black/30 px-2 py-1 text-[10px]"
+                                                >
+                                                    <span className="rounded border border-zinc-700/70 bg-zinc-900 px-1.5 py-0.5 text-zinc-300">
+                                                        {PROVIDER_LABELS[recipient.provider]}
+                                                    </span>
+                                                    <span className="font-medium text-purple-100">{recipient.projectName}</span>
+                                                    <span className="rounded border border-purple-700/60 bg-purple-900/40 px-1.5 py-0.5 text-purple-200">
+                                                        {recipient.status.replace("_", " ")}
+                                                    </span>
+                                                    <span className="ml-auto text-zinc-500">{recipient.id}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {previewRecipients.length > 8 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowAllPreviewRecipients((value) => !value)}
+                                                className="rounded border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-300 hover:bg-zinc-800"
+                                            >
+                                                {showAllPreviewRecipients
+                                                    ? "Show fewer recipients"
+                                                    : `Show all ${previewRecipients.length} recipients`}
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <span className="text-zinc-500">No preview available.</span>
