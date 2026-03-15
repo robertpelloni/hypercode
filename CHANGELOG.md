@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.171] — 2026-03-15
+
+- feat(web/mcp): added a `Server momentum (window buckets)` strip to `/dashboard/mcp` lifecycle triage, showing per-bucket dominant server activity and short-term momentum deltas.
+- changed(web/mcp): server-momentum buckets are now one-click drilldowns that apply the bucket's dominant server directly to the lifecycle `Server` filter for faster host-focused incident narrowing.
+- changed(web/mcp): lifecycle `Copy summary` output now includes `topServerMomentum` snapshots for stronger operator handoff context during server-centric investigations.
+
 ## [2.7.170] — 2026-03-15
 
 - changed(web/mcp): lifecycle timeline now keeps contextual recent events visible when both `reason` and `server` filters are active, while visually highlighting exact reason+server pair matches for faster incident scanning.

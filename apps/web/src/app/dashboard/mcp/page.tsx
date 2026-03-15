@@ -1095,6 +1095,100 @@ export default function MCPDashboard(): React.JSX.Element {
     const lifecycleReasonTrendMaxBucketCount = useMemo(() => {
         return lifecycleReasonTrendBuckets.reduce((max, bucket) => Math.max(max, bucket.totalCount), 0);
     }, [lifecycleReasonTrendBuckets]);
+    const lifecycleServerTrendBuckets = useMemo(() => {
+        if (scopedLifecycleEvents.length === 0) {
+            return [] as Array<{
+                label: string;
+                bucketStart: number;
+                bucketEnd: number;
+                topServerUuid: string;
+                topServerLabel: string;
+                topServerCount: number;
+                momentumDelta: number;
+                totalCount: number;
+            }>;
+        }
+
+        const timestamps = scopedLifecycleEvents.map((event) => event.timestamp);
+        const latestTimestamp = Math.max(...timestamps);
+        const earliestTimestamp = lifecycleWindowFilter === 'all'
+            ? Math.min(...timestamps)
+            : lifecycleWindowFilter === '5m'
+                ? latestTimestamp - (5 * 60 * 1000)
+                : lifecycleWindowFilter === '15m'
+                    ? latestTimestamp - (15 * 60 * 1000)
+                    : latestTimestamp - (60 * 60 * 1000);
+        const bucketCount = lifecycleWindowFilter === '1h' ? 6 : 5;
+        const spanMs = Math.max(latestTimestamp - earliestTimestamp, 1);
+        const bucketSizeMs = Math.max(Math.ceil(spanMs / bucketCount), 1);
+
+        const buckets = Array.from({ length: bucketCount }, (_, index) => {
+            const bucketStart = earliestTimestamp + (index * bucketSizeMs);
+            const bucketEnd = index === bucketCount - 1
+                ? latestTimestamp + 1
+                : bucketStart + bucketSizeMs;
+
+            return {
+                bucketStart,
+                bucketEnd,
+                totalCount: 0,
+                serverCounts: new Map<string, { count: number; label: string }>(),
+            };
+        });
+
+        scopedLifecycleEvents.forEach((event) => {
+            if (!event.serverUuid) {
+                return;
+            }
+
+            const rawBucketIndex = Math.floor((event.timestamp - earliestTimestamp) / bucketSizeMs);
+            const bucketIndex = Math.min(Math.max(rawBucketIndex, 0), bucketCount - 1);
+            const bucket = buckets[bucketIndex];
+
+            bucket.totalCount += 1;
+
+            const existing = bucket.serverCounts.get(event.serverUuid);
+            if (existing) {
+                existing.count += 1;
+                return;
+            }
+
+            bucket.serverCounts.set(event.serverUuid, {
+                count: 1,
+                label: event.serverName ?? event.serverUuid,
+            });
+        });
+
+        return buckets.map((bucket, index) => {
+            const sortedServers = Array.from(bucket.serverCounts.entries()).sort((left, right) => {
+                if (right[1].count !== left[1].count) {
+                    return right[1].count - left[1].count;
+                }
+
+                return left[1].label.localeCompare(right[1].label);
+            });
+            const topServer = sortedServers[0] ?? ['none', { count: 0, label: 'none' }];
+
+            const previousBucket = index > 0 ? buckets[index - 1] : null;
+            const previousTopServerCount = previousBucket
+                ? previousBucket.serverCounts.get(topServer[0])?.count ?? 0
+                : 0;
+
+            return {
+                label: new Date(bucket.bucketStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                bucketStart: bucket.bucketStart,
+                bucketEnd: bucket.bucketEnd,
+                topServerUuid: topServer[0],
+                topServerLabel: topServer[1].label,
+                topServerCount: topServer[1].count,
+                momentumDelta: topServer[0] === 'none' ? 0 : topServer[1].count - previousTopServerCount,
+                totalCount: bucket.totalCount,
+            };
+        });
+    }, [lifecycleWindowFilter, scopedLifecycleEvents]);
+    const lifecycleServerTrendMaxBucketCount = useMemo(() => {
+        return lifecycleServerTrendBuckets.reduce((max, bucket) => Math.max(max, bucket.totalCount), 0);
+    }, [lifecycleServerTrendBuckets]);
     const recentLifecycleEvents = timelineLifecycleEvents;
     const bulkActionsDisabled = bulkRefreshState !== null || reloadMetadataMutation.isPending || clearMetadataCacheMutation.isPending;
     const unresolvedActionableCount = unresolvedDiscoveryTargetUuids.length;
@@ -1384,6 +1478,13 @@ export default function MCPDashboard(): React.JSX.Element {
                 .map((facet) => `${facet.reasonCode}@${facet.serverLabel}: ${facet.count}`)
                 .join(', ')
             : 'none';
+        const topServerMomentumLine = lifecycleServerTrendBuckets.length > 0
+            ? lifecycleServerTrendBuckets
+                .filter((bucket) => bucket.topServerUuid !== 'none')
+                .slice(0, 3)
+                .map((bucket) => `${bucket.topServerLabel}:${bucket.topServerCount}${bucket.momentumDelta >= 0 ? '+' : ''}${bucket.momentumDelta}`)
+                .join(', ') || 'none'
+            : 'none';
         const focusedPairLine = hasFocusedLifecyclePair
             ? `${lifecycleReasonFilter}@${lifecycleServerFilter}`
             : 'none';
@@ -1402,6 +1503,7 @@ export default function MCPDashboard(): React.JSX.Element {
             `focusedPair=${focusedPairLine}`,
             `topReasons=${topReasonsLine}`,
             `topReasonServerPairs=${topReasonServerPairsLine}`,
+            `topServerMomentum=${topServerMomentumLine}`,
         ].join('\n');
 
         try {
@@ -1856,6 +1958,53 @@ export default function MCPDashboard(): React.JSX.Element {
                                                             </div>
                                                             <span className="text-[10px] text-zinc-500">{bucket.label}</span>
                                                             <span className="max-w-full truncate text-[10px] text-zinc-300">{bucket.topReasonCode}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ) : null}
+                                    {lifecycleServerTrendBuckets.length > 0 ? (
+                                        <div className="mt-2 rounded border border-zinc-800 bg-zinc-900/50 p-2">
+                                            <div className="flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-zinc-500">
+                                                <span>Server momentum (window buckets)</span>
+                                                <span>{lifecycleServerTrendBuckets.length} buckets</span>
+                                            </div>
+                                            <div className="mt-1.5 flex items-end gap-1.5">
+                                                {lifecycleServerTrendBuckets.map((bucket) => {
+                                                    const heightPct = lifecycleServerTrendMaxBucketCount > 0
+                                                        ? Math.max((bucket.totalCount / lifecycleServerTrendMaxBucketCount) * 100, bucket.totalCount > 0 ? 22 : 8)
+                                                        : 8;
+
+                                                    return (
+                                                        <button
+                                                            key={`${bucket.bucketStart}-${bucket.bucketEnd}`}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (bucket.topServerUuid !== 'none') {
+                                                                    setLifecycleServerFilter(bucket.topServerUuid);
+                                                                }
+                                                            }}
+                                                            disabled={bucket.topServerUuid === 'none'}
+                                                            title={bucket.topServerUuid === 'none'
+                                                                ? `${bucket.label} · no server-tagged events`
+                                                                : `${bucket.label} · top server ${bucket.topServerLabel} (${bucket.topServerCount}/${bucket.totalCount}), momentum ${bucket.momentumDelta >= 0 ? '+' : ''}${bucket.momentumDelta}`}
+                                                            aria-label={bucket.topServerUuid === 'none'
+                                                                ? `${bucket.label} no server-tagged lifecycle events`
+                                                                : `Filter by top server ${bucket.topServerLabel} from ${bucket.label}`}
+                                                            className="group flex min-w-0 flex-1 flex-col items-center gap-1 disabled:cursor-not-allowed"
+                                                        >
+                                                            <div className="flex h-14 w-full items-end">
+                                                                <div
+                                                                    className={`w-full rounded-sm border ${bucket.topServerUuid === 'none' ? 'border-zinc-800 bg-zinc-800/60' : lifecycleServerFilter === bucket.topServerUuid ? 'border-emerald-500/40 bg-emerald-500/20' : 'border-zinc-700 bg-zinc-700/80 group-hover:bg-zinc-600/80'}`}
+                                                                    style={{ height: `${heightPct}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className="text-[10px] text-zinc-500">{bucket.label}</span>
+                                                            <span className="max-w-full truncate text-[10px] text-zinc-300">{bucket.topServerLabel}</span>
+                                                            <span className={`text-[10px] ${bucket.momentumDelta > 0 ? 'text-emerald-300' : bucket.momentumDelta < 0 ? 'text-amber-300' : 'text-zinc-500'}`}>
+                                                                {bucket.momentumDelta >= 0 ? '+' : ''}{bucket.momentumDelta}
+                                                            </span>
                                                         </button>
                                                     );
                                                 })}
