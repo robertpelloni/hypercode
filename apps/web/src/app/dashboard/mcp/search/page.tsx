@@ -59,6 +59,8 @@ type ToolSelectionTelemetryEvent = {
     secondMatchReason?: string;
     secondScore?: number;
     scoreGap?: number;
+    ignoredResultCount?: number;
+    ignoredResultNames?: string[];
     toolName?: string;
     status: 'success' | 'error';
     message?: string;
@@ -102,7 +104,7 @@ type ToolPreferenceMutationInput = {
 
 type TelemetryWindowPreset = 'all' | '5m' | '15m' | '1h' | '24h';
 type TelemetrySourceFilter = 'all' | 'runtime-search' | 'cached-ranking' | 'live-aggregator';
-type TelemetryTriagePreset = 'errors-now' | 'runtime-failures' | 'load-incidents' | 'hydration-failures' | 'live-aggregator-focus';
+type TelemetryTriagePreset = 'errors-now' | 'runtime-failures' | 'load-incidents' | 'hydration-failures' | 'auto-load-skips' | 'live-aggregator-focus';
 
 const TELEMETRY_FILTERS_STORAGE_KEY = 'borg.mcp.search.telemetryFilters.v1';
 const TELEMETRY_TYPE_QUERY_KEY = 'telemetryType';
@@ -337,6 +339,7 @@ export default function SearchDashboard() {
         total: filteredTelemetryEvents.length,
         success: filteredTelemetryEvents.filter((event) => event.status === 'success').length,
         error: filteredTelemetryEvents.filter((event) => event.status === 'error').length,
+        ignoredResults: filteredTelemetryEvents.reduce((sum, event) => sum + (event.ignoredResultCount ?? 0), 0),
     };
     const telemetryTrendBuckets = buildTelemetryTrendBuckets({
         windowPreset: telemetryWindowFilter,
@@ -667,6 +670,14 @@ export default function SearchDashboard() {
             setTelemetryStatusFilter('error');
             setTelemetryWindowFilter('24h');
             setTelemetrySourceFilter('all');
+            return;
+        }
+
+        if (preset === 'auto-load-skips') {
+            setTelemetryTypeFilter('search');
+            setTelemetryStatusFilter('all');
+            setTelemetryWindowFilter('1h');
+            setTelemetrySourceFilter('cached-ranking');
             return;
         }
 
@@ -1324,6 +1335,7 @@ export default function SearchDashboard() {
                                         { value: 'runtime-failures', label: 'Runtime failures' },
                                         { value: 'load-incidents', label: 'Load incidents' },
                                         { value: 'hydration-failures', label: 'Hydration failures' },
+                                        { value: 'auto-load-skips', label: 'Auto-load skips' },
                                         { value: 'live-aggregator-focus', label: 'Live aggregator' },
                                     ] as const).map((preset) => (
                                         <button
@@ -1401,6 +1413,9 @@ export default function SearchDashboard() {
                                     </span>
                                     <span className="rounded-md border border-red-500/30 bg-red-500/10 px-2 py-1 text-red-300">
                                         errors: {telemetrySummary.error}
+                                    </span>
+                                    <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-amber-200">
+                                        ignored results: {telemetrySummary.ignoredResults}
                                     </span>
                                 </div>
 
@@ -1667,6 +1682,8 @@ export default function SearchDashboard() {
                                             {event.secondMatchReason ? <div className="text-xs text-zinc-500">second why: <span className="text-zinc-300">{event.secondMatchReason}</span></div> : null}
                                             {typeof event.secondScore === 'number' ? <div className="text-xs text-zinc-500">second score: <span className="text-zinc-300">{event.secondScore.toFixed(1)}</span></div> : null}
                                             {typeof event.scoreGap === 'number' ? <div className="text-xs text-zinc-400">score gap: <span className="text-zinc-200">{event.scoreGap.toFixed(1)}</span></div> : null}
+                                            {typeof event.ignoredResultCount === 'number' ? <div className="text-xs text-amber-300">ignored results: {event.ignoredResultCount}</div> : null}
+                                            {event.ignoredResultNames && event.ignoredResultNames.length > 0 ? <div className="text-xs text-zinc-400 break-all">ignored top choices: <span className="font-mono text-zinc-200">{event.ignoredResultNames.join(', ')}</span></div> : null}
                                             {typeof event.autoLoadConfidence === 'number' ? (
                                                 <div className="text-xs text-cyan-300">confidence: {(event.autoLoadConfidence * 100).toFixed(0)}%</div>
                                             ) : null}

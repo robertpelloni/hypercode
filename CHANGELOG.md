@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.172] — 2026-03-15
+
+- feat(core/mcp): search telemetry now records `ignoredResultCount` and compact `ignoredResultNames` so operators can see what ranked options Borg intentionally did not load.
+- changed(core/mcp): runtime-search, cached-ranking, and live-aggregator search paths now all emit ignored-candidate context alongside top/second score telemetry.
+- feat(web/mcp): `/dashboard/mcp/search` telemetry panel now surfaces ignored-result counts and ignored top-choice names per event, plus an `Auto-load skips` preset for faster triage of decision friction.
+
 ## [2.7.171] — 2026-03-15
 
 - feat(web/mcp): added a `Server momentum (window buckets)` strip to `/dashboard/mcp` lifecycle triage, showing per-bucket dominant server activity and short-term momentum deltas.

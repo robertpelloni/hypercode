@@ -16,6 +16,8 @@ export interface ToolSelectionTelemetryEvent {
     secondMatchReason?: string;
     secondScore?: number;
     scoreGap?: number;
+    ignoredResultCount?: number;
+    ignoredResultNames?: string[];
     toolName?: string;
     status: 'success' | 'error';
     message?: string;

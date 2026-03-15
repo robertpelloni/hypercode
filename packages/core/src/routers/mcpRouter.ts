@@ -166,6 +166,21 @@ function toLatencyMs(startedAt: number): number {
     return Math.max(0, Date.now() - startedAt);
 }
 
+function buildIgnoredSearchResultTelemetry<T extends { name: string }>(
+    results: T[],
+    loadedToolName?: string,
+): {
+    ignoredResultCount: number;
+    ignoredResultNames: string[];
+} {
+    const ignoredResults = results.filter((result) => result.name !== loadedToolName);
+
+    return {
+        ignoredResultCount: ignoredResults.length,
+        ignoredResultNames: ignoredResults.slice(0, 3).map((result) => result.name),
+    };
+}
+
 const toolSearchProfileSchema = z.enum(['web-research', 'repo-coding', 'browser-automation', 'local-ops', 'database']);
 
 async function readToolPreferences(): Promise<ToolPreferences> {
@@ -420,6 +435,7 @@ export const mcpRouter = t.router({
                         const topScore = typeof mappedResults[0]?.score === 'number' ? mappedResults[0].score : undefined;
                         const secondScore = typeof mappedResults[1]?.score === 'number' ? mappedResults[1].score : 0;
                         const scoreGap = typeof topScore === 'number' ? topScore - secondScore : undefined;
+                        const ignoredSearchTelemetry = buildIgnoredSearchResultTelemetry(mappedResults, autoLoadedResult?.name);
 
                         toolSelectionTelemetry.record({
                             type: 'search',
@@ -434,6 +450,8 @@ export const mcpRouter = t.router({
                             secondMatchReason: mappedResults[1]?.matchReason,
                             secondScore,
                             scoreGap,
+                            ignoredResultCount: ignoredSearchTelemetry.ignoredResultCount,
+                            ignoredResultNames: ignoredSearchTelemetry.ignoredResultNames,
                             latencyMs: toLatencyMs(searchStartedAt),
                             status: 'success',
                         });
@@ -542,6 +560,7 @@ export const mcpRouter = t.router({
                     autoLoaded: tool.name === autoLoadDecision?.toolName,
                     inputSchema: null,
                 }));
+                const ignoredSearchTelemetry = buildIgnoredSearchResultTelemetry(rankedResults, autoLoadDecision?.toolName);
 
                 toolSelectionTelemetry.record({
                     type: 'search',
@@ -556,6 +575,8 @@ export const mcpRouter = t.router({
                     secondMatchReason: rankedResults[1]?.matchReason,
                     secondScore: rankedResults[1]?.score,
                     scoreGap: rankedResults.length > 1 ? (rankedResults[0]?.score ?? 0) - (rankedResults[1]?.score ?? 0) : undefined,
+                    ignoredResultCount: ignoredSearchTelemetry.ignoredResultCount,
+                    ignoredResultNames: ignoredSearchTelemetry.ignoredResultNames,
                     latencyMs: toLatencyMs(searchStartedAt),
                     autoLoadReason: autoLoadDecision?.reason,
                     autoLoadConfidence: autoLoadDecision?.confidence,
@@ -617,6 +638,7 @@ export const mcpRouter = t.router({
                 rank: index + 1,
                 inputSchema: null,
             }));
+            const ignoredSearchTelemetry = buildIgnoredSearchResultTelemetry(mappedLiveTools);
 
             toolSelectionTelemetry.record({
                 type: 'search',
@@ -631,6 +653,8 @@ export const mcpRouter = t.router({
                 secondMatchReason: mappedLiveTools[1]?.matchReason,
                 secondScore: mappedLiveTools[1]?.score,
                 scoreGap: mappedLiveTools.length > 1 ? (mappedLiveTools[0]?.score ?? 0) - (mappedLiveTools[1]?.score ?? 0) : undefined,
+                ignoredResultCount: ignoredSearchTelemetry.ignoredResultCount,
+                ignoredResultNames: ignoredSearchTelemetry.ignoredResultNames,
                 latencyMs: toLatencyMs(searchStartedAt),
                 status: 'success',
             });
