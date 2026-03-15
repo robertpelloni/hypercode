@@ -1027,6 +1027,42 @@ export default function MCPDashboard(): React.JSX.Element {
         }
     }
 
+    function applyLifecyclePreset(preset: 'all' | 'crashes' | 'single-active-prunes' | 'mode-changes') {
+        if (preset === 'all') {
+            setLifecycleTypeFilter('all');
+            setLifecycleReasonFilter('all');
+            setLifecycleWindowFilter('15m');
+            setLifecycleScopeFilter('all');
+            return;
+        }
+
+        if (preset === 'crashes') {
+            setLifecycleTypeFilter('server-crash');
+            setLifecycleReasonFilter('process-exit');
+            setLifecycleWindowFilter('1h');
+            setLifecycleScopeFilter('all');
+            return;
+        }
+
+        if (preset === 'single-active-prunes') {
+            setLifecycleTypeFilter('single-active-prune');
+            setLifecycleReasonFilter('single-active-policy');
+            setLifecycleWindowFilter('15m');
+            setLifecycleScopeFilter('all');
+            return;
+        }
+
+        setLifecycleTypeFilter('mode-updated');
+        setLifecycleReasonFilter('all');
+        setLifecycleWindowFilter('1h');
+        setLifecycleScopeFilter('all');
+    }
+
+    const isCrashPresetActive = lifecycleTypeFilter === 'server-crash' && lifecycleReasonFilter === 'process-exit' && lifecycleWindowFilter === '1h' && lifecycleScopeFilter === 'all';
+    const isSingleActivePresetActive = lifecycleTypeFilter === 'single-active-prune' && lifecycleReasonFilter === 'single-active-policy' && lifecycleWindowFilter === '15m' && lifecycleScopeFilter === 'all';
+    const isModePresetActive = lifecycleTypeFilter === 'mode-updated' && lifecycleWindowFilter === '1h' && lifecycleScopeFilter === 'all';
+    const isAllPresetActive = lifecycleTypeFilter === 'all' && lifecycleReasonFilter === 'all' && lifecycleWindowFilter === '15m' && lifecycleScopeFilter === 'all';
+
     return (
         <div className="p-4 sm:p-6 xl:p-8 space-y-8">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -1229,6 +1265,52 @@ export default function MCPDashboard(): React.JSX.Element {
                                                 </option>
                                             </select>
                                         </label>
+                                    </div>
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => applyLifecyclePreset('crashes')}
+                                            className={`border-zinc-700 ${isCrashPresetActive ? 'bg-rose-500/15 text-rose-200 border-rose-500/40' : 'text-zinc-300 hover:bg-zinc-800'}`}
+                                            title="Show recent downstream crash events"
+                                            aria-label="Apply crash triage preset"
+                                        >
+                                            Crash triage
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => applyLifecyclePreset('single-active-prunes')}
+                                            className={`border-zinc-700 ${isSingleActivePresetActive ? 'bg-amber-500/15 text-amber-200 border-amber-500/40' : 'text-zinc-300 hover:bg-zinc-800'}`}
+                                            title="Show single-active pruning lifecycle decisions"
+                                            aria-label="Apply single-active pruning preset"
+                                        >
+                                            Single-active prunes
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => applyLifecyclePreset('mode-changes')}
+                                            className={`border-zinc-700 ${isModePresetActive ? 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40' : 'text-zinc-300 hover:bg-zinc-800'}`}
+                                            title="Show lifecycle mode update events"
+                                            aria-label="Apply mode-changes preset"
+                                        >
+                                            Mode changes
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => applyLifecyclePreset('all')}
+                                            className={`border-zinc-700 ${isAllPresetActive ? 'bg-zinc-700/40 text-white' : 'text-zinc-300 hover:bg-zinc-800'}`}
+                                            title="Reset lifecycle filters to default overview"
+                                            aria-label="Reset lifecycle filter presets"
+                                        >
+                                            Reset
+                                        </Button>
                                     </div>
                                     {recentLifecycleEvents.length > 0 ? (
                                         <div className="mt-2 space-y-1.5 text-[11px] text-zinc-400">

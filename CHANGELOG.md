@@ -4,6 +4,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.163] — 2026-03-15
+
+- feat(web/mcp): added one-click lifecycle timeline triage presets in `/dashboard/mcp` (`Crash triage`, `Single-active prunes`, `Mode changes`, `Reset`) to jump to practical filter combinations instantly.
+- changed(web/mcp): lifecycle preset buttons now provide active-state highlighting, making the current triage lens visible at a glance during incident response.
+
 ## [2.7.162] — 2026-03-15
 
 - feat(web/mcp): added lifecycle timeline **reason-code** filter in `/dashboard/mcp`, enabling direct isolation of normalized causes like `process-exit`, `single-active-policy`, and `focus-shift`.
