@@ -16,6 +16,27 @@ import { parseToolName } from '../services/tool-name-parser.service.js';
 import { sanitizeName } from '../services/common-utils.js';
 import type { ServerParameters } from '../types/mcp-admin/index.js';
 
+const DISCOVERY_TIMEOUT_MS = 2_000;
+
+async function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+    let timer: NodeJS.Timeout | null = null;
+
+    try {
+        return await Promise.race([
+            promise,
+            new Promise<T>((_, reject) => {
+                timer = setTimeout(() => {
+                    reject(new Error(`${label} timed out after ${DISCOVERY_TIMEOUT_MS}ms`));
+                }, DISCOVERY_TIMEOUT_MS);
+            }),
+        ]);
+    } finally {
+        if (timer) {
+            clearTimeout(timer);
+        }
+    }
+}
+
 export interface DownstreamDiscoveryContext {
     namespaceUuid: string;
     sessionId: string;
@@ -68,12 +89,18 @@ async function visitEligibleServers(
 
     await Promise.allSettled(
         eligibleServers.map(async ([uuid, params]) => {
-            const session = await mcpServerPool.getSession(
-                context.sessionId,
-                uuid,
-                params,
-                context.namespaceUuid,
-            );
+            const session = await withTimeout(
+                mcpServerPool.getSession(
+                    context.sessionId,
+                    uuid,
+                    params,
+                    context.namespaceUuid,
+                ),
+                `Session bootstrap for ${params.name || uuid}`,
+            ).catch((error) => {
+                console.error(`Error connecting to ${params.name || uuid} during ${logScope}:`, error);
+                return null;
+            });
             if (!session) {
                 return;
             }
@@ -115,15 +142,18 @@ export async function listDownstreamPrompts(options: {
         }
 
         try {
-            const result = await session.client.request(
-                {
-                    method: 'prompts/list',
-                    params: {
-                        cursor: options.cursor,
-                        _meta: options.meta,
+            const result = await withTimeout(
+                session.client.request(
+                    {
+                        method: 'prompts/list',
+                        params: {
+                            cursor: options.cursor,
+                            _meta: options.meta,
+                        },
                     },
-                },
-                ListPromptsResultSchema as unknown as import('zod').ZodType<any>,
+                    ListPromptsResultSchema as unknown as import('zod').ZodType<any>,
+                ),
+                `Prompt discovery for ${serverName}`,
             );
 
             if (!result.prompts) {
@@ -196,15 +226,18 @@ export async function listDownstreamResources(options: {
         }
 
         try {
-            const result = await session.client.request(
-                {
-                    method: 'resources/list',
-                    params: {
-                        cursor: options.cursor,
-                        _meta: options.meta,
+            const result = await withTimeout(
+                session.client.request(
+                    {
+                        method: 'resources/list',
+                        params: {
+                            cursor: options.cursor,
+                            _meta: options.meta,
+                        },
                     },
-                },
-                ListResourcesResultSchema as unknown as import('zod').ZodType<any>,
+                    ListResourcesResultSchema as unknown as import('zod').ZodType<any>,
+                ),
+                `Resource discovery for ${serverName}`,
             );
 
             if (!result.resources) {
@@ -270,15 +303,18 @@ export async function listDownstreamResourceTemplates(options: {
             }
 
             try {
-                const result = await session.client.request(
-                    {
-                        method: 'resources/templates/list',
-                        params: {
-                            cursor: options.cursor,
-                            _meta: options.meta,
+                const result = await withTimeout(
+                    session.client.request(
+                        {
+                            method: 'resources/templates/list',
+                            params: {
+                                cursor: options.cursor,
+                                _meta: options.meta,
+                            },
                         },
-                    },
-                    ListResourceTemplatesResultSchema as unknown as import('zod').ZodType<any>,
+                        ListResourceTemplatesResultSchema as unknown as import('zod').ZodType<any>,
+                    ),
+                    `Resource template discovery for ${serverName}`,
                 );
 
                 if (!result.resourceTemplates) {

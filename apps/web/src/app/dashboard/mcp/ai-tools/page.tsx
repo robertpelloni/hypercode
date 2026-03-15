@@ -8,7 +8,7 @@ import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
 
 import { getCliHarnessCards, getProviderDirectoryCards, getStatusBadgeClasses } from './ai-tool-directory';
-import { getPortalBadgeClasses } from '../../billing/billing-portal-data';
+import { getPortalBadgeClasses, getProviderPortalCards, getProviderQuickAccessSections } from '../../billing/billing-portal-data';
 
 export default function AIToolsDashboard() {
     const [query, setQuery] = useState('');
@@ -140,6 +140,8 @@ export default function AIToolsDashboard() {
 
     const cliHarnessCards = useMemo(() => getCliHarnessCards(normalizedCliDetections, normalizedSessions), [normalizedCliDetections, normalizedSessions]);
     const providerDirectoryCards = useMemo(() => getProviderDirectoryCards(normalizedProviderQuotas), [normalizedProviderQuotas]);
+    const providerPortalCards = useMemo(() => getProviderPortalCards(normalizedProviderQuotas), [normalizedProviderQuotas]);
+    const providerQuickAccessSections = useMemo(() => getProviderQuickAccessSections(normalizedProviderQuotas), [normalizedProviderQuotas]);
     const connectedProviders = useMemo(() => providerDirectoryCards.filter((card) => card.statusTone === 'success'), [providerDirectoryCards]);
     const detectedHarnesses = useMemo(() => cliHarnessCards.filter((card) => card.installed), [cliHarnessCards]);
     const executionEnvironmentData = useMemo(() => {
@@ -219,6 +221,28 @@ export default function AIToolsDashboard() {
                 <StatCard title="Detected Harnesses" value={`${detectedHarnesses.length}/${cliHarnessCards.length}`} icon={TerminalSquare} tone="text-violet-400" />
                 <StatCard title="Connected Providers" value={`${connectedProviders.length}/${providerDirectoryCards.length}`} icon={Bot} tone="text-cyan-400" />
             </div>
+
+            <Card className="bg-zinc-900 border-zinc-800">
+                <CardHeader>
+                    <CardTitle className="text-white">Cloud Dev Dashboards</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 text-sm">
+                    <Link href="/dashboard/cloud-dev" className="rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900">
+                        Borg cloud session dashboard
+                    </Link>
+                    <Link href="/dashboard/session" className="rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900">
+                        Local session supervisor
+                    </Link>
+                    <a href="https://github.com/robertpelloni/jules-autopilot" target="_blank" rel="noreferrer" className="rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900 inline-flex items-center justify-between gap-2">
+                        Jules Autopilot reference
+                        <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
+                    </a>
+                    <a href="https://github.com/robertpelloni/opencode-autopilot" target="_blank" rel="noreferrer" className="rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900 inline-flex items-center justify-between gap-2">
+                        OpenCode Autopilot reference
+                        <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
+                    </a>
+                </CardContent>
+            </Card>
 
             <Card className="bg-zinc-900 border-zinc-800">
                 <CardHeader>
@@ -312,6 +336,50 @@ export default function AIToolsDashboard() {
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 <Card className="bg-zinc-900 border-zinc-800">
                     <CardHeader>
+                        <CardTitle className="text-white">Provider Quick Access</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {providerQuickAccessSections.length === 0 ? (
+                            <div className="rounded border border-dashed border-zinc-800 bg-zinc-950/40 p-6 text-sm text-zinc-500">
+                                Quick access links are not available yet.
+                            </div>
+                        ) : (
+                            providerQuickAccessSections.map((section) => (
+                                <div key={section.id} className="rounded border border-zinc-800 bg-zinc-950/50 p-4 space-y-3">
+                                    <div>
+                                        <div className="text-sm font-semibold text-white">{section.title}</div>
+                                        <p className="mt-1 text-xs text-zinc-500">{section.description}</p>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {section.links.map((link) => (
+                                            <a
+                                                key={`${section.id}-${link.providerId}-${link.actionLabel}`}
+                                                href={link.href}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="rounded border border-zinc-800 bg-zinc-900/70 px-3 py-2 text-xs text-zinc-200 hover:border-zinc-700 hover:bg-zinc-800/80"
+                                            >
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="font-medium text-zinc-100">{link.providerLabel}</span>
+                                                    <span className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide ${getPortalBadgeClasses(link.statusTone)}`}>
+                                                        {link.statusLabel}
+                                                    </span>
+                                                </div>
+                                                <div className="mt-1 inline-flex items-center gap-1 text-blue-300">
+                                                    {link.actionLabel}
+                                                    <ExternalLink className="h-3 w-3" />
+                                                </div>
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-zinc-900 border-zinc-800">
+                    <CardHeader>
                         <CardTitle className="text-white">CLI Harness Directory</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -356,6 +424,68 @@ export default function AIToolsDashboard() {
                         )}
                     </CardContent>
                 </Card>
+            </div>
+
+            <Card className="bg-zinc-900 border-zinc-800">
+                <CardHeader>
+                    <CardTitle className="text-white">Provider Billing & Subscription Surfaces</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    {providerPortalCards.length === 0 ? (
+                        <div className="rounded border border-dashed border-zinc-800 bg-zinc-950/40 p-6 text-sm text-zinc-500">
+                            Provider portals are not available yet.
+                        </div>
+                    ) : (
+                        providerPortalCards.map((portal) => {
+                            const usage = providerDirectoryCards.find((entry) => entry.provider === portal.id);
+
+                            return (
+                                <div key={portal.id} className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4 space-y-3">
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-semibold text-white">{portal.label}</span>
+                                                <span className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide ${getPortalBadgeClasses(portal.statusTone)}`}>
+                                                    {portal.statusLabel}
+                                                </span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-zinc-400">{portal.notes}</p>
+                                            <p className="mt-1 text-xs text-zinc-500">{portal.authLabel} • {portal.availabilityLabel}</p>
+                                        </div>
+                                        <div className="text-right text-xs text-zinc-400">
+                                            <div>Usage: {usage?.usageLabel ?? 'n/a'}</div>
+                                            <div>Reset: {usage?.resetLabel ?? 'n/a'}</div>
+                                        </div>
+                                    </div>
+
+                                    {portal.errorLabel ? (
+                                        <div className="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                                            Last provider error: {portal.errorLabel}
+                                        </div>
+                                    ) : null}
+
+                                    <div className="flex flex-wrap gap-2">
+                                        {portal.actions.map((action) => (
+                                            <a
+                                                key={`${portal.id}-${action.kind}-${action.href}`}
+                                                href={action.href}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-1 rounded border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-200 hover:border-zinc-600 hover:bg-zinc-800"
+                                            >
+                                                {action.label}
+                                                <ExternalLink className="h-3 w-3" />
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
 
                 <Card className="bg-zinc-900 border-zinc-800">
                     <CardHeader>

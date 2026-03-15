@@ -10,6 +10,11 @@ export default function MetricsPage() {
         { refetchInterval: 5000 }
     );
 
+    const { data: routingHistory } = trpc.metrics.getRoutingHistory.useQuery(
+        { limit: 20 },
+        { refetchInterval: 10000 }
+    );
+
     const formatBytes = (b: number) => {
         if (b > 1073741824) return `${(b / 1073741824).toFixed(1)} GB`;
         if (b > 1048576) return `${(b / 1048576).toFixed(1)} MB`;
@@ -114,6 +119,66 @@ export default function MetricsPage() {
                     )}
                 </>
             )}
+
+            {/* LLM Routing Decisions */}
+            <div className="bg-card border rounded-lg p-6">
+                <h2 className="text-lg font-semibold mb-1">🔀 LLM Routing Decisions</h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                    Recent provider selection and failover events (last 20, newest first). Refreshes every 10s.
+                </p>
+                {(!routingHistory || routingHistory.length === 0) ? (
+                    <p className="text-sm text-muted-foreground italic">No routing events recorded yet.</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="text-left border-b">
+                                    <th className="pb-2 pr-4 font-medium text-muted-foreground">Time</th>
+                                    <th className="pb-2 pr-4 font-medium text-muted-foreground">Initial</th>
+                                    <th className="pb-2 pr-4 font-medium text-muted-foreground">Final</th>
+                                    <th className="pb-2 pr-4 font-medium text-muted-foreground">Attempts</th>
+                                    <th className="pb-2 pr-4 font-medium text-muted-foreground">Duration</th>
+                                    <th className="pb-2 font-medium text-muted-foreground">Failover</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {routingHistory.map((ev, i) => (
+                                    <tr key={i} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                                        <td className="py-2 pr-4 text-muted-foreground tabular-nums whitespace-nowrap">
+                                            {new Date(ev.timestamp).toLocaleTimeString()}
+                                        </td>
+                                        <td className="py-2 pr-4 font-mono">
+                                            {ev.initialProvider}/{ev.initialModelId}
+                                        </td>
+                                        <td className={`py-2 pr-4 font-mono ${ev.hadFailover ? 'text-amber-500' : 'text-green-500'}`}>
+                                            {ev.finalProvider}/{ev.finalModelId}
+                                        </td>
+                                        <td className="py-2 pr-4 tabular-nums">{ev.attempts}</td>
+                                        <td className="py-2 pr-4 tabular-nums text-muted-foreground">
+                                            {ev.durationMs}ms
+                                        </td>
+                                        <td className="py-2">
+                                            {ev.hadFailover ? (
+                                                <span
+                                                    className="text-amber-500 font-medium cursor-help"
+                                                    title={ev.failovers.map(f =>
+                                                        `${f.fromProvider}/${f.fromModelId}: ${f.reason}`
+                                                    ).join('\n')}
+                                                >
+                                                    ⚠ {ev.failovers.length} hop{ev.failovers.length !== 1 ? 's' : ''}
+                                                </span>
+                                            ) : (
+                                                <span className="text-green-500">✓ direct</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
+

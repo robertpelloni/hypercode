@@ -4,6 +4,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.135] — 2026-03-14
+
+- feat(ai): added `RoutingEvent` interface and in-memory ring buffer (last 50) to `LLMService` — every `generateText` call now records `timestamp`, `initialProvider`, `finalProvider`, `attempts`, `durationMs`, `hadFailover`, and per-hop `failovers[]`.
+- feat(ai): added `getRoutingHistory()` public method on `LLMService` to expose the routing ring buffer to routers and dashboards.
+- feat(core): added `metrics.getRoutingHistory` tRPC endpoint to return recent LLM routing/failover decisions (up to 50, newest-first).
+- feat(web): added **LLM Routing Decisions** table to `/dashboard/metrics` showing per-request routing telemetry with amber warnings for failover hops and hover tooltips for failure reasons; refetches every 10s.
+- fix(ai): removed stale compiled `.js` files from `packages/ai/src/` that caused vitest to load an outdated build missing `isProviderUnavailableError`, making the third `LLMService` test fail silently.
+- fix(ai/test): explicitly null out `openaiClient` in the *"missing API key"* test to prevent real OpenAI network calls polluting the test suite.
+- test(ai): added `records a RoutingEvent in getRoutingHistory() after each generateText call` test verifying ring-buffer shape and failover flag; all 4 LLMService tests now pass deterministically.
+
+## [2.7.134] — 2026-03-14
+
+- fixed(mcp/discovery): added per-server timeout guards for downstream `prompts/list`, `resources/list`, and `resources/templates/list` requests so slow or hung downstream servers cannot stall Borg discovery handlers.
+- fixed(mcp/discovery): added timeout protection around downstream session bootstrap (`mcpServerPool.getSession`) during discovery scans to prevent `/mcp list` prompt discovery from hanging on unhealthy servers.
+- test(core): added `packages/core/src/mcp/downstreamDiscovery.test.ts` coverage for prompt-discovery timeout fallback and mixed healthy+hung server behavior.
+- changed(build): rebuilt `packages/core/dist` so `server-stdio.js` picks up the MCP discovery timeout fix at runtime.
+
 ## [2.7.133] — 2026-03-14
 
 - feat(cloud-dev): rewrote `/dashboard/cloud-dev` page to use tRPC instead of localStorage

@@ -11,7 +11,39 @@ export interface LLMResponse {
         inputTokens: number;
         outputTokens: number;
     };
+    routing?: {
+        attempts: number;
+        finalProvider: string;
+        finalModelId: string;
+        failovers: Array<{
+            fromProvider: string;
+            fromModelId: string;
+            reason: string;
+            recoverable: boolean;
+        }>;
+    };
 }
+
+/** A single recorded LLM routing decision, stored in the ring buffer for telemetry. */
+export interface RoutingEvent {
+    timestamp: number;
+    initialProvider: string;
+    initialModelId: string;
+    finalProvider: string;
+    finalModelId: string;
+    attempts: number;
+    durationMs: number;
+    hadFailover: boolean;
+    failovers: Array<{
+        fromProvider: string;
+        fromModelId: string;
+        reason: string;
+        recoverable: boolean;
+    }>;
+}
+
+/** Maximum number of routing events to retain in memory. */
+const ROUTING_HISTORY_LIMIT = 50;
 
 export interface GenerateTextOptions {
     timeout?: number;
@@ -42,6 +74,8 @@ export class LLMService {
     private anthropicClient?: Anthropic;
     private forgeClient?: ForgeService;
     private totalUsage = { inputTokens: 0, outputTokens: 0, estimatedCostUSD: 0 };
+    /** Ring buffer of the last ROUTING_HISTORY_LIMIT routing decisions (newest first). */
+    private routingHistory: RoutingEvent[] = [];
     public modelSelector: RoutingAwareModelSelector;
 
     constructor(modelSelector?: RoutingAwareModelSelector) {
@@ -64,6 +98,11 @@ export class LLMService {
 
     public getCostStats() {
         return this.totalUsage;
+    }
+
+    /** Returns the routing history ring buffer (most-recent first). */
+    public getRoutingHistory(): RoutingEvent[] {
+        return [...this.routingHistory];
     }
 
     private getErrorMessage(error: unknown): string {
@@ -120,6 +159,38 @@ export class LLMService {
         );
     }
 
+    private isProviderUnavailableError(error: unknown): boolean {
+        const message = this.getErrorMessage(error).toLowerCase();
+        const structured = error as {
+            status?: number;
+            code?: string | number;
+            cause?: { code?: string | number; status?: number; message?: string };
+            error?: { code?: string | number; status?: number; message?: string };
+        };
+
+        const status = structured?.status ?? structured?.cause?.status ?? structured?.error?.status;
+        const code = `${structured?.code ?? structured?.cause?.code ?? structured?.error?.code ?? ''}`.toLowerCase();
+
+        if (status === 401 || status === 403 || status === 404) {
+            return true;
+        }
+
+        if (code === 'invalid_api_key' || code === 'authentication_error' || code === 'model_not_found' || code === 'permission_denied') {
+            return true;
+        }
+
+        return (
+            message.includes('api key not configured') ||
+            message.includes('authentication') ||
+            message.includes('unauthorized') ||
+            message.includes('forbidden') ||
+            message.includes('invalid api key') ||
+            message.includes('permission denied') ||
+            message.includes('model not found') ||
+            message.includes('unsupported model')
+        );
+    }
+
     private trackUsage(provider: string, model: string, usage?: { inputTokens: number, outputTokens: number }) {
         if (!usage) return;
         this.totalUsage.inputTokens += usage.inputTokens;
@@ -135,6 +206,14 @@ export class LLMService {
 
         const maxAttempts = this.modelSelector ? 5 : 1;
         let lastError: any;
+        const excludedCandidates = new Set<string>();
+        const failovers: Array<{
+            fromProvider: string;
+            fromModelId: string;
+            reason: string;
+            recoverable: boolean;
+        }> = [];
+        const startedAt = Date.now();
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             console.log(`[LLMService] Generating with ${provider}/${modelId} (Attempt ${attempt}/${maxAttempts})...`);
@@ -361,17 +440,52 @@ export class LLMService {
                 // Track Usage
                 this.trackUsage(provider, modelId, response.usage);
 
+                response.routing = {
+                    attempts: attempt,
+                    finalProvider: provider,
+                    finalModelId: modelId,
+                    failovers,
+                };
+
+                // Record in telemetry ring buffer (most-recent first, capped at ROUTING_HISTORY_LIMIT)
+                const event: RoutingEvent = {
+                    timestamp: Date.now(),
+                    initialProvider,
+                    initialModelId,
+                    finalProvider: provider,
+                    finalModelId: modelId,
+                    attempts: attempt,
+                    durationMs: Date.now() - startedAt,
+                    hadFailover: failovers.length > 0,
+                    failovers: [...failovers],
+                };
+                this.routingHistory.unshift(event);
+                if (this.routingHistory.length > ROUTING_HISTORY_LIMIT) {
+                    this.routingHistory.length = ROUTING_HISTORY_LIMIT;
+                }
+
                 return response;
 
             } catch (error: any) {
                 lastError = error;
                 const isRecoverable = this.isRecoverableError(error);
+                const isProviderUnavailable = this.isProviderUnavailableError(error);
+                const shouldFallback = Boolean(this.modelSelector) && attempt < maxAttempts && (isRecoverable || isProviderUnavailable);
 
-                if (this.modelSelector && isRecoverable && attempt < maxAttempts) {
+                if (shouldFallback) {
                     console.warn(`[LLMService] ⚠️ Provider ${provider} failed (${error.message}). Switching models...`);
 
                     // 1. Report Failure
                     this.modelSelector.reportFailure(provider, modelId, error);
+                    excludedCandidates.add(`${provider}:${modelId}`);
+
+                    const failureMessage = this.getErrorMessage(error);
+                    failovers.push({
+                        fromProvider: provider,
+                        fromModelId: modelId,
+                        reason: failureMessage || 'provider failure',
+                        recoverable: isRecoverable,
+                    });
 
                     // 2. Select Next Model
                     // Use options.taskComplexity if available, else 'medium'
@@ -381,7 +495,7 @@ export class LLMService {
                         routingTaskType: options?.routingTaskType,
                         routingStrategy: options?.routingStrategy,
                         provider: undefined, // Clear preference, force automatic selection
-                        exclude: [`${provider}:${modelId}`]
+                        exclude: Array.from(excludedCandidates)
                     });
 
                     if (next.provider === provider && next.modelId === modelId) {

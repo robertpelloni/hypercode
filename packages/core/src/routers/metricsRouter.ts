@@ -115,4 +115,21 @@ export const metricsRouter = t.router({
         }
         return { success: true, monitoring: input.enabled };
     }),
+
+    /**
+     * Get recent LLM routing / failover decisions.
+     * Returns events newest-first, up to the ring-buffer limit (50).
+     */
+    getRoutingHistory: t.procedure.input(z.object({
+        limit: z.number().min(1).max(50).default(20),
+    }).optional()).query(async ({ input }) => {
+        const server = getMcpServer();
+        try {
+            const history = server.llmService.getRoutingHistory();
+            const limit = input?.limit ?? 20;
+            return history.slice(0, limit);
+        } catch {
+            return [];
+        }
+    }),
 });
