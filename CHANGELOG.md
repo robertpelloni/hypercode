@@ -4,6 +4,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.161] — 2026-03-15
+
+- feat(web/mcp): added lifecycle timeline recency window filter in `/dashboard/mcp` (`Last 5m`, `Last 15m`, `Last 1h`, `All events`) for faster incident-focused triage.
+- changed(web/mcp): lifecycle timeline filtering pipeline now applies time-window scope before type/scope filters, improving signal-to-noise when debugging recent crashes/switches.
+
 ## [2.7.160] — 2026-03-15
 
 - feat(core/mcp): added normalized `reasonCode` telemetry on pool lifecycle events (`mode-initialized`, `mode-change`, `focus-shift`, `create-new`, `promote-idle`, `reuse-active`, `single-active-policy`, `cleanup-request`, `process-exit`) so operator tooling can classify lifecycle causes without parsing free-text messages.

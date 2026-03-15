@@ -747,6 +747,7 @@ export default function MCPDashboard(): React.JSX.Element {
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [lifecycleTypeFilter, setLifecycleTypeFilter] = useState<string>('all');
     const [lifecycleScopeFilter, setLifecycleScopeFilter] = useState<'all' | 'active-server'>('all');
+    const [lifecycleWindowFilter, setLifecycleWindowFilter] = useState<'5m' | '15m' | '1h' | 'all'>('15m');
     const [bulkRefreshState, setBulkRefreshState] = useState<BulkDiscoveryOperationState | null>(null);
     const reloadMetadataMutation = mcpServersClient.reloadMetadata.useMutation();
     const clearMetadataCacheMutation = mcpServersClient.clearMetadataCache.useMutation();
@@ -792,8 +793,20 @@ export default function MCPDashboard(): React.JSX.Element {
     }, [lifecycleEvents]);
     const filteredLifecycleEvents = useMemo(() => {
         const activeServerUuid = summary.pool?.currentActiveServerUuid ?? null;
+        const now = Date.now();
+        const windowMs = lifecycleWindowFilter === 'all'
+            ? null
+            : lifecycleWindowFilter === '5m'
+                ? 5 * 60 * 1000
+                : lifecycleWindowFilter === '15m'
+                    ? 15 * 60 * 1000
+                    : 60 * 60 * 1000;
 
         return lifecycleEvents.filter((event) => {
+            if (windowMs !== null && now - event.timestamp > windowMs) {
+                return false;
+            }
+
             if (lifecycleTypeFilter !== 'all' && event.type !== lifecycleTypeFilter) {
                 return false;
             }
@@ -808,7 +821,7 @@ export default function MCPDashboard(): React.JSX.Element {
 
             return true;
         });
-    }, [lifecycleEvents, lifecycleScopeFilter, lifecycleTypeFilter, summary.pool?.currentActiveServerUuid]);
+    }, [lifecycleEvents, lifecycleScopeFilter, lifecycleTypeFilter, lifecycleWindowFilter, summary.pool?.currentActiveServerUuid]);
     const recentLifecycleEvents = filteredLifecycleEvents.slice(0, 8);
     const bulkActionsDisabled = bulkRefreshState !== null || reloadMetadataMutation.isPending || clearMetadataCacheMutation.isPending;
     const unresolvedActionableCount = unresolvedDiscoveryTargetUuids.length;
@@ -1143,7 +1156,7 @@ export default function MCPDashboard(): React.JSX.Element {
                                             showing <span className="font-semibold text-white">{recentLifecycleEvents.length}</span> of <span className="font-semibold text-white">{filteredLifecycleEvents.length}</span>
                                         </div>
                                     </div>
-                                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                                    <div className="mt-2 grid gap-2 sm:grid-cols-3">
                                         <label className="flex flex-col gap-1 text-[10px] uppercase tracking-wider text-zinc-500">
                                             Event type
                                             <select
@@ -1157,6 +1170,21 @@ export default function MCPDashboard(): React.JSX.Element {
                                                 {lifecycleEventTypes.map((eventType) => (
                                                     <option key={eventType} value={eventType}>{eventType}</option>
                                                 ))}
+                                            </select>
+                                        </label>
+                                        <label className="flex flex-col gap-1 text-[10px] uppercase tracking-wider text-zinc-500">
+                                            Window
+                                            <select
+                                                value={lifecycleWindowFilter}
+                                                onChange={(event) => setLifecycleWindowFilter(event.target.value as '5m' | '15m' | '1h' | 'all')}
+                                                title="Filter lifecycle timeline by recency window"
+                                                aria-label="Filter lifecycle timeline by recency window"
+                                                className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-[11px] text-zinc-200 outline-none focus:ring-1 focus:ring-blue-500"
+                                            >
+                                                <option value="5m">Last 5m</option>
+                                                <option value="15m">Last 15m</option>
+                                                <option value="1h">Last 1h</option>
+                                                <option value="all">All events</option>
                                             </select>
                                         </label>
                                         <label className="flex flex-col gap-1 text-[10px] uppercase tracking-wider text-zinc-500">
