@@ -615,13 +615,7 @@ export function Sidebar({ className }: SidebarProps) {
                 const selected = paletteItems[paletteIndex];
                 if (selected) {
                     event.preventDefault();
-                    const trimmedQuery = paletteQuery.trim();
-                    if (trimmedQuery) {
-                        const nextSearches = [trimmedQuery, ...recentSearches.filter((entry) => entry !== trimmedQuery)]
-                            .slice(0, MAX_RECENT_SEARCHES);
-                        setRecentSearches(nextSearches);
-                        safeStorageSet(SIDEBAR_RECENT_SEARCHES_STORAGE_KEY, JSON.stringify(nextSearches));
-                    }
+                    rememberPaletteSearch(paletteQuery);
 
                     if (selected.kind === 'action' && selected.id) {
                         runPaletteAction(selected.id);
@@ -936,13 +930,7 @@ export function Sidebar({ className }: SidebarProps) {
                                             type="button"
                                             onMouseEnter={() => setPaletteIndex(index)}
                                             onClick={(event) => {
-                                                const trimmedQuery = paletteQuery.trim();
-                                                if (trimmedQuery) {
-                                                    const nextSearches = [trimmedQuery, ...recentSearches.filter((entry) => entry !== trimmedQuery)]
-                                                        .slice(0, MAX_RECENT_SEARCHES);
-                                                    setRecentSearches(nextSearches);
-                                                    safeStorageSet(SIDEBAR_RECENT_SEARCHES_STORAGE_KEY, JSON.stringify(nextSearches));
-                                                }
+                                                rememberPaletteSearch(paletteQuery);
 
                                                 if (item.kind === 'action' && item.id) {
                                                     runPaletteAction(item.id);

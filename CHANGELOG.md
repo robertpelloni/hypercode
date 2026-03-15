@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.211] — 2026-03-15
+
+- refactor(web/sidebar): reused the existing `rememberPaletteSearch(...)` helper for both keyboard and click selection flows in `Sidebar.tsx`, removing duplicated recent-search persistence logic in the quick-switch palette.
+- changed(web/sidebar): quick-switch recent-search history now follows one shared persistence path, reducing drift risk between palette interaction modes.
+- test(web/navigation): revalidated the focused nav suites after the palette persistence cleanup (`15` tests passing).
+
 ## [2.7.210] — 2026-03-15
 
 - changed(web/navigation): added shared `matchesNavQuery(...)` in `nav-validation.ts` so nav search/filter behavior now matches against title, description, section, and normalized href through one canonical utility.
