@@ -119,6 +119,9 @@ function InspectorDashboardContent() {
     const [argsJson, setArgsJson] = useState('{}');
     const [result, setResult] = useState<any | null>(null);
     const [hydratedSchema, setHydratedSchema] = useState<Record<string, unknown> | null>(null);
+    const [maxLoadedToolsDraft, setMaxLoadedToolsDraft] = useState(16);
+    const [maxHydratedSchemasDraft, setMaxHydratedSchemasDraft] = useState(8);
+    const [idleEvictionThresholdDraftMs, setIdleEvictionThresholdDraftMs] = useState(5 * 60 * 1000);
 
     const toolList = useMemo(() => ((tools || []) as InspectorTool[]), [tools]);
 
@@ -214,6 +217,11 @@ function InspectorDashboardContent() {
     })();
 
     const workingSet = (workingSetQuery.data?.tools || []) as WorkingSetTool[];
+    const workingSetLimits = workingSetQuery.data?.limits as {
+        maxLoadedTools?: number;
+        maxHydratedSchemas?: number;
+        idleEvictionThresholdMs?: number;
+    } | undefined;
     const telemetry = (telemetryQuery.data || []) as ToolSelectionTelemetryEvent[];
     const evictionHistory = (evictionHistoryQuery.data || []) as EvictionEvent[];
     const preferences = (preferencesQuery.data as ToolPreferences | undefined) ?? {
@@ -364,6 +372,35 @@ function InspectorDashboardContent() {
         setPreferencesMutation.mutate(next as never);
     };
 
+    const saveCapacity = () => {
+        const nextMax = Math.max(4, Math.min(64, Math.round(maxLoadedToolsDraft)));
+        const nextHydrated = Math.max(2, Math.min(32, Math.round(maxHydratedSchemasDraft)));
+        const nextIdleEvictionThresholdMs = Math.max(10_000, Math.min(24 * 60 * 60 * 1000, Math.round(idleEvictionThresholdDraftMs)));
+
+        setMaxLoadedToolsDraft(nextMax);
+        setMaxHydratedSchemasDraft(nextHydrated);
+        setIdleEvictionThresholdDraftMs(nextIdleEvictionThresholdMs);
+
+        if (
+            nextMax === (preferences.maxLoadedTools ?? 16)
+            && nextHydrated === (preferences.maxHydratedSchemas ?? 8)
+            && nextIdleEvictionThresholdMs === (preferences.idleEvictionThresholdMs ?? (5 * 60 * 1000))
+        ) {
+            return;
+        }
+
+        updateToolPreferences({
+            importantTools: preferences.importantTools,
+            alwaysLoadedTools: preferences.alwaysLoadedTools,
+            autoLoadMinConfidence: preferences.autoLoadMinConfidence,
+            maxLoadedTools: nextMax,
+            maxHydratedSchemas: nextHydrated,
+            idleEvictionThresholdMs: nextIdleEvictionThresholdMs,
+        });
+    };
+
+    const idleEvictionThresholdMinutes = Math.max(0.17, Number((idleEvictionThresholdDraftMs / 60000).toFixed(2)));
+
     const toggleAlwaysLoaded = (toolName: string) => {
         const next = new Set(alwaysLoadedTools);
         const isCurrentlyOn = alwaysLoadedTools.has(toolName) || dbAlwaysOnTools.has(toolName);
@@ -380,8 +417,17 @@ function InspectorDashboardContent() {
             importantTools: preferences.importantTools,
             alwaysLoadedTools: Array.from(next),
             autoLoadMinConfidence: preferences.autoLoadMinConfidence,
+            maxLoadedTools: preferences.maxLoadedTools,
+            maxHydratedSchemas: preferences.maxHydratedSchemas,
+            idleEvictionThresholdMs: preferences.idleEvictionThresholdMs,
         });
     };
+
+    useEffect(() => {
+        setMaxLoadedToolsDraft(preferences.maxLoadedTools ?? 16);
+        setMaxHydratedSchemasDraft(preferences.maxHydratedSchemas ?? 8);
+        setIdleEvictionThresholdDraftMs(preferences.idleEvictionThresholdMs ?? (5 * 60 * 1000));
+    }, [preferences.maxLoadedTools, preferences.maxHydratedSchemas, preferences.idleEvictionThresholdMs]);
 
     return (
         <div className="p-8 space-y-8 h-full flex flex-col">
@@ -630,7 +676,93 @@ function InspectorDashboardContent() {
                             <Layers className="h-4 w-4" /> Session Working Set
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-0 flex-1 overflow-y-auto">
+                    <CardContent className="p-0 flex-1 overflow-y-auto space-y-0">
+                        <div className="p-3 border-b border-zinc-800/70 space-y-3 bg-zinc-950/30">
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="rounded border border-zinc-800 bg-zinc-950/70 p-2">
+                                    <div className="uppercase tracking-wider text-zinc-500">Loaded cap</div>
+                                    <div className="mt-1 text-sm font-semibold text-white">{workingSetLimits?.maxLoadedTools ?? 0}</div>
+                                </div>
+                                <div className="rounded border border-zinc-800 bg-zinc-950/70 p-2">
+                                    <div className="uppercase tracking-wider text-zinc-500">Schema cap</div>
+                                    <div className="mt-1 text-sm font-semibold text-white">{workingSetLimits?.maxHydratedSchemas ?? 0}</div>
+                                </div>
+                                <div className="rounded border border-zinc-800 bg-zinc-950/70 p-2 col-span-2">
+                                    <div className="uppercase tracking-wider text-zinc-500">Idle threshold</div>
+                                    <div className="mt-1 text-sm font-semibold text-white">
+                                        {Math.max(0.17, Number((((workingSetLimits?.idleEvictionThresholdMs ?? 0) / 60000)).toFixed(2)))} min
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] uppercase tracking-wider text-zinc-500">Loaded cap</span>
+                                    <span className="text-xs text-zinc-300">{maxLoadedToolsDraft}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min={4}
+                                    max={64}
+                                    step={1}
+                                    value={maxLoadedToolsDraft}
+                                    onChange={(e) => setMaxLoadedToolsDraft(Number(e.target.value))}
+                                    className="w-full"
+                                    title="Maximum number of loaded tools before eviction"
+                                    aria-label="Maximum loaded tools"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] uppercase tracking-wider text-zinc-500">Schema cap</span>
+                                    <span className="text-xs text-zinc-300">{maxHydratedSchemasDraft}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min={2}
+                                    max={32}
+                                    step={1}
+                                    value={maxHydratedSchemasDraft}
+                                    onChange={(e) => setMaxHydratedSchemasDraft(Number(e.target.value))}
+                                    className="w-full"
+                                    title="Maximum number of hydrated schemas before eviction"
+                                    aria-label="Maximum hydrated schemas"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] uppercase tracking-wider text-zinc-500">Idle threshold (min)</span>
+                                    <span className="text-xs text-zinc-300">{idleEvictionThresholdMinutes}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min={0.17}
+                                    max={1440}
+                                    step={0.01}
+                                    value={idleEvictionThresholdMinutes}
+                                    onChange={(e) => setIdleEvictionThresholdDraftMs(Math.round(Number(e.target.value) * 60_000))}
+                                    className="w-full"
+                                    title="Idle duration threshold in minutes before idle-biased eviction"
+                                    aria-label="Idle eviction threshold"
+                                />
+                            </div>
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="w-full border-zinc-700 text-zinc-200 hover:bg-zinc-800"
+                                onClick={saveCapacity}
+                                disabled={setPreferencesMutation.isPending}
+                                title="Apply working-set capacity limits and idle threshold"
+                                aria-label="Apply working-set capacity limits"
+                            >
+                                Apply capacity
+                            </Button>
+                        </div>
+
                         {workingSet.length > 0 ? (
                             <div className="divide-y divide-zinc-800/50">
                                 {workingSet.map((tool) => {

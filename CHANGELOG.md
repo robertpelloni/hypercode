@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.138] — 2026-03-14
+
+- feat(web/mcp): added working-set limits visibility in `/dashboard/mcp/inspector` (`maxLoadedTools`, `maxHydratedSchemas`, and `idleEvictionThresholdMs`) so operators can see live capacity posture without switching pages.
+- feat(web/mcp): added in-panel working-set capacity controls in inspector (loaded cap, schema cap, idle eviction threshold) with persistence via `mcp.setToolPreferences`.
+- fix(web/mcp): inspector always-on toggles now preserve existing working-set capacity preferences (`maxLoadedTools`, `maxHydratedSchemas`, `idleEvictionThresholdMs`) when updating tool profile settings.
+
 ## [2.7.137] — 2026-03-14
 
 - feat(core/mcp): strengthened `mcp.getWorkingSet` fallback payload to always include `idleEvictionThresholdMs` in `limits` for stable UI rendering even when server state is unavailable.
