@@ -4,6 +4,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.166] — 2026-03-15
+
+- feat(web/mcp): added `Copy summary` action in `/dashboard/mcp` lifecycle controls that copies a compact incident handoff snapshot (window/type/reason/scope, active server, event counts, top reason facets).
+- changed(web/mcp): lifecycle triage handoff now supports both shareable URL links and paste-ready text summaries for faster operator-to-operator escalation.
+
 ## [2.7.165] — 2026-03-15
 
 - feat(web/mcp): added a compact `Top reasons (current scope)` lifecycle facet in `/dashboard/mcp` that surfaces high-frequency `reasonCode` values with event counts for the active time/type/scope slice.

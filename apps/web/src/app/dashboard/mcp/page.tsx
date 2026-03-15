@@ -1199,6 +1199,40 @@ export default function MCPDashboard(): React.JSX.Element {
         }
     }
 
+    async function handleCopyLifecycleTriageSummary() {
+        const activeServerLabel = summary.pool?.currentActiveServerName
+            ? `${summary.pool.currentActiveServerName}${summary.pool.currentActiveServerUuid ? ` (${summary.pool.currentActiveServerUuid})` : ''}`
+            : (summary.pool?.currentActiveServerUuid ?? 'none');
+        const topReasonsLine = lifecycleReasonFacetCounts.length > 0
+            ? lifecycleReasonFacetCounts.map((facet) => `${facet.reasonCode}: ${facet.count}`).join(', ')
+            : 'none';
+
+        const summaryText = [
+            'MCP lifecycle triage summary',
+            `window=${lifecycleWindowFilter}`,
+            `type=${lifecycleTypeFilter}`,
+            `reason=${lifecycleReasonFilter}`,
+            `scope=${lifecycleScopeFilter}`,
+            `activeServer=${activeServerLabel}`,
+            `matchingEvents=${filteredLifecycleEvents.length}`,
+            `visibleEvents=${recentLifecycleEvents.length}`,
+            `topReasons=${topReasonsLine}`,
+        ].join('\n');
+
+        try {
+            if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(summaryText);
+                toast.success('Copied lifecycle triage summary.');
+                return;
+            }
+
+            toast.error('Clipboard access is unavailable in this browser.');
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to copy lifecycle triage summary.';
+            toast.error(message);
+        }
+    }
+
     function applyLifecyclePreset(preset: 'all' | 'crashes' | 'single-active-prunes' | 'mode-changes') {
         if (preset === 'all') {
             setLifecycleTypeFilter('all');
@@ -1494,6 +1528,18 @@ export default function MCPDashboard(): React.JSX.Element {
                                         >
                                             <ExternalLink className="mr-2 h-3.5 w-3.5" />
                                             Copy triage link
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => void handleCopyLifecycleTriageSummary()}
+                                            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                                            title="Copy a compact lifecycle triage summary for incident handoff"
+                                            aria-label="Copy lifecycle triage summary"
+                                        >
+                                            <Activity className="mr-2 h-3.5 w-3.5" />
+                                            Copy summary
                                         </Button>
                                     </div>
                                     {lifecycleReasonFacetCounts.length > 0 ? (
