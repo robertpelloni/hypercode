@@ -305,4 +305,15 @@ export const billingRouter = t.router({
                 strategy: rules[input.taskType],
             };
         }),
+
+    /** Get models currently depleted or on cooldown in the ModelSelector session state. */
+    getDepletedModels: publicProcedure.query(async () => {
+        const llm = getLLMService();
+        try {
+            return llm.modelSelector.getDepletedModels?.() ?? [];
+        } catch {
+            return [];
+        }
+    }),
 });
+

@@ -373,6 +373,15 @@ export type ModelSelectorRuntime = {
     getQuotaService: () => QuotaServiceRuntime;
     getAvailableModels?: () => ModelInfoRuntime[];
     getFallbackChain?: (options?: { routingTaskType?: string }) => ModelInfoRuntime[];
+    getDepletedModels?: () => Array<{
+        key: string;
+        provider: string;
+        modelId: string;
+        depletedAt: number;
+        retryAfter: number;
+        isPermanent: boolean;
+        coolsDownAt: string;
+    }>;
 };
 
 export type CostStatsRuntime = {

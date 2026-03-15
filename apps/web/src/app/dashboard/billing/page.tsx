@@ -49,6 +49,7 @@ export default function ProviderAuthBillingMatrix() {
     const { data: pricing, isLoading: isPricingLoading } = trpc.billing.getModelPricing.useQuery();
     const { data: fallback, isLoading: isFallbackLoading } = trpc.billing.getFallbackChain.useQuery({ taskType: fallbackTaskType });
     const { data: taskRouting, isLoading: isTaskRoutingLoading } = trpc.billing.getTaskRoutingRules.useQuery();
+        const { data: depletedModels } = trpc.billing.getDepletedModels.useQuery(undefined, { refetchInterval: 15000 });
     const setRoutingStrategyMutation = trpc.billing.setRoutingStrategy.useMutation({
         onSuccess: async () => {
             toast.success('Default provider routing updated');
@@ -227,6 +228,34 @@ export default function ProviderAuthBillingMatrix() {
                             </div>
                         </CardContent>
                     </Card>
+
+                        {/* Blocked / Cooling-Down Models */}
+                        {depletedModels && depletedModels.length > 0 && (
+                            <Card className="bg-zinc-900 border-red-900/40 shadow-xl">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-bold text-red-400 uppercase tracking-widest flex items-center gap-2">
+                                        <AlertCircle className="h-4 w-4 text-red-400" />
+                                        Blocked / Cooling-Down Models
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="pt-2 space-y-2">
+                                    {depletedModels.map((m) => (
+                                        <div key={m.key} className={`flex items-center gap-3 p-2 rounded-lg border text-xs ${m.isPermanent ? 'bg-red-950/30 border-red-900/50' : 'bg-amber-950/20 border-amber-900/40'}`}>
+                                            <div className={`w-2 h-2 rounded-full shrink-0 ${m.isPermanent ? 'bg-red-500' : 'bg-amber-500'}`} />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-semibold text-zinc-200 truncate capitalize">{m.provider} / {m.modelId}</div>
+                                                <div className={`mt-0.5 ${m.isPermanent ? 'text-red-400' : 'text-amber-500'}`}>
+                                                    {m.isPermanent ? 'Auth failure — session blocked' : `Cooldown until ${m.coolsDownAt}`}
+                                                </div>
+                                            </div>
+                                            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 shrink-0 ${m.isPermanent ? 'border-red-700 text-red-400' : 'border-amber-700 text-amber-400'}`}>
+                                                {m.isPermanent ? 'BLOCKED' : '429'}
+                                            </Badge>
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        )}
 
                     {/* Routing Fallback Chain */}
                     <Card className="bg-zinc-900 border-zinc-800 shadow-xl">

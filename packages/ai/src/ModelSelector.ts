@@ -73,18 +73,76 @@ export class ModelSelector {
 
     public getQuotaService() { return this.quotaService; }
 
+    /** Returns a snapshot of currently depleted/cooling-down models for dashboard display. */
+    public getDepletedModels(): Array<{
+        key: string;
+        provider: string;
+        modelId: string;
+        depletedAt: number;
+        retryAfter: number; // Infinity means permanent for this session
+        isPermanent: boolean;
+        coolsDownAt: string; // human-readable
+    }> {
+        const now = Date.now();
+        const result: Array<ReturnType<ModelSelector['getDepletedModels']>[number]> = [];
+        for (const [key, status] of this.modelStates.entries()) {
+            if (!status.isDepleted) continue;
+            // Skip entries that have already naturally expired
+            if (status.retryAfter !== Infinity && now > (status.retryAfter ?? 0)) continue;
+            const [provider, ...modelParts] = key.split(':');
+            const isPermanent = status.retryAfter === Infinity;
+            result.push({
+                key,
+                provider: provider ?? key,
+                modelId: modelParts.join(':'),
+                depletedAt: status.depletedAt ?? now,
+                retryAfter: status.retryAfter ?? 0,
+                isPermanent,
+                coolsDownAt: isPermanent ? 'session end' : new Date(status.retryAfter ?? 0).toLocaleTimeString(),
+            });
+        }
+        return result;
+    }
+
     private getCandidateKey(provider: string, modelId: string): string {
         return `${provider}:${modelId}`;
     }
 
-    public reportFailure(provider: string, modelId: string) {
+    public reportFailure(provider: string, modelId: string, cause?: unknown) {
         const candidateKey = this.getCandidateKey(provider, modelId);
-        console.warn(`[ModelSelector] Reporting failure for ${candidateKey}. Marking as DEPLETED.`);
+
+        // Permanent failures (bad key, auth, model-not-found): block for the full session.
+        // Transient failures (429, 5xx, network): use the normal COOL_DOWN_MS backoff.
+        const isPermanent = this.isPermanentFailure(cause);
+        const cooldown = isPermanent ? Number.MAX_SAFE_INTEGER : COOL_DOWN_MS;
+        const label = isPermanent ? 'PERMANENT (auth/key)' : `TRANSIENT (${COOL_DOWN_MS / 1000}s backoff)`;
+        console.warn(`[ModelSelector] Reporting failure for ${candidateKey}. Mode: ${label}.`);
+
         this.modelStates.set(candidateKey, {
             isDepleted: true,
             depletedAt: Date.now(),
-            retryAfter: Date.now() + COOL_DOWN_MS
+            retryAfter: isPermanent ? Infinity : Date.now() + COOL_DOWN_MS,
         });
+    }
+
+    /** Returns true when the error indicates a permanent configuration failure (bad key / auth / not found). */
+    private isPermanentFailure(cause: unknown): boolean {
+        if (!cause) return false;
+        const err = cause as { status?: number; message?: string; code?: string };
+        const status = err.status;
+        const code = String(err.code ?? '').toLowerCase();
+        const message = (err.message ?? '').toLowerCase();
+        if (status === 401 || status === 403 || status === 404) return true;
+        if (code === 'invalid_api_key' || code === 'authentication_error' || code === 'permission_denied') return true;
+        return (
+            message.includes('api key not configured') ||
+            message.includes('unauthorized') ||
+            message.includes('invalid api key') ||
+            message.includes('forbidden') ||
+            message.includes('authentication') ||
+            message.includes('model not found') ||
+            message.includes('unsupported model')
+        );
     }
 
     private loadConfig() {

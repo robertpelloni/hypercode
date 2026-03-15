@@ -45,4 +45,37 @@ describe('ModelSelector', () => {
             reason: 'BUDGET_EXCEEDED_FORCED_LOCAL'
         });
     });
+
+    it('permanently blocks a model when reportFailure is called with an auth error cause', async () => {
+        const selector = new ModelSelector();
+        vi.spyOn(selector as any, 'getConfiguredChain').mockReturnValue(null);
+
+        const authError = { message: 'api key not configured' };
+        selector.reportFailure('google', 'gemini-2.0-flash', authError);
+
+        const depleted = selector.getDepletedModels();
+        const entry = depleted.find((d) => d.provider === 'google');
+        expect(entry).toBeDefined();
+        expect(entry!.isPermanent).toBe(true);
+        expect(entry!.retryAfter).toBe(Infinity);
+    });
+
+    it('uses a timed cooldown when reportFailure is called with a transient (429) cause', async () => {
+        const selector = new ModelSelector();
+        vi.spyOn(selector as any, 'getConfiguredChain').mockReturnValue(null);
+
+        const rateLimitError = { status: 429 };
+        selector.reportFailure('anthropic', 'claude-sonnet-4-20250514', rateLimitError);
+
+        const depleted = selector.getDepletedModels();
+        const entry = depleted.find((d) => d.provider === 'anthropic');
+        expect(entry).toBeDefined();
+        expect(entry!.isPermanent).toBe(false);
+        expect(entry!.retryAfter).toBeGreaterThan(Date.now());
+    });
+
+    it('getDepletedModels returns empty array when no failures have been reported', () => {
+        const selector = new ModelSelector();
+        expect(selector.getDepletedModels()).toEqual([]);
+    });
 });
