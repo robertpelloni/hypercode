@@ -2,6 +2,12 @@ import type { NavSection } from './nav-config';
 
 type NavItem = NavSection['items'][number];
 
+export interface NavSearchCandidate {
+    title: string;
+    href: string;
+    description?: string;
+}
+
 export interface NavDuplicateIssue {
     href: string;
     sections: string[];
@@ -52,6 +58,23 @@ export function isNavHrefActive(currentPathname: string, href: string): boolean 
     }
 
     return normalizedHref !== '/' && normalizedPathname.startsWith(`${normalizedHref}/`);
+}
+
+export function matchesNavQuery(
+    query: string,
+    item: NavSearchCandidate,
+    section?: string,
+): boolean {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) {
+        return true;
+    }
+
+    const normalizedHref = normalizeNavHref(item.href).toLowerCase();
+    return item.title.toLowerCase().includes(normalizedQuery)
+        || normalizedHref.includes(normalizedQuery)
+        || (item.description ?? '').toLowerCase().includes(normalizedQuery)
+        || (section ?? '').toLowerCase().includes(normalizedQuery);
 }
 
 export function buildNavItemsByHref(sections: NavSection[]): Map<string, NavItem> {

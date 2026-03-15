@@ -6,6 +6,7 @@ import {
     buildNavItemsByNormalizedHref,
     hasNavValidationIssues,
     isNavHrefActive,
+    matchesNavQuery,
     normalizeNavHref,
     validateSidebarSections,
 } from './nav-validation';
@@ -33,6 +34,26 @@ describe('isNavHrefActive', () => {
     it('supports nested-route activation but does not over-match root', () => {
         expect(isNavHrefActive('/dashboard/tools/detail', '/dashboard/tools')).toBe(true);
         expect(isNavHrefActive('/dashboard/tools', '/')).toBe(false);
+    });
+});
+
+describe('matchesNavQuery', () => {
+    const candidate = {
+        title: 'Library',
+        href: '/dashboard/library/?tab=overview',
+        description: 'Browse tools and documents',
+    };
+
+    it('matches against title, description, section, and normalized href', () => {
+        expect(matchesNavQuery('library', candidate, 'Knowledge')).toBe(true);
+        expect(matchesNavQuery('documents', candidate, 'Knowledge')).toBe(true);
+        expect(matchesNavQuery('knowledge', candidate, 'Knowledge')).toBe(true);
+        expect(matchesNavQuery('/dashboard/library', candidate, 'Knowledge')).toBe(true);
+    });
+
+    it('treats blank queries as match-all and rejects unrelated terms', () => {
+        expect(matchesNavQuery('', candidate, 'Knowledge')).toBe(true);
+        expect(matchesNavQuery('totally-unrelated', candidate, 'Knowledge')).toBe(false);
     });
 });
 

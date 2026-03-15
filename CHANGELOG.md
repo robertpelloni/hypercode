@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.210] — 2026-03-15
+
+- changed(web/navigation): added shared `matchesNavQuery(...)` in `nav-validation.ts` so nav search/filter behavior now matches against title, description, section, and normalized href through one canonical utility.
+- changed(web/sidebar): `Sidebar.tsx` now uses `matchesNavQuery(...)` for section filtering, quick-switch palette filtering, favorites filtering, and recents filtering, keeping search behavior consistent across all nav surfaces.
+- test(web/navigation): expanded `nav-validation.test.ts` with query-matching coverage (including normalized href matching) and revalidated focused nav suites (`15` tests passing).
+
 ## [2.7.209] — 2026-03-15
 
 - changed(web/navigation): added shared `isNavHrefActive(...)` in `nav-validation.ts` to centralize canonical active-route decisions using normalized pathname/href comparisons.

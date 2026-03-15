@@ -10,7 +10,7 @@ import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@d
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { SIDEBAR_SECTIONS } from "./mcp/nav-config";
-import { buildNavItemsByNormalizedHref, hasNavValidationIssues, isNavHrefActive, normalizeNavHref, validateSidebarSections } from "./mcp/nav-validation";
+import { buildNavItemsByNormalizedHref, hasNavValidationIssues, isNavHrefActive, matchesNavQuery, normalizeNavHref, validateSidebarSections } from "./mcp/nav-validation";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
@@ -213,15 +213,7 @@ export function Sidebar({ className }: SidebarProps) {
         return SIDEBAR_SECTIONS
             .map((section) => ({
                 ...section,
-                items: section.items.filter((item) => {
-                    if (!normalizedQuery) {
-                        return true;
-                    }
-                    return (
-                        item.title.toLowerCase().includes(normalizedQuery) ||
-                        item.href.toLowerCase().includes(normalizedQuery)
-                    );
-                }),
+                items: section.items.filter((item) => matchesNavQuery(normalizedQuery, item, section.title)),
             }))
             .filter((section) => section.items.length > 0);
     }, [normalizedQuery]);
@@ -290,15 +282,7 @@ export function Sidebar({ className }: SidebarProps) {
         });
 
         const rows = Array.from(routeMeta.values()).filter((item) => {
-            if (!q) {
-                return true;
-            }
-            return (
-                item.title.toLowerCase().includes(q) ||
-                item.href.toLowerCase().includes(q) ||
-                (item.description ?? '').toLowerCase().includes(q) ||
-                item.section.toLowerCase().includes(q)
-            );
+            return matchesNavQuery(q, item, item.section);
         });
 
         rows.sort((a, b) => {
@@ -330,12 +314,7 @@ export function Sidebar({ className }: SidebarProps) {
             .map((href) => allItemsByHref.get(href))
             .filter((item): item is { title: string; href: string; icon: any; description?: string } => Boolean(item))
             .filter((item) => {
-                if (!normalizedQuery) {
-                    return true;
-                }
-                return item.title.toLowerCase().includes(normalizedQuery)
-                    || item.href.toLowerCase().includes(normalizedQuery)
-                    || (item.description ?? '').toLowerCase().includes(normalizedQuery);
+                return matchesNavQuery(normalizedQuery, item, 'Favorites');
             });
     }, [allItemsByHref, favorites, normalizedQuery]);
 
@@ -344,12 +323,7 @@ export function Sidebar({ className }: SidebarProps) {
             .map((href) => allItemsByHref.get(href))
             .filter((item): item is { title: string; href: string; icon: any; description?: string } => Boolean(item))
             .filter((item) => {
-                if (!normalizedQuery) {
-                    return true;
-                }
-                return item.title.toLowerCase().includes(normalizedQuery)
-                    || item.href.toLowerCase().includes(normalizedQuery)
-                    || (item.description ?? '').toLowerCase().includes(normalizedQuery);
+                return matchesNavQuery(normalizedQuery, item, 'Recent');
             });
     }, [allItemsByHref, normalizedQuery, recentRoutes]);
 
