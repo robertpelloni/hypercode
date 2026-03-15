@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import type { NavSection } from './nav-config';
-import { buildNavItemsByHref, hasNavValidationIssues, normalizeNavHref, validateSidebarSections } from './nav-validation';
+import {
+    buildNavItemsByHref,
+    buildNavItemsByNormalizedHref,
+    hasNavValidationIssues,
+    normalizeNavHref,
+    validateSidebarSections,
+} from './nav-validation';
 
 describe('normalizeNavHref', () => {
     it('normalizes trailing slashes while preserving root', () => {
@@ -156,6 +162,28 @@ describe('validateSidebarSections', () => {
         ];
 
         const map = buildNavItemsByHref(sections);
+
+        expect(map.get('/same')?.title).toBe('Original');
+        expect(map.get('/same')?.description).toBe('first');
+    });
+
+    it('builds normalized href map with first-seen metadata for semantic collisions', () => {
+        const sections: NavSection[] = [
+            {
+                title: 'One',
+                items: [
+                    { title: 'Original', href: '/same/?tab=one#top', icon: null, variant: 'ghost', description: 'first' },
+                ],
+            },
+            {
+                title: 'Two',
+                items: [
+                    { title: 'Shadowed', href: '/same/', icon: null, variant: 'ghost', description: 'second' },
+                ],
+            },
+        ];
+
+        const map = buildNavItemsByNormalizedHref(sections);
 
         expect(map.get('/same')?.title).toBe('Original');
         expect(map.get('/same')?.description).toBe('first');

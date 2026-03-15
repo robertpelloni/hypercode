@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.206] — 2026-03-15
+
+- changed(web/navigation): added `buildNavItemsByNormalizedHref(...)` in `nav-validation.ts` to build deterministic first-seen nav metadata keyed by canonicalized hrefs, preventing semantic alias collisions from overriding map entries.
+- changed(web/sidebar): `Sidebar.tsx` now uses the normalized href map helper for route metadata lookups, aligning runtime hydration with canonical route normalization rules.
+- test(web/navigation): expanded `nav-validation.test.ts` with normalized-map collision coverage to verify first-seen behavior for query/hash/trailing-slash alias routes.
+
 ## [2.7.205] — 2026-03-15
 
 - changed(web/navigation): `normalizeNavHref(...)` now canonicalizes hrefs by trimming whitespace and stripping query/hash fragments before trailing-slash normalization, improving semantic route matching consistency.

@@ -10,7 +10,7 @@ import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@d
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { SIDEBAR_SECTIONS } from "./mcp/nav-config";
-import { buildNavItemsByHref, hasNavValidationIssues, normalizeNavHref, validateSidebarSections } from "./mcp/nav-validation";
+import { buildNavItemsByNormalizedHref, hasNavValidationIssues, normalizeNavHref, validateSidebarSections } from "./mcp/nav-validation";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
@@ -208,7 +208,7 @@ export function Sidebar({ className }: SidebarProps) {
 
     const navDiagnostics = useMemo(() => validateSidebarSections(SIDEBAR_SECTIONS), []);
 
-    const allItemsByHref = useMemo(() => buildNavItemsByHref(SIDEBAR_SECTIONS), []);
+    const allItemsByHref = useMemo(() => buildNavItemsByNormalizedHref(SIDEBAR_SECTIONS), []);
 
     const filteredSections = useMemo(() => {
         return SIDEBAR_SECTIONS

@@ -58,6 +58,22 @@ export function buildNavItemsByHref(sections: NavSection[]): Map<string, NavItem
     return map;
 }
 
+export function buildNavItemsByNormalizedHref(sections: NavSection[]): Map<string, NavItem> {
+    const map = new Map<string, NavItem>();
+
+    for (const section of sections) {
+        for (const item of section.items) {
+            const normalizedHref = normalizeNavHref(item.href);
+            // Preserve first-seen entries so normalized collisions cannot silently overwrite metadata.
+            if (!map.has(normalizedHref)) {
+                map.set(normalizedHref, item);
+            }
+        }
+    }
+
+    return map;
+}
+
 export function validateSidebarSections(sections: NavSection[]): NavValidationResult {
     const duplicateWithinSection: NavValidationResult['duplicateWithinSection'] = [];
     const hrefToSections = new Map<string, Set<string>>();
