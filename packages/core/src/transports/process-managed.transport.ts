@@ -53,6 +53,7 @@ export class ProcessManagedStdioTransport implements Transport {
     private _readBuffer: ReadBuffer = new ReadBuffer();
     private _serverParams: StdioServerParameters;
     private _stderrStream: PassThrough | null = null;
+    private _stdoutStream: PassThrough = new PassThrough();
     private _isCleanup: boolean = false;
 
     onclose?: () => void;
@@ -90,14 +91,13 @@ export class ProcessManagedStdioTransport implements Transport {
                     stdio: ["pipe", "pipe", this._serverParams.stderr ?? "inherit"],
                     shell: false,
                     signal: this._abortController.signal,
-                    windowsHide: process.platform === "win32" && isElectron(),
+                    // Always hide child process console windows on Windows.
+                    windowsHide: process.platform === "win32",
                     cwd: this._serverParams.cwd,
-                    detached: true,
+                    // Keep attached so lifecycle stays deterministic and no extra terminal window/process group appears.
+                    detached: false,
                 },
             );
-
-            // Unref the child process so it doesn't keep the parent alive
-            this._process.unref();
 
             this._process.on("error", (error) => {
                 if (error.name === "AbortError") {
@@ -133,6 +133,7 @@ export class ProcessManagedStdioTransport implements Transport {
             });
 
             this._process.stdout?.on("data", (chunk) => {
+                this._stdoutStream.write(chunk);
                 this._readBuffer.append(chunk);
                 this.processReadBuffer();
             });
@@ -160,6 +161,14 @@ export class ProcessManagedStdioTransport implements Transport {
         }
 
         return this._process?.stderr ?? null;
+    }
+
+    /**
+     * Raw stdout stream from the child process. This still carries JSON-RPC frames,
+     * but exposing it allows external observers to log process output for diagnostics.
+     */
+    get stdout(): Stream | null {
+        return this._stdoutStream ?? this._process?.stdout ?? null;
     }
 
     /**
@@ -218,8 +227,4 @@ export class ProcessManagedStdioTransport implements Transport {
             }
         });
     }
-}
-
-function isElectron() {
-    return Boolean(process.versions.electron);
 }

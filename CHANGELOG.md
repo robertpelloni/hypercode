@@ -4,6 +4,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.152] — 2026-03-15
+
+- fix(core/mcp): finalized `ProcessManagedStdioTransport` companion updates required by lazy lifecycle release (added `stdout` pass-through stream accessor used by log capture path).
+- changed(core/mcp): STDIO child spawn now uses `windowsHide` unconditionally on Windows and non-detached process lifecycle for deterministic cleanup without visible terminal windows.
+
 ## [2.7.151] — 2026-03-15
 
 - feat(core/mcp): downstream MCP processes now default to lazy session mode (`BORG_MCP_LAZY_SESSIONS`), preventing idle prewarm spawns until a tool is actually executed.
