@@ -4,6 +4,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.167] — 2026-03-15
+
+- changed(web/mcp): lifecycle `Top reasons (current scope)` facets now show per-reason percentage share in addition to raw counts, making dominant root causes easier to rank during active incidents.
+- changed(web/mcp): reason facet header now shows scoped total matching events, so operators can immediately gauge how representative each reason bucket is.
+
 ## [2.7.166] — 2026-03-15
 
 - feat(web/mcp): added `Copy summary` action in `/dashboard/mcp` lifecycle controls that copies a compact incident handoff snapshot (window/type/reason/scope, active server, event counts, top reason facets).

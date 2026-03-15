@@ -897,7 +897,11 @@ export default function MCPDashboard(): React.JSX.Element {
         });
 
         return Array.from(counts.entries())
-            .map(([reasonCode, count]) => ({ reasonCode, count }))
+            .map(([reasonCode, count]) => ({
+                reasonCode,
+                count,
+                sharePct: scopedEvents.length > 0 ? Math.round((count / scopedEvents.length) * 100) : 0,
+            }))
             .sort((left, right) => {
                 if (right.count !== left.count) {
                     return right.count - left.count;
@@ -1544,7 +1548,12 @@ export default function MCPDashboard(): React.JSX.Element {
                                     </div>
                                     {lifecycleReasonFacetCounts.length > 0 ? (
                                         <div className="mt-2 rounded border border-zinc-800 bg-zinc-900/50 p-2">
-                                            <div className="text-[10px] uppercase tracking-wider text-zinc-500">Top reasons (current scope)</div>
+                                            <div className="flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-zinc-500">
+                                                <span>Top reasons (current scope)</span>
+                                                <span>
+                                                    total <span className="font-semibold text-zinc-300">{filteredLifecycleEvents.length}</span>
+                                                </span>
+                                            </div>
                                             <div className="mt-1.5 flex flex-wrap gap-1.5">
                                                 <Button
                                                     type="button"
@@ -1570,6 +1579,7 @@ export default function MCPDashboard(): React.JSX.Element {
                                                     >
                                                         {facet.reasonCode}
                                                         <span className="ml-1 rounded border border-zinc-700 bg-zinc-900 px-1 text-[10px] text-zinc-300">{facet.count}</span>
+                                                        <span className="ml-1 text-[10px] text-zinc-400">{facet.sharePct}%</span>
                                                     </Button>
                                                 ))}
                                             </div>
