@@ -10,7 +10,7 @@ import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@d
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { SIDEBAR_SECTIONS } from "./mcp/nav-config";
-import { buildNavItemsByNormalizedHref, buildRecentRouteHistory, extractStringArray, getNavDescription, hasNavValidationIssues, isNavHrefActive, matchesNavQuery, normalizeNavHref, normalizeNavHrefList, sanitizeCollapsedSections, sanitizeNavPreferences, sanitizeRecentSearches, validateSidebarSections } from "./mcp/nav-validation";
+import { buildNavItemsByNormalizedHref, buildRecentRouteHistory, buildRecentSearchHistory, extractStringArray, getNavDescription, hasNavValidationIssues, isNavHrefActive, matchesNavQuery, normalizeNavHref, normalizeNavHrefList, sanitizeCollapsedSections, sanitizeNavPreferences, sanitizeRecentSearches, validateSidebarSections } from "./mcp/nav-validation";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
@@ -344,7 +344,7 @@ export function Sidebar({ className }: SidebarProps) {
         if (!trimmed) {
             return;
         }
-        const next = [trimmed, ...recentSearches];
+        const next = buildRecentSearchHistory(recentSearches, trimmed, MAX_RECENT_SEARCHES);
         persistRecentSearches(next);
     };
 

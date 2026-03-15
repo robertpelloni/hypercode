@@ -156,6 +156,13 @@ export function buildRecentRouteHistory(currentRoutes: string[], nextHref: strin
     ]).slice(0, limit);
 }
 
+export function buildRecentSearchHistory(currentSearches: string[], nextQuery: string, limit: number): string[] {
+    return sanitizeRecentSearches([
+        nextQuery,
+        ...currentSearches,
+    ], limit);
+}
+
 export function buildFallbackNavDescription(title: string, section: string, href?: string): string {
     const normalized = title.toLowerCase();
 

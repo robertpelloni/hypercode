@@ -6,6 +6,7 @@ import {
     buildNavItemsByHref,
     buildNavItemsByNormalizedHref,
     buildRecentRouteHistory,
+    buildRecentSearchHistory,
     extractStringArray,
     getNavDescription,
     hasNavValidationIssues,
@@ -138,6 +139,20 @@ describe('buildRecentRouteHistory', () => {
             '/dashboard/library',
             '/dashboard/tools',
             '/dashboard/settings',
+        ]);
+    });
+});
+
+describe('buildRecentSearchHistory', () => {
+    it('prepends the newest search, trims whitespace, deduplicates, and limits length', () => {
+        expect(buildRecentSearchHistory([
+            'tools',
+            'billing',
+            'logs',
+        ], '  billing  ', 3)).toEqual([
+            'billing',
+            'tools',
+            'logs',
         ]);
     });
 });

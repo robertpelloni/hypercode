@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.218] — 2026-03-15
+
+- changed(web/navigation): added shared `buildRecentSearchHistory(...)` in `apps/web/src/components/mcp/nav-validation.ts` so recent-search recency shaping now reuses one canonical helper for newest-first ordering, trimming, deduplication, and length capping.
+- refactor(web/sidebar): `rememberPaletteSearch(...)` in `Sidebar.tsx` now delegates recent-search updates to the shared history builder instead of maintaining a component-local prepend path.
+- test(web/navigation): expanded `apps/web/src/components/mcp/nav-validation.test.ts` with recent-search history coverage and revalidated focused nav suites (`29` tests passing).
+
 ## [2.7.217] — 2026-03-15
 
 - changed(web/navigation): added shared `buildRecentRouteHistory(...)` in `apps/web/src/components/mcp/nav-validation.ts` so recent-route recency shaping now reuses one canonical helper for normalization, deduplication, newest-first ordering, and length capping.
