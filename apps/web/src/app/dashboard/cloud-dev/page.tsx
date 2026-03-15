@@ -463,10 +463,10 @@ export default function CloudDevDashboardPage() {
         return BROADCAST_STATUS_ORDER.filter((status) => statuses.has(status));
     }, [broadcastPreview]);
 
-    const retryLastBroadcastWithSuggestions = useCallback((force: boolean) => {
+    const retryLastBroadcastWithStatuses = useCallback((statuses: SessionStatus[], force: boolean) => {
         if (!lastBroadcastPayload?.content) return;
         const baseFilter = lastBroadcastPayload.statusFilter ?? broadcastStatusFilter;
-        const statusFilter = mergeStatusFilter(baseFilter, skippedStatusSuggestions);
+        const statusFilter = mergeStatusFilter(baseFilter, statuses);
         setBroadcastStatusFilter(statusFilter);
         setBroadcastForce(force);
         broadcastMutation.mutate({
@@ -474,7 +474,18 @@ export default function CloudDevDashboardPage() {
             force,
             statusFilter: statusFilter.length > 0 ? statusFilter : undefined,
         });
-    }, [broadcastMutation, broadcastStatusFilter, lastBroadcastPayload, mergeStatusFilter, skippedStatusSuggestions]);
+    }, [broadcastMutation, broadcastStatusFilter, lastBroadcastPayload, mergeStatusFilter]);
+
+    const resultSkippedStatusSuggestions = useMemo(() => {
+        if (!broadcastResult) return [] as SessionStatus[];
+        const statuses = new Set<SessionStatus>();
+        broadcastResult.skippedSessions.forEach((session) => {
+            if (session.reason === "status_filter_mismatch") {
+                statuses.add(session.status);
+            }
+        });
+        return BROADCAST_STATUS_ORDER.filter((status) => statuses.has(status));
+    }, [broadcastResult]);
 
     const activeSessions = useMemo(() => sessions.filter((s) => s.status === "active").length, [sessions]);
     const pendingSessions = useMemo(() => sessions.filter((s) => s.status === "pending").length, [sessions]);
@@ -712,7 +723,7 @@ export default function CloudDevDashboardPage() {
                                                         <button
                                                             type="button"
                                                             disabled={broadcastMutation.isPending}
-                                                            onClick={() => retryLastBroadcastWithSuggestions(lastBroadcastPayload.force)}
+                                                            onClick={() => retryLastBroadcastWithStatuses(skippedStatusSuggestions, lastBroadcastPayload.force)}
                                                             className="rounded border border-purple-500/60 bg-purple-700/40 px-2 py-0.5 text-[10px] text-purple-100 hover:bg-purple-700/60 disabled:opacity-50"
                                                         >
                                                             Retry last with suggested statuses
@@ -722,7 +733,7 @@ export default function CloudDevDashboardPage() {
                                                         <button
                                                             type="button"
                                                             disabled={broadcastMutation.isPending}
-                                                            onClick={() => retryLastBroadcastWithSuggestions(true)}
+                                                            onClick={() => retryLastBroadcastWithStatuses(skippedStatusSuggestions, true)}
                                                             className="rounded border border-amber-500/60 bg-amber-700/40 px-2 py-0.5 text-[10px] text-amber-100 hover:bg-amber-700/60 disabled:opacity-50"
                                                         >
                                                             Retry last with suggested + Force
@@ -811,6 +822,52 @@ export default function CloudDevDashboardPage() {
                                     {broadcastResult.skippedSessionsSampled && (
                                         <div className="text-[10px] text-zinc-500">
                                             Result includes a sampled subset of skipped sessions.
+                                        </div>
+                                    )}
+                                    {resultSkippedStatusSuggestions.length > 0 && (
+                                        <div className="space-y-1">
+                                            <div className="text-[10px] text-zinc-500">Add suggested statuses from last send:</div>
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                                {resultSkippedStatusSuggestions.map((status) => (
+                                                    <button
+                                                        key={`add-result-suggested-status-${status}`}
+                                                        type="button"
+                                                        onClick={() => addBroadcastStatuses([status])}
+                                                        className="rounded border border-purple-700/70 bg-purple-900/35 px-2 py-0.5 text-[10px] text-purple-200 hover:bg-purple-900/55"
+                                                    >
+                                                        + {status.replace("_", " ")}
+                                                    </button>
+                                                ))}
+                                                {resultSkippedStatusSuggestions.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => addBroadcastStatuses(resultSkippedStatusSuggestions)}
+                                                        className="rounded border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-300 hover:bg-zinc-800"
+                                                    >
+                                                        Add all suggested
+                                                    </button>
+                                                )}
+                                                {lastBroadcastPayload?.content && (
+                                                    <button
+                                                        type="button"
+                                                        disabled={broadcastMutation.isPending}
+                                                        onClick={() => retryLastBroadcastWithStatuses(resultSkippedStatusSuggestions, lastBroadcastPayload.force)}
+                                                        className="rounded border border-purple-500/60 bg-purple-700/40 px-2 py-0.5 text-[10px] text-purple-100 hover:bg-purple-700/60 disabled:opacity-50"
+                                                    >
+                                                        Retry last with result suggestions
+                                                    </button>
+                                                )}
+                                                {lastBroadcastPayload?.content && (broadcastResult.skippedByReason.terminal_requires_force ?? 0) > 0 && !lastBroadcastPayload.force && (
+                                                    <button
+                                                        type="button"
+                                                        disabled={broadcastMutation.isPending}
+                                                        onClick={() => retryLastBroadcastWithStatuses(resultSkippedStatusSuggestions, true)}
+                                                        className="rounded border border-amber-500/60 bg-amber-700/40 px-2 py-0.5 text-[10px] text-amber-100 hover:bg-amber-700/60 disabled:opacity-50"
+                                                    >
+                                                        Retry last with result suggestions + Force
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

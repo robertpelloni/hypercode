@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.187] — 2026-03-15
+
+- feat(web/cloud-dev): post-send skipped-session diagnostics now provide status-mismatch suggestions with one-click `+ status` and `Add all suggested` controls.
+- feat(web/cloud-dev): added `Retry last with result suggestions` and `Retry last with result suggestions + Force` actions, enabling resend from actual skipped outcomes (not only preview diagnostics).
+- changed(web/cloud-dev): generalized broadcast retry helper now accepts explicit status-suggestion sets, keeping preview/result retry behavior consistent.
+
 ## [2.7.186] — 2026-03-15
 
 - feat(web/cloud-dev): broadcast preview skip diagnostics now offer one-click `Retry last with suggested + Force` when status-filter mismatches and terminal-session skips occur together.
