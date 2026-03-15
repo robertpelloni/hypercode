@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.191] — 2026-03-15
+
+- feat(web/cloud-dev): broadcast composer now shows an explicit `Session scope: N IDs` chip when retries are targeting a session-ID subset.
+- feat(web/cloud-dev): added one-click `clear` action for session-scoped retry targeting in `/dashboard/cloud-dev`, so operators can quickly return to status/global targeting.
+- changed(web/cloud-dev): post-send broadcast summary now reports active session-ID scope count when present, improving operator awareness during chained retry flows.
+
 ## [2.7.190] — 2026-03-15
 
 - feat(web/cloud-dev): preview skip diagnostics in `/dashboard/cloud-dev` now include one-click `Retry last to preview skipped only` and `Retry preview skipped only + Force` actions.

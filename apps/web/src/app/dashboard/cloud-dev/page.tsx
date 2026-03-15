@@ -630,6 +630,22 @@ export default function CloudDevDashboardPage() {
                                 clear
                             </button>
                         )}
+                        {lastBroadcastPayload?.sessionIds && lastBroadcastPayload.sessionIds.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => setLastBroadcastPayload((current) => {
+                                    if (!current) return current;
+                                    return {
+                                        ...current,
+                                        sessionIds: undefined,
+                                    };
+                                })}
+                                className="rounded border border-cyan-700/60 bg-cyan-900/30 px-2 py-0.5 text-cyan-200 hover:bg-cyan-900/50"
+                                title="Clear session-scoped retry targeting"
+                            >
+                                Session scope: {lastBroadcastPayload.sessionIds.length} IDs (clear)
+                            </button>
+                        )}
                     </div>
                     <div className="flex flex-wrap items-end gap-2">
                         <textarea rows={2} value={broadcastMsg} onChange={(e) => setBroadcastMsg(e.target.value)}
@@ -828,6 +844,9 @@ export default function CloudDevDashboardPage() {
                                 {broadcastResult.statuses.length > 0 ? ` (${broadcastResult.statuses.join(", ")})` : ""}.
                                 {Object.keys(broadcastResult.skippedByReason).length > 0
                                     ? ` Skip reasons: ${(Object.entries(broadcastResult.skippedByReason) as Array<[BroadcastSkipReason, number]>).map(([reason, count]) => `${BROADCAST_SKIP_REASON_LABELS[reason]}=${count}`).join(", ")}.`
+                                    : ""}
+                                {lastBroadcastPayload?.sessionIds && lastBroadcastPayload.sessionIds.length > 0
+                                    ? ` Session scope: ${lastBroadcastPayload.sessionIds.length} IDs.`
                                     : ""}
                             </p>
                             {(broadcastResult.skippedByReason.terminal_requires_force ?? 0) > 0 && !broadcastForce && (
