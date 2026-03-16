@@ -4,6 +4,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.240] — 2026-03-15
+
+- changed(web/mcp-search): `apps/web/src/app/dashboard/mcp/search/page.tsx` adds a new telemetry triage preset, **Manual failures**, which filters to `source=manual-action`, `status=error`, and a 1h window for one-click operator debugging of direct load/unload/hydrate failures.
+- test(validation): reran focused MCP suites (`toolSearchRanking`, `metamcp-session-working-set`) with `18` tests passing and revalidated web TypeScript gate (`WEB_TSC_OK`).
+
 ## [2.7.239] — 2026-03-15
 
 - feat(core/mcp): `packages/core/src/routers/mcpRouter.ts` now records **manual-action error telemetry** for `loadTool`, `unloadTool`, and `getToolSchema` mutations when downstream MCP calls fail, including tool name, event type, source attribution, and latency.
