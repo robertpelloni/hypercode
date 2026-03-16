@@ -486,7 +486,7 @@ export default function SearchDashboard() {
             query: event.query ?? event.topResultName ?? 'n/a',
             topResultName: event.topResultName ?? 'n/a',
             secondResultName: event.secondResultName ?? 'n/a',
-            scoreGap: Number((event.scoreGap ?? 0).toFixed(1)),
+            scoreGap: Number((event.scoreGap ?? 0).toFixed(3)),
             confidencePct: typeof event.autoLoadConfidence === 'number' ? Math.round(event.autoLoadConfidence * 100) : null,
             timestamp: event.timestamp,
         }))
