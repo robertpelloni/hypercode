@@ -246,6 +246,7 @@ function InspectorDashboardContent() {
     const [maxLoadedToolsDraft, setMaxLoadedToolsDraft] = useState(16);
     const [maxHydratedSchemasDraft, setMaxHydratedSchemasDraft] = useState(8);
     const [idleEvictionThresholdDraftMs, setIdleEvictionThresholdDraftMs] = useState(5 * 60 * 1000);
+    const [activeLaneAction, setActiveLaneAction] = useState<string | null>(null);
 
     const toolList = useMemo(() => ((tools || []) as InspectorTool[]), [tools]);
 
@@ -359,6 +360,15 @@ function InspectorDashboardContent() {
     const alwaysLoadedTools = new Set(preferences.alwaysLoadedTools);
     const loadedToolNames = new Set(workingSet.map((tool) => tool.name));
     const hydratedToolNames = new Set(workingSet.filter((tool) => tool.hydrated).map((tool) => tool.name));
+    const workingSetByName = new Map(workingSet.map((tool) => [tool.name, tool] as const));
+    const sortedAlwaysOnCatalog = toolList
+        .filter((tool) => Boolean(tool.always_on) || dbAlwaysOnTools.has(tool.name))
+        .slice()
+        .sort((left, right) => left.name.localeCompare(right.name));
+    const sortedKeepWarmCatalog = toolList
+        .filter((tool) => alwaysLoadedTools.has(tool.name))
+        .slice()
+        .sort((left, right) => left.name.localeCompare(right.name));
     const setPreferencesMutation = trpc.mcp.setToolPreferences.useMutation({
         onSuccess: async () => {
             toast.success('Always-on tool profile updated');
@@ -979,6 +989,78 @@ function InspectorDashboardContent() {
 
     const idleEvictionThresholdMinutes = Math.max(0.17, Number((idleEvictionThresholdDraftMs / 60000).toFixed(2)));
 
+    const hydrateToolSchema = async (toolName: string, isLoaded: boolean) => {
+        try {
+            if (!isLoaded) {
+                await loadMutation.mutateAsync({ name: toolName });
+            }
+
+            await schemaMutation.mutateAsync({ name: toolName });
+            return true;
+        } catch {
+            // Mutation callbacks already emit actionable toasts.
+            return false;
+        }
+    };
+
+    const runLaneAction = async (
+        laneId: 'always-on-lane' | 'keep-warm-lane',
+        action: 'load' | 'hydrate',
+        laneTools: InspectorTool[],
+    ) => {
+        const actionKey = `${laneId}:${action}`;
+        setActiveLaneAction(actionKey);
+
+        try {
+            const loadedNames = new Set(loadedToolNames);
+            const hydratedNames = new Set(hydratedToolNames);
+
+            const candidates = laneTools.filter((tool) => {
+                if (action === 'load') {
+                    return !loadedNames.has(tool.name);
+                }
+
+                return !hydratedNames.has(tool.name) && !Boolean(workingSetByName.get(tool.name)?.hydrated);
+            });
+
+            if (candidates.length === 0) {
+                toast.info(action === 'load' ? 'All lane tools are already loaded' : 'All lane tools are already hydrated');
+                return;
+            }
+
+            let succeeded = 0;
+
+            for (const tool of candidates) {
+                if (action === 'load') {
+                    try {
+                        await loadMutation.mutateAsync({ name: tool.name });
+                        loadedNames.add(tool.name);
+                        succeeded += 1;
+                    } catch {
+                        // Per-tool mutation callback already surfaced the error.
+                    }
+                    continue;
+                }
+
+                const wasLoaded = loadedNames.has(tool.name);
+                const hydrated = await hydrateToolSchema(tool.name, wasLoaded);
+                if (hydrated) {
+                    loadedNames.add(tool.name);
+                    hydratedNames.add(tool.name);
+                    succeeded += 1;
+                }
+            }
+
+            if (succeeded > 0) {
+                toast.success(action === 'load'
+                    ? `Loaded ${succeeded} lane tool${succeeded === 1 ? '' : 's'}`
+                    : `Hydrated ${succeeded} lane tool${succeeded === 1 ? '' : 's'}`);
+            }
+        } finally {
+            setActiveLaneAction((current) => (current === actionKey ? null : current));
+        }
+    };
+
     const toggleAlwaysLoaded = (toolName: string) => {
         const next = new Set(alwaysLoadedTools);
         const isCurrentlyOn = alwaysLoadedTools.has(toolName) || dbAlwaysOnTools.has(toolName);
@@ -1584,6 +1666,104 @@ function InspectorDashboardContent() {
                             >
                                 Apply capacity
                             </Button>
+
+                            <div className="space-y-3 border-t border-zinc-800/70 pt-3">
+                                <div className="text-[10px] uppercase tracking-wider text-zinc-500">Tool visibility lanes</div>
+                                <p className="text-[11px] text-zinc-500">
+                                    Always-on and keep-warm lanes expose bulk load/hydrate controls so operator prep stays one-click fast.
+                                </p>
+
+                                {([
+                                    {
+                                        id: 'always-on-lane',
+                                        label: 'Always-on advertised',
+                                        tone: 'text-sky-300',
+                                        tools: sortedAlwaysOnCatalog,
+                                        empty: 'No always-on advertised tools detected.',
+                                    },
+                                    {
+                                        id: 'keep-warm-lane',
+                                        label: 'Keep warm profile',
+                                        tone: 'text-cyan-300',
+                                        tools: sortedKeepWarmCatalog,
+                                        empty: 'No keep-warm profile tools configured yet.',
+                                    },
+                                ] as const).map((lane) => (
+                                    <div key={lane.id} className="space-y-2 rounded border border-zinc-800 bg-zinc-950/50 p-2">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className={`text-[10px] uppercase tracking-wider ${lane.tone}`}>
+                                                {lane.label} ({lane.tools.length})
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        void runLaneAction(lane.id, 'load', lane.tools as InspectorTool[]);
+                                                    }}
+                                                    disabled={loadMutation.isPending || schemaMutation.isPending || activeLaneAction != null || lane.tools.length === 0}
+                                                    title={`Load all ${lane.label.toLowerCase()} tools into the active working set`}
+                                                    aria-label={`Load all ${lane.label.toLowerCase()} tools`}
+                                                    className="h-7 border-blue-700 px-2 text-[10px] text-blue-200 hover:bg-blue-950/30"
+                                                >
+                                                    {activeLaneAction === `${lane.id}:load` ? (
+                                                        <>
+                                                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                                            Loading...
+                                                        </>
+                                                    ) : 'Load all'}
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        void runLaneAction(lane.id, 'hydrate', lane.tools as InspectorTool[]);
+                                                    }}
+                                                    disabled={loadMutation.isPending || schemaMutation.isPending || activeLaneAction != null || lane.tools.length === 0}
+                                                    title={`Hydrate all ${lane.label.toLowerCase()} tools`}
+                                                    aria-label={`Hydrate all ${lane.label.toLowerCase()} tools`}
+                                                    className="h-7 border-purple-700 px-2 text-[10px] text-purple-200 hover:bg-purple-950/30"
+                                                >
+                                                    {activeLaneAction === `${lane.id}:hydrate` ? (
+                                                        <>
+                                                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                                            Hydrating...
+                                                        </>
+                                                    ) : 'Hydrate all'}
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        {lane.tools.length > 0 ? (
+                                            <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
+                                                {lane.tools.map((tool) => {
+                                                    const loaded = loadedToolNames.has(tool.name);
+                                                    const hydrated = Boolean(workingSetByName.get(tool.name)?.hydrated);
+
+                                                    return (
+                                                        <div key={`${lane.id}-${tool.name}`} className="flex items-center justify-between gap-2 rounded border border-zinc-800/80 bg-zinc-900/50 px-2 py-1.5">
+                                                            <div className="min-w-0">
+                                                                <div className="font-mono text-[11px] text-zinc-200 truncate" title={tool.name}>{tool.name}</div>
+                                                                <div className="text-[10px] text-zinc-500 truncate" title={tool.server}>{tool.server || 'unknown server'}</div>
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                {loaded ? <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-emerald-300">loaded</span> : null}
+                                                                {hydrated ? <span className="rounded bg-purple-500/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-purple-300">schema</span> : null}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="rounded border border-dashed border-zinc-800 p-2 text-center text-[10px] text-zinc-500">
+                                                {lane.empty}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         {workingSet.length > 0 ? (

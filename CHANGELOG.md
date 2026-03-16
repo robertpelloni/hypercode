@@ -4,6 +4,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.279] — 2026-03-16
+
+- feat(web/mcp/inspector): Added `Tool visibility lanes` operator panel inside Session Working Set with explicit `Always-on advertised` and `Keep warm profile` sections.
+- feat(web/mcp/inspector): Added lane-level bulk actions (`Load all` / `Hydrate all`) with in-flight locking, progress affordances, and skip logic for already-ready tools.
+- feat(web/mcp/inspector): Added load-aware lane hydration sequencing (`load -> hydrate`) so hydration works even when lane tools are not yet loaded.
+- test(validation): `WEB_TSC_OK`; focused fallback/billing slice tests passed (`packages/core/src/routers/billingRouter.test.ts`, `apps/web/src/app/dashboard/billing/page.test.tsx`, `apps/web/src/app/dashboard/DashboardHomeClient.test.tsx`, `apps/web/tests/integration/fallback-e2e.test.ts`).
+
 ## [2.7.278] — 2026-03-16
 
 - feat(web/mcp/search): Added lane-level bulk actions in `Tool visibility lanes` — operators can now `Load all` or `Hydrate all` tools in the `Always-on advertised` and `Keep warm profile` lanes.
