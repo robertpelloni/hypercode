@@ -35,6 +35,8 @@ const FALLBACK_TASK_OPTIONS: BillingTaskRoutingRuleSummary['taskType'][] = ['gen
 export default function ProviderAuthBillingMatrix() {
     const [historyDays, setHistoryDays] = useState(30);
     const [fallbackTaskType, setFallbackTaskType] = useState<BillingTaskRoutingRuleSummary['taskType']>('general');
+    const [fallbackHistoryCauseFilter, setFallbackHistoryCauseFilter] = useState<'all' | 'fallback_provider' | 'budget_forced_local' | 'emergency_fallback'>('all');
+    const [fallbackHistoryTaskFilter, setFallbackHistoryTaskFilter] = useState<'all' | BillingTaskRoutingRuleSummary['taskType']>('all');
     
     // Key update dialog state
     const [activePortalId, setActivePortalId] = useState<string | null>(null);
@@ -125,6 +127,33 @@ export default function ProviderAuthBillingMatrix() {
     const activeRoutingMutationTask = setTaskRoutingRuleMutation.variables && 'taskType' in setTaskRoutingRuleMutation.variables
         ? setTaskRoutingRuleMutation.variables.taskType
         : undefined;
+    const fallbackHistoryRows = (fallbackHistory ?? []) as Array<{
+        id: number;
+        timestamp: number;
+        requestedProvider?: string;
+        selectedProvider: string;
+        selectedModelId: string;
+        taskType: BillingTaskRoutingRuleSummary['taskType'];
+        strategy: string;
+        reason: string;
+        causeCode: 'fallback_provider' | 'budget_forced_local' | 'emergency_fallback' | 'preference_honored';
+    }>;
+    const fallbackHistoryTaskOptions = Array.from(new Set(fallbackHistoryRows.map((event) => event.taskType))).sort();
+    const fallbackHistoryCauseCounts = fallbackHistoryRows.reduce((accumulator, event) => {
+        accumulator[event.causeCode] = (accumulator[event.causeCode] ?? 0) + 1;
+        return accumulator;
+    }, {} as Record<string, number>);
+    const filteredFallbackHistoryRows = fallbackHistoryRows.filter((event) => {
+        if (fallbackHistoryCauseFilter !== 'all' && event.causeCode !== fallbackHistoryCauseFilter) {
+            return false;
+        }
+
+        if (fallbackHistoryTaskFilter !== 'all' && event.taskType !== fallbackHistoryTaskFilter) {
+            return false;
+        }
+
+        return true;
+    });
 
     const handleDefaultStrategyChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         setRoutingStrategyMutation.mutate({ strategy: event.target.value as BillingRoutingStrategy });
@@ -293,7 +322,74 @@ export default function ProviderAuthBillingMatrix() {
                                 </Button>
                             </CardHeader>
                             <CardContent className="pt-2 space-y-1.5 max-h-64 overflow-y-auto">
-                                {fallbackHistory.map((event) => {
+                                <div className="mb-2 space-y-2 rounded-lg border border-zinc-800/70 bg-black/30 p-2 text-[10px]">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-zinc-500 uppercase tracking-wider">Cause</span>
+                                        {([
+                                            { value: 'all', label: 'All' },
+                                            { value: 'fallback_provider', label: 'Fallback' },
+                                            { value: 'budget_forced_local', label: 'Budget' },
+                                            { value: 'emergency_fallback', label: 'Emergency' },
+                                        ] as const).map((option) => {
+                                            const active = fallbackHistoryCauseFilter === option.value;
+                                            const count = option.value === 'all'
+                                                ? fallbackHistoryRows.length
+                                                : (fallbackHistoryCauseCounts[option.value] ?? 0);
+                                            return (
+                                                <button
+                                                    key={`fallback-cause-filter-${option.value}`}
+                                                    type="button"
+                                                    onClick={() => setFallbackHistoryCauseFilter(option.value)}
+                                                    className={`rounded border px-2 py-1 transition-colors ${active
+                                                        ? 'border-amber-500/50 bg-amber-500/15 text-amber-200'
+                                                        : 'border-zinc-700 bg-zinc-950/70 text-zinc-300 hover:bg-zinc-800'
+                                                        }`}
+                                                    title={`Filter fallback history by ${option.label.toLowerCase()} causes`}
+                                                    aria-label={`Filter fallback history by ${option.label} causes`}
+                                                >
+                                                    {option.label} ({count})
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-zinc-500 uppercase tracking-wider">Task</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFallbackHistoryTaskFilter('all')}
+                                            className={`rounded border px-2 py-1 transition-colors ${fallbackHistoryTaskFilter === 'all'
+                                                ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-200'
+                                                : 'border-zinc-700 bg-zinc-950/70 text-zinc-300 hover:bg-zinc-800'
+                                                }`}
+                                            title="Show all task types"
+                                            aria-label="Show all task types in fallback history"
+                                        >
+                                            All ({fallbackHistoryRows.length})
+                                        </button>
+                                        {fallbackHistoryTaskOptions.map((taskTypeOption) => (
+                                            <button
+                                                key={`fallback-task-filter-${taskTypeOption}`}
+                                                type="button"
+                                                onClick={() => setFallbackHistoryTaskFilter(taskTypeOption)}
+                                                className={`rounded border px-2 py-1 capitalize transition-colors ${fallbackHistoryTaskFilter === taskTypeOption
+                                                    ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-200'
+                                                    : 'border-zinc-700 bg-zinc-950/70 text-zinc-300 hover:bg-zinc-800'
+                                                    }`}
+                                                title={`Filter fallback history to ${formatTaskRoutingLabel(taskTypeOption).toLowerCase()} decisions`}
+                                                aria-label={`Filter fallback history to ${formatTaskRoutingLabel(taskTypeOption)} decisions`}
+                                            >
+                                                {formatTaskRoutingLabel(taskTypeOption)}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="text-zinc-500">
+                                        showing {filteredFallbackHistoryRows.length} of {fallbackHistoryRows.length} decisions
+                                    </div>
+                                </div>
+
+                                {filteredFallbackHistoryRows.map((event) => {
                                     const causeColor =
                                         event.causeCode === 'emergency_fallback' ? 'text-red-400 border-red-800' :
                                         event.causeCode === 'budget_forced_local' ? 'text-orange-400 border-orange-800' :
@@ -327,6 +423,11 @@ export default function ProviderAuthBillingMatrix() {
                                         </div>
                                     );
                                 })}
+                                {filteredFallbackHistoryRows.length === 0 ? (
+                                    <div className="rounded-lg border border-dashed border-zinc-800 p-3 text-xs text-zinc-500 text-center">
+                                        No fallback decisions match the selected filters.
+                                    </div>
+                                ) : null}
                             </CardContent>
                         </Card>
                     )}

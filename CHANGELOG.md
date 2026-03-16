@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.245] — 2026-03-16
+
+- changed(web/billing): `apps/web/src/app/dashboard/billing/page.tsx` adds fallback-history triage controls for **cause** and **task** filtering, including dynamic facet counts and scoped-result rendering.
+- changed(web/billing): **Recent Fallback Decisions** now shows a `showing X of Y` summary plus a no-results empty state for active filters, improving operator incident narrowing.
+- test(validation): revalidated strict TypeScript gates for core and web after billing triage filter additions (`CORE_TSC_OK`, `WEB_TSC_OK`).
+
 ## [2.7.244] — 2026-03-16
 
 - feat(core/billing): `packages/core/src/routers/billingRouter.ts` now exposes `billing.clearFallbackHistory` to reset the in-memory provider fallback decision ring buffer.
