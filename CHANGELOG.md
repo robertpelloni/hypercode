@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.289] — 2026-03-16
+
+- feat(web/mcp/search): Added row-level hydration in-flight feedback to loaded working-set cards so per-tool `Hydrate` actions now show `Hydrating...` state consistently across Search surfaces.
+- fix(web/mcp/search): `hydrateToolSchema(...)` now returns explicit success/failure state; bulk lane hydrate completion counts now reflect only successful hydrations instead of optimistic candidate counts.
+- test(validation): `WEB_TSC_OK`; focused fallback/billing slice tests passed (`packages/core/src/routers/billingRouter.test.ts`, `apps/web/src/app/dashboard/billing/page.test.tsx`, `apps/web/src/app/dashboard/DashboardHomeClient.test.tsx`, `apps/web/tests/integration/fallback-e2e.test.ts`).
+
 ## [2.7.288] — 2026-03-16
 
 - feat(web/mcp/search): Added per-tool in-flight action tracking so Search cards and lane cards now show row-level `Loading...` / `Unloading...` feedback for load/unload actions.

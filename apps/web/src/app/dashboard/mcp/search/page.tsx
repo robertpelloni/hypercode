@@ -1120,12 +1120,17 @@ export default function SearchDashboard() {
 
         try {
             if (!isLoaded) {
-                await loadMutation.mutateAsync({ name: toolName });
+                const loaded = await loadTool(toolName);
+                if (!loaded) {
+                    return false;
+                }
             }
 
             await hydrateMutation.mutateAsync({ name: toolName });
+            return true;
         } catch {
             // Mutation callbacks already emit actionable toasts.
+            return false;
         } finally {
             setActiveHydrationToolName((current) => (current === toolName ? null : current));
         }
@@ -1212,9 +1217,8 @@ export default function SearchDashboard() {
                 }
 
                 const loaded = loadedToolNames.has(tool.name);
-                const beforeHydrated = Boolean(workingSetByName.get(tool.name)?.hydrated || tool.hydrated);
-                await hydrateToolSchema(tool.name, loaded);
-                if (!beforeHydrated) {
+                const hydrated = await hydrateToolSchema(tool.name, loaded);
+                if (hydrated) {
                     succeeded += 1;
                 }
             }
@@ -1671,14 +1675,21 @@ export default function SearchDashboard() {
                                                                 Inspect
                                                             </Link>
                                                             <Button
-                                                                onClick={() => hydrateMutation.mutate({ name: tool.name })}
-                                                                disabled={hydrateMutation.isPending || tool.hydrated}
+                                                                onClick={() => {
+                                                                    void hydrateToolSchema(tool.name, true);
+                                                                }}
+                                                                disabled={hydrateMutation.isPending || activeHydrationToolName === tool.name || tool.hydrated}
                                                                 variant="outline"
                                                                 title="Hydrate this loaded tool schema"
                                                                 aria-label={`Hydrate loaded tool ${tool.name}`}
                                                                 className="w-full border-purple-700 text-purple-200 hover:bg-purple-950/30"
                                                             >
-                                                                Hydrate
+                                                                {activeHydrationToolName === tool.name ? (
+                                                                    <>
+                                                                        <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                                                                        Hydrating...
+                                                                    </>
+                                                                ) : 'Hydrate'}
                                                             </Button>
                                                             <Button
                                                                 onClick={() => {
