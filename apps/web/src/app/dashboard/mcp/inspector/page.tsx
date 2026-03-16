@@ -511,6 +511,8 @@ function InspectorDashboardContent() {
         const errorCount = bucketEvents.filter((event) => event.status === 'error').length;
 
         return {
+            start: bucket.start,
+            end: bucket.end,
             label: bucket.label,
             total: bucketEvents.length,
             successCount,
@@ -1675,17 +1677,43 @@ function InspectorDashboardContent() {
                             {telemetryStatusTrend.some((bucket) => bucket.total > 0) ? (
                                 <div className="grid grid-cols-6 gap-1">
                                     {telemetryStatusTrend.map((bucket) => {
+                                        const bucketSelected = telemetryBucketTimeFilter != null
+                                            && telemetryBucketTimeFilter.start === bucket.start
+                                            && telemetryBucketTimeFilter.end === bucket.end;
                                         const successWidth = bucket.total > 0 ? Math.round((bucket.successCount / bucket.total) * 100) : 0;
                                         const errorWidth = bucket.total > 0 ? Math.round((bucket.errorCount / bucket.total) * 100) : 0;
+                                        const drilldownDisabled = bucket.total === 0;
 
                                         return (
-                                            <div key={`inspector-status-trend-${bucket.label}`} className="space-y-1" title={`${bucket.label} • ${bucket.successCount} ok / ${bucket.errorCount} err`}>
+                                            <button
+                                                type="button"
+                                                key={`inspector-status-trend-${bucket.label}`}
+                                                disabled={drilldownDisabled}
+                                                onClick={() => {
+                                                    setTelemetryBucketTimeFilter({
+                                                        start: bucket.start,
+                                                        end: bucket.end,
+                                                        source: telemetrySourceFilter !== 'all' ? telemetrySourceFilter : undefined,
+                                                    });
+                                                }}
+                                                className={`space-y-1 rounded-sm border px-0.5 py-0.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${bucketSelected
+                                                    ? 'border-teal-500/50 bg-teal-500/10'
+                                                    : 'border-transparent hover:border-zinc-700/80'
+                                                    }`}
+                                                title={[
+                                                    `${bucket.label} • ${bucket.successCount} ok / ${bucket.errorCount} err`,
+                                                    drilldownDisabled ? 'No events in this bucket' : 'Click to focus this status bucket window',
+                                                ].join('\n')}
+                                                aria-label={drilldownDisabled
+                                                    ? `${bucket.label} has no status telemetry events`
+                                                    : `Focus status trend bucket ${bucket.label}`}
+                                            >
                                                 <div className="h-2 rounded border border-zinc-800/80 bg-zinc-900/80 overflow-hidden flex">
                                                     <div className="h-full bg-emerald-500/70" style={{ width: `${successWidth}%` }} />
                                                     <div className="h-full bg-red-500/75" style={{ width: `${errorWidth}%` }} />
                                                 </div>
                                                 <div className="text-[9px] text-zinc-500 text-center">{bucket.label}</div>
-                                            </div>
+                                            </button>
                                         );
                                     })}
                                 </div>

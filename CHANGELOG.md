@@ -4,6 +4,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.271] — 2026-03-16
+
+- feat(web/mcp/search): Status trend buckets are now clickable drilldown actions that apply the selected bucket time-range filter and highlight active bucket scope.
+- feat(web/mcp/inspector): Added parity status trend bucket drilldown actions with bucket-selected highlighting and disabled empty-bucket affordances.
+- feat(web/mcp): Status timeline now supports one-click transition from aggregate status sparkline to concrete time-window incident scope.
+- test(validation): `WEB_TSC_OK` — no TypeScript errors.
+
 ## [2.7.270] — 2026-03-16
 
 - feat(web/mcp/search): Added direct `Open Inspector` cross-link actions that carry current telemetry scope (type/status/window/source/tool/bucket) into inspector triage.
