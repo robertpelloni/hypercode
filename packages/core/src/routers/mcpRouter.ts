@@ -1153,24 +1153,37 @@ export const mcpRouter = t.router({
         }
 
         const startedAt = Date.now();
-        const result = await server.executeTool('load_tool', { name: input.name });
-        const message = getToolTextContent(result);
-        const evictedTools = parseEvictedToolsFromMessage(message);
-        const pressure = await readWorkingSetSnapshot(server);
-        toolSelectionTelemetry.record({
-            type: 'load',
-            toolName: input.name,
-            source: 'manual-action',
-            status: 'success',
-            message,
-            evictedTools,
-            latencyMs: toLatencyMs(startedAt),
-            ...pressure,
-        });
-        return {
-            ok: true,
-            message,
-        };
+        try {
+            const result = await server.executeTool('load_tool', { name: input.name });
+            const message = getToolTextContent(result);
+            const evictedTools = parseEvictedToolsFromMessage(message);
+            const pressure = await readWorkingSetSnapshot(server);
+            toolSelectionTelemetry.record({
+                type: 'load',
+                toolName: input.name,
+                source: 'manual-action',
+                status: 'success',
+                message,
+                evictedTools,
+                latencyMs: toLatencyMs(startedAt),
+                ...pressure,
+            });
+            return {
+                ok: true,
+                message,
+            };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            toolSelectionTelemetry.record({
+                type: 'load',
+                toolName: input.name,
+                source: 'manual-action',
+                status: 'error',
+                message,
+                latencyMs: toLatencyMs(startedAt),
+            });
+            throw error;
+        }
     }),
 
     unloadTool: publicProcedure.input(z.object({
@@ -1182,22 +1195,35 @@ export const mcpRouter = t.router({
         }
 
         const startedAt = Date.now();
-        const result = await server.executeTool('unload_tool', { name: input.name });
-        const message = getToolTextContent(result);
-        const pressure = await readWorkingSetSnapshot(server);
-        toolSelectionTelemetry.record({
-            type: 'unload',
-            toolName: input.name,
-            source: 'manual-action',
-            status: 'success',
-            message,
-            latencyMs: toLatencyMs(startedAt),
-            ...pressure,
-        });
-        return {
-            ok: true,
-            message,
-        };
+        try {
+            const result = await server.executeTool('unload_tool', { name: input.name });
+            const message = getToolTextContent(result);
+            const pressure = await readWorkingSetSnapshot(server);
+            toolSelectionTelemetry.record({
+                type: 'unload',
+                toolName: input.name,
+                source: 'manual-action',
+                status: 'success',
+                message,
+                latencyMs: toLatencyMs(startedAt),
+                ...pressure,
+            });
+            return {
+                ok: true,
+                message,
+            };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            toolSelectionTelemetry.record({
+                type: 'unload',
+                toolName: input.name,
+                source: 'manual-action',
+                status: 'error',
+                message,
+                latencyMs: toLatencyMs(startedAt),
+            });
+            throw error;
+        }
     }),
 
     getToolSchema: publicProcedure.input(z.object({
@@ -1209,23 +1235,36 @@ export const mcpRouter = t.router({
         }
 
         const startedAt = Date.now();
-        const result = await server.executeTool('get_tool_schema', { name: input.name });
-        const parsed = parseToolJson(result, {
-            inputSchema: null,
-            evictedHydratedTools: [],
-        });
-        const pressure = await readWorkingSetSnapshot(server);
-        toolSelectionTelemetry.record({
-            type: 'hydrate',
-            toolName: input.name,
-            source: 'manual-action',
-            status: 'success',
-            message: 'schema hydrated',
-            evictedTools: Array.isArray(parsed.evictedHydratedTools) ? parsed.evictedHydratedTools : [],
-            latencyMs: toLatencyMs(startedAt),
-            ...pressure,
-        });
-        return parsed;
+        try {
+            const result = await server.executeTool('get_tool_schema', { name: input.name });
+            const parsed = parseToolJson(result, {
+                inputSchema: null,
+                evictedHydratedTools: [],
+            });
+            const pressure = await readWorkingSetSnapshot(server);
+            toolSelectionTelemetry.record({
+                type: 'hydrate',
+                toolName: input.name,
+                source: 'manual-action',
+                status: 'success',
+                message: 'schema hydrated',
+                evictedTools: Array.isArray(parsed.evictedHydratedTools) ? parsed.evictedHydratedTools : [],
+                latencyMs: toLatencyMs(startedAt),
+                ...pressure,
+            });
+            return parsed;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            toolSelectionTelemetry.record({
+                type: 'hydrate',
+                toolName: input.name,
+                source: 'manual-action',
+                status: 'error',
+                message,
+                latencyMs: toLatencyMs(startedAt),
+            });
+            throw error;
+        }
     }),
 
     /** Get aggregator status and stats */

@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.239] — 2026-03-15
+
+- feat(core/mcp): `packages/core/src/routers/mcpRouter.ts` now records **manual-action error telemetry** for `loadTool`, `unloadTool`, and `getToolSchema` mutations when downstream MCP calls fail, including tool name, event type, source attribution, and latency.
+- changed(core/mcp): manual mutation handlers now emit telemetry in both success and failure paths before rethrowing errors, improving operator visibility for failed direct actions from the dashboard.
+- test(validation): reran focused MCP suites (`toolSearchRanking`, `metamcp-session-working-set`) with `18` tests passing and revalidated web TypeScript gate (`WEB_TSC_OK`).
+
 ## [2.7.238] — 2026-03-15
 
 - feat(core/mcp): `packages/core/src/routers/mcpRouter.ts` now emits explicit telemetry `source` attribution for non-search events: `runtime-search` and `cached-ranking` for auto-load load events, and `manual-action` for direct load/unload/hydrate actions.
