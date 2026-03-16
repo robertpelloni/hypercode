@@ -4,6 +4,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.270] — 2026-03-16
+
+- feat(web/mcp/search): Added direct `Open Inspector` cross-link actions that carry current telemetry scope (type/status/window/source/tool/bucket) into inspector triage.
+- feat(web/mcp/search): Added per-source `Open in Inspector` quick action from source breakdown rows, preserving focused source failures and active bucket scope when available.
+- feat(web/mcp/inspector): Added direct `Open Search` cross-link actions with parity scope preservation and per-source `Open in Search` handoff from source trend rows.
+- test(validation): `WEB_TSC_OK` — no TypeScript errors.
+
 ## [2.7.269] — 2026-03-16
 
 - feat(web/mcp/inspector): Source trend bucket drilldown now applies a concrete bucket time-range filter (`telemetryBucketStart` / `telemetryBucketEnd`) so incident triage is constrained to the exact clicked window.

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from 'next/link';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent } from "@borg/ui";
@@ -1037,6 +1038,47 @@ function InspectorDashboardContent() {
         }
     };
 
+    const buildSearchTelemetryHref = (options?: {
+        source?: TelemetrySourceFilter;
+        status?: 'all' | ToolSelectionTelemetryEvent['status'];
+        tool?: string | null;
+        bucket?: { start: number; end: number } | null;
+    }): string => {
+        const params = new URLSearchParams();
+        const source = options?.source ?? telemetrySourceFilter;
+        const status = options?.status ?? telemetryStatusFilter;
+        const tool = options?.tool ?? telemetryToolFilter;
+        const bucket = options?.bucket ?? telemetryBucketTimeFilter;
+
+        if (telemetryTypeFilter !== 'all') {
+            params.set(INSPECTOR_TELEMETRY_TYPE_QUERY_KEY, telemetryTypeFilter);
+        }
+
+        if (status !== 'all') {
+            params.set(INSPECTOR_TELEMETRY_STATUS_QUERY_KEY, status);
+        }
+
+        if (telemetryWindowFilter !== '15m') {
+            params.set(INSPECTOR_TELEMETRY_WINDOW_QUERY_KEY, telemetryWindowFilter);
+        }
+
+        if (source !== 'all') {
+            params.set(INSPECTOR_TELEMETRY_SOURCE_QUERY_KEY, source);
+        }
+
+        if (tool) {
+            params.set(INSPECTOR_TELEMETRY_TOOL_QUERY_KEY, tool);
+        }
+
+        if (bucket) {
+            params.set(INSPECTOR_TELEMETRY_BUCKET_START_QUERY_KEY, String(bucket.start));
+            params.set(INSPECTOR_TELEMETRY_BUCKET_END_QUERY_KEY, String(bucket.end));
+        }
+
+        const query = params.toString();
+        return query ? `/dashboard/mcp/search?${query}` : '/dashboard/mcp/search';
+    };
+
     const copyTelemetrySummary = async () => {
         if (typeof window === 'undefined' || !navigator.clipboard) {
             toast.error('Clipboard unavailable');
@@ -1699,6 +1741,20 @@ function InspectorDashboardContent() {
                                                         >
                                                             Focus failures
                                                         </button>
+                                                        <Link
+                                                            href={buildSearchTelemetryHref({
+                                                                source: source.value,
+                                                                status: 'error',
+                                                                bucket: telemetryBucketTimeFilter && telemetryBucketTimeFilter.source === source.value
+                                                                    ? { start: telemetryBucketTimeFilter.start, end: telemetryBucketTimeFilter.end }
+                                                                    : null,
+                                                            })}
+                                                            className="rounded border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-blue-200 transition-colors hover:bg-blue-500/20"
+                                                            title={`Open Search with ${source.label} failure scope`}
+                                                            aria-label={`Open search for ${source.label} failures`}
+                                                        >
+                                                            Open in Search
+                                                        </Link>
                                                     </div>
                                                 </div>
 
@@ -2176,6 +2232,15 @@ function InspectorDashboardContent() {
                             >
                                 Copy summary
                             </button>
+
+                            <Link
+                                href={buildSearchTelemetryHref()}
+                                className="rounded-md border border-blue-500/30 bg-blue-500/10 px-2 py-1 text-blue-200 transition-colors hover:bg-blue-500/20"
+                                title="Open MCP Search with current telemetry scope"
+                                aria-label="Open MCP Search with current telemetry scope"
+                            >
+                                Open Search
+                            </Link>
                         </div>
                     </div>
 

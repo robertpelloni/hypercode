@@ -945,6 +945,47 @@ export default function SearchDashboard() {
         }
     };
 
+    const buildInspectorTelemetryHref = (options?: {
+        source?: TelemetrySourceFilter;
+        status?: 'all' | ToolSelectionTelemetryEvent['status'];
+        tool?: string | null;
+        bucket?: { start: number; end: number } | null;
+    }): string => {
+        const params = new URLSearchParams();
+        const source = options?.source ?? telemetrySourceFilter;
+        const status = options?.status ?? telemetryStatusFilter;
+        const tool = options?.tool ?? (telemetryToolFilter === 'all' ? null : telemetryToolFilter);
+        const bucket = options?.bucket ?? telemetryBucketTimeFilter;
+
+        if (telemetryTypeFilter !== 'all') {
+            params.set(TELEMETRY_TYPE_QUERY_KEY, telemetryTypeFilter);
+        }
+
+        if (status !== 'all') {
+            params.set(TELEMETRY_STATUS_QUERY_KEY, status);
+        }
+
+        if (telemetryWindowFilter !== '15m') {
+            params.set(TELEMETRY_WINDOW_QUERY_KEY, telemetryWindowFilter);
+        }
+
+        if (source !== 'all') {
+            params.set(TELEMETRY_SOURCE_QUERY_KEY, source);
+        }
+
+        if (tool && tool !== 'all') {
+            params.set(TELEMETRY_TOOL_QUERY_KEY, tool);
+        }
+
+        if (bucket) {
+            params.set(TELEMETRY_BUCKET_START_QUERY_KEY, String(bucket.start));
+            params.set(TELEMETRY_BUCKET_END_QUERY_KEY, String(bucket.end));
+        }
+
+        const query = params.toString();
+        return query ? `/dashboard/mcp/inspector?${query}` : '/dashboard/mcp/inspector';
+    };
+
     const copyTelemetrySummary = async () => {
         if (typeof window === 'undefined' || !navigator.clipboard) {
             toast.error('Clipboard unavailable');
@@ -1906,6 +1947,15 @@ export default function SearchDashboard() {
                                     >
                                         Copy summary
                                     </button>
+
+                                    <Link
+                                        href={buildInspectorTelemetryHref()}
+                                        className="rounded-md border border-blue-500/30 bg-blue-500/10 px-2 py-1 text-blue-200 transition-colors hover:bg-blue-500/20"
+                                        title="Open MCP Inspector with current telemetry scope"
+                                        aria-label="Open MCP Inspector with current telemetry scope"
+                                    >
+                                        Open Inspector
+                                    </Link>
                                 </div>
                             </div>
 
@@ -1975,6 +2025,20 @@ export default function SearchDashboard() {
                                                             >
                                                                 Focus failures
                                                             </button>
+                                                            <Link
+                                                                href={buildInspectorTelemetryHref({
+                                                                    source: item.source,
+                                                                    status: 'error',
+                                                                    bucket: telemetryBucketTimeFilter && telemetryBucketTimeFilter.source === item.source
+                                                                        ? { start: telemetryBucketTimeFilter.start, end: telemetryBucketTimeFilter.end }
+                                                                        : null,
+                                                                })}
+                                                                className="rounded border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] text-blue-200 transition-colors hover:bg-blue-500/20"
+                                                                title="Open Inspector with this source failure scope"
+                                                                aria-label={`Open inspector for ${item.source} failures`}
+                                                            >
+                                                                Open in Inspector
+                                                            </Link>
                                                         </div>
                                                     </div>
                                                     <div className="h-1.5 w-full rounded bg-zinc-800/80">
