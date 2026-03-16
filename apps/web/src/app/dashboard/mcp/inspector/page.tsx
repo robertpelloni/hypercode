@@ -509,10 +509,10 @@ function InspectorDashboardContent() {
         scoreGapCount: 0,
     });
     const telemetryMeanConfidencePct = telemetryConfidenceStats.total > 0
-        ? Math.round((telemetryConfidenceStats.confidenceSum / telemetryConfidenceStats.total) * 100)
+        ? Number((((telemetryConfidenceStats.confidenceSum / telemetryConfidenceStats.total) * 100)).toFixed(1))
         : null;
     const telemetryMeanScoreGap = telemetryConfidenceStats.scoreGapCount > 0
-        ? Number((telemetryConfidenceStats.scoreGapSum / telemetryConfidenceStats.scoreGapCount).toFixed(1))
+        ? Number((telemetryConfidenceStats.scoreGapSum / telemetryConfidenceStats.scoreGapCount).toFixed(3))
         : null;
     const telemetryTrendBuckets = buildTelemetryTrendBuckets({
         windowPreset: telemetryWindowFilter,

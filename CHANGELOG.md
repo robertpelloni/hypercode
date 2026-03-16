@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.303] — 2026-03-16
+
+- feat(web/mcp/search): Increased copied telemetry confidence metric precision to `mean confidence` (1 decimal) and `meanGap` (3 decimals) for more stable incident comparison.
+- feat(web/mcp/inspector): Added matching confidence metric precision update in copied telemetry summaries for Search/Inspector parity.
+- test(validation): `WEB_TSC_OK`; focused fallback/billing slice tests passed (`packages/core/src/routers/billingRouter.test.ts`, `apps/web/src/app/dashboard/billing/page.test.tsx`, `apps/web/src/app/dashboard/DashboardHomeClient.test.tsx`, `apps/web/tests/integration/fallback-e2e.test.ts`).
+
 ## [2.7.302] — 2026-03-16
 
 - feat(web/mcp/search): Normalized `Most ambiguous searches` score-gap values in copied telemetry summaries to fixed three-decimal precision for consistent ambiguity comparison.
