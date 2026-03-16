@@ -1,36 +1,42 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@borg/ui";
-import { Button } from "@borg/ui";
-import { Badge } from "@borg/ui";
-import { Input } from "@borg/ui";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@borg/ui";
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@borg/ui";
 import { Activity, Trash2, Search, RefreshCcw, BarChart3, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
-import { filterLogEntries, normalizeLogEntries, normalizeLogSummary } from './logs-page-normalizers';
+import { filterLogEntries, filterLogEntriesByLevel, normalizeLogEntries, normalizeLogSummary } from './logs-page-normalizers';
 
 function formatDuration(ms: number) {
     if (ms < 1000) return `${ms}ms`;
     return `${(ms / 1000).toFixed(2)}s`;
 }
 
-function formatTime(timestamp: number) {
-    return new Date(timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
-
 export default function LogsDashboard() {
     const [searchQuery, setSearchQuery] = useState("");
+    const [serverNameFilter, setServerNameFilter] = useState("");
+    const [sessionIdFilter, setSessionIdFilter] = useState("");
     const [limit, setLimit] = useState(100);
+    const [levelFilter, setLevelFilter] = useState<string>('all');
+    const [autoRefresh, setAutoRefresh] = useState(true);
 
     const utils = trpc.useUtils();
-    
-    // Fetch summary metrics
-    const { data: summary, refetch: refetchSummary, isFetching: isFetchingSummary } = trpc.logs.summary.useQuery({ limit: 5000 });
-    
-    // Fetch log entries
-    const { data: logs, refetch: refetchLogs, isFetching: isFetchingLogs } = trpc.logs.list.useQuery({ limit });
+
+    const listQueryInput = {
+        limit,
+        ...(serverNameFilter.trim().length > 0 ? { serverName: serverNameFilter.trim() } : {}),
+        ...(sessionIdFilter.trim().length > 0 ? { sessionId: sessionIdFilter.trim() } : {}),
+    };
+
+    const { data: summary, refetch: refetchSummary, isFetching: isFetchingSummary } = trpc.logs.summary.useQuery(
+        { limit: 5000 },
+        { refetchInterval: autoRefresh ? 10_000 : false },
+    );
+
+    const { data: logs, refetch: refetchLogs, isFetching: isFetchingLogs } = trpc.logs.list.useQuery(
+        listQueryInput,
+        { refetchInterval: autoRefresh ? 5_000 : false },
+    );
 
     const clearLogs = trpc.logs.clear.useMutation({
         onSuccess: () => {
@@ -50,14 +56,12 @@ export default function LogsDashboard() {
     const normalizedSummary = normalizeLogSummary(summary);
     const normalizedLogs = normalizeLogEntries(logs);
 
-    // Filter logs client-side for immediate feedback
-    const filteredLogs = filterLogEntries(normalizedLogs, searchQuery);
+    const filteredLogs = filterLogEntriesByLevel(filterLogEntries(normalizedLogs, searchQuery), levelFilter);
     const topTools = normalizedSummary.topTools;
     const topToolMaxCount = topTools[0]?.count ?? 0;
 
     return (
         <div className="p-8 space-y-8 h-full overflow-y-auto w-full max-w-[1600px] mx-auto">
-            {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
@@ -69,6 +73,14 @@ export default function LogsDashboard() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <Button
+                        type="button"
+                        onClick={() => setAutoRefresh((current) => !current)}
+                        variant="outline"
+                        className="border-zinc-700 hover:bg-zinc-800"
+                    >
+                        {autoRefresh ? 'Auto-refresh on' : 'Auto-refresh off'}
+                    </Button>
                     <Button 
                         onClick={handleRefresh} 
                         disabled={isRefreshing}
@@ -90,7 +102,6 @@ export default function LogsDashboard() {
                 </div>
             </div>
 
-            {/* Metrics Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Card className="bg-zinc-900 border-zinc-800">
                     <CardContent className="p-6">
@@ -138,12 +149,9 @@ export default function LogsDashboard() {
                 </Card>
             </div>
 
-            {/* Main Content Area */}
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-                
-                {/* Left Column: Log Feed */}
                 <div className="xl:col-span-3 space-y-4">
-                    <div className="flex items-center gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                             <Input 
@@ -153,8 +161,20 @@ export default function LogsDashboard() {
                                 className="w-full pl-9 bg-zinc-900 border-zinc-800 text-white"
                             />
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-zinc-500">
-                            <span>Showing {filteredLogs.length} of {limit}</span>
+                        <Input
+                            value={serverNameFilter}
+                            onChange={(e) => setServerNameFilter(e.target.value)}
+                            placeholder="Server name filter"
+                            className="lg:col-span-3 bg-zinc-900 border-zinc-800 text-white"
+                        />
+                        <Input
+                            value={sessionIdFilter}
+                            onChange={(e) => setSessionIdFilter(e.target.value)}
+                            placeholder="Session ID filter"
+                            className="lg:col-span-3 bg-zinc-900 border-zinc-800 text-white"
+                        />
+                        <div className="flex items-center gap-2 text-sm text-zinc-500 lg:col-span-3 justify-end">
+                            <span>Showing {filteredLogs.length} of {normalizedLogs.length}</span>
                             <select 
                                 value={limit} 
                                 onChange={(e) => setLimit(Number(e.target.value))}
@@ -165,6 +185,17 @@ export default function LogsDashboard() {
                                 <option value={500}>500</option>
                                 <option value={1000}>1000</option>
                             </select>
+                            <select
+                                value={levelFilter}
+                                onChange={(e) => setLevelFilter(e.target.value)}
+                                className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-300 outline-none"
+                                aria-label="Filter by level"
+                            >
+                                <option value="all">All levels</option>
+                                <option value="info">Info</option>
+                                <option value="warn">Warn</option>
+                                <option value="error">Error</option>
+                            </select>
                         </div>
                     </div>
 
@@ -173,18 +204,19 @@ export default function LogsDashboard() {
                             <Table>
                                 <TableHeader className="bg-zinc-950">
                                     <TableRow className="border-zinc-800 hover:bg-transparent">
-                                        <TableHead className="w-[100px] text-zinc-400">Time</TableHead>
+                                        <TableHead className="w-[120px] text-zinc-400">Time</TableHead>
                                         <TableHead className="w-[80px] text-zinc-400">Status</TableHead>
                                         <TableHead className="w-[180px] text-zinc-400">Server</TableHead>
                                         <TableHead className="w-[200px] text-zinc-400">Tool</TableHead>
                                         <TableHead className="w-[100px] text-zinc-400 text-right">Duration</TableHead>
+                                        <TableHead className="w-[320px] text-zinc-400">Message</TableHead>
                                         <TableHead className="text-zinc-400">Result / Error</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {filteredLogs.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="h-32 text-center text-zinc-500">
+                                            <TableCell colSpan={7} className="h-32 text-center text-zinc-500">
                                                 No logs found.
                                             </TableCell>
                                         </TableRow>
@@ -194,7 +226,8 @@ export default function LogsDashboard() {
                                             return (
                                                 <TableRow key={log.id} className="border-zinc-800/50 hover:bg-zinc-800/30">
                                                     <TableCell className="font-mono text-xs text-zinc-500 whitespace-nowrap">
-                                                        {formatTime(log.timestamp)}
+                                                        <div>{new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>
+                                                        <div className="text-[10px] text-zinc-600">{new Date(log.timestamp).toLocaleDateString()}</div>
                                                     </TableCell>
                                                     <TableCell>
                                                         {isError ? (
@@ -211,6 +244,9 @@ export default function LogsDashboard() {
                                                     </TableCell>
                                                     <TableCell className="font-mono text-xs text-zinc-400 text-right">
                                                         {formatDuration(log.durationMs || 0)}
+                                                    </TableCell>
+                                                    <TableCell className="text-xs text-zinc-500 truncate max-w-[320px]" title={log.message}>
+                                                        {log.message ?? '—'}
                                                     </TableCell>
                                                     <TableCell className="text-xs text-zinc-400 truncate max-w-[400px]" title={isError ? log.error : 'Success'}>
                                                         {isError ? (
@@ -229,7 +265,6 @@ export default function LogsDashboard() {
                     </Card>
                 </div>
 
-                {/* Right Column: Top Tools */}
                 <div className="space-y-6">
                     <Card className="bg-zinc-900 border-zinc-800">
                         <CardHeader className="pb-4">
@@ -275,7 +310,6 @@ export default function LogsDashboard() {
                         </CardContent>
                     </Card>
                 </div>
-
             </div>
         </div>
     );

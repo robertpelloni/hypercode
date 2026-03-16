@@ -4,6 +4,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.232] — 2026-03-15
+
+- changed(web/logs): upgraded `apps/web/src/app/dashboard/logs/page.tsx` into a stronger operator surface with server/session filter inputs, level filtering, controllable auto-refresh, corrected table column structure, and improved visibility of message/error details.
+- changed(web/logs): refined list query wiring so server and session filters are pushed down into `trpc.logs.list` input instead of only client-side slicing.
+- refactor(web/mcp-logs): `apps/web/src/app/dashboard/mcp/logs/page.tsx` now reuses the main logs dashboard surface to eliminate duplicate behavior drift and ensure MCP route parity.
+- test(web/logs): reran focused logs+navigation suites (`logs-page-normalizers`, `mcp/nav-validation`) with `39` tests passing; web `tsc --noEmit` passes.
+
 ## [2.7.231] — 2026-03-15
 
 - changed(web/mcp-search): `apps/web/src/app/dashboard/mcp/search/page.tsx` now clearly separates **server always-on** tool inventory from **keep warm** (always-loaded preference) inventory, with corrected summary counts and clearer UI wording.
