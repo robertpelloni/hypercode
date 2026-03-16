@@ -451,7 +451,8 @@ export const mcpRouter = t.router({
                                 keywords: tool.keywords ?? [],
                                 alwaysOn: Boolean(tool.alwaysOn),
                                 originalName: tool.originalName ?? null,
-                                loaded: Boolean(tool.loaded),
+                                // Merge loaded state: either already loaded or auto-loaded this request.
+                                loaded: Boolean(tool.loaded) || tool.name === runtimeAutoLoadedToolName,
                                 hydrated: Boolean(tool.hydrated),
                                 deferred: Boolean(tool.deferred),
                                 requiresSchemaHydration: Boolean(tool.requiresSchemaHydration),
@@ -459,7 +460,6 @@ export const mcpRouter = t.router({
                                 score: tool.score ?? 0,
                                 rank: index + 1,
                                 autoLoaded: tool.name === runtimeAutoLoadedToolName,
-                                loaded: Boolean(tool.loaded) || tool.name === runtimeAutoLoadedToolName,
                                 inputSchema: null,
                             }))
                             : runtimeMappedResults;
@@ -482,6 +482,10 @@ export const mcpRouter = t.router({
                                 hydrated: tool.hydrated,
                                 deferred: tool.deferred,
                                 autoLoaded: tool.autoLoaded,
+                                // Required by RankedToolSearchResult — pass through mapped values.
+                                requiresSchemaHydration: tool.requiresSchemaHydration,
+                                matchReason: tool.matchReason,
+                                score: tool.score,
                             })),
                             normalizedQuery,
                             {
@@ -510,10 +514,10 @@ export const mcpRouter = t.router({
                                 source: 'runtime-search',
                                 status: 'success',
                                 message: `Tool '${runtimeAutoLoadedResult.name}' auto-loaded by runtime search.`,
-                                autoLoadReason: autoLoadDecision.reason,
-                                autoLoadConfidence: autoLoadDecision.confidence,
-                                scoreGap: autoLoadDecision.scoreGap,
-                                topScore: autoLoadDecision.topScore,
+                                autoLoadReason: autoLoadDecision?.reason,
+                                autoLoadConfidence: autoLoadDecision?.confidence,
+                                scoreGap: autoLoadDecision?.scoreGap,
+                                topScore: autoLoadDecision?.topScore,
                                 ...pressure,
                             });
                         } else if (!runtimeAutoLoadedResult && autoLoadDecision && server) {

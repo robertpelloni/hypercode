@@ -50,6 +50,7 @@ export default function ProviderAuthBillingMatrix() {
     const { data: fallback, isLoading: isFallbackLoading } = trpc.billing.getFallbackChain.useQuery({ taskType: fallbackTaskType });
     const { data: taskRouting, isLoading: isTaskRoutingLoading } = trpc.billing.getTaskRoutingRules.useQuery();
         const { data: depletedModels } = trpc.billing.getDepletedModels.useQuery(undefined, { refetchInterval: 15000 });
+    const { data: fallbackHistory } = trpc.billing.getFallbackHistory.useQuery({ limit: 20 }, { refetchInterval: 10000 });
     const setRoutingStrategyMutation = trpc.billing.setRoutingStrategy.useMutation({
         onSuccess: async () => {
             toast.success('Default provider routing updated');
@@ -256,6 +257,54 @@ export default function ProviderAuthBillingMatrix() {
                                 </CardContent>
                             </Card>
                         )}
+
+                    {/* Recent Fallback Decisions — ring-buffer from CoreModelSelector showing provider substitutions */}
+                    {fallbackHistory && fallbackHistory.length > 0 && (
+                        <Card className="bg-zinc-900 border-amber-900/30 shadow-xl">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2">
+                                    <Zap className="h-4 w-4 text-amber-400" />
+                                    Recent Fallback Decisions
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-2 space-y-1.5 max-h-64 overflow-y-auto">
+                                {fallbackHistory.map((event) => {
+                                    const causeColor =
+                                        event.causeCode === 'emergency_fallback' ? 'text-red-400 border-red-800' :
+                                        event.causeCode === 'budget_forced_local' ? 'text-orange-400 border-orange-800' :
+                                        'text-amber-300 border-amber-800';
+                                    const causeLabel =
+                                        event.causeCode === 'emergency_fallback' ? 'EMERGENCY' :
+                                        event.causeCode === 'budget_forced_local' ? 'BUDGET' :
+                                        'FALLBACK';
+                                    const elapsed = Math.round((Date.now() - event.timestamp) / 1000);
+                                    const elapsedLabel = elapsed < 60 ? `${elapsed}s ago` : elapsed < 3600 ? `${Math.round(elapsed / 60)}m ago` : `${Math.round(elapsed / 3600)}h ago`;
+                                    return (
+                                        <div key={event.id} className={`flex items-start gap-2 rounded-lg border p-2 text-xs ${causeColor}`}>
+                                            <div className="shrink-0 mt-0.5">
+                                                <Badge variant="outline" className={`text-[9px] px-1 py-0 ${causeColor}`}>{causeLabel}</Badge>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    {event.requestedProvider && event.requestedProvider !== event.selectedProvider && (
+                                                        <span className="text-zinc-400 line-through">{event.requestedProvider}</span>
+                                                    )}
+                                                    {event.requestedProvider && event.requestedProvider !== event.selectedProvider && (
+                                                        <span className="text-zinc-500">→</span>
+                                                    )}
+                                                    <span className="font-semibold text-zinc-100 capitalize">{event.selectedProvider}/{event.selectedModelId}</span>
+                                                </div>
+                                                <div className="text-zinc-500 mt-0.5">
+                                                    {event.taskType} · {event.strategy} · {event.reason}
+                                                </div>
+                                            </div>
+                                            <div className="shrink-0 text-zinc-600 text-[10px] pt-0.5">{elapsedLabel}</div>
+                                        </div>
+                                    );
+                                })}
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Routing Fallback Chain */}
                     <Card className="bg-zinc-900 border-zinc-800 shadow-xl">

@@ -4,6 +4,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.243] — 2026-03-16
+
+- feat(core/billing): `packages/core/src/providers/CoreModelSelector.ts` now records a bounded in-process fallback decision ring buffer (`MAX_FALLBACK_EVENTS=50`) covering provider-substitution, budget-forced-local, and emergency fallback paths.
+- feat(core/billing): `packages/core/src/routers/billingRouter.ts` adds `billing.getFallbackHistory` so the dashboard can query recent provider routing substitutions with cause metadata.
+- changed(web/billing): `apps/web/src/app/dashboard/billing/page.tsx` now renders **Recent Fallback Decisions**, showing selected provider/model, requested provider crossover, cause badges, and recency for operator triage.
+- fix(core/mcp-router): `packages/core/src/routers/mcpRouter.ts` aligns runtime mapped loaded-state attribution and null-safe auto-load telemetry field access to satisfy strict type checks.
+- test(validation): revalidated strict TypeScript gates for core and web (`CORE_TSC_OK`, `WEB_TSC_OK`).
+
 ## [2.7.242] — 2026-03-15
 
 - changed(web/mcp-inspector): mirrored **telemetry tool drilldown** parity from `/dashboard/mcp/search` (v2.7.241) into `/dashboard/mcp/inspector` — `telemetryErrorToolRows` computed facet aggregates top-6 failing tools from `scopedTelemetryEvents`, rendered as **Top failing tools (current scope)** panel with one-click focus (tool + error status filter); existing tool filter chip and URL/localStorage persistence were already present.

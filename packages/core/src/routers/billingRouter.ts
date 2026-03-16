@@ -315,5 +315,40 @@ export const billingRouter = t.router({
             return [];
         }
     }),
+
+    /**
+     * Get recent provider fallback decisions from the in-process ring buffer.
+     *
+     * Each entry represents a routing decision where the preferred provider was not
+     * honored (due to quota exhaustion, rate limits, budget cap, or no candidates
+     * available at all).  Returns entries in reverse-chronological order.
+     *
+     * The billing dashboard "Recent Fallback Decisions" card consumes this to let
+     * operators understand why Borg substituted a different provider/model than
+     * configured.
+     */
+    getFallbackHistory: publicProcedure
+        .input(z.object({ limit: z.number().min(1).max(50).optional() }).optional())
+        .query(async ({ input }) => {
+            const llm = getLLMService();
+            try {
+                const selector = llm.modelSelector as unknown as {
+                    getFallbackHistory?: (limit: number) => Array<{
+                        id: number;
+                        timestamp: number;
+                        requestedProvider?: string;
+                        selectedProvider: string;
+                        selectedModelId: string;
+                        taskType: string;
+                        strategy: string;
+                        reason: string;
+                        causeCode: string;
+                    }>;
+                };
+                return selector.getFallbackHistory?.(input?.limit ?? 20) ?? [];
+            } catch {
+                return [];
+            }
+        }),
 });
 

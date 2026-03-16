@@ -27,6 +27,45 @@ const DEFAULT_PROVIDER_LIMITS: Record<string, number> = {
     deepseek: 5,
 };
 
+/** Maximum number of fallback events retained in the in-process ring buffer. */
+const MAX_FALLBACK_EVENTS = 50;
+
+/**
+ * A single provider-selection decision recorded whenever `selectModel` does NOT
+ * honor the caller's preferred provider (or uses a budget/emergency override).
+ * These snapshots power the "Recent Fallback Decisions" card on the billing dashboard.
+ */
+export interface ProviderFallbackEvent {
+    /** Monotonic event ID (counter, not UUID) for stable list keys in the UI. */
+    id: number;
+    /** Unix milliseconds when the decision was made. */
+    timestamp: number;
+    /** Provider requested by the caller, or undefined if none was specified. */
+    requestedProvider?: string;
+    /** Provider that was actually selected. */
+    selectedProvider: string;
+    /** Model ID that was selected. */
+    selectedModelId: string;
+    /** Task type that drove the routing decision. */
+    taskType: ProviderTaskType;
+    /** Routing strategy that was active at decision time. */
+    strategy: ProviderRoutingStrategy;
+    /**
+     * Human-readable reason string from the selector (e.g. `TASK_TYPE_CODING`,
+     * `BUDGET_EXCEEDED_FORCED_LOCAL`, `EMERGENCY_FALLBACK`).
+     */
+    reason: string;
+    /**
+     * Structured cause code for programmatic triage:
+     * - `preference_honored`: selected provider matches requested provider (this event is
+     *   recorded only for completeness in the first-selection case).
+     * - `fallback_provider`: caller preferred a different provider but it was unavailable.
+     * - `budget_forced_local`: daily budget exceeded, forced route to local provider.
+     * - `emergency_fallback`: no executable candidates were available at all.
+     */
+    causeCode: 'preference_honored' | 'fallback_provider' | 'budget_forced_local' | 'emergency_fallback';
+}
+
 interface SelectorOptions {
     registry?: ProviderRegistry;
     quotaService?: NormalizedQuotaService;
@@ -42,6 +81,9 @@ export class CoreModelSelector extends ModelSelector {
     private defaultRoutingStrategy: ProviderRoutingStrategy;
     private readonly candidateCooldowns = new Map<string, number>();
     private readonly roundRobinOffsets = new Map<ProviderTaskType, number>();
+    /** Append-only ring buffer of provider fallback events (capped to MAX_FALLBACK_EVENTS). */
+    private readonly fallbackEventBuffer: ProviderFallbackEvent[] = [];
+    private fallbackEventCounter = 0;
 
     constructor(options: SelectorOptions = {}) {
         super();
@@ -121,11 +163,13 @@ export class CoreModelSelector extends ModelSelector {
             const forcedLocal = this.rankCandidates(taskType, 'cheapest', undefined, new Set(), false)
                 .find((candidate) => candidate.provider === 'lmstudio' || candidate.provider === 'ollama');
             if (forcedLocal) {
-                return {
+                const result: SelectedModel = {
                     provider: forcedLocal.provider,
                     modelId: forcedLocal.id,
                     reason: 'BUDGET_EXCEEDED_FORCED_LOCAL',
                 };
+                this.recordFallbackEvent(result, taskType, strategy, request.provider, 'budget_forced_local');
+                return result;
             }
         }
 
@@ -133,19 +177,74 @@ export class CoreModelSelector extends ModelSelector {
         const selected = candidates[0];
 
         if (!selected) {
-            return {
+            const result: SelectedModel = {
                 provider: 'lmstudio',
                 modelId: 'local',
                 reason: 'EMERGENCY_FALLBACK',
             };
+            this.recordFallbackEvent(result, taskType, strategy, request.provider, 'emergency_fallback');
+            return result;
         }
 
         this.quotaTracker.markProviderHealthy(selected.provider);
-        return {
+        const reason = request.provider === selected.provider
+            ? 'PROVIDER_PREFERENCE'
+            : this.buildReason(selected, taskType, strategy, request.provider);
+        const result: SelectedModel = {
             provider: selected.provider,
             modelId: selected.id,
-            reason: request.provider === selected.provider ? 'PROVIDER_PREFERENCE' : this.buildReason(selected, taskType, strategy, request.provider),
+            reason,
         };
+        // Record non-trivial events: actual fallbacks (requested provider not honored) and
+        // first-selection summaries when no provider preference was expressed.
+        const causeCode = request.provider && request.provider !== selected.provider
+            ? 'fallback_provider'
+            : 'preference_honored';
+        if (causeCode === 'fallback_provider') {
+            this.recordFallbackEvent(result, taskType, strategy, request.provider, causeCode);
+        }
+        return result;
+    }
+
+    /**
+     * Returns the last N fallback events in reverse-chronological order.
+     * Events only include decisions where the preferred provider was not honored,
+     * plus budget/emergency overrides.
+     */
+    public getFallbackHistory(limit = 20): ProviderFallbackEvent[] {
+        return this.fallbackEventBuffer.slice(-Math.max(1, limit)).reverse();
+    }
+
+    /** Clears the in-process fallback event ring buffer. */
+    public clearFallbackHistory(): void {
+        this.fallbackEventBuffer.length = 0;
+        this.fallbackEventCounter = 0;
+    }
+
+    /** Appends a fallback event to the ring buffer, evicting oldest when full. */
+    private recordFallbackEvent(
+        result: SelectedModel,
+        taskType: ProviderTaskType,
+        strategy: ProviderRoutingStrategy,
+        requestedProvider: string | undefined,
+        causeCode: ProviderFallbackEvent['causeCode'],
+    ): void {
+        const event: ProviderFallbackEvent = {
+            id: ++this.fallbackEventCounter,
+            timestamp: Date.now(),
+            requestedProvider: requestedProvider ?? undefined,
+            selectedProvider: result.provider,
+            selectedModelId: result.modelId,
+            taskType,
+            strategy,
+            reason: result.reason,
+            causeCode,
+        };
+        this.fallbackEventBuffer.push(event);
+        // Evict oldest entries when the buffer exceeds the cap.
+        if (this.fallbackEventBuffer.length > MAX_FALLBACK_EVENTS) {
+            this.fallbackEventBuffer.splice(0, this.fallbackEventBuffer.length - MAX_FALLBACK_EVENTS);
+        }
     }
 
     /**
