@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.241] — 2026-03-15
+
+- changed(web/mcp-search): `apps/web/src/app/dashboard/mcp/search/page.tsx` now supports telemetry **tool drilldown** (`telemetryTool`) with URL/local-storage persistence, active-filter chips, and reset handling so operator handoff can target a specific failing tool.
+- changed(web/mcp-search): added **Top failing tools (current scope)** clustering card to MCP search telemetry; each row is one-click focus (tool + error status) for faster manual-action/load/hydrate failure triage.
+- test(validation): revalidated web TypeScript gate after telemetry filter/drilldown additions (`WEB_TSC_OK`).
+
 ## [2.7.240] — 2026-03-15
 
 - changed(web/mcp-search): `apps/web/src/app/dashboard/mcp/search/page.tsx` adds a new telemetry triage preset, **Manual failures**, which filters to `source=manual-action`, `status=error`, and a 1h window for one-click operator debugging of direct load/unload/hydrate failures.

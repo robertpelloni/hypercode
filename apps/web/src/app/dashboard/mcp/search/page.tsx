@@ -118,6 +118,7 @@ const TELEMETRY_TYPE_QUERY_KEY = 'telemetryType';
 const TELEMETRY_STATUS_QUERY_KEY = 'telemetryStatus';
 const TELEMETRY_WINDOW_QUERY_KEY = 'telemetryWindow';
 const TELEMETRY_SOURCE_QUERY_KEY = 'telemetrySource';
+const TELEMETRY_TOOL_QUERY_KEY = 'telemetryTool';
 
 type TelemetryTrendBucket = {
     start: number;
@@ -233,6 +234,7 @@ export default function SearchDashboard() {
     const [telemetryStatusFilter, setTelemetryStatusFilter] = useState<'all' | ToolSelectionTelemetryEvent['status']>('all');
     const [telemetryWindowFilter, setTelemetryWindowFilter] = useState<TelemetryWindowPreset>('15m');
     const [telemetrySourceFilter, setTelemetrySourceFilter] = useState<TelemetrySourceFilter>('all');
+    const [telemetryToolFilter, setTelemetryToolFilter] = useState<string>('all');
     const utils = trpc.useUtils();
     const searchQuery = trpc.mcp.searchTools.useQuery(
         { query, profile: profile === 'default' ? undefined : profile },
@@ -351,14 +353,26 @@ export default function SearchDashboard() {
     const telemetryEventsPreStatusFilter = telemetryEvents
         .filter((event) => telemetryWindowStart == null || event.timestamp >= telemetryWindowStart)
         .filter((event) => telemetryTypeFilter === 'all' || event.type === telemetryTypeFilter)
-        .filter((event) => telemetrySourceFilter === 'all' || event.source === telemetrySourceFilter);
+        .filter((event) => telemetrySourceFilter === 'all' || event.source === telemetrySourceFilter)
+        .filter((event) => {
+            if (telemetryToolFilter === 'all') {
+                return true;
+            }
+
+            if (event.toolName === telemetryToolFilter) {
+                return true;
+            }
+
+            return event.type === 'search' && event.topResultName === telemetryToolFilter;
+        });
     const filteredTelemetryEvents = telemetryEventsPreStatusFilter
         .filter((event) => telemetryStatusFilter === 'all' || event.status === telemetryStatusFilter);
     const telemetry = filteredTelemetryEvents.slice(0, 12);
     const telemetryFiltersAtDefault = telemetryTypeFilter === 'all'
         && telemetryStatusFilter === 'all'
         && telemetryWindowFilter === '15m'
-        && telemetrySourceFilter === 'all';
+        && telemetrySourceFilter === 'all'
+        && telemetryToolFilter === 'all';
     const telemetrySummary = {
         total: filteredTelemetryEvents.length,
         success: filteredTelemetryEvents.filter((event) => event.status === 'success').length,
@@ -378,6 +392,17 @@ export default function SearchDashboard() {
         .map(([reason, count]) => ({ reason, count }))
         .sort((left, right) => right.count - left.count || left.reason.localeCompare(right.reason))
         .slice(0, 5);
+    const telemetryErrorToolRows = Array.from(filteredTelemetryEvents.reduce((accumulator, event) => {
+        if (event.status !== 'error' || !event.toolName) {
+            return accumulator;
+        }
+
+        accumulator.set(event.toolName, (accumulator.get(event.toolName) ?? 0) + 1);
+        return accumulator;
+    }, new Map<string, number>()).entries())
+        .map(([toolName, count]) => ({ toolName, count }))
+        .sort((left, right) => right.count - left.count || left.toolName.localeCompare(right.toolName))
+        .slice(0, 6);
     const telemetryTrendBuckets = buildTelemetryTrendBuckets({
         windowPreset: telemetryWindowFilter,
         windowStart: telemetryWindowStart,
@@ -478,6 +503,7 @@ export default function SearchDashboard() {
         const urlStatus = searchParams.get(TELEMETRY_STATUS_QUERY_KEY);
         const urlWindow = searchParams.get(TELEMETRY_WINDOW_QUERY_KEY);
         const urlSource = searchParams.get(TELEMETRY_SOURCE_QUERY_KEY);
+        const urlTool = searchParams.get(TELEMETRY_TOOL_QUERY_KEY);
 
         if (urlType && ['all', 'search', 'load', 'hydrate', 'unload'].includes(urlType)) {
             setTelemetryTypeFilter(urlType as 'all' | ToolSelectionTelemetryEvent['type']);
@@ -499,6 +525,11 @@ export default function SearchDashboard() {
             hasHydratedFromUrl = true;
         }
 
+        if (urlTool) {
+            setTelemetryToolFilter(urlTool);
+            hasHydratedFromUrl = true;
+        }
+
         if (hasHydratedFromUrl) {
             return;
         }
@@ -514,6 +545,7 @@ export default function SearchDashboard() {
                 status?: string;
                 window?: string;
                 source?: string;
+                tool?: string;
             };
 
             if (parsed.type && ['all', 'search', 'load', 'hydrate', 'unload'].includes(parsed.type)) {
@@ -531,6 +563,10 @@ export default function SearchDashboard() {
             if (parsed.source && ['all', 'runtime-search', 'cached-ranking', 'live-aggregator', 'manual-action'].includes(parsed.source)) {
                 setTelemetrySourceFilter(parsed.source as TelemetrySourceFilter);
             }
+
+            if (parsed.tool && parsed.tool.trim().length > 0) {
+                setTelemetryToolFilter(parsed.tool);
+            }
         } catch {
             // Ignore invalid persisted filter payloads and continue with defaults.
         }
@@ -545,12 +581,13 @@ export default function SearchDashboard() {
                     status: telemetryStatusFilter,
                     window: telemetryWindowFilter,
                     source: telemetrySourceFilter,
+                    tool: telemetryToolFilter,
                 }),
             );
         } catch {
             // Ignore storage write failures (private mode/quota) and keep UI functional.
         }
-    }, [telemetrySourceFilter, telemetryStatusFilter, telemetryTypeFilter, telemetryWindowFilter]);
+    }, [telemetrySourceFilter, telemetryStatusFilter, telemetryToolFilter, telemetryTypeFilter, telemetryWindowFilter]);
 
     useEffect(() => {
         const nextParams = new URLSearchParams(searchParams.toString());
@@ -579,6 +616,12 @@ export default function SearchDashboard() {
             nextParams.set(TELEMETRY_SOURCE_QUERY_KEY, telemetrySourceFilter);
         }
 
+        if (telemetryToolFilter === 'all') {
+            nextParams.delete(TELEMETRY_TOOL_QUERY_KEY);
+        } else {
+            nextParams.set(TELEMETRY_TOOL_QUERY_KEY, telemetryToolFilter);
+        }
+
         const currentQuery = searchParams.toString();
         const nextQuery = nextParams.toString();
         if (currentQuery === nextQuery) {
@@ -586,7 +629,7 @@ export default function SearchDashboard() {
         }
 
         router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
-    }, [pathname, router, searchParams, telemetrySourceFilter, telemetryStatusFilter, telemetryTypeFilter, telemetryWindowFilter]);
+    }, [pathname, router, searchParams, telemetrySourceFilter, telemetryStatusFilter, telemetryToolFilter, telemetryTypeFilter, telemetryWindowFilter]);
 
     const updateToolPreferences = (next: ToolPreferenceMutationInput) => {
         setPreferencesMutation.mutate(next as never);
@@ -676,6 +719,7 @@ export default function SearchDashboard() {
         setTelemetryStatusFilter('all');
         setTelemetryWindowFilter('15m');
         setTelemetrySourceFilter('all');
+        setTelemetryToolFilter('all');
 
         try {
             window.localStorage.removeItem(TELEMETRY_FILTERS_STORAGE_KEY);
@@ -1468,6 +1512,17 @@ export default function SearchDashboard() {
                                             source: {telemetrySourceFilter} ×
                                         </button>
                                     ) : null}
+                                    {telemetryToolFilter !== 'all' ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setTelemetryToolFilter('all')}
+                                            className="rounded-md border border-fuchsia-500/30 bg-fuchsia-500/10 px-2 py-1 text-fuchsia-200 transition-colors hover:bg-fuchsia-500/20"
+                                            title="Clear telemetry tool filter"
+                                            aria-label="Clear telemetry tool filter"
+                                        >
+                                            tool: {telemetryToolFilter} ×
+                                        </button>
+                                    ) : null}
                                     {telemetryFiltersAtDefault ? (
                                         <span className="rounded-md border border-zinc-700 bg-zinc-950/70 px-2 py-1 text-zinc-500">
                                             default scope
@@ -1724,6 +1779,31 @@ export default function SearchDashboard() {
                                     </div>
                                 )}
                             </div>
+
+                            {telemetryErrorToolRows.length > 0 ? (
+                                <div className="mb-4 space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3">
+                                    <div className="text-[10px] uppercase tracking-wider text-zinc-500">Top failing tools (current scope)</div>
+                                    <div className="space-y-1">
+                                        {telemetryErrorToolRows.map((row) => (
+                                            <div key={`search-error-tool-${row.toolName}`} className="flex items-center justify-between gap-2 rounded border border-zinc-800/70 bg-zinc-900/60 px-2 py-1 text-[10px]">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setTelemetryToolFilter(row.toolName);
+                                                        setTelemetryStatusFilter('error');
+                                                    }}
+                                                    className="truncate text-left text-zinc-300 hover:text-white"
+                                                    title={`Focus telemetry on ${row.toolName}`}
+                                                    aria-label={`Focus telemetry on failing tool ${row.toolName}`}
+                                                >
+                                                    {row.toolName}
+                                                </button>
+                                                <span className="rounded border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 text-red-200">{row.count}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : null}
 
                             {telemetryAutoLoadSkipReasonRows.length > 0 ? (
                                 <div className="mb-4 space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3">
