@@ -4,6 +4,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.268] — 2026-03-16
+
+- feat(web/mcp/search): Source trend bucket drilldown now applies a concrete bucket time-range filter (`telemetryBucketStart` / `telemetryBucketEnd`) so triage focuses on the exact period represented by the clicked bar.
+- feat(web/mcp/search): Added active bucket-time filter chip, reset behavior, and URL/local persistence for stable shareable incident slices.
+- feat(web/mcp/search): Source trend buckets now show selected-state highlighting when the bucket-time filter is active.
+- test(validation): `WEB_TSC_OK` — no TypeScript errors.
+
 ## [2.7.267] — 2026-03-16
 
 - feat(web/mcp/search): Source trend bucket bars are now clickable drilldown actions that focus source-level failures directly from the trend chart.

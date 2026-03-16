@@ -120,6 +120,8 @@ const TELEMETRY_STATUS_QUERY_KEY = 'telemetryStatus';
 const TELEMETRY_WINDOW_QUERY_KEY = 'telemetryWindow';
 const TELEMETRY_SOURCE_QUERY_KEY = 'telemetrySource';
 const TELEMETRY_TOOL_QUERY_KEY = 'telemetryTool';
+const TELEMETRY_BUCKET_START_QUERY_KEY = 'telemetryBucketStart';
+const TELEMETRY_BUCKET_END_QUERY_KEY = 'telemetryBucketEnd';
 
 type TelemetryTrendBucket = {
     start: number;
@@ -220,6 +222,18 @@ function formatDurationCompact(durationMs: number): string {
     return `${hours}h`;
 }
 
+function formatTelemetryBucketRange(start: number, end: number): string {
+    const sameDay = new Date(start).toDateString() === new Date(end).toDateString();
+    const startLabel = sameDay
+        ? new Date(start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : new Date(start).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const endLabel = sameDay
+        ? new Date(end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : new Date(end).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    return `${startLabel} → ${endLabel}`;
+}
+
 export default function SearchDashboard() {
     const router = useRouter();
     const pathname = usePathname();
@@ -236,6 +250,11 @@ export default function SearchDashboard() {
     const [telemetryWindowFilter, setTelemetryWindowFilter] = useState<TelemetryWindowPreset>('15m');
     const [telemetrySourceFilter, setTelemetrySourceFilter] = useState<TelemetrySourceFilter>('all');
     const [telemetryToolFilter, setTelemetryToolFilter] = useState<string>('all');
+    const [telemetryBucketTimeFilter, setTelemetryBucketTimeFilter] = useState<{
+        start: number;
+        end: number;
+        source?: TelemetrySourceFilter;
+    } | null>(null);
     const utils = trpc.useUtils();
     const searchQuery = trpc.mcp.searchTools.useQuery(
         { query, profile: profile === 'default' ? undefined : profile },
@@ -356,6 +375,13 @@ export default function SearchDashboard() {
         .filter((event) => telemetryTypeFilter === 'all' || event.type === telemetryTypeFilter)
         .filter((event) => telemetrySourceFilter === 'all' || event.source === telemetrySourceFilter)
         .filter((event) => {
+            if (!telemetryBucketTimeFilter) {
+                return true;
+            }
+
+            return event.timestamp >= telemetryBucketTimeFilter.start && event.timestamp < telemetryBucketTimeFilter.end;
+        })
+        .filter((event) => {
             if (telemetryToolFilter === 'all') {
                 return true;
             }
@@ -373,7 +399,8 @@ export default function SearchDashboard() {
         && telemetryStatusFilter === 'all'
         && telemetryWindowFilter === '15m'
         && telemetrySourceFilter === 'all'
-        && telemetryToolFilter === 'all';
+        && telemetryToolFilter === 'all'
+        && telemetryBucketTimeFilter == null;
     const telemetrySummary = {
         total: filteredTelemetryEvents.length,
         success: filteredTelemetryEvents.filter((event) => event.status === 'success').length,
@@ -508,6 +535,8 @@ export default function SearchDashboard() {
                     const topFailingTool = Object.entries(toolCounts).sort((left, right) => right[1] - left[1])[0]?.[0];
 
                     return {
+                        start: bucket.start,
+                        end: bucket.end,
                         label: bucket.label,
                         count: bucketEvents.length,
                         errorCount: bucketErrors,
@@ -575,6 +604,8 @@ export default function SearchDashboard() {
         const urlWindow = searchParams.get(TELEMETRY_WINDOW_QUERY_KEY);
         const urlSource = searchParams.get(TELEMETRY_SOURCE_QUERY_KEY);
         const urlTool = searchParams.get(TELEMETRY_TOOL_QUERY_KEY);
+        const urlBucketStart = searchParams.get(TELEMETRY_BUCKET_START_QUERY_KEY);
+        const urlBucketEnd = searchParams.get(TELEMETRY_BUCKET_END_QUERY_KEY);
 
         if (urlType && ['all', 'search', 'load', 'hydrate', 'unload'].includes(urlType)) {
             setTelemetryTypeFilter(urlType as 'all' | ToolSelectionTelemetryEvent['type']);
@@ -601,6 +632,21 @@ export default function SearchDashboard() {
             hasHydratedFromUrl = true;
         }
 
+        if (urlBucketStart && urlBucketEnd) {
+            const parsedStart = Number(urlBucketStart);
+            const parsedEnd = Number(urlBucketEnd);
+            if (Number.isFinite(parsedStart) && Number.isFinite(parsedEnd) && parsedStart < parsedEnd) {
+                setTelemetryBucketTimeFilter({
+                    start: parsedStart,
+                    end: parsedEnd,
+                    source: urlSource && ['runtime-search', 'cached-ranking', 'live-aggregator', 'manual-action'].includes(urlSource)
+                        ? (urlSource as TelemetrySourceFilter)
+                        : undefined,
+                });
+                hasHydratedFromUrl = true;
+            }
+        }
+
         if (hasHydratedFromUrl) {
             return;
         }
@@ -617,6 +663,9 @@ export default function SearchDashboard() {
                 window?: string;
                 source?: string;
                 tool?: string;
+                bucketStart?: number;
+                bucketEnd?: number;
+                bucketSource?: string;
             };
 
             if (parsed.type && ['all', 'search', 'load', 'hydrate', 'unload'].includes(parsed.type)) {
@@ -638,6 +687,22 @@ export default function SearchDashboard() {
             if (parsed.tool && parsed.tool.trim().length > 0) {
                 setTelemetryToolFilter(parsed.tool);
             }
+
+            if (
+                typeof parsed.bucketStart === 'number'
+                && typeof parsed.bucketEnd === 'number'
+                && Number.isFinite(parsed.bucketStart)
+                && Number.isFinite(parsed.bucketEnd)
+                && parsed.bucketStart < parsed.bucketEnd
+            ) {
+                setTelemetryBucketTimeFilter({
+                    start: parsed.bucketStart,
+                    end: parsed.bucketEnd,
+                    source: parsed.bucketSource && ['runtime-search', 'cached-ranking', 'live-aggregator', 'manual-action'].includes(parsed.bucketSource)
+                        ? (parsed.bucketSource as TelemetrySourceFilter)
+                        : undefined,
+                });
+            }
         } catch {
             // Ignore invalid persisted filter payloads and continue with defaults.
         }
@@ -653,12 +718,15 @@ export default function SearchDashboard() {
                     window: telemetryWindowFilter,
                     source: telemetrySourceFilter,
                     tool: telemetryToolFilter,
+                    bucketStart: telemetryBucketTimeFilter?.start,
+                    bucketEnd: telemetryBucketTimeFilter?.end,
+                    bucketSource: telemetryBucketTimeFilter?.source,
                 }),
             );
         } catch {
             // Ignore storage write failures (private mode/quota) and keep UI functional.
         }
-    }, [telemetrySourceFilter, telemetryStatusFilter, telemetryToolFilter, telemetryTypeFilter, telemetryWindowFilter]);
+    }, [telemetryBucketTimeFilter, telemetrySourceFilter, telemetryStatusFilter, telemetryToolFilter, telemetryTypeFilter, telemetryWindowFilter]);
 
     useEffect(() => {
         const nextParams = new URLSearchParams(searchParams.toString());
@@ -693,6 +761,14 @@ export default function SearchDashboard() {
             nextParams.set(TELEMETRY_TOOL_QUERY_KEY, telemetryToolFilter);
         }
 
+        if (!telemetryBucketTimeFilter) {
+            nextParams.delete(TELEMETRY_BUCKET_START_QUERY_KEY);
+            nextParams.delete(TELEMETRY_BUCKET_END_QUERY_KEY);
+        } else {
+            nextParams.set(TELEMETRY_BUCKET_START_QUERY_KEY, String(telemetryBucketTimeFilter.start));
+            nextParams.set(TELEMETRY_BUCKET_END_QUERY_KEY, String(telemetryBucketTimeFilter.end));
+        }
+
         const currentQuery = searchParams.toString();
         const nextQuery = nextParams.toString();
         if (currentQuery === nextQuery) {
@@ -700,7 +776,7 @@ export default function SearchDashboard() {
         }
 
         router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
-    }, [pathname, router, searchParams, telemetrySourceFilter, telemetryStatusFilter, telemetryToolFilter, telemetryTypeFilter, telemetryWindowFilter]);
+    }, [pathname, router, searchParams, telemetryBucketTimeFilter, telemetrySourceFilter, telemetryStatusFilter, telemetryToolFilter, telemetryTypeFilter, telemetryWindowFilter]);
 
     const updateToolPreferences = (next: ToolPreferenceMutationInput) => {
         setPreferencesMutation.mutate(next as never);
@@ -791,6 +867,7 @@ export default function SearchDashboard() {
         setTelemetryWindowFilter('15m');
         setTelemetrySourceFilter('all');
         setTelemetryToolFilter('all');
+        setTelemetryBucketTimeFilter(null);
 
         try {
             window.localStorage.removeItem(TELEMETRY_FILTERS_STORAGE_KEY);
@@ -800,6 +877,8 @@ export default function SearchDashboard() {
     };
 
     const applyTelemetryPreset = (preset: TelemetryTriagePreset) => {
+        setTelemetryBucketTimeFilter(null);
+
         if (preset === 'errors-now') {
             setTelemetryTypeFilter('all');
             setTelemetryStatusFilter('error');
@@ -903,6 +982,7 @@ export default function SearchDashboard() {
             `window=${telemetryWindowFilter}`,
             `source=${telemetrySourceFilter}`,
             `tool=${telemetryToolFilter}`,
+            `bucket=${telemetryBucketTimeFilter ? formatTelemetryBucketRange(telemetryBucketTimeFilter.start, telemetryBucketTimeFilter.end) : 'all'}`,
         ].join(', ');
         const topFailingTools = telemetryErrorToolRows.length > 0
             ? telemetryErrorToolRows.map((row) => `${row.toolName}:${row.count}`).join(', ')
@@ -1664,6 +1744,17 @@ export default function SearchDashboard() {
                                             tool: {telemetryToolFilter} ×
                                         </button>
                                     ) : null}
+                                    {telemetryBucketTimeFilter ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setTelemetryBucketTimeFilter(null)}
+                                            className="rounded-md border border-teal-500/30 bg-teal-500/10 px-2 py-1 text-teal-200 transition-colors hover:bg-teal-500/20"
+                                            title="Clear telemetry bucket time filter"
+                                            aria-label="Clear telemetry bucket time filter"
+                                        >
+                                            bucket: {formatTelemetryBucketRange(telemetryBucketTimeFilter.start, telemetryBucketTimeFilter.end)} ×
+                                        </button>
+                                    ) : null}
                                     {telemetryFiltersAtDefault ? (
                                         <span className="rounded-md border border-zinc-700 bg-zinc-950/70 px-2 py-1 text-zinc-500">
                                             default scope
@@ -1898,6 +1989,9 @@ export default function SearchDashboard() {
                                                             <div className="text-[10px] uppercase tracking-wider text-zinc-500">trend ({telemetryWindowFilter})</div>
                                                             <div className="grid grid-cols-6 gap-1">
                                                                 {item.trend.map((bucket) => {
+                                                                    const bucketSelected = telemetryBucketTimeFilter != null
+                                                                        && telemetryBucketTimeFilter.start === bucket.start
+                                                                        && telemetryBucketTimeFilter.end === bucket.end;
                                                                     const intensity = maxTelemetryTrendBucketCount > 0
                                                                         ? Math.max(0, Math.min(1, bucket.count / maxTelemetryTrendBucketCount))
                                                                         : 0;
@@ -1914,10 +2008,18 @@ export default function SearchDashboard() {
                                                                             type="button"
                                                                             key={`${item.source}-${bucket.label}`}
                                                                             disabled={drilldownDisabled}
-                                                                            className="space-y-1 disabled:cursor-not-allowed disabled:opacity-40"
+                                                                            className={`space-y-1 rounded-sm border px-0.5 py-0.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${bucketSelected
+                                                                                ? 'border-teal-500/50 bg-teal-500/10'
+                                                                                : 'border-transparent hover:border-zinc-700/80'
+                                                                                }`}
                                                                             onClick={() => {
                                                                                 setTelemetrySourceFilter(item.source);
                                                                                 setTelemetryStatusFilter('error');
+                                                                                setTelemetryBucketTimeFilter({
+                                                                                    start: bucket.start,
+                                                                                    end: bucket.end,
+                                                                                    source: item.source,
+                                                                                });
                                                                                 if (bucket.topFailingTool) {
                                                                                     setTelemetryToolFilter(bucket.topFailingTool);
                                                                                 }
