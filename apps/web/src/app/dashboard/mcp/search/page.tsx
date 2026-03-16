@@ -255,6 +255,7 @@ export default function SearchDashboard() {
         end: number;
         source?: TelemetrySourceFilter;
     } | null>(null);
+    const [activeHydrationToolName, setActiveHydrationToolName] = useState<string | null>(null);
     const utils = trpc.useUtils();
     const searchQuery = trpc.mcp.searchTools.useQuery(
         { query, profile: profile === 'default' ? undefined : profile },
@@ -564,6 +565,7 @@ export default function SearchDashboard() {
     const importantTools = new Set(preferences.importantTools);
     const alwaysLoadedTools = new Set(preferences.alwaysLoadedTools);
     const loadedToolNames = new Set(workingSet.map((tool) => tool.name));
+    const workingSetByName = new Map(workingSet.map((tool) => [tool.name, tool]));
     const alwaysOnAdvertisedNames = new Set(
         allKnownTools
             .filter((tool) => Boolean(tool.alwaysOn))
@@ -575,6 +577,12 @@ export default function SearchDashboard() {
     const sortedAlwaysOnWorkingSet = [...alwaysOnWorkingSet].sort((left, right) => left.lastAccessedAt - right.lastAccessedAt);
     const sortedKeepWarmWorkingSet = [...keepWarmWorkingSet].sort((left, right) => left.lastAccessedAt - right.lastAccessedAt);
     const sortedDynamicWorkingSet = [...dynamicWorkingSet].sort((left, right) => left.lastAccessedAt - right.lastAccessedAt);
+    const sortedAlwaysOnCatalog = [...allKnownTools]
+        .filter((tool) => Boolean(tool.alwaysOn) || alwaysOnAdvertisedNames.has(tool.name))
+        .sort((left, right) => left.name.localeCompare(right.name));
+    const sortedKeepWarmCatalog = [...allKnownTools]
+        .filter((tool) => alwaysLoadedTools.has(tool.name) && !alwaysOnAdvertisedNames.has(tool.name))
+        .sort((left, right) => left.name.localeCompare(right.name));
     const hydratedCount = workingSet.filter((tool) => tool.hydrated).length;
     const idleEvictionThresholdMs = Math.max(
         0,
@@ -1104,6 +1112,22 @@ export default function SearchDashboard() {
         }
     };
 
+    const hydrateToolSchema = async (toolName: string, isLoaded: boolean) => {
+        setActiveHydrationToolName(toolName);
+
+        try {
+            if (!isLoaded) {
+                await loadMutation.mutateAsync({ name: toolName });
+            }
+
+            await hydrateMutation.mutateAsync({ name: toolName });
+        } catch {
+            // Mutation callbacks already emit actionable toasts.
+        } finally {
+            setActiveHydrationToolName((current) => (current === toolName ? null : current));
+        }
+    };
+
     return (
         <div className="p-8 space-y-8 h-full flex flex-col">
             <PageStatusBanner status="beta" message="MCP Semantic Search" note="Tool discovery and ranking are functional. Schema hydration depth and score tuning are ongoing." />
@@ -1277,6 +1301,8 @@ export default function SearchDashboard() {
                                 <div className="divide-y divide-zinc-800/80">
                                     {results.map((tool) => {
                                         const isLoaded = tool.loaded ?? loadedToolNames.has(tool.name);
+                                        const hydratedFromWorkingSet = workingSetByName.get(tool.name)?.hydrated ?? false;
+                                        const isHydrated = Boolean(tool.hydrated) || hydratedFromWorkingSet;
 
                                         return (
                                             <div key={tool.name} className="p-5 hover:bg-zinc-950/60 transition-colors space-y-4">
@@ -1307,7 +1333,7 @@ export default function SearchDashboard() {
                                                                     loaded
                                                                 </span>
                                                             ) : null}
-                                                            {tool.hydrated ? (
+                                                            {isHydrated ? (
                                                                 <span className="text-[10px] bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded text-purple-300 uppercase tracking-wider">
                                                                     schema ready
                                                                 </span>
@@ -1409,14 +1435,21 @@ export default function SearchDashboard() {
                                                         Call now
                                                     </Button>
                                                     <Button
-                                                        onClick={() => hydrateMutation.mutate({ name: tool.name })}
-                                                        disabled={hydrateMutation.isPending || !isLoaded || Boolean(tool.hydrated)}
-                                                        title="Hydrate this tool's schema into the active working set"
+                                                        onClick={() => {
+                                                            void hydrateToolSchema(tool.name, isLoaded);
+                                                        }}
+                                                        disabled={hydrateMutation.isPending || loadMutation.isPending || activeHydrationToolName === tool.name || isHydrated}
+                                                        title={isLoaded ? "Hydrate this tool's schema into the active working set" : "Load then hydrate this tool schema into the active working set"}
                                                         aria-label={`Hydrate schema for tool ${tool.name}`}
                                                         variant="outline"
                                                         className="border-purple-700 text-purple-200 hover:bg-purple-950/30"
                                                     >
-                                                        Hydrate schema
+                                                        {activeHydrationToolName === tool.name ? (
+                                                            <>
+                                                                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                                                                Hydrating...
+                                                            </>
+                                                        ) : isLoaded ? 'Hydrate schema' : 'Load + hydrate'}
                                                     </Button>
                                                     <Button
                                                         onClick={() => unloadMutation.mutate({ name: tool.name })}
@@ -1682,6 +1715,111 @@ export default function SearchDashboard() {
                             >
                                 Apply capacity
                             </Button>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-zinc-900 border-zinc-800">
+                        <CardHeader className="pb-3 border-b border-zinc-800">
+                            <CardTitle className="text-white flex items-center gap-2 text-base">
+                                <Database className="h-4 w-4 text-sky-300" />
+                                Tool visibility lanes
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 space-y-4">
+                            <p className="text-xs text-zinc-500">
+                                Always-on tools are advertised immediately by always-on servers, while keep-warm tools are your pinned preload set.
+                                Both lanes expose direct load/hydrate actions so you can prepare working-set depth before the next call.
+                            </p>
+
+                            {([
+                                {
+                                    id: 'always-on-lane',
+                                    label: 'Always-on advertised',
+                                    tone: 'text-sky-300',
+                                    tools: sortedAlwaysOnCatalog,
+                                    empty: 'No always-on advertised tools detected in catalog.',
+                                },
+                                {
+                                    id: 'keep-warm-lane',
+                                    label: 'Keep warm profile',
+                                    tone: 'text-cyan-300',
+                                    tools: sortedKeepWarmCatalog,
+                                    empty: 'No keep-warm profile tools configured yet.',
+                                },
+                            ] as const).map((lane) => (
+                                <div key={lane.id} className="space-y-2">
+                                    <div className={`text-[10px] uppercase tracking-wider ${lane.tone}`}>
+                                        {lane.label} ({lane.tools.length})
+                                    </div>
+                                    {lane.tools.length > 0 ? (
+                                        <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                                            {lane.tools.map((tool) => {
+                                                const loaded = loadedToolNames.has(tool.name);
+                                                const hydrated = Boolean(workingSetByName.get(tool.name)?.hydrated || tool.hydrated);
+
+                                                return (
+                                                    <div key={`${lane.id}-${tool.name}`} className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3 space-y-2">
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div className="min-w-0">
+                                                                <div className="font-mono text-xs text-zinc-100 break-all">{tool.name}</div>
+                                                                <div className="text-[10px] text-zinc-500 mt-1 break-all">{tool.serverDisplayName || tool.server}</div>
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                {loaded ? (
+                                                                    <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded text-emerald-300 uppercase tracking-wider">
+                                                                        loaded
+                                                                    </span>
+                                                                ) : null}
+                                                                {hydrated ? (
+                                                                    <span className="text-[10px] bg-purple-500/10 border border-purple-500/20 px-1.5 py-0.5 rounded text-purple-300 uppercase tracking-wider">
+                                                                        schema
+                                                                    </span>
+                                                                ) : null}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                onClick={() => loadMutation.mutate({ name: tool.name })}
+                                                                disabled={loadMutation.isPending || loaded}
+                                                                title="Load this lane tool into working set"
+                                                                aria-label={`Load ${tool.name} from ${lane.label}`}
+                                                                className="border-blue-700 text-blue-200 hover:bg-blue-950/30"
+                                                            >
+                                                                {loaded ? 'Loaded' : 'Load'}
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                onClick={() => {
+                                                                    void hydrateToolSchema(tool.name, loaded);
+                                                                }}
+                                                                disabled={hydrateMutation.isPending || loadMutation.isPending || activeHydrationToolName === tool.name || hydrated}
+                                                                title={loaded ? "Hydrate schema for this lane tool" : "Load then hydrate schema for this lane tool"}
+                                                                aria-label={`Hydrate schema for ${tool.name} from ${lane.label}`}
+                                                                className="border-purple-700 text-purple-200 hover:bg-purple-950/30"
+                                                            >
+                                                                {activeHydrationToolName === tool.name ? (
+                                                                    <>
+                                                                        <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                                                                        Hydrating...
+                                                                    </>
+                                                                ) : loaded ? 'Hydrate' : 'Load + hydrate'}
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-lg border border-dashed border-zinc-800 p-3 text-xs text-zinc-500 text-center">
+                                            {lane.empty}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
                         </CardContent>
                     </Card>
 

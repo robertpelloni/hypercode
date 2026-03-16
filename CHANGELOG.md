@@ -4,6 +4,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.277] — 2026-03-16
+
+- feat(web/mcp/search): `Hydrate schema` now supports load-aware hydration from search results and lane cards — if a tool is not loaded, Borg performs `load -> hydrate` in one action.
+- feat(web/mcp/search): Added `Tool visibility lanes` panel with explicit `Always-on advertised` and `Keep warm profile` sections, each showing current loaded/schema state and direct load/hydrate actions.
+- feat(web/mcp/search): Schema-ready badges now resolve from live working-set state so hydrated status remains accurate even when catalog metadata lags.
+- test(validation): `WEB_TSC_OK`; focused MCP tests passed (`apps/web/src/lib/mcp-import.test.ts`, `apps/web/src/app/dashboard/mcp/mcp-dashboard-utils.test.ts`).
+
 ## [2.7.276] — 2026-03-16
 
 - feat(web/nav): Added missing in-page maturity banners for `MCP Router`, `Integration Hub`, `Supervisor`, `Jules`, `Agent Playground`, and `AI Tools` so route status is visible after navigation, not just in the sidebar.
