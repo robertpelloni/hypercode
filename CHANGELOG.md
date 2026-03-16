@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.291] — 2026-03-16
+
+- feat(web/mcp/inspector): Added missing `manual-failures` telemetry triage preset so Inspector now matches Search preset coverage for source-focused incident filtering.
+- feat(web/mcp/inspector): `applyTelemetryPreset(...)` now supports one-click `status=error` + `source=manual-action` scoping to speed triage of operator-triggered failures.
+- test(validation): `WEB_TSC_OK`; focused fallback/billing slice tests passed (`packages/core/src/routers/billingRouter.test.ts`, `apps/web/src/app/dashboard/billing/page.test.tsx`, `apps/web/src/app/dashboard/DashboardHomeClient.test.tsx`, `apps/web/tests/integration/fallback-e2e.test.ts`).
+
 ## [2.7.290] — 2026-03-16
 
 - feat(web/mcp/inspector): Added telemetry source parity with Search by including `manual-action` in Inspector source filters, source breakdown rows, and URL/local-storage filter hydration.

@@ -87,7 +87,7 @@ type ToolPreferenceMutationInput = {
 
 type TelemetryWindowPreset = 'all' | '5m' | '15m' | '1h' | '24h';
 type TelemetrySourceFilter = 'all' | 'runtime-search' | 'cached-ranking' | 'live-aggregator' | 'manual-action';
-type TelemetryTriagePreset = 'errors-now' | 'runtime-failures' | 'load-incidents' | 'hydration-failures' | 'auto-load-skips' | 'live-aggregator-focus';
+type TelemetryTriagePreset = 'errors-now' | 'runtime-failures' | 'manual-failures' | 'load-incidents' | 'hydration-failures' | 'auto-load-skips' | 'live-aggregator-focus';
 
 type TelemetryTrendBucket = {
     start: number;
@@ -1357,6 +1357,14 @@ function InspectorDashboardContent() {
             return;
         }
 
+        if (preset === 'manual-failures') {
+            setTelemetryTypeFilter('all');
+            setTelemetryStatusFilter('error');
+            setTelemetryWindowFilter('1h');
+            setTelemetrySourceFilter('manual-action');
+            return;
+        }
+
         if (preset === 'load-incidents') {
             setTelemetryTypeFilter('load');
             setTelemetryStatusFilter('error');
@@ -2039,6 +2047,7 @@ function InspectorDashboardContent() {
                             {([
                                 { value: 'errors-now', label: 'Errors now' },
                                 { value: 'runtime-failures', label: 'Runtime failures' },
+                                { value: 'manual-failures', label: 'Manual failures' },
                                 { value: 'load-incidents', label: 'Load incidents' },
                                 { value: 'hydration-failures', label: 'Hydration failures' },
                                 { value: 'auto-load-skips', label: 'Auto-load skips' },
