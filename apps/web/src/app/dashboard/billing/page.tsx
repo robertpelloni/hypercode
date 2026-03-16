@@ -20,6 +20,7 @@ import {
 } from './billing-portal-data';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@borg/ui';
 import { Input } from '@borg/ui';
+import { PageStatusBanner } from '@/components/PageStatusBanner';
 import {
     getBillingUsageSummary,
     getDefaultRoutingStrategy,
@@ -119,6 +120,10 @@ export default function ProviderAuthBillingMatrix() {
     const providerQuickAccessSections = getProviderQuickAccessSections(quotas as BillingProviderQuotaSummary[] | undefined);
     const usageSummary = getBillingUsageSummary(status);
     const quotaRows = normalizeBillingQuotaRows(quotas);
+    const authenticatedProviderCount = quotaRows.filter((row) => row.authenticated).length;
+    const configuredOnlyProviderCount = quotaRows.filter((row) => row.configured && !row.authenticated).length;
+    const missingAuthProviderCount = quotaRows.filter((row) => !row.configured).length;
+    const liveErrorProviderCount = quotaRows.filter((row) => Boolean(row.lastError)).length;
     const fallbackChain = normalizeFallbackChain(fallback);
     const fallbackSelectedTaskType = getFallbackTaskType(fallback, fallbackTaskType);
     const defaultRoutingStrategy = getDefaultRoutingStrategy(taskRouting);
@@ -203,6 +208,12 @@ export default function ProviderAuthBillingMatrix() {
 
     return (
         <div className="p-8 max-w-[1600px] mx-auto space-y-8">
+            <PageStatusBanner
+                status="beta"
+                message="Provider Billing & Routing"
+                note="Routing controls and fallback telemetry are live. Cost/quota values may be estimated or stale when providers expose limited billing APIs or auth is incomplete."
+            />
+
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
@@ -224,6 +235,36 @@ export default function ProviderAuthBillingMatrix() {
                     </Button>
                 </div>
             </div>
+
+            <Card className="bg-zinc-900 border-zinc-800 shadow-xl">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-cyan-400" />
+                        Provider Data Fidelity
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-2 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <Badge variant="outline" className="border-emerald-500/40 text-emerald-300 bg-emerald-950/20">
+                            Live auth: {authenticatedProviderCount}
+                        </Badge>
+                        <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-950/20">
+                            Configured only: {configuredOnlyProviderCount}
+                        </Badge>
+                        <Badge variant="outline" className="border-zinc-600 text-zinc-300 bg-zinc-900/60">
+                            Missing auth: {missingAuthProviderCount}
+                        </Badge>
+                        {liveErrorProviderCount > 0 ? (
+                            <Badge variant="outline" className="border-red-500/40 text-red-300 bg-red-950/20">
+                                Provider errors: {liveErrorProviderCount}
+                            </Badge>
+                        ) : null}
+                    </div>
+                    <p className="text-xs text-zinc-500">
+                        Quota and usage values are strongest when a provider is <span className="text-emerald-300">authenticated</span>. Providers in <span className="text-amber-300">configured only</span> can still route if fallback allows, but billing accuracy and health confidence are lower until a successful connection test completes.
+                    </p>
+                </CardContent>
+            </Card>
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 {/* Left Column - Financial Overview & Fallback */}

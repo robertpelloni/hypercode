@@ -4,6 +4,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.256] — 2026-03-16
+
+- feat(web/billing): Added `PageStatusBanner` (beta) to `dashboard/billing/page.tsx` clarifying that routing/fallback controls are live while quota/cost fidelity varies by provider auth/API support.
+- feat(web/billing): Added a `Provider Data Fidelity` panel with operator-visible counts for `Live auth`, `Configured only`, `Missing auth`, and `Provider errors`.
+- feat(web/billing): Added explanatory copy that distinguishes strong billing confidence (authenticated providers) from lower-confidence configured-only states.
+- test(validation): `WEB_TSC_OK` — no TypeScript errors.
+
 ## [2.7.255] — 2026-03-16
 
 - feat(web/session): Added `PageStatusBanner` (beta) to `dashboard/session/page.tsx` clarifying that lifecycle supervision is live while attach/recovery ergonomics continue to mature.
