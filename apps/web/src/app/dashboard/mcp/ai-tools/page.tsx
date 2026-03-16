@@ -6,6 +6,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from '@borg/ui';
 import { Bot, CheckCircle2, Database, ExternalLink, KeyRound, Loader2, RefreshCw, Search, Server, TerminalSquare, Wrench, XCircle } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
+import { PageStatusBanner } from '@/components/PageStatusBanner';
 
 import { getCliHarnessCards, getProviderDirectoryCards, getStatusBadgeClasses } from './ai-tool-directory';
 import { getPortalBadgeClasses, getProviderPortalCards, getProviderQuickAccessSections } from '../../billing/billing-portal-data';
@@ -197,6 +198,11 @@ export default function AIToolsDashboard() {
 
     return (
         <div className="p-8 space-y-8 h-full overflow-y-auto">
+            <PageStatusBanner
+                status="experimental"
+                message="AI Tools Directory"
+                note="This operator view already surfaces real harness, provider, and MCP inventory data, but it is still a broad directory surface rather than a fully consolidated Borg control plane."
+            />
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white">AI Tools</h1>

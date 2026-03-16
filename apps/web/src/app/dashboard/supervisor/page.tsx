@@ -12,6 +12,7 @@ import {
     type NormalizedSupervisorTask,
     type SupervisorAutonomyLevel,
 } from './supervisor-page-normalizers';
+import { PageStatusBanner } from '@/components/PageStatusBanner';
 
 export default function SupervisorPage() {
     const [goal, setGoal] = useState('');
@@ -61,6 +62,11 @@ export default function SupervisorPage() {
 
     return (
         <div className="p-6 space-y-6 h-full flex flex-col">
+            <PageStatusBanner
+                status="beta"
+                message="Supervisor control surface"
+                note="Goal decomposition, autonomy toggles, and execution supervision are live. Richer multi-session orchestration and operator guardrails are still being refined."
+            />
             <div className="flex justify-between items-start">
                 <div className="flex flex-col gap-2">
                     <h1 className="text-3xl font-bold tracking-tight">👮 Supervisor</h1>

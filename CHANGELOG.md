@@ -4,6 +4,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.276] — 2026-03-16
+
+- feat(web/nav): Added missing in-page maturity banners for `MCP Router`, `Integration Hub`, `Supervisor`, `Jules`, `Agent Playground`, and `AI Tools` so route status is visible after navigation, not just in the sidebar.
+- feat(web/nav): Promoted key hub routes to explicit sidebar maturity labels — `MCP Router` and `Integration Hub` are now marked `beta`, while `Jules` is marked `experimental` to match delivered behavior.
+- feat(web/nav): `Supervisor` is now labeled `beta` in navigation to align with its live operator controls and newly added in-page status banner.
+- test(validation): `WEB_TSC_OK` — no TypeScript errors.
+
 ## [2.7.275] — 2026-03-16
 
 - feat(web/nav): Command palette route results now surface the same maturity badges as the sidebar, so search-based navigation no longer hides `beta`, `experimental`, or `embed` status.

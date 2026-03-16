@@ -6,6 +6,7 @@ import { Button } from "@borg/ui";
 import { Loader2, Send, Bot, User, Terminal } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
+import { PageStatusBanner } from '@/components/PageStatusBanner';
 
 export default function AgentPlayground(): React.JSX.Element {
     const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', content: string, tools?: any[] }>>([
@@ -47,6 +48,11 @@ export default function AgentPlayground(): React.JSX.Element {
 
     return (
         <div className="p-8 space-y-8 h-full flex flex-col">
+            <PageStatusBanner
+                status="experimental"
+                message="Agent Playground"
+                note="Live agent chat is wired through Borg tools, but orchestration controls, safety rails, and richer session context handling are still evolving."
+            />
             <div className="flex justify-between items-center shrink-0">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white">Agent Playground</h1>

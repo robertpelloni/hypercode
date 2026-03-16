@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@borg/ui';
 import { Bot, Cable, Check, Copy, ExternalLink, FolderCode, Globe, Loader2, Puzzle, Settings2, Sparkles, TerminalSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageStatusBanner } from '@/components/PageStatusBanner';
 
 import { trpc } from '@/utils/trpc';
 import {
@@ -96,6 +97,11 @@ export default function IntegrationsDashboard() {
 
     return (
         <div className="p-8 space-y-8 h-full overflow-y-auto">
+            <PageStatusBanner
+                status="beta"
+                message="Integration Hub"
+                note="Install-surface discovery, bridge readiness, and MCP client target detection are live. Full two-way browser and IDE workflow parity is still in progress."
+            />
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white">Integration Hub</h1>

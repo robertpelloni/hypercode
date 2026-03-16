@@ -31,6 +31,7 @@ import {
     Wrench,
     Zap,
 } from 'lucide-react';
+import { PageStatusBanner } from '@/components/PageStatusBanner';
 
 type AggregatedServer = {
     uuid?: string;
@@ -1562,6 +1563,11 @@ export default function MCPDashboard(): React.JSX.Element {
 
     return (
         <div className="p-4 sm:p-6 xl:p-8 space-y-8">
+            <PageStatusBanner
+                status="beta"
+                message="MCP Router Control Plane"
+                note="Core router health, lifecycle telemetry, config import, and downstream server management are live. Progressive disclosure and some search/load ergonomics are still maturing."
+            />
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white">MCP Router Control Plane</h1>

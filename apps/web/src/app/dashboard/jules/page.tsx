@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ExternalLink, Rocket, KeyRound, PlugZap, RefreshCw, CheckCircle2, XCircle, Trash2 } from "lucide-react";
+import { PageStatusBanner } from '@/components/PageStatusBanner';
 
 const JULES_API_KEY_STORAGE = "jules-api-key";
 const JULES_SYNC_LOG_STORAGE_KEY = 'jules-session-sync-log-v1';
@@ -179,6 +180,13 @@ export default function JulesDashboardPage() {
 
   return (
     <div className="w-full h-full flex flex-col bg-black text-white">
+      <div className="p-4 pb-0 bg-black">
+        <PageStatusBanner
+          status="experimental"
+          message="Jules integration"
+          note="Embedded access, local API-key handling, and sync-log visibility are present. Full Borg-native orchestration, logs, and session recovery parity are still a later slice."
+        />
+      </div>
       <div className="p-4 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3 bg-zinc-900">
         <div>
           <h1 className="text-xl font-bold">Jules Autopilot</h1>

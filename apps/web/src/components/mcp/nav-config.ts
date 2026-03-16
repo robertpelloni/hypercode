@@ -68,6 +68,7 @@ export const MCP_CONTROL_PLANE_NAV: NavItem[] = [
         icon: Server,
         description: "Control plane for MCP routing, server health, and aggregation status.",
         variant: "default",
+        badge: "beta",
     },
     {
         title: "API Keys",
@@ -209,6 +210,7 @@ export const INTEGRATIONS_NAV: NavItem[] = [
         icon: Puzzle,
         description: "Install/connect Borg across browser, editor, and MCP client environments from one operator surface.",
         variant: "default",
+        badge: "beta",
     },
     {
         title: "Open-WebUI",
@@ -232,6 +234,7 @@ export const INTEGRATIONS_NAV: NavItem[] = [
         icon: Rocket,
         description: "Jules integration dashboard and remote orchestration controls.",
         variant: "ghost",
+        badge: "experimental",
     },
     {
         title: "DeerFlow Harness",
@@ -252,7 +255,7 @@ export const INTEGRATIONS_NAV: NavItem[] = [
 
 export const CORE_DASHBOARD_NAV: NavItem[] = [
     { title: "Mission Control", href: "/", icon: LayoutDashboard, variant: "ghost" },
-    { title: "Supervisor", href: "/dashboard/supervisor", icon: Eye, variant: "ghost" },
+    { title: "Supervisor", href: "/dashboard/supervisor", icon: Eye, variant: "ghost", badge: "beta" },
     { title: "Sessions", href: "/dashboard/session", icon: MonitorPlay, description: "Manage supervised AI coding sessions, harness configurations, and restart policies.", variant: "ghost", badge: "beta" },
     { title: "Providers", href: "/dashboard/billing", icon: Key, variant: "ghost", badge: "beta" },
     { title: "Health", href: "/dashboard/health", icon: Activity, variant: "ghost", badge: "beta" },
