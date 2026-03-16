@@ -179,6 +179,23 @@ function formatRelativeTimestamp(timestamp: number | null): string {
     return `${deltaHours}h ago`;
 }
 
+function formatTrendTooltipErrorMessage(message: string | undefined): string | null {
+    if (!message) {
+        return null;
+    }
+
+    const compact = message.replace(/\s+/g, ' ').trim();
+    if (compact.length === 0) {
+        return null;
+    }
+
+    if (compact.length <= 120) {
+        return compact;
+    }
+
+    return `${compact.slice(0, 117)}...`;
+}
+
 function InspectorDashboardContent() {
     const router = useRouter();
     const pathname = usePathname();
@@ -1598,6 +1615,10 @@ function InspectorDashboardContent() {
                                                     {source.trend.map((bucket) => {
                                                         const successWidth = bucket.total > 0 ? Math.round((bucket.successCount / bucket.total) * 100) : 0;
                                                         const errorWidth = bucket.total > 0 ? Math.round((bucket.errorCount / bucket.total) * 100) : 0;
+                                                        const bucketErrorRatePercent = bucket.total > 0
+                                                            ? Math.round((bucket.errorCount / bucket.total) * 100)
+                                                            : 0;
+                                                        const compactTopErrorMessage = formatTrendTooltipErrorMessage(bucket.topErrorMessage);
 
                                                         return (
                                                             <div
@@ -1605,8 +1626,9 @@ function InspectorDashboardContent() {
                                                             title={[
                                                                 `${source.label} • ${bucket.label}`,
                                                                 `${bucket.successCount} ok / ${bucket.errorCount} err`,
+                                                                `Error rate: ${bucketErrorRatePercent}%`,
                                                                 bucket.topFailingTool ? `Top failing tool: ${bucket.topFailingTool}` : null,
-                                                                bucket.topErrorMessage ? `Error: ${bucket.topErrorMessage}` : null,
+                                                                compactTopErrorMessage ? `Error: ${compactTopErrorMessage}` : null,
                                                             ].filter(Boolean).join('\n')}
                                                         >
                                                                 <div className="h-1.5 rounded border border-zinc-800/80 bg-zinc-900/80 overflow-hidden flex">

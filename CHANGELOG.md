@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.265] — 2026-03-16
+
+- feat(web/mcp/inspector): Cleaned up source-trend tooltips to include explicit bucket error-rate context and compacted top-error snippets.
+- feat(web/mcp/inspector): Added safe long-message truncation for tooltip error text to keep hover diagnostics readable.
+- test(validation): `WEB_TSC_OK` — no TypeScript errors.
+
 ## [2.7.264] — 2026-03-16
 
 - feat(web/mcp/search): `Copy summary` now includes a `Focused source URL` pre-filtered to the dominant failing source (`source + status=error`) for one-click handoff.
