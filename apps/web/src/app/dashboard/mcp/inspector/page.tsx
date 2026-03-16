@@ -1313,8 +1313,9 @@ function InspectorDashboardContent() {
         const topSkipReasons = telemetryAutoLoadSkipReasonBreakdown.length > 0
             ? telemetryAutoLoadSkipReasonBreakdown.map((row) => `${row.reason}:${row.count}`).join(', ')
             : 'none';
+        const formatScoreGap = (scoreGap: number): string => scoreGap.toFixed(3);
         const ambiguousSearchRows = telemetryAmbiguousSearchRows.length > 0
-            ? telemetryAmbiguousSearchRows.slice(0, 3).map((row) => `${row.topResultName} vs ${row.secondResultName} (gap ${row.scoreGap})`).join(' | ')
+            ? telemetryAmbiguousSearchRows.slice(0, 3).map((row) => `${row.topResultName} vs ${row.secondResultName} (gap ${formatScoreGap(row.scoreGap)})`).join(' | ')
             : 'none';
         const formatErrorRatePercent = (errorRatePercent: number): string => `${errorRatePercent.toFixed(1)}%`;
         const summary = [

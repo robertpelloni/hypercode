@@ -1155,8 +1155,9 @@ export default function SearchDashboard() {
         const topSkipReasons = telemetryAutoLoadSkipReasonRows.length > 0
             ? telemetryAutoLoadSkipReasonRows.map((row) => `${row.reason}:${row.count}`).join(', ')
             : 'none';
+        const formatScoreGap = (scoreGap: number): string => scoreGap.toFixed(3);
         const ambiguousSearchRows = telemetryAmbiguousSearchRows.length > 0
-            ? telemetryAmbiguousSearchRows.slice(0, 3).map((row) => `${row.topResultName} vs ${row.secondResultName} (gap ${row.scoreGap})`).join(' | ')
+            ? telemetryAmbiguousSearchRows.slice(0, 3).map((row) => `${row.topResultName} vs ${row.secondResultName} (gap ${formatScoreGap(row.scoreGap)})`).join(' | ')
             : 'none';
         const formatErrorRatePercent = (errorCount: number, totalCount: number): string => (
             totalCount > 0 ? `${((errorCount / totalCount) * 100).toFixed(1)}%` : 'n/a'
