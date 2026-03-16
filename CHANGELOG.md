@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.296] — 2026-03-16
+
+- feat(web/mcp/inspector): Expanded telemetry summary chip row with explicit active-filter chips for `type`, `status`, `window`, `source`, and text `search`, each with one-click clear actions.
+- feat(web/mcp/inspector): Added `default scope` indicator parity so operators can immediately tell when no narrowing filters remain.
+- test(validation): `WEB_TSC_OK`; focused fallback/billing slice tests passed (`packages/core/src/routers/billingRouter.test.ts`, `apps/web/src/app/dashboard/billing/page.test.tsx`, `apps/web/src/app/dashboard/DashboardHomeClient.test.tsx`, `apps/web/tests/integration/fallback-e2e.test.ts`).
+
 ## [2.7.295] — 2026-03-16
 
 - feat(web/mcp/search): Added explicit active-preset summary chip (`preset: ...`) in telemetry filter state so triage context is visible at a glance instead of relying only on highlighted preset buttons.

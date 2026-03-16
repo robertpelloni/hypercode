@@ -2141,6 +2141,50 @@ function InspectorDashboardContent() {
                             <span className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-emerald-300">success: {telemetrySummary.success}</span>
                             <span className="rounded-md border border-red-500/30 bg-red-500/10 px-2 py-1 text-red-300">errors: {telemetrySummary.error}</span>
                             <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-amber-200">ignored results: {telemetrySummary.ignoredResults}</span>
+                            {telemetryTypeFilter !== 'all' ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setTelemetryTypeFilter('all')}
+                                    className="rounded-md border border-blue-500/30 bg-blue-500/10 px-2 py-1 text-blue-200 transition-colors hover:bg-blue-500/20"
+                                    title="Clear telemetry type filter"
+                                    aria-label="Clear telemetry type filter"
+                                >
+                                    type: {telemetryTypeFilter} ×
+                                </button>
+                            ) : null}
+                            {telemetryStatusFilter !== 'all' ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setTelemetryStatusFilter('all')}
+                                    className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-cyan-200 transition-colors hover:bg-cyan-500/20"
+                                    title="Clear telemetry status filter"
+                                    aria-label="Clear telemetry status filter"
+                                >
+                                    status: {telemetryStatusFilter} ×
+                                </button>
+                            ) : null}
+                            {telemetryWindowFilter !== '15m' ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setTelemetryWindowFilter('15m')}
+                                    className="rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-violet-200 transition-colors hover:bg-violet-500/20"
+                                    title="Clear telemetry window filter"
+                                    aria-label="Clear telemetry window filter"
+                                >
+                                    window: {telemetryWindowFilter} ×
+                                </button>
+                            ) : null}
+                            {telemetrySourceFilter !== 'all' ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setTelemetrySourceFilter('all')}
+                                    className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-amber-200 transition-colors hover:bg-amber-500/20"
+                                    title="Clear telemetry source filter"
+                                    aria-label="Clear telemetry source filter"
+                                >
+                                    source: {telemetrySourceFilter} ×
+                                </button>
+                            ) : null}
                             {activeTelemetryPreset ? (
                                 <span
                                     className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-emerald-200"
@@ -2148,6 +2192,17 @@ function InspectorDashboardContent() {
                                 >
                                     preset: {activeTelemetryPreset.label}
                                 </span>
+                            ) : null}
+                            {telemetrySearchQuery ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setTelemetrySearchQuery('')}
+                                    className="rounded-md border border-lime-500/30 bg-lime-500/10 px-2 py-1 text-lime-200 transition-colors hover:bg-lime-500/20"
+                                    title="Clear telemetry text search filter"
+                                    aria-label="Clear telemetry text search filter"
+                                >
+                                    search: {telemetrySearchQuery} ×
+                                </button>
                             ) : null}
                             {telemetryToolFilter != null && (
                                 <button
@@ -2171,6 +2226,11 @@ function InspectorDashboardContent() {
                                     bucket: {formatTelemetryBucketRange(telemetryBucketTimeFilter.start, telemetryBucketTimeFilter.end)} ×
                                 </button>
                             )}
+                            {telemetryFiltersAtDefault ? (
+                                <span className="rounded-md border border-zinc-700 bg-zinc-950/70 px-2 py-1 text-zinc-500">
+                                    default scope
+                                </span>
+                            ) : null}
                         </div>
 
                         <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3">

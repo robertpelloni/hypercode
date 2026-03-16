@@ -1,1 +1,1 @@
-# Borg Project Version: 2.7.295
+# Borg Project Version: 2.7.296
