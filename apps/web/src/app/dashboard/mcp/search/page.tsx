@@ -1160,6 +1160,7 @@ export default function SearchDashboard() {
         const summary = [
             `MCP Search telemetry summary`,
             `Filters: ${filterSummary}`,
+            `Active preset: ${activeTelemetryPreset ? activeTelemetryPreset.label : 'custom'}`,
             `Segment scope: ${telemetryBucketTimeFilter && telemetryStatusFilter !== 'all' ? `${telemetryStatusFilter} within ${formatTelemetryBucketRange(telemetryBucketTimeFilter.start, telemetryBucketTimeFilter.end)}` : 'none'}`,
             `Events: total=${telemetrySummary.total}, success=${telemetrySummary.success}, error=${telemetrySummary.error}, ignored=${telemetrySummary.ignoredResults}`,
             `Dominant source (volume): ${dominantSourceByVolume ? `${dominantSourceByVolume.source} (${dominantSourceByVolume.count} events, ${dominantSourceByVolume.error} errors, ${Math.round((dominantSourceByVolume.error / dominantSourceByVolume.count) * 100)}% error rate)` : 'none'}`,

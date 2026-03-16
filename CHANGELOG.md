@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.298] — 2026-03-16
+
+- feat(web/mcp/search): `copyTelemetrySummary()` now includes explicit `Active preset` context (`preset label` or `custom`) so pasted triage summaries preserve current preset intent.
+- feat(web/mcp/inspector): Added matching `Active preset` line in Inspector telemetry summary copy output for Search/Inspector incident handoff parity.
+- test(validation): `WEB_TSC_OK`; focused fallback/billing slice tests passed (`packages/core/src/routers/billingRouter.test.ts`, `apps/web/src/app/dashboard/billing/page.test.tsx`, `apps/web/src/app/dashboard/DashboardHomeClient.test.tsx`, `apps/web/tests/integration/fallback-e2e.test.ts`).
+
 ## [2.7.297] — 2026-03-16
 
 - feat(web/mcp/inspector): Added explicit `Active filters` label to telemetry summary chip row so Inspector matches Search filter terminology and improves triage scannability.
