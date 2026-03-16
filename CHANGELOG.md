@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.287] — 2026-03-16
+
+- feat(web/mcp/inspector): Added per-tool in-flight action tracking for lane-card and inspector actions so `Load`/`Unload` now show row-specific `Loading...`/`Unloading...` feedback.
+- feat(web/mcp/inspector): Introduced row-scoped action guards for load/unload operations, reducing ambiguous global-pending states during concurrent operator workflows.
+- test(validation): `WEB_TSC_OK`; focused fallback/billing slice tests passed (`packages/core/src/routers/billingRouter.test.ts`, `apps/web/src/app/dashboard/billing/page.test.tsx`, `apps/web/src/app/dashboard/DashboardHomeClient.test.tsx`, `apps/web/tests/integration/fallback-e2e.test.ts`).
+
 ## [2.7.286] — 2026-03-16
 
 - feat(web/mcp/inspector): Added per-tool lane-card hydration in-flight state tracking so active schema hydration shows row-level `Hydrating...` feedback.

@@ -247,7 +247,9 @@ function InspectorDashboardContent() {
     const [maxHydratedSchemasDraft, setMaxHydratedSchemasDraft] = useState(8);
     const [idleEvictionThresholdDraftMs, setIdleEvictionThresholdDraftMs] = useState(5 * 60 * 1000);
     const [activeLaneAction, setActiveLaneAction] = useState<string | null>(null);
+    const [activeLoadToolName, setActiveLoadToolName] = useState<string | null>(null);
     const [activeHydrationToolName, setActiveHydrationToolName] = useState<string | null>(null);
+    const [activeUnloadToolName, setActiveUnloadToolName] = useState<string | null>(null);
 
     const toolList = useMemo(() => ((tools || []) as InspectorTool[]), [tools]);
 
@@ -1008,6 +1010,34 @@ function InspectorDashboardContent() {
         }
     };
 
+    const loadTool = async (toolName: string) => {
+        setActiveLoadToolName(toolName);
+
+        try {
+            await loadMutation.mutateAsync({ name: toolName });
+            return true;
+        } catch {
+            // Mutation callbacks already emit actionable toasts.
+            return false;
+        } finally {
+            setActiveLoadToolName((current) => (current === toolName ? null : current));
+        }
+    };
+
+    const unloadTool = async (toolName: string) => {
+        setActiveUnloadToolName(toolName);
+
+        try {
+            await unloadMutation.mutateAsync({ name: toolName });
+            return true;
+        } catch {
+            // Mutation callbacks already emit actionable toasts.
+            return false;
+        } finally {
+            setActiveUnloadToolName((current) => (current === toolName ? null : current));
+        }
+    };
+
     const runLaneAction = async (
         laneId: 'always-on-lane' | 'keep-warm-lane',
         action: 'load' | 'hydrate' | 'unload',
@@ -1045,24 +1075,20 @@ function InspectorDashboardContent() {
 
             for (const tool of candidates) {
                 if (action === 'load') {
-                    try {
-                        await loadMutation.mutateAsync({ name: tool.name });
+                    const loaded = await loadTool(tool.name);
+                    if (loaded) {
                         loadedNames.add(tool.name);
                         succeeded += 1;
-                    } catch {
-                        // Per-tool mutation callback already surfaced the error.
                     }
                     continue;
                 }
 
                 if (action === 'unload') {
-                    try {
-                        await unloadMutation.mutateAsync({ name: tool.name });
+                    const unloaded = await unloadTool(tool.name);
+                    if (unloaded) {
                         loadedNames.delete(tool.name);
                         hydratedNames.delete(tool.name);
                         succeeded += 1;
-                    } catch {
-                        // Per-tool mutation callback already surfaced the error.
                     }
                     continue;
                 }
@@ -1491,14 +1517,21 @@ function InspectorDashboardContent() {
                                             Copy link
                                         </Button>
                                         <Button
-                                            onClick={() => loadMutation.mutate({ name: selectedTool.name })}
-                                            disabled={loadMutation.isPending}
+                                            onClick={() => {
+                                                void loadTool(selectedTool.name);
+                                            }}
+                                            disabled={loadMutation.isPending || activeLoadToolName === selectedTool.name}
                                             variant="outline"
                                             title="Load this tool into the active session working set"
                                             aria-label={`Load tool ${selectedTool.name}`}
                                             className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
                                         >
-                                            Load
+                                            {activeLoadToolName === selectedTool.name ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Loading...
+                                                </>
+                                            ) : 'Load'}
                                         </Button>
                                         <Button
                                             onClick={() => schemaMutation.mutate({ name: selectedTool.name })}
@@ -1512,14 +1545,21 @@ function InspectorDashboardContent() {
                                             Schema
                                         </Button>
                                         <Button
-                                            onClick={() => unloadMutation.mutate({ name: selectedTool.name })}
-                                            disabled={unloadMutation.isPending || !selectedIsLoaded}
+                                            onClick={() => {
+                                                void unloadTool(selectedTool.name);
+                                            }}
+                                            disabled={unloadMutation.isPending || !selectedIsLoaded || activeUnloadToolName === selectedTool.name}
                                             variant="outline"
                                             title="Unload this tool from the current working set"
                                             aria-label={`Unload tool ${selectedTool.name}`}
                                             className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
                                         >
-                                            Unload
+                                            {activeUnloadToolName === selectedTool.name ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Unloading...
+                                                </>
+                                            ) : 'Unload'}
                                         </Button>
                                         <Button
                                             onClick={() => toggleAlwaysLoaded(selectedTool.name)}
@@ -1818,13 +1858,20 @@ function InspectorDashboardContent() {
                                                                     type="button"
                                                                     variant="outline"
                                                                     size="sm"
-                                                                    onClick={() => loadMutation.mutate({ name: tool.name })}
-                                                                    disabled={loadMutation.isPending || loaded || activeLaneAction != null}
+                                                                    onClick={() => {
+                                                                        void loadTool(tool.name);
+                                                                    }}
+                                                                    disabled={loadMutation.isPending || loaded || activeLaneAction != null || activeLoadToolName === tool.name}
                                                                     title={loaded ? `${tool.name} is already loaded` : `Load ${tool.name} into the active working set`}
                                                                     aria-label={`Load ${tool.name}`}
                                                                     className="h-7 border-blue-700 px-2 text-[10px] text-blue-200 hover:bg-blue-950/30"
                                                                 >
-                                                                    {loaded ? 'Loaded' : 'Load'}
+                                                                    {activeLoadToolName === tool.name ? (
+                                                                        <>
+                                                                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                                                            Loading...
+                                                                        </>
+                                                                    ) : loaded ? 'Loaded' : 'Load'}
                                                                 </Button>
                                                                 <Button
                                                                     type="button"
@@ -1849,13 +1896,20 @@ function InspectorDashboardContent() {
                                                                     type="button"
                                                                     variant="outline"
                                                                     size="sm"
-                                                                    onClick={() => unloadMutation.mutate({ name: tool.name })}
-                                                                    disabled={unloadMutation.isPending || !loaded || activeLaneAction != null}
+                                                                    onClick={() => {
+                                                                        void unloadTool(tool.name);
+                                                                    }}
+                                                                    disabled={unloadMutation.isPending || !loaded || activeLaneAction != null || activeUnloadToolName === tool.name}
                                                                     title={loaded ? `Unload ${tool.name} from the active working set` : `${tool.name} is already unloaded`}
                                                                     aria-label={`Unload ${tool.name}`}
                                                                     className="h-7 border-zinc-700 px-2 text-[10px] text-zinc-300 hover:bg-zinc-800"
                                                                 >
-                                                                    {loaded ? 'Unload' : 'Unloaded'}
+                                                                    {activeUnloadToolName === tool.name ? (
+                                                                        <>
+                                                                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                                                            Unloading...
+                                                                        </>
+                                                                    ) : loaded ? 'Unload' : 'Unloaded'}
                                                                 </Button>
                                                             </div>
                                                         </div>
@@ -1911,13 +1965,21 @@ function InspectorDashboardContent() {
                                                 Focus
                                             </Button>
                                             <Button
-                                                onClick={() => unloadMutation.mutate({ name: tool.name })}
+                                                onClick={() => {
+                                                    void unloadTool(tool.name);
+                                                }}
+                                                disabled={activeUnloadToolName === tool.name}
                                                 variant="outline"
                                                 title={`Unload ${tool.name} from the working set`}
                                                 aria-label={`Unload loaded tool ${tool.name}`}
                                                 className="flex-1 border-zinc-700 text-zinc-300 hover:bg-zinc-800"
                                             >
-                                                Unload
+                                                {activeUnloadToolName === tool.name ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        Unloading...
+                                                    </>
+                                                ) : 'Unload'}
                                             </Button>
                                         </div>
                                     </div>
