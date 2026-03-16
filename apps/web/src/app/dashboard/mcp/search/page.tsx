@@ -859,6 +859,13 @@ export default function SearchDashboard() {
             return;
         }
 
+        const dominantSourceByVolume = telemetrySourceStats
+            .filter((source) => source.count > 0)
+            .sort((left, right) => right.count - left.count || right.error - left.error)[0] ?? null;
+        const dominantSourceByErrors = telemetrySourceStats
+            .filter((source) => source.error > 0)
+            .sort((left, right) => right.error - left.error || right.count - left.count)[0] ?? null;
+
         const filterSummary = [
             `type=${telemetryTypeFilter}`,
             `status=${telemetryStatusFilter}`,
@@ -879,6 +886,8 @@ export default function SearchDashboard() {
             `MCP Search telemetry summary`,
             `Filters: ${filterSummary}`,
             `Events: total=${telemetrySummary.total}, success=${telemetrySummary.success}, error=${telemetrySummary.error}, ignored=${telemetrySummary.ignoredResults}`,
+            `Dominant source (volume): ${dominantSourceByVolume ? `${dominantSourceByVolume.source} (${dominantSourceByVolume.count} events, ${dominantSourceByVolume.error} errors)` : 'none'}`,
+            `Dominant source (errors): ${dominantSourceByErrors ? `${dominantSourceByErrors.source} (${dominantSourceByErrors.error} errors)` : 'none'}`,
             `Confidence: belowFloor=${telemetryConfidenceStats.belowFloor}, nearFloor=${telemetryConfidenceStats.nearFloor}, high=${telemetryConfidenceStats.highConfidence}, mean=${telemetryMeanConfidencePct ?? 'n/a'}%, meanGap=${telemetryMeanScoreGap ?? 'n/a'}`,
             `Top failing tools: ${topFailingTools}`,
             `Top skip reasons: ${topSkipReasons}`,

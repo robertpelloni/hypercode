@@ -949,6 +949,13 @@ function InspectorDashboardContent() {
             return;
         }
 
+        const dominantSourceByVolume = telemetrySourceBreakdown
+            .filter((source) => source.total > 0)
+            .sort((left, right) => right.total - left.total || right.errorCount - left.errorCount)[0] ?? null;
+        const dominantSourceByErrors = telemetrySourceBreakdown
+            .filter((source) => source.errorCount > 0)
+            .sort((left, right) => right.errorCount - left.errorCount || right.total - left.total)[0] ?? null;
+
         const filterSummary = [
             `type=${telemetryTypeFilter}`,
             `status=${telemetryStatusFilter}`,
@@ -970,6 +977,8 @@ function InspectorDashboardContent() {
             `MCP Inspector telemetry summary`,
             `Filters: ${filterSummary}`,
             `Events: total=${telemetrySummary.total}, success=${telemetrySummary.success}, error=${telemetrySummary.error}, ignored=${telemetrySummary.ignoredResults}`,
+            `Dominant source (volume): ${dominantSourceByVolume ? `${dominantSourceByVolume.value} (${dominantSourceByVolume.total} events, ${dominantSourceByVolume.errorCount} errors)` : 'none'}`,
+            `Dominant source (errors): ${dominantSourceByErrors ? `${dominantSourceByErrors.value} (${dominantSourceByErrors.errorCount} errors)` : 'none'}`,
             `Confidence: belowFloor=${telemetryConfidenceStats.belowFloor}, nearFloor=${telemetryConfidenceStats.nearFloor}, high=${telemetryConfidenceStats.highConfidence}, mean=${telemetryMeanConfidencePct ?? 'n/a'}%, meanGap=${telemetryMeanScoreGap ?? 'n/a'}`,
             `Top failing tools: ${topFailingTools}`,
             `Top skip reasons: ${topSkipReasons}`,

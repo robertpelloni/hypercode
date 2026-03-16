@@ -4,6 +4,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.261] — 2026-03-16
+
+- feat(web/mcp/search): `Copy summary` in `dashboard/mcp/search/page.tsx` now includes dominant telemetry source context by event volume and by error count.
+- feat(web/mcp/inspector): Added parity dominant-source summary lines in `dashboard/mcp/inspector/page.tsx` for faster incident handoff triage.
+- feat(web/mcp): Telemetry handoff snippets now explicitly call out where most events/errors are concentrated before deeper drilldown.
+- test(validation): `WEB_TSC_OK` — no TypeScript errors.
+
 ## [2.7.260] — 2026-03-16
 
 - feat(web/mcp/search): Added `Copy summary` action in `dashboard/mcp/search/page.tsx` to copy a filter-scoped telemetry snapshot (counts, confidence bands, top failures, skip reasons, ambiguity highlights).
