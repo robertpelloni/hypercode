@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.266] — 2026-03-16
+
+- feat(web/mcp/inspector): Source trend bucket bars are now clickable drilldown actions that focus `source + error` scope directly from the trend chart.
+- feat(web/mcp/inspector): Trend bucket drilldown optionally applies bucket top-failing tool focus, accelerating path from source-level signal to tool-level incident triage.
+- test(validation): `WEB_TSC_OK` — no TypeScript errors.
+
 ## [2.7.265] — 2026-03-16
 
 - feat(web/mcp/inspector): Cleaned up source-trend tooltips to include explicit bucket error-rate context and compacted top-error snippets.

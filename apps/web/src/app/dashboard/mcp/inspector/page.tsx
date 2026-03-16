@@ -1619,23 +1619,38 @@ function InspectorDashboardContent() {
                                                             ? Math.round((bucket.errorCount / bucket.total) * 100)
                                                             : 0;
                                                         const compactTopErrorMessage = formatTrendTooltipErrorMessage(bucket.topErrorMessage);
+                                                        const drilldownDisabled = bucket.total === 0;
 
                                                         return (
-                                                            <div
-                                                            key={`inspector-source-trend-${source.value}-${bucket.label}`}
-                                                            title={[
-                                                                `${source.label} • ${bucket.label}`,
-                                                                `${bucket.successCount} ok / ${bucket.errorCount} err`,
-                                                                `Error rate: ${bucketErrorRatePercent}%`,
-                                                                bucket.topFailingTool ? `Top failing tool: ${bucket.topFailingTool}` : null,
-                                                                compactTopErrorMessage ? `Error: ${compactTopErrorMessage}` : null,
-                                                            ].filter(Boolean).join('\n')}
-                                                        >
+                                                            <button
+                                                                type="button"
+                                                                key={`inspector-source-trend-${source.value}-${bucket.label}`}
+                                                                disabled={drilldownDisabled}
+                                                                onClick={() => {
+                                                                    setTelemetrySourceFilter(source.value);
+                                                                    setTelemetryStatusFilter('error');
+                                                                    if (bucket.topFailingTool) {
+                                                                        setTelemetryToolFilter(bucket.topFailingTool);
+                                                                    }
+                                                                }}
+                                                                className="disabled:cursor-not-allowed disabled:opacity-40"
+                                                                title={[
+                                                                    `${source.label} • ${bucket.label}`,
+                                                                    `${bucket.successCount} ok / ${bucket.errorCount} err`,
+                                                                    `Error rate: ${bucketErrorRatePercent}%`,
+                                                                    bucket.topFailingTool ? `Top failing tool: ${bucket.topFailingTool}` : null,
+                                                                    compactTopErrorMessage ? `Error: ${compactTopErrorMessage}` : null,
+                                                                    drilldownDisabled ? 'No events in this bucket' : 'Click to focus this source bucket',
+                                                                ].filter(Boolean).join('\n')}
+                                                                aria-label={drilldownDisabled
+                                                                    ? `${source.label} ${bucket.label} has no events`
+                                                                    : `Focus ${source.label} ${bucket.label} failures`}
+                                                            >
                                                                 <div className="h-1.5 rounded border border-zinc-800/80 bg-zinc-900/80 overflow-hidden flex">
                                                                     <div className="h-full bg-emerald-500/70" style={{ width: `${successWidth}%` }} />
                                                                     <div className="h-full bg-red-500/75" style={{ width: `${errorWidth}%` }} />
                                                                 </div>
-                                                            </div>
+                                                            </button>
                                                         );
                                                     })}
                                                 </div>
