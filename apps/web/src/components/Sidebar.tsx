@@ -9,7 +9,7 @@ import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type D
 import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
-import { SIDEBAR_SECTIONS } from "./mcp/nav-config";
+import { SIDEBAR_SECTIONS, type NavItem } from "./mcp/nav-config";
 import { buildExportedNavPreferences, buildNavItemsByNormalizedHref, buildRecentRouteHistory, buildRecentSearchHistory, comparePaletteRoutes, getNavDescription, hasNavValidationIssues, isNavHrefActive, matchesNavQuery, normalizeNavHref, sanitizeCollapsedSections, sanitizeFavoriteRoutes, sanitizeNavPreferences, sanitizeRecentRoutes, sanitizeRecentSearches, validateSidebarSections } from "./mcp/nav-validation";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
@@ -108,6 +108,44 @@ type PaletteItem = {
     description?: string;
 };
 
+type NavBadge = NonNullable<NavItem['badge']>;
+
+const NAV_BADGE_META: Record<NavBadge, { shortLabel: string; legendLabel: string; className: string }> = {
+    experimental: {
+        shortLabel: 'exp',
+        legendLabel: 'Experimental',
+        className: 'bg-amber-900/60 text-amber-300',
+    },
+    beta: {
+        shortLabel: 'beta',
+        legendLabel: 'Beta',
+        className: 'bg-blue-900/60 text-blue-300',
+    },
+    embed: {
+        shortLabel: 'embed',
+        legendLabel: 'External embed',
+        className: 'bg-zinc-700/80 text-zinc-400',
+    },
+};
+
+function NavMaturityBadge({ badge }: { badge?: NavBadge }) {
+    if (!badge) {
+        return null;
+    }
+
+    const meta = NAV_BADGE_META[badge];
+
+    return (
+        <span
+            className={cn('ml-1.5 rounded px-1 py-0.5 text-[9px] font-semibold uppercase leading-none', meta.className)}
+            title={`${meta.legendLabel} surface`}
+            aria-label={`${meta.legendLabel} surface`}
+        >
+            {meta.shortLabel}
+        </span>
+    );
+}
+
 export function Sidebar({ className }: SidebarProps) {
     const router = useRouter();
     const pathname = usePathname();
@@ -133,6 +171,21 @@ export function Sidebar({ className }: SidebarProps) {
     const allItemsByHref = useMemo(() => buildNavItemsByNormalizedHref(SIDEBAR_SECTIONS), []);
     const allowedNavHrefs = useMemo(() => new Set(allItemsByHref.keys()), [allItemsByHref]);
     const favoriteSet = useMemo(() => new Set(favorites), [favorites]);
+    const maturityCounts = useMemo(() => {
+        const counts: Record<NavBadge, number> = {
+            experimental: 0,
+            beta: 0,
+            embed: 0,
+        };
+
+        for (const item of allItemsByHref.values()) {
+            if (item.badge) {
+                counts[item.badge] += 1;
+            }
+        }
+
+        return counts;
+    }, [allItemsByHref]);
 
     useEffect(() => {
         const parsed = safeStorageGetJson<unknown>(SIDEBAR_COLLAPSE_STORAGE_KEY);
@@ -703,6 +756,25 @@ export function Sidebar({ className }: SidebarProps) {
                                 {navNotice}
                             </div>
                         ) : null}
+                        {(maturityCounts.beta > 0 || maturityCounts.experimental > 0 || maturityCounts.embed > 0) ? (
+                            <div className="mt-2 rounded-md border border-zinc-800 bg-zinc-900/70 px-2.5 py-2 text-[11px] text-zinc-400">
+                                <div className="mb-1 uppercase tracking-wider text-zinc-500">Surface status</div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {(['beta', 'experimental', 'embed'] as const).map((badge) => (
+                                        maturityCounts[badge] > 0 ? (
+                                            <span
+                                                key={badge}
+                                                className="inline-flex items-center rounded-md border border-zinc-800 bg-black/30 px-1.5 py-1"
+                                                title={`${maturityCounts[badge]} ${NAV_BADGE_META[badge].legendLabel.toLowerCase()} routes in navigation`}
+                                            >
+                                                <NavMaturityBadge badge={badge} />
+                                                <span className="ml-1 text-zinc-300">{maturityCounts[badge]}</span>
+                                            </span>
+                                        ) : null
+                                    ))}
+                                </div>
+                            </div>
+                        ) : null}
                     </div>
 
                     {favoriteItems.length > 0 ? (
@@ -746,15 +818,7 @@ export function Sidebar({ className }: SidebarProps) {
                                     >
                                         <item.icon className="mr-2 h-4 w-4" />
                                         {item.title}
-                                                    {item.badge === 'experimental' && (
-                                                        <span className="ml-1.5 px-1 py-0.5 rounded text-[9px] font-semibold uppercase bg-amber-900/60 text-amber-300 leading-none">exp</span>
-                                                    )}
-                                                    {item.badge === 'beta' && (
-                                                        <span className="ml-1.5 px-1 py-0.5 rounded text-[9px] font-semibold uppercase bg-blue-900/60 text-blue-300 leading-none">beta</span>
-                                                    )}
-                                                    {item.badge === 'embed' && (
-                                                        <span className="ml-1.5 px-1 py-0.5 rounded text-[9px] font-semibold uppercase bg-zinc-700/80 text-zinc-400 leading-none">embed</span>
-                                                    )}
+                                        <NavMaturityBadge badge={item.badge} />
                                     </Link>
                                 ))}
                             </div>
@@ -796,6 +860,7 @@ export function Sidebar({ className }: SidebarProps) {
                                                 >
                                                     <item.icon className="mr-2 h-4 w-4" />
                                                     {item.title}
+                                                    <NavMaturityBadge badge={item.badge} />
                                                 </Link>
                                                 <button
                                                     type="button"
@@ -923,7 +988,7 @@ function FavoriteNavRow({
     active,
     onToggleFavorite,
 }: {
-    item: { title: string; href: string; icon: any; description?: string };
+    item: { title: string; href: string; icon: any; description?: string; badge?: NavBadge };
     active: boolean;
     onToggleFavorite: (href: string) => void;
 }) {
@@ -954,6 +1019,7 @@ function FavoriteNavRow({
             >
                 <item.icon className="mr-2 h-4 w-4" />
                 {item.title}
+                <NavMaturityBadge badge={item.badge} />
             </Link>
             <button
                 type="button"

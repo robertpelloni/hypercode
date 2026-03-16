@@ -4,6 +4,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.274] — 2026-03-16
+
+- feat(web/nav): Sidebar now renders maturity badges (`beta`, `experimental`, `embed`) consistently in section links, favorites, and recent routes so operators can spot non-stable surfaces at a glance.
+- feat(web/nav): Added a compact `Surface status` legend to the sidebar summarizing how many beta, experimental, and external-embed routes are currently exposed.
+- feat(web/nav): Core dashboard entries for Sessions, Providers, Health, Logs, Audit, and System are now explicitly marked `beta` to match their in-page status banners and reduce dashboard readiness ambiguity.
+- test(validation): `WEB_TSC_OK` — no TypeScript errors.
+
 ## [2.7.273] — 2026-03-16
 
 - feat(web/mcp/search): `Copy link` now rebuilds MCP Search share URLs from the current in-memory telemetry filters so freshly clicked bucket/segment drilldowns copy the exact active scope.
