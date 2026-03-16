@@ -1317,6 +1317,7 @@ function InspectorDashboardContent() {
             : 'none';
         const summary = [
             `MCP Inspector telemetry summary`,
+            `Generated at: ${new Date().toISOString()}`,
             `Filters: ${filterSummary}`,
             `Active preset: ${activeTelemetryPreset ? activeTelemetryPreset.label : 'custom'}`,
             `Segment scope: ${telemetryBucketTimeFilter && telemetryStatusFilter !== 'all' ? `${telemetryStatusFilter} within ${formatTelemetryBucketRange(telemetryBucketTimeFilter.start, telemetryBucketTimeFilter.end)}` : 'none'}`,

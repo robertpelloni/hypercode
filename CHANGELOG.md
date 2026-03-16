@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.299] — 2026-03-16
+
+- feat(web/mcp/search): Added explicit `Generated at` ISO timestamp line to telemetry summary copy output so incident handoffs include an unambiguous capture time.
+- feat(web/mcp/inspector): Added matching `Generated at` ISO timestamp line in Inspector telemetry summary copy output for cross-surface handoff parity.
+- test(validation): `WEB_TSC_OK`; focused fallback/billing slice tests passed (`packages/core/src/routers/billingRouter.test.ts`, `apps/web/src/app/dashboard/billing/page.test.tsx`, `apps/web/src/app/dashboard/DashboardHomeClient.test.tsx`, `apps/web/tests/integration/fallback-e2e.test.ts`).
+
 ## [2.7.298] — 2026-03-16
 
 - feat(web/mcp/search): `copyTelemetrySummary()` now includes explicit `Active preset` context (`preset label` or `custom`) so pasted triage summaries preserve current preset intent.
