@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@borg/ui';
 import { trpc } from '@/utils/trpc';
@@ -69,6 +69,14 @@ function TargetStatusPill({ target }: { target: ServerProbeTarget }) {
 }
 
 export default function MCPServerProbePage(): React.JSX.Element {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-zinc-400">Loading MCP server probe...</div>}>
+            <MCPServerProbePageContent />
+        </Suspense>
+    );
+}
+
+function MCPServerProbePageContent(): React.JSX.Element {
     const searchParams = useSearchParams();
     const { data: servers, isLoading: isLoadingServers } = trpc.mcp.listServers.useQuery();
     const { data: tools, isLoading: isLoadingTools } = trpc.mcp.listTools.useQuery();

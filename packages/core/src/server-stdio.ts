@@ -23,22 +23,9 @@ async function main() {
     });
 
     try {
-        const { ensureBackgroundCoreRunning } = await import('./backgroundCoreBootstrap.js');
-        void ensureBackgroundCoreRunning({
-            waitForReady: false,
-            log: (message, ...optionalParams) => console.error(message, ...optionalParams),
-        }).then((result) => {
-            if (result.status === 'spawned') {
-                console.error(`[Borg Core] Background control-plane bootstrap requested (PID: ${result.pid ?? 'unknown'}).`);
-            }
-        }).catch((error) => {
-            console.error('[Borg Core] Background control-plane bootstrap failed:', error);
-        });
-
-        const { MCPServer } = await import('./MCPServer.js');
-        const mcp = new MCPServer({ skipWebsocket: true });
-        await mcp.start();
-        console.error("[Borg Core] MCP Server Stdio Entry Point Started.");
+        const { startStdioLoader } = await import('./stdioLoader.js');
+        await startStdioLoader();
+        console.error('[Borg Core] MCP stdio loader started.');
     } catch (err) {
         console.error("Failed to start MCP server:", err);
         process.exit(1);

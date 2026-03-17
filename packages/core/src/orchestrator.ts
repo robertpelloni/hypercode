@@ -77,7 +77,12 @@ export async function startOrchestrator(options: StartOrchestratorOptions = {}) 
             console.log("[Core] 2. Instantiating MCPServer...");
             const inputTools = new InputTools();
             const systemStatusTool = new SystemStatusTool();
-            const mcp = new MCPServer({ inputTools, systemStatusTool, skipAutoDrive: !autoDrive });
+            const mcp = new MCPServer({
+                inputTools,
+                systemStatusTool,
+                skipAutoDrive: !autoDrive,
+                skipStdio: true,
+            });
 
             console.log("[Core] 3. Starting MCPServer...");
             await mcp.start();

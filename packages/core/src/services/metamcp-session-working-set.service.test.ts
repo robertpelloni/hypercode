@@ -121,6 +121,31 @@ describe('SessionToolWorkingSet', () => {
         expect(workingSet.isHydrated('pinned')).toBe(false);
     });
 
+    it('tracks always-loaded tool recency metadata', () => {
+        const nowSpy = vi.spyOn(Date, 'now');
+        const workingSet = new SessionToolWorkingSet({
+            maxLoadedTools: 2,
+            maxHydratedSchemas: 1,
+        });
+
+        nowSpy.mockReturnValueOnce(1_000);
+        workingSet.setAlwaysLoadedTools(['pinned']);
+
+        const initialState = workingSet.listLoadedTools().find((tool) => tool.name === 'pinned');
+        expect(initialState).toBeTruthy();
+        expect(initialState?.lastLoadedAt).toBe(1_000);
+        expect(initialState?.lastAccessedAt).toBe(1_000);
+
+        nowSpy.mockReturnValueOnce(2_500);
+        expect(workingSet.touchTool('pinned')).toBe(true);
+
+        const updatedState = workingSet.listLoadedTools().find((tool) => tool.name === 'pinned');
+        expect(updatedState?.lastLoadedAt).toBe(1_000);
+        expect(updatedState?.lastAccessedAt).toBe(2_500);
+
+        nowSpy.mockRestore();
+    });
+
     it('records evicted tools in the bounded eviction history with tier=loaded', () => {
         const workingSet = new SessionToolWorkingSet({
             maxLoadedTools: 2,
@@ -186,7 +211,23 @@ describe('SessionToolWorkingSet', () => {
         expect(workingSet.getEvictionHistory()).toHaveLength(0);
     });
 
-    it('reconfigure updates capacity limits without clearing loaded tools', () => {
+    it('bounds eviction history to the configured retention size', () => {
+        const workingSet = new SessionToolWorkingSet({
+            maxLoadedTools: 1,
+            maxHydratedSchemas: 1,
+        });
+
+        for (let index = 0; index < 220; index += 1) {
+            workingSet.loadTool(`tool-${index}`);
+        }
+
+        const history = workingSet.getEvictionHistory();
+        expect(history).toHaveLength(200);
+        expect(history[0]?.toolName).toBe('tool-218');
+        expect(history[history.length - 1]?.toolName).toBe('tool-19');
+    });
+
+    it('reconfigure applies tighter limits immediately and records evictions', () => {
         const workingSet = new SessionToolWorkingSet({
             maxLoadedTools: 8,
             maxHydratedSchemas: 4,
@@ -194,27 +235,28 @@ describe('SessionToolWorkingSet', () => {
 
         workingSet.loadTool('alpha');
         workingSet.loadTool('beta');
+        workingSet.loadTool('gamma');
 
-        workingSet.reconfigure({ maxLoadedTools: 32, maxHydratedSchemas: 16, idleEvictionThresholdMs: 90_000 });
+        workingSet.reconfigure({ maxLoadedTools: 2, maxHydratedSchemas: 1, idleEvictionThresholdMs: 90_000 });
 
         expect(workingSet.getLimits()).toEqual({
-            maxLoadedTools: 32,
-            maxHydratedSchemas: 16,
+            maxLoadedTools: 2,
+            maxHydratedSchemas: 1,
             idleEvictionThresholdMs: 90_000,
         });
-        // Previously loaded tools are still present.
-        expect(workingSet.isLoaded('alpha')).toBe(true);
-        expect(workingSet.isLoaded('beta')).toBe(true);
+
+        expect(workingSet.getLoadedToolNames().length).toBeLessThanOrEqual(2);
+        expect(workingSet.getEvictionHistory().length).toBeGreaterThan(0);
     });
 
-    it('reconfigure clamps inputs to valid bounds', () => {
+    it('reconfigure normalizes inputs to valid lower bounds', () => {
         const workingSet = new SessionToolWorkingSet();
 
-        workingSet.reconfigure({ maxLoadedTools: 200, maxHydratedSchemas: 0, idleEvictionThresholdMs: 1 });
+        workingSet.reconfigure({ maxLoadedTools: 0.2, maxHydratedSchemas: 0, idleEvictionThresholdMs: -5 });
 
         const limits = workingSet.getLimits();
-        expect(limits.maxLoadedTools).toBe(64);       // clamped to max
-        expect(limits.maxHydratedSchemas).toBe(2);    // clamped to min
-        expect(limits.idleEvictionThresholdMs).toBe(10_000); // clamped to min
+        expect(limits.maxLoadedTools).toBe(1);
+        expect(limits.maxHydratedSchemas).toBe(1);
+        expect(limits.idleEvictionThresholdMs).toBe(0);
     });
 });

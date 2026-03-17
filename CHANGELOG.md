@@ -4,6 +4,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.307] — 2026-03-17
+
+- feat(core/mcp): Upgraded `SessionToolWorkingSet` with explicit runtime `reconfigure(...)` support and bounded eviction history (`getEvictionHistory` / `clearEvictionHistory`) so capacity and eviction telemetry remain observable through Borg-native meta-tools.
+- feat(core/mcp): Hardened working-set eviction accounting with idle-aware metadata (`idleEvicted`, `idleDurationMs`, `tier`) and unified history recording for both loaded-tier and hydrated-tier evictions.
+- feat(core/mcp): Added native `set_capacity`, `get_eviction_history`, and `clear_eviction_history` handling in `NativeSessionMetaTools` to keep direct/native mode behavior aligned with MetaMCP proxy expectations.
+- test(core): Added focused `SessionToolWorkingSet` coverage (`packages/core/src/mcp/SessionToolWorkingSet.test.ts`) and expanded native meta-tool tests for capacity updates + eviction history (`packages/core/src/mcp/NativeSessionMetaTools.test.ts`); focused tests passed and direct core typecheck passed (`pnpm -C packages/core exec tsc --noEmit`).
+
+## [2.7.306] — 2026-03-17
+
+- fix(core/mcp): Switched legacy downstream stdio client paths (`Router` and `mcp/StdioClient`) to Borg's managed stdio transport so Windows child consoles stay hidden while stdout/stderr remain observable in the MetaMCP log store.
+- test(core): Added regression coverage proving legacy stdio client paths now request managed piped diagnostics instead of raw SDK stdio transport (`packages/core/src/stdio-transport-visibility.test.ts`).
+- test(core): Focused stdio validation passed (`packages/core/src/backgroundCoreBootstrap.test.ts`, `packages/core/src/stdioLoader.test.ts`, `packages/core/src/stdio-transport-visibility.test.ts`); direct core typecheck passed (`pnpm -C packages/core exec tsc --noEmit --pretty false`).
+
+## [2.7.305] — 2026-03-17
+
+- feat(core/mcp): Split the stdio-facing Borg MCP entrypoint into a lightweight loader that advertises cached downstream tool inventory immediately, triggers background core startup, and avoids cold-start stalls during MCP host discovery.
+- feat(core/mcp): Added a dedicated loader status tool plus HTTP proxy handoff for tool execution so the stdio loader can report warming state until the background control plane is ready.
+- refactor(core/orchestrator): Background control-plane startup now launches `MCPServer` with `skipStdio`, leaving stdio ownership to the external loader and preventing duplicated transport responsibility.
+- test(core): Focused loader/bootstrap tests passed (`packages/core/src/backgroundCoreBootstrap.test.ts`, `packages/core/src/stdioLoader.test.ts`); direct core typecheck passed (`pnpm -C packages/core exec tsc --noEmit --pretty false`).
+
 ## [2.7.304] — 2026-03-16
 
 - fix(web/mcp/search): Preserved ambiguous-search `scoreGap` precision at three decimals when building telemetry summary rows, preventing premature 1-decimal quantization before copy output.
@@ -1612,7 +1632,7 @@ All notable changes to this project will be documented in this file.
 - **Phase 140: Extension URL Ingestion Parity**
   - Added a new Core compatibility endpoint `POST /knowledge.ingest-url` backed by the existing deep-research URL ingestion service.
   - Added browser-extension popup support for ingesting the active tab URL or an operator-edited URL directly into Borg Knowledge.
-  - Added `AIOS: Ingest URL to Knowledge` plus a matching VS Code mini-dashboard action so URL ingestion is now available from both extension surfaces.
+  - Added `Borg: Ingest URL to Knowledge` plus a matching VS Code mini-dashboard action so URL ingestion is now available from both extension surfaces.
   - Updated the parity matrix to mark URL ingestion as shipped across dashboard, browser extension, and VS Code extension.
 ### Validated
 - Verified Core typecheck plus browser and VS Code extension builds pass after the new URL ingestion flow was added.
@@ -1656,7 +1676,7 @@ All notable changes to this project will be documented in this file.
 ## [2.7.97] - 2026-03-06
 ### Added
 - **Phase 135: VS Code RAG Ingestion Parity**
-  - Added `AIOS: Ingest Selection to RAG` to the VS Code extension so the active selection or full file can be sent directly to Borg's `/rag.ingest-text` compatibility endpoint.
+  - Added `Borg: Ingest Selection to RAG` to the VS Code extension so the active selection or full file can be sent directly to Borg's `/rag.ingest-text` compatibility endpoint.
   - Added a matching **Ingest to RAG** quick action to the VS Code mini-dashboard so RAG ingestion is available from both the command palette and the sidebar UI.
   - Added an editor context-menu entry for direct selection ingestion and updated the parity matrix to mark VS Code RAG ingestion as shipped.
 ### Validated
@@ -1674,7 +1694,7 @@ All notable changes to this project will be documented in this file.
 ## [2.7.95] - 2026-03-06
 ### Added
 - **Phase 133: VS Code Mini Dashboard Parity**
-  - Recreated `packages/vscode/src/extension.ts` with a richer AIOS sidebar that now functions as a real mini-dashboard instead of a thin dispatch-only surface.
+  - Recreated `packages/vscode/src/extension.ts` with a richer Borg sidebar that now functions as a real mini-dashboard instead of a thin dispatch-only surface.
   - Added live sidebar snapshot state for Core connection health, active researcher/coder availability, active editor, active terminal, and a recent activity feed.
   - Added quick actions for dashboard deep links, memory, tools, logs, analytics, council/debate flows, architect mode, and direct tool invocation through the Core compatibility endpoint.
   - Added `borg.dashboardUrl` configuration and updated the VS Code activity-bar view label from `Dispatch` to `Mini Dashboard` to reflect the expanded surface.
@@ -1698,7 +1718,7 @@ All notable changes to this project will be documented in this file.
 ## [2.7.93] - 2026-03-06
 ### Added
 - **Phase 131: VS Code Sidebar Dispatch UI**
-  - Added an `AIOS` activity-bar container and a `Dispatch` webview view to the VS Code extension.
+  - Added a `Borg` activity-bar container and a `Dispatch` webview view to the VS Code extension.
   - Added a sidebar UI for hub status, research dispatch, coder dispatch, and quick memory capture from the active selection.
   - Connected the sidebar UI to the already-shipped Core expert endpoints and refreshed sidebar status on Core connect/disconnect events.
 ### Validated
@@ -1709,8 +1729,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **Phase 130: VS Code Expert Dispatch Commands**
   - Added `/expert.dispatch` and `/expert.status` Core compatibility endpoints so non-dashboard clients can invoke the existing researcher/coder agents and query their availability.
-  - Implemented `AIOS: Run Agent` in the VS Code extension with command-palette-driven dispatch to either the Research Agent or Coder Agent.
-  - Implemented `AIOS: Show Hub Status` in the VS Code extension to display Core connection state plus researcher/coder availability.
+  - Implemented `Borg: Run Agent` in the VS Code extension with command-palette-driven dispatch to either the Research Agent or Coder Agent.
+  - Implemented `Borg: Show Hub Status` in the VS Code extension to display Core connection state plus researcher/coder availability.
 ### Validated
 - Verified `pnpm -C packages/core exec tsc --noEmit` passes.
 - Verified `pnpm -C packages/vscode compile` passes.
@@ -1739,7 +1759,7 @@ All notable changes to this project will be documented in this file.
 ## [2.7.89] - 2026-03-06
 ### Added
 - **Phase 127 Completion: VS Code Knowledge Capture Bridge**
-  - Registered the existing `AIOS: Remember Selection` command in the VS Code extension and wired it to emit `KNOWLEDGE_CAPTURE` events to Borg Core.
+  - Registered the existing `Borg: Remember Selection` command in the VS Code extension and wired it to emit `KNOWLEDGE_CAPTURE` events to Borg Core.
   - Extended Phase 127 cross-surface knowledge capture so both the browser extension and VS Code can push context directly into Borg memory through the shared Core bridge.
 ### Validated
 - Verified `pnpm -C packages/vscode compile` passes.

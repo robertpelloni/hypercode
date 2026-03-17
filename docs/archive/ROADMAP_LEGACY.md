@@ -2,7 +2,7 @@
 
 **Current Version**: 2.7.108
 **Last Stable Phase**: 146
-**Codename**: AIOS (AI Operating System)
+**Codename**: Borg Neural OS
 
 ---
 
@@ -182,7 +182,7 @@
     - [x] Add Core compatibility endpoints for expert dispatch and expert status.
     - [x] Expose command-palette-driven research/code dispatch and status checks in the VS Code extension.
 - [x] **Phase 131: VS Code Sidebar Dispatch UI**
-    - [x] Add a real activity-bar webview surface for AIOS dispatch inside VS Code.
+    - [x] Add a real activity-bar webview surface for Borg dispatch inside VS Code.
     - [x] Surface research, coder, status, and memory-capture actions directly in the sidebar.
 - [x] **Phase 133: VS Code Mini Dashboard Parity**
     - [x] Upgrade the VS Code sidebar from dispatch-only UI to a real mini-dashboard with status, recent tasks, and quick actions.

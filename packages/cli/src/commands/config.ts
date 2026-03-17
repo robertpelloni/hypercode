@@ -1,7 +1,7 @@
 /**
  * `borg config` - Configuration management
  *
- * View, set, and manage Borg AIOS configuration including
+ * View, set, and manage Borg configuration including
  * all subsystem settings, secrets, and environment variables.
  *
  * @example
@@ -11,8 +11,14 @@
  */
 
 import type { Command } from 'commander';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { readCanonicalVersion } from '../version.js';
 
 export function registerConfigCommand(program: Command): void {
+  const commandDir = dirname(fileURLToPath(import.meta.url));
+  const version = readCanonicalVersion(commandDir);
+
   const config = program
     .command('config')
     .alias('cfg')
@@ -27,7 +33,7 @@ export function registerConfigCommand(program: Command): void {
       const chalk = (await import('chalk')).default;
 
       const defaultConfig = {
-        version: '2.5.0',
+        version,
         server: { host: '0.0.0.0', port: 3000, cors: true },
         mcp: {
           enabled: true,

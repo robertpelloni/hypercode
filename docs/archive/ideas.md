@@ -1,4 +1,4 @@
-# Ideas for Improvement: BORG (AIOS)
+# Ideas for Improvement: BORG
 
 BORG is the "Universal AI Operating System." To move from "Dashboard" to "True Distributed Collective Intelligence," here are several transformative improvements:
 
@@ -16,7 +16,7 @@ BORG is the "Universal AI Operating System." To move from "Dashboard" to "True D
 
 ## 4. Operational & Security Perspectives
 *   **The "Red Button" Lockdown:** Implement **Protocol Omega (Physical Hardware Kill Switch)**. Given BORG's ability to automate VS Code and terminal commands, a physical key turn should instantly sever all external connections and revert the Director agent to "Observer-Only" mode.
-*   **Immutable "Audit of Thought":** Mirror the sequence of "Director" plans and "Council" debates to **Stone.Ledger**. This creates an unforgeable "Black Box" recorder for your AIOS, proving exactly why a specific code change was made and which agent authorized it.
+*   **Immutable "Audit of Thought":** Mirror the sequence of "Director" plans and "Council" debates to **Stone.Ledger**. This creates an unforgeable "Black Box" recorder for your Borg system, proving exactly why a specific code change was made and which agent authorized it.
 
 ## 5. Ecosystem & Monetization
 *   **The "Skill Marketplace" Ledger:** Pivot the Skill Registry into a **Tokenized Marketplace**. Developers earn Bobcoin for "Publishing" high-quality, verified skills (via `mcpm_install`), and users "Stake" Bobcoin on the most reliable agents, creating a meritocratic AI economy.

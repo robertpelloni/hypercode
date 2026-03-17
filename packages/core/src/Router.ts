@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { ListToolsResult, CallToolResult, Tool } from "@modelcontextprotocol/sdk/types.js";
+import { metamcpLogStore } from "./services/log-store.service.js";
+import { ProcessManagedStdioTransport } from "./transports/process-managed.transport.js";
 
 /**
  * RouterConfig
@@ -50,9 +51,36 @@ export class Router {
     async connectToServer(name: string, command: string, args: string[]) {
         if (this.clients.has(name)) return this.clients.get(name);
 
-        const transport = new StdioClientTransport({
+        const transport = new ProcessManagedStdioTransport({
             command,
             args,
+            stderr: 'pipe',
+        });
+
+        transport.stderr?.on('data', (chunk: Buffer) => {
+            const message = chunk.toString().trim();
+            if (!message) {
+                return;
+            }
+
+            metamcpLogStore.addLog(name, 'error', message);
+        });
+
+        transport.stderr?.on('error', (error: Error) => {
+            metamcpLogStore.addLog(name, 'error', 'stderr error', error);
+        });
+
+        transport.stdout?.on('data', (chunk: Buffer) => {
+            const message = chunk.toString().trim();
+            if (!message) {
+                return;
+            }
+
+            metamcpLogStore.addLog(name, 'info', message);
+        });
+
+        transport.stdout?.on('error', (error: Error) => {
+            metamcpLogStore.addLog(name, 'error', 'stdout error', error);
         });
 
         const client = new Client(

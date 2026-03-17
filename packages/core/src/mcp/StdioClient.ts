@@ -1,10 +1,11 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { MCPServerConfig } from "../config/BorgConfig.js";
+import { metamcpLogStore } from "../services/log-store.service.js";
+import { ProcessManagedStdioTransport } from "../transports/process-managed.transport.js";
 
 export class StdioClient {
     private client: Client | null = null;
-    private transport: StdioClientTransport | null = null;
+    private transport: ProcessManagedStdioTransport | null = null;
     public readonly name: string;
     private config: MCPServerConfig;
 
@@ -27,10 +28,37 @@ export class StdioClient {
         }
         Object.assign(safeEnv, this.config.env);
 
-        this.transport = new StdioClientTransport({
+        this.transport = new ProcessManagedStdioTransport({
             command: this.config.command,
             args: this.config.args,
-            env: safeEnv
+            env: safeEnv,
+            stderr: 'pipe',
+        });
+
+        this.transport.stderr?.on('data', (chunk: Buffer) => {
+            const message = chunk.toString().trim();
+            if (!message) {
+                return;
+            }
+
+            metamcpLogStore.addLog(this.name, 'error', message);
+        });
+
+        this.transport.stderr?.on('error', (error: Error) => {
+            metamcpLogStore.addLog(this.name, 'error', 'stderr error', error);
+        });
+
+        this.transport.stdout?.on('data', (chunk: Buffer) => {
+            const message = chunk.toString().trim();
+            if (!message) {
+                return;
+            }
+
+            metamcpLogStore.addLog(this.name, 'info', message);
+        });
+
+        this.transport.stdout?.on('error', (error: Error) => {
+            metamcpLogStore.addLog(this.name, 'error', 'stdout error', error);
         });
 
         this.client = new Client({
@@ -76,6 +104,9 @@ export class StdioClient {
     public async close(): Promise<void> {
         if (this.transport) {
             await this.transport.close();
+        }
+        if (this.client) {
+            await this.client.close();
         }
     }
 }

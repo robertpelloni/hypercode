@@ -203,7 +203,18 @@ declare global {
     var mcpServerInstance: MCPServer;
 }
 
+type MCPServerOptions = {
+    skipWebsocket?: boolean;
+    skipAutoDrive?: boolean;
+    skipMesh?: boolean;
+    skipStdio?: boolean;
+    inputTools?: InputTools;
+    systemStatusTool?: SystemStatusTool;
+    processRegistry?: ProcessRegistry;
+};
+
 export class MCPServer {
+    private readonly options: MCPServerOptions;
     private server: Server; // Stdio Server
     private serverSetupPromise: Promise<void>;
     private wsServer: Server | null = null; // WebSocket Server
@@ -457,7 +468,8 @@ export class MCPServer {
         this.nativeSessionMetaTools.setAlwaysLoadedTools(toolNames);
     }
 
-    constructor(options: { skipWebsocket?: boolean, skipAutoDrive?: boolean, skipMesh?: boolean, inputTools?: InputTools, systemStatusTool?: SystemStatusTool, processRegistry?: ProcessRegistry } = {}) {
+    constructor(options: MCPServerOptions = {}) {
+        this.options = options;
         this.router = new Router();
         this.modelSelector = new CoreModelSelector();
         this.llmService = new LLMService(this.modelSelector);
@@ -3171,10 +3183,14 @@ export class MCPServer {
         await this.serverSetupPromise;
 
         // 1. Start Stdio (for local CLI usage)
-        mcpServerDebugLog('[MCPServer] Connecting Stdio...');
-        const stdioTransport = new StdioServerTransport();
-        await this.server.connect(stdioTransport);
-        mcpServerDebugLog('Borg Core: Stdio Transport Active');
+        if (!this.options.skipStdio) {
+            mcpServerDebugLog('[MCPServer] Connecting Stdio...');
+            const stdioTransport = new StdioServerTransport();
+            await this.server.connect(stdioTransport);
+            mcpServerDebugLog('Borg Core: Stdio Transport Active');
+        } else {
+            mcpServerDebugLog('[MCPServer] Skipping Stdio transport (managed by external loader).');
+        }
 
         // 2. Start WebSocket (for Extension/Web usage)
         if (this.wsServer && !this.wssInstance) {

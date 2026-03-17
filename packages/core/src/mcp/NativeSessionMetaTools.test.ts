@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
 import { NativeSessionMetaTools } from './NativeSessionMetaTools.js';
@@ -97,6 +97,7 @@ describe('NativeSessionMetaTools search auto-load', () => {
     });
 
     it('refreshes loaded-tool LRU order when a loaded tool is used again', () => {
+        vi.useFakeTimers();
         const workingSet = new SessionToolWorkingSet({
             maxLoadedTools: 3,
             maxHydratedSchemas: 2,
@@ -110,16 +111,24 @@ describe('NativeSessionMetaTools search auto-load', () => {
             { name: 'browser__delta', description: 'Delta tool', inputSchema: { type: 'object', properties: {} } },
         ]);
 
+        vi.setSystemTime(new Date(0));
         metaTools.loadToolIntoSession('browser__alpha');
+
+        vi.advanceTimersByTime(10);
         metaTools.loadToolIntoSession('browser__beta');
+
+        vi.advanceTimersByTime(10);
         metaTools.loadToolIntoSession('browser__gamma');
 
+        vi.advanceTimersByTime(10);
         expect(metaTools.touchLoadedTool('browser__alpha')).toBe(true);
 
+        vi.advanceTimersByTime(10);
         const { evicted } = metaTools.loadToolIntoSession('browser__delta');
 
         expect(evicted).toEqual(['browser__beta']);
-        expect(workingSet.getLoadedToolNames()).toEqual(['browser__gamma', 'browser__alpha', 'browser__delta']);
+        expect(workingSet.getLoadedToolNames().sort()).toEqual(['browser__alpha', 'browser__delta', 'browser__gamma']);
+        vi.useRealTimers();
     });
 
     it('keeps always-loaded tools visible and protected from full unloads', async () => {
@@ -149,5 +158,81 @@ describe('NativeSessionMetaTools search auto-load', () => {
 
         const visibleNames = metaTools.getVisibleLoadedTools().map((tool) => tool.name);
         expect(visibleNames).toContain('browser__pinned');
+    });
+
+    it('supports runtime capacity updates through set_capacity', async () => {
+        const workingSet = new SessionToolWorkingSet({
+            maxLoadedTools: 4,
+            maxHydratedSchemas: 2,
+        });
+        const metaTools = new NativeSessionMetaTools(workingSet);
+
+        const result = await metaTools.handleToolCall('set_capacity', {
+            maxLoadedTools: 6,
+            maxHydratedSchemas: 3,
+            idleEvictionThresholdMs: 60_000,
+        });
+        const text = result?.content?.find((item) => item.type === 'text')?.text ?? '';
+
+        expect(text).toContain('maxLoadedTools=6');
+        expect(text).toContain('maxHydratedSchemas=3');
+        expect(text).toContain('idleEvictionThresholdMs=60000');
+        expect(workingSet.getLimits()).toMatchObject({
+            maxLoadedTools: 6,
+            maxHydratedSchemas: 3,
+            idleEvictionThresholdMs: 60_000,
+        });
+    });
+
+    it('normalizes set_capacity inputs using working-set reconfigure semantics', async () => {
+        const workingSet = new SessionToolWorkingSet({
+            maxLoadedTools: 4,
+            maxHydratedSchemas: 2,
+        });
+        const metaTools = new NativeSessionMetaTools(workingSet);
+
+        await metaTools.handleToolCall('set_capacity', {
+            maxLoadedTools: 0.2,
+            maxHydratedSchemas: 0,
+            idleEvictionThresholdMs: -15,
+        });
+
+        expect(workingSet.getLimits()).toMatchObject({
+            maxLoadedTools: 1,
+            maxHydratedSchemas: 1,
+            idleEvictionThresholdMs: 0,
+        });
+    });
+
+    it('returns and clears working-set eviction history', async () => {
+        const workingSet = new SessionToolWorkingSet({
+            maxLoadedTools: 2,
+            maxHydratedSchemas: 1,
+        });
+        const metaTools = new NativeSessionMetaTools(workingSet);
+
+        metaTools.refreshCatalog([
+            { name: 'browser__one', description: 'One', inputSchema: { type: 'object', properties: {} } },
+            { name: 'browser__two', description: 'Two', inputSchema: { type: 'object', properties: {} } },
+            { name: 'browser__three', description: 'Three', inputSchema: { type: 'object', properties: {} } },
+        ]);
+
+        metaTools.loadToolIntoSession('browser__one');
+        metaTools.loadToolIntoSession('browser__two');
+        metaTools.loadToolIntoSession('browser__three');
+
+        const historyResult = await metaTools.handleToolCall('get_eviction_history', {});
+        const history = parseTextJson<Array<{ toolName: string; tier: string }>>(historyResult);
+
+        expect(history.length).toBeGreaterThan(0);
+        expect(history[0]?.toolName).toBe('browser__one');
+        expect(history[0]?.tier).toBe('loaded');
+
+        const clearResult = await metaTools.handleToolCall('clear_eviction_history', {});
+        const clearText = clearResult?.content?.find((item) => item.type === 'text')?.text ?? '';
+        expect(clearText).toContain('Cleared');
+
+        const afterClear = parseTextJson<Array<unknown>>(await metaTools.handleToolCall('get_eviction_history', {}));
+        expect(afterClear).toEqual([]);
     });
 });

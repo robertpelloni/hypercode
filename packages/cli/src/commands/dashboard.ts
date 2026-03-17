@@ -10,8 +10,14 @@
  */
 
 import type { Command } from 'commander';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { readCanonicalVersion } from '../version.js';
 
 export function registerDashboardCommand(program: Command): void {
+  const commandDir = dirname(fileURLToPath(import.meta.url));
+  const version = readCanonicalVersion(commandDir);
+
   program
     .command('dashboard')
     .alias('ui')
@@ -63,7 +69,7 @@ Examples:
   // About command (bonus)
   program
     .command('about')
-    .description('Show Borg AIOS version, project info, and submodule status')
+    .description('Show Borg version, project info, and submodule status')
     .option('--json', 'Output as JSON')
     .action(async (opts) => {
       const chalk = (await import('chalk')).default;
@@ -72,8 +78,7 @@ Examples:
         console.log(JSON.stringify({
           name: 'Borg',
           subtitle: 'The Neural Operating System',
-          version: '2.5.0',
-          codename: 'AIOS',
+          version,
           packages: ['@borg/core', '@borg/cli', '@borg/types', '@borg/ai', '@borg/agents', '@borg/tools', '@borg/search', '@borg/memory', '@borg/adk'],
           repository: 'https://github.com/robertpelloni/borg',
         }, null, 2));
@@ -81,7 +86,7 @@ Examples:
       }
 
       console.log(chalk.bold.cyan('\n  ⬡ Borg — The Neural Operating System'));
-      console.log(chalk.dim('  Version: 2.5.0 | Codename: AIOS\n'));
+  console.log(chalk.dim(`  Version: ${version}\n`));
       console.log(chalk.dim('  "The Ultimate AI Tool Dashboard & Development Orchestrator"\n'));
 
       console.log(chalk.bold('  Packages:'));

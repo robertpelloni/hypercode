@@ -2,16 +2,15 @@
 /**
  * Borg CLI - The Neural Operating System Command Interface
  * @module @borg/cli
- * @version 2.5.0
+ * @version dynamic (root VERSION)
  *
  * Main entry point for the `borg` command. Provides comprehensive CLI access
- * to all AIOS subsystems: MCP router, memory, agents, sessions, providers,
+ * to all Borg subsystems: MCP router, memory, agents, sessions, providers,
  * tools, skills, configuration, and the web dashboard.
  */
 
 import { Command } from 'commander';
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { registerStartCommand } from './commands/start.js';
@@ -24,26 +23,17 @@ import { registerProviderCommand } from './commands/provider.js';
 import { registerToolsCommand } from './commands/tools.js';
 import { registerConfigCommand } from './commands/config.js';
 import { registerDashboardCommand } from './commands/dashboard.js';
+import { readCanonicalVersion } from './version.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-/** Read version from VERSION.md (single source of truth) */
-function getVersion(): string {
-  try {
-    const versionPath = resolve(__dirname, '..', '..', '..', 'VERSION.md');
-    return readFileSync(versionPath, 'utf-8').trim();
-  } catch {
-    return '2.5.0';
-  }
-}
-
-const version = getVersion();
+const version = readCanonicalVersion(__dirname);
 
 const program = new Command();
 
 program
   .name('borg')
-  .description('Borg — The Neural Operating System / AIOS\n\nThe ultimate AI tool dashboard & development orchestrator.\nManage MCP servers, memory, agents, sessions, providers, and more.')
+  .description('Borg — The Neural Operating System\n\nThe ultimate AI tool dashboard & development orchestrator.\nManage MCP servers, memory, agents, sessions, providers, and more.')
   .version(version, '-v, --version', 'Display the current Borg version')
   .option('--json', 'Output results as JSON (applies to list/status commands)')
   .option('--config <path>', 'Path to borg config file', '~/.borg/config.jsonc')

@@ -1,9 +1,9 @@
 # Copilot Instructions — Borg Project
 
-> **NOTICE**: Primary instructions are in [`docs/UNIVERSAL_LLM_INSTRUCTIONS.md`](docs/UNIVERSAL_LLM_INSTRUCTIONS.md). This file is optimized for GitHub Copilot in VS Code.
+> **NOTICE**: Primary instructions are in [`docs/UNIVERSAL_LLM_INSTRUCTIONS.md`](../../docs/UNIVERSAL_LLM_INSTRUCTIONS.md). This file is optimized for GitHub Copilot in VS Code.
 
 ## Context
-- **Project**: Borg — The Neural Operating System (AIOS)
+- **Project**: Borg — The Neural Operating System
 - **Language**: TypeScript (Node.js ESM, strict mode)
 - **Build**: pnpm + Turborepo monorepo
 - **Test**: Vitest

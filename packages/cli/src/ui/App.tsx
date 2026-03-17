@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, useApp } from 'ink';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Header } from './components/Header.js';
 import { EventLog, LogEntry } from './components/EventLog.js';
 import { AgentStatus, AgentState } from './components/AgentStatus.js';
 import { CommandInput } from './components/CommandInput.js';
 import { LogEmitter } from '../logger-patch.js';
+import { readCanonicalVersion } from '../version.js';
 
 // We'll import these dynamically in useEffect to ensure they run in the same process context if needed,
 // but for the TUI, we are the host.
 import { startOrchestrator } from '@borg/core/orchestrator';
 
+const moduleDir = dirname(fileURLToPath(import.meta.url));
+
 export const App = () => {
     const { exit } = useApp();
+    const appVersion = readCanonicalVersion(moduleDir);
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [agents, setAgents] = useState<AgentState[]>([]);
     const [systemStatus, setSystemStatus] = useState('initializing');
@@ -103,7 +109,7 @@ export const App = () => {
 
     return (
         <Box flexDirection="column" padding={1} height="100%">
-            <Header version="2.3.0" status={systemStatus} />
+            <Header version={appVersion} status={systemStatus} />
             <Box flexDirection="row" marginTop={1} flexGrow={1}>
                 <Box width="70%" marginRight={1}>
                     <EventLog logs={logs} />

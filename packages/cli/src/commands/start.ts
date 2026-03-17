@@ -1,5 +1,5 @@
 /**
- * `borg start` - Start the AIOS backend server
+ * `borg start` - Start the Borg backend server
  *
  * Launches the Borg core server with Express/tRPC/WebSocket/MCP endpoints.
  * The server provides the API backend for the WebUI dashboard, CLI commands,
@@ -19,6 +19,7 @@ import { isAbsolute, join, resolve, sep, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { Command } from 'commander';
+import { readCanonicalVersion } from '../version.js';
 
 export interface BorgStartLockRecord {
   instanceId: string;
@@ -287,7 +288,7 @@ export function createLockLifecycleHandlers(
 export function registerStartCommand(program: Command): void {
   program
     .command('start')
-    .description('Start the Borg AIOS backend server (Express/tRPC/WebSocket/MCP)')
+    .description('Start the Borg backend server (Express/tRPC/WebSocket/MCP)')
     .option('-p, --port <number>', 'tRPC control-plane port', '4000')
     .option('-H, --host <address>', 'Server host address', '0.0.0.0')
     .option('--no-mcp', 'Disable the MCP server endpoint')
@@ -313,14 +314,9 @@ Examples:
       const explicitPort = process.argv.includes('--port') || process.argv.includes('-p');
       let lockHandle: BorgStartLockHandle | null = null;
 
-      let borgVersion = 'unknown';
-      try {
-        // Walk up from the cli package to find the repo root VERSION file
-        const cliDir = dirname(fileURLToPath(import.meta.url));
-        const repoRoot = resolve(cliDir, '..', '..', '..', '..');
-        borgVersion = readFileSync(join(repoRoot, 'VERSION'), 'utf-8').trim() || 'unknown';
-      } catch { /* VERSION file not found — continue */ }
-      console.log(chalk.bold.cyan(`\n  ⬡ Borg AIOS v${borgVersion}`));
+      const cliDir = dirname(fileURLToPath(import.meta.url));
+      const borgVersion = readCanonicalVersion(cliDir);
+      console.log(chalk.bold.cyan(`\n  ⬡ Borg v${borgVersion}`));
       console.log(chalk.dim('  The Neural Operating System\n'));
 
       try {

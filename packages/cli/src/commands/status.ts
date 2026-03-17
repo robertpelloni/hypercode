@@ -1,7 +1,7 @@
 /**
  * `borg status` - Show system status overview
  *
- * Displays the current state of the Borg AIOS system including server status,
+ * Displays the current state of the Borg system including server status,
  * MCP servers, active sessions, memory usage, and provider quotas.
  *
  * @example
@@ -10,11 +10,17 @@
  */
 
 import type { Command } from 'commander';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { readCanonicalVersion } from '../version.js';
 
 export function registerStatusCommand(program: Command): void {
+  const commandDir = dirname(fileURLToPath(import.meta.url));
+  const version = readCanonicalVersion(commandDir);
+
   program
     .command('status')
-    .description('Show Borg AIOS system status (server, MCP, sessions, memory, providers)')
+    .description('Show Borg system status (server, MCP, sessions, memory, providers)')
     .option('--json', 'Output as JSON')
     .addHelpText('after', `
 Examples:
@@ -27,7 +33,7 @@ Examples:
 
       if (opts.json) {
         const status = {
-          version: '2.5.0',
+          version,
           server: { status: 'running', uptime: process.uptime() },
           mcp: { servers: 0, running: 0, tools: 0 },
           sessions: { active: 0, paused: 0, total: 0 },
@@ -38,7 +44,7 @@ Examples:
         return;
       }
 
-      console.log(chalk.bold.cyan('\n  ⬡ Borg AIOS Status\n'));
+      console.log(chalk.bold.cyan('\n  ⬡ Borg Status\n'));
 
       const table = new Table({
         chars: { mid: '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' },

@@ -34,7 +34,7 @@ const DEFAULT_MAX_HYDRATED_SCHEMAS = 8;
 const DEFAULT_IDLE_EVICTION_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
 /** Maximum number of eviction events kept in the in-memory history ring. */
-const MAX_EVICTION_HISTORY = 20;
+const MAX_EVICTION_HISTORY = 200;
 
 /** Internal per-tool tracking entry stored in the loaded/hydrated maps. */
 interface ToolEntry {
@@ -51,6 +51,7 @@ export class SessionToolWorkingSet {
     private readonly loadedTools = new Map<string, ToolEntry>();
     private readonly hydratedTools = new Map<string, ToolEntry>();
     private readonly alwaysLoadedTools = new Set<string>();
+    private readonly alwaysLoadedState = new Map<string, ToolEntry>();
     /** Bounded ring buffer of the most recent eviction events. */
     private readonly evictionHistory: WorkingSetEvictionEvent[] = [];
 
@@ -67,15 +68,40 @@ export class SessionToolWorkingSet {
      */
     reconfigure(options: SessionToolWorkingSetOptions): void {
         if (typeof options.maxLoadedTools === 'number') {
-            this.maxLoadedTools = Math.max(4, Math.min(64, options.maxLoadedTools));
+            this.maxLoadedTools = Math.max(1, Math.round(options.maxLoadedTools));
         }
 
         if (typeof options.maxHydratedSchemas === 'number') {
-            this.maxHydratedSchemas = Math.max(2, Math.min(32, options.maxHydratedSchemas));
+            this.maxHydratedSchemas = Math.max(1, Math.round(options.maxHydratedSchemas));
         }
 
         if (typeof options.idleEvictionThresholdMs === 'number') {
-            this.idleEvictionThresholdMs = Math.max(10_000, options.idleEvictionThresholdMs);
+            this.idleEvictionThresholdMs = Math.max(0, Math.round(options.idleEvictionThresholdMs));
+        }
+
+        const timestamp = Date.now();
+
+        while (this.loadedTools.size > this.maxLoadedTools) {
+            const candidate = this.pickEvictionCandidate(this.loadedTools);
+            if (!candidate) {
+                break;
+            }
+
+            const entry = this.loadedTools.get(candidate)!;
+            this.loadedTools.delete(candidate);
+            this.hydratedTools.delete(candidate);
+            this.recordEviction(candidate, 'loaded', entry.accessedAt);
+        }
+
+        while (this.hydratedTools.size > this.maxHydratedSchemas) {
+            const candidate = this.pickEvictionCandidate(this.hydratedTools);
+            if (!candidate) {
+                break;
+            }
+
+            const entry = this.hydratedTools.get(candidate)!;
+            this.hydratedTools.delete(candidate);
+            this.recordEviction(candidate, 'hydrated', entry.accessedAt);
         }
     }
 
@@ -136,6 +162,7 @@ export class SessionToolWorkingSet {
 
     loadTool(name: string): string[] {
         if (this.alwaysLoadedTools.has(name)) {
+            this.ensureAlwaysLoadedState(name, Date.now());
             return [];
         }
 
@@ -190,9 +217,13 @@ export class SessionToolWorkingSet {
 
     touchTool(name: string): boolean {
         const timestamp = Date.now();
-        const touchedLoaded = this.alwaysLoadedTools.has(name)
-            ? true
-            : this.touch(this.loadedTools, name, timestamp);
+        let touchedLoaded = false;
+        if (this.alwaysLoadedTools.has(name)) {
+            this.ensureAlwaysLoadedState(name, timestamp);
+            touchedLoaded = true;
+        } else {
+            touchedLoaded = this.touch(this.loadedTools, name, timestamp);
+        }
         const touchedHydrated = this.touch(this.hydratedTools, name, timestamp);
         return touchedLoaded || touchedHydrated;
     }
@@ -232,7 +263,7 @@ export class SessionToolWorkingSet {
 
     listLoadedTools(): LoadedToolState[] {
         return this.getLoadedToolNames().map((name) => {
-            const loadedEntry = this.loadedTools.get(name);
+            const loadedEntry = this.loadedTools.get(name) ?? this.alwaysLoadedState.get(name);
             const hydratedEntry = this.hydratedTools.get(name);
             return {
                 name,
@@ -263,9 +294,21 @@ export class SessionToolWorkingSet {
     }
 
     setAlwaysLoadedTools(names: string[]): void {
+        const timestamp = Date.now();
+        const previousAlwaysLoadedState = new Map(this.alwaysLoadedState);
         this.alwaysLoadedTools.clear();
+        this.alwaysLoadedState.clear();
+
         for (const name of names) {
             this.alwaysLoadedTools.add(name);
+            const existingEntry = previousAlwaysLoadedState.get(name)
+                ?? this.loadedTools.get(name)
+                ?? this.hydratedTools.get(name);
+
+            this.alwaysLoadedState.set(name, {
+                loadedAt: existingEntry?.loadedAt ?? timestamp,
+                accessedAt: existingEntry?.accessedAt ?? timestamp,
+            });
         }
 
         for (const loadedName of Array.from(this.loadedTools.keys())) {
@@ -273,5 +316,18 @@ export class SessionToolWorkingSet {
                 this.loadedTools.delete(loadedName);
             }
         }
+    }
+
+    private ensureAlwaysLoadedState(name: string, timestamp: number): void {
+        const entry = this.alwaysLoadedState.get(name);
+        if (entry) {
+            entry.accessedAt = timestamp;
+            return;
+        }
+
+        this.alwaysLoadedState.set(name, {
+            loadedAt: timestamp,
+            accessedAt: timestamp,
+        });
     }
 }

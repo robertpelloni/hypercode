@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@borg/ui";
 import { Loader2, Search, Zap, Code, Layers, ExternalLink, Activity, Database, ArrowDownToLine, Sparkles, Trash2, SlidersHorizontal, History } from "lucide-react";
@@ -113,6 +113,9 @@ type ToolPreferenceMutationInput = {
 type TelemetryWindowPreset = 'all' | '5m' | '15m' | '1h' | '24h';
 type TelemetrySourceFilter = 'all' | 'runtime-search' | 'cached-ranking' | 'live-aggregator' | 'manual-action';
 type TelemetryTriagePreset = 'errors-now' | 'runtime-failures' | 'manual-failures' | 'load-incidents' | 'hydration-failures' | 'auto-load-skips' | 'live-aggregator-focus';
+type EvictionReasonFilter = 'all' | 'idle-biased' | 'capacity';
+type EvictionTierFilter = 'all' | WorkingSetEvictionEvent['tier'];
+type EvictionWindowPreset = 'all' | '5m' | '15m' | '1h' | '24h';
 
 const TELEMETRY_FILTERS_STORAGE_KEY = 'borg.mcp.search.telemetryFilters.v1';
 const TELEMETRY_TYPE_QUERY_KEY = 'telemetryType';
@@ -122,6 +125,10 @@ const TELEMETRY_SOURCE_QUERY_KEY = 'telemetrySource';
 const TELEMETRY_TOOL_QUERY_KEY = 'telemetryTool';
 const TELEMETRY_BUCKET_START_QUERY_KEY = 'telemetryBucketStart';
 const TELEMETRY_BUCKET_END_QUERY_KEY = 'telemetryBucketEnd';
+const EVICTION_FILTERS_STORAGE_KEY = 'borg.mcp.search.evictionFilters.v1';
+const EVICTION_REASON_QUERY_KEY = 'evictionReason';
+const EVICTION_TIER_QUERY_KEY = 'evictionTier';
+const EVICTION_WINDOW_QUERY_KEY = 'evictionWindow';
 
 type TelemetryTrendBucket = {
     start: number;
@@ -234,7 +241,37 @@ function formatTelemetryBucketRange(start: number, end: number): string {
     return `${startLabel} → ${endLabel}`;
 }
 
+function resolveEvictionWindowStart(windowPreset: EvictionWindowPreset): number | null {
+    const now = Date.now();
+
+    if (windowPreset === '5m') {
+        return now - (5 * 60 * 1000);
+    }
+
+    if (windowPreset === '15m') {
+        return now - (15 * 60 * 1000);
+    }
+
+    if (windowPreset === '1h') {
+        return now - (60 * 60 * 1000);
+    }
+
+    if (windowPreset === '24h') {
+        return now - (24 * 60 * 60 * 1000);
+    }
+
+    return null;
+}
+
 export default function SearchDashboard() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-zinc-400">Loading search dashboard...</div>}>
+            <SearchDashboardContent />
+        </Suspense>
+    );
+}
+
+function SearchDashboardContent() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -259,6 +296,9 @@ export default function SearchDashboard() {
     const [activeHydrationToolName, setActiveHydrationToolName] = useState<string | null>(null);
     const [activeUnloadToolName, setActiveUnloadToolName] = useState<string | null>(null);
     const [activeLaneAction, setActiveLaneAction] = useState<string | null>(null);
+    const [evictionReasonFilter, setEvictionReasonFilter] = useState<EvictionReasonFilter>('all');
+    const [evictionTierFilter, setEvictionTierFilter] = useState<EvictionTierFilter>('all');
+    const [evictionWindowFilter, setEvictionWindowFilter] = useState<EvictionWindowPreset>('all');
     const utils = trpc.useUtils();
     const searchQuery = trpc.mcp.searchTools.useQuery(
         { query, profile: profile === 'default' ? undefined : profile },
@@ -557,6 +597,41 @@ export default function SearchDashboard() {
         return Math.max(max, sourceMax);
     }, 0);
     const recentEvictions = (evictionHistoryQuery.data as WorkingSetEvictionEvent[] | undefined) ?? [];
+    const evictionSummary = recentEvictions.reduce((accumulator, event) => {
+        accumulator.total += 1;
+        if (event.idleEvicted) {
+            accumulator.idleEvictions += 1;
+        } else {
+            accumulator.capacityEvictions += 1;
+        }
+
+        if (event.tier === 'loaded') {
+            accumulator.loadedTierEvictions += 1;
+        } else {
+            accumulator.hydratedTierEvictions += 1;
+        }
+
+        accumulator.longestIdleDurationMs = Math.max(accumulator.longestIdleDurationMs, Math.max(0, event.idleDurationMs ?? 0));
+        return accumulator;
+    }, {
+        total: 0,
+        idleEvictions: 0,
+        capacityEvictions: 0,
+        loadedTierEvictions: 0,
+        hydratedTierEvictions: 0,
+        longestIdleDurationMs: 0,
+    });
+    const evictionWindowStart = resolveEvictionWindowStart(evictionWindowFilter);
+    const filteredEvictions = recentEvictions.filter((event) => {
+        const windowMatch = evictionWindowStart == null || event.timestamp >= evictionWindowStart;
+        const reasonMatch = evictionReasonFilter === 'all'
+            || (evictionReasonFilter === 'idle-biased' ? event.idleEvicted : !event.idleEvicted);
+        const tierMatch = evictionTierFilter === 'all' || event.tier === evictionTierFilter;
+        return windowMatch && reasonMatch && tierMatch;
+    });
+    const evictionFiltersAtDefault = evictionReasonFilter === 'all'
+        && evictionTierFilter === 'all'
+        && evictionWindowFilter === 'all';
     const preferences = (preferencesQuery.data as ToolPreferences | undefined) ?? {
         importantTools: [],
         alwaysLoadedTools: [],
@@ -791,6 +866,105 @@ export default function SearchDashboard() {
         router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
     }, [pathname, router, searchParams, telemetryBucketTimeFilter, telemetrySourceFilter, telemetryStatusFilter, telemetryToolFilter, telemetryTypeFilter, telemetryWindowFilter]);
 
+    useEffect(() => {
+        let hasHydratedFromUrl = false;
+
+        const urlReason = searchParams.get(EVICTION_REASON_QUERY_KEY);
+        const urlTier = searchParams.get(EVICTION_TIER_QUERY_KEY);
+        const urlWindow = searchParams.get(EVICTION_WINDOW_QUERY_KEY);
+
+        if (urlReason && ['all', 'idle-biased', 'capacity'].includes(urlReason)) {
+            setEvictionReasonFilter(urlReason as EvictionReasonFilter);
+            hasHydratedFromUrl = true;
+        }
+
+        if (urlTier && ['all', 'loaded', 'hydrated'].includes(urlTier)) {
+            setEvictionTierFilter(urlTier as EvictionTierFilter);
+            hasHydratedFromUrl = true;
+        }
+
+        if (urlWindow && ['all', '5m', '15m', '1h', '24h'].includes(urlWindow)) {
+            setEvictionWindowFilter(urlWindow as EvictionWindowPreset);
+            hasHydratedFromUrl = true;
+        }
+
+        if (hasHydratedFromUrl) {
+            return;
+        }
+
+        try {
+            const raw = window.localStorage.getItem(EVICTION_FILTERS_STORAGE_KEY);
+            if (!raw) {
+                return;
+            }
+
+            const parsed = JSON.parse(raw) as {
+                reason?: string;
+                tier?: string;
+                window?: string;
+            };
+
+            if (parsed.reason && ['all', 'idle-biased', 'capacity'].includes(parsed.reason)) {
+                setEvictionReasonFilter(parsed.reason as EvictionReasonFilter);
+            }
+
+            if (parsed.tier && ['all', 'loaded', 'hydrated'].includes(parsed.tier)) {
+                setEvictionTierFilter(parsed.tier as EvictionTierFilter);
+            }
+
+            if (parsed.window && ['all', '5m', '15m', '1h', '24h'].includes(parsed.window)) {
+                setEvictionWindowFilter(parsed.window as EvictionWindowPreset);
+            }
+        } catch {
+            // Ignore invalid persisted filter payloads and continue with defaults.
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(
+                EVICTION_FILTERS_STORAGE_KEY,
+                JSON.stringify({
+                    reason: evictionReasonFilter,
+                    tier: evictionTierFilter,
+                    window: evictionWindowFilter,
+                }),
+            );
+        } catch {
+            // Ignore storage write failures (private mode/quota) and keep UI functional.
+        }
+    }, [evictionReasonFilter, evictionTierFilter, evictionWindowFilter]);
+
+    useEffect(() => {
+        const nextParams = new URLSearchParams(searchParams.toString());
+
+        if (evictionReasonFilter === 'all') {
+            nextParams.delete(EVICTION_REASON_QUERY_KEY);
+        } else {
+            nextParams.set(EVICTION_REASON_QUERY_KEY, evictionReasonFilter);
+        }
+
+        if (evictionTierFilter === 'all') {
+            nextParams.delete(EVICTION_TIER_QUERY_KEY);
+        } else {
+            nextParams.set(EVICTION_TIER_QUERY_KEY, evictionTierFilter);
+        }
+
+        if (evictionWindowFilter === 'all') {
+            nextParams.delete(EVICTION_WINDOW_QUERY_KEY);
+        } else {
+            nextParams.set(EVICTION_WINDOW_QUERY_KEY, evictionWindowFilter);
+        }
+
+        const currentQuery = searchParams.toString();
+        const nextQuery = nextParams.toString();
+        if (currentQuery === nextQuery) {
+            return;
+        }
+
+        router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+    }, [pathname, router, searchParams, evictionReasonFilter, evictionTierFilter, evictionWindowFilter]);
+
     const updateToolPreferences = (next: ToolPreferenceMutationInput) => {
         setPreferencesMutation.mutate(next as never);
     };
@@ -886,6 +1060,101 @@ export default function SearchDashboard() {
             window.localStorage.removeItem(TELEMETRY_FILTERS_STORAGE_KEY);
         } catch {
             // Ignore local storage cleanup errors.
+        }
+    };
+
+    const resetEvictionFilters = () => {
+        setEvictionReasonFilter('all');
+        setEvictionTierFilter('all');
+        setEvictionWindowFilter('all');
+
+        try {
+            window.localStorage.removeItem(EVICTION_FILTERS_STORAGE_KEY);
+        } catch {
+            // Ignore local storage cleanup errors.
+        }
+    };
+
+    const focusTelemetryFromEviction = (toolName: string) => {
+        setTelemetryToolFilter(toolName);
+        setTelemetryStatusFilter('error');
+        setTelemetryBucketTimeFilter(null);
+    };
+
+    const copyEvictionShareLink = async () => {
+        if (typeof window === 'undefined' || !navigator.clipboard) {
+            toast.error('Clipboard unavailable');
+            return;
+        }
+
+        const nextParams = new URLSearchParams(searchParams.toString());
+
+        if (evictionReasonFilter === 'all') {
+            nextParams.delete(EVICTION_REASON_QUERY_KEY);
+        } else {
+            nextParams.set(EVICTION_REASON_QUERY_KEY, evictionReasonFilter);
+        }
+
+        if (evictionTierFilter === 'all') {
+            nextParams.delete(EVICTION_TIER_QUERY_KEY);
+        } else {
+            nextParams.set(EVICTION_TIER_QUERY_KEY, evictionTierFilter);
+        }
+
+        if (evictionWindowFilter === 'all') {
+            nextParams.delete(EVICTION_WINDOW_QUERY_KEY);
+        } else {
+            nextParams.set(EVICTION_WINDOW_QUERY_KEY, evictionWindowFilter);
+        }
+
+        const shareUrl = `${window.location.origin}${pathname}${nextParams.toString() ? `?${nextParams.toString()}` : ''}`;
+
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            toast.success('Eviction share link copied');
+        } catch {
+            toast.error('Failed to copy eviction share link');
+        }
+    };
+
+    const copyEvictionSummary = async () => {
+        if (typeof window === 'undefined' || !navigator.clipboard) {
+            toast.error('Clipboard unavailable');
+            return;
+        }
+
+        const filterSummary = [
+            `reason=${evictionReasonFilter}`,
+            `tier=${evictionTierFilter}`,
+            `window=${evictionWindowFilter}`,
+        ].join(', ');
+        const currentScopeUrl = `${window.location.origin}${pathname}${window.location.search}`;
+        const topEvictedTools = Array.from(filteredEvictions.reduce((accumulator, event) => {
+            accumulator.set(event.toolName, (accumulator.get(event.toolName) ?? 0) + 1);
+            return accumulator;
+        }, new Map<string, number>()).entries())
+            .map(([toolName, count]) => ({ toolName, count }))
+            .sort((left, right) => right.count - left.count || left.toolName.localeCompare(right.toolName))
+            .slice(0, 5);
+        const topEvictedToolsSummary = topEvictedTools.length > 0
+            ? topEvictedTools.map((row) => `${row.toolName}:${row.count}`).join(', ')
+            : 'none';
+
+        const summary = [
+            'MCP Search eviction summary',
+            `Generated at: ${new Date().toISOString()}`,
+            `Filters: ${filterSummary}`,
+            `Scope URL: ${currentScopeUrl}`,
+            `Events: showing=${Math.min(filteredEvictions.length, 10)}/${filteredEvictions.length}, total=${recentEvictions.length}`,
+            `Breakdown: idle-biased=${evictionSummary.idleEvictions}, capacity=${evictionSummary.capacityEvictions}, loaded-tier=${evictionSummary.loadedTierEvictions}, hydrated-tier=${evictionSummary.hydratedTierEvictions}, max-idle=${formatDurationCompact(evictionSummary.longestIdleDurationMs)}`,
+            `Top evicted tools: ${topEvictedToolsSummary}`,
+        ].join('\n');
+
+        try {
+            await navigator.clipboard.writeText(summary);
+            toast.success('Eviction summary copied');
+        } catch {
+            toast.error('Failed to copy eviction summary');
         }
     };
 
@@ -2127,37 +2396,201 @@ export default function SearchDashboard() {
                         </CardContent>
                     </Card>
 
-                    {recentEvictions.length > 0 && (
-                        <Card className="bg-zinc-900 border-zinc-800">
-                            <CardHeader className="pb-3 border-b border-zinc-800 flex flex-row items-center justify-between gap-3">
-                                <CardTitle className="text-white flex items-center gap-2 text-base">
-                                    <History className="h-4 w-4 text-amber-400" />
-                                    Recent evictions
-                                </CardTitle>
-                                <Button
+                    <Card className="bg-zinc-900 border-zinc-800">
+                        <CardHeader className="pb-3 border-b border-zinc-800 flex flex-row items-center justify-between gap-3">
+                            <CardTitle className="text-white flex items-center gap-2 text-base">
+                                <History className="h-4 w-4 text-amber-400" />
+                                Recent evictions
+                            </CardTitle>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={clearEvictionHistoryMutation.isPending || recentEvictions.length === 0}
+                                onClick={() => clearEvictionHistoryMutation.mutate()}
+                                title="Clear the recent working-set eviction history"
+                                aria-label="Clear working-set eviction history"
+                                className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                            >
+                                {clearEvictionHistoryMutation.isPending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Trash2 className="mr-2 h-3.5 w-3.5" />}
+                                Clear
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="p-4 space-y-3">
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                                <span className="rounded-md border border-zinc-700 bg-zinc-950/70 px-2 py-1 text-zinc-300">events: {evictionSummary.total}</span>
+                                <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-amber-200">idle-biased: {evictionSummary.idleEvictions}</span>
+                                <span className="rounded-md border border-zinc-700 bg-zinc-950/70 px-2 py-1 text-zinc-300">capacity: {evictionSummary.capacityEvictions}</span>
+                                <span className="rounded-md border border-red-500/30 bg-red-500/10 px-2 py-1 text-red-300">loaded-tier: {evictionSummary.loadedTierEvictions}</span>
+                                <span className="rounded-md border border-purple-500/30 bg-purple-500/10 px-2 py-1 text-purple-300">hydrated-tier: {evictionSummary.hydratedTierEvictions}</span>
+                                <span className="rounded-md border border-zinc-700 bg-zinc-950/70 px-2 py-1 text-zinc-300">max idle: {formatDurationCompact(evictionSummary.longestIdleDurationMs)}</span>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                                <span className="text-zinc-500 uppercase tracking-wider">triage</span>
+                                {([
+                                    { key: 'all', label: 'all reasons' },
+                                    { key: 'idle-biased', label: 'idle-biased' },
+                                    { key: 'capacity', label: 'capacity' },
+                                ] as const).map((option) => (
+                                    <button
+                                        key={`search-eviction-reason-${option.key}`}
+                                        type="button"
+                                        onClick={() => setEvictionReasonFilter(option.key)}
+                                        aria-pressed={evictionReasonFilter === option.key}
+                                        className={`rounded-md border px-2 py-1 transition-colors ${evictionReasonFilter === option.key
+                                            ? 'border-amber-500/40 bg-amber-500/15 text-amber-200'
+                                            : 'border-zinc-700 bg-zinc-950/70 text-zinc-300 hover:bg-zinc-800'
+                                            }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
+                                {([
+                                    { key: 'all', label: 'all tiers' },
+                                    { key: 'loaded', label: 'loaded' },
+                                    { key: 'hydrated', label: 'hydrated' },
+                                ] as const).map((option) => (
+                                    <button
+                                        key={`search-eviction-tier-${option.key}`}
+                                        type="button"
+                                        onClick={() => setEvictionTierFilter(option.key)}
+                                        aria-pressed={evictionTierFilter === option.key}
+                                        className={`rounded-md border px-2 py-1 transition-colors ${evictionTierFilter === option.key
+                                            ? 'border-violet-500/40 bg-violet-500/15 text-violet-200'
+                                            : 'border-zinc-700 bg-zinc-950/70 text-zinc-300 hover:bg-zinc-800'
+                                            }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
+                                {([
+                                    { key: 'all', label: 'all time' },
+                                    { key: '5m', label: '5m' },
+                                    { key: '15m', label: '15m' },
+                                    { key: '1h', label: '1h' },
+                                    { key: '24h', label: '24h' },
+                                ] as const).map((option) => (
+                                    <button
+                                        key={`search-eviction-window-${option.key}`}
+                                        type="button"
+                                        onClick={() => setEvictionWindowFilter(option.key)}
+                                        aria-pressed={evictionWindowFilter === option.key}
+                                        className={`rounded-md border px-2 py-1 transition-colors ${evictionWindowFilter === option.key
+                                            ? 'border-sky-500/40 bg-sky-500/15 text-sky-200'
+                                            : 'border-zinc-700 bg-zinc-950/70 text-zinc-300 hover:bg-zinc-800'
+                                            }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
+                                <span className="rounded-md border border-zinc-700 bg-zinc-950/70 px-2 py-1 text-zinc-300">
+                                    showing: {Math.min(filteredEvictions.length, 10)}/{filteredEvictions.length} filtered ({recentEvictions.length} total)
+                                </span>
+                                <button
                                     type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={clearEvictionHistoryMutation.isPending || recentEvictions.length === 0}
-                                    onClick={() => clearEvictionHistoryMutation.mutate()}
-                                    title="Clear the recent working-set eviction history"
-                                    aria-label="Clear working-set eviction history"
-                                    className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                                    onClick={resetEvictionFilters}
+                                    disabled={evictionFiltersAtDefault}
+                                    className="ml-auto rounded-md border border-zinc-700 bg-zinc-950/70 px-2 py-1 text-zinc-300 transition-colors hover:bg-zinc-800 disabled:opacity-50"
+                                    title="Reset eviction filters to defaults"
+                                    aria-label="Reset eviction filters"
                                 >
-                                    {clearEvictionHistoryMutation.isPending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Trash2 className="mr-2 h-3.5 w-3.5" />}
-                                    Clear
-                                </Button>
-                            </CardHeader>
-                            <CardContent className="p-4">
+                                    Reset filters
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={copyEvictionShareLink}
+                                    className="rounded-md border border-zinc-700 bg-zinc-950/70 px-2 py-1 text-zinc-300 transition-colors hover:bg-zinc-800"
+                                    title="Copy URL with current eviction filter scope"
+                                    aria-label="Copy eviction share link"
+                                >
+                                    Copy link
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={copyEvictionSummary}
+                                    className="rounded-md border border-zinc-700 bg-zinc-950/70 px-2 py-1 text-zinc-300 transition-colors hover:bg-zinc-800"
+                                    title="Copy a text summary of current eviction triage scope"
+                                    aria-label="Copy eviction summary"
+                                >
+                                    Copy summary
+                                </button>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                                <span className="text-zinc-500 uppercase tracking-wider">Active filters</span>
+                                {evictionReasonFilter !== 'all' ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setEvictionReasonFilter('all')}
+                                        className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-amber-200 transition-colors hover:bg-amber-500/20"
+                                        title="Clear eviction reason filter"
+                                        aria-label="Clear eviction reason filter"
+                                    >
+                                        reason: {evictionReasonFilter} ×
+                                    </button>
+                                ) : null}
+                                {evictionTierFilter !== 'all' ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setEvictionTierFilter('all')}
+                                        className="rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-violet-200 transition-colors hover:bg-violet-500/20"
+                                        title="Clear eviction tier filter"
+                                        aria-label="Clear eviction tier filter"
+                                    >
+                                        tier: {evictionTierFilter} ×
+                                    </button>
+                                ) : null}
+                                {evictionWindowFilter !== 'all' ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setEvictionWindowFilter('all')}
+                                        className="rounded-md border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-sky-200 transition-colors hover:bg-sky-500/20"
+                                        title="Clear eviction window filter"
+                                        aria-label="Clear eviction window filter"
+                                    >
+                                        window: {evictionWindowFilter} ×
+                                    </button>
+                                ) : null}
+                                {evictionFiltersAtDefault ? (
+                                    <span className="rounded-md border border-zinc-700 bg-zinc-950/70 px-2 py-1 text-zinc-500">
+                                        default scope
+                                    </span>
+                                ) : null}
+                            </div>
+
+                            {filteredEvictions.length > 0 ? (
                                 <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                                    {recentEvictions.slice(0, 10).map((event, index) => (
+                                    {filteredEvictions.slice(0, 10).map((event, index) => (
                                         // eslint-disable-next-line react/no-array-index-key
                                         <div key={`${event.toolName}-${event.timestamp}-${index}`} className="flex items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2">
                                             <div className="min-w-0">
                                                 <span className="font-mono text-xs text-zinc-200 break-all block">{event.toolName}</span>
                                                 <span className="text-[10px] text-zinc-500 block mt-0.5">
-                                                    idle {Math.max(0, Math.round((event.idleDurationMs ?? 0) / 1000))}s • {event.idleEvicted ? 'idle eviction' : 'capacity eviction'}
+                                                    idle {formatDurationCompact(event.idleDurationMs ?? 0)}
+                                                    <span className={`ml-1 rounded px-1.5 py-0.5 ${event.idleEvicted ? 'bg-amber-500/10 text-amber-300' : 'bg-zinc-800 text-zinc-400'}`}>
+                                                        {event.idleEvicted ? 'idle-biased' : 'capacity'}
+                                                    </span>
                                                 </span>
+                                                <div className="mt-1 flex items-center gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => focusTelemetryFromEviction(event.toolName)}
+                                                        className="inline-flex items-center text-[10px] text-cyan-300 hover:text-cyan-200"
+                                                        title={`Focus telemetry on ${event.toolName}`}
+                                                        aria-label={`Focus telemetry on ${event.toolName}`}
+                                                    >
+                                                        Focus telemetry
+                                                    </button>
+                                                    <Link
+                                                        href={`/dashboard/mcp/inspector?telemetryStatus=error&telemetryTool=${encodeURIComponent(event.toolName)}`}
+                                                        className="inline-flex items-center text-[10px] text-zinc-400 hover:text-zinc-200"
+                                                        title={`Open inspector telemetry errors filtered to ${event.toolName}`}
+                                                        aria-label={`Open inspector error telemetry for ${event.toolName}`}
+                                                    >
+                                                        Open in inspector
+                                                    </Link>
+                                                </div>
                                             </div>
                                             <div className="flex items-center gap-2 shrink-0">
                                                 <span className={`text-[10px] px-1.5 py-0.5 rounded border ${event.tier === 'loaded' ? 'border-red-500/20 bg-red-500/10 text-red-300' : 'border-amber-500/20 bg-amber-500/10 text-amber-300'}`}>
@@ -2168,9 +2601,13 @@ export default function SearchDashboard() {
                                         </div>
                                     ))}
                                 </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                            ) : (
+                                <div className="rounded-lg border border-dashed border-zinc-800 p-4 text-xs text-zinc-500 text-center">
+                                    No eviction events match the current reason/tier/window filter.
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
 
                     <Card className="bg-zinc-900 border-zinc-800">
                         <CardHeader className="pb-3 border-b border-zinc-800 flex flex-row items-center justify-between gap-3">

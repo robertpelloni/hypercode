@@ -170,6 +170,33 @@ export class NativeSessionMetaTools {
             return await executeListLoadedToolsCompatibility(this.workingSet);
         }
 
+        if (name === 'set_capacity') {
+            const rawMax = typeof args.maxLoadedTools === 'number' ? args.maxLoadedTools : undefined;
+            const rawHydrated = typeof args.maxHydratedSchemas === 'number' ? args.maxHydratedSchemas : undefined;
+            const rawIdle = typeof args.idleEvictionThresholdMs === 'number' ? args.idleEvictionThresholdMs : undefined;
+
+            this.workingSet.reconfigure({
+                maxLoadedTools: rawMax,
+                maxHydratedSchemas: rawHydrated,
+                idleEvictionThresholdMs: rawIdle,
+            });
+
+            const updated = this.workingSet.getLimits();
+            return createTextResult(
+                `Working-set capacity updated: maxLoadedTools=${updated.maxLoadedTools}, maxHydratedSchemas=${updated.maxHydratedSchemas}, idleEvictionThresholdMs=${updated.idleEvictionThresholdMs}`,
+            );
+        }
+
+        if (name === 'get_eviction_history') {
+            return createTextResult(JSON.stringify(this.workingSet.getEvictionHistory()));
+        }
+
+        if (name === 'clear_eviction_history') {
+            const clearedCount = this.workingSet.getEvictionHistory().length;
+            this.workingSet.clearEvictionHistory();
+            return createTextResult(`Cleared ${clearedCount} eviction history entr${clearedCount === 1 ? 'y' : 'ies'}.`);
+        }
+
         return null;
     }
 

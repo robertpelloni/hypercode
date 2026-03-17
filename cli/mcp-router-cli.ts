@@ -9,6 +9,9 @@
  */
 
 import { Command } from 'commander';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { MCPRegistryService, type RegistryServerDefinition } from '../packages/core/src/services/MCPRegistryService.js';
 import { ServerRegistryService, type ServerInstallationResult } from '../packages/core/src/services/ServerRegistryService.js';
 import { ConfigurationService, type ConfigFile } from '../packages/core/src/services/ConfigurationService.js';
@@ -19,11 +22,33 @@ import { McpSessionService, type PerformanceMetrics } from '../packages/core/src
 // ============================================
 
 const program = new Command();
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+function readCanonicalVersion(): string {
+    const candidates = [
+        resolve(__dirname, '..', 'VERSION'),
+        resolve(__dirname, '..', 'VERSION.md'),
+    ];
+
+    for (const candidate of candidates) {
+        try {
+            const raw = readFileSync(candidate, 'utf-8').trim();
+            const match = raw.match(/\d+\.\d+\.\d+(?:-[\w.-]+)?/);
+            if (match) {
+                return match[0];
+            }
+        } catch {
+            // Keep trying.
+        }
+    }
+
+    return '0.0.0';
+}
 
 program
-    .name('aios-mcp-router')
+    .name('borg-mcp-router')
     .description('Ultimate MCP Router - Manage MCP servers, configurations, and sessions')
-    .version('1.0.0')
+    .version(readCanonicalVersion())
     .option('--data-dir <path>', 'Data directory path', './data')
     .option('--format <type>', 'Output format (json, table)', 'json');
 
@@ -235,10 +260,11 @@ program
 program
     .command('export-configs <format>')
     .description('Export configurations')
-    .option('--format <type>', 'Export format (aios, claude, openai, google)', 'aios')
+    .option('--format <type>', 'Export format (borg, claude, openai, google)', 'borg')
     .action(async (options, command) => {
-        const format = command.args[0] || program.opts().format || 'aios';
-        console.log(`📤 Exporting to ${format} format...`);
+        const requestedFormat = command.args[0] || program.opts().format || 'borg';
+        const format = requestedFormat;
+        console.log(`📤 Exporting to ${requestedFormat} format...`);
 
         try {
             const content = await configService.exportConfigs(format);
@@ -340,7 +366,7 @@ program
         const session = sessionService.stopSession(serverId);
 
         if (session) {
-            console.log('✅ Session stopped`);
+            console.log('✅ Session stopped');
         } else {
             console.error('❌ Session not found');
             process.exit(1);
@@ -356,7 +382,7 @@ program
         console.log(`🔄 Restarting session: ${serverId}`);
         await sessionService.stopSession(serverId);
         await sessionService.startSession(serverId);
-        console.log('✅ Session restarted`);
+        console.log('✅ Session restarted');
     });
 
 // Shutdown All Sessions Command
@@ -406,11 +432,11 @@ program.parseAsync().then(async () => {
     console.log('    shutdown-sessions - Shutdown all sessions');
     console.log('');
     console.log('Examples:');
-    console.log('  aios-mcp-router discover          - Discover all servers');
-    console.log('  aios-mcp-router search "file"    - Search for file servers');
-    console.log('  aios-mcp-router install fs-server   - Install filesystem server');
-    console.log('  aios-mcp-router init-sessions       - Auto-start all servers');
-    console.log('  aios-mcp-router session-stats       - Get session statistics');
+    console.log('  borg-mcp-router discover          - Discover all servers');
+    console.log('  borg-mcp-router search "file"    - Search for file servers');
+    console.log('  borg-mcp-router install fs-server   - Install filesystem server');
+    console.log('  borg-mcp-router init-sessions       - Auto-start all servers');
+    console.log('  borg-mcp-router session-stats       - Get session statistics');
 }).catch(err => {
     console.error('❌ Error:', err.message);
     process.exit(1);

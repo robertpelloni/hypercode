@@ -4,7 +4,7 @@ import WebSocket from 'ws';
 let socket: WebSocket | null = null;
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
-let sidebarProvider: AiosSidebarProvider | null = null;
+let sidebarProvider: BorgSidebarProvider | null = null;
 let reconnectTimer: NodeJS.Timeout | null = null;
 let lastActivityTime = Date.now();
 let debounceTimer: NodeJS.Timeout | null = null;
@@ -301,8 +301,8 @@ async function createSidebarSnapshot(): Promise<SidebarSnapshot> {
     };
 }
 
-class AiosSidebarProvider implements vscode.WebviewViewProvider {
-    public static readonly viewType = 'aios.dispatchView';
+class BorgSidebarProvider implements vscode.WebviewViewProvider {
+    public static readonly viewType = 'borg.dispatchView';
     private view?: vscode.WebviewView;
 
     resolveWebviewView(webviewView: vscode.WebviewView): void | Thenable<void> {
@@ -513,7 +513,7 @@ class AiosSidebarProvider implements vscode.WebviewViewProvider {
 </head>
 <body>
     <div class="card">
-        <h2>AIOS Mini Dashboard</h2>
+        <h2>Borg Mini Dashboard</h2>
         <div class="grid">
             <div class="metric">
                 <div class="label">Connection</div>
@@ -673,8 +673,8 @@ class AiosSidebarProvider implements vscode.WebviewViewProvider {
 
 export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('Borg Bridge');
-    sidebarProvider = new AiosSidebarProvider();
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider(AiosSidebarProvider.viewType, sidebarProvider));
+    sidebarProvider = new BorgSidebarProvider();
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(BorgSidebarProvider.viewType, sidebarProvider));
 
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'borg.connect';
@@ -685,20 +685,20 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand('borg.connect', connectToCore));
     context.subscriptions.push(vscode.commands.registerCommand('borg.disconnect', disconnectFromCore));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.showStatus', showHubStatus));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.runAgent', runAgentDispatch));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.searchMemory', searchMemory));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.ingestSelectionToRag', ingestSelectionToRag));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.ingestUrl', ingestUrl));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.rememberSelection', rememberSelection));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.listTools', listTools));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.invokeTool', invokeTool));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.openDashboard', () => openDashboardRoute(DASHBOARD_ROUTES.home, 'Opened dashboard')));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.showLogs', showLogs));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.startDebate', startDebate));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.viewAnalytics', viewAnalytics));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.listDebateTemplates', listDebateTemplates));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.architectMode', architectMode));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.showStatus', showHubStatus));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.runAgent', runAgentDispatch));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.searchMemory', searchMemory));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.ingestSelectionToRag', ingestSelectionToRag));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.ingestUrl', ingestUrl));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.rememberSelection', rememberSelection));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.listTools', listTools));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.invokeTool', invokeTool));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.openDashboard', () => openDashboardRoute(DASHBOARD_ROUTES.home, 'Opened dashboard')));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.showLogs', showLogs));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.startDebate', startDebate));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.viewAnalytics', viewAnalytics));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.listDebateTemplates', listDebateTemplates));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.architectMode', architectMode));
 
     const config = vscode.workspace.getConfiguration('borg');
     if (config.get<boolean>('autoConnect', true)) {
@@ -758,7 +758,7 @@ export function activate(context: vscode.ExtensionContext) {
         addActivity('system', 'Terminal capture unavailable', 'VS Code runtime does not expose terminal write event.');
     }
 
-    addActivity('system', 'Extension activated', 'AIOS VS Code bridge is online.');
+    addActivity('system', 'Extension activated', 'Borg VS Code bridge is online.');
     addChatHistory('system', 'extension', 'VS Code extension bridge activated.');
 }
 
