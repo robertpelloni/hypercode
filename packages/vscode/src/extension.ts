@@ -4,7 +4,7 @@ import WebSocket from 'ws';
 let socket: WebSocket | null = null;
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
-let sidebarProvider: AiosSidebarProvider | null = null;
+let sidebarProvider: BorgSidebarProvider | null = null;
 let reconnectTimer: NodeJS.Timeout | null = null;
 let lastActivityTime = Date.now();
 let debounceTimer: NodeJS.Timeout | null = null;
@@ -170,7 +170,7 @@ function summarizeText(value: string, maxLength = 600): string {
         return normalized;
     }
 
-    return `${normalized.slice(0, maxLength)}…`;
+    return `${normalized.slice(0, maxLength)}â€¦`;
 }
 
 function getVisibleChatEditorSnapshots(): ChatHistoryEntry[] {
@@ -301,8 +301,8 @@ async function createSidebarSnapshot(): Promise<SidebarSnapshot> {
     };
 }
 
-class AiosSidebarProvider implements vscode.WebviewViewProvider {
-    public static readonly viewType = 'aios.dispatchView';
+class BorgSidebarProvider implements vscode.WebviewViewProvider {
+    public static readonly viewType = 'borg.dispatchView';
     private view?: vscode.WebviewView;
 
     resolveWebviewView(webviewView: vscode.WebviewView): void | Thenable<void> {
@@ -513,23 +513,23 @@ class AiosSidebarProvider implements vscode.WebviewViewProvider {
 </head>
 <body>
     <div class="card">
-        <h2>AIOS Mini Dashboard</h2>
+        <h2>Borg Mini Dashboard</h2>
         <div class="grid">
             <div class="metric">
                 <div class="label">Connection</div>
-                <div class="value" id="connectionValue">Checking…</div>
+                <div class="value" id="connectionValue">Checkingâ€¦</div>
             </div>
             <div class="metric">
                 <div class="label">Experts</div>
-                <div class="value"><span id="researcherValue">—</span> / <span id="coderValue">—</span></div>
+                <div class="value"><span id="researcherValue">â€”</span> / <span id="coderValue">â€”</span></div>
             </div>
             <div class="metric">
                 <div class="label">Active Editor</div>
-                <div class="value" id="editorValue">—</div>
+                <div class="value" id="editorValue">â€”</div>
             </div>
             <div class="metric">
                 <div class="label">Active Terminal</div>
-                <div class="value" id="terminalValue">—</div>
+                <div class="value" id="terminalValue">â€”</div>
             </div>
         </div>
         <div class="row">
@@ -558,7 +558,7 @@ class AiosSidebarProvider implements vscode.WebviewViewProvider {
 
     <div class="card">
         <h3>Research Agent</h3>
-        <textarea id="researchQuery" placeholder="Ask Borg to research a topic…"></textarea>
+        <textarea id="researchQuery" placeholder="Ask Borg to research a topicâ€¦"></textarea>
         <div class="row">
             <select id="researchDepth">
                 <option value="1">Depth 1</option>
@@ -573,7 +573,7 @@ class AiosSidebarProvider implements vscode.WebviewViewProvider {
 
     <div class="card">
         <h3>Coder Agent</h3>
-        <textarea id="codeTask" placeholder="Describe a coding task for Borg…"></textarea>
+        <textarea id="codeTask" placeholder="Describe a coding task for Borgâ€¦"></textarea>
         <div class="row">
             <button id="codeBtn">Run Coder</button>
         </div>
@@ -582,14 +582,14 @@ class AiosSidebarProvider implements vscode.WebviewViewProvider {
     <div class="card">
         <h3>Recent Tasks</h3>
         <ul id="feed" class="feed">
-            <li><span class="muted">Waiting for Borg activity…</span></li>
+            <li><span class="muted">Waiting for Borg activityâ€¦</span></li>
         </ul>
     </div>
 
     <div class="card">
         <h3>Latest Result</h3>
         <div id="result" class="result">Ready.</div>
-        <div class="muted" id="dashboardUrl">—</div>
+        <div class="muted" id="dashboardUrl">â€”</div>
     </div>
 
     <script nonce="${nonce}">
@@ -616,7 +616,7 @@ class AiosSidebarProvider implements vscode.WebviewViewProvider {
             feedEl.innerHTML = items.map((item) => {
                 return '<li>' +
                     '<div class="feed-title">' + item.title + ' <span class="pill">' + item.kind + '</span></div>' +
-                    '<div class="feed-meta">' + item.time + ' • ' + item.detail + '</div>' +
+                    '<div class="feed-meta">' + item.time + ' â€¢ ' + item.detail + '</div>' +
                 '</li>';
             }).join('');
         }
@@ -673,8 +673,8 @@ class AiosSidebarProvider implements vscode.WebviewViewProvider {
 
 export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('Borg Bridge');
-    sidebarProvider = new AiosSidebarProvider();
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider(AiosSidebarProvider.viewType, sidebarProvider));
+    sidebarProvider = new BorgSidebarProvider();
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(BorgSidebarProvider.viewType, sidebarProvider));
 
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'borg.connect';
@@ -685,20 +685,20 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand('borg.connect', connectToCore));
     context.subscriptions.push(vscode.commands.registerCommand('borg.disconnect', disconnectFromCore));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.showStatus', showHubStatus));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.runAgent', runAgentDispatch));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.searchMemory', searchMemory));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.ingestSelectionToRag', ingestSelectionToRag));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.ingestUrl', ingestUrl));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.rememberSelection', rememberSelection));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.listTools', listTools));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.invokeTool', invokeTool));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.openDashboard', () => openDashboardRoute(DASHBOARD_ROUTES.home, 'Opened dashboard')));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.showLogs', showLogs));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.startDebate', startDebate));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.viewAnalytics', viewAnalytics));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.listDebateTemplates', listDebateTemplates));
-    context.subscriptions.push(vscode.commands.registerCommand('aios.architectMode', architectMode));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.showStatus', showHubStatus));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.runAgent', runAgentDispatch));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.searchMemory', searchMemory));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.ingestSelectionToRag', ingestSelectionToRag));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.ingestUrl', ingestUrl));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.rememberSelection', rememberSelection));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.listTools', listTools));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.invokeTool', invokeTool));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.openDashboard', () => openDashboardRoute(DASHBOARD_ROUTES.home, 'Opened dashboard')));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.showLogs', showLogs));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.startDebate', startDebate));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.viewAnalytics', viewAnalytics));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.listDebateTemplates', listDebateTemplates));
+    context.subscriptions.push(vscode.commands.registerCommand('borg.architectMode', architectMode));
 
     const config = vscode.workspace.getConfiguration('borg');
     if (config.get<boolean>('autoConnect', true)) {
@@ -758,7 +758,7 @@ export function activate(context: vscode.ExtensionContext) {
         addActivity('system', 'Terminal capture unavailable', 'VS Code runtime does not expose terminal write event.');
     }
 
-    addActivity('system', 'Extension activated', 'AIOS VS Code bridge is online.');
+    addActivity('system', 'Extension activated', 'Borg VS Code bridge is online.');
     addChatHistory('system', 'extension', 'VS Code extension bridge activated.');
 }
 
@@ -879,7 +879,7 @@ async function showHubStatus() {
     const status = await fetchHubStatus();
     addActivity('status', 'Hub status checked', `${status.connectionState}; researcher=${status.researcher}; coder=${status.coder}`);
     addChatHistory('system', 'extension', `Hub status checked: ${status.connectionState}; researcher=${status.researcher}; coder=${status.coder}`);
-    void vscode.window.showInformationMessage(`Borg Hub ${status.connectionState} — Researcher: ${status.researcher}, Coder: ${status.coder}`);
+    void vscode.window.showInformationMessage(`Borg Hub ${status.connectionState} â€” Researcher: ${status.researcher}, Coder: ${status.coder}`);
 }
 
 async function dispatchResearchTask(query: string, depth: number): Promise<unknown> {
@@ -1196,7 +1196,7 @@ async function handleMessage(msg: Record<string, unknown>) {
         addActivity(
             'system',
             'Core bridge manifest received',
-            `${manifest?.connectedClients?.length ?? 0} registered clients · ${manifest?.supportedHookPhases?.length ?? 0} hook phases advertised.`,
+            `${manifest?.connectedClients?.length ?? 0} registered clients Â· ${manifest?.supportedHookPhases?.length ?? 0} hook phases advertised.`,
         );
         return;
     }

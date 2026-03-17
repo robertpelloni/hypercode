@@ -36,8 +36,8 @@ describe('toolset meta tools', () => {
     process.env.MCP_PROGRESSIVE_MODE = 'true';
     process.env.MCP_DISABLE_METAMCP = 'true';
 
-    const dir = mkdtempSync(path.join(os.tmpdir(), 'aios-toolset-test-'));
-    process.env.AIOS_DATA_DIR = dir;
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'borg-toolset-test-'));
+    process.env.BORG_DATA_DIR = dir;
 
     const policyService: PolicyServiceLike = { evaluate: () => ({ allowed: true }) };
     const savedScriptService: SavedScriptServiceLike = { getAllScripts: () => [] };

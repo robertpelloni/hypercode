@@ -15,10 +15,10 @@ const config = createConfig({
     walletConnect({
       projectId: WALLETCONNECT_PROJECT_ID,
       metadata: {
-        name: 'AIOS Dashboard',
-        description: 'AI Operating System - Bobcoin Wallet',
-        url: 'https://aios.local',
-        icons: ['https://aios.local/icon.png'],
+        name: 'Borg Dashboard',
+        description: 'Borg - AI Operating System - Bobcoin Wallet',
+        url: 'https://borg.local',
+        icons: ['https://borg.local/icon.png'],
       },
       showQrModal: true,
     }),

@@ -70,7 +70,7 @@ describe('TelemetryService', () => {
 
     it('should include service name attribute', () => {
       const span = telemetry.startSpan('test');
-      expect(span.attributes['service.name']).toBe('aios-core');
+      expect(span.attributes['service.name']).toBe('borg-core');
       telemetry.endSpan(span.spanId);
     });
   });

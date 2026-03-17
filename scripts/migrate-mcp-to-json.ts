@@ -20,8 +20,8 @@ async function migrate() {
 
     console.log('[Migration] Exporting configurations...');
     try {
-        // Export in 'aios' format (native borg format)
-        const jsonContent = await configService.exportConfigs('aios');
+        // Export in 'Borg' format (native borg format)
+        const jsonContent = await configService.exportConfigs('Borg');
 
         // Config file path - creating it in the root
         const configPath = path.resolve('mcp.json');

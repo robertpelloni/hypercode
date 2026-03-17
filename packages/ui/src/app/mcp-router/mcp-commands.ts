@@ -1,7 +1,7 @@
 /**
- * AIOS MCP Router - CLI Integration
+ * Borg MCP Router - CLI Integration
  *
- * Integrates MCP Router CLI commands into the main aios CLI
+ * Integrates MCP Router CLI commands into the main borg CLI
  */
 
 import { spawn } from 'child_process';

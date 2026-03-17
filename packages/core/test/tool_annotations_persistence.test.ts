@@ -9,7 +9,7 @@ type ToolAnnotationDatabaseArg = Parameters<ToolAnnotationManager['setDatabase']
 
 describe('ToolAnnotationManager persistence', () => {
   test('writes and reads from DB when available', () => {
-    const dir = mkdtempSync(path.join(os.tmpdir(), 'aios-ann-db-'));
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'borg-ann-db-'));
 
     let db: DatabaseManager;
     try {

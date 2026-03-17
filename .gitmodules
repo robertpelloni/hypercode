@@ -8,16 +8,16 @@
         path = external/MetaMCP
         url = https://github.com/robertpelloni/MetaMCP
 [submodule "submodules/mcpproxy"]
-        path = submodules/mcpproxy
+	path = archive/submodules/mcpproxy
         url = https://github.com/Dumbris/mcpproxy
 [submodule "submodules/litellm"]
-        path = submodules/litellm
+	path = archive/submodules/litellm
         url = https://github.com/BerriAI/litellm
 [submodule "external/claude-mem"]
-        path = external/claude-mem
+	path = archive/claude-mem
         url = https://github.com/robertpelloni/claude-mem
 [submodule "external/OmniRoute"]
-        path = external/OmniRoute
+	path = archive/OmniRoute
         url = https://github.com/diegosouzapw/OmniRoute
 [submodule "packages/claude-mem"]
         path = packages/claude-mem

@@ -36,76 +36,76 @@
                 "title": "Borg: Disconnect from Core"
             },
             {
-                "command": "aios.showStatus",
-                "title": "AIOS: Show Hub Status"
+                "command": "borg.showStatus",
+                "title": "Borg: Show Hub Status"
             },
             {
-                "command": "aios.runAgent",
-                "title": "AIOS: Run Agent"
+                "command": "borg.runAgent",
+                "title": "Borg: Run Agent"
             },
             {
-                "command": "aios.searchMemory",
-                "title": "AIOS: Search Memory"
+                "command": "borg.searchMemory",
+                "title": "Borg: Search Memory"
             },
             {
-                "command": "aios.ingestUrl",
-                "title": "AIOS: Ingest URL to Knowledge"
+                "command": "borg.ingestUrl",
+                "title": "Borg: Ingest URL to Knowledge"
             },
             {
-                "command": "aios.ingestSelectionToRag",
-                "title": "AIOS: Ingest Selection to RAG"
+                "command": "borg.ingestSelectionToRag",
+                "title": "Borg: Ingest Selection to RAG"
             },
             {
-                "command": "aios.rememberSelection",
-                "title": "AIOS: Remember Selection"
+                "command": "borg.rememberSelection",
+                "title": "Borg: Remember Selection"
             },
             {
-                "command": "aios.listTools",
-                "title": "AIOS: List Tools"
+                "command": "borg.listTools",
+                "title": "Borg: List Tools"
             },
             {
-                "command": "aios.invokeTool",
-                "title": "AIOS: Invoke Tool"
+                "command": "borg.invokeTool",
+                "title": "Borg: Invoke Tool"
             },
             {
-                "command": "aios.openDashboard",
-                "title": "AIOS: Open Dashboard"
+                "command": "borg.openDashboard",
+                "title": "Borg: Open Dashboard"
             },
             {
-                "command": "aios.showLogs",
-                "title": "AIOS: Show Logs"
+                "command": "borg.showLogs",
+                "title": "Borg: Show Logs"
             },
             {
-                "command": "aios.startDebate",
-                "title": "AIOS: Start Council Debate"
+                "command": "borg.startDebate",
+                "title": "Borg: Start Council Debate"
             },
             {
-                "command": "aios.viewAnalytics",
-                "title": "AIOS: View Supervisor Analytics"
+                "command": "borg.viewAnalytics",
+                "title": "Borg: View Supervisor Analytics"
             },
             {
-                "command": "aios.listDebateTemplates",
-                "title": "AIOS: List Debate Templates"
+                "command": "borg.listDebateTemplates",
+                "title": "Borg: List Debate Templates"
             },
             {
-                "command": "aios.architectMode",
-                "title": "AIOS: Architect Mode (Two-Model)"
+                "command": "borg.architectMode",
+                "title": "Borg: Architect Mode (Two-Model)"
             }
         ],
         "viewsContainers": {
             "activitybar": [
                 {
-                    "id": "aiosSidebar",
-                    "title": "AIOS",
-                    "icon": "resources/aios.svg"
+                    "id": "BorgSidebar",
+                    "title": "Borg",
+                    "icon": "resources/borg.svg"
                 }
             ]
         },
         "views": {
-            "aiosSidebar": [
+            "BorgSidebar": [
                 {
                     "type": "webview",
-                    "id": "aios.dispatchView",
+                    "id": "borg.dispatchView",
                     "name": "Mini Dashboard"
                 }
             ]
@@ -138,14 +138,14 @@
         "menus": {
             "editor/context": [
                 {
-                    "command": "aios.ingestSelectionToRag",
+                    "command": "borg.ingestSelectionToRag",
                     "when": "editorHasSelection",
-                    "group": "aios@1"
+                    "group": "Borg@1"
                 },
                 {
-                    "command": "aios.rememberSelection",
+                    "command": "borg.rememberSelection",
                     "when": "editorHasSelection",
-                    "group": "aios@2"
+                    "group": "Borg@2"
                 }
             ]
         }
