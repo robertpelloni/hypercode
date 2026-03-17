@@ -4,6 +4,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.311] — 2026-03-17
+
+- fix(test): Updated JsonConfigProvider and mcp-tool-preferences tests for working-set schema compatibility. Tests now use `toMatchObject()` to accept additional session working-set capacity fields (`maxLoadedTools`, `maxHydratedSchemas`, `idleEvictionThresholdMs`).
+- test(validation): Core package tests improved to 156/157 passing (99.4% pass rate); all router tests and config tests validated.
+
 ## [2.7.310] — 2026-03-17
 
 - feat(core/services): Implemented MetricsService singleton pattern with static `getInstance()` and `dispose()` methods for proper lifecycle management and test isolation, aligning with AuditService pattern.
