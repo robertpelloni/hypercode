@@ -5,14 +5,38 @@ export interface MetricEvent {
     value: number;
     tags?: Record<string, string>;
 }
+
+export interface MetricsServiceOptions {
+    maxEvents?: number;
+    monitoringIntervalMs?: number;
+}
+
 import os from 'os';
 
 export class MetricsService {
+    private static instance: MetricsService;
     private events: MetricEvent[] = [];
     private readonly MAX_EVENTS = 10000;
     private monitorInterval: NodeJS.Timeout | null = null;
 
     constructor() { }
+
+    // Singleton factory method for proper test isolation
+    public static getInstance(): MetricsService {
+        if (!MetricsService.instance) {
+            MetricsService.instance = new MetricsService();
+        }
+        return MetricsService.instance;
+    }
+
+    // Cleanup method for test isolation (clears static instance and stops monitoring)
+    public dispose(): void {
+        if (this.monitorInterval) {
+            clearInterval(this.monitorInterval);
+            this.monitorInterval = null;
+        }
+        this.events = [];
+    }
 
     public startMonitoring(intervalMs: number = 5000) {
         if (this.monitorInterval) clearInterval(this.monitorInterval);
