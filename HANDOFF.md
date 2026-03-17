@@ -1,8 +1,57 @@
 # Borg Handoff
 
-_Last updated: 2026-03-11_
+_Last updated: 2026-03-17_
 
-## Latest session update — memory story consolidation slice
+## Latest session update — build stability and runtime verification (v2.7.308)
+
+### What changed
+
+**Core build fixes:**
+- `packages/core/src/services/metamcp-session-working-set.service.ts`
+  - Fixed `recordEviction()` function calls to use correct 3-parameter signature instead of object parameter
+  - Lines 93, 110 updated to match: `recordEviction(candidate, tier, entry.accessedAt)`
+  - Resolved TypeScript errors: "Expected 3 arguments, but got 1"
+  - **Validation**: `SessionToolWorkingSet.test.ts` (5 tests) **passed**
+
+**Web app rendering fixes:**
+- `apps/web/src/app/dashboard/mcp/search/page.tsx`
+  - Added Suspense boundary wrapper for `useSearchParams()` CSR bailout
+  - Extracted `SearchDashboardContent` component inside Suspense to fix Next.js 16.1 rendering requirement
+- `apps/web/src/app/dashboard/mcp/testing/servers/page.tsx`
+  - Applied same Suspense boundary pattern for `useSearchParams()` hook
+  - Extracted `MCPServerProbePageContent` component inside Suspense wrapper
+  - **Validation**: Full web app build with webpack backend **succeeded** without errors
+
+**Build system compatibility:**
+- Identified turbo.json issue in MCP-SuperAssistant submodule (deprecated keys)
+  - Issue noted for submodule maintainer (cannot directly edit submodule from parent repo)
+
+### Focused validation
+
+- `pnpm -C packages/core run build`: **passed** (tsc clean)
+- `pnpm -C apps/web run build --webpack`: **passed** (all routes prerendered)
+- `get_errors` on all touched files: **clean**
+- Version bumped to **2.7.308** and CHANGELOG updated
+
+### Recommended next move
+
+**Priority 1: Core test failures**
+- AuditService / MetricsService test failures due to singleton pattern mismatch
+  - Tests expect `getInstance()` static method, but implementation is standard class
+  - Review: `test/services/AuditService.test.ts` and `test/services/MetricsService.test.ts`
+  - Consider whether to: (1) implement singleton pattern, or (2) update tests to match implementation
+
+**Priority 2: Startup orchestration determinism (P0-1)**
+- Verify complete boot contract: CLI start → core ready → router initialized → inventory ready
+- Implement canonical readiness definition across CLI, dashboard, and launcher
+- Add startup regression tests per TODO.md acceptance criteria
+
+**Priority 3: MCP control-plane closure**
+- Replace stubbed tool-search behavior with canonical Borg-native pipeline
+- Full load/unload/schema-hydration working-set story
+- Tool search ranking refinement for large inventories
+
+## Previous session update — memory story consolidation slice
 
 ### Follow-up slice — fuzzy intent-aware cross-session links
 
