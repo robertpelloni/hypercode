@@ -189,7 +189,11 @@ function SessionPanel({
         { refetchInterval: 3000 }
     );
     const sendMutation = trpc.cloudDev.sendMessage.useMutation({
-        onSuccess: () => { setMsgInput(""); void messagesQuery.refetch(); },
+        onSuccess: () => {
+            setMsgInput("");
+            void messagesQuery.refetch();
+            onSessionMutation(); // keep messageCount in session list in sync
+        },
     });
     const acceptPlanMutation = trpc.cloudDev.acceptPlan.useMutation({
         onSuccess: async () => {
@@ -244,6 +248,14 @@ function SessionPanel({
     const canLoadAll = activeTab === "chat"
         ? session.messageCount > messageLimit
         : session.logCount > logLimit;
+
+    // Scroll to the bottom of the chat whenever new messages arrive or when the
+    // chat tab becomes active, so fresh messages are always visible.
+    useEffect(() => {
+        if (activeTab === "chat") {
+            chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [filteredMessages.length, activeTab]);
 
     return (
         <div className="border border-zinc-700 rounded-lg bg-zinc-950 overflow-hidden">
@@ -424,7 +436,7 @@ export default function CloudDevDashboardPage() {
     const [expandedSession, setExpandedSession] = useState<{ id: string; tab: "chat" | "logs" } | null>(null);
     const [showBroadcast, setShowBroadcast] = useState(false);
     const [broadcastMsg, setBroadcastMsg] = useState("");
-    const [broadcastForce, setBroadcastForce] = useState(false);
+    const [broadcastForce, setBroadcastForce] = useState(true);
     const [broadcastStatusFilter, setBroadcastStatusFilter] = useState<SessionStatus[]>([]);
     const [broadcastSessionScopeIds, setBroadcastSessionScopeIds] = useState<string[] | null>(null);
     const [lastBroadcastPayload, setLastBroadcastPayload] = useState<{

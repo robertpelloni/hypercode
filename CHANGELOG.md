@@ -4,6 +4,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.322] — 2026-03-18
+
+- chore(tasks): Move completed active tasks 007/008/009 to `tasks/completed/`; they were fully satisfied by existing implementations (startupStatus tests=13, health/logs/audit pages live, dashboard pages properly labeled).
+- chore(web/nav): Add "AI Providers Hub" (`/dashboard/providers`) entry to `CORE_DASHBOARD_NAV` in `nav-config.ts` so operators can reach the new page from the sidebar.
+- chore(web/nav): Update OpenCode Autopilot nav description from "Legacy embed, migration in progress" to the accurate native dashboard description; downgrade badge from `embed` to `experimental`.
+- chore(version): Bumped VERSION to 2.7.322.
+- validation: `pnpm -C apps/web exec tsc --noEmit --pretty false` exit 0, 0 errors.
+
 ## [2.7.321] — 2026-03-18
 
 - feat(web/autopilot): Replaced placeholder iframe with a full native React dashboard for the OpenCode Autopilot multi-model AI council server. Connects directly to the Autopilot REST API (port 3847) with 8 s live polling. Shows server health, council supervisor roster, consensus-mode selector, active sessions (start/stop/resume/guidance), veto queue (approve/reject), CLI tools grid, and debate-history log.
