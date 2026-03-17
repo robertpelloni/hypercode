@@ -32,8 +32,43 @@ import {
   type DashboardStatusSummary,
   type DashboardStartupStatus,
 } from './dashboard-home-view';
+import {
+  buildMissionControlFunctionEntries,
+  countEnabledMissionControlFunctions,
+  createCoreMissionControlToggleState,
+  createDefaultMissionControlToggleState,
+  sanitizeMissionControlToggleState,
+} from './mission-control-function-toggles';
+import { SIDEBAR_SECTIONS } from '../../components/mcp/nav-config';
 
 describe('dashboard home helpers', () => {
+  it('builds and sanitizes main dashboard function toggle state from the shared route catalog', () => {
+    const entries = buildMissionControlFunctionEntries(SIDEBAR_SECTIONS);
+    const defaults = createDefaultMissionControlToggleState(entries);
+    const coreOnly = createCoreMissionControlToggleState(entries);
+
+    expect(entries.length).toBeGreaterThan(20);
+    expect(defaults['/dashboard/mcp']).toBe(true);
+    expect(defaults['/dashboard/research']).toBe(true);
+    expect(coreOnly['/dashboard/settings']).toBe(true);
+    expect(coreOnly['/dashboard/research']).toBe(false);
+
+    expect(sanitizeMissionControlToggleState({
+      '/dashboard/mcp': false,
+      '/dashboard/research': false,
+      '/dashboard/not-real': true,
+    }, entries)).toMatchObject({
+      '/dashboard/mcp': false,
+      '/dashboard/research': false,
+    });
+
+    expect(countEnabledMissionControlFunctions({
+      ...defaults,
+      '/dashboard/mcp': false,
+      '/dashboard/research': false,
+    }, entries)).toBe(entries.length - 2);
+  });
+
   it('builds overview metrics from live dashboard summaries', () => {
     const mcpStatus: DashboardStatusSummary = {
       initialized: true,
@@ -1611,6 +1646,13 @@ describe('DashboardHomeView', () => {
     expect(html).toContain('Operator alerts');
     expect(html).toContain('All clear');
     expect(html).toContain('All major systems look healthy');
+    expect(html).toContain('Function toggles');
+    expect(html).toContain('Main dashboard function matrix');
+    expect(html).toContain('Quick launch preview');
+    expect(html).toContain('Enable all');
+    expect(html).toContain('Core only');
+    expect(html).toContain('MCP Control Plane');
+    expect(html).toContain('Labs &amp; Experimental');
   });
 
   it('renders actionable first-run provider guidance when no providers are configured', () => {

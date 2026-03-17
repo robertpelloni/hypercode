@@ -4,7 +4,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.7.331] — 2026-03-17
+## [2.7.333] — 2026-03-17
+
+- feat(web): add Mission Control function-toggle matrix on main dashboard — full per-function
+  enable/disable panel driven by the shared sidebar route catalog (`SIDEBAR_SECTIONS`, ~75 routes
+  across 5 sections), with localStorage persistence, "Enable all" / "Core only" preset buttons,
+  per-section bulk toggles, and a quick-launch preview strip showing the first 12 enabled links.
+- test(web): expanded `dashboard-home-view.test.tsx` with toggle-state builder and sanitizer
+  coverage and new assertions for the toggle panel rendering.
+- chore(version): bump canonical version to `2.7.333`.
 
 ## [2.7.332] — 2026-03-17
 

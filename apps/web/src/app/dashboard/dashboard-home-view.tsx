@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { MissionControlFunctionToggles } from './mission-control-function-toggles';
+
 export interface DashboardStatusSummary {
     initialized: boolean;
     serverCount: number;
@@ -1134,6 +1136,8 @@ export function DashboardHomeView({
                         )}
                     </div>
                 </header>
+
+                <MissionControlFunctionToggles />
 
                 <div className="grid gap-6 xl:grid-cols-2">
                     <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg shadow-slate-950/20">

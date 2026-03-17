@@ -111,11 +111,36 @@ This handoff reflects a documentation-overhaul sync to current repository realit
   - `VERSION` / `VERSION.md` -> `2.7.329`
   - `CHANGELOG.md` -> `2.7.329`
 
+## Latest continuation slice (2.7.330–2.7.332)
+
+- Fixed `LanceDBStore.addMemory` to sanitize metadata before writing (Arrow schema inference).
+- Fixed `HealerReactor` exponential backoff + known-unrecoverable error filtering.
+- Fixed `TerminalSensor` stderr buffering to prevent partial log chunk healer storms.
+- Added `TerminalSensor` regression coverage for partial stderr buffering.
+- Prevented zero-server fresh-install startup from getting stuck in permanent pending.
+- Added `startupStatus` regression for stale zero-server config-sync flags.
+- Hardened MCP import robustness for realistic managed-server payloads.
+- Rewrote README for public release (HN/Reddit framing, Docker quick-start, route table).
+- Untracked `chat.json`, `audit-*.jsonl` from git; extended `.gitignore`.
+- Added root `.env.example`.
+
+## Latest continuation slice (2.7.333)
+
+- feat(web): Mission Control function-toggle matrix on main dashboard.
+  - Driven by shared `SIDEBAR_SECTIONS` route catalog (~75 routes, 5 sections).
+  - `localStorage`-persisted per-function toggle state with sanitization/merge on hydration.
+  - "Enable all" and "Core only" preset buttons (core-only enables `CORE_DASHBOARD_NAV` 11 items).
+  - Per-section bulk toggles, per-function enable checkbox, quick-launch preview strip (top 12 enabled).
+  - New file: `apps/web/src/app/dashboard/mission-control-function-toggles.tsx`.
+  - Modified: `dashboard-home-view.tsx` (import + render), `dashboard-home-view.test.tsx` (8 new assertions).
+  - 38/38 tests passing; web TypeScript clean.
+
 ## Next recommended steps
 
 1. Run a fresh root smoke cycle (`pnpm run dev` + dashboard MCP/session/billing critical path checks).
-2. Keep `tasks/active/` populated with the next 1–3 concrete blockers.
-3. Continue docs discipline: update roadmap/todo/handoff/changelog in the same PR as behavior changes.
+2. Address remaining 1.0 blockers: session supervisor attach story, provider auth/quota truthfulness.
+3. Keep `tasks/active/` populated with the next 1–3 concrete blockers.
+4. Continue docs discipline: update roadmap/todo/handoff/changelog in the same PR as behavior changes.
 
 ## Handoff rule
 
