@@ -2,42 +2,11 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge, ScrollArea } from "@borg/ui";
-import { FlaskConical, Play, Square, Loader2, RefreshCw, CheckCircle2, XCircle, Clock, AlertCircle, RotateCcw, ChevronDown, ChevronRight } from "lucide-react";
+import { FlaskConical, Play, Square, Loader2, RefreshCw, CheckCircle2, XCircle, Clock, AlertCircle, RotateCcw, ChevronDown, ChevronRight, Search } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
 import { PageStatusBanner } from '@/components/PageStatusBanner';
-
-type TestResult = {
-    file: string;
-    status: 'pass' | 'fail' | 'running' | string;
-    timestamp: number;
-    output?: string;
-};
-
-function normalizeResults(data: unknown): TestResult[] {
-    if (!Array.isArray(data)) return [];
-    return data.map((r: unknown) => {
-        if (!r || typeof r !== 'object') return { file: '', status: 'unknown', timestamp: 0 };
-        const entry = r as Record<string, unknown>;
-        return {
-            file: typeof entry['file'] === 'string' ? entry['file'] : '',
-            status: typeof entry['status'] === 'string' ? entry['status'] : 'unknown',
-            timestamp: typeof entry['timestamp'] === 'number' ? entry['timestamp'] : 0,
-            output: typeof entry['output'] === 'string' ? entry['output'] : undefined,
-        };
-    });
-}
-
-function normalizeStatus(data: unknown): { isRunning: boolean; results: Record<string, TestResult> } {
-    if (!data || typeof data !== 'object') return { isRunning: false, results: {} };
-    const s = data as Record<string, unknown>;
-    return {
-        isRunning: s['isRunning'] === true,
-        results: (s['results'] && typeof s['results'] === 'object' && !Array.isArray(s['results']))
-            ? s['results'] as Record<string, TestResult>
-            : {},
-    };
-}
+import { filterResults, isRerunnableResult, normalizeResults, normalizeStatus, type TestResult } from './page-helpers';
 
 function statusIcon(status: string) {
     switch (status) {
@@ -66,32 +35,62 @@ function formatRelativeTime(ts: number): string {
     return `${Math.round(m / 60)}h ago`;
 }
 
-function TestResultCard({ result }: { result: TestResult }) {
+
+function TestResultCard({
+    result,
+    onRerun,
+    isRerunning,
+}: {
+    result: TestResult;
+    onRerun: (file: string) => void;
+    isRerunning: boolean;
+}) {
     const [expanded, setExpanded] = useState(result.status === 'fail');
+    const rerunnable = isRerunnableResult(result.status) && result.file.length > 0;
 
     return (
         <div className={`rounded-lg border ${result.status === 'fail' ? 'border-red-900/50 bg-zinc-950' : 'border-zinc-800 bg-zinc-900'}`}>
-            <button
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-800/30 transition-colors text-left"
-                onClick={() => result.output && setExpanded(e => !e)}
-            >
-                {statusIcon(result.status)}
-                <span className="font-mono text-sm text-zinc-300 flex-1 truncate" title={result.file}>
-                    {result.file}
-                </span>
-                <span className="text-xs text-zinc-600 shrink-0 ml-2">{formatRelativeTime(result.timestamp)}</span>
-                <Badge
-                    variant="outline"
-                    className={`text-[10px] h-5 ml-2 shrink-0 ${statusBadgeClass(result.status)}`}
+            <div className="flex items-center gap-2 px-4 py-3 hover:bg-zinc-800/30 transition-colors">
+                <button
+                    className="min-w-0 flex flex-1 items-center gap-3 text-left"
+                    onClick={() => result.output && setExpanded(e => !e)}
+                    type="button"
                 >
-                    {result.status}
-                </Badge>
-                {result.output && (
-                    expanded
-                        ? <ChevronDown className="h-3.5 w-3.5 text-zinc-600 shrink-0 ml-1" />
-                        : <ChevronRight className="h-3.5 w-3.5 text-zinc-600 shrink-0 ml-1" />
+                    {statusIcon(result.status)}
+                    <span className="font-mono text-sm text-zinc-300 flex-1 truncate" title={result.file}>
+                        {result.file}
+                    </span>
+                    <span className="text-xs text-zinc-600 shrink-0 ml-2">{formatRelativeTime(result.timestamp)}</span>
+                    <Badge
+                        variant="outline"
+                        className={`text-[10px] h-5 ml-2 shrink-0 ${statusBadgeClass(result.status)}`}
+                    >
+                        {result.status}
+                    </Badge>
+                    {result.output && (
+                        expanded
+                            ? <ChevronDown className="h-3.5 w-3.5 text-zinc-600 shrink-0 ml-1" />
+                            : <ChevronRight className="h-3.5 w-3.5 text-zinc-600 shrink-0 ml-1" />
+                    )}
+                </button>
+                {rerunnable && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="border-zinc-700 bg-transparent text-zinc-300 hover:text-white"
+                        onClick={() => onRerun(result.file)}
+                        disabled={isRerunning}
+                    >
+                        {isRerunning ? (
+                            <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                            <RotateCcw className="mr-2 h-3.5 w-3.5" />
+                        )}
+                        Rerun
+                    </Button>
                 )}
-            </button>
+            </div>
             {expanded && result.output && (
                 <div className="border-t border-zinc-800 px-4 pb-4 pt-3">
                     <ScrollArea className="max-h-48">
@@ -106,6 +105,10 @@ function TestResultCard({ result }: { result: TestResult }) {
 }
 
 export default function TestsDashboard() {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'fail' | 'running' | 'pass'>('all');
+    const [activeRerunFile, setActiveRerunFile] = useState<string | null>(null);
+    const [isBulkRerunning, setIsBulkRerunning] = useState(false);
     const statusQuery = trpc.tests.status.useQuery(undefined, { refetchInterval: 3000 });
     const resultsQuery = trpc.tests.results.useQuery(undefined, { refetchInterval: 3000 });
 
@@ -117,13 +120,70 @@ export default function TestsDashboard() {
         onSuccess: () => { toast.success('Auto-test watcher stopped'); statusQuery.refetch(); },
         onError: err => toast.error(`Failed to stop: ${err.message}`),
     });
+    const runMutation = trpc.tests.run.useMutation({
+        onError: err => toast.error(`Failed to queue rerun: ${err.message}`),
+    });
 
     const normalized = normalizeStatus(statusQuery.data);
     const results = normalizeResults(resultsQuery.data);
+    const filteredResults = filterResults(results, { query: searchQuery, statusFilter });
 
     const passing = results.filter(r => r.status === 'pass').length;
     const failing = results.filter(r => r.status === 'fail').length;
     const running = results.filter(r => r.status === 'running').length;
+
+    const refreshAll = async () => {
+        await Promise.all([statusQuery.refetch(), resultsQuery.refetch()]);
+    };
+
+    const handleRerun = async (file: string) => {
+        setActiveRerunFile(file);
+        try {
+            const response = await runMutation.mutateAsync({ filePath: file });
+            if (response.success) {
+                toast.success(`Queued rerun for ${response.testFile ?? file}`);
+            } else {
+                toast.error(response.error || 'No related test file found');
+            }
+            await refreshAll();
+        } finally {
+            setActiveRerunFile(null);
+        }
+    };
+
+    const handleRerunFailed = async () => {
+        const failedFiles = results
+            .filter((result) => result.status === 'fail' && result.file.length > 0)
+            .map((result) => result.file);
+
+        if (failedFiles.length === 0) {
+            toast.info('No failing tests to rerun');
+            return;
+        }
+
+        setIsBulkRerunning(true);
+        let queuedCount = 0;
+
+        try {
+            for (const file of failedFiles) {
+                setActiveRerunFile(file);
+                const response = await runMutation.mutateAsync({ filePath: file });
+                if (response.success) {
+                    queuedCount += 1;
+                }
+            }
+
+            if (queuedCount > 0) {
+                toast.success(`Queued ${queuedCount} failing test rerun${queuedCount === 1 ? '' : 's'}`);
+            } else {
+                toast.error('Could not map failing results to runnable test files');
+            }
+            await refreshAll();
+        } finally {
+            setActiveRerunFile(null);
+            setIsBulkRerunning(false);
+        }
+    };
 
     return (
         <div className="p-8 space-y-8">
@@ -144,7 +204,7 @@ export default function TestsDashboard() {
                         variant="outline"
                         size="sm"
                         className="border-zinc-700 text-zinc-400 hover:text-white"
-                        onClick={() => { statusQuery.refetch(); resultsQuery.refetch(); }}
+                        onClick={() => { void refreshAll(); }}
                         disabled={statusQuery.isFetching}
                     >
                         {statusQuery.isFetching ? (
@@ -153,6 +213,20 @@ export default function TestsDashboard() {
                             <RefreshCw className="h-4 w-4 mr-2" />
                         )}
                         Refresh
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-zinc-700 text-zinc-400 hover:text-white"
+                        onClick={() => { void handleRerunFailed(); }}
+                        disabled={isBulkRerunning || failing === 0}
+                    >
+                        {isBulkRerunning ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                            <RotateCcw className="h-4 w-4 mr-2" />
+                        )}
+                        Rerun Failing
                     </Button>
                     {normalized.isRunning ? (
                         <Button
@@ -212,10 +286,31 @@ export default function TestsDashboard() {
                     <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
                         <Clock className="h-4 w-4" />
                         Recent Results
-                        {results.length > 0 && (
-                            <Badge variant="secondary" className="ml-1 text-xs">{results.length}</Badge>
+                        {filteredResults.length > 0 && (
+                            <Badge variant="secondary" className="ml-1 text-xs">{filteredResults.length}</Badge>
                         )}
                     </h2>
+                    <div className="flex items-center gap-2 text-xs">
+                        <div className="relative">
+                            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-600" />
+                            <input
+                                value={searchQuery}
+                                onChange={(event) => setSearchQuery(event.target.value)}
+                                placeholder="Filter file or output"
+                                className="h-9 w-56 rounded-md border border-zinc-800 bg-zinc-950 pl-8 pr-3 text-sm text-zinc-200 outline-none transition-colors placeholder:text-zinc-600 focus:border-cyan-700"
+                            />
+                        </div>
+                        <select
+                            value={statusFilter}
+                            onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
+                            className="h-9 rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-200 outline-none focus:border-cyan-700"
+                        >
+                            <option value="all">All statuses</option>
+                            <option value="fail">Failing only</option>
+                            <option value="running">Running only</option>
+                            <option value="pass">Passing only</option>
+                        </select>
+                    </div>
                 </div>
 
                 {resultsQuery.isLoading ? (
@@ -228,11 +323,27 @@ export default function TestsDashboard() {
                         <p>No test results yet.</p>
                         <p className="mt-1">Start the watcher and save a source file to trigger an automatic run.</p>
                     </div>
+                ) : filteredResults.length === 0 ? (
+                    <div className="text-center p-12 text-zinc-600 text-sm border border-dashed border-zinc-800 rounded-lg">
+                        <Search className="h-10 w-10 mx-auto mb-3 opacity-25" />
+                        <p>No results match the current filter.</p>
+                        <p className="mt-1">Try a different file fragment, output keyword, or status scope.</p>
+                    </div>
                 ) : (
                     <div className="space-y-2">
                         {/* Failures first */}
-                        {[...results.filter(r => r.status === 'fail'), ...results.filter(r => r.status === 'running'), ...results.filter(r => r.status === 'pass'), ...results.filter(r => r.status !== 'fail' && r.status !== 'running' && r.status !== 'pass')].map((r, i) => (
-                            <TestResultCard key={r.file || i} result={r} />
+                        {[
+                            ...filteredResults.filter(r => r.status === 'fail'),
+                            ...filteredResults.filter(r => r.status === 'running'),
+                            ...filteredResults.filter(r => r.status === 'pass'),
+                            ...filteredResults.filter(r => r.status !== 'fail' && r.status !== 'running' && r.status !== 'pass'),
+                        ].map((r, i) => (
+                            <TestResultCard
+                                key={r.file || i}
+                                result={r}
+                                onRerun={handleRerun}
+                                isRerunning={activeRerunFile === r.file}
+                            />
                         ))}
                     </div>
                 )}

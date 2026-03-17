@@ -4,7 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.7.311] — 2026-03-17
+## [2.7.313] — 2026-03-17
+
+- feat(web/tests): Upgraded `/dashboard/tests` from passive watcher status into an operator control surface with per-result rerun buttons, bulk rerun for failing tests, and client-side file/output/status filtering backed by `trpc.tests.run`.
+- test(web/tests): Added focused helper coverage for tests dashboard normalization, filter behavior, and rerun eligibility (`apps/web/src/app/dashboard/tests/page.test.ts`).
+- test(validation): Focused Vitest coverage passed for the tests dashboard helper module, and `pnpm -C apps/web exec tsc --noEmit --pretty false` completed successfully.
+
 ## [2.7.312] — 2026-03-17
 
 - task completed: P0-1 (Task 007: Startup Orchestration Truthfulness) - Deterministic boot contract verified with 13/13 startup tests passing, canonical readiness definition implemented, fresh-install boot flow validated.

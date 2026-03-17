@@ -2,6 +2,17 @@
 
 _Last updated: 2026-03-17 (continuation session)_
 
+## Latest continuation slice — Tests dashboard operator controls (v2.7.312 → v2.7.313)
+
+- Upgraded `/dashboard/tests` to expose the existing `trpc.tests.run` capability instead of only showing watcher state.
+- Added per-row `Rerun` controls for pass/fail results, plus a bulk `Rerun Failing` action for quick recovery loops.
+- Added client-side filtering by file/output text and result status so operators can narrow large result sets without leaving the page.
+- Extracted pure helper logic into `apps/web/src/app/dashboard/tests/page-helpers.ts` and added focused Vitest coverage for normalization, filtering, and rerun eligibility.
+- Validation completed:
+  - ✅ `pnpm exec vitest run apps/web/src/app/dashboard/tests/page.test.ts`
+  - ✅ `pnpm -C apps/web exec tsc --noEmit --pretty false`
+  - ⚠️ Existing unrelated repo issue remains in core typecheck task (`packages/core/src/stdioLoader.ts` schema typing); not introduced by this slice.
+
 ## Current session update — test stability, core services improvements, and build validation (v2.7.309 → v2.7.311)
 ## Current session summary — Tasks 007/008/009 completion validated, version 2.7.312 released
 
