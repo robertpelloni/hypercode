@@ -4,6 +4,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.309] — 2026-03-17
+
+- feat(core/services): Implemented AuditService singleton pattern with static `getInstance()` and `dispose()` methods for proper lifecycle management and test isolation.
+- test(validation): Core package build validated successfully with tsc; SessionToolWorkingSet tests passing (5/5).
+
 ## [2.7.308] — 2026-03-17
 
 - fix(core/mcp): Fixed `recordEviction()` function calls in `metamcp-session-working-set.service.ts` to use correct 3-parameter signature instead of object parameter (lines 93, 110).
