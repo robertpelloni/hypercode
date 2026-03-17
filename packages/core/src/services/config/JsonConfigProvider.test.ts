@@ -47,10 +47,14 @@ describe('JsonConfigProvider always-visible tools compatibility', () => {
 
         const config = await loadBorgMcpConfig(workspace);
         expect(config.alwaysVisibleTools).toEqual(['browser__open']);
-        expect(config.settings?.toolSelection).toEqual({
+        expect(config.settings?.toolSelection).toMatchObject({
             importantTools: [],
             alwaysLoadedTools: ['browser__open'],
             autoLoadMinConfidence: 0.85,
+            // Session working-set capacity fields
+            maxLoadedTools: expect.any(Number),
+            maxHydratedSchemas: expect.any(Number),
+            idleEvictionThresholdMs: expect.any(Number),
         });
     });
 });
