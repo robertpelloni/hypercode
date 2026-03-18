@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Starting Super AI Plugin..."
+echo "Starting Borg..."
 
 # Check for pnpm
 if ! command -v pnpm &> /dev/null

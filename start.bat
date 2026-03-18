@@ -1,5 +1,5 @@
 @echo off
-echo Starting Super AI Plugin...
+echo Starting Borg...
 
 where pnpm >nul 2>nul
 if %errorlevel% neq 0 (
