@@ -86,6 +86,7 @@ import { FileSensor } from "./sensors/FileSensor.js";
 import { TerminalSensor } from "./sensors/TerminalSensor.js";
 import { AutoTestReactor } from "./reactors/AutoTestReactor.js";
 import { HealerReactor } from "./reactors/HealerReactor.js";
+import { MemoryHarvestReactor } from "./reactors/MemoryHarvestReactor.js";
 import { SessionManager } from "./services/SessionManager.js";
 import { SessionSupervisor } from "./supervisor/SessionSupervisor.js";
 import { ProjectTracker } from "./services/ProjectTracker.js";
@@ -561,6 +562,9 @@ export class MCPServer {
 
         this.healerReactor = new HealerReactor(this.eventBus, this.healerService);
         this.healerReactor.start();
+
+        this.memoryHarvestReactor = new MemoryHarvestReactor(this.eventBus, this.llmService, this.agentMemoryService);
+        this.memoryHarvestReactor.start();
 
         // Neural Pulse Bridge: Broadcast all system events to connected dashboard clients
         this.eventBus.on('system_event', (event) => {

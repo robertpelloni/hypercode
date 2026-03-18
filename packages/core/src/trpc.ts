@@ -57,10 +57,12 @@ import { swarmRouter } from './routers/swarmRouter.js';
 import { openWebUIRouter } from './routers/openWebUIRouter.js';
 import { infrastructureRouter } from './routers/infrastructureRouter.js';
 import { ragRouter } from './routers/ragRouter.js';
+import { projectRouter } from './routers/projectRouter.js';
 
 // import { type AnyTRPCRouter } from '@trpc/server';
 
 export const appRouter = t.router({
+    project: projectRouter,
     graph: graphRouter,
     workflow: workflowRouter,
     tests: testsRouter,

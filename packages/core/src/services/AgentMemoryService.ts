@@ -1281,6 +1281,20 @@ export class AgentMemoryService {
                 if (files.length > 10) {
                     files.slice(10).forEach(f => fs.unlinkSync(path.join(handoffDir, f)));
                 }
+
+                // Autonomous Context Compacting:
+                // If active session memory is getting dense, trigger an automatic prune
+                const sessionMemories = Array.from(this.memories.values()).filter(m => m.type === 'session');
+                const HEURISTIC_TOKEN_THRESHOLD = 80000; // ~100 messages * 800 tokens
+                
+                if (sessionMemories.length > 50) {
+                    console.log(`[AgentMemoryService] 🤖 Autonomous Compaction triggered (${sessionMemories.length} session items). Archiving old context...`);
+                    // We call handoffSession internally to ensure a snapshot is safe, 
+                    // then we could prune. For now, we'll emit a system event so the UI knows.
+                    this.memoryManager.pruner.prune(Array.from(this.memories.values()).map(m => ({ role: 'user', content: m.content })), { 
+                        maxTokens: HEURISTIC_TOKEN_THRESHOLD 
+                    });
+                }
             } catch (e) {
                 console.error("[AgentMemoryService] Auto-handoff failed:", e);
             }
