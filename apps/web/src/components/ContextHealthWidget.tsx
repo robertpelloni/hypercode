@@ -13,9 +13,10 @@ export function ContextHealthWidget() {
     // Using agentMemory.stats as a proxy for context health.
     const { data: stats, isLoading } = trpc.agentMemory.stats.useQuery();
     
-    // Mock local LLM detection - in production these would be real tRPC queries
-    // testing availability of Ollama/LM Studio endpoints
-    const localLlmQuery = { data: { ollama: true, lmstudio: false }, isLoading: false };
+    // Use real query for local LLM detection
+    const localLlmQuery = trpc.pulse.checkLocalProviders.useQuery(undefined, {
+        refetchInterval: 10000 // Refetch every 10s
+    });
 
     const compactMutation = trpc.agentMemory.handoff.useMutation({
         onSuccess: () => {

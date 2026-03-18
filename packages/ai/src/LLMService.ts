@@ -105,6 +105,31 @@ export class LLMService {
         return [...this.routingHistory];
     }
 
+    /**
+     * Probes local LLM endpoints to check for availability.
+     */
+    public async probeLocalProviders(): Promise<{ ollama: boolean; lmstudio: boolean }> {
+        const results = { ollama: false, lmstudio: false };
+
+        try {
+            // Probe Ollama (default port 11434)
+            const ollamaRes = await fetch("http://localhost:11434/api/tags", { signal: AbortSignal.timeout(500) });
+            results.ollama = ollamaRes.ok;
+        } catch (e) {
+            results.ollama = false;
+        }
+
+        try {
+            // Probe LM Studio (default port 1234)
+            const lmsRes = await fetch("http://localhost:1234/v1/models", { signal: AbortSignal.timeout(500) });
+            results.lmstudio = lmsRes.ok;
+        } catch (e) {
+            results.lmstudio = false;
+        }
+
+        return results;
+    }
+
     private getErrorMessage(error: unknown): string {
         if (error instanceof Error) {
             return error.message;

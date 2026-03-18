@@ -26,10 +26,16 @@ export const pulseRouter = t.router({
         if (!mcp) return { status: 'offline' };
 
         return {
-            status: 'online',
-            uptime: process.uptime(),
-            agents: Array.from(mcp.activeAgentsMap?.keys() || []),
-            memoryInitialized: mcp.isMemoryInitialized
+        status: 'online',
+        uptime: process.uptime(),
+        agents: Array.from(mcp.activeAgentsMap?.keys() || []),
+        memoryInitialized: mcp.isMemoryInitialized
         };
-    })
-});
+        }),
+
+        checkLocalProviders: publicProcedure.query(async () => {
+        const mcp = getMcpServer();
+        if (!mcp) return { ollama: false, lmstudio: false };
+        return await mcp.llmService.probeLocalProviders();
+        })
+        });
