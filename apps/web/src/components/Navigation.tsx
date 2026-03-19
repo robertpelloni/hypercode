@@ -34,7 +34,7 @@ const LABS_NAV_ITEMS = [
 export function Navigation() {
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
-    const versionLabel = (process.env.NEXT_PUBLIC_BORG_VERSION ?? '2.7.307').replace(/^v/i, '');
+    const versionLabel = (process.env.NEXT_PUBLIC_BORG_VERSION ?? '0.9.1').replace(/^v/i, '');
 
     const isActive = (path: string) => pathname === path;
 
