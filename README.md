@@ -103,6 +103,22 @@ pnpm install
 pnpm run dev
 ```
 
+### Local Git Hygiene (runtime session file)
+
+`packages/cli/.borg-session.json` is updated at runtime (for example `lastHeartbeat`) and can appear as a local change even when source code is clean.
+
+If you want to keep your working tree clean locally, mark it as skip-worktree:
+
+```bash
+git update-index --skip-worktree packages/cli/.borg-session.json
+```
+
+To undo that local-only behavior later:
+
+```bash
+git update-index --no-skip-worktree packages/cli/.borg-session.json
+```
+
 ---
 
 ## 📂 Repository Layout
