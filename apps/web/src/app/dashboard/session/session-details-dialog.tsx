@@ -464,6 +464,7 @@ export function SessionDetailsDialog({ session, currentTimestamp }: SessionDetai
                                         </div>
                                     ) : null}
 
+                                    {((attachInfoQuery.data as any)?.attachReadiness === 'ready') && (
                                     <div className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-3">
                                         <div className="mb-2 flex items-center justify-between gap-3">
                                             <span className="text-xs uppercase tracking-[0.18em] text-zinc-500">Run one-shot shell command</span>
@@ -504,6 +505,7 @@ export function SessionDetailsDialog({ session, currentTimestamp }: SessionDetai
                                             </div>
                                         ) : null}
                                     </div>
+                                    )}
                                 </div>
                             ) : (
                                 <p className="text-sm text-zinc-500">Attach information is unavailable for this session.</p>
