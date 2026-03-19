@@ -86,6 +86,33 @@ Open `http://localhost:3001/dashboard` to:
 
 ---
 
+## 🔐 Security & Trust Model
+
+Borg is designed as a **local-first control plane**. You should treat it as a high-privilege operator process in your development environment.
+
+### What Borg does (and does not) assume
+- Borg assumes you trust the local machine and user account running it.
+- Borg does **not** require a hosted Borg backend for core operation.
+- Borg can call external MCP servers/tools, so security posture depends on what you connect.
+
+### Trust boundaries
+- **Local process boundary**: Borg, your MCP clients, and local tools run with local user permissions.
+- **Network boundary**: Any remote MCP endpoint or API provider is outside the local trust boundary.
+- **Secret boundary**: Secrets/API keys are your responsibility and should be injected via environment/config, not committed to git.
+
+### Operational hardening recommendations
+- Run Borg with a least-privilege user account.
+- Scope API keys to minimum permissions and rotate regularly.
+- Review enabled MCP servers/tools and disable anything not needed.
+- Isolate sensitive workloads in separate environments/projects.
+- Audit logs regularly for unexpected tool executions.
+
+### Repository safety basics
+- Never commit real secrets; use templates such as `.env.example`.
+- Runtime-generated files (for example `packages/cli/.borg-session.json`) may change frequently and can be locally excluded from git noise when needed.
+
+---
+
 ## 🏁 Quick Start
 
 ### Prerequisites
