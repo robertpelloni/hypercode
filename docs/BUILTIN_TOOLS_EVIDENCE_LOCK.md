@@ -45,6 +45,9 @@ A platform is only marked **Locked** when all fields are complete and reviewed.
 ## GitHub Copilot CLI — 🟡 Partially Locked
 
 - Primary source (in-repo): `archive/docs/RESEARCH_COMPETITORS.md`
+- Secondary sources (in-repo):
+  - `archive/OmniRoute/docs/FEATURES.md` (CLI tools + CLI agents listings)
+  - `archive/OmniRoute/docs/CODEBASE_DOCUMENTATION.md` (GitHub/Copilot executor notes)
 - Version pin: research snapshot in repo
 - Captured commands:
   - `suggest`
@@ -59,6 +62,10 @@ A platform is only marked **Locked** when all fields are complete and reviewed.
 ## Gemini CLI — 🟡 Partially Locked
 
 - Primary source (in-repo): `archive/docs/RESEARCH_COMPETITORS.md`
+- Secondary sources (in-repo):
+  - `archive/OmniRoute/docs/FEATURES.md`
+  - `archive/OmniRoute/docs/CODEBASE_DOCUMENTATION.md`
+  - `archive/docs/CLIENT_CONFIGS.md`
 - Captured capability classes:
   - search grounding
   - file operations
@@ -72,26 +79,46 @@ A platform is only marked **Locked** when all fields are complete and reviewed.
 
 ---
 
-## Codex CLI — ❌ Unlocked
+## Codex CLI — 🟡 Partially Locked
 
-- Required evidence:
-  - official docs + version pin
-  - exact built-ins and signatures
+- Primary source (in-repo):
+  - `archive/OmniRoute/docs/FEATURES.md`
+  - `archive/OmniRoute/docs/CODEBASE_DOCUMENTATION.md`
+- Captured evidence:
+  - Listed as first-class CLI tool + built-in CLI agent in OmniRoute docs
+  - Codex executor behavior documented (instruction injection, thinking controls)
+- Missing for full lock:
+  - official upstream Codex CLI tool manifest + version pin
+  - exact built-in command/function signatures
   - approval/permission model semantics
 
-## Claude Code — ❌ Unlocked
+## Claude Code — 🟡 Partially Locked
 
-- Required evidence:
-  - official docs + version pin
-  - exact built-ins and signatures
+- Primary source (in-repo):
+  - `archive/OmniRoute/docs/FEATURES.md`
+  - `archive/docs/CLIENT_CONFIGS.md`
+- Captured evidence:
+  - Listed as first-class CLI tool in dashboard feature inventory
+  - Config locations documented for Windows/macOS/Linux
+- Missing for full lock:
+  - official upstream tool/command manifest + version pin
+  - exact built-in signatures and output contracts
   - approval/permission model semantics
 
-## Cursor — ❌ Unlocked
+## Cursor — 🟡 Partially Locked
 
-- Required evidence:
-  - official docs + version pin
-  - exact built-ins and signatures
-  - approval/permission model semantics
+- Primary source (in-repo):
+  - `archive/docs/CLIENT_CONFIGS.md`
+  - `archive/OmniRoute/docs/FEATURES.md`
+  - `archive/OmniRoute/docs/CODEBASE_DOCUMENTATION.md`
+- Captured evidence:
+  - Config locations documented
+  - Listed as supported CLI/IDE integration surface
+  - Cursor executor notes captured (auth/request protocol specialization)
+- Missing for full lock:
+  - official Cursor built-in tool manifest + version pin
+  - exact tool signatures/return shapes
+  - approval model semantics
 
 ## VS Code + Copilot IDE Agent — ❌ Unlocked
 
@@ -100,26 +127,47 @@ A platform is only marked **Locked** when all fields are complete and reviewed.
   - exact built-ins and signatures
   - approval/permission model semantics
 
-## Windsurf — ❌ Unlocked
+## Windsurf — 🟡 Partially Locked
 
-- Required evidence:
-  - official docs + version pin
-  - exact built-ins and signatures
-  - approval/permission model semantics
+- Primary source (in-repo): `archive/docs/CLIENT_CONFIGS.md`
+- Captured evidence:
+  - Windsurf MCP config location documented
+- Missing for full lock:
+  - official Windsurf built-in tools manifest + version pin
+  - exact tool signatures/return shapes
+  - approval model semantics
 
-## Kiro — ❌ Unlocked
+## Kiro — 🟡 Partially Locked
 
-- Required evidence:
-  - official docs + version pin
-  - exact built-ins and signatures
-  - approval/permission model semantics
+- Primary source (in-repo):
+  - `archive/OmniRoute/docs/FEATURES.md`
+  - `archive/OmniRoute/docs/CODEBASE_DOCUMENTATION.md`
+- Captured evidence:
+  - Listed as supported provider/tooling surface
+  - Dedicated Kiro executor behavior documented
+- Missing for full lock:
+  - official Kiro built-in tools/commands manifest + version pin
+  - exact tool signatures/return shapes
+  - approval model semantics
 
-## Antigravity — ❌ Unlocked
+## Antigravity — 🟡 Partially Locked
 
-- Required evidence:
-  - official docs + version pin
-  - exact built-ins and signatures
-  - approval/permission model semantics
+- Primary source (in-repo):
+  - `archive/OmniRoute/docs/FEATURES.md`
+  - `archive/OmniRoute/docs/CODEBASE_DOCUMENTATION.md`
+- Captured evidence:
+  - Listed as supported CLI/provider surface in feature docs
+  - Dedicated Antigravity executor behavior documented
+- Missing for full lock:
+  - official Antigravity built-in tools manifest + version pin
+  - exact tool signatures/return shapes
+  - approval model semantics
+
+---
+
+## Evidence Quality Note
+
+Current “Partially Locked” status for several platforms is **integration-level** evidence sourced from Borg's archived research and OmniRoute documentation. This is useful for roadmap priority, but it is **not yet authoritative first-party tool-schema evidence**.
 
 ---
 
