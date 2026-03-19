@@ -5,6 +5,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { POST } from '../../src/app/api/trpc/[trpc]/route';
 import { DashboardHomeView } from '../../src/app/dashboard/dashboard-home-view';
 
+// Stub client-only tRPC-hook components so renderToStaticMarkup works in Node tests
+vi.mock('../../src/components/SuggestionsPanel', () => ({ default: () => null }));
+vi.mock('../../src/components/SessionHandoffWidget', () => ({ SessionHandoffWidget: () => null }));
+vi.mock('../../src/components/ContextHealthWidget', () => ({ ContextHealthWidget: () => null }));
+
 describe('dashboard MCP flow integration', () => {
   const originalFetch = global.fetch;
   const originalUpstream = process.env.BORG_TRPC_UPSTREAM;

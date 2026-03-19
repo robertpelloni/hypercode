@@ -207,6 +207,26 @@ describe('SessionSupervisor', () => {
             rootDir: tempDir,
             persistencePath: path.join(tempDir, 'session-supervisor.json'),
             spawnProcess: () => new FakeProcess(),
+            detectExecutionEnvironment: async () => ({
+                os: process.platform,
+                summary: {
+                    ready: true,
+                    preferredShellId: 'node',
+                    preferredShellLabel: 'Node',
+                    shellCount: 0,
+                    verifiedShellCount: 0,
+                    toolCount: 0,
+                    verifiedToolCount: 0,
+                    harnessCount: 0,
+                    verifiedHarnessCount: 0,
+                    supportsPowerShell: false,
+                    supportsPosixShell: false,
+                    notes: [],
+                },
+                shells: [],
+                tools: [],
+                harnesses: [],
+            }),
         });
 
         const session = await supervisor.createSession({

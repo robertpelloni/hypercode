@@ -4,6 +4,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.2] — 2026-03-20
+
+### Task 025 — MCP Dashboard Runtime Smoke and Import Robustness
+- test(root): Created root-level `vitest.config.ts` with `@/` → `apps/web/src/` path alias so web integration tests resolve Next.js-style imports without separate tsconfig tricks.
+- test(web): Fixed `apps/web/tests/integration/mcp-to-dashboard.test.ts` — added `vi.mock` stubs for `SuggestionsPanel`, `SessionHandoffWidget`, and `ContextHealthWidget` to prevent tRPC hook crashes during `renderToStaticMarkup` in a Node test environment. Both integration tests now pass.
+- test(web): Added test `'bridges bulk imports via legacy mcpServers format when upstream rejects modern array body'` to `apps/web/src/app/api/trpc/[trpc]/route.test.ts` — covers the `legacy-mcp-bulk-import-bridge` compat response path (11/11 route tests green).
+
+### Task 026 — Session Supervisor Worktree and Attach Reliability
+- fix(core/supervisor): `SessionSupervisor.test.ts > persists metadata patches for a running session` timed out because the constructor default fell through to the real `detectLocalExecutionEnvironment()` platform probe. Added a minimal `detectExecutionEnvironment` stub to that test, matching the pattern already used in adjacent tests. All 8 supervisor tests now pass (< 4.6 s total, no 5 s timeouts).
+
 ## [0.9.1] — 2026-03-19
 
 - docs(roundtable): Added a current canonical frontier-model debate pack under `docs/`:

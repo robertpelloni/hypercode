@@ -729,4 +729,83 @@ describe('legacy MCP dashboard compatibility bridge', () => {
       }
     }
   });
-});
+
+    it('bridges bulk imports via legacy mcpServers format when upstream rejects modern array body', async () => {
+      process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:4100/trpc';
+
+      const legacyUpstreamResult = { imported: 2, skipped: 0 };
+
+      // buildUpstreamUrl strips ?batch=1 for bulkImport requests, so both the primary proxy
+      // loop and tryBridgeBulkImport call the same URL. Differentiate by body shape:
+      // primary proxy sends the normalized array; bridge sends { mcpServers: { name: config } }.
+      global.fetch = vi.fn(async (input, init) => {
+        const url = String(input);
+
+        if (url !== 'http://127.0.0.1:4100/trpc/mcpServers.bulkImport' || init?.method !== 'POST') {
+          throw new Error(`Unexpected fetch: ${url}`);
+        }
+
+        const parsedBody = JSON.parse(String(init?.body ?? '{}'));
+
+        if (Array.isArray(parsedBody)) {
+          // Primary proxy sends normalized array body → reject to activate bridge path
+          return new Response('not found', { status: 404 });
+        }
+
+        if (parsedBody && typeof parsedBody === 'object' && 'mcpServers' in parsedBody) {
+          // Bridge sends legacy { mcpServers: { name: config } } → succeed
+          return new Response(JSON.stringify({ result: { data: legacyUpstreamResult } }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          });
+        }
+
+        throw new Error(`Unexpected body shape: ${JSON.stringify(parsedBody)}`);
+      }) as typeof fetch;
+
+      const request = new Request(
+        'http://localhost:3010/api/trpc/mcpServers.bulkImport?batch=1',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            0: {
+              json: [
+                {
+                  name: 'bridge_stdio_test',
+                  type: 'STDIO',
+                  command: 'npx',
+                  args: ['-y', '@modelcontextprotocol/server-memory'],
+                },
+                {
+                  name: 'bridge_http_test',
+                  type: 'STREAMABLE_HTTP',
+                  url: 'https://example.com/mcp/',
+                  bearerToken: 'tok_test',
+                },
+              ],
+            },
+          }),
+        },
+      );
+
+      const response = await POST(request);
+      const payload = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('x-borg-trpc-compat')).toBe('legacy-mcp-bulk-import-bridge');
+      expect(payload?.result?.data ?? payload?.[0]?.result?.data).toEqual(legacyUpstreamResult);
+
+      // Verify the bridge call used the legacy { mcpServers: { name: config } } format
+      const bridgeCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
+        ([, init]) => {
+          const parsed = JSON.parse(String(init?.body ?? '{}'));
+          return parsed && typeof parsed === 'object' && 'mcpServers' in parsed;
+        },
+      );
+      expect(bridgeCalls.length).toBeGreaterThanOrEqual(1);
+      const bridgeBody = JSON.parse(String(bridgeCalls[0]?.[1]?.body ?? '{}'));
+      expect(bridgeBody.mcpServers).toHaveProperty('bridge_stdio_test');
+      expect(bridgeBody.mcpServers).toHaveProperty('bridge_http_test');
+    });
+  });
