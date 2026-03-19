@@ -1,6 +1,6 @@
 # Built-In Tools Evidence Lock
 
-> Date: 2026-03-18  
+> Date: 2026-03-19  
 > Purpose: source-pin every competitor tool contract before declaring parity complete.
 
 ## How to Use
@@ -19,7 +19,44 @@ A platform is only marked **Locked** when all fields are complete and reviewed.
 
 ---
 
-## OpenCode — ✅ Locked (repo-sourced)
+## Related Resources (Phase 1: Foundation)
+
+- **[VERSION_PINS.jsonc](./fixtures/VERSION_PINS.jsonc)** — Central registry for version pins across all L2+ platforms. Used in CI validation.
+- **[TOOL_CONTRACTS.md](./fixtures/TOOL_CONTRACTS.md)** — Golden fixture template capturing tool signatures, permission patterns, and hook semantics.
+- **[L3_PROMOTION_STRATEGY.md](./fixtures/L3_PROMOTION_STRATEGY.md)** — Systematic path from L2 → L3 for each platform (version capture + response fixtures + CI validation).
+- **[CI Workflow: validate-evidence-lock.yml](./.github/workflows/validate-evidence-lock.yml)** — Automated validation gate for lock integrity and version drift.
+
+**Phase 1 Status (2026-03-19):** Infrastructure created for version pinning and fixture automation. Next: Execute Phase 2 (golden fixture population) on first platform release.
+
+---
+
+## Lock Rubric (L0–L3)
+
+- **L0 (Unlocked)**: no trustworthy first-party evidence.
+- **L1 (Partial, integration-level)**: archive/internal evidence only.
+- **L2 (Partial, first-party)**: official docs captured for commands/tools/permissions, but missing strict version/contract pin and/or response payload contract.
+- **L3 (Locked)**: first-party docs + version/commit pin + exact command/tool/permission schema + payload contract + reviewer signoff.
+
+---
+
+## First-Party Verification Queue (Current)
+
+| Platform | Level | First-party sources captured | Blocking gap to L3 |
+| --- | --- | --- | --- |
+| OpenCode | L3 | In-repo canonical evidence set | Revalidate against latest upstream release |
+| GitHub Copilot CLI | L2 | GitHub Docs command/programmatic/ACP references | Runtime release pin + normalized response payload contract fixture |
+| Gemini CLI | L2 | Google Gemini CLI command + tools references (captured in current pass) | Version pin + return payload fixture coverage |
+| Codex CLI | L2 | OpenAI CLI reference + slash commands + approvals/security + changelog | Explicit built-in tool I/O fixture set and stable release pin strategy |
+| Claude Code | L2 | Anthropic hooks + permissions references | Version pin and serialized response fixture matrix |
+| Cursor | L2 | Cursor hooks reference (events, matchers, permission decisions, tool categories) | Version pin + full built-in tool argument/return contract set |
+| VS Code + Copilot IDE Agent | L0 | None yet in this lock file | Official API/tool contract mapping + approvals model |
+| Windsurf | L1 | Onboarding/install docs only | First-party built-in tool manifest + permissions + schemas |
+| Kiro | L2 | Kiro hooks + MCP docs | Version pin + response payload contracts |
+| Antigravity | L1 | Archive-only integration evidence | First-party tool manifest, permissions, and schema evidence |
+
+---
+
+## OpenCode — ✅ Locked (L3, repo-sourced)
 
 - Primary source (in-repo): `archive/docs/RESEARCH_COMPETITORS.md`
 - Version pin: research snapshot in repo (2026-02 era)
@@ -38,153 +75,156 @@ A platform is only marked **Locked** when all fields are complete and reviewed.
   - Allow once / allow session / deny
   - Non-interactive auto-approve mode
 - Caveat:
-  - Should still be revalidated against latest upstream release.
+  - Revalidate against latest upstream release cadence.
 
 ---
 
-## GitHub Copilot CLI — 🟡 Partially Locked
+## GitHub Copilot CLI — 🟡 Partially Locked (L2, first-party)
 
-- Primary source (in-repo): `archive/docs/RESEARCH_COMPETITORS.md`
-- Secondary sources (in-repo):
-  - `archive/OmniRoute/docs/FEATURES.md` (CLI tools + CLI agents listings)
-  - `archive/OmniRoute/docs/CODEBASE_DOCUMENTATION.md` (GitHub/Copilot executor notes)
-- Snapshot pin evidence (in-repo):
-  - `archive/docs/archive/SUBMODULES.md` → `copilot-cli` pinned at `v0.0.401-0`
-  - `archive/docs/submodules/agents_repos-agent-sessions.md` (supports Copilot session path: `~/.copilot/session-state`)
-- Captured commands:
-  - `suggest`
-  - `explain`
-- Missing for full lock:
-  - argument-level schema details
-  - machine-readable response shape contract
-  - latest release diff verification
-
----
-
-## Gemini CLI — 🟡 Partially Locked
-
-- Primary source (in-repo): `archive/docs/RESEARCH_COMPETITORS.md`
-- Secondary sources (in-repo):
-  - `archive/OmniRoute/docs/FEATURES.md`
-  - `archive/OmniRoute/docs/CODEBASE_DOCUMENTATION.md`
-  - `archive/docs/CLIENT_CONFIGS.md`
-- Snapshot pin evidence (in-repo):
-  - `archive/docs/archive/SUBMODULES.md` → `gemini-cli` pinned at `MK_TAG_TEST-3216-gc5d0fc2c3`
-  - `archive/docs/submodules/agents_repos-agent-sessions.md` (session path: `~/.gemini/tmp`)
-  - `archive/docs/submodules/auth-gemini.md` (OAuth flow and config surface for Opencode bridge)
-- Captured capability classes:
-  - search grounding
-  - file operations
-  - shell
-  - web fetch
-  - trusted folders/policies
-- Missing for full lock:
-  - exact tool/command names with signatures
-  - response schema contracts
-  - version-pinned official doc links
+- First-party references:
+  - https://docs.github.com/en/copilot/how-tos/use-copilot-agents/use-copilot-cli
+  - https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference
+  - https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-programmatic-reference
+  - https://docs.github.com/en/copilot/reference/copilot-cli-reference/acp-server
+- Last verified date: 2026-03-19
+- Captured command/flag schema evidence:
+  - `copilot`, `copilot help`, `copilot login/logout`, `copilot plugin` command family
+  - approval/permissions flags: `--allow-all`, `--allow-tool`, `--deny-tool`, `--allow-url`, `--deny-url`
+  - execution modes: interactive, `-p/--prompt` programmatic, ACP server via `--acp`
+  - slash command inventory includes `/plan`, `/permissions`, `/mcp`, `/agent`, `/review`, `/usage`, etc.
+- Captured tool/permission contract evidence:
+  - tool permission pattern syntax (`Kind(argument)`), deny precedence over allow
+  - session-level approval responses (`y`, `n`, `!`, `#`, `?`)
+  - hook contracts (`preToolUse`, `agentStop`, `subagentStop`) with decision fields and tool names (`bash`, `powershell`, `view`, `edit`, `create`, `glob`, `grep`, `web_fetch`, `task`)
+- Missing for L3:
+  - runtime release pin policy (e.g., `copilot version` capture in evidence fixture)
+  - normalized, machine-readable response payload fixture contract across interactive/programmatic/ACP flows
 
 ---
 
-## Codex CLI — 🟡 Partially Locked
+## Gemini CLI — 🟡 Partially Locked (L2, first-party)
 
-- Primary source (in-repo):
-  - `archive/OmniRoute/docs/FEATURES.md`
-  - `archive/OmniRoute/docs/CODEBASE_DOCUMENTATION.md`
-- Secondary sources (in-repo):
-  - `archive/docs/submodules/agents_repos-agent-sessions.md` (Codex session paths and lifecycle behavior)
-  - `archive/docs/submodules/auth-openai-codex.md` (Codex OAuth bridge details)
-  - `archive/docs/submodules/auth-openai-codex-config.md` (Codex model preset inventory)
+- First-party references (captured in current pass):
+  - Gemini CLI command reference (slash command inventory)
+  - Gemini CLI tools reference (built-in tools and safety/confirmation semantics)
+- Last verified date: 2026-03-19
 - Captured evidence:
-  - Listed as first-class CLI tool + built-in CLI agent in OmniRoute docs
-  - Codex executor behavior documented (instruction injection, thinking controls)
-  - Opencode bridge doc states use of OpenAI official OAuth method used by Codex CLI
-- Missing for full lock:
-  - official upstream Codex CLI tool manifest + version pin
-  - exact built-in command/function signatures
-  - approval/permission model semantics
+  - explicit slash commands including context/tools/MCP/permissions/planning surfaces
+  - explicit built-in tool families (shell/file/web/planning/memory/interaction)
+  - mutating tool confirmation and security posture documented
+- Missing for L3:
+  - stable release/version pin and changelog-based drift process
+  - formal return payload fixture matrix per built-in tool
 
-## Claude Code — 🟡 Partially Locked
+---
 
-- Primary source (in-repo):
-  - `archive/OmniRoute/docs/FEATURES.md`
-  - `archive/docs/CLIENT_CONFIGS.md`
-- Snapshot pin evidence (in-repo):
-  - `archive/docs/archive/SUBMODULES.md` → `claude-code` pinned at `v2.1.29`
-  - `archive/docs/submodules/agents_repos-agent-sessions.md` (session path: `~/.claude/sessions`)
+## Codex CLI — 🟡 Partially Locked (L2, first-party)
+
+- First-party references:
+  - https://developers.openai.com/codex/cli/reference
+  - https://developers.openai.com/codex/cli/slash-commands
+  - https://developers.openai.com/codex/agent-approvals-security
+  - https://developers.openai.com/codex/changelog
+- Last verified date: 2026-03-19
+- Captured command/flag schema evidence:
+  - global flags include `--ask-for-approval`, `--sandbox`, `--full-auto`, `--yolo`, `--search`, `--add-dir`
+  - command inventory includes `codex exec`, `resume`, `fork`, `mcp`, `mcp-server`, `sandbox`, `cloud`, `features`, `execpolicy`
+  - slash command inventory includes `/permissions`, `/plan`, `/mcp`, `/status`, `/diff`, `/review`, `/agent`, `/ps`
+- Captured approval/sandbox semantics:
+  - explicit sandbox-vs-approval layering
+  - predefined combinations (`read-only`, `workspace-write`, `danger-full-access`) and policy behavior
+  - protected path semantics and network/web-search risk controls
+- Version evidence:
+  - changelog includes explicit CLI release entries (example observed: `0.115.0`)
+- Missing for L3:
+  - pinned fixture set for built-in tool call inputs/outputs across modes
+  - finalized release pinning rule adopted in this repo (exact CLI version + verification script)
+
+## Claude Code — 🟡 Partially Locked (L2, first-party)
+
+- First-party references:
+  - https://code.claude.com/docs/en/hooks
+  - https://code.claude.com/docs/en/permissions
+- Last verified date: 2026-03-19
+- Captured tool/permission schema evidence:
+  - permission modes: `default`, `acceptEdits`, `plan`, `dontAsk`, `bypassPermissions`
+  - rule syntax for `Bash`, `Read/Edit`, `WebFetch`, `MCP`, `Agent(...)`
+  - precedence model (deny/ask/allow and managed settings behavior)
+  - hook lifecycle events and decision outputs (`allow/deny/ask`, `block/allow`, `continue` semantics)
+  - pre-tool built-ins and argument fields documented (`Bash`, `Write`, `Edit`, `Read`, `Glob`, `Grep`, `WebFetch`, `WebSearch`, `Agent`)
+- Missing for L3:
+  - reproducible release/version pin captured in lock fixture
+  - canonical return payload fixture set for each built-in tool/event
+
+## Cursor — 🟡 Partially Locked (L2, first-party)
+
+- First-party references:
+  - Cursor hooks reference (captured in current pass)
+- Last verified date: 2026-03-19
 - Captured evidence:
-  - Listed as first-class CLI tool in dashboard feature inventory
-  - Config locations documented for Windows/macOS/Linux
-- Missing for full lock:
-  - official upstream tool/command manifest + version pin
-  - exact built-in signatures and output contracts
-  - approval/permission model semantics
+  - hook events (`preToolUse`, `postToolUse`, `beforeMCPExecution`, etc.)
+  - matcher behavior and tool category matching (Shell/Read/Write/Grep/Delete/Task/MCP patterns)
+  - permission decisions and schema fields (`allow`/`deny`/`ask` patterns where applicable)
+  - hook config contract (`version`, `timeout`, `loop_limit`, `failClosed`, handlers)
+- Missing for L3:
+  - explicit release/version pin
+  - full built-in tool argument/return contracts outside hook-surface documentation
 
-## Cursor — 🟡 Partially Locked
-
-- Primary source (in-repo):
-  - `archive/docs/CLIENT_CONFIGS.md`
-  - `archive/OmniRoute/docs/FEATURES.md`
-  - `archive/OmniRoute/docs/CODEBASE_DOCUMENTATION.md`
-- Captured evidence:
-  - Config locations documented
-  - Listed as supported CLI/IDE integration surface
-  - Cursor executor notes captured (auth/request protocol specialization)
-- Missing for full lock:
-  - official Cursor built-in tool manifest + version pin
-  - exact tool signatures/return shapes
-  - approval model semantics
-
-## VS Code + Copilot IDE Agent — ❌ Unlocked
+## VS Code + Copilot IDE Agent — ❌ Unlocked (L0)
 
 - Required evidence:
   - official docs + version pin
-  - exact built-ins and signatures
+  - exact built-ins/signatures
   - approval/permission model semantics
 
-## Windsurf — 🟡 Partially Locked
+## Windsurf — 🟡 Partially Locked (L1)
 
-- Primary source (in-repo): `archive/docs/CLIENT_CONFIGS.md`
+- First-party references:
+  - Windsurf getting-started/onboarding docs (captured)
+- Last verified date: 2026-03-19
 - Captured evidence:
-  - Windsurf MCP config location documented
-- Missing for full lock:
-  - official Windsurf built-in tools manifest + version pin
-  - exact tool signatures/return shapes
-  - approval model semantics
+  - install/update and onboarding behavior
+- Missing for L2/L3:
+  - official built-in tools manifest
+  - exact tool signatures and return shapes
+  - permissions/approvals model details
 
-## Kiro — 🟡 Partially Locked
+## Kiro — 🟡 Partially Locked (L2, first-party)
 
-- Primary source (in-repo):
+- First-party references:
+  - Kiro hooks docs
+  - Kiro MCP docs
+- Last verified date: 2026-03-19
+- Captured evidence:
+  - hook trigger taxonomy (pre/post tool use, file/task/manual triggers)
+  - built-in category filters and MCP interaction model
+- Missing for L3:
+  - release/version pin
+  - explicit return payload contracts for core built-ins
+
+## Antigravity — 🟡 Partially Locked (L1)
+
+- Primary source (archive/integration-level):
   - `archive/OmniRoute/docs/FEATURES.md`
   - `archive/OmniRoute/docs/CODEBASE_DOCUMENTATION.md`
+  - `archive/docs/submodules/config_repos-Setup_Ultimate_OpenCode.md`
+- Last verified date: 2026-03-19
 - Captured evidence:
-  - Listed as supported provider/tooling surface
-  - Dedicated Kiro executor behavior documented
-- Missing for full lock:
-  - official Kiro built-in tools/commands manifest + version pin
-  - exact tool signatures/return shapes
-  - approval model semantics
-
-## Antigravity — 🟡 Partially Locked
-
-- Primary source (in-repo):
-  - `archive/OmniRoute/docs/FEATURES.md`
-  - `archive/OmniRoute/docs/CODEBASE_DOCUMENTATION.md`
-- Secondary sources (in-repo):
-  - `archive/docs/submodules/config_repos-Setup_Ultimate_OpenCode.md` (integration workflow and plugin references)
-  - `archive/docs/archive/SUBMODULES.md` (`opencode-antigravity-auth` snapshot listing)
-- Captured evidence:
-  - Listed as supported CLI/provider surface in feature docs
-  - Dedicated Antigravity executor behavior documented
-- Missing for full lock:
-  - official Antigravity built-in tools manifest + version pin
-  - exact tool signatures/return shapes
-  - approval model semantics
+  - provider/integration existence and executor behavior notes
+- Missing for L2/L3:
+  - first-party built-in tools manifest + permissions and schema contracts
+  - version/release pin from official source
 
 ---
 
 ## Evidence Quality Note
 
-Current “Partially Locked” status for several platforms is **integration-level** evidence sourced from Borg's archived research and OmniRoute documentation. This is useful for roadmap priority, but it is **not yet authoritative first-party tool-schema evidence**.
+This file now contains a mixed evidence set:
+
+- **L2 sections** are grounded in first-party docs fetched in this session.
+- **L1 sections** remain archive/integration-level and are not yet authoritative contracts.
+
+Do not claim parity complete until L1/L0 entries are promoted.
 
 ---
 
@@ -192,8 +232,8 @@ Current “Partially Locked” status for several platforms is **integration-lev
 
 Do not claim “first-class parity complete” until:
 
-- [ ] All target platforms are **Locked**
+- [ ] All target platforms are **L3 / Locked**
 - [ ] Golden fixtures exist for tool call/response compatibility
 - [ ] Alias profiles pass CI
 - [ ] Permission model equivalence tests pass
-- [ ] Change log includes parity delta per release
+- [ ] Changelog includes parity delta per release
