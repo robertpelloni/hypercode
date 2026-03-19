@@ -90,7 +90,6 @@ function runWorkspaceBuild() {
       "turbo",
       "run",
       "build",
-      "--filter=!mcp-superassistant",
       "--filter=!@repo/*",
     ],
     {

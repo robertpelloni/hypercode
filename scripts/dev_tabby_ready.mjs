@@ -407,8 +407,6 @@ function spawnTurboDev() {
     'dev',
     '--concurrency',
     '22',
-    '--filter=!mcp-superassistant',
-    '--filter=!@extension/hmr',
     '--filter=!@borg/cli',
     '--filter=!@repo/*',
   ];
