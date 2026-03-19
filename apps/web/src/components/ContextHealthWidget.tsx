@@ -41,7 +41,7 @@ export function ContextHealthWidget() {
                         Cognitive Health
                     </div>
                     <Badge variant="outline" className="text-[10px] border-zinc-800 text-zinc-500 font-mono">
-                        v2.7.333
+                        v0.9.1
                     </Badge>
                 </CardTitle>
             </CardHeader>

@@ -1,6 +1,6 @@
 {
   "name": "@borg/web",
-  "version": "2.7.333",
+  "version": "0.9.1",
   "private": true,
   "scripts": {
     "dev": "node ./scripts/dev.mjs",

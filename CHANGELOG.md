@@ -4,6 +4,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.1] — 2026-03-19
+
+- docs(roundtable): Added a current canonical frontier-model debate pack under `docs/`:
+  - `PROJECT_ROUNDTABLE_BRIEF.md`
+  - `PROJECT_ROUNDTABLE_DEBATE_PROMPT.md`
+  - `PROJECT_ROUNDTABLE_EXECUTIVE_PROMPT.md`
+  - `PROJECT_ROUNDTABLE_SCORECARD_TEMPLATE.md`
+- docs(roundtable): The new brief inventories the repo’s major apps/packages/submodules, distinguishes implemented vs partial vs planned feature families, captures the actual active task queue from `archive/tasks/active/`, and explicitly calls out current documentation drift (missing root canonical files, archive-vs-live path mismatch, and index references to non-existent docs).
+- docs(index): Added the new roundtable documentation set to `BORG_MASTER_INDEX.jsonc` so future sessions and reviewers can discover the current debate materials without relying on stale archived copies.
+- chore(version): Synchronized active version references to `0.9.1` across `VERSION`, `VERSION.md`, active `package.json` manifests, visible UI/runtime literals, and the README heading.
+
+## [2.7.334] — 2026-03-18
+
+- fix(core/mcp): Added `discoveryPreflight.ts` guard that short-circuits binary metadata discovery before spawning any process when a server still carries placeholder/sample config values (`YOUR_*_HERE` patterns, sample Postgres DSNs) or when a local STDIO command is missing from `PATH`. Affected servers return `pending` status with a descriptive message instead of causing flaky `npx`/`uvx` subprocess crashes on startup.
+- fix(core/healer): `shouldIgnoreExpectedStartupError` in `HealerReactor` now `export`ed and expanded to ignore 7 additional non-actionable error classes: missing Node modules (transient `npx` unpacks), missing local executables, `ECONNREFUSED` on localhost/Chroma services, and command-not-found strings on Windows and Unix. Prevents quota-draining heal loops when optional MCP servers are simply not installed.
+- fix(core/supervisor): `SessionSupervisor.shouldUseWorktree()` now correctly implements conflict-based isolation — the first session targeting a directory claims it directly; a worktree is only allocated when a second active session would otherwise share the same working directory. Previously the supervisor allocated a worktree for every session when a worktree manager was present.
+- fix(core/supervisor): All 5 supervisor unit tests now inject `detectExecutionEnvironment` via the new `createFakeDetectEnvironment()` test-helper stub, preventing the real shell/binary probe (`detectLocalExecutionEnvironment`) from running inside tests and causing 5s Vitest timeouts.
+- test(core): Added `HealerReactor.test.ts` with 3 regression tests covering the new ignore fragments. Expanded `mcpDiscoveryFailureHandling.test.ts` with 2 preflight tests (placeholder config, missing command). All 5 supervisor tests verified green.
+- chore(version): Bumped canonical version to `2.7.334`.
+
 ## [2.7.333] — 2026-03-17
 
 - feat(web): add Mission Control function-toggle matrix on main dashboard — full per-function

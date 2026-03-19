@@ -1220,7 +1220,7 @@ export class AgentMemoryService {
             .slice(0, 20);
 
         const handoffArtifact = {
-            version: "2.7.333",
+            version: "0.9.1",
             timestamp: Date.now(),
             sessionId: metadata.sessionId || 'current',
             stats,

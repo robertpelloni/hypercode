@@ -727,7 +727,7 @@ export class MCPServer {
 
     private createServerInstance(): { server: Server; ready: Promise<void> } {
         const s = new Server(
-            { name: "borg-core", version: "2.7.333" },
+            { name: "borg-core", version: "0.9.1" },
             {
                 capabilities: {
                     tools: {},
