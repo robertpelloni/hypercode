@@ -10,6 +10,8 @@ export type ToolPreferences = {
     idleEvictionThresholdMs: number;
 };
 
+export type ToolPreferencePatch = Partial<ToolPreferences>;
+
 type ToolSelectionSettings = {
     importantTools?: unknown;
     alwaysLoadedTools?: unknown;
@@ -82,6 +84,17 @@ export function normalizeToolPreferences(value: { importantTools?: unknown; alwa
         maxHydratedSchemas: normalizeMaxHydratedSchemas(value?.maxHydratedSchemas),
         idleEvictionThresholdMs: normalizeIdleEvictionThresholdMs(value?.idleEvictionThresholdMs),
     };
+}
+
+export function applyToolPreferencePatch(current: ToolPreferences, patch: ToolPreferencePatch | null | undefined): ToolPreferences {
+    return normalizeToolPreferences({
+        importantTools: patch?.importantTools ?? current.importantTools,
+        alwaysLoadedTools: patch?.alwaysLoadedTools ?? current.alwaysLoadedTools,
+        autoLoadMinConfidence: patch?.autoLoadMinConfidence ?? current.autoLoadMinConfidence,
+        maxLoadedTools: patch?.maxLoadedTools ?? current.maxLoadedTools,
+        maxHydratedSchemas: patch?.maxHydratedSchemas ?? current.maxHydratedSchemas,
+        idleEvictionThresholdMs: patch?.idleEvictionThresholdMs ?? current.idleEvictionThresholdMs,
+    });
 }
 
 export function readToolPreferencesFromSettings(settings: ToolSelectionSettings | null | undefined): ToolPreferences {

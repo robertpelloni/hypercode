@@ -1,6 +1,6 @@
 # Version
 
-0.9.1
+0.9.10
 
 ## Maintenance Guide: Where to Update
 When bumping the version of Borg, the following locations must be synchronized to ensure consistency across the CLI, Web Dashboard, and internal packages:

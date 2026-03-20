@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+    applyToolPreferencePatch,
     buildToolPreferenceSettings,
     mergeToolPreferences,
     normalizeToolPreferences,
@@ -145,6 +146,57 @@ describe('mcp tool preferences helpers', () => {
                 alwaysLoadedTools: ['browser__open'],
                 autoLoadMinConfidence: 0.9,
             },
+        });
+    });
+
+    it('applies partial patches without resetting omitted values', () => {
+        const current = makePreferences({
+            importantTools: ['github__issues'],
+            alwaysLoadedTools: ['browser__open'],
+            autoLoadMinConfidence: 0.91,
+            maxLoadedTools: 20,
+            maxHydratedSchemas: 10,
+            idleEvictionThresholdMs: 12 * 60 * 1000,
+        });
+
+        const patched = applyToolPreferencePatch(current, {
+            importantTools: ['memory__recall'],
+        });
+
+        expect(patched).toMatchObject({
+            importantTools: ['memory__recall'],
+            alwaysLoadedTools: ['browser__open'],
+            autoLoadMinConfidence: 0.91,
+            maxLoadedTools: 20,
+            maxHydratedSchemas: 10,
+            idleEvictionThresholdMs: 12 * 60 * 1000,
+        });
+    });
+
+    it('normalizes partial patch values while preserving untouched fields', () => {
+        const current = makePreferences({
+            importantTools: ['github__issues'],
+            alwaysLoadedTools: ['browser__open'],
+            autoLoadMinConfidence: 0.88,
+            maxLoadedTools: 18,
+            maxHydratedSchemas: 9,
+            idleEvictionThresholdMs: 9 * 60 * 1000,
+        });
+
+        const patched = applyToolPreferencePatch(current, {
+            autoLoadMinConfidence: 5,
+            maxLoadedTools: 100,
+            maxHydratedSchemas: 1,
+            idleEvictionThresholdMs: 1,
+        });
+
+        expect(patched).toMatchObject({
+            importantTools: ['github__issues'],
+            alwaysLoadedTools: ['browser__open'],
+            autoLoadMinConfidence: 0.99,
+            maxLoadedTools: 64,
+            maxHydratedSchemas: 2,
+            idleEvictionThresholdMs: 10_000,
         });
     });
 });

@@ -3,6 +3,30 @@
 ## Borg Changelog
 
 All notable changes to this project will be documented in this file.
+## [0.9.10] — 2026-03-20
+
+### Task 037 — Safe Partial Tool Preference Patching
+
+- fix(core/mcp): Hardened `mcp.setToolPreferences` in `packages/core/src/routers/mcpRouter.ts` so partial preference updates no longer reset omitted fields via schema defaults.
+  - Mutation input now accepts optional fields.
+  - Server now merges patches against current persisted preferences before normalization/write.
+  - Existing behavior for full payload updates is preserved.
+
+- feat(core/mcp): Added `applyToolPreferencePatch(...)` in `packages/core/src/routers/mcp-tool-preferences.ts`.
+  - Centralized merge semantics for preference patches.
+  - Normalizes/clamps patched values (`autoLoadMinConfidence`, caps, `idleEvictionThresholdMs`) while preserving untouched fields.
+
+- test(core/mcp): Expanded `packages/core/src/routers/mcp-tool-preferences.test.ts`.
+  - Added coverage proving omitted fields are preserved under partial patches.
+  - Added coverage proving patched values are normalized/clamped without altering untouched values.
+
+- chore(core/mcp): Updated `readToolPreferences` settings typing in `mcpRouter.ts` to include `idleEvictionThresholdMs` for consistency with persisted tool selection schema.
+
+- verification:
+  - `pnpm -C packages/core exec vitest run src/routers/mcp-tool-preferences.test.ts --reporter=basic` ✅
+  - `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
+  - `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
+
 ## [0.9.9] — 2026-03-20
 
 ### Task 034 — Focused Catalog Ingestion Coverage + TODO Truth Sync

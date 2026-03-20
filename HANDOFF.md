@@ -2,6 +2,19 @@
 
 ## Delta update (latest)
 
+### Backend hardening: safe partial `setToolPreferences` patches
+- Updated `packages/core/src/routers/mcpRouter.ts` so `mcp.setToolPreferences` accepts optional fields and merges patches with current persisted preferences before write.
+- Added `applyToolPreferencePatch(...)` to `packages/core/src/routers/mcp-tool-preferences.ts` to centralize patch merge + normalization semantics.
+- Added focused test coverage in `packages/core/src/routers/mcp-tool-preferences.test.ts`:
+  - partial patch preserves omitted values,
+  - patched values are clamped/normalized while untouched fields remain intact.
+- This closes the broader default-overwrite class beyond UI-only payload fixes.
+
+### Verification (post-change)
+- `pnpm -C packages/core exec vitest run src/routers/mcp-tool-preferences.test.ts --reporter=basic` ✅
+- `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
+- `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
+
 ### MCP search preferences regression fix (idle eviction threshold preservation)
 - Patched `apps/web/src/app/dashboard/mcp/search/page.tsx` so partial preference updates no longer reset `idleEvictionThresholdMs` via server-side defaults.
 - Root cause: `mcp.setToolPreferences` input schema uses defaults for omitted fields; UI actions (`toggleImportant`, `toggleAlwaysLoaded`, `saveAutoLoadMinConfidence`) were omitting `idleEvictionThresholdMs`.
