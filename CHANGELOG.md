@@ -3,6 +3,26 @@
 ## Borg Changelog
 
 All notable changes to this project will be documented in this file.
+## [0.9.9] — 2026-03-20
+
+### Task 034 — Focused Catalog Ingestion Coverage + TODO Truth Sync
+
+- test(core/catalog): Added focused coverage in `published-catalog-ingestor.test.ts` for:
+  - Transport normalization and description-based inference
+  - Normalization transition eligibility (`discovered` -> `normalized` gating rules)
+  - Ingestion dedupe expectations around canonical IDs and provenance fan-in
+  - Recipe confidence scoring behavior and penalties
+  - Install-method inference defaults
+
+- chore(test): Cleaned test file quality details:
+  - Removed unused Vitest imports
+  - Renamed helper `deduplicateByCanonicaId` -> `deduplicateByCanonicalId` for clarity
+
+- chore(docs/todo): Synchronized `TODO.md` with implemented runtime reality:
+  - Marked focused ranking/normalization/validation tests complete (0.9.9)
+  - Marked scheduled ingestion refresh complete (0.9.7)
+  - Marked richer adapter extraction (npm + GitHub topic) complete (0.9.6/0.9.7)
+
 ## [0.9.8] — 2026-03-20
 
 ### Task 033 — Bidirectional Server-to-Catalog Linking

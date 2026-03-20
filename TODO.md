@@ -9,7 +9,7 @@ _Last updated: 2026-03-20_
 - [x] ~~Add validation-run state model~~ — done in 0.9.4
 - [x] ~~Wire first operator flow: discover -> preview recipe -> validate -> persist~~ — done in 0.9.4
 - [x] ~~Keep startup/session/provider truthfulness checks green~~ — done in 0.9.2/0.9.3
-- [ ] Add focused tests for ranking/normalization/validation transitions
+- [x] ~~Add focused tests for ranking/normalization/validation transitions~~ — done in 0.9.9
 
 This TODO list reflects the current codebase state after comparing the archive plans against what is actually implemented now.
 
@@ -26,8 +26,8 @@ This TODO list reflects the current codebase state after comparing the archive p
 - [x] ~~Ingest from official/community MCP registries and normalize their formats (Glama.ai, Smithery.ai, mcp.run)~~ — done in 0.9.4
 - [x] ~~Preserve raw source payloads for audit/debugging~~ — done in 0.9.4
 - [x] ~~Deduplicate servers appearing in multiple registries~~ — done in 0.9.4
-- [ ] Add scheduled refresh/sync jobs (currently manual-only)
-- [ ] Replace heuristic-only snapshot extraction with richer source adapters (npm, GitHub topic search)
+- [x] ~~Add scheduled refresh/sync jobs~~ — done in 0.9.7
+- [x] ~~Replace heuristic-only snapshot extraction with richer source adapters (npm, GitHub topic search)~~ — done in 0.9.6/0.9.7
 
 ### 3) Build intelligent configuration generation
 - [x] ~~Derive Borg-safe config recipes from published metadata~~ — done in 0.9.4
