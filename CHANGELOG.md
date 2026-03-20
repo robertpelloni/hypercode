@@ -3,6 +3,29 @@
 ## Borg Changelog
 
 All notable changes to this project will be documented in this file.
+## [0.9.7] — 2026-03-20
+
+### Task 032 — GitHub Topic Adapter + Scheduled Catalog Ingestion
+
+- feat(core/catalog): New `GitHubTopicAdapter` in `published-catalog-ingestor.ts`:
+  - Searches GitHub public repo search API for repos tagged with the `mcp-server` topic
+  - Fetches up to 3 pages × 100 repos = 300 repos sorted by stars descending
+  - Infers transport from description/topics (`stdio` default, `sse`/`streamable_http` from keywords)
+  - Infers install method from repo language: Python→pip, Go→go-install, Rust→cargo, JS/TS→npm
+  - Adds 1.5s inter-page delay to respect GitHub unauthenticated rate limits (10 req/min)
+  - Registered in `INGESTION_ADAPTERS` as adapter #5
+  - Security: uses the same `safeFetch` utility with 15s timeout; raw_payload stored (never executed)
+
+- feat(core): **Scheduled automatic catalog ingestion** added to `startOrchestrator()`:
+  - Runs `ingestPublishedCatalog()` once 10 seconds after server startup
+  - Re-runs every 24 hours via `setInterval` (non-blocking, non-fatal)
+  - Logs ingestion completion summary (upserted count, error count, adapter names)
+  - `scheduleCatalogIngestion()` helper extracted to module scope for clarity
+
+- chore(docs): Updated `published-catalog-ingestor.ts` file-level docstring to list all 5 adapters
+
+
+
 ## [0.9.6] — 2026-03-20
 
 ### Task 031 — npm Registry Ingestion Adapter + Archivist Normalization Pass

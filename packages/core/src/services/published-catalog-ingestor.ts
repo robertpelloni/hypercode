@@ -20,6 +20,7 @@
  *   2. SmitheryAiAdapter   — hits smithery.ai registry API
  *   3. McpRunAdapter       — hits mcp.run/api/servers (soft failure if unavailable)
  *   4. NpmRegistryAdapter  — searches npm for @modelcontextprotocol/* and mcp-server-* packages
+ *   5. GitHubTopicAdapter  — searches GitHub repos tagged with topic:mcp-server (top 300 by stars)
  *
  * Security note: raw_payload is stored as JSON but NEVER executed. The Configurator
  * agent generates recipes separately based on the cataloged data. This adapter
@@ -479,6 +480,133 @@ export class NpmRegistryAdapter implements CatalogSourceAdapter {
 }
 
 // ---------------------------------------------------------------------------
+// Adapter 5: GitHub topic: mcp-server
+// Searches GitHub's public repository search API for repos tagged with the
+// `mcp-server` topic. Requires no auth for up to 10 requests/min (unauthenticated).
+// We fetch up to 3 pages × 100 items = 300 repos, sorted by stars descending.
+// ---------------------------------------------------------------------------
+
+type GitHubRepo = {
+    id: number;
+    full_name: string;
+    name: string;
+    description: string | null;
+    html_url: string;
+    clone_url?: string;
+    stargazers_count: number;
+    topics?: string[];
+    language?: string | null;
+    owner?: { login?: string; type?: string };
+    homepage?: string | null;
+    default_branch?: string;
+};
+
+type GitHubSearchResponse = {
+    total_count?: number;
+    items?: GitHubRepo[];
+};
+
+export class GitHubTopicAdapter implements CatalogSourceAdapter {
+    readonly name = "github-topics";
+    private readonly searchBase = "https://api.github.com/search/repositories";
+    /** Max pages to fetch. 100 items per page, unauthenticated rate limit = 10 req/min. */
+    private readonly maxPages = 3;
+
+    async ingest(): Promise<IngestResult> {
+        const result: IngestResult = {
+            source: this.name,
+            fetched: 0,
+            upserted: 0,
+            errors: [],
+        };
+
+        const seen = new Set<string>();
+
+        for (let page = 1; page <= this.maxPages; page++) {
+            const url =
+                `${this.searchBase}?q=topic:mcp-server` +
+                `&sort=stars&order=desc&per_page=100&page=${page}`;
+
+            try {
+                const payload = await safeFetch(url) as GitHubSearchResponse;
+                const items: GitHubRepo[] = payload?.items ?? [];
+
+                if (items.length === 0) break; // no more pages
+
+                for (const repo of items) {
+                    const key = `github/${repo.full_name}`;
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+
+                    result.fetched++;
+
+                    try {
+                        const transport = this.inferTransport(
+                            repo.description ?? "",
+                            repo.topics ?? [],
+                            repo.language ?? "",
+                        );
+
+                        const server = await publishedCatalogRepository.upsertServer({
+                            canonical_id: key,
+                            display_name: repo.name,
+                            description: repo.description ?? null,
+                            author: repo.owner?.login ?? null,
+                            repository_url: repo.html_url,
+                            homepage_url: repo.homepage ?? null,
+                            tags: repo.topics ?? [],
+                            categories: [],
+                            stars: repo.stargazers_count,
+                            transport,
+                            install_method: this.inferInstallMethod(repo.topics ?? [], repo.language ?? ""),
+                            auth_model: "unknown",
+                        });
+
+                        await publishedCatalogRepository.upsertSource({
+                            server_uuid: server.uuid,
+                            source_name: this.name,
+                            source_url: repo.html_url,
+                            raw_payload: repo as unknown as Record<string, unknown>,
+                        });
+
+                        result.upserted++;
+                    } catch (err) {
+                        result.errors.push(`github repo ${repo.full_name}: ${String(err)}`);
+                    }
+                }
+
+                // Respect GitHub's unauthenticated rate limit: add a small delay between pages
+                if (page < this.maxPages && items.length === 100) {
+                    await new Promise<void>(res => setTimeout(res, 1500));
+                }
+            } catch (err) {
+                result.errors.push(`github page ${page}: ${String(err)}`);
+                break; // abort pagination on network error
+            }
+        }
+
+        return result;
+    }
+
+    private inferTransport(description: string, topics: string[], language: string): string {
+        const combined = (description + " " + topics.join(" ") + " " + language).toLowerCase();
+        if (combined.includes("sse") || combined.includes("server-sent")) return "sse";
+        if (combined.includes("streamable") || combined.includes("http server")) return "streamable_http";
+        // Most GitHub-hosted MCP servers expose stdio; default to that
+        return "stdio";
+    }
+
+    private inferInstallMethod(topics: string[], language: string): string {
+        const lang = language.toLowerCase();
+        if (lang === "python" || topics.includes("python")) return "pip";
+        if (lang === "go") return "go-install";
+        if (lang === "rust" || topics.includes("rust")) return "cargo";
+        // JavaScript/TypeScript and unknown → npm/npx
+        return "npm";
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Main ingestion service
 // ---------------------------------------------------------------------------
 
@@ -488,6 +616,7 @@ const INGESTION_ADAPTERS: CatalogSourceAdapter[] = [
     new SmitheryAiAdapter(),
     new McpRunAdapter(),
     new NpmRegistryAdapter(),
+    new GitHubTopicAdapter(),
 ];
 
 export type IngestionReport = {

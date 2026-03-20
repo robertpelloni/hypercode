@@ -10,6 +10,7 @@ import { createExpressMiddleware } from '@trpc/server/adapters/express';
 console.log("[Core:Orchestrator] ✓ @trpc/server/adapters/express");
 import { appRouter } from './trpc.js';
 console.log("[Core:Orchestrator] ✓ trpc.js");
+import { ingestPublishedCatalog } from './services/published-catalog-ingestor.js';
 import { InputTools, SystemStatusTool } from '@borg/tools';
 import { MCPServer } from './MCPServer.js';
 import { resolveSupervisorEntryPath } from './orchestratorPaths.js';
@@ -49,6 +50,9 @@ export async function startOrchestrator(options: StartOrchestratorOptions = {}) 
     app.listen(trpcPort, host, () => {
         console.log(`[Core] tRPC Server running at http://${host}:${trpcPort}/trpc`);
     });
+
+    // 1.1. Schedule automatic catalog ingestion (startup + 24h interval)
+    scheduleCatalogIngestion();
 
     // 1.5. Start Supervisor (Native Input / Watchdog)
     if (startSupervisor) {
@@ -109,4 +113,34 @@ export async function startOrchestrator(options: StartOrchestratorOptions = {}) 
         trpcPort,
         bridgePort: startMcp ? 3001 : null,
     };
+}
+
+// ---------------------------------------------------------------------------
+// Catalog Ingestion Scheduler
+// ---------------------------------------------------------------------------
+const INGEST_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const INGEST_STARTUP_DELAY_MS = 10_000;           // 10 seconds after startup
+
+function scheduleCatalogIngestion(): void {
+    const run = () => {
+        console.log("[Core:Catalog] Running scheduled catalog ingestion...");
+        ingestPublishedCatalog()
+            .then(report => {
+                const adapterNames = report.results.map(r => r.source).join(", ");
+                console.log(
+                    `[Core:Catalog] Ingestion complete — upserted: ${report.total_upserted}, ` +
+                    `errors: ${report.total_errors}, adapters: ${adapterNames}`
+                );
+            })
+            .catch(err => {
+                console.warn("[Core:Catalog] Scheduled ingestion failed (non-fatal):", err?.message ?? err);
+            });
+    };
+
+    setTimeout(() => {
+        run();
+        setInterval(run, INGEST_INTERVAL_MS);
+    }, INGEST_STARTUP_DELAY_MS);
+
+    console.log(`[Core:Catalog] Catalog ingestion scheduled (startup delay: ${INGEST_STARTUP_DELAY_MS / 1000}s, interval: 24h)`);
 }
