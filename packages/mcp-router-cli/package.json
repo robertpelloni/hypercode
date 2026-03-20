@@ -1,19 +1,19 @@
 {
-  "name": "@borg/mcp-router-cli",
-  "version": "0.9.1",
-  "description": "Borg MCP Router CLI - Manage MCP servers, configurations, and sessions",
-  "type": "module",
-  "bin": {
-    "mcp-router": "./mcp-router-cli.ts"
-  },
-  "exports": {
-    ".": "./mcp-router-cli.ts"
-  },
-  "engines": {
-    "bun": ">=1.0.0"
-  },
-  "dependencies": {
-    "commander": "^12.1.0",
-    "@borg/core": "workspace:*"
-  }
+    "name":  "@borg/mcp-router-cli",
+    "version":  "0.9.1",
+    "description":  "Borg MCP Router CLI - Manage MCP servers, configurations, and sessions",
+    "type":  "module",
+    "bin":  {
+                "mcp-router":  "./mcp-router-cli.ts"
+            },
+    "exports":  {
+                    ".":  "./mcp-router-cli.ts"
+                },
+    "engines":  {
+                    "bun":  "\u003e=1.0.0"
+                },
+    "dependencies":  {
+                         "commander":  "^12.1.0",
+                         "@borg/core":  "workspace:*"
+                     }
 }

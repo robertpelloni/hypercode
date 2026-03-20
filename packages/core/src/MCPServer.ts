@@ -3468,7 +3468,7 @@ export class MCPServer {
                         status: 'online',
                         uptime: process.uptime(),
                         timestamp: Date.now(),
-                        version: '0.1.0'
+                        version: '0.9.1'
                     }));
                 } else if (req.url === '/mcp/servers') {
                     const servers = await this.mcpAggregator.listServers();

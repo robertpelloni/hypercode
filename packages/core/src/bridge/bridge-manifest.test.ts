@@ -12,7 +12,7 @@ describe('bridge manifest helpers', () => {
         const registered = applyBridgeClientHello(initial, {
             clientType: 'vscode-extension',
             clientName: 'Borg VS Code Bridge',
-            version: '0.9.0-beta',
+            version: '0.9.1',
             platform: 'VS Code 1.99',
             capabilities: ['chat.inject', 'editor.selection.read', 'chat.inject'],
             hookPhases: ['chat.submit', 'editor.selection', 'chat.submit'],
@@ -22,7 +22,7 @@ describe('bridge manifest helpers', () => {
             clientId: 'client-1',
             clientType: 'vscode-extension',
             clientName: 'Borg VS Code Bridge',
-            version: '0.9.0-beta',
+            version: '0.9.1',
             platform: 'VS Code 1.99',
             capabilities: ['chat.inject', 'editor.selection.read'],
             hookPhases: ['chat.submit', 'editor.selection'],
