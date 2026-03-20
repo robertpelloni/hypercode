@@ -39,6 +39,8 @@ All notable changes to this project will be documented in this file.
 - feat(web/nav): `Published Catalog` navigation entry added to `LABS_DASHBOARD_NAV` section (href `/dashboard/registry`, badge `beta`, icon `Globe`)
 - fix(web/registry): Removed `.output()` Zod validators from catalog router procedures — codebase has no superjson transformer so `z.date()` in output schemas caused tRPC client types to diverge from runtime values
 - fix(web/registry): Replaced `keepPreviousData` (removed in React Query v5) in the registry page list query
+- feat(core/catalog): Implemented real freshness metric for `catalog.stats.recentlyUpdated` using `updated_at >= now - 24h` via new repository method `countRecentlyUpdated(hours)`.
+- feat(web/registry): Added `Updated 24h` stat card to `/dashboard/registry` so operators can monitor catalog freshness directly from the dashboard.
 - TypeScript: `packages/core` and `apps/web` both pass `tsc --noEmit` with zero errors
 
 

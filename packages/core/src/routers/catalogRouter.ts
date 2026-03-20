@@ -202,7 +202,7 @@ export const catalogRouter = t.router({
                 publishedCatalogRepository.countServers({}),
                 publishedCatalogRepository.countServers({ status: "validated" }),
                 publishedCatalogRepository.countServers({ status: "broken" }),
-                publishedCatalogRepository.countServers({}), // reuse for now
+                publishedCatalogRepository.countRecentlyUpdated(24),
             ]);
 
             // Status breakdown — query each status
@@ -230,7 +230,7 @@ export const catalogRouter = t.router({
                 byStatus,
                 validated,
                 broken,
-                recentlyUpdated: recentlyUpdated, // TODO: filter by updated_at > 24h
+                recentlyUpdated,
             };
         }),
 });

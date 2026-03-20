@@ -202,6 +202,20 @@ export class PublishedCatalogRepository {
         return row?.count ?? 0;
     }
 
+    /**
+     * Count servers updated within the last N hours.
+     * Used by dashboard freshness metrics.
+     */
+    async countRecentlyUpdated(hours = 24): Promise<number> {
+        const threshold = new Date(Date.now() - Math.max(1, hours) * 60 * 60 * 1000);
+        const [row] = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(publishedMcpServersTable)
+            .where(gte(publishedMcpServersTable.updated_at, threshold));
+
+        return row?.count ?? 0;
+    }
+
     async findServerByUuid(uuid: string): Promise<PublishedMcpServer | undefined> {
         const [row] = await db
             .select()

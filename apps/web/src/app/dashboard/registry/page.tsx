@@ -197,7 +197,7 @@ export default function RegistryPage() {
 
             {/* Stats cards */}
             {stats && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <StatCard label="Total" value={stats.total} color="zinc" />
                     <StatCard label="Validated" value={stats.validated} color="emerald" />
                     <StatCard label="Broken" value={stats.broken} color="red" />
@@ -206,6 +206,7 @@ export default function RegistryPage() {
                         value={stats.byStatus?.discovered ?? 0}
                         color="zinc"
                     />
+                    <StatCard label="Updated 24h" value={stats.recentlyUpdated ?? 0} color="amber" />
                 </div>
             )}
 
