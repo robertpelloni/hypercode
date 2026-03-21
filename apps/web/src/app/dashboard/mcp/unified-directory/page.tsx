@@ -172,6 +172,7 @@ export default function UnifiedDirectoryPage() {
                 <select
                     value={backlogFiltersEnabled ? researchStatus : ""}
                     disabled={!backlogFiltersEnabled}
+                    title={backlogFiltersEnabled ? "" : "Available when source includes backlog entries"}
                     onChange={(event) => {
                         setResearchStatus(event.target.value as (typeof RESEARCH_FILTERS)[number]);
                         setPage(0);
@@ -191,6 +192,7 @@ export default function UnifiedDirectoryPage() {
                         type="checkbox"
                         checked={backlogFiltersEnabled && (showDuplicates || duplicatesOnly)}
                         disabled={duplicatesOnly || !backlogFiltersEnabled}
+                        title={backlogFiltersEnabled ? "" : "Available when source includes backlog entries"}
                         onChange={(event) => {
                             setShowDuplicates(event.target.checked);
                             setPage(0);
@@ -204,6 +206,7 @@ export default function UnifiedDirectoryPage() {
                         type="checkbox"
                         checked={backlogFiltersEnabled && duplicatesOnly}
                         disabled={!backlogFiltersEnabled}
+                        title={backlogFiltersEnabled ? "" : "Available when source includes backlog entries"}
                         onChange={(event) => {
                             const next = event.target.checked;
                             setDuplicatesOnly(next);
@@ -233,6 +236,12 @@ export default function UnifiedDirectoryPage() {
                     Clear filters{hasActiveFilters ? ` (${activeFilterCount})` : ""}
                 </button>
             </div>
+
+            {!backlogFiltersEnabled ? (
+                <p className="text-xs text-zinc-500">
+                    Backlog-specific filters are disabled while source is set to <span className="text-zinc-300">Catalog only</span>.
+                </p>
+            ) : null}
 
             <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl overflow-hidden">
                 <div className="overflow-x-auto">

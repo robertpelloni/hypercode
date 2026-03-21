@@ -4,6 +4,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.18] — 2026-03-21
+
+### Unified Directory Disabled Filter Guidance
+
+- feat(web/unified-directory): Improved clarity when backlog-only filters are unavailable in `apps/web/src/app/dashboard/mcp/unified-directory/page.tsx`.
+  - Added inline guidance text explaining why backlog-specific controls are disabled in `Catalog only` mode.
+  - Added `title` hints on disabled backlog filter controls for better hover/accessibility feedback.
+
+- verification:
+  - `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
+  - `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
+
 ## [0.10.17] — 2026-03-21
 
 ### Unified Directory Clear Filters URL Reset
