@@ -156,7 +156,7 @@ export default function UnifiedDirectoryPage() {
                 </select>
 
                 <select
-                    value={researchStatus}
+                    value={backlogFiltersEnabled ? researchStatus : ""}
                     disabled={!backlogFiltersEnabled}
                     onChange={(event) => {
                         setResearchStatus(event.target.value as (typeof RESEARCH_FILTERS)[number]);
@@ -175,7 +175,7 @@ export default function UnifiedDirectoryPage() {
                 <label className="inline-flex items-center gap-2 text-sm text-zinc-300">
                     <input
                         type="checkbox"
-                        checked={showDuplicates || duplicatesOnly}
+                        checked={backlogFiltersEnabled && (showDuplicates || duplicatesOnly)}
                         disabled={duplicatesOnly || !backlogFiltersEnabled}
                         onChange={(event) => {
                             setShowDuplicates(event.target.checked);
@@ -188,7 +188,7 @@ export default function UnifiedDirectoryPage() {
                 <label className="inline-flex items-center gap-2 text-sm text-zinc-300">
                     <input
                         type="checkbox"
-                        checked={duplicatesOnly}
+                        checked={backlogFiltersEnabled && duplicatesOnly}
                         disabled={!backlogFiltersEnabled}
                         onChange={(event) => {
                             const next = event.target.checked;

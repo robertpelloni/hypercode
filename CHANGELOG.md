@@ -4,6 +4,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.13] — 2026-03-21
+
+### Unified Directory Source-Aware Backlog Control Display
+
+- feat(web/unified-directory): Updated `apps/web/src/app/dashboard/mcp/unified-directory/page.tsx` to render backlog-only controls with inactive display values in `Catalog only` mode.
+  - `research_status` select now visually resets to `All backlog research states` while disabled.
+  - `Show duplicate backlog links` and `Only duplicate backlog links` checkboxes now render unchecked while disabled.
+  - Underlying backlog filter state is still preserved, so switching back to `All sources`/`Backlog only` restores prior selections.
+
+- verification:
+  - `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
+  - `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
+
 ## [0.10.12] — 2026-03-21
 
 ### Unified Directory Source-Aware Backlog Filter Forwarding
