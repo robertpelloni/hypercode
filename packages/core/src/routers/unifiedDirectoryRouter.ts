@@ -94,6 +94,7 @@ export const unifiedDirectoryRouter = t.router({
                     search: z.string().optional(),
                     source: z.enum(["all", "catalog", "backlog"]).default("all"),
                     show_duplicates: z.boolean().default(false),
+                    research_status: z.enum(["pending", "running", "done", "failed", "skipped"]).optional(),
                 })
                 .optional(),
         )
@@ -103,6 +104,7 @@ export const unifiedDirectoryRouter = t.router({
             const source = input?.source ?? "all";
             const search = input?.search;
             const showDuplicates = input?.show_duplicates ?? false;
+            const researchStatus = input?.research_status;
 
             const wantCatalog = source === "all" || source === "catalog";
             const wantBacklog = source === "all" || source === "backlog";
@@ -122,6 +124,7 @@ export const unifiedDirectoryRouter = t.router({
                               offset: 0,
                               search,
                               show_duplicates: showDuplicates,
+                              research_status: researchStatus,
                           })
                           .then((rows) => rows.map(normalizeBacklogItem))
                     : Promise.resolve([] as UnifiedBacklogItem[]),
@@ -132,6 +135,7 @@ export const unifiedDirectoryRouter = t.router({
                     ? linksBacklogRepository.countLinks({
                           search,
                           show_duplicates: showDuplicates,
+                                                    research_status: researchStatus,
                       })
                     : Promise.resolve(0),
             ]);

@@ -95,7 +95,7 @@ describe('unifiedDirectoryRouter', () => {
         expect(countLinksSpy).not.toHaveBeenCalled();
     });
 
-    it('backlog-only source forwards show_duplicates to backlog listing', async () => {
+    it('backlog-only source forwards show_duplicates and research_status to backlog queries', async () => {
         vi.spyOn(publishedCatalogRepository, 'listServers').mockResolvedValue([] as any[]);
         vi.spyOn(publishedCatalogRepository, 'countServers').mockResolvedValue(0);
 
@@ -103,18 +103,27 @@ describe('unifiedDirectoryRouter', () => {
         const countLinksSpy = vi.spyOn(linksBacklogRepository, 'countLinks').mockResolvedValue(0);
 
         const caller = createCaller();
-        await caller.list({ source: 'backlog', show_duplicates: true, limit: 20, offset: 0, search: 'bookmark' });
+        await caller.list({
+            source: 'backlog',
+            show_duplicates: true,
+            research_status: 'pending',
+            limit: 20,
+            offset: 0,
+            search: 'bookmark',
+        });
 
         expect(listLinksSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 show_duplicates: true,
                 search: 'bookmark',
+                research_status: 'pending',
             }),
         );
         expect(countLinksSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 show_duplicates: true,
                 search: 'bookmark',
+                research_status: 'pending',
             }),
         );
     });

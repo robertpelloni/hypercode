@@ -4,6 +4,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.5] — 2026-03-21
+
+### Unified Directory Backlog Triage Filter
+
+- feat(core/unified-directory): Added optional `research_status` input to `unifiedDirectory.list` in `packages/core/src/routers/unifiedDirectoryRouter.ts`.
+  - Supports backlog research states: `pending`, `running`, `done`, `failed`, `skipped`.
+  - Forwards the selected status to both backlog list and count queries when backlog source is included.
+
+- feat(web/unified-directory): Added `research_status` filter control to `apps/web/src/app/dashboard/mcp/unified-directory/page.tsx`.
+  - Operators can now triage backlog entries directly from the merged Unified Directory view.
+  - URL-hydrated state now includes `research_status` in addition to `search`, `source`, and `show_duplicates`.
+
+- test(core/router): Extended `packages/core/src/routers/unifiedDirectoryRouter.test.ts` to verify `research_status` is forwarded to backlog repository list/count calls.
+
+- verification:
+  - `pnpm -C packages/core exec vitest run src/routers/unifiedDirectoryRouter.test.ts` ✅
+  - `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
+  - `pnpm -C packages/core build` ✅
+  - `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
+
 ## [0.10.4] — 2026-03-21
 
 ### Unified Directory URL Filter Hydration
