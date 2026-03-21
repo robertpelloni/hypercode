@@ -8,7 +8,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
     acquireSingleInstanceLock,
     createLockLifecycleHandlers,
+    isAddrInUseError,
     pickDashboardPort,
+    resolveControlPlaneFallbackPort,
     resolveDashboardUrl,
     resolveDataDir,
     startCoreRuntime,
@@ -287,5 +289,57 @@ describe('dashboard startup helpers', () => {
             port: 3010,
             reusedExisting: false,
         });
+    });
+});
+
+describe('control-plane fallback helpers', () => {
+    it('detects EADDRINUSE recursively through error causes', () => {
+        const nested = {
+            cause: {
+                code: 'EADDRINUSE',
+            },
+        };
+
+        expect(isAddrInUseError({ code: 'EADDRINUSE' })).toBe(true);
+        expect(isAddrInUseError(nested)).toBe(true);
+        expect(isAddrInUseError(new Error('other'))).toBe(false);
+    });
+
+    it('falls back to the requested port after stale-port reuse bind conflicts', () => {
+        const fallback = resolveControlPlaneFallbackPort({
+            requestedPort: 4000,
+            selectedPort: 3100,
+            explicitPort: false,
+            reusedStalePort: true,
+            startupError: { code: 'EADDRINUSE' },
+        });
+
+        expect(fallback).toBe(4000);
+    });
+
+    it('does not fall back when startup was explicit or not stale-reuse related', () => {
+        expect(resolveControlPlaneFallbackPort({
+            requestedPort: 4000,
+            selectedPort: 3100,
+            explicitPort: true,
+            reusedStalePort: true,
+            startupError: { code: 'EADDRINUSE' },
+        })).toBeNull();
+
+        expect(resolveControlPlaneFallbackPort({
+            requestedPort: 4000,
+            selectedPort: 3100,
+            explicitPort: false,
+            reusedStalePort: false,
+            startupError: { code: 'EADDRINUSE' },
+        })).toBeNull();
+
+        expect(resolveControlPlaneFallbackPort({
+            requestedPort: 4000,
+            selectedPort: 3100,
+            explicitPort: false,
+            reusedStalePort: true,
+            startupError: new Error('boom'),
+        })).toBeNull();
     });
 });

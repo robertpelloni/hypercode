@@ -384,6 +384,46 @@ export async function pickDashboardPort(
   return { port: requestedPort, reusedExisting: false };
 }
 
+export function isAddrInUseError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const code = (error as { code?: unknown }).code;
+  if (code === 'EADDRINUSE') {
+    return true;
+  }
+
+  const cause = (error as { cause?: unknown }).cause;
+  return cause ? isAddrInUseError(cause) : false;
+}
+
+export function resolveControlPlaneFallbackPort(options: {
+  requestedPort: number;
+  selectedPort: number;
+  explicitPort: boolean;
+  reusedStalePort: boolean;
+  startupError: unknown;
+}): number | null {
+  if (options.explicitPort) {
+    return null;
+  }
+
+  if (!options.reusedStalePort) {
+    return null;
+  }
+
+  if (!isAddrInUseError(options.startupError)) {
+    return null;
+  }
+
+  if (options.requestedPort === options.selectedPort) {
+    return null;
+  }
+
+  return options.requestedPort;
+}
+
 function getDashboardSpawnSpec(webRoot: string, repoRoot: string, host: string, port: number) {
   const nextBinCandidates = [
     join(repoRoot, 'node_modules', 'next', 'dist', 'bin', 'next'),
@@ -502,13 +542,46 @@ Examples:
         }
         console.log('');
 
-        const runtime = await startCoreRuntime({
-          host,
-          port,
-          mcp: Boolean(opts.mcp),
-          supervisor: Boolean(opts.supervisor),
-          autoDrive: Boolean(opts.autoDrive),
-        });
+        let runtime;
+        let activePort = port;
+
+        try {
+          runtime = await startCoreRuntime({
+            host,
+            port: activePort,
+            mcp: Boolean(opts.mcp),
+            supervisor: Boolean(opts.supervisor),
+            autoDrive: Boolean(opts.autoDrive),
+          });
+        } catch (startupError) {
+          const fallbackPort = resolveControlPlaneFallbackPort({
+            requestedPort,
+            selectedPort: activePort,
+            explicitPort,
+            reusedStalePort: lockHandle.reusedStalePort,
+            startupError,
+          });
+
+          if (fallbackPort === null) {
+            throw startupError;
+          }
+
+          const fallbackPortIsFree = await isPortFree(fallbackPort);
+          if (!fallbackPortIsFree) {
+            throw startupError;
+          }
+
+          console.log(chalk.yellow(`  ↺ Reused stale port ${activePort} was occupied at bind time; retrying on requested port ${fallbackPort}.`));
+          activePort = fallbackPort;
+
+          runtime = await startCoreRuntime({
+            host,
+            port: activePort,
+            mcp: Boolean(opts.mcp),
+            supervisor: Boolean(opts.supervisor),
+            autoDrive: Boolean(opts.autoDrive),
+          });
+        }
 
         console.log(chalk.dim('  Core loaded: orchestrator started'));
         console.log(chalk.green(`  ✓ tRPC control plane running at http://${runtime.host}:${runtime.trpcPort}/trpc`));
