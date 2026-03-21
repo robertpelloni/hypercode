@@ -86,6 +86,7 @@ export default function UnifiedDirectoryPage() {
     const items = data?.items ?? [];
     const total = data?.total ?? 0;
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const backlogFiltersEnabled = source !== "catalog";
 
     const subtitle = useMemo(() => {
         if (!stats) return "";
@@ -152,11 +153,12 @@ export default function UnifiedDirectoryPage() {
 
                 <select
                     value={researchStatus}
+                    disabled={!backlogFiltersEnabled}
                     onChange={(event) => {
                         setResearchStatus(event.target.value as (typeof RESEARCH_FILTERS)[number]);
                         setPage(0);
                     }}
-                    className="h-9 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-300"
+                    className="h-9 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-300 disabled:opacity-50"
                 >
                     <option value="">All backlog research states</option>
                     {RESEARCH_FILTERS.filter(Boolean).map((status) => (
@@ -170,7 +172,7 @@ export default function UnifiedDirectoryPage() {
                     <input
                         type="checkbox"
                         checked={showDuplicates || duplicatesOnly}
-                        disabled={duplicatesOnly}
+                        disabled={duplicatesOnly || !backlogFiltersEnabled}
                         onChange={(event) => {
                             setShowDuplicates(event.target.checked);
                             setPage(0);
@@ -183,6 +185,7 @@ export default function UnifiedDirectoryPage() {
                     <input
                         type="checkbox"
                         checked={duplicatesOnly}
+                        disabled={!backlogFiltersEnabled}
                         onChange={(event) => {
                             const next = event.target.checked;
                             setDuplicatesOnly(next);

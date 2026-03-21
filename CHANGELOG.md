@@ -4,6 +4,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.11] — 2026-03-21
+
+### Unified Directory Source-Aware Backlog Filter Gating
+
+- feat(web/unified-directory): Updated `apps/web/src/app/dashboard/mcp/unified-directory/page.tsx` so backlog-only filters are disabled when source is set to `Catalog only`.
+  - `research_status`, `Show duplicate backlog links`, and `Only duplicate backlog links` now become inactive for catalog-only views.
+  - This prevents misleading filter interactions where controls appeared active but had no effect on catalog-only queries.
+
+- verification:
+  - `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
+  - `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
+
 ## [0.10.10] — 2026-03-21
 
 ### Unified Directory Duplicate Toggle Coherence
