@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { trpc } from "@/utils/trpc";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@borg/core";
@@ -16,6 +16,14 @@ const PAGE_SIZE = 50;
 const RESEARCH_FILTERS = ["", "pending", "running", "done", "failed", "skipped"] as const;
 
 export default function LinksBacklogPage() {
+    return (
+        <Suspense fallback={<LinksBacklogPageSkeleton />}>
+            <LinksBacklogPageContent />
+        </Suspense>
+    );
+}
+
+function LinksBacklogPageContent() {
     const searchParams = useSearchParams();
 
     const [search, setSearch] = useState("");
@@ -234,6 +242,21 @@ export default function LinksBacklogPage() {
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    );
+}
+
+function LinksBacklogPageSkeleton() {
+    return (
+        <div className="p-6 max-w-7xl mx-auto space-y-6">
+            <PageStatusBanner
+                status="beta"
+                message="Link Backlog"
+                note="Loading backlog view..."
+            />
+            <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-6 text-sm text-zinc-500">
+                Preparing backlog filters...
             </div>
         </div>
     );

@@ -4,6 +4,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.24] — 2026-03-21
+
+### Next.js CSR Suspense Boundary Hardening
+
+- fix(web/links): Updated `apps/web/src/app/dashboard/links/page.tsx` to wrap `useSearchParams()` usage in a Suspense-backed page wrapper.
+  - Prevents Next.js prerender bailout failures for `/dashboard/links` caused by missing Suspense boundary around CSR search-param reads.
+
+- fix(web/unified-directory): Updated `apps/web/src/app/dashboard/mcp/unified-directory/page.tsx` to apply the same Suspense boundary pattern around `useSearchParams()` usage.
+  - Prevents equivalent prerender bailout failures for `/dashboard/mcp/unified-directory`.
+
+- verification:
+  - `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
+  - `pnpm -C apps/web build` ✅
+
 ## [0.10.23] — 2026-03-21
 
 ### Unified Directory Reset Handler Unification

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@borg/core";
 import { trpc } from "@/utils/trpc";
@@ -38,6 +38,14 @@ function statusClass(source: UnifiedItem["source"], status: string | null): stri
 }
 
 export default function UnifiedDirectoryPage() {
+    return (
+        <Suspense fallback={<UnifiedDirectoryPageSkeleton />}>
+            <UnifiedDirectoryPageContent />
+        </Suspense>
+    );
+}
+
+function UnifiedDirectoryPageContent() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -326,6 +334,23 @@ export default function UnifiedDirectoryPage() {
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    );
+}
+
+function UnifiedDirectoryPageSkeleton() {
+    return (
+        <div className="p-6 max-w-7xl mx-auto space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+                    <Database className="w-6 h-6 text-indigo-400" />
+                    Unified Directory
+                </h1>
+                <p className="text-zinc-500 text-sm mt-1">Loading directory filters…</p>
+            </div>
+            <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-6 text-sm text-zinc-500">
+                Preparing merged catalog and backlog view...
             </div>
         </div>
     );
