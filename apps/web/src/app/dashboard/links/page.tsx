@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { trpc } from "@/utils/trpc";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@borg/core";
+import { useSearchParams } from "next/navigation";
 import { BookMarked, ExternalLink, Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { PageStatusBanner } from "@/components/PageStatusBanner";
@@ -15,11 +16,32 @@ const PAGE_SIZE = 50;
 const RESEARCH_FILTERS = ["", "pending", "running", "done", "failed", "skipped"] as const;
 
 export default function LinksBacklogPage() {
+    const searchParams = useSearchParams();
+
     const [search, setSearch] = useState("");
     const [researchStatus, setResearchStatus] = useState<(typeof RESEARCH_FILTERS)[number]>("");
     const [showDuplicates, setShowDuplicates] = useState(false);
     const [syncBaseUrl, setSyncBaseUrl] = useState("http://localhost:5000");
     const [page, setPage] = useState(0);
+
+    const querySearch = searchParams.get("search")?.trim() ?? "";
+    const querySource = searchParams.get("source")?.trim() ?? "";
+    const queryStatusRaw = searchParams.get("research_status")?.trim() ?? "";
+    const queryShowDuplicatesRaw = searchParams.get("show_duplicates")?.trim().toLowerCase() ?? "";
+    const queryShowDuplicates = queryShowDuplicatesRaw === "1" || queryShowDuplicatesRaw === "true";
+    const queryStatus = RESEARCH_FILTERS.includes(queryStatusRaw as (typeof RESEARCH_FILTERS)[number])
+        ? (queryStatusRaw as (typeof RESEARCH_FILTERS)[number])
+        : "";
+
+    useEffect(() => {
+        if (querySearch !== search) setSearch(querySearch);
+        if (queryStatus !== researchStatus) setResearchStatus(queryStatus);
+        if (queryShowDuplicates !== showDuplicates) setShowDuplicates(queryShowDuplicates);
+        if (querySearch || queryStatus || queryShowDuplicates) setPage(0);
+        // Intentionally react only to URL-derived inputs; this hydrates deep links
+        // without fighting user edits once params are unchanged.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [querySearch, queryStatus, queryShowDuplicates]);
 
     const utils = trpc.useUtils();
     const { data: stats } = trpc.linksBacklog.stats.useQuery();
@@ -83,6 +105,11 @@ export default function LinksBacklogPage() {
                         BobbyBookmarks is the canonical datasource for this backlog.
                         {sourceSummary ? <span className="ml-2 text-zinc-500">{sourceSummary}</span> : null}
                     </p>
+                    {querySource === "unified-directory" && (
+                        <p className="text-cyan-400 text-xs mt-1">
+                            Prefiltered from Unified Directory deep link.
+                        </p>
+                    )}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                     <input

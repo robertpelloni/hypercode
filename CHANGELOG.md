@@ -4,6 +4,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.3] — 2026-03-21
+
+### Unified Directory Navigation UX Improvements
+
+- feat(web/unified-directory): Added source-aware deep-link actions in `apps/web/src/app/dashboard/mcp/unified-directory/page.tsx`.
+  - Catalog entries now include a direct internal action to `/dashboard/registry/{uuid}`.
+  - Backlog entries now include a direct internal action to `/dashboard/links` with prefilled query params.
+
+- feat(web/links): Added URL-driven filter hydration in `apps/web/src/app/dashboard/links/page.tsx`.
+  - Reads `search`, `research_status`, `show_duplicates`, and `source` query params via `useSearchParams`.
+  - Deep-linked backlog pages now initialize filters from URL and show a contextual hint when opened from Unified Directory.
+
+- verification:
+  - `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
+  - `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
+  - `pnpm -C packages/core exec vitest run src/routers/unifiedDirectoryRouter.test.ts` ✅
+
 ## [0.10.2] — 2026-03-21
 
 ### Unified Directory Validation Hardening

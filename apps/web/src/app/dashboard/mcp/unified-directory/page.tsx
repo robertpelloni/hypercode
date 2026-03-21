@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@borg/core";
 import { trpc } from "@/utils/trpc";
+import Link from "next/link";
 import { BookMarked, Database, ExternalLink, Loader2, Search } from "lucide-react";
 
 const PAGE_SIZE = 50;
@@ -200,6 +201,23 @@ function UnifiedRow({ item }: { item: UnifiedItem }) {
                             <ExternalLink className="w-3 h-3" />
                         </a>
                     ) : null}
+                    <div className="flex flex-wrap gap-2 mt-1">
+                        {item.source === "catalog" ? (
+                            <Link
+                                href={`/dashboard/registry/${item.id}`}
+                                className="inline-flex items-center text-xs text-indigo-300 hover:text-indigo-200 hover:underline"
+                            >
+                                Open catalog entry
+                            </Link>
+                        ) : (
+                            <Link
+                                href={`/dashboard/links?search=${encodeURIComponent(item.subtitle ?? item.title)}&source=unified-directory`}
+                                className="inline-flex items-center text-xs text-cyan-300 hover:text-cyan-200 hover:underline"
+                            >
+                                Open in link backlog
+                            </Link>
+                        )}
+                    </div>
                     {item.tags.length > 0 ? (
                         <div className="flex flex-wrap gap-1 mt-1">
                             {item.tags.slice(0, 6).map((tag) => (
