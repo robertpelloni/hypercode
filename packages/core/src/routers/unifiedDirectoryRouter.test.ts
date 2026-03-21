@@ -59,6 +59,8 @@ describe('unifiedDirectoryRouter', () => {
                 page_title: null,
                 page_description: null,
                 research_status: 'pending',
+                is_duplicate: true,
+                duplicate_of: 'catalog/new',
                 tags: ['bookmark'],
                 updated_at: new Date('2026-03-21T09:30:00.000Z'),
                 created_at: new Date('2026-03-21T09:00:00.000Z'),
@@ -78,6 +80,13 @@ describe('unifiedDirectoryRouter', () => {
             'backlog-mid',
             'catalog-old',
         ]);
+
+        const backlogItem = result.items.find((item) => item.id === 'backlog-mid');
+        expect(backlogItem?.source).toBe('backlog');
+        if (backlogItem?.source === 'backlog') {
+            expect(backlogItem.is_duplicate).toBe(true);
+            expect(backlogItem.duplicate_of).toBe('catalog/new');
+        }
     });
 
     it('catalog-only source does not query backlog repository', async () => {

@@ -4,6 +4,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.8] — 2026-03-21
+
+### Unified Directory Duplicate Lineage Visibility
+
+- feat(core/unified-directory): Extended unified backlog item shape in `packages/core/src/routers/unifiedDirectoryRouter.ts` to expose `duplicate_of` (and explicit `duplicate_of: null` for catalog entries) so duplicate lineage is available to the UI.
+
+- feat(web/unified-directory): Updated `apps/web/src/app/dashboard/mcp/unified-directory/page.tsx` to display duplicate lineage in backlog rows.
+  - Duplicate badges now show `of <duplicate_of>` when lineage metadata is present, improving triage clarity.
+
+- test(core/router): Updated `packages/core/src/routers/unifiedDirectoryRouter.test.ts` to validate that backlog duplicate lineage (`duplicate_of`) is normalized and returned.
+
+- verification:
+  - `pnpm -C packages/core exec vitest run src/routers/unifiedDirectoryRouter.test.ts` ✅
+  - `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
+  - `pnpm -C packages/core build` ✅
+  - `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
+
 ## [0.10.7] — 2026-03-21
 
 ### Unified Directory Duplicates-Only Triage

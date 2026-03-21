@@ -311,6 +311,11 @@ function UnifiedRow({ item }: { item: UnifiedItem }) {
                         <span className="inline-flex px-2 py-0.5 rounded text-[11px] border bg-amber-950 text-amber-300 border-amber-800">
                             duplicate
                         </span>
+                        {item.duplicate_of ? (
+                            <div className="text-[11px] text-amber-200 mt-1 break-all">
+                                of {item.duplicate_of}
+                            </div>
+                        ) : null}
                     </div>
                 ) : null}
             </td>
