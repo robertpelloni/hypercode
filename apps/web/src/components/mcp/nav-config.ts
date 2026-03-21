@@ -222,10 +222,10 @@ export const INTEGRATIONS_NAV: NavItem[] = [
         badge: "embed",
     },
     {
-        title: "OpenCode Autopilot",
-        href: "/dashboard/autopilot",
+        title: "Borg Orchestrator",
+        href: "/dashboard/orchestrator",
         icon: Sparkles,
-        description: "Multi-model AI council server control plane: council roster, consensus mode, sessions, veto queue, and CLI tools.",
+        description: "Council governance and session-supervision control plane for Borg Orchestrator, with legacy autopilot compatibility.",
         variant: "ghost",
         badge: "experimental",
     },
@@ -266,6 +266,7 @@ export const CORE_DASHBOARD_NAV: NavItem[] = [
     { title: "System", href: "/dashboard/system", icon: Server, description: "Operator console: uptime, subsystem health, boot status.", variant: "ghost", badge: "beta" },
     { title: "Documentation", href: "/docs", icon: BookOpen, variant: "ghost" },
     { title: "Settings", href: "/dashboard/settings", icon: Settings2, variant: "ghost" },
+    { title: "Link Backlog", href: "/dashboard/links", icon: BookMarked, description: "Canonical BobbyBookmarks-powered backlog and future universal MCP directory feed.", variant: "ghost", badge: "beta" },
 ];
 
 export const LABS_DASHBOARD_NAV: NavItem[] = [

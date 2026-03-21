@@ -1,24 +1,23 @@
 "use client";
 
 /**
- * autopilot/page.tsx – OpenCode Autopilot Dashboard
+ * autopilot/page.tsx – Borg Orchestrator Dashboard (legacy compatibility route)
  *
- * Native Borg-integrated control panel for the opencode-autopilot
- * (https://github.com/robertpelloni/opencode-autopilot) server.
+ * Native Borg-integrated control panel for the Borg Orchestrator council runtime.
  *
  * Provides:
  *  - Council status: supervisor roster, consensus mode, enable/disable toggle
  *  - Sessions list with start / stop / resume / guidance controls
- *  - CLI tools detection panel
+ *  - CLI tools detection panel for supported harness targets
  *  - Veto queue (pending decisions awaiting human approval)
  *  - Debate history log
  *  - Server health bar
  *
- * The autopilot server exposes a REST API at NEXT_PUBLIC_AUTOPILOT_URL
- * (default: http://localhost:3847). All calls are made client-side via
- * the /api/autopilot-proxy Next.js route so we avoid CORS issues.
+ * The orchestrator service exposes a REST API at NEXT_PUBLIC_BORG_ORCHESTRATOR_URL
+ * (default: http://localhost:3847). The legacy NEXT_PUBLIC_AUTOPILOT_URL
+ * variable remains supported for compatibility during migration.
  *
- * If the server is unreachable the page shows a clear "offline" banner and
+ * If the service is unreachable the page shows a clear "offline" banner and
  * all controls are disabled – we never render fake/stale data.
  */
 
@@ -156,10 +155,10 @@ function fmtDuration(seconds: number): string {
     return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
 }
 
-// ─── Hook: autopilot API client ────────────────────────────────────────────
+// ─── Hook: orchestrator API client ─────────────────────────────────────────
 
 const BASE = typeof window !== "undefined"
-    ? (process.env.NEXT_PUBLIC_AUTOPILOT_URL ?? "http://localhost:3847")
+    ? (process.env.NEXT_PUBLIC_BORG_ORCHESTRATOR_URL ?? process.env.NEXT_PUBLIC_AUTOPILOT_URL ?? "http://localhost:3847")
     : "http://localhost:3847";
 
 /** Simple result container — avoids discriminant-union narrowing issues. */
@@ -231,7 +230,7 @@ function SectionCard({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function AutopilotDashboardPage() {
+export default function BorgOrchestratorDashboardPage() {
     // ── state ──────────────────────────────────────────────────────────────
     const [online, setOnline] = useState<boolean | null>(null);
     const [council, setCouncil] = useState<CouncilStatus | null>(null);
@@ -448,7 +447,7 @@ export default function AutopilotDashboardPage() {
                 <div>
                     <h1 className="text-xl font-bold flex items-center gap-2">
                         <Bot className="h-5 w-5 text-purple-400" />
-                        OpenCode Autopilot
+                        Borg Orchestrator
                     </h1>
                     <p className="text-zinc-400 text-sm">Multi-model AI council governance &amp; session management</p>
                 </div>
@@ -476,7 +475,7 @@ export default function AutopilotDashboardPage() {
                         <ExternalLink className="h-3 w-3" /> Open Standalone UI
                     </a>
                     <a
-                        href="https://github.com/robertpelloni/opencode-autopilot"
+                        href="https://github.com/robertpelloni/borg"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-xs flex items-center gap-1.5"
@@ -491,10 +490,10 @@ export default function AutopilotDashboardPage() {
                 <div className="mx-4 mt-3 px-3 py-2.5 bg-red-950/30 border border-red-700/50 rounded-lg flex flex-wrap items-start gap-2 text-sm">
                     <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
                     <div>
-                        <p className="text-red-300 font-medium">OpenCode Autopilot server is not reachable.</p>
+                        <p className="text-red-300 font-medium">Borg Orchestrator is not reachable.</p>
                         <p className="text-red-400/70 text-xs mt-0.5">
-                            Configure <code className="bg-red-950/50 px-1 rounded">NEXT_PUBLIC_AUTOPILOT_URL</code> (current: {serverUrl}).
-                            Start the server: <code className="bg-red-950/50 px-1 rounded">cd packages/opencode-autopilot &amp;&amp; bun run dev</code>
+                            Configure <code className="bg-red-950/50 px-1 rounded">NEXT_PUBLIC_BORG_ORCHESTRATOR_URL</code> (current: {serverUrl}).
+                            The legacy <code className="bg-red-950/50 px-1 rounded">NEXT_PUBLIC_AUTOPILOT_URL</code> alias still works during migration.
                         </p>
                     </div>
                 </div>
@@ -502,15 +501,15 @@ export default function AutopilotDashboardPage() {
             {online === null && (
                 <div className="mx-4 mt-3 px-3 py-2.5 bg-zinc-900 border border-zinc-700 rounded-lg flex items-center gap-2 text-sm text-zinc-400">
                     <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                    Connecting to OpenCode Autopilot server at {serverUrl}…
+                    Connecting to Borg Orchestrator at {serverUrl}…
                 </div>
             )}
             {online && (
                 <div className="px-4 pt-3">
                     <PageStatusBanner
                         status="experimental"
-                        message="OpenCode Autopilot integration"
-                        note="Native Borg dashboard backed by the opencode-autopilot REST API. Start the server to enable full functionality."
+                        message="Borg Orchestrator integration"
+                        note="Native Borg dashboard for council governance, session supervision, and smart-pilot workflows. Legacy autopilot env names remain supported during migration."
                     />
                 </div>
             )}
@@ -618,7 +617,7 @@ export default function AutopilotDashboardPage() {
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-xs text-zinc-600">No supervisors registered. Add API keys to the autopilot server to auto-register supervisors.</p>
+                            <p className="text-xs text-zinc-600">No supervisors registered. Add provider credentials so Borg Orchestrator can auto-register supervisors.</p>
                         )}
                     </div>
                 </SectionCard>

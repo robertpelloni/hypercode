@@ -1,7 +1,7 @@
 ## 🏗️ Technical Architecture
 
 ### Overview
-Borg Orchestrator is a TypeScript monorepo application that implements a multi-model AI council for autonomous development guidance. Multiple AI supervisors debate and vote on code changes through a democratic process.
+Borg Orchestrator is the council and session-supervision subsystem inside the Borg monorepo. This document describes the original standalone architecture that informed the integrated runtime now hosted in Borg core and the web dashboard.
 
 ### Monorepo Structure
 
@@ -135,6 +135,14 @@ OPENAI_API_KEY, ANTHROPIC_API_KEY, DEEPSEEK_API_KEY,
 GEMINI_API_KEY, GROK_API_KEY, QWEN_API_KEY, KIMI_API_KEY
 
 # Server Config
+BORG_ORCHESTRATOR_PORT=3847
+BORG_ORCHESTRATOR_HOST=0.0.0.0
+BORG_ORCHESTRATOR_BASE_PORT=4096
+BORG_ORCHESTRATOR_DEBATE_ROUNDS=2
+BORG_ORCHESTRATOR_CONSENSUS=0.7
+BORG_ORCHESTRATOR_SMART_PILOT=false
+
+# Legacy compatibility aliases
 AUTOPILOT_PORT=3847
 AUTOPILOT_HOST=0.0.0.0
 AUTOPILOT_BASE_PORT=4096
@@ -143,7 +151,7 @@ AUTOPILOT_CONSENSUS=0.7
 AUTOPILOT_SMART_PILOT=false
 ```
 
-**Config File** (`.autopilot/config.json`)
+**Config File** (`.borg/orchestrator/config.json`, with `.autopilot/config.json` still supported as a legacy fallback)
 ```json
 {
   "council": {

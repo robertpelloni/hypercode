@@ -59,6 +59,7 @@ import { infrastructureRouter } from './routers/infrastructureRouter.js';
 import { ragRouter } from './routers/ragRouter.js';
 import { catalogRouter } from './routers/catalogRouter.js';
 import { projectRouter } from './routers/projectRouter.js';
+import { linksBacklogRouter } from './routers/linksBacklogRouter.js';
 
 // import { type AnyTRPCRouter } from '@trpc/server';
 
@@ -120,6 +121,7 @@ export const appRouter = t.router({
     infrastructure: infrastructureRouter,
     rag: ragRouter,
     catalog: catalogRouter,
+    linksBacklog: linksBacklogRouter,
 });
 
 export type AppRouter = typeof appRouter;

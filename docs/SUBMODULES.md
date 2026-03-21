@@ -4,7 +4,7 @@ Borg uses a highly modular architecture that integrates numerous best-in-class u
 
 ## Directory Structure
 
-*   `archive/`: Contains deprecated or deeply integrated submodules (e.g., `opencode-autopilot` which was integrated into core).
+*   `archive/`: Contains deprecated or deeply integrated submodules (e.g., the former `opencode-autopilot`, now assimilated as Borg Orchestrator inside core).
 *   `packages/`: Houses core internal libraries, tools, and some submoduled logic (like `claude-mem`).
 *   `external/`: Houses large upstream reference projects (e.g., MetaMCP, OmniRoute).
 

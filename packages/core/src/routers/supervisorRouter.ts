@@ -17,12 +17,12 @@ export const supervisorRouter = t.router({
         goal: z.string(),
         maxSteps: z.number().default(20)
     })).mutation(async ({ input }) => {
-        // Phase 76 Integration: Inject OpenCode's advanced file-watching and context synthesis logic
+        // Phase 76 Integration: delegate to Borg Orchestrator when its council runtime is available
         try {
             const res = await fetch(`http://localhost:3847/api/sessions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // opencode-autopilot session manager accepts task + options
+                // The orchestrator session manager accepts task + workingDirectory
                 body: JSON.stringify({
                     task: { description: input.goal },
                     workingDirectory: process.cwd()
@@ -38,11 +38,11 @@ export const supervisorRouter = t.router({
                 return {
                     success: true,
                     sessionId: sessionData.id,
-                    message: "Goal successfully delegated to OpenCode Autopilot."
+                    message: "Goal successfully delegated to Borg Orchestrator."
                 };
             }
         } catch (e: any) {
-            console.warn(`[Supervisor] OpenCode Autopilot unavailable (${e.message}). Falling back to native supervisor.`);
+            console.warn(`[Supervisor] Borg Orchestrator unavailable (${e.message}). Falling back to native supervisor.`);
         }
 
         const server = getMcpServer();
@@ -51,13 +51,13 @@ export const supervisorRouter = t.router({
 
     /** Get current supervisor status - active tasks, workers, queue depth */
     status: t.procedure.query(async () => {
-        // Attempt to aggregate stats from Opencode Autopilot
-        let opencodeActive = 0;
+        // Attempt to aggregate stats from Borg Orchestrator
+        let orchestratorActive = 0;
         try {
             const res = await fetch(`http://localhost:3847/api/health`);
             if (res.ok) {
                 const data = await res.json();
-                opencodeActive = data.sessions?.active || 0;
+                orchestratorActive = data.sessions?.active || 0;
             }
         } catch (e) {
             // Ignore if down
@@ -67,7 +67,7 @@ export const supervisorRouter = t.router({
         const sup = server.supervisor;
         return {
             isActive: sup.isActive?.() ?? false,
-            activeWorkers: (sup.getActiveWorkers?.() ?? []).concat(opencodeActive > 0 ? [`OpenCode (${opencodeActive})`] : []),
+            activeWorkers: (sup.getActiveWorkers?.() ?? []).concat(orchestratorActive > 0 ? [`Orchestrator (${orchestratorActive})`] : []),
             queueDepth: sup.getQueueDepth?.() ?? 0,
             lastActivity: sup.getLastActivity?.() ?? null,
             totalTasksCompleted: sup.getTotalCompleted?.() ?? 0,
@@ -79,14 +79,14 @@ export const supervisorRouter = t.router({
         limit: z.number().min(1).max(100).default(20),
         status: z.enum(['all', 'pending', 'active', 'completed', 'failed']).default('all'),
     }).optional()).query(async ({ input }) => {
-        let opencodeTasks: any[] = [];
+        let orchestratorTasks: any[] = [];
         try {
             const res = await fetch(`http://localhost:3847/api/sessions`);
             if (res.ok) {
                 const data = await res.json();
-                opencodeTasks = data.map((d: any) => ({
+                orchestratorTasks = data.map((d: any) => ({
                     id: d.id,
-                    description: d.currentTask || 'OpenCode Session',
+                    description: d.currentTask || 'Orchestrator Session',
                     status: d.status === 'running' ? 'active' : d.status
                 }));
             }
@@ -95,7 +95,7 @@ export const supervisorRouter = t.router({
         const server = getMcpServer();
         const sup = server.supervisor;
         let allTasks = sup.listTasks?.() ?? [];
-        allTasks = [...allTasks, ...opencodeTasks];
+        allTasks = [...allTasks, ...orchestratorTasks];
 
         const filtered = input?.status === 'all'
             ? allTasks

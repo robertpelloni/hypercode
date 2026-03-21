@@ -4,6 +4,8 @@
 
 A multi-model AI council for autonomous development guidance. Multiple AI supervisors debate and vote on code changes through a democratic process.
 
+This document describes the legacy standalone council architecture that has now been assimilated into the Borg monorepo. The canonical product name is **Borg Orchestrator**. Legacy `AUTOPILOT_*` environment variables remain supported for compatibility, but new deployments should prefer `BORG_ORCHESTRATOR_*`.
+
 ## Architecture
 
 ```
@@ -61,12 +63,20 @@ KIMI_API_KEY            # Kimi supervisor (or MOONSHOT_API_KEY)
 
 ### Server Configuration
 ```bash
-AUTOPILOT_PORT=3847           # API server port
-AUTOPILOT_HOST=0.0.0.0        # Bind address
-AUTOPILOT_BASE_PORT=4096      # Session base port
-AUTOPILOT_DEBATE_ROUNDS=2     # Number of debate rounds
-AUTOPILOT_CONSENSUS=0.7       # Consensus threshold (70%)
-AUTOPILOT_SMART_PILOT=false   # Enable auto-continue
+BORG_ORCHESTRATOR_PORT=3847           # API server port
+BORG_ORCHESTRATOR_HOST=0.0.0.0        # Bind address
+BORG_ORCHESTRATOR_BASE_PORT=4096      # Session base port
+BORG_ORCHESTRATOR_DEBATE_ROUNDS=2     # Number of debate rounds
+BORG_ORCHESTRATOR_CONSENSUS=0.7       # Consensus threshold (70%)
+BORG_ORCHESTRATOR_SMART_PILOT=false   # Enable auto-continue
+
+# Legacy compatibility aliases still accepted:
+AUTOPILOT_PORT=3847
+AUTOPILOT_HOST=0.0.0.0
+AUTOPILOT_BASE_PORT=4096
+AUTOPILOT_DEBATE_ROUNDS=2
+AUTOPILOT_CONSENSUS=0.7
+AUTOPILOT_SMART_PILOT=false
 ```
 
 ## API Endpoints

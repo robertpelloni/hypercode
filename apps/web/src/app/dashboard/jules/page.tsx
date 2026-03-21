@@ -71,7 +71,7 @@ function safeStorageRemove(key: string): void {
 
 export default function JulesDashboardPage() {
   const embeddedUrl = useMemo(
-    () => process.env.NEXT_PUBLIC_JULES_DASHBOARD_URL || "http://localhost:3002/jules/autopilot",
+    () => process.env.NEXT_PUBLIC_JULES_DASHBOARD_URL || "http://localhost:3002/dashboard",
     [],
   );
 
@@ -189,7 +189,7 @@ export default function JulesDashboardPage() {
       </div>
       <div className="p-4 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3 bg-zinc-900">
         <div>
-          <h1 className="text-xl font-bold">Jules Autopilot</h1>
+          <h1 className="text-xl font-bold">Jules Orchestrator</h1>
           <p className="text-zinc-400 text-sm">Run and supervise Jules sessions directly from Borg.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -317,7 +317,7 @@ export default function JulesDashboardPage() {
       <div className="flex-1 relative bg-black min-h-[70vh]">
         <iframe
           src={embeddedUrl}
-          title="Jules Autopilot"
+          title="Jules Dashboard"
           className="w-full h-full border-0"
           allow="clipboard-read; clipboard-write"
         />

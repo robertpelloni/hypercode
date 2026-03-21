@@ -240,11 +240,11 @@ export default function AIToolsDashboard() {
                         Local session supervisor
                     </Link>
                     <a href="https://github.com/robertpelloni/jules-autopilot" target="_blank" rel="noreferrer" className="rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900 inline-flex items-center justify-between gap-2">
-                        Jules Autopilot reference
+                        Jules legacy reference
                         <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
                     </a>
                     <a href="https://github.com/robertpelloni/opencode-autopilot" target="_blank" rel="noreferrer" className="rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900 inline-flex items-center justify-between gap-2">
-                        OpenCode Autopilot reference
+                        Borg Orchestrator legacy source
                         <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
                     </a>
                 </CardContent>

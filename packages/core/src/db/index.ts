@@ -451,6 +451,38 @@ function initializeSchema(database: InstanceType<typeof Database>): void {
         CREATE INDEX IF NOT EXISTS pmvr_outcome_idx ON published_mcp_validation_runs(outcome);
         CREATE INDEX IF NOT EXISTS pmvr_created_at_idx ON published_mcp_validation_runs(created_at);
 
+        -- links_backlog: canonical Borg link backlog (BobbyBookmarks + future sources)
+        CREATE TABLE IF NOT EXISTS links_backlog (
+            uuid TEXT PRIMARY KEY,
+            url TEXT NOT NULL,
+            normalized_url TEXT NOT NULL UNIQUE,
+            title TEXT,
+            description TEXT,
+            tags TEXT NOT NULL DEFAULT '[]',
+            source TEXT NOT NULL DEFAULT 'manual',
+            is_duplicate INTEGER NOT NULL DEFAULT 0,
+            duplicate_of TEXT,
+            research_status TEXT NOT NULL DEFAULT 'pending',
+            http_status INTEGER,
+            page_title TEXT,
+            page_description TEXT,
+            favicon_url TEXT,
+            researched_at INTEGER,
+            cluster_id TEXT,
+            bobbybookmarks_bookmark_id INTEGER,
+            import_session_id INTEGER,
+            raw_payload TEXT,
+            synced_at INTEGER,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+            updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        );
+
+        CREATE INDEX IF NOT EXISTS links_backlog_normalized_url_idx ON links_backlog(normalized_url);
+        CREATE INDEX IF NOT EXISTS links_backlog_source_idx ON links_backlog(source);
+        CREATE INDEX IF NOT EXISTS links_backlog_research_status_idx ON links_backlog(research_status);
+        CREATE INDEX IF NOT EXISTS links_backlog_cluster_id_idx ON links_backlog(cluster_id);
+        CREATE INDEX IF NOT EXISTS links_backlog_synced_at_idx ON links_backlog(synced_at);
+
         -- Council Tables
         CREATE TABLE IF NOT EXISTS council_debates (
             id TEXT PRIMARY KEY,

@@ -703,6 +703,7 @@ export const ValidationRunModeEnum = ["transport_probe", "tools_list", "smoke_te
 
 /** Enum: validation run outcome */
 export const ValidationRunOutcomeEnum = ["pending", "passed", "failed", "error", "timeout", "skipped"] as const;
+export const LinkBacklogResearchStatusEnum = ["pending", "running", "done", "failed", "skipped"] as const;
 
 /**
  * Table: published_mcp_servers
@@ -894,5 +895,54 @@ export const publishedMcpValidationRunsTable = sqliteTable(
         serverIdx: index("pmvr_server_uuid_idx").on(table.server_uuid),
         outcomeIdx: index("pmvr_outcome_idx").on(table.outcome),
         createdIdx: index("pmvr_created_at_idx").on(table.created_at),
+    })
+);
+
+/**
+ * Table: links_backlog
+ * Canonical Borg link backlog, initially fed by BobbyBookmarks and designed to
+ * become one of the data sources for the universal integrated MCP directory.
+ */
+export const linksBacklogTable = sqliteTable(
+    "links_backlog",
+    {
+        uuid: text("uuid").primaryKey(),
+        url: text("url").notNull(),
+        normalized_url: text("normalized_url").notNull().unique(),
+        title: text("title"),
+        description: text("description"),
+        tags: text("tags", { mode: "json" })
+            .$type<string[]>()
+            .notNull()
+            .default(sql`'[]'`),
+        source: text("source").notNull().default("manual"),
+        is_duplicate: integer("is_duplicate", { mode: "boolean" }).notNull().default(false),
+        duplicate_of: text("duplicate_of"),
+        research_status: text("research_status", { enum: LinkBacklogResearchStatusEnum })
+            .notNull()
+            .default("pending"),
+        http_status: integer("http_status"),
+        page_title: text("page_title"),
+        page_description: text("page_description"),
+        favicon_url: text("favicon_url"),
+        researched_at: integer("researched_at", { mode: "timestamp" }),
+        cluster_id: text("cluster_id"),
+        bobbybookmarks_bookmark_id: integer("bobbybookmarks_bookmark_id"),
+        import_session_id: integer("import_session_id"),
+        raw_payload: text("raw_payload", { mode: "json" }).$type<Record<string, unknown> | null>(),
+        synced_at: integer("synced_at", { mode: "timestamp" }),
+        created_at: integer("created_at", { mode: "timestamp" })
+            .notNull()
+            .default(sql`(strftime('%s', 'now'))`),
+        updated_at: integer("updated_at", { mode: "timestamp" })
+            .notNull()
+            .default(sql`(strftime('%s', 'now'))`),
+    },
+    (table) => ({
+        normalizedIdx: index("links_backlog_normalized_url_idx").on(table.normalized_url),
+        sourceIdx: index("links_backlog_source_idx").on(table.source),
+        researchStatusIdx: index("links_backlog_research_status_idx").on(table.research_status),
+        clusterIdx: index("links_backlog_cluster_id_idx").on(table.cluster_id),
+        syncedAtIdx: index("links_backlog_synced_at_idx").on(table.synced_at),
     })
 );

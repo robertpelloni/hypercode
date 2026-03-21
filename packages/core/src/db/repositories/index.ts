@@ -24,3 +24,4 @@ export * from "./logs.repo.js";
 export * from "./policies.repo.js";
 export * from "./saved-scripts.repo.js";
 export * from "./published-catalog.repo.js";
+export * from "./links-backlog.repo.js";

@@ -2,7 +2,12 @@ import type { CouncilConfig, SupervisorConfig, SessionTemplate, LogRotationConfi
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 
-const CONFIG_DIR = process.env.AUTOPILOT_CONFIG_DIR || join(process.cwd(), '.autopilot');
+const DEFAULT_ORCHESTRATOR_CONFIG_DIR = join(process.cwd(), '.borg', 'orchestrator');
+const LEGACY_CONFIG_DIR = process.env.AUTOPILOT_CONFIG_DIR || join(process.cwd(), '.autopilot');
+const CONFIG_DIR = process.env.BORG_ORCHESTRATOR_CONFIG_DIR
+  || process.env.AUTOPILOT_CONFIG_DIR
+  || (existsSync(join(DEFAULT_ORCHESTRATOR_CONFIG_DIR, 'config.json')) ? DEFAULT_ORCHESTRATOR_CONFIG_DIR : undefined)
+  || (existsSync(join(LEGACY_CONFIG_DIR, 'config.json')) ? LEGACY_CONFIG_DIR : DEFAULT_ORCHESTRATOR_CONFIG_DIR);
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 
 export interface PersistenceConfig {
@@ -57,7 +62,7 @@ const DEFAULT_CONFIG: AutopilotConfig = {
   },
   persistence: {
     enabled: true,
-    filePath: '.autopilot/sessions.json',
+    filePath: '.borg/orchestrator/sessions.json',
     autoSaveIntervalMs: 5000,
     autoResumeOnStart: true,
     maxPersistedSessions: 100,
@@ -181,6 +186,16 @@ function loadSupervisorsFromEnv(): SupervisorConfig[] {
   return supervisors;
 }
 
+function getEnvValue(...names: string[]): string | undefined {
+  for (const name of names) {
+    const value = process.env[name];
+    if (typeof value === 'string' && value.length > 0) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
 export function loadConfig(): AutopilotConfig {
   let config = { ...DEFAULT_CONFIG };
 
@@ -216,23 +231,29 @@ export function loadConfig(): AutopilotConfig {
     }
   }
 
-  if (process.env.AUTOPILOT_PORT) {
-    config.server.port = parseInt(process.env.AUTOPILOT_PORT);
+  const orchestratorPort = getEnvValue('BORG_ORCHESTRATOR_PORT', 'AUTOPILOT_PORT');
+  if (orchestratorPort) {
+    config.server.port = parseInt(orchestratorPort);
   }
-  if (process.env.AUTOPILOT_HOST) {
-    config.server.host = process.env.AUTOPILOT_HOST;
+  const orchestratorHost = getEnvValue('BORG_ORCHESTRATOR_HOST', 'AUTOPILOT_HOST');
+  if (orchestratorHost) {
+    config.server.host = orchestratorHost;
   }
-  if (process.env.AUTOPILOT_BASE_PORT) {
-    config.sessions.basePort = parseInt(process.env.AUTOPILOT_BASE_PORT);
+  const basePort = getEnvValue('BORG_ORCHESTRATOR_BASE_PORT', 'AUTOPILOT_BASE_PORT');
+  if (basePort) {
+    config.sessions.basePort = parseInt(basePort);
   }
-  if (process.env.AUTOPILOT_DEBATE_ROUNDS) {
-    config.council.debateRounds = parseInt(process.env.AUTOPILOT_DEBATE_ROUNDS);
+  const debateRounds = getEnvValue('BORG_ORCHESTRATOR_DEBATE_ROUNDS', 'AUTOPILOT_DEBATE_ROUNDS');
+  if (debateRounds) {
+    config.council.debateRounds = parseInt(debateRounds);
   }
-  if (process.env.AUTOPILOT_CONSENSUS) {
-    config.council.consensusThreshold = parseFloat(process.env.AUTOPILOT_CONSENSUS);
+  const consensusThreshold = getEnvValue('BORG_ORCHESTRATOR_CONSENSUS', 'AUTOPILOT_CONSENSUS');
+  if (consensusThreshold) {
+    config.council.consensusThreshold = parseFloat(consensusThreshold);
   }
-  if (process.env.AUTOPILOT_SMART_PILOT) {
-    config.council.smartPilot = process.env.AUTOPILOT_SMART_PILOT === 'true';
+  const smartPilot = getEnvValue('BORG_ORCHESTRATOR_SMART_PILOT', 'AUTOPILOT_SMART_PILOT');
+  if (smartPilot) {
+    config.council.smartPilot = smartPilot === 'true';
   }
 
   return config;
