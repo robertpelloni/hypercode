@@ -1,149 +1,32 @@
-# Handoff – 2026-03-20
+# Handoff & Session Learnings (2026-03-20)
 
-## Delta update (latest)
+## Session Summary
+In this session, we undertook a massive structural realignment of the Borg Cognitive Control Plane. The goal was to cement the "Mega-Dashboard" vision, incorporating all requirements for an ultimate universal AI tool dashboard, complete with browser/IDE extensions, an MCP router/aggregator/proxy, autonomous council supervision, and omniscient memory.
 
-### MCP search UI now uses true partial preference patches
-- Updated `apps/web/src/app/dashboard/mcp/search/page.tsx` to send minimal preference patch payloads instead of full snapshots.
-  - Important toggle patches only `importantTools`.
-  - Keep-warm toggle patches only `alwaysLoadedTools`.
-  - Auto-load confidence save patches only `autoLoadMinConfidence`.
-  - Capacity save patches only capacity/idle fields.
-- Removed `as never` cast from `setPreferencesMutation.mutate(...)`.
-- Rationale: with backend patch-merge semantics in place, partial payloads reduce stale-state overwrite risk and keep client intent explicit.
+## Accomplishments
+1.  **Documentation Overhaul**:
+    *   Rewrote `VISION.md` to perfectly capture the 6 pillars of the project: The Universal AI Dashboard, The Universal MCP Intelligence Layer, The Ultimate AI Coding Harness, Omniscient Memory & RAG, Multi-Agent Swarms & Council, and Universal Integrations.
+    *   Updated `ROADMAP.md` mapping out Phases I through M to track the implementation of these features.
+    *   Generated a highly granular `TODO.md` to track short-term implementations.
+    *   Unified all LLM instructions into `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` and updated `GEMINI.md`, `CLAUDE.md`, `GPT.md`, `AGENTS.md`, and `copilot-instructions.md` to inherit from it.
+    *   Created `docs/SUBMODULES.md` to track submodule origins, and added `MEMORY.md` and `DEPLOY.md`.
+2.  **Council / Auto-Orchestrator Assimilation**:
+    *   Successfully assimilated `opencode-autopilot` (now Borg Orchestrator) into `@borg/core`.
+    *   Migrated the Bun/Hono backend to Node/Express/tRPC.
+    *   Wired the logic into Borg's `Drizzle ORM` schema and `SessionSupervisor`.
+    *   Built the "Roundtable" Next.js dashboard view, bringing the council UI into the central app.
+    *   Purged the old submodule.
+3.  **Intelligent Model Fallback**:
+    *   Updated `packages/ai/src/ModelSelector.ts` to implement the specific fallback chain requested by the user (`Gemini 3 Pro` -> `Codex 5.3` -> `Claude Opus 4.6`). This ensures the system automatically switches providers when quota limits are reached.
 
-### Verification (post-change)
-- `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
-- `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
+## Learnings & Non-Obvious Discoveries
+*   **Submodule UI**: I discovered that `apps/web/src/app/dashboard/submodules/page.tsx` *already* has a highly functional UI for mapping the directory structure, reading `.gitmodules`, and extracting package versions dynamically using Node's `child_process`. We do not need to rebuild this; we only need to maintain `docs/SUBMODULES.md` as a textual reference.
+*   **Model Routing Logic**: The `LLMService.ts` and `ModelSelector.ts` are tightly coupled. `LLMService` catches 429/Quota errors and calls `modelSelector.reportFailure()`, which marks that provider as depleted and automatically fetches the next candidate in the chain. This is highly robust and requires minimal changes beyond updating the arrays in `DEFAULT_CHAINS`.
+*   **Worktree/Submodule Collisions**: During the commit process, I noticed an embedded git repository inside `packages/claude-mem.worktrees`. It is critical to use `git rm --cached` on these immediately to avoid polluting the git index.
 
-### Backend hardening: safe partial `setToolPreferences` patches
-- Updated `packages/core/src/routers/mcpRouter.ts` so `mcp.setToolPreferences` accepts optional fields and merges patches with current persisted preferences before write.
-- Added `applyToolPreferencePatch(...)` to `packages/core/src/routers/mcp-tool-preferences.ts` to centralize patch merge + normalization semantics.
-- Added focused test coverage in `packages/core/src/routers/mcp-tool-preferences.test.ts`:
-  - partial patch preserves omitted values,
-  - patched values are clamped/normalized while untouched fields remain intact.
-- This closes the broader default-overwrite class beyond UI-only payload fixes.
+## Next Steps for the Next Model
+1.  **Merge Feature Branches**: We deferred a blind mass-merge of the 30+ feature branches to avoid catastrophic conflicts. The next model should systematically inspect branches like `feat/top-features`, `feat/login`, and `feat/engagement_modules` and merge them safely into `main-clean`.
+2.  **Implement NotebookLM Integration**: Begin work on Phase I (Omniscient Memory), specifically the file parsing and citation-backed answer generation.
+3.  **UI Polish**: The new `RoundtableDashboard.tsx` has some placeholder text in the Activity Logs. Hook this up to a real Zustand store or tRPC subscription.
 
-### Verification (post-change)
-- `pnpm -C packages/core exec vitest run src/routers/mcp-tool-preferences.test.ts --reporter=basic` ✅
-- `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
-- `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
-
-### MCP search preferences regression fix (idle eviction threshold preservation)
-- Patched `apps/web/src/app/dashboard/mcp/search/page.tsx` so partial preference updates no longer reset `idleEvictionThresholdMs` via server-side defaults.
-- Root cause: `mcp.setToolPreferences` input schema uses defaults for omitted fields; UI actions (`toggleImportant`, `toggleAlwaysLoaded`, `saveAutoLoadMinConfidence`) were omitting `idleEvictionThresholdMs`.
-- Fix: every preferences mutation path now includes `idleEvictionThresholdMs: preferences.idleEvictionThresholdMs`.
-- Operator impact: changing important/keep-warm/autoload confidence no longer silently reverts idle-eviction policy to 5 minutes.
-
-### Verification (post-change)
-- `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
-- File diagnostics for `apps/web/src/app/dashboard/mcp/search/page.tsx` report no errors ✅
-
-### VS Code task hygiene (Vitest reporter + duplicate task cleanup)
-- Fixed `verify: mcp discovery guards` in `.vscode/tasks.json` by removing unsupported Vitest flag `--reporter=basic`.
-- Confirmed task execution now passes:
-  - `pnpm exec vitest run packages/core/test/mcpDiscoveryFailureHandling.test.ts packages/core/test/HealerReactor.test.ts` ✅
-- Removed duplicate task entries for `core: typecheck` / `web: build-webpack` to reduce task picker ambiguity and keep task IDs deterministic.
-- Re-validated `core: typecheck-marker` task after cleanup (`CORE_TSC_OK`) ✅
-- Follow-up cleanup removed additional duplicate variants:
-  - `web: tsc verify current 2`
-  - `root: build extensions validate 2`
-  - `verify: mcp discovery guards clean`, `clean 2`, `clean 3`
-- Re-validated after second pass:
-  - `web: tsc verify current` ✅
-  - `verify: mcp discovery guards` ✅
-
-### Published catalog → managed install workflow (operator action)
-- Added `catalog.installFromRecipe` admin mutation in `packages/core/src/routers/catalogRouter.ts`.
-- New install mutation behavior:
-  - allows install only for `validated`/`certified` published entries,
-  - requires an active recipe,
-  - maps recipe template fields into managed `mcp_servers` create input with transport-aware logic,
-  - enforces required secrets (`required_secrets`) before create,
-  - auto-generates a unique, safe server name if needed.
-- Updated `apps/web/src/app/dashboard/registry/page.tsx` with a row-level `Install` action (download icon), enabled only for validated/certified rows.
-- Install success now refreshes both published catalog list and managed MCP server list caches.
-- Improved `/dashboard/registry` install UX with a guided modal:
-  - opens from row-level Install action,
-  - loads active recipe detail via `catalog.get`,
-  - renders inputs for `required_env` defaults and `required_secrets`,
-  - submits merged values into `catalog.installFromRecipe`.
-
-### Verification (post-change)
-- `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
-- `pnpm -C apps/web build --webpack` ✅
-- Edited files report no diagnostics in workspace Problems for this slice ✅
-- Guided install modal wiring in `apps/web/src/app/dashboard/registry/page.tsx` reports no TypeScript diagnostics ✅
-
-### MCP registry/catalog workflow unification (UI)
-- Updated `apps/web/src/app/dashboard/mcp/registry/page.tsx` to include a `Published Catalog Intelligence` panel.
-- Added live metrics sourced from `trpc.catalog.stats` (total, validated, broken, updated 24h).
-- Added an explicit deep-link CTA to `/dashboard/registry` to route operators from quick-install templates to the provenance/validation-first catalog surface.
-- Clarified split responsibilities in-page to reduce operator ambiguity between install templates and verified catalog workflows.
-
-### Verification (post-change)
-- `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
-- `pnpm -C apps/web build --webpack` ✅
-- `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
-
-### Catalog freshness metric completed
-- Implemented a real `recentlyUpdated` metric for the published catalog API:
-  - Added `countRecentlyUpdated(hours = 24)` to `packages/core/src/db/repositories/published-catalog.repo.ts`
-  - Uses `updated_at >= now - 24h` on `published_mcp_servers` (no placeholder counting)
-- Wired `packages/core/src/routers/catalogRouter.ts` `stats` procedure to use this real metric instead of the previous temporary total-count fallback.
-- Updated `/dashboard/registry` UI (`apps/web/src/app/dashboard/registry/page.tsx`) to display a new `Updated 24h` stat card.
-
-### Verification (post-change)
-- `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
-- `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
-- `pnpm -C apps/web build --webpack` ✅
-
-### Notes for next session
-- Build is currently green; no reproducible web build failure remains from earlier task context.
-- Next likely high-value step: unify `/dashboard/mcp/registry` and `/dashboard/registry` operator experience (navigation clarity + workflow handoff), then add richer catalog detail drilldown (sources + latest validation run per row).
-
-## What changed in this session
-
-### Runtime warning stabilization
-- Patched `packages/ui/src/components/ui/use-toast.tsx` to avoid re-subscribing toast listeners on every state change (`useEffect` deps changed from `[state]` to `[]`).
-- This targets the React warning about state updates on unmounted/not-yet-mounted components in the layout/provider tree.
-
-### Verification done
-- Type checks and targeted tests passed in prior steps.
-- A traced `apps/web` production build completed successfully after earlier intermittent failure, indicating stale/transient artifact behavior rather than deterministic compile break.
-
-### Strategic direction clarified
-- Canonical priority is now **MCP Registry Intelligence P0**:
-  1. published catalog persistence,
-  2. ingestion/provenance/dedupe,
-  3. config intelligence,
-  4. validation harness,
-  5. operator install workflow.
-- Updated top authoritative blocks in `ROADMAP.md` and `TODO.md` (both now dated `2026-03-20`).
-
-## External research ingested
-
-High-signal references reviewed:
-- MCPProxy docs (`config-file`, `upstream-servers`, `docker-isolation`, `sensitive-data-detection`)
-- MetaMCP docs (`quickstart`, concepts)
-- MCPHub docs (`quickstart`, endpoint model)
-- mcp-use/manufact docs (`agent/client/server overview`, TypeScript agent config)
-- ContextForge roadmap page for ecosystem-scale validation and catalog governance patterns
-
-Two repos still unresolved by extractor:
-- `https://github.com/robertpelloni/pluggedin-app`
-- `https://github.com/robertpelloni/mcp-tool-chainer`
-
-## Recommended next coding step (immediate)
-
-Implement DB primitives in core for published-catalog + validation history:
-- `published_mcp_servers`
-- `published_mcp_server_sources`
-- `published_mcp_validation_runs`
-- `published_mcp_config_recipes`
-
-Then wire one ingestion adapter end-to-end (single source) and one UI read path.
-
-## Risks / watchouts
-- Avoid mixing published and installed states in one status field.
-- Preserve provenance/raw payload references for auditability.
-- Ensure secrets are modeled as requirements/placeholders only (never persisted as plaintext values).
+End of Line.
