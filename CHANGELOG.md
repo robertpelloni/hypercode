@@ -4,6 +4,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.15] — 2026-03-21
+
+### Unified Directory One-Click Filter Reset
+
+- feat(web/unified-directory): Added a `Clear filters` action to `apps/web/src/app/dashboard/mcp/unified-directory/page.tsx`.
+  - Resets search, source, backlog research status, duplicate toggles, and pagination to defaults in one click.
+  - Improves triage workflow speed after deep-linking or multi-filter exploration.
+
+- verification:
+  - `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
+  - `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
+
 ## [0.10.14] — 2026-03-21
 
 ### Unified Directory Effective URL Prefilter Detection

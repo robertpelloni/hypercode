@@ -207,6 +207,21 @@ export default function UnifiedDirectoryPage() {
                     />
                     Only duplicate backlog links
                 </label>
+
+                <button
+                    type="button"
+                    onClick={() => {
+                        setSearch("");
+                        setSource("all");
+                        setResearchStatus("");
+                        setShowDuplicates(false);
+                        setDuplicatesOnly(false);
+                        setPage(0);
+                    }}
+                    className="h-9 px-3 rounded-lg border border-zinc-700 text-sm text-zinc-300 hover:text-zinc-100 hover:border-zinc-500"
+                >
+                    Clear filters
+                </button>
             </div>
 
             <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl overflow-hidden">
