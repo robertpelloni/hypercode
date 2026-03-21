@@ -73,20 +73,24 @@ export default function UnifiedDirectoryPage() {
     }, [querySearch, querySource, queryResearchStatus, queryShowDuplicates, queryDuplicatesOnly]);
 
     const { data: stats } = trpc.unifiedDirectory.stats.useQuery();
+    const backlogFiltersEnabled = source !== "catalog";
+    const effectiveShowDuplicates = backlogFiltersEnabled && (showDuplicates || duplicatesOnly);
+    const effectiveDuplicatesOnly = backlogFiltersEnabled && duplicatesOnly;
+    const effectiveResearchStatus = backlogFiltersEnabled ? (researchStatus || undefined) : undefined;
+
     const { data, isLoading, isFetching } = trpc.unifiedDirectory.list.useQuery({
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE,
         search: search.trim() || undefined,
         source,
-        research_status: researchStatus || undefined,
-        show_duplicates: showDuplicates || duplicatesOnly,
-        duplicates_only: duplicatesOnly,
+        research_status: effectiveResearchStatus,
+        show_duplicates: effectiveShowDuplicates,
+        duplicates_only: effectiveDuplicatesOnly,
     });
 
     const items = data?.items ?? [];
     const total = data?.total ?? 0;
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-    const backlogFiltersEnabled = source !== "catalog";
 
     const subtitle = useMemo(() => {
         if (!stats) return "";

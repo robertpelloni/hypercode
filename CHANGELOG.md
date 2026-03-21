@@ -4,6 +4,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.12] — 2026-03-21
+
+### Unified Directory Source-Aware Backlog Filter Forwarding
+
+- feat(web/unified-directory): Updated `apps/web/src/app/dashboard/mcp/unified-directory/page.tsx` to make request payloads source-aware, not just control states.
+  - In `Catalog only` mode, backlog-specific query fields are now suppressed at request time:
+    - `research_status` is omitted
+    - `show_duplicates` resolves to `false`
+    - `duplicates_only` resolves to `false`
+  - This keeps backend inputs aligned with visible UI state and avoids hidden filter carry-over semantics when backlog source is out of scope.
+
+- verification:
+  - `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
+  - `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
+
 ## [0.10.11] — 2026-03-21
 
 ### Unified Directory Source-Aware Backlog Filter Gating
