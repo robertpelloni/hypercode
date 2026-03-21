@@ -4,6 +4,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.2] — 2026-03-21
+
+### Unified Directory Validation Hardening
+
+- test(core/router): Added focused coverage for `packages/core/src/routers/unifiedDirectoryRouter.ts` in `packages/core/src/routers/unifiedDirectoryRouter.test.ts`.
+  - verifies merged list behavior across catalog + backlog sources
+  - verifies global recency sort ordering across source boundaries
+  - verifies source filtering (`catalog` vs `backlog`) skips unnecessary repository calls
+  - verifies backlog duplicate toggle is forwarded correctly (`show_duplicates`)
+  - verifies merged pagination correctness
+  - verifies `stats` aggregation wiring (`total`, `validated`, `broken`, `updated_24h`, combined totals)
+
+- verification:
+  - `pnpm -C packages/core exec vitest run src/routers/unifiedDirectoryRouter.test.ts` ✅
+  - `pnpm -C packages/core exec tsc --noEmit --pretty false` ✅
+  - `pnpm -C apps/web exec tsc --noEmit --pretty false` ✅
+
 ## [0.10.1] — 2026-03-21
 
 ### Unified Directory (first integrated slice)
