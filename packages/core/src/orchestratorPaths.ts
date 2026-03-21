@@ -46,9 +46,15 @@ export function resolveCliEntryPath(startDir: string = process.cwd()): string | 
   ].filter((value, index, array): value is string => Boolean(value) && array.indexOf(value) === index);
 
   for (const root of candidateRoots) {
-    const candidate = path.join(root, 'packages', 'cli', 'dist', 'index.js');
-    if (fs.existsSync(candidate)) {
-      return candidate;
+    const candidates = [
+      path.join(root, 'packages', 'cli', 'dist', 'cli', 'src', 'index.js'),
+      path.join(root, 'packages', 'cli', 'dist', 'index.js'),
+    ];
+
+    for (const candidate of candidates) {
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
     }
   }
 

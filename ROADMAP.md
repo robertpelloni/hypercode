@@ -10,9 +10,9 @@ This short block is the source of truth for current execution.
 Evolve Borg into the **Ultimate Universal AI Dashboard**, bringing full feature parity with existing CLI harnesses (OpenCode, Claude Code, Aider, etc.) into a cohesive WebUI/CLI control plane with omniscient memory and intelligent fallback routing.
 
 ### Next up
-- **Phase J1:** Operator startup flow completion (`borg start --dashboard`, dashboard auto-open, MCP client registration UX).
 - **Phase J2:** Universal IDE & Browser Extensions (intercepting web chats, automatic context harvesting).
 - **Phase K:** Intelligent Model Routing & Quota Fallbacks.
+- **Phase K1:** Smarter provider fallback and quota-aware routing UX.
 
 ---
 
@@ -27,7 +27,7 @@ Evolve Borg into the **Ultimate Universal AI Dashboard**, bringing full feature 
 - [ ] Browser controls: scrape web pages, intercept debug logs, read history.
 - [~] **IDE Plugins** (VSCode, Cursor, Windsurf, JetBrains): VS Code packaging/install scaffolding exists; deeper core integration remains.
 - [ ] Provide new hook events to the IDE and automatically save sessions.
-- [ ] Add a non-destructive Borg MCP registration workflow and dashboard auto-launch startup path.
+- [x] Add a non-destructive Borg MCP registration workflow and dashboard auto-launch startup path.
 
 ## Phase K — Intelligent Model Routing & Quota Fallbacks
 - [ ] Smart provider and model selection based on quota usage and budgets.

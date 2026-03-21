@@ -12,7 +12,8 @@
  *   borg start --config ./my.json # Use custom config file
  */
 
-import { closeSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { spawn, type ChildProcess } from 'node:child_process';
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import net from 'node:net';
 import { homedir } from 'node:os';
 import { isAbsolute, join, resolve, sep, dirname } from 'node:path';
@@ -79,6 +80,12 @@ type CoreRuntimeModule = {
   }>;
 };
 
+type FetchLike = typeof globalThis.fetch;
+
+const DASHBOARD_PORT_CANDIDATES = [3000, 3010, 3020, 3030, 3040] as const;
+const DEFAULT_DASHBOARD_READY_TIMEOUT_MS = 30_000;
+const DEFAULT_DASHBOARD_POLL_INTERVAL_MS = 500;
+
 export function resolveDataDir(dataDir: string, homeDirectory: string = homedir()): string {
   if (dataDir === '~') {
     return homeDirectory;
@@ -89,6 +96,23 @@ export function resolveDataDir(dataDir: string, homeDirectory: string = homedir(
   }
 
   return isAbsolute(dataDir) ? dataDir : resolve(dataDir);
+}
+
+export function resolveRepoRoot(startDir: string): string | null {
+  let current = resolve(startDir);
+  const root = current.slice(0, current.indexOf(sep) + 1) || current;
+
+  while (true) {
+    if (existsSync(join(current, 'turbo.json'))) {
+      return current;
+    }
+
+    if (current === root) {
+      return null;
+    }
+
+    current = dirname(current);
+  }
 }
 
 export function isProcessRunning(pid: number): boolean {
@@ -263,6 +287,117 @@ export async function startCoreRuntime(
   });
 }
 
+export function resolveBrowserHost(host: string): string {
+  return host === '0.0.0.0' || host === '::' || host === '[::]'
+    ? '127.0.0.1'
+    : host;
+}
+
+export function resolveDashboardUrl(host: string, port: number): string {
+  return `http://${resolveBrowserHost(host)}:${port}/dashboard`;
+}
+
+export async function isHttpReady(
+  url: string,
+  fetchImpl: FetchLike = globalThis.fetch,
+): Promise<boolean> {
+  try {
+    const response = await fetchImpl(url, { method: 'GET' });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function waitForHttpReady(
+  options: {
+    url: string;
+    timeoutMs?: number;
+    pollIntervalMs?: number;
+    shouldAbort?: () => boolean;
+  },
+  deps: {
+    fetchImpl?: FetchLike;
+  } = {},
+): Promise<boolean> {
+  const fetchImpl = deps.fetchImpl ?? globalThis.fetch;
+  const deadline = Date.now() + (options.timeoutMs ?? DEFAULT_DASHBOARD_READY_TIMEOUT_MS);
+  const pollIntervalMs = options.pollIntervalMs ?? DEFAULT_DASHBOARD_POLL_INTERVAL_MS;
+
+  do {
+    if (await isHttpReady(options.url, fetchImpl)) {
+      return true;
+    }
+
+    if (options.shouldAbort?.()) {
+      return false;
+    }
+
+    if (Date.now() >= deadline) {
+      return false;
+    }
+
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, pollIntervalMs));
+  } while (true);
+}
+
+export async function pickDashboardPort(
+  requestedPort: number,
+  explicitPort: boolean,
+  host: string,
+  deps: {
+    isPortFree?: (port: number) => Promise<boolean>;
+    fetchImpl?: FetchLike;
+  } = {},
+): Promise<{ port: number; reusedExisting: boolean }> {
+  const checkPortFree = deps.isPortFree ?? isPortFree;
+  const fetchImpl = deps.fetchImpl ?? globalThis.fetch;
+  const requestedUrl = resolveDashboardUrl(host, requestedPort);
+
+  if (await isHttpReady(requestedUrl, fetchImpl)) {
+    return { port: requestedPort, reusedExisting: true };
+  }
+
+  if (explicitPort) {
+    return { port: requestedPort, reusedExisting: false };
+  }
+
+  if (await checkPortFree(requestedPort)) {
+    return { port: requestedPort, reusedExisting: false };
+  }
+
+  for (const candidate of DASHBOARD_PORT_CANDIDATES) {
+    if (candidate === requestedPort) {
+      continue;
+    }
+
+    const candidateUrl = resolveDashboardUrl(host, candidate);
+    if (await isHttpReady(candidateUrl, fetchImpl)) {
+      return { port: candidate, reusedExisting: true };
+    }
+
+    if (await checkPortFree(candidate)) {
+      return { port: candidate, reusedExisting: false };
+    }
+  }
+
+  return { port: requestedPort, reusedExisting: false };
+}
+
+function getDashboardSpawnSpec(webRoot: string, repoRoot: string, host: string, port: number) {
+  const nextBinCandidates = [
+    join(repoRoot, 'node_modules', 'next', 'dist', 'bin', 'next'),
+    join(webRoot, 'node_modules', 'next', 'dist', 'bin', 'next'),
+  ];
+  const nextBin = nextBinCandidates.find((candidate) => existsSync(candidate)) ?? nextBinCandidates[0];
+
+  return {
+    command: process.execPath,
+    args: [nextBin, 'start', '--port', String(port), '--hostname', host],
+    cwd: webRoot,
+  };
+}
+
 export function createLockLifecycleHandlers(
   lockHandle: BorgStartLockHandle,
   deps: CreateLockLifecycleHandlersDeps = {},
@@ -302,11 +437,13 @@ export function registerStartCommand(program: Command): void {
     .command('start')
     .description('Start the Borg backend server (Express/tRPC/WebSocket/MCP)')
     .option('-p, --port <number>', 'tRPC control-plane port', '4000')
+    .option('--dashboard-port <number>', 'Dashboard web runtime port', '3000')
     .option('-H, --host <address>', 'Server host address', '0.0.0.0')
     .option('--no-mcp', 'Disable the MCP server endpoint')
     .option('--supervisor', 'Enable Borg supervisor startup')
     .option('--auto-drive', 'Enable Director auto-drive after startup')
     .option('--no-dashboard', 'Disable serving the WebUI dashboard')
+    .option('--no-open-dashboard', 'Start the dashboard runtime without opening the browser')
     .option('-c, --config <path>', 'Path to config file')
     .option('-d, --data-dir <path>', 'Data directory for Borg state', '~/.borg')
     .option('--daemon', 'Run as background daemon')
@@ -322,12 +459,17 @@ Examples:
     .action(async (opts) => {
       const chalk = (await import('chalk')).default;
       const requestedPort = parseInt(opts.port, 10);
+      const requestedDashboardPort = parseInt(opts.dashboardPort, 10);
       const host = opts.host;
       const explicitPort = process.argv.includes('--port') || process.argv.includes('-p');
+      const explicitDashboardPort = process.argv.some((arg) => arg === '--dashboard-port' || arg.startsWith('--dashboard-port='));
       let lockHandle: BorgStartLockHandle | null = null;
+      let dashboardChild: ChildProcess | null = null;
 
       const cliDir = dirname(fileURLToPath(import.meta.url));
       const borgVersion = readCanonicalVersion(cliDir);
+      const repoRoot = resolveRepoRoot(cliDir) ?? resolve(cliDir, '..', '..', '..', '..', '..');
+      const webRoot = join(repoRoot, 'apps', 'web');
       console.log(chalk.bold.cyan(`\n  ⬡ Borg v${borgVersion}`));
       console.log(chalk.dim('  The Neural Operating System\n'));
 
@@ -340,7 +482,13 @@ Examples:
         });
 
         const port = lockHandle.port;
-  const lifecycle = createLockLifecycleHandlers(lockHandle);
+        const lifecycle = createLockLifecycleHandlers(lockHandle);
+        const cleanupDashboardChild = () => {
+          if (dashboardChild && !dashboardChild.killed) {
+            dashboardChild.kill();
+          }
+          dashboardChild = null;
+        };
 
         console.log(chalk.yellow('  Starting server...'));
         console.log(chalk.dim(`  Host: ${host}:${port}`));
@@ -365,22 +513,108 @@ Examples:
         console.log(chalk.dim('  Core loaded: orchestrator started'));
         console.log(chalk.green(`  ✓ tRPC control plane running at http://${runtime.host}:${runtime.trpcPort}/trpc`));
         if (opts.mcp) {
-          console.log(chalk.green(`  ✓ MCP bridge ready at ws://127.0.0.1:${runtime.bridgePort ?? 3001} (+ HTTP health on /health)`));
+          console.log(chalk.green(`  ✓ MCP bridge target ws://127.0.0.1:${runtime.bridgePort ?? 3001} (+ HTTP health on /health when available)`));
         }
         if (opts.supervisor) {
           console.log(chalk.green('  ✓ Supervisor startup enabled for this run'));
         }
         if (opts.dashboard) {
-          console.log(chalk.green('  ✓ Dashboard proxy can now reach Core via the web app runtime'));
+          const dashboardSelection = await pickDashboardPort(
+            requestedDashboardPort,
+            explicitDashboardPort,
+            host,
+          );
+          const dashboardUrl = resolveDashboardUrl(host, dashboardSelection.port);
+          const shouldOpenDashboard = opts.openDashboard !== false && !opts.daemon;
+
+          if (dashboardSelection.reusedExisting) {
+            console.log(chalk.green(`  ✓ Reusing dashboard runtime at ${dashboardUrl}`));
+          } else {
+            const { command, args, cwd } = getDashboardSpawnSpec(
+              webRoot,
+              repoRoot,
+              host,
+              dashboardSelection.port,
+            );
+            let dashboardExited = false;
+            let dashboardLaunchErrorMessage: string | null = null;
+
+            dashboardChild = spawn(command, args, {
+              cwd,
+              stdio: 'inherit',
+              env: {
+                ...process.env,
+              },
+              windowsHide: true,
+            });
+            dashboardChild.once('exit', () => {
+              dashboardExited = true;
+              dashboardChild = null;
+            });
+            dashboardChild.once('error', (error) => {
+              dashboardLaunchErrorMessage = error instanceof Error ? error.message : String(error);
+              dashboardExited = true;
+              dashboardChild = null;
+            });
+
+            if (!explicitDashboardPort && dashboardSelection.port !== requestedDashboardPort) {
+              console.log(chalk.yellow(`  ↺ Dashboard port ${requestedDashboardPort} busy, falling back to ${dashboardSelection.port}`));
+            }
+
+            const dashboardReady = await waitForHttpReady({
+              url: dashboardUrl,
+              shouldAbort: () => dashboardExited,
+            });
+
+            if (dashboardReady) {
+              console.log(chalk.green(`  ✓ Dashboard runtime ready at ${dashboardUrl}`));
+            } else if (dashboardLaunchErrorMessage) {
+              console.log(chalk.yellow(`  ⚠ Dashboard runtime failed to launch: ${dashboardLaunchErrorMessage}`));
+            } else if (dashboardExited) {
+              console.log(chalk.yellow(`  ⚠ Dashboard runtime exited before ${dashboardUrl} became ready.`));
+            } else {
+              console.log(chalk.yellow(`  ⚠ Dashboard runtime is still starting. Visit ${dashboardUrl} in a moment.`));
+            }
+          }
+
+          if (shouldOpenDashboard) {
+            try {
+              const open = (await import('open')).default;
+              await open(dashboardUrl);
+              console.log(chalk.green(`  ✓ Opened dashboard at ${dashboardUrl}`));
+            } catch {
+              console.log(chalk.yellow(`  ⚠ Could not open the browser automatically. Visit ${dashboardUrl} manually.`));
+            }
+          } else {
+            console.log(chalk.dim(`  Dashboard URL: ${dashboardUrl}`));
+          }
         }
         console.log(chalk.dim('\n  Press Ctrl+C to stop\n'));
 
-        process.once('exit', lifecycle.cleanup);
-        process.once('SIGINT', lifecycle.handleSigint);
-        process.once('SIGTERM', lifecycle.handleSigterm);
-        process.once('uncaughtException', lifecycle.handleUncaughtException);
-        process.once('unhandledRejection', lifecycle.handleUnhandledRejection);
+        process.once('exit', () => {
+          cleanupDashboardChild();
+          lifecycle.cleanup();
+        });
+        process.once('SIGINT', () => {
+          cleanupDashboardChild();
+          lifecycle.handleSigint();
+        });
+        process.once('SIGTERM', () => {
+          cleanupDashboardChild();
+          lifecycle.handleSigterm();
+        });
+        process.once('uncaughtException', (error) => {
+          cleanupDashboardChild();
+          lifecycle.handleUncaughtException(error);
+        });
+        process.once('unhandledRejection', (reason) => {
+          cleanupDashboardChild();
+          lifecycle.handleUnhandledRejection(reason);
+        });
       } catch (err: unknown) {
+        if (dashboardChild && !dashboardChild.killed) {
+          dashboardChild.kill();
+        }
         lockHandle?.releaseSync();
         const msg = err instanceof Error ? err.message : String(err);
         console.error(chalk.red(`  ✗ Failed to start: ${msg}`));

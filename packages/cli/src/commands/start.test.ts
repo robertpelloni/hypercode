@@ -5,7 +5,14 @@ import { tmpdir } from 'node:os';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { acquireSingleInstanceLock, createLockLifecycleHandlers, resolveDataDir, startCoreRuntime } from './start.js';
+import {
+    acquireSingleInstanceLock,
+    createLockLifecycleHandlers,
+    pickDashboardPort,
+    resolveDashboardUrl,
+    resolveDataDir,
+    startCoreRuntime,
+} from './start.js';
 
 const tempDirs: string[] = [];
 
@@ -239,5 +246,46 @@ describe('resolveDataDir', () => {
     it('expands the home-directory shorthand', () => {
         const resolved = resolveDataDir('~/.borg', 'C:/tmp/home');
         expect(resolved.replaceAll('\\', '/')).toBe('C:/tmp/home/.borg');
+    });
+});
+
+describe('dashboard startup helpers', () => {
+    it('rewrites wildcard hosts to a browser-safe dashboard URL', () => {
+        expect(resolveDashboardUrl('0.0.0.0', 3000)).toBe('http://127.0.0.1:3000/dashboard');
+        expect(resolveDashboardUrl('127.0.0.1', 3010)).toBe('http://127.0.0.1:3010/dashboard');
+    });
+
+    it('reuses an already-running dashboard on the requested port', async () => {
+        const fetchImpl = vi.fn().mockResolvedValue({ ok: true });
+
+        await expect(pickDashboardPort(
+            3000,
+            false,
+            '127.0.0.1',
+            {
+                fetchImpl: fetchImpl as any,
+                isPortFree: async () => false,
+            },
+        )).resolves.toEqual({
+            port: 3000,
+            reusedExisting: true,
+        });
+    });
+
+    it('falls back to the next free dashboard port when the default port is busy', async () => {
+        const fetchImpl = vi.fn().mockResolvedValue({ ok: false });
+
+        await expect(pickDashboardPort(
+            3000,
+            false,
+            '127.0.0.1',
+            {
+                fetchImpl: fetchImpl as any,
+                isPortFree: async (port) => port === 3010,
+            },
+        )).resolves.toEqual({
+            port: 3010,
+            reusedExisting: false,
+        });
     });
 });
