@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 
 const root = resolve(process.cwd());
 const readmePath = resolve(root, 'README.md');
+const checkOnly = process.argv.includes('--check');
 
 const tableRows = [
   { label: 'Dashboard Home', path: 'docs/screenshots/dashboard-home.png' },
@@ -34,5 +35,18 @@ for (const row of tableRows) {
 }
 
 readme = lines.join(eol);
+const original = readFileSync(readmePath, 'utf8');
+
+if (checkOnly) {
+  if (original === readme) {
+    console.log('SCREENSHOT_STATUS_SYNC_CHECK_OK');
+    process.exit(0);
+  }
+
+  console.error('SCREENSHOT_STATUS_SYNC_CHECK_FAILED');
+  console.error('Run: pnpm run sync:screenshot-status');
+  process.exit(1);
+}
+
 writeFileSync(readmePath, readme, 'utf8');
 console.log('SCREENSHOT_STATUS_SYNC_OK');

@@ -48,6 +48,10 @@ Automatically update the screenshot status column in root `README.md`:
 
 `pnpm run sync:screenshot-status`
 
+Check whether status is already synced (no file writes):
+
+`pnpm run check:screenshot-status-sync`
+
 ## One-command refresh
 
 Run sync + validation together:
@@ -57,3 +61,7 @@ Run sync + validation together:
 For release-level enforcement (fails if any required screenshot is missing):
 
 `pnpm run visuals:refresh:strict`
+
+Verify-only mode (no writes):
+
+`pnpm run visuals:verify`

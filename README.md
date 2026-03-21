@@ -40,6 +40,8 @@
 > Refresh status + validate in one step: `pnpm run visuals:refresh`
 >
 > Enforce all screenshots before release: `pnpm run visuals:refresh:strict`
+>
+> Verify-only (no file writes): `pnpm run visuals:verify`
 
 | Capture | Target path | Status |
 |---|---|---|
