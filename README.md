@@ -34,6 +34,8 @@
 ## 🖼️ Screenshots
 
 > Drop your latest captures into `docs/screenshots/` and keep this section as your visual changelog.
+>
+> Capture guide: [`docs/screenshots/README.md`](docs/screenshots/README.md)
 
 | Capture | Target path | Status |
 |---|---|---|
