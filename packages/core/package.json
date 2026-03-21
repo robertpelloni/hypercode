@@ -1,6 +1,6 @@
 {
     "name":  "@borg/core",
-    "version":  "0.10.0",
+    "version":  "0.9.667",
     "type":  "module",
     "main":  "dist/index.js",
     "types":  "dist/index.d.ts",
@@ -87,7 +87,7 @@
                             "@types/better-sqlite3":  "^7.6.13",
                             "@types/cors":  "^2.8.17",
                             "@types/express":  "^4.17.21",
-                            "@types/node":  "^20.10.0",
+                            "@types/node":  "^20.9.667",
                             "@types/ws":  "^8.18.1",
                             "eslint":  "^8.56.0",
                             "typescript":  "^5.3.3",

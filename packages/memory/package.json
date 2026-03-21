@@ -1,6 +1,6 @@
 {
     "name":  "@borg/memory",
-    "version":  "0.10.0",
+    "version":  "0.9.667",
     "type":  "module",
     "main":  "dist/index.js",
     "types":  "dist/index.d.ts",
@@ -30,7 +30,7 @@
                          "typescript":  "^5.3.3"
                      },
     "devDependencies":  {
-                            "@types/node":  "^20.10.0",
+                            "@types/node":  "^20.9.667",
                             "eslint":  "^8.56.0"
                         }
 }

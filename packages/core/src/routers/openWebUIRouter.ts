@@ -6,7 +6,7 @@ export const openWebUIRouter = t.router({
         // Return integration status for the dashboard
         return {
             status: 'active',
-            version: '0.10.0',
+            version: '0.9.667',
             connected_tools: 0,
             message: 'Open-WebUI integration is initialized and ready.',
             timestamp: new Date().toISOString()

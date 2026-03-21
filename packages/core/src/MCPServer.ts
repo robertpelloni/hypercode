@@ -734,7 +734,7 @@ export class MCPServer {
 
     private createServerInstance(): { server: Server; ready: Promise<void> } {
         const s = new Server(
-            { name: "borg-core", version: "0.10.0" },
+            { name: "borg-core", version: "0.9.667" },
             {
                 capabilities: {
                     tools: {},
@@ -3511,7 +3511,7 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
                         status: 'online',
                         uptime: process.uptime(),
                         timestamp: Date.now(),
-                        version: '0.10.0'
+                        version: '0.9.667'
                     }));
                 } else if (req.url === '/mcp/servers') {
                     const servers = await this.mcpAggregator.listServers();

@@ -1,6 +1,6 @@
 {
     "name":  "borg-monorepo",
-    "version":  "0.10.0",
+    "version":  "0.9.667",
     "private":  true,
     "packageManager":  "pnpm@10.28.0",
     "scripts":  {
@@ -27,7 +27,7 @@
                 },
     "devDependencies":  {
                             "@rollup/rollup-win32-x64-msvc":  "4.55.1",
-                            "@types/node":  "^20.10.0",
+                            "@types/node":  "^20.9.667",
                             "@typescript-eslint/eslint-plugin":  "^8.53.0",
                             "@typescript-eslint/parser":  "^8.53.0",
                             "@vitest/coverage-v8":  "^4.0.16",

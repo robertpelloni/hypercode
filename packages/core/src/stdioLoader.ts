@@ -318,7 +318,7 @@ export async function callLoaderTool(
 
 export async function startStdioLoader(): Promise<void> {
     const server = new Server(
-        { name: 'borg-core-loader', version: '0.10.0' },
+        { name: 'borg-core-loader', version: '0.9.667' },
         {
             capabilities: {
                 tools: {},

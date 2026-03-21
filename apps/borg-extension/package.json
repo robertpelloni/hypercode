@@ -1,6 +1,6 @@
 {
     "name":  "borg-extension",
-    "version":  "0.10.0",
+    "version":  "0.9.667",
     "description":  "Borg Extension",
     "license":  "MIT",
     "private":  true,

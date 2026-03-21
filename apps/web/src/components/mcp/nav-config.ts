@@ -334,7 +334,7 @@ export const SIDEBAR_SECTIONS: NavSection[] = [
         items: INTEGRATIONS_NAV,
     },
     {
-        title: "Borg 0.10.0 Core",
+        title: "Borg 0.9.667 Core",
         items: CORE_DASHBOARD_NAV,
     },
     {

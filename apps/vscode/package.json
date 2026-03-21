@@ -1,7 +1,7 @@
 {
     "name": "borg-vscode-extension",
     "displayName": "Borg Plugin",
-    "version": "0.10.0",
+    "version": "0.9.667",
     "description": "Connect VS Code to Borg Hub for AI agent orchestration, memory management, and tool invocation",
     "publisher": "borg",
     "engines": {
