@@ -232,7 +232,19 @@ Borg becomes:
 - a **truthful operator dashboard**,
 - and eventually a **multi-agent orchestrator over known-good infrastructure**.
 
+## Phase H — Assimilation of Auto-Orchestrator (OpenCode Autopilot)
+
+### Target outcome
+Integrate the multi-model council supervision system from `opencode-autopilot` into Borg.
+
+### Deliverables
+- `@borg/auto-orchestrator` package
+- Council debate UI in Borg Dashboard
+- Integration with Borg's Provider Truth and Session Supervisor
+- Migration of Hono/Bun logic to Express/Node
+
 ## Top missing features to carry forward
+
 
 1. **Published MCP server database** distinct from installed-server records
 2. **Registry ingestion jobs** from official/community sources with provenance
