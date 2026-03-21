@@ -36,6 +36,8 @@
 > Drop your latest captures into `docs/screenshots/` and keep this section as your visual changelog.
 >
 > Capture guide: [`docs/screenshots/README.md`](docs/screenshots/README.md)
+>
+> Refresh status + validate in one step: `pnpm run visuals:refresh`
 
 | Capture | Target path | Status |
 |---|---|---|

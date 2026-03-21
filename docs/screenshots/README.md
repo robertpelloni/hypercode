@@ -47,3 +47,9 @@ Use strict mode to fail when any required screenshot is missing:
 Automatically update the screenshot status column in root `README.md`:
 
 `pnpm run sync:screenshot-status`
+
+## One-command refresh
+
+Run sync + validation together:
+
+`pnpm run visuals:refresh`
