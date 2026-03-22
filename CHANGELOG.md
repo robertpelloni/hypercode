@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.90.5] — 2026-03-22
+
+### CLI Harness Expansion
+- feat(core/supervisor): Added 4 new CLI harnesses to `cliHarnessCatalog.ts`: `superai-cli`, `codebuff`, `codemachine`, `factory-droid` (11 total).
+- feat(core/council): Added `factory-droid` and `superai-cli` to `CLIType` union and `cliTypeSchema` enum for full coverage.
+
+### Automation & Scripts
+- feat(scripts): Created `check_submodule_versions.mjs` — enumerates all Git submodules, extracts version/sha/date/status, outputs JSON report to `docs/SUBMODULE_VERSIONS.json` and a formatted CLI table.
+- feat(package.json): Added `pnpm submodules:check` npm script alias.
+- docs: Created `docs/MERGE_PROTOCOL.md` — formalized the 7-step merge & assimilation protocol with quick reference table.
+
+### Agent Documentation
+- docs(AGENTS.md): Added Operational Context section covering pnpm v10, build verification, UI imports, MCP config, Always On tools, Code Mode, and key docs.
+- docs(GEMINI.md, CLAUDE.md, GPT.md): Added Key Operational Notes section to each model-specific instruction file.
+
+### TODO Cleanup
+- Verified and marked as complete: Code Mode escape hatch, MEMORY.md, UI feature documentation, TOON parsing, universal MCP directory, submodule script, merge protocol, auto-start harness coverage, Council→SmartPilot wiring, and all agent docs.
+
 ## [0.90.4] — 2026-03-22
 
 ### Always On Tools & Semantic Auto-Execution
