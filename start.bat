@@ -7,9 +7,16 @@ if %errorlevel% neq 0 (
     npm install -g pnpm
 )
 
-echo Installing dependencies...
-call pnpm install
-if %errorlevel% neq 0 exit /b %errorlevel%
+set SKIP_INSTALL=0
+if /I "%BORG_SKIP_INSTALL%"=="1" set SKIP_INSTALL=1
+
+if "%SKIP_INSTALL%"=="1" (
+    echo Skipping dependency install (BORG_SKIP_INSTALL=1)...
+) else (
+    echo Installing dependencies...
+    call pnpm install
+    if %errorlevel% neq 0 exit /b %errorlevel%
+)
 
 set BUILD_TARGET=build:workspace
 if /I "%BORG_FULL_BUILD%"=="1" set BUILD_TARGET=build

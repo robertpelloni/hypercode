@@ -52,6 +52,13 @@ set BORG_FULL_BUILD=1
 .\start.bat
 ```
 
+For repeat local runs where dependencies are already installed, you can skip the install step:
+
+```bash
+set BORG_SKIP_INSTALL=1
+.\start.bat
+```
+
 **Linux/macOS**:
 ```bash
 ./start.sh
