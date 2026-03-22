@@ -44,6 +44,14 @@ Use the provided startup scripts:
 .\start.bat
 ```
 
+`start.bat` defaults to `pnpm run build:workspace` (faster startup, skips extension-only build stages).
+To force a full build before startup, set:
+
+```bash
+set BORG_FULL_BUILD=1
+.\start.bat
+```
+
 **Linux/macOS**:
 ```bash
 ./start.sh
