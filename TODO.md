@@ -22,7 +22,7 @@ _Short-term tasks, bug fixes, and feature implementations. For long-term goals, 
 
 ## MCP Substrate & Proxies
 - [x] Improve MCP router startup: load last-known-good configuration to report immediately, regardless of whether the core is fully ready.
-- [ ] Build the universal integrated MCP directory so installed servers, published catalog entries, BobbyBookmarks backlog links, and future feature-group assets resolve through one operator-facing directory surface.
+- [x] Build the universal integrated MCP directory so installed servers, published catalog entries, BobbyBookmarks backlog links, and future feature-group assets resolve through one operator-facing directory surface.
 - [x] Implement dynamic progressive tool disclosure (show only 5-6 permanent meta tools initially, auto-load others on high confidence).
 - [x] Add explicit tool semantic search / tool RAG.
 - [x] Implement TOON format parsing and MCP traffic inspection panels.
