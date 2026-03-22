@@ -11,7 +11,7 @@ _Short-term tasks, bug fixes, and feature implementations. For long-term goals, 
 - [x] Make `borg-orchestrator` (opencode-autopilot) a first-class feature and half of the dashboard grid.
 - [x] Integrate Orchestrator server into the standard `pnpm dev` stack with health-check validation.
 - [ ] Ensure all features are thoroughly documented within the UI (tooltips, labels, descriptions).
-- [ ] Implement "Code Mode" escape hatch interface in the dashboard.
+- [x] Implement "Code Mode" escape hatch interface in the dashboard.
 - [x] Create detailed usage/billing subpanels tracking credit balances per provider.
 
 ## Orchestration & Models
@@ -40,7 +40,7 @@ _Short-term tasks, bug fixes, and feature implementations. For long-term goals, 
 - [ ] Standardize and document the 7-step merge protocol for handling upstream forks.
 
 ## Documentation
-- [ ] Create/Update `MEMORY.md` with ongoing observations.
+- [x] Create/Update `MEMORY.md` with ongoing observations.
 - [x] Create/Update `DEPLOY.md` with explicit deployment/startup instructions.
 - [x] Update `CHANGELOG.md` for this sprint.
 - [ ] Refine `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`, `GPT.md` to reference the Universal LLM Instructions and the new rigorous documentation protocols.
