@@ -9,6 +9,7 @@ import {
     acquireSingleInstanceLock,
     createLockLifecycleHandlers,
     isAddrInUseError,
+    pickAvailableControlPlaneFallbackPort,
     pickDashboardPort,
     resolveControlPlaneFallbackPort,
     resolveDashboardUrl,
@@ -317,6 +318,18 @@ describe('control-plane fallback helpers', () => {
         expect(fallback).toBe(4000);
     });
 
+    it('falls back to requested+1 when default requested port collides at bind time', () => {
+        const fallback = resolveControlPlaneFallbackPort({
+            requestedPort: 4000,
+            selectedPort: 4000,
+            explicitPort: false,
+            reusedStalePort: false,
+            startupError: { code: 'EADDRINUSE' },
+        });
+
+        expect(fallback).toBe(4001);
+    });
+
     it('does not fall back when startup was explicit or not stale-reuse related', () => {
         expect(resolveControlPlaneFallbackPort({
             requestedPort: 4000,
@@ -341,5 +354,21 @@ describe('control-plane fallback helpers', () => {
             reusedStalePort: true,
             startupError: new Error('boom'),
         })).toBeNull();
+    });
+
+    it('picks the preferred fallback port when free, otherwise chooses next available', async () => {
+        await expect(pickAvailableControlPlaneFallbackPort(4001, {
+            isPortFree: async (port) => port === 4001,
+        })).resolves.toBe(4001);
+
+        await expect(pickAvailableControlPlaneFallbackPort(4001, {
+            isPortFree: async (port) => port === 4003,
+        })).resolves.toBe(4003);
+    });
+
+    it('returns null when no fallback port is available in the scan window', async () => {
+        await expect(pickAvailableControlPlaneFallbackPort(4001, {
+            isPortFree: async () => false,
+        })).resolves.toBeNull();
     });
 });

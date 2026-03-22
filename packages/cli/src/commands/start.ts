@@ -83,6 +83,7 @@ type CoreRuntimeModule = {
 type FetchLike = typeof globalThis.fetch;
 
 const DASHBOARD_PORT_CANDIDATES = [3000, 3010, 3020, 3030, 3040] as const;
+const CONTROL_PLANE_FALLBACK_OFFSETS = [1, 2, 3, 4, 5] as const;
 const DEFAULT_DASHBOARD_READY_TIMEOUT_MS = 30_000;
 const DEFAULT_DASHBOARD_POLL_INTERVAL_MS = 500;
 
@@ -409,11 +410,15 @@ export function resolveControlPlaneFallbackPort(options: {
     return null;
   }
 
-  if (!options.reusedStalePort) {
+  if (!isAddrInUseError(options.startupError)) {
     return null;
   }
 
-  if (!isAddrInUseError(options.startupError)) {
+  if (!options.reusedStalePort && options.requestedPort === options.selectedPort) {
+    return options.requestedPort + 1;
+  }
+
+  if (!options.reusedStalePort) {
     return null;
   }
 
@@ -422,6 +427,28 @@ export function resolveControlPlaneFallbackPort(options: {
   }
 
   return options.requestedPort;
+}
+
+export async function pickAvailableControlPlaneFallbackPort(
+  preferredPort: number,
+  deps: {
+    isPortFree?: (port: number) => Promise<boolean>;
+  } = {},
+): Promise<number | null> {
+  const checkPortFree = deps.isPortFree ?? isPortFree;
+
+  if (await checkPortFree(preferredPort)) {
+    return preferredPort;
+  }
+
+  for (const offset of CONTROL_PLANE_FALLBACK_OFFSETS) {
+    const candidate = preferredPort + offset;
+    if (await checkPortFree(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
 
 function getDashboardSpawnSpec(webRoot: string, repoRoot: string, host: string, port: number) {
@@ -566,13 +593,15 @@ Examples:
             throw startupError;
           }
 
-          const fallbackPortIsFree = await isPortFree(fallbackPort);
-          if (!fallbackPortIsFree) {
+          const resolvedFallbackPort = await pickAvailableControlPlaneFallbackPort(fallbackPort);
+          if (resolvedFallbackPort === null) {
             throw startupError;
           }
 
-          console.log(chalk.yellow(`  ↺ Reused stale port ${activePort} was occupied at bind time; retrying on requested port ${fallbackPort}.`));
-          activePort = fallbackPort;
+          if (lockHandle.port !== resolvedFallbackPort) {
+            console.log(chalk.yellow(`  ↺ Port ${activePort} was unavailable at bind time; retrying control-plane startup on port ${resolvedFallbackPort}.`));
+          }
+          activePort = resolvedFallbackPort;
 
           runtime = await startCoreRuntime({
             host,
