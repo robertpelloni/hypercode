@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { PageStatusBanner } from '@/components/PageStatusBanner';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, Button, Input } from '@borg/ui';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, Button, Input, Textarea } from '@borg/ui';
 import { trpc } from '@/utils/trpc';
 import {
     Users as UsersIcon,
