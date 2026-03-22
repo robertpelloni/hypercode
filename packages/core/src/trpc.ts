@@ -63,6 +63,7 @@ import { linksBacklogRouter } from './routers/linksBacklogRouter.js';
 import { unifiedDirectoryRouter } from './routers/unifiedDirectoryRouter.js';
 import { codeModeRouter } from './routers/codeModeRouter.js';
 import { secretsRouter } from './routers/secretsRouter.js';
+import { browserExtensionRouter } from './routers/browserExtensionRouter.js';
 
 // import { type AnyTRPCRouter } from '@trpc/server';
 
@@ -128,6 +129,7 @@ export const appRouter = t.router({
     unifiedDirectory: unifiedDirectoryRouter,
     codeMode: codeModeRouter,
     secrets: secretsRouter,
+    browserExtension: browserExtensionRouter,
 });
 
 export type AppRouter = typeof appRouter;

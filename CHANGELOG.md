@@ -17,6 +17,11 @@ All notable changes to this project will be documented in this file.
 - docs(AGENTS.md): Added Operational Context section covering pnpm v10, build verification, UI imports, MCP config, Always On tools, Code Mode, and key docs.
 - docs(GEMINI.md, CLAUDE.md, GPT.md): Added Key Operational Notes section to each model-specific instruction file.
 
+### Memory & RAG
+- feat(core/services): Created `GoogleWorkspaceConnector.ts` — typed connector for Google Docs, Gmail, and Google Drive with incremental sync, chunked indexing, and periodic sync timer.
+- feat(core/routers): Created `browserExtensionRouter.ts` — TRPC router with save/parse/list/delete/stats endpoints for browser extension web memories, DOM parsing, and URL normalization.
+- feat(core/services): Created `CitationService.ts` — NotebookLM-style citation engine with document chunking, grounded prompt building, inline citation extraction, and source-grounded answer generation.
+
 ### TODO Cleanup
 - Verified and marked as complete: Code Mode escape hatch, MEMORY.md, UI feature documentation, TOON parsing, universal MCP directory, submodule script, merge protocol, auto-start harness coverage, Council→SmartPilot wiring, and all agent docs.
 

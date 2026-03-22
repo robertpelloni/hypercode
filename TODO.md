@@ -30,9 +30,9 @@ _Short-term tasks, bug fixes, and feature implementations. For long-term goals, 
 
 ## Memory & RAG
 - [x] Integrate `github.com/robertpelloni/bobbybookmarks` as the canonical link backlog datasource with sync, dedupe, research-status, and clustering visibility in Borg.
-- [ ] Connect the memory subsystem to Google Docs, Gmail, and Google Drive for seamless RAG.
-- [ ] Implement memory browser extension endpoints (saving web memories, parsing DOM).
-- [ ] Integrate NotebookLM-style features for source-grounded, citation-backed answers.
+- [x] Connect the memory subsystem to Google Docs, Gmail, and Google Drive for seamless RAG.
+- [x] Implement memory browser extension endpoints (saving web memories, parsing DOM).
+- [x] Integrate NotebookLM-style features for source-grounded, citation-backed answers.
 
 ## Automation & Scripts
 - [x] Create automated script to check versions of all submodules, update them, and generate the UI data feed for the submodule dashboard.
