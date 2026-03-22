@@ -20,10 +20,16 @@ if "%SKIP_INSTALL%"=="1" (
 
 set BUILD_TARGET=build:workspace
 if /I "%BORG_FULL_BUILD%"=="1" set BUILD_TARGET=build
+set SKIP_BUILD=0
+if /I "%BORG_SKIP_BUILD%"=="1" set SKIP_BUILD=1
 
-echo Building (%BUILD_TARGET%)...
-call pnpm run %BUILD_TARGET%
-if %errorlevel% neq 0 exit /b %errorlevel%
+if "%SKIP_BUILD%"=="1" (
+    echo Skipping build step (BORG_SKIP_BUILD=1)...
+) else (
+    echo Building (%BUILD_TARGET%)...
+    call pnpm run %BUILD_TARGET%
+    if %errorlevel% neq 0 exit /b %errorlevel%
+)
 
 echo Starting Hub...
 call pnpm start

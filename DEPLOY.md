@@ -59,6 +59,13 @@ set BORG_SKIP_INSTALL=1
 .\start.bat
 ```
 
+For the fastest local restart loop (when you know previous build artifacts are still valid), you can also skip the build step:
+
+```bash
+set BORG_SKIP_BUILD=1
+.\start.bat
+```
+
 **Linux/macOS**:
 ```bash
 ./start.sh
