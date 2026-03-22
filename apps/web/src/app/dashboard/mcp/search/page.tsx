@@ -644,7 +644,7 @@ function SearchDashboardContent() {
         && evictionWindowFilter === 'all';
     const preferences = (preferencesQuery.data as ToolPreferences | undefined) ?? {
         importantTools: [],
-        alwaysLoadedTools: [],
+        alwaysLoadedTools: ['search_tools', 'read_file', 'write_file', 'grep_search', 'execute_command', 'browser__open'],
         autoLoadMinConfidence: 0.85,
         maxLoadedTools: 16,
         maxHydratedSchemas: 8,

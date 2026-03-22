@@ -242,7 +242,7 @@ async function readToolPreferences(): Promise<ToolPreferences> {
         const settings = config.settings as { toolSelection?: { importantTools?: unknown; alwaysLoadedTools?: unknown; autoLoadMinConfidence?: unknown; maxLoadedTools?: unknown; maxHydratedSchemas?: unknown; idleEvictionThresholdMs?: unknown } } | undefined;
         return readToolPreferencesFromSettings(settings?.toolSelection);
     } catch {
-        return { importantTools: [], alwaysLoadedTools: [], autoLoadMinConfidence: 0.85, maxLoadedTools: 16, maxHydratedSchemas: 8, idleEvictionThresholdMs: 5 * 60 * 1000 };
+        return { importantTools: [], alwaysLoadedTools: ['search_tools', 'read_file', 'write_file', 'grep_search', 'execute_command', 'browser__open'], autoLoadMinConfidence: 0.85, maxLoadedTools: 16, maxHydratedSchemas: 8, idleEvictionThresholdMs: 5 * 60 * 1000 };
     }
 }
 

@@ -439,7 +439,7 @@ function InspectorDashboardContent() {
         && evictionWindowFilter === 'all';
     const preferences = (preferencesQuery.data as ToolPreferences | undefined) ?? {
         importantTools: [],
-        alwaysLoadedTools: [],
+        alwaysLoadedTools: ['search_tools', 'read_file', 'write_file', 'grep_search', 'execute_command', 'browser__open'],
         autoLoadMinConfidence: 0.85,
     };
     const dbTools = dbToolsQuery.data ?? [];

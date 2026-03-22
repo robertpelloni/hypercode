@@ -76,9 +76,14 @@ function normalizeIdleEvictionThresholdMs(value: unknown): number {
 }
 
 export function normalizeToolPreferences(value: { importantTools?: unknown; alwaysLoadedTools?: unknown; autoLoadMinConfidence?: unknown; maxLoadedTools?: unknown; maxHydratedSchemas?: unknown; idleEvictionThresholdMs?: unknown } | null | undefined): ToolPreferences {
+    const rawAlwaysLoadedTools = value?.alwaysLoadedTools;
+    const alwaysLoadedTools = rawAlwaysLoadedTools === undefined 
+        ? ['search_tools', 'read_file', 'write_file', 'grep_search', 'execute_command', 'browser__open'] 
+        : normalizeToolNames(rawAlwaysLoadedTools);
+
     return {
         importantTools: normalizeToolNames(value?.importantTools),
-        alwaysLoadedTools: normalizeToolNames(value?.alwaysLoadedTools),
+        alwaysLoadedTools,
         autoLoadMinConfidence: normalizeAutoLoadMinConfidence(value?.autoLoadMinConfidence),
         maxLoadedTools: normalizeMaxLoadedTools(value?.maxLoadedTools),
         maxHydratedSchemas: normalizeMaxHydratedSchemas(value?.maxHydratedSchemas),

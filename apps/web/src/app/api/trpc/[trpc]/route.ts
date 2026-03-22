@@ -801,7 +801,7 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
     'mcp.searchTools': [],
     'mcp.getToolPreferences': {
       importantTools: [],
-      alwaysLoadedTools: [],
+      alwaysLoadedTools: ['search_tools', 'read_file', 'write_file', 'grep_search', 'execute_command', 'browser__open'],
     },
     'mcp.getJsoncEditor': {
       path: localConfigSource.path,
