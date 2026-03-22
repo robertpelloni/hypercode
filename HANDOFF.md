@@ -1,32 +1,115 @@
-# Handoff & Session Learnings (2026-03-20)
+# Handoff & Session Learnings (2026-03-21)
 
-## Session Summary
-In this session, we undertook a massive structural realignment of the Borg Cognitive Control Plane. The goal was to cement the "Mega-Dashboard" vision, incorporating all requirements for an ultimate universal AI tool dashboard, complete with browser/IDE extensions, an MCP router/aggregator/proxy, autonomous council supervision, and omniscient memory.
+## Current State
 
-## Accomplishments
-1.  **Documentation Overhaul**:
-    *   Rewrote `VISION.md` to perfectly capture the 6 pillars of the project: The Universal AI Dashboard, The Universal MCP Intelligence Layer, The Ultimate AI Coding Harness, Omniscient Memory & RAG, Multi-Agent Swarms & Council, and Universal Integrations.
-    *   Updated `ROADMAP.md` mapping out Phases I through M to track the implementation of these features.
-    *   Generated a highly granular `TODO.md` to track short-term implementations.
-    *   Unified all LLM instructions into `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` and updated `GEMINI.md`, `CLAUDE.md`, `GPT.md`, `AGENTS.md`, and `copilot-instructions.md` to inherit from it.
-    *   Created `docs/SUBMODULES.md` to track submodule origins, and added `MEMORY.md` and `DEPLOY.md`.
-2.  **Council / Auto-Orchestrator Assimilation**:
-    *   Successfully assimilated `opencode-autopilot` (now Borg Orchestrator) into `@borg/core`.
-    *   Migrated the Bun/Hono backend to Node/Express/tRPC.
-    *   Wired the logic into Borg's `Drizzle ORM` schema and `SessionSupervisor`.
-    *   Built the "Roundtable" Next.js dashboard view, bringing the council UI into the central app.
-    *   Purged the old submodule.
-3.  **Intelligent Model Fallback**:
-    *   Updated `packages/ai/src/ModelSelector.ts` to implement the specific fallback chain requested by the user (`Gemini 3 Pro` -> `Codex 5.3` -> `Claude Opus 4.6`). This ensures the system automatically switches providers when quota limits are reached.
+Repo is clean (local). All typechecks pass.
 
-## Learnings & Non-Obvious Discoveries
-*   **Submodule UI**: I discovered that `apps/web/src/app/dashboard/submodules/page.tsx` *already* has a highly functional UI for mapping the directory structure, reading `.gitmodules`, and extracting package versions dynamically using Node's `child_process`. We do not need to rebuild this; we only need to maintain `docs/SUBMODULES.md` as a textual reference.
-*   **Model Routing Logic**: The `LLMService.ts` and `ModelSelector.ts` are tightly coupled. `LLMService` catches 429/Quota errors and calls `modelSelector.reportFailure()`, which marks that provider as depleted and automatically fetches the next candidate in the chain. This is highly robust and requires minimal changes beyond updating the arrays in `DEFAULT_CHAINS`.
-*   **Worktree/Submodule Collisions**: During the commit process, I noticed an embedded git repository inside `packages/claude-mem.worktrees`. It is critical to use `git rm --cached` on these immediately to avoid polluting the git index.
+- Current branch: `main`
+- VERSION: `0.10.28`
+- All CI workflows fixed (pnpm v9 → v10), badges will be green on next push
 
-## Next Steps for the Next Model
-1.  **Merge Feature Branches**: We deferred a blind mass-merge of the 30+ feature branches to avoid catastrophic conflicts. The next model should systematically inspect branches like `feat/top-features`, `feat/login`, and `feat/engagement_modules` and merge them safely into `main-clean`.
-2.  **Implement NotebookLM Integration**: Begin work on Phase I (Omniscient Memory), specifically the file parsing and citation-backed answer generation.
-3.  **UI Polish**: The new `RoundtableDashboard.tsx` has some placeholder text in the Activity Logs. Hook this up to a real Zustand store or tRPC subscription.
+## What Landed This Session
 
-End of Line.
+### 1. BobbyBookmarks-backed link backlog slice
+
+The first real Borg-native backlog datasource is now implemented.
+
+- Added persistent `links_backlog` storage in:
+  - `packages/core/src/db/metamcp-schema.ts`
+  - `packages/core/src/db/index.ts`
+- Added repository layer:
+  - `packages/core/src/db/repositories/links-backlog.repo.ts`
+  - export wired via `packages/core/src/db/repositories/index.ts`
+- Added BobbyBookmarks adapter + normalization helpers:
+  - `packages/core/src/services/bobby-bookmarks-adapter.ts`
+  - `packages/core/src/services/bobby-bookmarks-adapter.test.ts`
+- Added tRPC surface:
+  - `packages/core/src/routers/linksBacklogRouter.ts`
+  - registered in `packages/core/src/trpc.ts`
+- Added operator UI:
+  - `apps/web/src/app/dashboard/links/page.tsx`
+  - nav wiring in `apps/web/src/components/mcp/nav-config.ts`
+
+This is now the canonical Borg link backlog surface and the first foundation for the universal integrated MCP directory.
+
+### 2. Borg Orchestrator integration cleanup
+
+The active rename/integration pass was completed far enough to make the product feel coherent.
+
+- Canonical route alias:
+  - `apps/web/src/app/dashboard/orchestrator/page.tsx` → re-exports the upgraded dashboard page
+- Legacy compatibility page updated:
+  - `apps/web/src/app/dashboard/autopilot/page.tsx`
+- Env/config compatibility cleanup:
+  - `apps/web/.env.example`
+  - `packages/core/src/orchestrator/council/services/config.ts`
+- Related UI/documentation cleanup:
+  - `apps/web/src/app/dashboard/jules/page.tsx`
+  - `apps/web/src/app/dashboard/mcp/ai-tools/page.tsx`
+  - `packages/core/src/routers/supervisorRouter.ts`
+  - `docs/council/README.md`
+  - `docs/council/ARCHITECTURE.md`
+  - `docs/SUBMODULES.md`
+
+Important: legacy `AUTOPILOT_*` / `NEXT_PUBLIC_AUTOPILOT_*` compatibility is still intentionally supported where needed. Canonical naming is now `BORG_ORCHESTRATOR_*`.
+
+## Validation Already Completed
+
+These commands passed after the landed changes:
+
+```powershell
+pnpm --filter @borg/core exec vitest run src/services/bobby-bookmarks-adapter.test.ts
+pnpm --filter @borg/core build
+## What Landed This Sprint
+
+### 1. CI/CD Green Build Restoration
+- Fixed `pnpm/action-setup@v4` version `9` → `10` in `.github/workflows/ci.yml` (×6), `release.yml` (×1), `benchmark.yml` (×1)
+- Root cause: `pnpm@10.28.0` packageManager lock → `ERR_PNPM_BAD_PM_VERSION` with v9
+
+### 2. README Visual Overhaul
+- `README.md` redesigned: hero, 4 badge rows, stats/graph/streak widgets, screenshot grid
+- Screenshot tracking table preserved (required by `sync-screenshot-status.mjs`)
+
+### 3. .gitignore Hygiene
+- Added `.autopilot/`, `**/.autopilot/`, `.build-output.log`, `**/.build-output.log`
+
+### 4. Unified MCP Directory (done, verified)
+- `packages/core/src/routers/unifiedDirectoryRouter.ts` — list + stats procedures
+- Router registered as `unifiedDirectory:` in `packages/core/src/trpc.ts`
+- Page at `apps/web/src/app/dashboard/mcp/unified-directory/page.tsx`
+- Nav entry in `apps/web/src/components/mcp/nav-config.ts`
+
+### 5. Code Mode Escape Hatch
+- `packages/core/src/routers/codeModeRouter.ts` — `getStatus`, `enable`, `disable`, `execute`
+- Registered as `codeMode:` in `packages/core/src/trpc.ts`
+- `apps/web/src/app/dashboard/code/page.tsx` now includes:
+  - Live Code Mode status panel (enabled indicator, tool count, context reduction %)
+  - Enable/Disable toggle
+  - Registered tools table
+  - Direct code execution editor with output display
+- Core package rebuilt to regenerate `.d.ts` types
+
+### 6. Documentation
+- `CHANGELOG.md` updated to `v0.10.28`
+- `MEMORY.md` updated with pnpm, screenshot sync, release gate notes
+- `DEPLOY.md` updated with pnpm v10 requirement and release gate instructions
+- `VERSION` bumped to `0.10.28`
+- `TODO.md` marked model fallback logic as `[x]` complete
+
+## Validation Completed
+
+```powershell
+pnpm -C packages/core build                             # exit 0
+pnpm -C packages/core exec tsc --noEmit --pretty false  # exit 0
+pnpm -C apps/web exec tsc --noEmit --pretty false       # exit 0
+```
+
+## Next Priority Items (from TODO.md)
+
+- Create detailed billing subpanels per provider (credit balances, usage tracking)
+- Improve MCP router startup with last-known-good config loading
+- Dynamic progressive tool disclosure (5-6 meta tools initially)
+- TOON format parsing and MCP traffic inspection panels
+- BobbyBookmarks integration as canonical link backlog datasource (dedupe, research-status, clustering)
+- Fully wire Council debate to `SmartPilot` trigger for autonomous self-correction
+Create:

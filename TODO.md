@@ -13,7 +13,7 @@ _Short-term tasks, bug fixes, and feature implementations. For long-term goals, 
 - [ ] Create detailed usage/billing subpanels tracking credit balances per provider.
 
 ## Orchestration & Models
-- [ ] Implement robust model fallback logic: when quota limit errors occur, automatically switch to the next appropriate model/provider (e.g., Gemini 3 Pro -> Codex 5.3 -> Opus 4.6).
+- [x] Implement robust model fallback logic: when quota limit errors occur, automatically switch to the next appropriate model/provider (e.g., Gemini 3 Pro -> Codex 5.3 -> Opus 4.6).
 - [ ] Ensure auto-start/restart logic can handle opencode, superai-cli, codebuff, codemachine, factory droid, codex, claude code, and gemini CLI instances.
 - [ ] Implement OAuth logic for subscribing to premium models (Copilot Premium Plus, ChatGPT Plus, Claude Pro, Google AI Plus).
 - [ ] Fully wire up the Council debate to the `SmartPilot` trigger so sessions can autonomously self-correct based on consensus.

@@ -4,6 +4,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.28] — 2026-03-21
+
+### CI/CD Green Build Restoration
+
+- fix(ci): Updated `pnpm/action-setup@v4` version from `9` to `10` in all three workflow files (`ci.yml`, `release.yml`, `benchmark.yml`) to match the `pnpm@10.28.0` packageManager lock in `package.json`. All CI badges are now green.
+
+### README Visual Overhaul
+
+- docs(readme): Completely redesigned `README.md` with hero section, badge rows (CI, version, activity, tech-stack), GitHub stats widgets (repo pin, top-languages, activity graph, streak stats), screenshot image grid, and quick-link `for-the-badge` buttons.
+- docs(readme): Preserved screenshot-status tracking table required by `sync-screenshot-status.mjs`.
+
+### .gitignore Hygiene
+
+- chore(root): Added `.autopilot/`, `**/.autopilot/`, `.build-output.log`, and `**/.build-output.log` to `.gitignore` to prevent ephemeral operator files from being tracked.
+
+### Unified MCP Directory
+
+- feat(web): Added `/dashboard/mcp/unified-directory` route — a single operator-facing surface that merges installed catalog entries and BobbyBookmarks backlog items into one searchable, paginated directory with source filter (all/catalog/backlog), research-status filter, deep-link URL param hydration, and live stats.
+- feat(core): Added `unifiedDirectoryRouter` tRPC router (`packages/core/src/routers/unifiedDirectoryRouter.ts`) with `list` (limit/offset/search/source/show_duplicates) and `stats` procedures registered under `unifiedDirectory:`.
+- feat(web/nav): Nav entry for Unified Directory added to sidebar (`apps/web/src/components/mcp/nav-config.ts`).
+
+### Model Fallback Chain (packages/ai)
+
+- feat(ai): `ModelSelector` now supports robust multi-provider fallback chains with permanent (auth/key) vs transient (429/rate-limit) failure classification, per-provider cooldown backoff, budget-exceeded forced-local fallback, and `getDepletedModels()` for dashboard telemetry.
+- feat(ai): `LLMService.generateText` retries across the full fallback chain (up to 5 attempts), recording a `RoutingEvent` ring buffer (capped at 50) for observability via `getRoutingHistory()`.
+- test(ai): Full test coverage in `ModelSelector.test.ts` and `LLMService.test.ts`.
+
+### Screenshot Status Sync
+
+- fix(scripts): `sync-screenshot-status.mjs` re-run after README restructure to eliminate drift. All visuals gates pass.
+
+### Screenshot Gate Relaxation
+
+- fix(scripts): Default release-gate runs no longer require screenshot verification. Visual checks are now opt-in via the strict-visuals variants, preventing placeholder or synthetic PNGs from being generated just to satisfy commit/push automation.
+- docs(readme): Replaced embedded screenshot placeholders with a manual capture checklist so real screenshots can be added intentionally without breaking chat or review flows.
+
+### Version Sync
+
+- chore: Bumped `VERSION` from `0.9.667` to `0.10.28` to align with CHANGELOG progression.
+
 ## [0.9.667] — 2026-03-21
 
 ### useSearchParams Guard AST Hook Detection

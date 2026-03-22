@@ -71,3 +71,31 @@ Once the dashboard is running, navigate to the **Integrations** tab in the WebUI
 *   Browser Extensions (Chrome, Firefox).
 *   IDE Plugins (VSCode, Cursor, Windsurf).
 *   CLI Harnesses.
+
+## Package Manager Requirement
+
+**pnpm v10 is required.** The root `package.json` locks `packageManager: pnpm@10.28.0`. Using pnpm v9 or below will produce `ERR_PNPM_BAD_PM_VERSION` and fail the build.
+
+```bash
+npm install -g pnpm@10
+```
+
+## CI/CD
+
+Workflows in `.github/workflows/` use `pnpm/action-setup@v4` with `version: 10`. Do not downgrade this — it will invalidate every CI run against the packageManager lock.
+
+## Release Gate
+
+Before merging or pushing, validate the full release gate:
+
+```bash
+pnpm run check:release-gate:ci
+```
+
+This runs (in order):
+1. `check:placeholders` — ensures no unresolved placeholder files are committed
+2. `visuals:verify` — validates screenshot tracking table in README is in sync
+3. Core typecheck — `tsc --noEmit` across `packages/core`
+4. Turbo lint — ESLint across all packages
+
+If `visuals:verify` fails, run `pnpm run sync:screenshot-status` to resync the README table.
