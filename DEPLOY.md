@@ -94,8 +94,13 @@ pnpm run check:release-gate:ci
 
 This runs (in order):
 1. `check:placeholders` — ensures no unresolved placeholder files are committed
-2. `visuals:verify` — validates screenshot tracking table in README is in sync
-3. Core typecheck — `tsc --noEmit` across `packages/core`
-4. Turbo lint — ESLint across all packages
+2. Core typecheck — `tsc --noEmit` across `packages/core`
+3. Turbo lint — ESLint across all packages
 
-If `visuals:verify` fails, run `pnpm run sync:screenshot-status` to resync the README table.
+Screenshot/visual verification is now opt-in (manual workflow). Use this when you explicitly want to validate screenshot state:
+
+```bash
+pnpm run check:release-gate:ci:strict-visuals
+```
+
+If strict visuals fail, run `pnpm run sync:screenshot-status` to resync the README table.
