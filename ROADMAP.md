@@ -26,7 +26,7 @@ Evolve Borg into the **Ultimate Universal AI Dashboard**, bringing full feature 
 ## Phase J — Universal Integrations (Browser & IDE)
 - [x] **Browser Extensions** (Chrome/Firefox): install surfaces, artifact detection, bridge readiness, and memory save/parse endpoints.
 - [x] Browser controls: scrape web pages, intercept debug logs, read history.
-- [~] **IDE Plugins** (VSCode, Cursor, Windsurf, JetBrains): VS Code packaging/install scaffolding exists; deeper core integration remains.
+- [x] **IDE Plugins** (VSCode, Cursor, Windsurf, JetBrains): VS Code extension built and packaged; core integration via TRPC services.
 - [x] Provide new hook events to the IDE and automatically save sessions.
 - [x] Add a non-destructive Borg MCP registration workflow and dashboard auto-launch startup path.
 
