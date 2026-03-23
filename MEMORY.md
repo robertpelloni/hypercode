@@ -48,3 +48,11 @@ _This document records ongoing observations about the codebase, architectural de
 ### Autopilot Bump Text Corruption
 *   The Antigravity autopilot can corrupt files that have editor focus when it types bump text. Compiled `.js` files are especially vulnerable. If a file shows `"Proceed Proceed Proceed..."` prepended to its content, that's autopilot corruption — restore line 1.
 
+### New Service Architecture (v0.90.5–0.90.6)
+*   **TRPC Router count**: The main `trpc.ts` now registers 70+ routers including `browserExtension`, `sessionExport`, `toolChaining`, and `browserControls`.
+*   **Context Harvesting**: `ContextHarvester` uses semantic sentence-boundary chunking with configurable overlap, time-decay relevance scoring (0.05/hour default), and automatic pruning/compaction on a timer. Token budget defaults to 128K.
+*   **Citation Service**: `CitationService` implements NotebookLM-style grounded answers. Uses keyword-based relevance as a placeholder for vector similarity — swap `scoredChunks` with LanceDB embedding queries in production.
+*   **Tool Chaining**: `toolChainingRouter` supports 3 failure policies (`stop`, `skip`, `retry`) and chains up to 20 steps. Tool aliases are per-server to avoid collisions.
+*   **Session Export**: `sessionExportRouter` auto-detects 8 formats (borg, claude-code, cursor, opencode, aider, windsurf, continue, copilot). Export packages use version `1.0` schema.
+*   **Google Workspace**: `GoogleWorkspaceConnector` is fully typed but requires `googleapis` npm package and credentials to activate. Periodic sync defaults to 15-minute intervals.
+*   **Browser Controls**: `browserControlsRouter` caps history at 10K entries and console logs at 5K entries to prevent memory bloat.
