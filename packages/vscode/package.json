@@ -164,7 +164,7 @@
         "@types/ws": "^8.5.10",
         "@typescript-eslint/eslint-plugin": "^6.13.1",
         "@typescript-eslint/parser": "^6.13.1",
-        "eslint": "^8.54.0",
+        "eslint": "^9.26.0",
         "tsup": "^8.0.2",
         "typescript": "^5.3.3",
         "vsce": "^2.15.0"
