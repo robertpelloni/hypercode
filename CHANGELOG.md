@@ -21,6 +21,12 @@ All notable changes to this project will be documented in this file.
 - feat(core/services): Created `GoogleWorkspaceConnector.ts` — typed connector for Google Docs, Gmail, and Google Drive with incremental sync, chunked indexing, and periodic sync timer.
 - feat(core/routers): Created `browserExtensionRouter.ts` — TRPC router with save/parse/list/delete/stats endpoints for browser extension web memories, DOM parsing, and URL normalization.
 - feat(core/services): Created `CitationService.ts` — NotebookLM-style citation engine with document chunking, grounded prompt building, inline citation extraction, and source-grounded answer generation.
+- feat(core/services): Created `ContextHarvester.ts` — automatic context harvesting with semantic chunking, relevance scoring, time decay, token-budgeted retrieval, and auto-compaction.
+
+### Session & Tool Management
+- feat(core/routers): Created `sessionExportRouter.ts` — session export/import with portable JSON format, auto-detection of 8 CLI tool formats, merge/dry-run modes.
+- feat(core/routers): Created `toolChainingRouter.ts` — tool renaming/aliases, sequential tool call chaining with failure policies, deferred binary lazy loading.
+- feat(core/routers): Created `browserControlsRouter.ts` — server-side web scraping, extension-bridged history push/query, console log interception.
 
 ### TODO Cleanup
 - Verified and marked as complete: Code Mode escape hatch, MEMORY.md, UI feature documentation, TOON parsing, universal MCP directory, submodule script, merge protocol, auto-start harness coverage, Council→SmartPilot wiring, and all agent docs.
