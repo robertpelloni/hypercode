@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { t, publicProcedure, adminProcedure } from '../lib/trpc-core.js';
+import { browserDataRepository } from '../db/repositories/browser-data.repo.js';
 
 /**
  * Memory Browser Extension Router
@@ -125,8 +126,7 @@ function extractMetaFromHtml(html: string): Record<string, string> {
     return meta;
 }
 
-// In-memory store for now — swap with SQLite/LanceDB in production
-const memoryStore: WebMemory[] = [];
+// In-memory store replaced with SQLite: browserDataRepository
 
 export const browserExtensionRouter = t.router({
     /**
@@ -136,29 +136,33 @@ export const browserExtensionRouter = t.router({
     saveMemory: adminProcedure
         .input(SaveMemoryInputSchema)
         .mutation(async ({ input }) => {
-            const memory: WebMemory = {
+            const normalized = normalizeUrl(input.url);
+            
+            // Check for simple dedup based on normalized URL in existing DB
+            // (A more advanced dedup might use insert onConflictDoUpdate)
+            const existingAll = await browserDataRepository.getAllMemories();
+            const existing = existingAll.find(m => m.normalizedUrl === normalized);
+            
+            if (existing) {
+                // Return existing immediately for now to simulate dedup
+                return { id: existing.id, deduplicated: true };
+            }
+
+            const memory = await browserDataRepository.saveMemory({
                 id: `mem_${Date.now()}_${simpleHash(input.url)}`,
                 url: input.url,
-                normalizedUrl: normalizeUrl(input.url),
+                normalizedUrl: normalized,
                 title: input.title,
                 content: input.content.substring(0, 50_000), // Cap at 50K chars
-                selectedText: input.selectedText,
+                selectedText: input.selectedText || null,
                 tags: input.tags ?? [],
-                favicon: input.favicon,
+                favicon: input.favicon || null,
                 savedAt: new Date(input.timestamp ?? Date.now()),
                 source: input.source,
                 contentHash: simpleHash(input.content),
-            };
+            });
 
-            // Dedup by normalized URL
-            const existingIdx = memoryStore.findIndex(m => m.normalizedUrl === memory.normalizedUrl);
-            if (existingIdx >= 0) {
-                memoryStore[existingIdx] = memory;
-            } else {
-                memoryStore.push(memory);
-            }
-
-            return { id: memory.id, deduplicated: existingIdx >= 0 };
+            return { id: memory.id, deduplicated: false };
         }),
 
     /**
@@ -196,7 +200,8 @@ export const browserExtensionRouter = t.router({
             offset: z.number().min(0).default(0),
         }))
         .query(async ({ input }) => {
-            let filtered = [...memoryStore];
+            const allMemories = await browserDataRepository.getAllMemories();
+            let filtered = [...allMemories];
 
             if (input.search) {
                 const q = input.search.toLowerCase();
@@ -211,7 +216,7 @@ export const browserExtensionRouter = t.router({
                 filtered = filtered.filter(m => m.tags.includes(input.tag!));
             }
 
-            // Sort by newest first
+            // Already sorted from DB but ensure consistency
             filtered.sort((a, b) => b.savedAt.getTime() - a.savedAt.getTime());
 
             return {
@@ -226,28 +231,25 @@ export const browserExtensionRouter = t.router({
     deleteMemory: adminProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ input }) => {
-            const idx = memoryStore.findIndex(m => m.id === input.id);
-            if (idx >= 0) {
-                memoryStore.splice(idx, 1);
-                return { deleted: true };
-            }
-            return { deleted: false };
+            const deleted = await browserDataRepository.deleteMemory(input.id);
+            return { deleted };
         }),
 
     /**
      * Get stats about saved web memories.
      */
     stats: publicProcedure.query(async () => {
+        const allMemories = await browserDataRepository.getAllMemories();
         const tagCounts: Record<string, number> = {};
-        for (const memory of memoryStore) {
+        for (const memory of allMemories) {
             for (const tag of memory.tags) {
                 tagCounts[tag] = (tagCounts[tag] || 0) + 1;
             }
         }
 
         return {
-            totalMemories: memoryStore.length,
-            uniqueUrls: new Set(memoryStore.map(m => m.normalizedUrl)).size,
+            totalMemories: allMemories.length,
+            uniqueUrls: new Set(allMemories.map(m => m.normalizedUrl)).size,
             topTags: Object.entries(tagCounts)
                 .sort(([, a], [, b]) => b - a)
                 .slice(0, 20)

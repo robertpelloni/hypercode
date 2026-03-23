@@ -495,6 +495,69 @@ function initializeSchema(database: InstanceType<typeof Database>): void {
         CREATE INDEX IF NOT EXISTS links_backlog_cluster_id_idx ON links_backlog(cluster_id);
         CREATE INDEX IF NOT EXISTS links_backlog_synced_at_idx ON links_backlog(synced_at);
 
+        -- Browser Data
+        CREATE TABLE IF NOT EXISTS web_memories (
+            id TEXT PRIMARY KEY,
+            url TEXT NOT NULL,
+            normalized_url TEXT NOT NULL,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            selected_text TEXT,
+            tags TEXT NOT NULL DEFAULT '[]',
+            favicon TEXT,
+            source TEXT NOT NULL,
+            content_hash TEXT NOT NULL,
+            saved_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS browser_history (
+            id TEXT PRIMARY KEY,
+            url TEXT NOT NULL,
+            title TEXT NOT NULL,
+            domain TEXT NOT NULL,
+            visited_at INTEGER NOT NULL,
+            visit_count INTEGER NOT NULL DEFAULT 1
+        );
+
+        CREATE TABLE IF NOT EXISTS browser_console_logs (
+            id TEXT PRIMARY KEY,
+            level TEXT NOT NULL,
+            message TEXT NOT NULL,
+            source TEXT NOT NULL,
+            url TEXT,
+            line_number INTEGER,
+            timestamp INTEGER NOT NULL
+        );
+
+        -- Tool Chaining
+        CREATE TABLE IF NOT EXISTS tool_chains (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            trigger_pattern TEXT,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS tool_chain_steps (
+            id TEXT PRIMARY KEY,
+            chain_id TEXT NOT NULL,
+            step_order INTEGER NOT NULL,
+            tool_name TEXT NOT NULL,
+            arguments_template TEXT NOT NULL,
+            timeout_ms INTEGER,
+            failure_policy TEXT NOT NULL DEFAULT 'abort',
+            retry_count INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (chain_id) REFERENCES tool_chains(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS tool_aliases (
+            alias TEXT PRIMARY KEY,
+            target_tool TEXT NOT NULL,
+            description TEXT,
+            default_arguments TEXT NOT NULL DEFAULT '{}',
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        );
+
         -- Council Tables
         CREATE TABLE IF NOT EXISTS council_debates (
             id TEXT PRIMARY KEY,

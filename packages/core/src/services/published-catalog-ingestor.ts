@@ -309,9 +309,18 @@ async function safeFetch(url: string): Promise<unknown> {
             headers: { "Accept": "application/json", "User-Agent": "Borg/MCP-Catalog-Ingestor" },
         });
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status} ${response.statusText}`);
+            console.warn(`[CatalogIngestor] HTTP ${response.status} from ${url}`);
+            return null; // Graceful degradation for rate limits/404s
         }
-        return await response.json();
+        try {
+            return await response.json();
+        } catch (e) {
+            console.warn(`[CatalogIngestor] Failed to parse JSON from ${url}:`, e);
+            return null;
+        }
+    } catch (err) {
+        console.warn(`[CatalogIngestor] Request to ${url} failed:`, err instanceof Error ? err.message : String(err));
+        return null; // Suppress DNS / Abort errors to prevent crash
     } finally {
         clearTimeout(timeout);
     }

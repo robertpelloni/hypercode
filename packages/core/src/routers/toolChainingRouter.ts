@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { t, publicProcedure, adminProcedure } from '../lib/trpc-core.js';
+import { toolChainsRepository } from '../db/repositories/tool-chains.repo.js';
 
 /**
  * Tool Call Chaining & Renaming Router (Phase M)
@@ -79,9 +80,7 @@ export interface LazyToolState {
     invocationCount: number;
 }
 
-// In-memory stores
-const toolAliases: ToolAlias[] = [];
-const toolChains: Map<string, ToolChainDefinition> = new Map();
+// Ephemeral state for binary lazy loading
 const lazyToolStates: Map<string, LazyToolState> = new Map();
 
 export const toolChainingRouter = t.router({
@@ -93,28 +92,38 @@ export const toolChainingRouter = t.router({
     createAlias: adminProcedure
         .input(ToolRenameSchema)
         .mutation(async ({ input }) => {
-            const existing = toolAliases.find(a => a.alias === input.alias);
+            const existing = await toolChainsRepository.getAliasById(input.alias);
             if (existing) {
-                throw new Error(`Alias '${input.alias}' already exists for ${existing.originalName}`);
+                throw new Error(`Alias '${input.alias}' already exists for ${existing.targetTool}`);
             }
 
-            const alias: ToolAlias = {
-                serverId: input.serverId,
-                originalName: input.originalName,
+            const alias = await toolChainsRepository.upsertAlias({
                 alias: input.alias,
+                targetTool: input.originalName,
                 description: input.description,
-                createdAt: Date.now(),
-            };
+            });
 
-            toolAliases.push(alias);
-            return alias;
+            return {
+                serverId: input.serverId,
+                originalName: alias.targetTool,
+                alias: alias.alias,
+                description: alias.description || undefined,
+                createdAt: alias.createdAt.getTime(),
+            };
         }),
 
     /**
      * List all tool aliases.
      */
     listAliases: publicProcedure.query(async () => {
-        return toolAliases;
+        const aliases = await toolChainsRepository.getAliases();
+        return aliases.map(a => ({
+            serverId: 'unknown', // Lost in abstraction but generally available via registry resolution
+            originalName: a.targetTool,
+            alias: a.alias,
+            description: a.description || undefined,
+            createdAt: a.createdAt.getTime(),
+        }));
     }),
 
     /**
@@ -123,12 +132,8 @@ export const toolChainingRouter = t.router({
     removeAlias: adminProcedure
         .input(z.object({ alias: z.string() }))
         .mutation(async ({ input }) => {
-            const idx = toolAliases.findIndex(a => a.alias === input.alias);
-            if (idx >= 0) {
-                toolAliases.splice(idx, 1);
-                return { removed: true };
-            }
-            return { removed: false };
+            const removed = await toolChainsRepository.deleteAlias(input.alias);
+            return { removed };
         }),
 
     /**
@@ -137,8 +142,18 @@ export const toolChainingRouter = t.router({
     resolveAlias: publicProcedure
         .input(z.object({ name: z.string() }))
         .query(async ({ input }) => {
-            const alias = toolAliases.find(a => a.alias === input.name);
-            return alias ? { resolved: true, ...alias } : { resolved: false };
+            const alias = await toolChainsRepository.getAliasById(input.name);
+            if (alias) {
+                return {
+                    resolved: true,
+                    serverId: 'unknown',
+                    originalName: alias.targetTool,
+                    alias: alias.alias,
+                    description: alias.description || undefined,
+                    createdAt: alias.createdAt.getTime(),
+                };
+            }
+            return { resolved: false };
         }),
 
     // ─── Tool Call Chaining ───
@@ -151,26 +166,47 @@ export const toolChainingRouter = t.router({
         .mutation(async ({ input }) => {
             const id = `chain_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-            const chain: ToolChainDefinition = {
-                id,
-                name: input.name,
-                description: input.description,
-                steps: input.steps,
+            const saved = await toolChainsRepository.createChain(
+                {
+                    id,
+                    name: input.name,
+                    description: input.description,
+                },
+                input.steps.map((step, idx) => ({
+                    id: `step_${id}_${idx}`,
+                    chainId: id,
+                    stepOrder: idx,
+                    toolName: step.toolName,
+                    argumentsTemplate: step.inputMapping || {},
+                }))
+            );
+
+            return {
+                ...saved,
                 failurePolicy: input.failurePolicy,
                 maxRetries: input.maxRetries,
-                createdAt: Date.now(),
                 runCount: 0,
             };
-
-            toolChains.set(id, chain);
-            return chain;
         }),
 
     /**
      * List all tool chains.
      */
     listChains: publicProcedure.query(async () => {
-        return Array.from(toolChains.values());
+        const chains = await toolChainsRepository.getAllChains();
+        return chains.map(chain => ({
+            id: chain.id,
+            name: chain.name,
+            description: chain.description || undefined,
+            steps: chain.steps.map(s => ({
+                toolName: s.toolName,
+                inputMapping: s.argumentsTemplate as Record<string, string>,
+            })),
+            failurePolicy: 'stop',
+            maxRetries: 1,
+            createdAt: chain.createdAt.getTime(),
+            runCount: 0,
+        }));
     }),
 
     /**
@@ -179,9 +215,22 @@ export const toolChainingRouter = t.router({
     getChain: publicProcedure
         .input(z.object({ id: z.string() }))
         .query(async ({ input }) => {
-            const chain = toolChains.get(input.id);
+            const chain = await toolChainsRepository.getChainById(input.id);
             if (!chain) throw new Error(`Chain '${input.id}' not found`);
-            return chain;
+            
+            return {
+                id: chain.id,
+                name: chain.name,
+                description: chain.description || undefined,
+                steps: chain.steps.map(s => ({
+                    toolName: s.toolName,
+                    inputMapping: s.argumentsTemplate as Record<string, string>,
+                })),
+                failurePolicy: 'stop',
+                maxRetries: 1,
+                createdAt: chain.createdAt.getTime(),
+                runCount: 0,
+            };
         }),
 
     /**
@@ -193,7 +242,7 @@ export const toolChainingRouter = t.router({
             initialInput: z.record(z.unknown()).optional(),
         }))
         .mutation(async ({ input }) => {
-            const chain = toolChains.get(input.chainId);
+            const chain = await toolChainsRepository.getChainById(input.chainId);
             if (!chain) throw new Error(`Chain '${input.chainId}' not found`);
 
             const startTime = Date.now();
@@ -205,20 +254,15 @@ export const toolChainingRouter = t.router({
                 try {
                     // In production: resolve tool via MCP runtime and execute
                     // For now, record the step as attempted
-                    const outputKey = step.outputKey || `step_${stepsCompleted}`;
-                    results[outputKey] = { tool: step.toolName, status: 'executed', input: step.inputMapping };
+                    const outputKey = `step_${stepsCompleted}`;
+                    results[outputKey] = { tool: step.toolName, status: 'executed', input: step.argumentsTemplate };
                     stepsCompleted++;
                 } catch (error) {
                     const msg = error instanceof Error ? error.message : String(error);
                     errors.push(`Step ${stepsCompleted}: ${msg}`);
-
-                    if (chain.failurePolicy === 'stop') break;
-                    // 'skip' continues to next step
+                    break;
                 }
             }
-
-            chain.runCount++;
-            chain.lastRunAt = Date.now();
 
             const result: ChainExecutionResult = {
                 chainId: chain.id,
@@ -239,7 +283,8 @@ export const toolChainingRouter = t.router({
     deleteChain: adminProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ input }) => {
-            return { deleted: toolChains.delete(input.id) };
+            const deleted = await toolChainsRepository.deleteChain(input.id);
+            return { deleted };
         }),
 
     // ─── Lazy Loading / Deferred Startup ───

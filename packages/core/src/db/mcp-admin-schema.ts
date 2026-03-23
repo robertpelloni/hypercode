@@ -7,3 +7,5 @@
 
 export * from "./metamcp-schema.js";
 export * from "./council-schema.js";
+export * from "./mcp-browser-schema.js";
+export * from "./mcp-tool-chain-schema.js";

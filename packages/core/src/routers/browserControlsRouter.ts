@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { t, publicProcedure, adminProcedure } from '../lib/trpc-core.js';
+import { browserDataRepository } from '../db/repositories/browser-data.repo.js';
 
 /**
  * Browser Controls Router (Phase J)
@@ -97,10 +98,6 @@ function extractImages(html: string): Array<{ src: string; alt: string }> {
     return images;
 }
 
-// In-memory stores for extension-bridged data
-const historyEntries: BrowserHistoryEntry[] = [];
-const consoleLogs: ConsoleLogEntry[] = [];
-
 export const browserControlsRouter = t.router({
     /**
      * Scrape a web page by URL (server-side fetch).
@@ -148,11 +145,16 @@ export const browserControlsRouter = t.router({
         .mutation(async ({ input }) => {
             for (const entry of input.entries) {
                 const domain = new URL(entry.url).hostname;
-                historyEntries.push({ ...entry, domain });
+                await browserDataRepository.addHistoryEntry({
+                    id: `hist_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                    url: entry.url,
+                    title: entry.title,
+                    domain,
+                    visitedAt: new Date(entry.visitedAt),
+                    visitCount: entry.visitCount,
+                });
             }
-            // Cap at 10K entries
-            while (historyEntries.length > 10_000) historyEntries.shift();
-            return { stored: input.entries.length, total: historyEntries.length };
+            return { stored: input.entries.length };
         }),
 
     /**
@@ -161,7 +163,8 @@ export const browserControlsRouter = t.router({
     queryHistory: publicProcedure
         .input(HistoryQuerySchema)
         .query(async ({ input }) => {
-            let filtered = [...historyEntries];
+            const allHistory = await browserDataRepository.getHistory();
+            let filtered = [...allHistory];
 
             if (input.query) {
                 const q = input.query.toLowerCase();
@@ -173,11 +176,17 @@ export const browserControlsRouter = t.router({
                 filtered = filtered.filter(e => e.domain === input.domain);
             }
             if (input.since) {
-                filtered = filtered.filter(e => e.visitedAt >= input.since!);
+                filtered = filtered.filter(e => e.visitedAt.getTime() >= input.since!);
             }
 
-            filtered.sort((a, b) => b.visitedAt - a.visitedAt);
-            return { entries: filtered.slice(0, input.limit), total: filtered.length };
+            filtered.sort((a, b) => b.visitedAt.getTime() - a.visitedAt.getTime());
+            return {
+                entries: filtered.slice(0, input.limit).map(e => ({
+                    ...e,
+                    visitedAt: e.visitedAt.getTime()
+                })),
+                total: filtered.length
+            };
         }),
 
     /**
@@ -195,9 +204,18 @@ export const browserControlsRouter = t.router({
             })),
         }))
         .mutation(async ({ input }) => {
-            consoleLogs.push(...input.logs);
-            while (consoleLogs.length > 5_000) consoleLogs.shift();
-            return { stored: input.logs.length, total: consoleLogs.length };
+            for (const log of input.logs) {
+                await browserDataRepository.addConsoleLog({
+                    id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                    level: log.level,
+                    message: log.message,
+                    source: log.source,
+                    url: log.url || null,
+                    lineNumber: log.lineNumber || null,
+                    timestamp: new Date(log.timestamp),
+                });
+            }
+            return { stored: input.logs.length };
         }),
 
     /**
@@ -210,26 +228,38 @@ export const browserControlsRouter = t.router({
             limit: z.number().min(1).max(500).default(100),
         }))
         .query(async ({ input }) => {
-            let filtered = [...consoleLogs];
-            if (input.level) filtered = filtered.filter(l => l.level === input.level);
+            const allLogs = await browserDataRepository.getConsoleLogs({ level: input.level });
+            let filtered = [...allLogs];
+            
             if (input.search) {
                 const q = input.search.toLowerCase();
                 filtered = filtered.filter(l => l.message.toLowerCase().includes(q));
             }
-            filtered.sort((a, b) => b.timestamp - a.timestamp);
-            return { logs: filtered.slice(0, input.limit), total: filtered.length };
+            
+            filtered.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+            return {
+                logs: filtered.slice(0, input.limit).map(l => ({
+                    ...l,
+                    timestamp: l.timestamp.getTime()
+                })),
+                total: filtered.length
+            };
         }),
 
     /**
      * Stats on collected browser data.
      */
     stats: publicProcedure.query(async () => {
-        const domains = new Set(historyEntries.map(e => e.domain));
-        const errorCount = consoleLogs.filter(l => l.level === 'error').length;
+        const history = await browserDataRepository.getHistory();
+        const logs = await browserDataRepository.getConsoleLogs();
+        
+        const domains = new Set(history.map(e => e.domain));
+        const errorCount = logs.filter(l => l.level === 'error').length;
+        
         return {
-            historyCount: historyEntries.length,
+            historyCount: history.length,
             uniqueDomains: domains.size,
-            consoleLogCount: consoleLogs.length,
+            consoleLogCount: logs.length,
             consoleErrors: errorCount,
         };
     }),

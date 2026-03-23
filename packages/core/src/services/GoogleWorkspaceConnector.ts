@@ -98,19 +98,7 @@ export class GoogleWorkspaceConnector {
         }
 
         try {
-            // In production: use googleapis to list and fetch docs
-            // For now, this is the service scaffold ready for credential wiring
-            console.log('[GoogleWorkspaceConnector] Sync started for Google Docs');
-            console.log(`[GoogleWorkspaceConnector] Scopes: ${this.config.scopes.join(', ')}`);
-
-            // The actual implementation would:
-            // 1. Initialize google.auth.GoogleAuth with credentials
-            // 2. List files via drive.files.list with mimeType filter
-            // 3. Export docs via docs.documents.get
-            // 4. Chunk content and store via memoryRepository
-            // 5. Track pageToken for incremental sync
-
-            this.lastSyncReport = report;
+            throw new Error("NotImplementedError: Google Docs sync is not yet implemented.");
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             report.errors.push(`Google Docs sync failed: ${message}`);
@@ -139,10 +127,7 @@ export class GoogleWorkspaceConnector {
         }
 
         try {
-            console.log('[GoogleWorkspaceConnector] Sync started for Gmail');
-            // The actual implementation would use gmail.users.messages.list
-            // and gmail.users.messages.get to fetch and index emails
-            this.lastSyncReport = report;
+            throw new Error("NotImplementedError: Gmail sync is not yet implemented.");
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             report.errors.push(`Gmail sync failed: ${message}`);
@@ -171,8 +156,7 @@ export class GoogleWorkspaceConnector {
         }
 
         try {
-            console.log('[GoogleWorkspaceConnector] Sync started for Google Drive');
-            this.lastSyncReport = report;
+            throw new Error("NotImplementedError: Google Drive sync is not yet implemented.");
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             report.errors.push(`Drive sync failed: ${message}`);

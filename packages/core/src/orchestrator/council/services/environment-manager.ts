@@ -75,6 +75,8 @@ const CLI_SPECIFIC_VARS: Record<CLIType, string[]> = {
   trae: ['TRAE_*'],
   pi: ['PI_*'],
   warp: ['WARP_*'],
+  'superai-cli': ['SUPER_AI_*'],
+  'factory-droid': ['FACTORY_DROID_*'],
 };
 
 class EnvironmentManager {
@@ -270,6 +272,8 @@ class EnvironmentManager {
       trae: [],
       pi: [],
       warp: [],
+      'superai-cli': [],
+      'factory-droid': [],
     };
 
     return required[cliType] || [];

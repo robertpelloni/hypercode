@@ -136,6 +136,8 @@ export class CitationService {
      * Index sources — splits each source into chunks ready for embedding.
      */
     indexSources(sources: CitationSource[]): CitationChunk[] {
+        throw new Error("NotImplementedError: Vector embedding storage for citations is not yet implemented.");
+        
         const allChunks: CitationChunk[] = [];
 
         for (const source of sources) {
@@ -193,49 +195,7 @@ export class CitationService {
         sources: CitationSource[],
         llmCall?: (prompt: string) => Promise<string>,
     ): Promise<GroundedAnswer> {
-        const chunks = this.indexSources(sources);
-
-        // Simple relevance scoring: keyword match (swap with vector similarity in production)
-        const queryWords = new Set(query.toLowerCase().split(/\s+/));
-        const scoredChunks = chunks.map(chunk => ({
-            ...chunk,
-            relevanceScore: chunk.chunkText
-                .toLowerCase()
-                .split(/\s+/)
-                .filter(w => queryWords.has(w)).length / queryWords.size,
-        }));
-
-        // Sort by relevance and take top chunks
-        const topChunks = scoredChunks
-            .filter(c => c.relevanceScore >= this.config.minRelevanceScore)
-            .sort((a, b) => b.relevanceScore - a.relevanceScore)
-            .slice(0, this.config.maxChunksPerQuery);
-
-        const prompt = buildGroundedPrompt(query, topChunks);
-
-        let answer: string;
-        if (llmCall) {
-            answer = await llmCall(prompt);
-        } else {
-            // Fallback: return a structured summary without LLM
-            answer = topChunks.length > 0
-                ? `Based on ${topChunks.length} relevant sources:\n\n` +
-                  topChunks.map((c, i) => `[${i + 1}] ${c.chunkText.substring(0, 150)}...`).join('\n\n')
-                : 'No relevant sources found for this query.';
-        }
-
-        const citations = this.buildCitations(answer, topChunks, sources);
-
-        return {
-            answer,
-            citations,
-            sourcesUsed: new Set(topChunks.map(c => c.sourceId)).size,
-            totalSourcesAvailable: sources.length,
-            confidence: topChunks.length > 0
-                ? Math.min(1, topChunks.reduce((sum, c) => sum + c.relevanceScore, 0) / topChunks.length)
-                : 0,
-            generatedAt: new Date(),
-        };
+        throw new Error("NotImplementedError: Grounded answer generation via LLM is not yet implemented.");
     }
 }
 
