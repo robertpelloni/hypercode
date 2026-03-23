@@ -41,6 +41,11 @@ _This document records ongoing observations about the codebase, architectural de
 *   **UI imports**: Components in `apps/web/` must import from `@borg/ui`, not `@/components/ui/*`. The `@/components/ui/` alias path does not exist in `apps/web` — those components live in `packages/ui/src/components/ui/`. Not all `packages/ui` components are re-exported from the barrel `index.tsx` (e.g., `ScrollArea` is not).
 *   **Production build**: `pnpm run build` in `apps/web` is the authoritative build verification. Dev mode (`pnpm dev`) may not surface all import errors.
 
+### 2026-03-23 Observation - Maestro Assimilation & Port Deadlocks
+- Discovered that crashing background Orchestrator instances (Node.js) heavily occluded ports `4000` and `4001`, blocking `.\start.bat`. Nailing down explicit `taskkill /F /PID` cleanup instructions internally for developer maintenance.
+- Initiated strict version normalization (`0.90.7` across all 20+ internal packages) via the `scripts/bump_version.mjs` script.
+- Adopted the `Maestro` repository as an internal Electron Submodule (`apps/maestro`), replacing its deprecated `electron-rebuild` package with `@electron/rebuild` to satisfy Node v24 compliance alongside the unified `pnpm` workspace constraints.
+
 ### MCP Configuration
 *   Config files live at `~/.borg/mcp.json` (or `.jsonc`). The `JsonConfigProvider` migrates legacy configs from workspace root automatically.
 *   MCP server discovery supports STDIO, SSE, and STREAMABLE_HTTP transports with a 30-second timeout.

@@ -1,16 +1,16 @@
 {
-    "name":  "@borg/mcp-client",
-    "version":  "0.90.0",
-    "main":  "dist/index.js",
-    "types":  "dist/index.d.ts",
-    "scripts":  {
-                    "build":  "tsc",
-                    "test":  "vitest run --passWithNoTests"
-                },
-    "dependencies":  {
-                         "@modelcontextprotocol/sdk":  "^1.0.0"
-                     },
-    "devDependencies":  {
-                            "typescript":  "^5.3.3"
-                        }
+    "name": "@borg/mcp-client",
+    "version": "0.90.7",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "test": "vitest run --passWithNoTests"
+    },
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.0.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.3.3"
+    }
 }

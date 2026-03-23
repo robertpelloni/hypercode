@@ -1,10 +1,10 @@
 # Version
 
-0.90.0
+0.90.7
 
 ## Version Sync Checklist
 
-When bumping Borg, update every active product-facing version reference below in the same change set. This list was refreshed during the `0.90.0` normalization pass to match the files that were actually updated.
+When bumping Borg, update every active product-facing version reference below in the same change set. This list was refreshed during the `0.90.7` normalization pass to match the files that were actually updated.
 
 ### 1. Canonical version files
 - `VERSION`

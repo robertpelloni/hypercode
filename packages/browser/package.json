@@ -1,6 +1,6 @@
 {
   "name": "@borg/browser-legacy",
-  "version": "0.90.0",
+  "version": "0.90.7",
   "scripts": {
     "build": "webpack --config webpack.config.js"
   },

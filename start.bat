@@ -31,6 +31,9 @@ if "%SKIP_BUILD%"=="1" (
     if errorlevel 1 exit /b 1
 )
 
+echo Starting Maestro Dashboard...
+start /B cmd /c "pnpm -C apps/maestro start"
+
 echo Starting Hub...
 call pnpm start
 if errorlevel 1 exit /b 1

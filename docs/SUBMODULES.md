@@ -15,6 +15,7 @@ Borg uses a highly modular architecture that integrates numerous best-in-class u
 ### Active Integrations
 | Name | Path | Origin | Purpose |
 | :--- | :--- | :--- | :--- |
+| **Maestro** | `apps/maestro` | `https://github.com/robertpelloni/Maestro` | Unified Electron Dashboard UI. |
 | **MetaMCP** | `external/MetaMCP` | `https://github.com/metatool-ai/metamcp` | Core reference for MCP routing and aggregation. |
 | **OmniRoute** | `archive/OmniRoute` | `https://github.com/diegosouzapw/OmniRoute` | Reference for LLM routing and fallback logic. |
 | **Claude-Mem** | `packages/claude-mem` | `https://github.com/robertpelloni/claude-mem` | Core memory subsystem fork. |
