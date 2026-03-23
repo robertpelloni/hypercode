@@ -32,7 +32,7 @@
         "@types/express": "^4.17.21",
         "@types/ink-text-input": "^2.0.5",
         "@types/react": "^18.2.0",
-        "eslint": "^8.56.0",
+        "eslint": "^9.26.0",
         "typescript": "^5.9.3"
     }
 }
