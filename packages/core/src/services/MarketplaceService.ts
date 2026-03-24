@@ -141,9 +141,9 @@ export class MarketplaceService {
 
         // 1. Check if it's an MCP server installed in mcp.json
         try {
-            // Assume mcp.json is near the root or in a config dir
-            // The default MetaMCP Controller writes to mcp.json in the current working directory or a specific config path
-            const mcpJsonPath = path.join(process.cwd(), 'mcp.json');
+            const os = await import('os');
+            // Check the unified config path
+            const mcpJsonPath = path.join(os.homedir(), '.borg', 'mcp.json');
             const mcpJsonRaw = await fs.readFile(mcpJsonPath, 'utf-8');
             const mcpConfig = JSON.parse(mcpJsonRaw);
 

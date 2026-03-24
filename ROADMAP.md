@@ -55,7 +55,7 @@ Evolve Borg into the **Ultimate Universal AI Dashboard**, bringing full feature 
 - [x] Wire `MarketplaceService` to real community data instead of TODO stubs for MeshService.
 - [x] Implement community tool/skill/agent publishing and discovery.
 - [x] Upgrade `CitationService` from keyword scoring to LanceDB vector embeddings.
-- [ ] React Native/Expo mobile companion app for remote monitoring/control.
+- [x] React Native/Expo mobile companion app for remote monitoring/control.
 
 ## Completed Phases
 - **Phase A**: Initial architecture and schema.

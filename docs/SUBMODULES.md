@@ -16,10 +16,11 @@ Borg uses a highly modular architecture that integrates numerous best-in-class u
 | Name | Path | Origin | Purpose |
 | :--- | :--- | :--- | :--- |
 | **Maestro** | `apps/maestro` | `https://github.com/robertpelloni/Maestro` | Unified Electron Dashboard UI. |
-| **MetaMCP** | `external/MetaMCP` | `https://github.com/metatool-ai/metamcp` | Core reference for MCP routing and aggregation. |
-| **OmniRoute** | `archive/OmniRoute` | `https://github.com/diegosouzapw/OmniRoute` | Reference for LLM routing and fallback logic. |
-| **Claude-Mem** | `packages/claude-mem` | `https://github.com/robertpelloni/claude-mem` | Core memory subsystem fork. |
-| **LiteLLM** | `archive/submodules/litellm` | `https://github.com/BerriAI/litellm` | Reference for multi-provider API translation and load balancing. |
+| **OmniRoute** | `archive/OmniRoute` | `https://github.com/diegosouzapw/OmniRoute` | Reference for LLM routing and fallback logic (Archived). |
+| **Claude-Mem (Archive)** | `archive/claude-mem` | `https://github.com/robertpelloni/claude-mem` | Old core memory subsystem fork (Archived). |
+| **LiteLLM** | `archive/submodules/litellm` | `https://github.com/BerriAI/litellm` | Reference for multi-provider API translation (Archived). |
+| **MCPProxy** | `archive/submodules/mcpproxy` | `https://github.com/modelcontextprotocol/mcpproxy` | Reference proxy codebase (Archived). |
+| **Claude-Mem** | `packages/claude-mem` | `https://github.com/robertpelloni/claude-mem` | Active core memory subsystem fork. |
 
 ## Updating Submodules
 

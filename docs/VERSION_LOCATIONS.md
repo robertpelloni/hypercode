@@ -3,13 +3,13 @@
 This document tracks all locations where the Borg version number is hardcoded or referenced. When performing a major version bump (like the `0.90.0` milestone), ensure all these locations are synchronized.
 
 ## 1. Primary Version Sources
-- `VERSION`: (Current: `0.90.0`) - Authoritative plain-text version.
-- `VERSION.md`: (Current: `0.90.0`) - Version history and sync checklist.
-- `CHANGELOG.md`: (Current: `0.90.0`) - Narrative history of changes.
-- `HANDOFF.md`: (Current: `0.90.0`) - Active session context.
+- `VERSION`: (Current: `0.99.3`) - Authoritative plain-text version.
+- `VERSION.md`: (Current: `0.99.3`) - Version history and sync checklist.
+- `CHANGELOG.md`: (Current: `0.99.3`) - Narrative history of changes.
+- `HANDOFF.md`: (Current: `0.99.3`) - Active session context.
 
 ## 2. Package Manifests (`package.json`)
-All these currently reference `0.90.0`:
+All these currently reference `0.99.3`:
 - `package.json` (Root)
 - `apps/borg-extension/package.json`
 - `apps/vscode/package.json`
@@ -36,7 +36,7 @@ All these currently reference `0.90.0`:
 
 ## 3. Web UI Fallbacks & Branding
 - `apps/web/src/components/Navigation.tsx`: Fallback for `NEXT_PUBLIC_BORG_VERSION`.
-- `apps/web/src/components/mcp/nav-config.ts`: Hardcoded branding string "Borg 0.90.0 Core".
+- `apps/web/src/components/mcp/nav-config.ts`: Hardcoded branding string "Borg 0.99.3 Core".
 
 ## 4. CLI & Core Runtime Fallbacks
 - `packages/cli/src/version.ts`: Returns hardcoded version string.

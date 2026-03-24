@@ -128,9 +128,9 @@ export class CitationService {
     constructor(config?: Partial<CitationServiceConfig>) {
         this.config = { ...DEFAULT_CONFIG, ...config };
         
-        // Store vector DB locally in the workspace .borg directory
-        const processCwd = typeof process !== 'undefined' ? process.cwd() : '';
-        this.lancedbPath = `${processCwd}/.borg/citations_db`;
+        // Store vector DB locally in the global user .borg directory
+        const os = require('os');
+        this.lancedbPath = `${os.homedir()}/.borg/citations_db`;
     }
 
     getConfig(): CitationServiceConfig {
