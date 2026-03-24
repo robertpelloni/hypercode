@@ -20,7 +20,8 @@ export class MeshCoderAgent extends SpecializedAgent {
 
             // Dispatch to the internal CoderAgent implementation
             const result = await this.mcpServer.coderAgent.handleTask({
-                task: offer.task
+                task: offer.task,
+                worktreePath: offer.worktreePath
             });
 
             // The Mesh expects the final payload to be primarily a string `result` field

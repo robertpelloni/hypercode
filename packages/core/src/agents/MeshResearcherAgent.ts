@@ -23,6 +23,7 @@ export class MeshResearcherAgent extends SpecializedAgent {
 
             const result = await this.mcpServer.researcherAgent.handleTask({
                 task: offer.task,
+                worktreePath: offer.worktreePath,
                 options: { depth: 2, breadth: 3 }
             });
 

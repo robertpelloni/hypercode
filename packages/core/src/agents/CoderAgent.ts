@@ -67,9 +67,13 @@ Output ONLY valid JSON.`;
             console.log(`[CoderAgent] 💡 Generated Plan: Write ${plan.filename}`);
 
             // 2. Execute Action (Write to Disk)
-            // Ideally, we respect a workspace root.
-            const workspaceRoot = process.cwd();
+            // Phase 95: Strict Git Worktree sandbox mapping with fallback
+            const workspaceRoot = offer.worktreePath || process.cwd();
             const targetPath = path.resolve(workspaceRoot, plan.filename);
+
+            if (!targetPath.startsWith(workspaceRoot)) {
+                throw new Error(`Security Violation: Attempted to write outside the assigned Swarm Worktree isolation zone: ${targetPath}`);
+            }
 
             await fs.writeFile(targetPath, plan.content, 'utf-8');
             console.log(`[CoderAgent] 💾 Wrote to ${targetPath}`);
