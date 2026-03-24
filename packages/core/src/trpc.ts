@@ -49,7 +49,7 @@ import { savedScriptsRouter } from './routers/savedScriptsRouter.js';
 import { oauthRouter } from './routers/oauthRouter.js';
 import { agentRouter } from './routers/agentRouter.js';
 import { browserRouter } from './routers/browserRouter.js';
-// import { meshRouter } from './routers/meshRouter.js';
+import { meshRouter } from './routers/meshRouter.js';
 import { marketplaceRouter } from './routers/marketplaceRouter.js';
 import { deerFlowRouter } from './routers/deerFlowRouter.js';
 import { cloudDevRouter } from './routers/cloudDevRouter.js';
@@ -119,7 +119,7 @@ export const appRouter = t.router({
     oauth: oauthRouter,
     agent: agentRouter,
     browser: browserRouter,
-    // mesh: meshRouter,
+    mesh: meshRouter,
     marketplace: marketplaceRouter,
     deerFlow: deerFlowRouter,
     cloudDev: cloudDevRouter,

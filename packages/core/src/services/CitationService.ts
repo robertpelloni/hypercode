@@ -123,9 +123,14 @@ GROUNDED ANSWER:`;
 
 export class CitationService {
     private config: CitationServiceConfig;
+    private lancedbPath: string;
 
     constructor(config?: Partial<CitationServiceConfig>) {
         this.config = { ...DEFAULT_CONFIG, ...config };
+        
+        // Store vector DB locally in the workspace .borg directory
+        const processCwd = typeof process !== 'undefined' ? process.cwd() : '';
+        this.lancedbPath = `${processCwd}/.borg/citations_db`;
     }
 
     getConfig(): CitationServiceConfig {
@@ -133,13 +138,19 @@ export class CitationService {
     }
 
     /**
-     * Index sources — splits each source into chunks ready for embedding.
+     * Index sources — splits each source into chunks, generates embeddings,
+     * and stores them in a LanceDB table for retrieval.
      */
-    indexSources(sources: CitationSource[]): CitationChunk[] {
-        throw new Error("NotImplementedError: Vector embedding storage for citations is not yet implemented.");
-        
-        const allChunks: CitationChunk[] = [];
+    async indexSources(sessionId: string, sources: CitationSource[]): Promise<void> {
+        // Dynamic imports for heavy ML / DB dependencies
+        const { pipeline } = await import('@xenova/transformers');
+        const lancedb = await import('@lancedb/lancedb');
 
+        const embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+        const db = await lancedb.connect(this.lancedbPath);
+
+        const data: any[] = [];
+        
         for (const source of sources) {
             const textChunks = chunkDocument(
                 source.content,
@@ -147,17 +158,64 @@ export class CitationService {
                 this.config.chunkOverlap,
             );
 
-            for (const chunkText of textChunks) {
-                allChunks.push({
+            for (let i = 0; i < textChunks.length; i++) {
+                const chunkText = textChunks[i];
+                const output = await embedder(chunkText, { pooling: 'mean', normalize: true });
+                const vector = Array.from(output.data);
+                
+                data.push({
+                    vector,
                     sourceId: source.id,
                     sourceTitle: source.title,
                     chunkText,
-                    relevanceScore: 0, // Set during retrieval
+                    chunkIndex: i
                 });
             }
         }
+        
+        if (data.length === 0) return;
 
-        return allChunks;
+        // Use a unique table per session/query batch to scope citations
+        const tableName = `citations_${sessionId}`;
+        try {
+            await db.dropTable(tableName);
+        } catch (e) { /* Ignore if it doesn't exist */ }
+        
+        await db.createTable(tableName, data);
+    }
+    
+    /**
+     * Retrieves the most relevant chunks from the indexed sources for a given query.
+     */
+    async retrieveRelevantChunks(sessionId: string, query: string): Promise<CitationChunk[]> {
+        const { pipeline } = await import('@xenova/transformers');
+        const lancedb = await import('@lancedb/lancedb');
+        
+        const embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+        const db = await lancedb.connect(this.lancedbPath);
+        
+        const output = await embedder(query, { pooling: 'mean', normalize: true });
+        const queryVector = Array.from(output.data) as number[];
+        
+        const tableName = `citations_${sessionId}`;
+        try {
+            const table = await db.openTable(tableName);
+            const results = await table.search(queryVector)
+                .limit(this.config.maxChunksPerQuery)
+                .toArray();
+                
+            return results
+                .filter(row => 1 - (row._distance || 0) >= this.config.minRelevanceScore)
+                .map(row => ({
+                    sourceId: row.sourceId as string,
+                    sourceTitle: row.sourceTitle as string,
+                    chunkText: row.chunkText as string,
+                    relevanceScore: 1 - (row._distance || 0)
+                }));
+        } catch (e) {
+            console.error("Failed to retrieve chunks from LanceDB:", e);
+            return [];
+        }
     }
 
     /**
@@ -188,14 +246,38 @@ export class CitationService {
 
     /**
      * Generate a grounded answer with citations.
-     * In production, this calls the LLM with the grounded prompt.
      */
     async generateGroundedAnswer(
+        sessionId: string,
         query: string,
         sources: CitationSource[],
-        llmCall?: (prompt: string) => Promise<string>,
+        llmCall: (prompt: string) => Promise<string>,
     ): Promise<GroundedAnswer> {
-        throw new Error("NotImplementedError: Grounded answer generation via LLM is not yet implemented.");
+        
+        // 1. Index the sources into the vector DB
+        await this.indexSources(sessionId, sources);
+        
+        // 2. Retrieve relevant chunks
+        const scoredChunks = await this.retrieveRelevantChunks(sessionId, query);
+        
+        // 3. Build prompt and call LLM
+        const prompt = buildGroundedPrompt(query, scoredChunks);
+        const rawAnswer = await llmCall(prompt);
+        
+        // 4. Build citations
+        const citations = this.buildCitations(rawAnswer, scoredChunks, sources);
+        
+        // Ensure confidence score based on citation counts
+        const confidence = scoredChunks.length > 0 ? (citations.length / scoredChunks.length) : 0;
+        
+        return {
+            answer: rawAnswer,
+            citations,
+            sourcesUsed: citations.length,
+            totalSourcesAvailable: sources.length,
+            confidence: Math.min(Math.max(confidence, 0.1), 1.0), // Bound 0.1 - 1.0 based on citation density
+            generatedAt: new Date()
+        };
     }
 }
 

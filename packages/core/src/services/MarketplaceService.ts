@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { McpmRegistry, RegistryItem } from '../skills/McpmRegistry.js';
 import { McpmInstaller } from '../skills/McpmInstaller.js';
-// import { MeshService } from './MeshService.js';
+import { MeshService, SwarmMessageType } from '../mesh/MeshService.js';
 import { Registry } from '@borg/mcp-registry';
 import path from 'path';
 
@@ -25,7 +25,7 @@ export class MarketplaceService {
     private legacyRegistry: McpmRegistry;
     private mcpRegistry: ReturnType<typeof Registry.prototype.list>;
     private installer: McpmInstaller;
-    // private meshService?: MeshService;
+    private meshService?: MeshService;
     private installDir: string;
 
     constructor(installDir: string, meshService?: any) {
@@ -37,7 +37,7 @@ export class MarketplaceService {
         this.mcpRegistry = registry.list();
 
         this.installer = new McpmInstaller(installDir);
-        // this.meshService = meshService;
+        this.meshService = meshService;
     }
 
     /**
@@ -84,12 +84,32 @@ export class MarketplaceService {
             });
         }
 
-        /*
-        // Mesh Discovery (Future: Listen for announcements)
+        // Mesh Discovery
         if (this.meshService) {
-            // TODO: Query MeshService for discovered peers offering tools
+            const meshCaps = this.meshService.getMeshCapabilities();
+            for (const [nodeId, caps] of Object.entries(meshCaps)) {
+                // Ignore self
+                if (nodeId === this.meshService.nodeId) continue;
+                
+                for (const cap of caps) {
+                    if (filter && !cap.toLowerCase().includes(filter.toLowerCase())) continue;
+                    
+                    entries.push({
+                        id: `${nodeId}:${cap}`,
+                        name: cap,
+                        description: `Shared tool from peer ${nodeId.slice(0, 8)}`,
+                        author: `Peer ${nodeId.slice(0, 8)}`,
+                        type: 'tool',
+                        source: 'community',
+                        url: `mesh://${nodeId}/${cap}`,
+                        verified: false,
+                        peerCount: 1,
+                        installed: false,
+                        tags: ['mesh', 'community']
+                    });
+                }
+            }
         }
-        */
 
         // Check installation status
         for (const entry of entries) {
@@ -106,13 +126,14 @@ export class MarketplaceService {
     }
 
     async publish(manifest: Partial<MarketplaceEntry>): Promise<string> {
-        /*
         if (!this.meshService) {
             throw new Error("MeshService not available for publishing.");
         }
-        // TODO: Implement broadcasting via MeshService
-        */
-        return "Published to Mesh (Simulation - Out of Scope)";
+        
+        // Publish capability to the mesh
+        this.meshService.broadcast(SwarmMessageType.CAPABILITY_RESPONSE, { capability: manifest.name });
+        
+        return `Published ${manifest.name} to Mesh network`;
     }
 
     private async checkInstalled(id: string): Promise<boolean> {
