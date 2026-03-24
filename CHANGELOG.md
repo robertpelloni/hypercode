@@ -4,9 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.99.3] — 2026-03-23
+
+### Added
+- **System Configuration Dashboard:** Completely expanded `/dashboard/config` from a simple 14-line wrapper into a comprehensive System Configuration surface using a multi-tab layout (`@borg/ui` Tabs).
+- **Model Providers Panel:** Added `ModelProvidersList` to manage LLM API keys natively in the dashboard, persisting directly to the workspace `.env` file via `settingsRouter`.
+- **System Limits Panel:** Added `SystemLimitsPanel` to manage authentication boundaries (disable signups, SSO, basic auth) and MCP execution limits (timeout resets) via `configRouter`.
+
+### Removed
+- **Orphaned Router:** Deleted `packages/core/src/routers/councilRouter.ts` (131 lines). Its procedures (`members`, `updateMembers`) were previously inlined into `council/index.ts` during the v0.99.2 build fix, making this file safely redundant.
+
+### Version
+- Bumped `VERSION` from `0.99.2` to `0.99.3`.
+
 ## [0.99.2] — 2026-03-24
 
-### Fixed
 - **Council Router Build Error:** Rewrote `packages/core/src/routers/council/index.ts` to expose `members` and `updateMembers` as direct top-level procedures. These were previously orphaned in `routers/councilRouter.ts` (never imported by `trpc.ts`), causing TypeScript errors in `providers/routing/page.tsx`. Both `@borg/core` and `@borg/web` now typecheck cleanly.
 
 ### Changed
