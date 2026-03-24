@@ -61,3 +61,11 @@ _This document records ongoing observations about the codebase, architectural de
 *   **Session Export**: `sessionExportRouter` auto-detects 8 formats (borg, claude-code, cursor, opencode, aider, windsurf, continue, copilot). Export packages use version `1.0` schema.
 *   **Google Workspace**: `GoogleWorkspaceConnector` is fully typed but requires `googleapis` npm package and credentials to activate. Periodic sync defaults to 15-minute intervals.
 *   **Browser Controls**: `browserControlsRouter` caps history at 10K entries and console logs at 5K entries to prevent memory bloat.
+
+### 2026-03-24 Observation - Deep Audit (Antigravity / Claude Opus 4.6)
+- **104 local branches** had accumulated from Jules and other agents. 94 were already merged, 2 were pre-Phase-Bankruptcy v2.7.x legacy (unmergeable without destroying the clean 0.99.x state). All deleted, leaving a clean single-branch repo.
+- **Council router split**: Two `councilRouter.ts` files existed — one at `routers/councilRouter.ts` (orphaned, never imported by `trpc.ts`) containing `members`/`updateMembers` procedures, and one at `routers/council/councilRouter.ts` (active) containing debate/status procedures. Unified by inlining the orphaned procedures into `council/index.ts`.
+- **`t.mergeRouters` pitfall**: tRPC's `mergeRouters` does NOT propagate types to downstream consumer packages (`apps/web`). Procedures must be in a single `t.router()` call for type inference to flow correctly through the generated `.d.ts` barrel.
+- **Dashboard page size distribution**: Pages range from 1 line (orchestrator, re-export) to 2716 lines (mcp). Most are genuinely wired to real components and services. No completely empty/broken stubs found.
+- **Council.json models**: Updated from outdated slugs (`claude-sonnet-4`, `gpt-4o`, `gemini-1.5-pro`) to current 2026 models (`claude-opus-4`, `gpt-5.4-turbo`, `gemini-3.1-pro`, `gemma3`).
+
