@@ -1,52 +1,106 @@
-# VISION: The Borg Cognitive Control Plane & Universal AI Dashboard
+# Vision
 
-## 🌌 The Objective
+## North star
 
-Borg is evolving into the ultimate, all-encompassing **AI Tool Dashboard, Cognitive Control Plane, and Verifiable Orchestration Substrate** for local and remote AI development.
+Borg is the **local-first control plane** for MCP tooling, provider routing, session continuity, and operator observability.
 
-It is designed to be the central nervous system for all PC-based local AI tools, consolidating fragmented CLI/TUI harnesses, MCP servers, and agentic workflows into a single, highly polished, long-running service.
+It is building toward a future where one local system can coordinate the most important parts of AI-heavy work: tools, models, sessions, context, and visibility.
 
-## 🔭 The Ultimate Vision
+That future only becomes credible if the present system is reliable.
 
-### 1. The Ultimate Universal AI Dashboard
-*   **Tool Management:** Complete oversight of all PC-based local AI tools (installation status, update commands, health checks).
-*   **Asset Libraries:** Centralized management of prompts, system prompts, jailbreaks, templates, and subagent descriptions.
-*   **Universal Skills Library:** Management and installation of skills across various tools.
-*   **Environment & Secrets:** Secure management of API keys, OAuth logins, environment variables, paths, and `.env` file expansion.
-*   **Telemetry & Resource Management:** A long-running service (runs on startup) that monitors and manages PC memory, CPU, disk, bandwidth usage, starts/restarts crashed processes, and tracks API quota usage, billing details, and credit balances across providers.
+## The problem
 
-### 2. The Universal MCP Intelligence Layer (Client & Server)
-*   **Ultimate MCP Client & Aggregator:** Combines many MCP servers into one "master" server. Handles dynamic progressive tool discovery, tool semantic search, tool RAG, context inspection, keep-alive, and heartbeats.
-*   **Universal Integrated MCP Directory:** A single operator-facing directory that unifies installed MCP servers, published MCP catalog entries, BobbyBookmarks link backlog items, and all future feature-group assets into one searchable and actionable inventory.
-*   **MCP Operations:** Automatic installation, dynamic grouping (namespaces for servers and tools), enabling/disabling individual tools, traffic inspection, and logging.
-*   **Advanced Routing & Proxying:** Translates between remote/local types, stdio/remote, SSE/streaming-HTTP. Implements tool renaming, context syntax minimization, tool call chaining, deferred binary startup (lazy loading), and code mode.
-*   **Verification:** Cryptographic attestation and evidence locking for all tool outputs to ensure infrastructure truthfulness.
+AI workflows are fragmenting faster than they are becoming usable. A serious operator may now rely on:
+- multiple MCP servers,
+- multiple provider accounts and quotas,
+- multiple coding or session harnesses,
+- multiple memory surfaces,
+- and weak observability across all of them.
 
-### 3. The Ultimate AI Coding Harness (CLI/TUI/WebUI)
-*   **Feature Parity & Supremacy:** Full feature parity with all major AI CLI harnesses (OpenCode, Codebuff, Claude Code, Codex, Cursor, Factory Droid, Gemini CLI, Goose, Grok Build, Kimi, Mistral Vibe, etc.).
-*   **Omni-Interface:** A polished WebUI dashboard that connects to local CLI sessions, cloud dev sessions, and mobile remote control.
-*   **Session Management:** Auto-start/restart of stalled instances, session resuming, import/export of session history, and cross-session memory injection.
-*   **Intelligent Model Routing:** Automatic fallback and selection of alternative models when quotas are extinguished or budgets are met (e.g., switch across all providers of Gemini 3 Pro, then Codex 5.3, then Opus 4.6).
-*   **Rust-Powered Performance:** A high-performance Rust-based micro-kernel for ultra-low latency tool execution and zero-overhead quota management.
+Borg exists to reduce that fragmentation with a practical local substrate.
 
-### 4. Omniscient Memory & RAG Ecosystem
-*   **Canonical Link Backlog:** Borg uses `github.com/robertpelloni/bobbybookmarks` as the canonical backlog datasource for links, bookmark imports, research status, deduplication, and clustering metadata.
-*   **Pluggable Memory Subsystems:** Support for diverse short-term, medium-term, and long-term memory architectures (vector databases, file-based, NotebookLM-style integration).
-*   **Context Operations:** Automatic context harvesting, pruning, compacting, reranking, rewriting, and semantic chunking.
-*   **Seamless Integration:** Tight hooks into Google Docs, Gmail, Google Drive, local file systems, and IDE/browser extensions to automatically ingest and categorize information during active sessions.
+## Core thesis
 
-### 5. Multi-Agent Swarms & Council Orchestration
-*   **Agentic Supervision:** Built-in auto-pilot, supervisor functions, and a multi-model debate/consensus protocol (Borg Orchestrator) for critical architectural decisions.
-*   **Subagent Spawning:** Ability to dynamically spawn specialized agents from different models and providers to execute parallel tasks.
-*   **Agent-to-Agent (A2A) Protocols:** Standardized communication for local and remote development intercommunication.
-*   **P2P "Hive Mind":** A decentralized swarm intelligence layer where Borg nodes gossip facts, code symbols, and tool optimizations across a global peer-to-peer mesh.
+The strongest version of Borg is not the loudest one. It is the version that makes a messy local AI stack feel:
+- calm,
+- visible,
+- composable,
+- and recoverable.
 
-### 6. Universal Integrations (Browser & IDE)
-*   **Browser Extensions:** Connects the core memory/MCP systems to web chat interfaces (ChatGPT, Claude, Gemini). Harvests web memories, reads browser history, controls the browser DOM, and intercepts debug logs.
-*   **IDE Plugins:** Extensions for VSCode, Cursor, Windsurf, JetBrains that connect to the Borg core to access memories, sessions, skills, and configuration, while automatically harvesting context from active coding sessions.
+## Practical product direction
 
-### 7. Autonomous Economy (Bobcoin Integration)
-*   **Verified Marketplace:** A decentralized marketplace for MCP tools and agent skills, with cryptographic proof of work and Bobcoin-based micro-payments.
-*   **Decentralized Compute:** Autonomous agents can "rent" compute or specialized tool access from other nodes in the swarm using a unified ledger.
+### 1. MCP coordination
+Borg should become the clearest place to:
+- register MCP servers,
+- inspect tools,
+- manage working sets,
+- understand runtime state,
+- and diagnose failure.
 
-*Borg is not just a tool aggregator; it is the verifiable operating system for autonomous developers.*
+### 2. Model and provider routing
+Borg should make provider behavior legible:
+- fallback chains,
+- quota exhaustion,
+- auth-state changes,
+- budget-sensitive routing,
+- and routing history.
+
+### 3. Session continuity and memory
+Borg should help one operator continue work without rebuilding context from scratch:
+- better session recovery,
+- useful memory retrieval,
+- stronger provenance,
+- and clearer context inspection.
+
+### 4. Operator observability
+Borg should make it easy to answer:
+- what is running,
+- what is failing,
+- what changed,
+- which provider or tool is misbehaving,
+- and whether a page is showing real state or partial state.
+
+## What Borg is not optimizing for in v1
+
+- mass-market simplicity
+- hosted SaaS-first workflows
+- speculative autonomy as a substitute for operator control
+- broad “AI OS” claims without proof
+- platform expansion that outruns reliability
+
+## Long-term direction
+
+If Borg succeeds over time, it could support richer orchestration layers, stronger automation, and more advanced coordination across tools. That is a **long-term direction**, not a current release promise.
+
+## Maturity model
+
+Every major capability should be described as:
+- **Stable**
+- **Beta**
+- **Experimental**
+- **Vision**
+
+This language should appear consistently in docs and UI.
+
+## Non-goals for v1
+
+The following may remain outside a focused `v1.0.0`:
+- marketplace ecosystems
+- economy or payment systems
+- mesh networking
+- immersive visualizations
+- major rewrites before stabilization
+
+## Design principles
+
+1. **Local first**
+2. **Truth over hype**
+3. **Visible systems**
+4. **Interoperability over reinvention**
+5. **Continuity over novelty**
+
+## Best current promise
+
+> Borg aims to be a dependable local AI control plane first, and a richer orchestration environment second.
+
+That sequencing is the whole game.

@@ -1,79 +1,114 @@
-# Borg Roadmap
+# Roadmap
 
-_Last updated: 2026-03-24_
+_Last updated: 2026-03-25_
 
-## Canonical now/next (authoritative)
+## Status legend
 
-This short block is the source of truth for current execution.
+- **Stable** — production-intended, tested, maintained
+- **Beta** — usable, still evolving
+- **Experimental** — active R&D, not dependable
+- **Vision** — directional only
 
-### Current objective
-Evolve Borg into the **Ultimate Universal AI Dashboard**, bringing full feature parity with existing CLI harnesses (OpenCode, Claude Code, Aider, etc.) into a cohesive WebUI/CLI control plane with omniscient memory and intelligent fallback routing.
+## Framing
 
-### Next up
-- **Phase N1:** Marketplace & Mesh — activate the P2P `meshRouter`, wire `MarketplaceService` to real community data, and enable tool/skill discovery across Borg peers.
-- **Phase N2:** CitationService production hardening — swap keyword scoring for LanceDB vector embeddings, add citation UI in the dashboard.
-- **Phase N3:** Mobile Remote Control — React Native or Expo companion app connecting to local Borg server via WebSocket tunnels.
+Borg has two jobs at once:
+1. ship a reliable local control plane,
+2. preserve a credible long-term vision for richer AI orchestration.
 
----
+This roadmap keeps those jobs separate.
 
-## Phase I — Omniscient Memory & RAG Ecosystem
-- [x] Make `github.com/robertpelloni/bobbybookmarks` the canonical link backlog datasource for Borg, with sync into local backlog storage plus research/clustering metadata.
-- [x] Pluggable Memory Subsystems (support for vector DBs, file-based, NotebookLM-style).
-- [x] Automatic context harvesting, pruning, compacting, reranking, and semantic chunking.
-- [x] Seamless integrations with Google Docs, Gmail, Google Drive, and local file systems.
-- [x] Export/Import and autodetect of sessions and memories across environments.
+## Current objective (Now)
 
-## Phase J — Universal Integrations (Browser & IDE)
-- [x] **Browser Extensions** (Chrome/Firefox): install surfaces, artifact detection, bridge readiness, and memory save/parse endpoints.
-- [x] Browser controls: scrape web pages, intercept debug logs, read history.
-- [x] **IDE Plugins** (VSCode, Cursor, Windsurf, JetBrains): VS Code extension built and packaged; core integration via TRPC services.
-- [x] Provide new hook events to the IDE and automatically save sessions.
-- [x] Add a non-destructive Borg MCP registration workflow and dashboard auto-launch startup path.
+Deliver a trustworthy `v1.0.0` centered on:
 
-## Phase K — Intelligent Model Routing & Quota Fallbacks
-- [x] Smart provider and model selection based on quota usage and budgets.
-- [x] Automatic fallback across providers (e.g., switch across all providers of Gemini 3 Pro, then Codex 5.3, then Opus 4.6).
-- [x] Management of OAuth logins and API key management in a centralized secrets vault.
-- [x] Usage observation, tracking of billing details, and credit balance management.
-- [x] Routing Hierarchy UI with drag-and-drop provider ordering.
+1. MCP control plane reliability
+2. Provider routing correctness
+3. Memory usefulness
+4. Dashboard truthfulness
 
-## Phase L — The Ultimate AI Coding Harness
-- [x] Feature parity with all major harnesses (11 CLI types supported).
-- [x] WebUI with TUI/CLI parity, including remote access/control from mobile.
-- [x] Auto-start/restart of stalled CLI instances on autopilot with council supervision.
-- [x] Transfer tasks to cloud dev environments and broadcast messages across instances.
+### Current priorities
 
-## Phase M — Advanced MCP Aggregation & Proxying
-- [x] Build a universal integrated MCP directory (installed servers + published catalog + backlog links).
-- [x] Fast, lightweight MCP server startup (LKG configuration).
-- [x] MCP Traffic Inspection, Code Mode, TOON format implementation.
-- [x] Tool renaming, context syntax minimization, tool call chaining, deferred binary startup.
-- [x] Specify high-value tools for permanent disclosure vs. dynamic progressive disclosure.
+#### 1. Stabilize the core wedge
+Focus on the strongest product shape already present:
+- MCP control plane
+- provider routing and billing visibility
+- session supervision
+- memory inspection and continuity
+- system observability
 
-## Phase N — Marketplace, Mesh & Community
-- [x] Activate the `meshRouter` (currently commented out in `trpc.ts`). Enable P2P memory swarm and agent federation across Borg instances.
-- [x] Wire `MarketplaceService` to real community data instead of TODO stubs for MeshService.
-- [x] Implement community tool/skill/agent publishing and discovery.
-- [x] Upgrade `CitationService` from keyword scoring to LanceDB vector embeddings.
-- [x] React Native/Expo mobile companion app for remote monitoring/control.
+#### 2. Dashboard convergence
+- complete high-value data-binding work
+- remove or clearly label misleading states
+- improve empty states and error behavior
+- reduce duplicate or low-value surfaces
 
-## Phase O — Dashboard Convergence & v1.0.0 (Current)
-- [ ] **Convergence**: Ensure all 59+ dashboard pages are 100% functional, responsive, and data-bound.
-- [ ] **Production Stabilization**: Zero-error console policy. Fix remaining storage access and tRPC SSE connection errors in extensions.
-- [ ] **Submodule Dashboard**: Implement a unified UI for monitoring and updating all project submodules and their versions.
-- [ ] **Mobile App Hardening**: Finalize wireframes and link @borg/mobile to real WebSocket/tRPC endpoints.
-- [ ] **Global v1.0.0 Global Cut**: Comprehensive audit of all package.json lockfiles and preparation for the stable release.
+#### 3. Extension and runtime reliability
+- fix storage access failures
+- reduce SSE or subscription edge cases
+- remove startup and port mismatch drift
+- improve honest degradation when services are unavailable
 
-## Phase P — The Autonomous Future (Mad Science)
-- [ ] **Rust Micro-Kernel Rewrite**: Transition the core event loop to Rust for ultra-low latency.
-- [ ] **P2P Hive Mind**: Global swarm intelligence layer for cross-node knowledge gossip.
-- [ ] **Autonomous Economy**: Full Bobcoin integration for verified tool marketplaces and decentralized compute rental.
-- [ ] **Immersive 3D Brain**: Three.js/React Three Fiber visualization of the P2P mesh and cognitive activity.
+#### 4. Release discipline
+- unify version story
+- tighten release criteria
+- improve documentation accuracy
+- reduce contradictory status messaging
 
-## Completed Phases
-- **Phase A**: Initial architecture and schema.
-- **Phase B**: Core verification logic (Evidence Lock).
-- **Phase C**: L1/L2 memory scaffolding.
-- **Phase H**: Assimilation of Auto-Orchestrator (Council Debate, Smart Pilot, Terminal PTY Harness).
-- **Phase K**: Intelligent Model Routing & Quota Fallbacks (v0.90.5).
-- **Phase I–N**: All completed as of v0.99.5.
+## Next
+
+### A. MCP operator improvements
+- better tool grouping and search
+- stronger import/export clarity
+- clearer runtime health reporting
+- better working-set management
+
+### B. Memory quality
+- better provenance
+- better retrieval tuning
+- stronger import/export ergonomics
+- better memory inspection UX
+
+### C. Session workflow quality
+- cleaner create/edit flows
+- stronger attach/restart ergonomics
+- clearer crash/recovery visibility
+- clearer isolation behavior
+
+### D. Provider routing polish
+- clearer fallback history
+- stronger quota truthfulness
+- more actionable auth-state and routing config
+
+## Later
+
+- mobile and desktop companion polish after core stabilization
+- safer public tool ingestion and sandboxing
+- richer operator automation with guardrails
+- deeper benchmark and latency reporting
+
+## Vision
+
+These remain exploratory until the control plane is stronger:
+- advanced council or debate systems
+- multi-node federation or mesh-style coordination
+- marketplace or community distribution systems
+- performance-critical Rust components
+- richer graph or 3D cognition visualizations
+
+## Proposed `v1.0.0` bar
+
+A credible `v1.0.0` should mean:
+- reliable start and core workflow execution
+- honest operator pages with real backend state
+- dependable MCP inspection and config flows
+- useful provider fallback visibility
+- meaningful session and memory continuity
+- documentation that does not overclaim
+
+## Explicit de-scope until v1 ships
+
+Do not prioritize these ahead of core convergence:
+- economy or payment ideas
+- broad P2P claims
+- major rewrites without measured need
+- large net-new surfaces while core ones remain rough

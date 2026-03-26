@@ -1,49 +1,119 @@
-# BORG Agents Directory
+# AGENTS — Borg Contributor & Agent Guide
 
-> **CRITICAL MANDATE: READ `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` FIRST.**
-> All agents must adhere to the universal guidelines.
+**Mandatory reading first:** `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`
 
-## 🤖 The Council of Agents
+## Core rule
 
-Borg relies on a diverse set of specialized AI models to accomplish tasks. Each model has its own specific instruction set.
+Borg is in a **stabilization-first** phase. Default work should improve reliability, truthfulness, type safety, observability, and operator usefulness. Do not expand scope unless explicitly requested or directly required to fix a real blocker.
 
-### 1. Gemini (`GEMINI.md`)
-*   **Role**: The Architect & Analyst.
-*   **Best for**: Massive context processing, full-repo scans, cross-file architectural analysis, resolving complex git conflicts.
-*   **Characteristics**: Fast, handles massive inputs, excellent at recognizing high-level patterns.
+## Working principle
 
-### 2. Claude (`CLAUDE.md`)
-*   **Role**: The Senior Engineer & Code Reviewer.
-*   **Best for**: Nuanced TypeScript refactoring, strict type checking, detailed markdown documentation, complex logic debugging.
-*   **Characteristics**: Methodical, extremely detail-oriented, prone to writing robust step-by-step plans in `TODO.md` before acting.
+Build the future **through convergence, not chaos**.
 
-### 3. GPT (`GPT.md`)
-*   **Role**: The Rapid Implementer.
-*   **Best for**: Quick scaffolding, regex generation, simple shell scripts, boilerplate generation.
-*   **Characteristics**: Fast execution, highly proficient with standard CLI tools.
+The project has ambitious long-range ideas, but current contributions should strengthen the operator-facing core:
+- MCP control plane quality
+- provider routing correctness
+- session supervision usability
+- memory and context continuity
+- observability and diagnostics
 
-### 4. Copilot (`copilot-instructions.md`)
-*   **Role**: The IDE Companion.
-*   **Best for**: Inline code completion, writing unit tests for active files, micro-edits.
-*   **Characteristics**: Operates within the IDE context, constrained to the immediate files open in the editor.
+## Priority order
 
-## 🔄 Agentic Workflows
+1. Fix broken or misleading behavior
+2. Improve runtime stability
+3. Improve dashboard truthfulness
+4. Improve MCP, session, provider, and memory usability
+5. Reduce documentation drift
+6. Add narrowly justified features only if explicitly requested
 
-Borg agents follow the 7-Step Workflow outlined in `UNIVERSAL_LLM_INSTRUCTIONS.md`. They are expected to operate autonomously, utilizing subagents where necessary, and continually synchronizing with the central memory and context files (`VISION.md`, `ROADMAP.md`, `MEMORY.md`, etc.).
+## Read before making changes
 
-## 🎓 Skills
+Review these files before editing code or docs:
+- `README.md`
+- `VISION.md`
+- `ROADMAP.md`
+- `TODO.md`
+- `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`
 
-Agents can extend their capabilities by activating tools from the `skills/` directory. If an agent encounters a problem outside its immediate training, it should search the skills library and assimilate the necessary knowledge.
+If docs and code disagree, prefer reality and update the docs.
 
-## 🛠️ Operational Context
+## Scope control
 
-These facts apply to all agents operating in the Borg workspace:
+### Allowed by default
+- bug fixes
+- type and test hardening
+- observability improvements
+- docs accuracy improvements
+- UX clarity improvements on existing surfaces
 
-*   **pnpm v10 required**: Root `package.json` locks `packageManager: pnpm@10.28.0`. Using v9 will fail builds.
-*   **Build verification**: Run `pnpm run build` in `apps/web` to verify production build. Dev mode may not catch all import errors.
-*   **UI imports**: Components in `apps/web/` must import from `@borg/ui`, never `@/components/ui/*` — that path doesn't exist in the web app.
-*   **MCP config**: Server definitions live at `~/.borg/mcp.json`. Legacy configs from workspace root are auto-migrated.
-*   **Always On tools**: The `always_on` flag (SQLite) lets servers/tools be permanently advertised. The `auto_call_tool` meta-tool enables semantic execution.
-*   **Code Mode**: Escape hatch at `/dashboard/code` — lets LLMs call tools via TypeScript instead of JSON schemas for up to 94% context reduction.
-*   **Key docs to review**: `MEMORY.md`, `TODO.md`, `ROADMAP.md`, `CHANGELOG.md`, `DEPLOY.md`, `VERSION`.
+### Requires explicit approval
+- new dashboard areas
+- new routers or services without a blocking need
+- speculative platform expansion
+- broad architectural rewrites
 
+## Truthfulness policy
+
+Every major feature or surface should be described as one of:
+- **Stable**
+- **Beta**
+- **Experimental**
+- **Vision**
+
+Do not present scaffolding, mocks, or partial integrations as complete.
+
+## What good contributions look like
+
+- tighten an existing workflow
+- fix runtime or type errors
+- improve first-run or recovery UX
+- make status reporting more truthful
+- reduce misleading documentation
+- improve test coverage around real failure modes
+
+## What to avoid by default
+
+- shipping new conceptual layers just to feel ambitious
+- adding new operator surfaces that are not fully wired
+- overstating implementation maturity
+- letting documentation outrun the code
+- hiding unstable behavior behind confident language
+
+## Repo-specific rules
+
+- Use **pnpm v10**.
+- In `apps/web`, import shared components from `@borg/ui`.
+- After backend changes in `packages/core`, verify relevant type and build flows.
+- Prefer type-safe fixes over escape hatches.
+- Treat extension bridges, tool execution, and config ingestion as high-risk surfaces.
+
+## Validation baseline
+
+Run targeted verification for the area you change. At minimum, prefer:
+
+```bash
+pnpm -C packages/core exec tsc --noEmit
+pnpm -C apps/web exec tsc --noEmit --pretty false
+pnpm run test
+```
+
+If a check cannot run, document why.
+
+## Documentation rules
+
+If behavior changes, update the relevant docs in the same change:
+- `README.md`
+- `ROADMAP.md`
+- `TODO.md`
+- `CHANGELOG.md`
+- `AGENTS.md` if contributor rules changed
+
+## Current interpretation of success
+
+Borg succeeds by becoming:
+- more reliable,
+- more understandable,
+- more inspectable,
+- and more useful as a local control plane.
+
+Ambition is welcome. Overclaiming is not.
