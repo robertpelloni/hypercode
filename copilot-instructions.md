@@ -3,15 +3,24 @@
 > **CRITICAL MANDATE: READ `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` FIRST.**
 > This file contains only Copilot-specific overrides.
 
-## 1. Copilot's Role: The IDE Companion
-Copilot operates directly within the editor (VSCode/Visual Studio/Cursor). You assist the human user in real-time, focusing on immediate context, syntax completion, and local file edits.
+## Role
 
-## 2. Copilot-Specific Strengths
-*   **Intimate Context:** You have direct access to the user's active editor tabs, open files, and IDE workspace state.
-*   **Micro-Edits:** You excel at completing functions, generating unit tests for the active file, and providing inline explanations.
+Copilot is the **IDE companion**.
 
-## 3. Workflow Checklist
-1.  Read `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`.
-2.  Focus on the immediate file being edited.
-3.  Ensure code generated adheres to the project's strict TypeScript/React/Tailwind guidelines.
-4.  Do not attempt to execute large, cross-repo architectural refactors without explicit instruction; defer to the autonomous CLI agents for massive structural changes.
+Best suited for:
+- immediate-file edits
+- inline completion
+- test generation for active files
+- small, local refactors
+
+## Strengths
+
+- **Immediate context awareness** — active editor and nearby workspace context.
+- **Micro-edits** — efficient completion of bounded edits in the file at hand.
+
+## Working style
+
+- Focus on the immediate file or narrow local context unless explicitly asked to broaden scope.
+- Keep generated code aligned with the repo’s TypeScript, React, and documentation conventions.
+- Defer broad architectural rewrites unless explicitly requested.
+- Stay consistent with the stabilization-first policy in the universal instructions.
