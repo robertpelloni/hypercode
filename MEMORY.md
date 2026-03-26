@@ -69,11 +69,17 @@ _This document records ongoing observations about the codebase, architectural de
 - **Dashboard page size distribution**: Pages range from 1 line (orchestrator, re-export) to 2716 lines (mcp). Most are genuinely wired to real components and services. No completely empty/broken stubs found.
 - **Council.json models**: Updated from outdated slugs (`claude-sonnet-4`, `gpt-4o`, `gemini-1.5-pro`) to current 2026 models (`claude-opus-4`, `gpt-5.4-turbo`, `gemini-3.1-pro`, `gemma3`).
 
+### 2026-03-25 Observation - Historical Phase P framing
+- **Historical note**: Earlier sessions described Borg as being in a "Phase P / Full Assimilation" mode with "Neural Operating System" framing. Treat this as historical context about prior project rhetoric and exploration, **not** as the current canonical execution policy.
+- **Still useful signal**: The underlying observation remains relevant: there was strong interest in porting or internalizing ideas from **Maestro**, **BobbyBookmarks**, and **Jules-Autopilot**.
+- **Canonical policy now**: Current repo-wide guidance is stabilization-first. Ambitious assimilation or parity work belongs in `VISION.md` or deferred roadmap sections unless it directly improves the present control-plane core.
+- **Tone reminder**: Preserve the user's high-energy encouragement as motivational context, but do not let hype language outrun implementation reality in active docs or instructions.
+
 ### 2026-03-24 Observation - Phase O Initialization (Gemini 2.0 Flash)
 - **Port 3847 Harmonization**: Standardized the `BORG_ORCHESTRATOR_PORT` to `3847` across all packages (`packages/ui`, `apps/web`, `apps/maestro`). This resolved persistent `ERR_CONNECTION_REFUSED` errors where components were still looking for the legacy port `3001`.
 - **tRPC SSE for Extensions**: Implemented `TRPCProvider.tsx` in `packages/claude-mem` dashboard with `unstable_httpSubscriptionLink` and `splitLink`. This allows extension webviews to handle tRPC subscriptions over HTTP SSE, bypassing the `Subscriptions are unsupported by httpLink` error without requiring a WebSocket upgrade in restricted browser contexts.
 - **Storage Access Fallback**: Added a `safeStorage` utility in `packages/claude-mem` that automatically falls back to in-memory storage when `localStorage` is inaccessible. This resolves the `Access to storage is not allowed` error frequently seen in sandboxed extension contexts.
 - **CI/CD Stabilization**: Restored GitHub frontpage "Green" status by fixing linting errors in `apps/maestro` (missing `@types/mdast`, unused `@ts-expect-error` directives, and `agentSessionId` type mismatches in CLI commands).
-- **README Mad Science**: Restored the "🧪 ALL CAPS MAD SCIENCE" heading to the project root, signaling the transition to highly ambitious Phase O/P goals.
-- **Ambitious Roadmap Expansion**: Seeded `IDEAS.md` files across all major repositories with high-intelligence proposals: Rust micro-kernel, P2P Hive Mind, and Bobcoin-integrated autonomous economy.
+- **README Mad Science**: Earlier sessions briefly restored more hype-heavy framing in public docs. Current canon has since been normalized toward truthfulness and convergence-first messaging.
+- **Ambitious Roadmap Expansion**: `IDEAS.md` seeding and long-range concepts remain useful as exploratory inputs, but they should stay clearly separated from active near-term commitments.
 

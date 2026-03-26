@@ -20,7 +20,7 @@
 ## Design Preferences (from user)
 
 - **Version in one place**: The `VERSION` file at root is the single source of truth. `pnpm update-version` propagates it to all `package.json` files.
-- **Every build = new version**: Any change warrants a version bump before committing.
+- **Historical versioning preference**: Earlier repo guidance treated nearly every change as version-bump-worthy. Current Borg canon is more selective: bump versions and changelogs when the change is release-relevant, user-visible at that level, or explicitly requested.
 - **Commit message must reference version**: e.g., `feat: Add Dashboard shortcuts (v0.7.1)`.
 - **Autonomous operation**: Commit, push, and continue to the next task without pausing when possible.
 - **Document everything**: All findings, changes, and decisions should be reflected in documentation.
