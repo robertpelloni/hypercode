@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { debateSimulator } from '../debate-simulator.js';
 
 const createTestDebate = (id: string, outcome: 'approved' | 'rejected' | 'deadlock' = 'approved') => ({

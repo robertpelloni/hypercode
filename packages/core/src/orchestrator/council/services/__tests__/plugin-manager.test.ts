@@ -1,6 +1,6 @@
-import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { PluginManager } from '../plugin-manager.js';
-import type { SupervisorConfig } from './types.js';
+import type { SupervisorConfig } from '../types.js';
 
 describe('PluginManager', () => {
   let manager: PluginManager;

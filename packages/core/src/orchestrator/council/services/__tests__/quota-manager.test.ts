@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { quotaManager, type RateLimitConfig } from '../quota-manager.js';
 
 describe('QuotaManagerService', () => {

@@ -1,6 +1,6 @@
-import { describe, test, expect, beforeEach } from 'bun:test';
+import { describe, test, expect, beforeEach } from 'vitest';
 import { DebateHistoryService } from '../debate-history.js';
-import type { DevelopmentTask, CouncilDecision, Vote } from './types.js';
+import type { DevelopmentTask, CouncilDecision, Vote } from '../types.js';
 
 describe('DebateHistoryService', () => {
   let service: DebateHistoryService;

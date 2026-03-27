@@ -1,6 +1,6 @@
-import { describe, test, expect, beforeEach, mock } from 'bun:test';
+import { describe, test, expect, beforeEach, mock } from 'vitest';
 import { SupervisorCouncil } from '../council.js';
-import type { Supervisor, Message, DevelopmentTask } from './types.js';
+import type { Supervisor, Message, DevelopmentTask } from '../types.js';
 
 function createMockSupervisor(name: string, responses: string[]): Supervisor {
   let callIndex = 0;

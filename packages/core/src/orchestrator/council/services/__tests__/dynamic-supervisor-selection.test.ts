@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from 'bun:test';
+import { describe, test, expect, beforeEach } from 'vitest';
 import { DynamicSupervisorSelection } from '../dynamic-supervisor-selection.js';
 
 describe('DynamicSupervisorSelection', () => {

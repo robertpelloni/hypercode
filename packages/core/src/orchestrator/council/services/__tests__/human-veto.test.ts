@@ -1,6 +1,6 @@
-import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { HumanVetoService } from '../human-veto.js';
-import type { CouncilDecision, DevelopmentTask } from './types.js';
+import type { CouncilDecision, DevelopmentTask } from '../types.js';
 
 describe('HumanVetoService', () => {
   let veto: HumanVetoService;

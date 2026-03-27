@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { WorkspaceManagerService } from '../workspace-manager.js';
-import type { CouncilDecision } from './types.js';
+import type { CouncilDecision } from '../types.js';
 
 describe('WorkspaceManagerService', () => {
   let manager: WorkspaceManagerService;

@@ -1,5 +1,5 @@
-import { describe, test, expect, beforeEach, mock } from 'bun:test';
-import type { SessionHealth, SessionHealthStatus } from './types.js';
+import { describe, test, expect, beforeEach, mock } from 'vitest';
+import type { SessionHealth, SessionHealthStatus } from '../types.js';
 
 // Testable version of health monitor without external dependencies
 class TestHealthMonitor {
