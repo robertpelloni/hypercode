@@ -15,6 +15,7 @@ describe('mcp SessionToolWorkingSet defaults', () => {
         expect(workingSet.getLimits()).toEqual({
             maxLoadedTools: 16,
             maxHydratedSchemas: 8,
+            idleEvictionThresholdMs: 300000,
         });
     });
 });

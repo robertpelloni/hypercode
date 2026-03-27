@@ -22,6 +22,13 @@ export interface PruningOptions {
 export class ContextPruner {
     private options: PruningOptions;
 
+    private buildSummaryMessage(droppedCount: number): Message {
+        return {
+            role: 'system',
+            content: `[System: Context Pruned. ${droppedCount} messages were removed to fit token limits.]`
+        };
+    }
+
     constructor(options: Partial<PruningOptions> = {}) {
         this.options = {
             maxTokens: options.maxTokens || 100000,
@@ -83,26 +90,36 @@ export class ContextPruner {
         // Remove from the beginning of the middle block (oldest "active" memories)
         // until we fit or run out of middle messages
 
-        let currentTokens = totalTokens;
+        const estimateCandidateWithoutSummary = () => this.estimateTokens([...safeFirst, ...middle, ...safeLast]);
 
-        while (middle.length > 0 && currentTokens > this.options.maxTokens) {
-            const removed = middle.shift(); // Remove oldest
-            if (!removed) {
-                break;
-            }
-            const removedTokens = this.estimateTokens([removed]);
-            currentTokens -= removedTokens;
+        while (middle.length > 0 && estimateCandidateWithoutSummary() > this.options.maxTokens) {
+            middle.shift(); // Remove oldest
         }
 
         const originalMiddleLength = messages.slice(keepFirst, -keepLast).length;
-        const droppedCount = originalMiddleLength - middle.length;
+        let droppedCount = originalMiddleLength - middle.length;
 
         if (droppedCount > 0) {
-            const summaryMsg: Message = {
-                role: 'system',
-                content: `[System: Context Pruned. ${droppedCount} messages were removed to fit token limits.]`
-            };
-            return [...safeFirst, summaryMsg, ...middle, ...safeLast];
+            while (middle.length > 0) {
+                const summaryTokens = this.estimateTokens([this.buildSummaryMessage(droppedCount)]);
+                if (estimateCandidateWithoutSummary() + summaryTokens <= this.options.maxTokens) {
+                    break;
+                }
+
+                if (!middle.shift()) {
+                    break;
+                }
+                droppedCount += 1;
+            }
+
+            const summaryMsg = this.buildSummaryMessage(droppedCount);
+            const withSummary = [...safeFirst, summaryMsg, ...middle, ...safeLast];
+
+            if (this.estimateTokens(withSummary) <= this.options.maxTokens) {
+                return withSummary;
+            }
+
+            return [...safeFirst, ...middle, ...safeLast];
         }
 
         return [...safeFirst, ...middle, ...safeLast];

@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.99.9] — 2026-03-27
+
+### Added
+- **CacheService**: Generic LRU+TTL in-memory cache with events, singleton-per-namespace, automatic cleanup timer, and `cached()` async decorator helper.
+- **ConnectionPoolService**: Generic connection pool with factory/destroyer/validator lifecycle, bounded acquire with timeout/backpressure, graceful drain, and `ConnectionPoolManager` static registry.
+- **TelemetryService**: W3C Trace Context compatible distributed tracing with span lifecycle, attributes, events, async `trace()` wrapper, traceparent export/parse, and ring-buffered completed spans.
+
+### Fixed
+- **Core Test Suite Stabilization**: Reduced test failures from 49 to 3 (407→450+ tests pass). Fixed 14 test files:
+  - `MetricsService.test.ts` — Full service rewrite implementing Prometheus-style API (counters, gauges, histograms, timers)
+  - `AuditService.test.ts` — Full service rewrite implementing typed logging helpers, query filtering, event emission
+  - `fallback-chain.test.ts` / `auth.test.ts` — Added `await` for async `getProviderSnapshots()`
+  - `serverMetadataCache.test.ts` — Added missing fixture properties and real tool data
+  - `session-tool-working-set.test.ts` — Added `idleEvictionThresholdMs` to expected shape
+  - `direct-mode-compatibility.test.ts` / `compatibility-tool-runtime.test.ts` — Updated import config result format
+  - `compatibility-tool-definitions.test.ts` — Added `auto_call_tool` to expected order
+  - `aggregator.test.ts` / `traffic-inspector.test.ts` — Updated traffic event assertions
+  - `lifecycle.test.ts` / `crash-isolation.test.ts` — Added lazy connection triggers
+  - `native-session-meta-tools.test.ts` — Updated for auto-load behavior
+  - `execution-environment.test.ts` — Updated note text
+  - `McpmInstaller.test.ts` — Added `@borg/mcp-registry` mock
+
+### Version
+- Bumped `VERSION` from `0.99.8` to `0.99.9`.
+
 ## [0.99.8] — 2026-03-24
 
 ### Added

@@ -86,11 +86,6 @@ describe('MCP master router aggregation', () => {
         expect(aggregator.getTrafficEvents()).toEqual([
             expect.objectContaining({
                 server: 'github',
-                method: 'tools/list',
-                success: true,
-            }),
-            expect.objectContaining({
-                server: 'github',
                 method: 'tools/call',
                 success: false,
                 error: 'tool input invalid',

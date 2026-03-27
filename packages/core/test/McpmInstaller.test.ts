@@ -18,6 +18,15 @@ vi.mock('../src/skills/McpmRegistry.js', () => {
     };
 });
 
+// Mock @borg/mcp-registry so the installer falls through to the legacy git clone path
+vi.mock('@borg/mcp-registry', () => {
+    return {
+        Registry: vi.fn().mockImplementation(() => ({
+            list: vi.fn().mockReturnValue([]),
+        })),
+    };
+});
+
 // Mock fs
 vi.mock('fs/promises', async () => {
     return {

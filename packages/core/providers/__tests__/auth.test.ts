@@ -85,13 +85,13 @@ describe('provider auth normalization', () => {
         expect(registry.resolveAuthState('local-provider')).toMatchObject({ authMethod: 'none', authenticated: true });
     });
 
-    it('configures and authenticates at least three providers through the normalized layer', () => {
+    it('configures and authenticates at least three providers through the normalized layer', async () => {
         process.env.OPENAI_API_KEY = 'openai';
         process.env.ANTHROPIC_API_KEY = 'anthropic';
         process.env.GOOGLE_API_KEY = 'google';
 
         const selector = new CoreModelSelector();
-        const authenticatedProviders = selector.getProviderSnapshots().filter((provider) => provider.authenticated);
+        const authenticatedProviders = (await selector.getProviderSnapshots()).filter((provider) => provider.authenticated);
 
         expect(authenticatedProviders.map((provider) => provider.provider)).toEqual(
             expect.arrayContaining(['openai', 'anthropic', 'google']),

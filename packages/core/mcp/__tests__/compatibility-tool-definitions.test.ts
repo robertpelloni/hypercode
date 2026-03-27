@@ -49,6 +49,7 @@ describe('compatibilityToolDefinitions', () => {
         expect(names).toEqual([
             'search_tools',
             'load_tool',
+            'auto_call_tool',
             'get_tool_schema',
             'get_tool_context',
             'unload_tool',

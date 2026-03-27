@@ -41,7 +41,7 @@ describe('provider fallback chain', () => {
         expect(third.provider).toBe('deepseek');
         expect(third.provider).not.toBe(first.provider);
         expect(third.provider).not.toBe(second.provider);
-        expect(selector.getProviderSnapshots().find((provider) => provider.provider === 'google')?.availability).toBe('quota_exhausted');
-        expect(selector.getProviderSnapshots().find((provider) => provider.provider === 'openai')?.availability).toBe('rate_limited');
+        expect((await selector.getProviderSnapshots()).find((provider) => provider.provider === 'google')?.availability).toBe('quota_exhausted');
+        expect((await selector.getProviderSnapshots()).find((provider) => provider.provider === 'openai')?.availability).toBe('rate_limited');
     });
 });

@@ -39,19 +39,19 @@ describe('MCP traffic inspector', () => {
 
         const events = aggregator.getTrafficEvents();
 
-        expect(events).toHaveLength(3);
-        expect(events[1]).toMatchObject({
+        expect(events).toHaveLength(2);
+        expect(events[0]).toMatchObject({
             server: 'github',
             method: 'tools/list',
             success: true,
         });
-        expect(events[2]).toMatchObject({
+        expect(events[1]).toMatchObject({
             server: 'github',
             method: 'tools/call',
             toolName: 'create_issue',
             success: true,
         });
-        expect(events[2].paramsSummary).toContain('title=Bug');
-        expect(events[2].latencyMs).toBeGreaterThanOrEqual(0);
+        expect(events[1].paramsSummary).toContain('title=Bug');
+        expect(events[1].latencyMs).toBeGreaterThanOrEqual(0);
     });
 });

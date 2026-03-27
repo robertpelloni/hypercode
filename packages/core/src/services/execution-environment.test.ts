@@ -101,6 +101,6 @@ describe('detectLocalExecutionEnvironment', () => {
         expect(environment.summary.ready).toBe(false);
         expect(environment.summary.preferredShellId).toBeNull();
         expect(environment.summary.verifiedShellCount).toBe(0);
-        expect(environment.summary.notes).toContain('No verified POSIX shell detected yet; Borg should prefer PowerShell-compatible command plans.');
+        expect(environment.summary.notes).toContain('No verified POSIX shell detected. Recommendation: Install Cygwin or WSL to ensure 1:1 compatibility with AI model tool training (e.g. bash, grep, sed).');
     });
 });

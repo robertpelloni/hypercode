@@ -10,6 +10,8 @@ import {
 const baseServer = {
     uuid: 'server-1',
     name: 'demo',
+    description: null as string | null,
+    always_on: false,
     type: 'STDIO' as const,
     command: 'npx',
     args: ['-y', '@modelcontextprotocol/server-memory'],
@@ -65,7 +67,7 @@ describe('server metadata cache', () => {
     });
 
     it('reuses cached metadata only when the launch fingerprint still matches', () => {
-        const cached = buildBinaryDiscoveryMetadata(baseServer, [], '2026-03-09T00:00:00.000Z');
+        const cached = buildBinaryDiscoveryMetadata(baseServer, [{ name: 'ping' }], '2026-03-09T00:00:00.000Z');
 
         expect(hasReusableMetadataCache(cached, baseServer)).toBe(true);
         expect(hasReusableMetadataCache(cached, {

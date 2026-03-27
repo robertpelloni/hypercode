@@ -266,7 +266,7 @@ describe('compatibilityToolRuntime', () => {
         expect(importClaudeConfig).toHaveBeenCalledWith('{"mcpServers":{}}');
         expect(result).toEqual({
             isError: false,
-            content: [{ type: 'text', text: 'Imported 2 servers. Skipped: ["bad-server"]' }],
+            content: [{ type: 'text', text: 'Import completed.\nSuccessful: 2\nSkipped: bad-server' }],
         });
     });
 

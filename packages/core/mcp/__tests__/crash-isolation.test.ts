@@ -46,7 +46,9 @@ describe('MCP crash isolation', () => {
         });
 
         await aggregator.initialize();
+        await aggregator.listAggregatedTools(); // trigger lazy connect
         await aggregator.notifyServerExit('beta', new Error('crashed'));
+        await aggregator.listAggregatedTools(); // trigger lazy reconnect after restart
 
         const servers = await aggregator.listServers();
         const alphaState = servers.find((server) => server.name === 'alpha');

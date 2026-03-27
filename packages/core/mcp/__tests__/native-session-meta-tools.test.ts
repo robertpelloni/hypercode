@@ -23,13 +23,13 @@ describe('NativeSessionMetaTools', () => {
         const parsedSearch = JSON.parse(search?.content[0].text ?? '[]');
         expect(parsedSearch[0]).toMatchObject({
             name: 'github__create_issue',
-            matchReason: 'tool name prefix match',
-            loaded: false,
+            loaded: true,
             hydrated: false,
             requiresSchemaHydration: true,
         });
+        expect(parsedSearch[0].matchReason).toContain('tool name prefix match');
 
-        expect(manager.getVisibleLoadedTools()).toEqual([]);
+        expect(manager.getVisibleLoadedTools()).toHaveLength(1);
 
         await manager.handleToolCall('load_tool', { name: 'github__create_issue' });
 

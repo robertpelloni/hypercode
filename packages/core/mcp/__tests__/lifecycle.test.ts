@@ -36,6 +36,7 @@ describe('MCP lifecycle', () => {
         });
 
         await aggregator.initialize();
+        await aggregator.listAggregatedTools(); // trigger lazy connect for enabled servers
         expect((await aggregator.listServers()).map((server) => [server.name, server.status])).toEqual([
             ['alpha', 'connected'],
             ['beta', 'stopped'],
