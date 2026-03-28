@@ -57,6 +57,16 @@ export async function detectCliHarnesses(
     catalog: CliHarnessCatalogEntry[] = CLI_HARNESS_CATALOG,
 ): Promise<CliHarnessDetectionResult[]> {
     return Promise.all(catalog.map(async (entry) => {
+        if (entry.detectionMode === 'manual') {
+            return {
+                ...entry,
+                installed: false,
+                resolvedPath: null,
+                version: null,
+                detectionError: 'Manual install surface; no PATH-detectable command is currently modeled for this harness.',
+            } satisfies CliHarnessDetectionResult;
+        }
+
         const resolvedPath = await resolveCommandPath(entry.command);
 
         if (!resolvedPath) {

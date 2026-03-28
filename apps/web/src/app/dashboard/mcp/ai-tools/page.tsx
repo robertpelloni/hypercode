@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@borg/ui';
-import { Bot, CheckCircle2, Database, ExternalLink, KeyRound, Loader2, RefreshCw, Search, Server, TerminalSquare, Wrench, XCircle } from 'lucide-react';
+import { Bot, CheckCircle2, Database, ExternalLink, KeyRound, Loader2, RefreshCw, Rocket, Search, Server, TerminalSquare, Wrench, XCircle } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
 import { PageStatusBanner } from '@/components/PageStatusBanner';
@@ -240,11 +240,15 @@ export default function AIToolsDashboard() {
                         Local session supervisor
                     </Link>
                     <a href="https://github.com/robertpelloni/jules-autopilot" target="_blank" rel="noreferrer" className="rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900 inline-flex items-center justify-between gap-2">
-                        Jules legacy reference
+                        <span className="flex items-center gap-2"><Rocket className="h-4 w-4 text-emerald-400" /> cloud-orchestrator legacy fork (Beta)</span>
+                        <ExternalLink className="h-3 w-3 text-zinc-500" />
+                    </a>
+                    <a href="https://github.com/robertpelloni/jules-autopilot" target="_blank" rel="noreferrer" className="rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900 inline-flex items-center justify-between gap-2">
+                        cloud-orchestrator legacy reference
                         <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
                     </a>
                     <a href="https://github.com/robertpelloni/opencode-autopilot" target="_blank" rel="noreferrer" className="rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900 inline-flex items-center justify-between gap-2">
-                        Borg Orchestrator legacy source
+                        cli-orchestrator legacy source
                         <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
                     </a>
                 </CardContent>

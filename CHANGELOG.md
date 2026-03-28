@@ -1,8 +1,52 @@
-## Borg# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- **Orchestrator Terminology Alignment**: Updated live operator-facing labels and service names to prefer `electron-orchestrator`, `cloud-orchestrator`, and `cli-orchestrator`, while preserving legacy paths and upstream URLs where deeper migrations are not yet complete.
+- **HyperCode Harness Assimilation**: Added `submodules/hypercode` as a tracked upstream and introduced a shared Borg CLI harness registry so `hypercode` is now the primary `borg session` harness identity.
+- **HyperCode Tool Inventory Visibility**: Borg CLI and the Go sidecar harness registry now surface HyperCode's source-backed tool calls by reading `submodules/hypercode/tools/*.go`, while keeping other external harnesses labeled as install/runtime metadata only until deeper bridge contracts exist.
+- **Antigravity Harness Visibility**: Borg's CLI and Go harness inventories now include Antigravity as a docs-backed metadata-only editor harness, while explicitly withholding source-backed tool/session parity claims until a real shell contract exists.
+- **Experimental Go Port Workspace**: Added an isolated `go/` sidecar workspace for feasibility testing a Go-native Borg control-plane slice without disturbing the existing Node/Next fork. The initial port exposes health, sessions, and CLI-tools endpoints plus a separate `.borg-go` lock/config path.
+- **Go Sidecar Interop**: The experimental Go workspace now reports both the main Node Borg lock and the Go sidecar lock via `/api/runtime/locks`, so coexistence can be tested without rewiring the primary startup path.
+- **Go Runtime Status Summary**: The experimental Go workspace now exposes `/api/runtime/status`, a read-only summary endpoint that combines sidecar health, lock visibility plus compact running counts, config-path health, total and available CLI tool/harness counts, imported-instructions availability, provider totals plus configured/authenticated/executable counts and auth/task buckets, memory availability plus default-section and per-section entry breakdowns, discovered-session counts plus session task/model-hint breakdowns and TypeScript supervisor-bridge visibility, import-root health, and import-source candidates plus compact valid/invalid, aggregate estimated size, source-type, model-hint, and error buckets for easier coexistence checks.
+- **Go Session Supervisor Bridge**: The experimental Go workspace now exposes `/api/sessions/supervisor/catalog`, `/list`, `/get`, `/create`, `/start`, `/stop`, and `/restart` as bridge routes into the existing TypeScript `sessionRouter`, so the sidecar can drive supervised-session lifecycle through the live main control plane instead of staying discovery-only.
+- **Go API Index Surface**: The experimental Go workspace now exposes `/api/index`, a compact self-describing route index listing the current read-only sidecar endpoints, categories, and short descriptions.
+- **Go Memory Bridge**: The experimental Go workspace now exposes the main fork's auto-imported instructions document via `/api/runtime/imported-instructions`, giving the sidecar port a read-only continuity bridge into Borg's existing session-import output.
+- **Go Session Source Scanner**: The experimental Go workspace now exposes `/api/import/roots` and `/api/import/sources`, a read-only view of explicit Borg-style discovery roots plus discovered artifacts across `.claude`, `.copilot/session-state`, and broader workspace/home OpenAI or ChatGPT export folders including `.chatgpt`, `ChatGPT`, and `OpenAI`.
+- **Go Session Summary Surface**: The experimental Go workspace now exposes `/api/sessions/summary`, a compact read-only summary of discovered sessions grouped by CLI type, session format, inferred task, and detected model hints.
+- **Go Sectioned Memory Status**: The experimental Go workspace now exposes `/api/memory/borg-memory/status`, a read-only summary of Borg's sectioned-memory store with legacy `claude_mem.json` fallback, section counts, missing default buckets, and latest update timestamps.
+- **Go Import Validation Surface**: The experimental Go workspace now exposes `/api/import/validate`, `/api/import/candidates`, `/api/import/manifest`, and `/api/import/summary`, so discovered session artifacts can be validated, enriched with format/model metadata, exported as a structured read-only manifest, and summarized by source tool, format, validity, model hints, and validation-error buckets.
+- **Go Harness Registry Surface**: The experimental Go workspace now exposes `/api/cli/harnesses`, a read-only harness registry that mirrors the main CLI lane's harness identities, maturity labels, runtime metadata, and install visibility for `hypercode`, `opencode`, `claude`, `codex`, `gemini`, `goose`, and `custom`.
+- **Go CLI Summary Surface**: The experimental Go workspace now exposes `/api/cli/summary`, a compact read-only summary of detected CLI tools, installed harnesses, and the current primary harness so operators can inspect sidecar CLI readiness in one call.
+- **Go Discovered Sessions Surface**: The experimental Go workspace now exposes discovered session artifacts through `/api/sessions`, returning read-only `discovered` entries with source path, format, validation state, and detected model hints instead of an always-empty session list.
+- **Go Config Status Surface**: The experimental Go workspace now exposes `/api/config/status`, a read-only summary of sidecar wiring including workspace, config, lock, repo-level Borg and MCP config files, imported-instructions, memory-store, and hypercode-submodule paths.
+- **Go Provider Status Surface**: The experimental Go workspace now exposes `/api/providers/status`, a read-only provider credential summary covering configured/authenticated state and auth-method hints for the current sidecar environment.
+- **Go Provider Catalog Surface**: The experimental Go workspace now exposes `/api/providers/catalog`, a read-only provider metadata view covering default models, auth methods, preferred tasks, executability, and current sidecar credential visibility.
+- **Go Provider Summary Surface**: The experimental Go workspace now exposes `/api/providers/summary`, a compact read-only provider rollup covering provider counts, configuration counts, executability, auth-method buckets, and preferred-task buckets.
+- **Go Routing Summary Surface**: The experimental Go workspace now exposes `/api/providers/routing-summary`, a read-only preview of Node-aligned task routing defaults and configured-provider ordering with explicit limitations instead of pretending the Go sidecar owns live quota-aware routing.
+
+### Changed
+- **CLI Harness Visibility**: Added `borg session harnesses` and expanded `borg session start` help/output so harness maturity, upstream source, launch command, and the HyperCode primary-lane designation are visible from the compiled CLI.
+- **Core Harness Detection Modes**: `@borg/core` harness detection now distinguishes command-detected vs manual/docs-backed harnesses, so Antigravity can appear in core inventory surfaces without being misrepresented as a PATH CLI or supervised shell target.
+- **Harness Parity Summaries**: `borg session harnesses`, Go `/api/cli/summary`, and Go `/api/runtime/status` now publish explicit source-backed vs metadata-only vs operator-defined harness counts plus enumerated source-backed tool totals, so parity claims stay measurable instead of implied.
+- **HyperCode Runtime Metadata**: Advanced the HyperCode submodule to its Go/Cobra implementation and updated Borg docs to describe the current upstream truth: default TUI REPL, `pipe` command, and Borg-aware adapter package, still labeled **Experimental**.
+- **Session Import Coverage**: Extended imported-session discovery to include Simon Willison `llm` CLI `logs.db` histories, converting logged conversations and standalone responses into imported Borg sessions with preserved tool-call/result markers and token metadata.
+- **ChatGPT Export Coverage**: Imported-session discovery now expands exported ChatGPT `conversations.json` mapping trees into per-conversation sessions, following the active `current_node` branch instead of flattening whole export bundles into one transcript.
+- **Orchestrator Naming Convergence**: Updated top-level docs and operator-facing dashboard labels to present the desktop lane as `electron-orchestrator`, the cloud lane as `cloud-orchestrator`, and the local terminal lane as `cli-orchestrator`, while preserving existing code paths and legacy aliases during the transition.
+- **Go Sidecar Framing**: Updated the experimental Go sidecar help text and startup log to describe that workspace explicitly as the `cli-orchestrator` port instead of a generic Borg control plane.
+- **Parity Framing**: Tightened root documentation so Borg no longer implies `electron-orchestrator` and `cli-orchestrator` already have 100% feature parity; the desktop lane is broader today, while the CLI lane remains the cleaner control-plane and Go-port target.
+
+### Fixed
+- **CLI Tool Detection Startup Path**: The council CLI registry no longer uses `shell: true` for detection probes, eliminating the Node `DEP0190` warning and making multi-part detect commands like `gh copilot`, `python -m aider`, and `npx opencode` execute through safer structured argument parsing.
+- **Catalog Ingestor Error Truthfulness**: Published catalog adapters now count HTTP failures, aborted requests, and JSON-parse failures as real adapter errors instead of logging a warning and still reporting `errors=0` in the ingestion summary.
+- **Maestro Tailwind CSS Warning**: Stopped Tailwind from generating an invalid `.\[-\:\\s\|\] { -: \s|; }` rule from a markdown-table separator regex in `documentStats.ts`, eliminating the `Expected identifier but found "-"` CSS minification warning while preserving table stripping behavior.
+- **Maestro Lazy-Import Splitting**: Removed duplicate static+lazy import paths for `LogViewer`, `DirectorNotesModal`, `AIOverviewTab`, and `UnifiedHistoryTab`, so the renderer build no longer warns that those modules cannot be moved into separate chunks.
+- **Cloud Orchestrator pnpm Warning**: Removed the ignored nested `pnpm.overrides` block from `apps/cloud-orchestrator/package.json`, eliminating the repeated workspace warning during `pnpm install` and build flows.
 
 ## [0.99.9] — 2026-03-27
 
@@ -10,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CacheService**: Generic LRU+TTL in-memory cache with events, singleton-per-namespace, automatic cleanup timer, and `cached()` async decorator helper.
 - **ConnectionPoolService**: Generic connection pool with factory/destroyer/validator lifecycle, bounded acquire with timeout/backpressure, graceful drain, and `ConnectionPoolManager` static registry.
 - **TelemetryService**: W3C Trace Context compatible distributed tracing with span lifecycle, attributes, events, async `trace()` wrapper, traceparent export/parse, and ring-buffered completed spans.
+- **Prism MCP Reference Submodule**: Added `submodules/prism-mcp` so Borg can track upstream Prism memory/dashboard work as a first-class reference repository during assimilation.
 
 ### Fixed
 - **Core Test Suite Stabilization**: Reduced test failures from 49 to 3 (407→450+ tests pass). Fixed 14 test files:
@@ -25,6 +70,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `native-session-meta-tools.test.ts` — Updated for auto-load behavior
   - `execution-environment.test.ts` — Updated note text
   - `McpmInstaller.test.ts` — Added `@borg/mcp-registry` mock
+- **Session Import Coverage**: Extended imported-session discovery to include VS Code and VS Code Insiders Copilot Chat transcripts from `emptyWindowChatSessions`, while excluding known Cursor workspace metadata files that are not real chat sessions.
+- **OpenAI Session Import Coverage**: Borg now discovers OpenAI or ChatGPT export JSON histories from explicit `.openai` / `.chatgpt` / `ChatGPT` / `OpenAI` roots and normalizes them into readable user/assistant transcripts with tool-call markers.
+- **Prism Session Import Coverage**: Borg can now ingest Prism local `~/.prism-mcp/data.db` ledger and handoff rows as imported sessions, including behavioral `event_type` / `confidence_score` / `importance` metadata and derived correction warnings.
+- **Memory Bootstrap Idempotency**: Hardened `@borg/memory` LanceDB startup so concurrent first writes no longer crash Borg with `Table 'memories' already exists`; the adapter now retries `openTable()` after a competing creator wins the race.
+- **Import Throughput + Coverage**: Imported-session discovery now includes home-directory `~/.opencode` and `~/.aider` roots, and session-memory extraction falls back straight to heuristics when no OpenAI key is configured instead of stalling on provider fallback.
+- **LanceDB Schema Drift Tolerance**: Existing `memories` tables created with older metadata schemas no longer reject new import fields like `sourceTool`; Borg now constrains append rows to the live LanceDB schema when needed.
+- **Startup Hardening**: Maestro's postinstall native rebuild wrapper now downgrades known Windows `EPERM` file-lock failures on `better-sqlite3` to warnings, so workspace install can continue while startup preflight still verifies actual Electron runtime readiness.
 
 ### Version
 - Bumped `VERSION` from `0.99.8` to `0.99.9`.
@@ -4132,3 +4184,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Core Infrastructure**: Registered LSP, Code Mode, and Plan Mode tools in MCPServer.
 - **Verification**: Added `CoreInfra.test.ts`.
+- **Broader Harness Catalog Alignment**: Expanded the TypeScript supervisor catalog, council CLI registry, compiled CLI harness list, and Go sidecar harness registry so Borg now tracks `hypercode`, `aider`, `cursor`, `copilot`, `qwen`, `superai-cli`, `codebuff`, `codemachine`, and `factory-droid` more consistently across session catalog and `/api/cli/harnesses` surfaces, while keeping non-HyperCode parity claims explicitly limited to install/runtime metadata.

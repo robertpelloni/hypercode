@@ -16,6 +16,17 @@ interface CLIDefinition {
 
 const CLI_DEFINITIONS: CLIDefinition[] = [
   {
+    type: 'hypercode',
+    name: 'HyperCode CLI',
+    command: 'hypercode',
+    serveArgs: [],
+    versionArgs: ['version'],
+    detectCommands: ['hypercode'],
+    capabilities: ['chat', 'edit', 'repl', 'borg-adapter'],
+    interactive: true,
+    promptRegex: '(?i)(?:>)\\s*$',
+  },
+  {
     type: 'opencode',
     name: 'OpenCode CLI',
     command: 'opencode',
@@ -314,6 +325,31 @@ const CLI_DEFINITIONS: CLIDefinition[] = [
   },
 ];
 
+function stripWrappingQuotes(token: string): string {
+  if (
+    (token.startsWith('"') && token.endsWith('"')) ||
+    (token.startsWith("'") && token.endsWith("'"))
+  ) {
+    return token.slice(1, -1);
+  }
+  return token;
+}
+
+export function splitCommandSpec(commandSpec: string): { command: string; args: string[] } {
+  const tokens = commandSpec.match(/"[^"]*"|'[^']*'|\S+/g) ?? [];
+  if (tokens.length === 0) {
+    return { command: '', args: [] };
+  }
+
+  const command = tokens[0]!;
+  const args = tokens.slice(1);
+
+  return {
+    command: stripWrappingQuotes(command),
+    args: args.map(stripWrappingQuotes),
+  };
+}
+
 class CLIRegistry {
   private tools: Map<CLIType, CLITool> = new Map();
   private customTools: Map<string, CLITool> = new Map();
@@ -345,11 +381,12 @@ class CLIRegistry {
     for (const cmd of def.detectCommands) {
       try {
         const result = await this.runCommand(cmd, def.versionArgs);
+        const parsedCommand = splitCommandSpec(cmd);
         if (result.success) {
           return {
             type: def.type,
             name: def.name,
-            command: cmd.split(' ')[0],
+            command: parsedCommand.command || def.command,
             args: def.serveArgs,
             healthEndpoint: def.healthEndpoint,
             detectCommand: cmd,
@@ -380,13 +417,23 @@ class CLIRegistry {
 
   private runCommand(command: string, args: string[]): Promise<{ success: boolean; output: string }> {
     return new Promise((resolve) => {
-      const parts = command.split(' ');
-      const cmd = parts[0];
-      const cmdArgs = [...parts.slice(1), ...args];
+      const parsedCommand = splitCommandSpec(command);
+      if (!parsedCommand.command) {
+        resolve({ success: false, output: '' });
+        return;
+      }
 
-      const proc = spawn(cmd, cmdArgs, {
-        shell: true,
-        timeout: 5000,
+      const cmdArgs = [...parsedCommand.args, ...args];
+      let settled = false;
+      const finish = (result: { success: boolean; output: string }) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutHandle);
+        resolve(result);
+      };
+
+      const proc = spawn(parsedCommand.command, cmdArgs, {
+        shell: false,
         windowsHide: true,
       });
 
@@ -395,16 +442,16 @@ class CLIRegistry {
       proc.stderr?.on('data', (data) => { output += data.toString(); });
 
       proc.on('close', (code) => {
-        resolve({ success: code === 0, output: output.trim() });
+        finish({ success: code === 0, output: output.trim() });
       });
 
       proc.on('error', () => {
-        resolve({ success: false, output: '' });
+        finish({ success: false, output: '' });
       });
 
-      setTimeout(() => {
+      const timeoutHandle = setTimeout(() => {
         proc.kill();
-        resolve({ success: false, output: '' });
+        finish({ success: false, output: '' });
       }, 5000);
     });
   }

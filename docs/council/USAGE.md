@@ -1,13 +1,15 @@
 # Usage Examples
 
-This document provides practical examples of using the Borg Orchestrator Council plugin.
+This document provides practical examples of using the cli-orchestrator council plugin.
 
 ## Basic Setup
 
 1. **Install the plugin**:
    ```bash
-   npm install borg-orchestrator-council
+   pnpm install
    ```
+
+   The council now ships inside the Borg monorepo as the **cli-orchestrator** lane rather than as a standalone `borg-orchestrator-council` package.
 
 2. **Create configuration**:
    Create `.opencode/council.json` in your project:
@@ -351,5 +353,5 @@ Store debate history for analysis:
 ## Support
 
 For issues, questions, or contributions:
-- GitHub Issues: [Repository Issues](https://github.com/robertpelloni/borg-orchestrator-council/issues)
+- GitHub Issues: use the main Borg repository issue tracker.
 - Documentation: [README.md](../README.md)

@@ -665,7 +665,7 @@
       "isInstalled": true
     },
     {
-      "name": "jules-autopilot",
+      "name": "cloud-orchestrator",
       "path": "jules-autopilot",
       "url": "https://github.com/robertpelloni/jules-autopilot",
       "status": "missing",

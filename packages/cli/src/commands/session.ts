@@ -11,6 +11,15 @@
  */
 
 import type { Command } from 'commander';
+import {
+  CLI_HARNESSES,
+  PRIMARY_CLI_HARNESS,
+  formatCliHarnessHelpLines,
+  formatCliHarnessList,
+  resolveCliHarnessDefinition,
+  resolveCliHarnessDefinitions,
+  summarizeCliHarnessParity,
+} from '../harnesses.js';
 
 export function registerSessionCommand(program: Command): void {
   const session = program
@@ -36,9 +45,65 @@ export function registerSessionCommand(program: Command): void {
     });
 
   session
+    .command('harnesses')
+    .description('List Borg-supported CLI harness identities and maturity')
+    .option('--json', 'Output harness metadata as JSON')
+    .option('--verbose', 'Show extra integration and tool inventory details')
+    .action(async (opts) => {
+      const chalk = (await import('chalk')).default;
+      const definitions = resolveCliHarnessDefinitions();
+      const parity = summarizeCliHarnessParity();
+      if (opts.json) {
+        console.log(JSON.stringify(definitions, null, 2));
+        return;
+      }
+
+      const Table = (await import('cli-table3')).default;
+      const table = new Table({
+        head: ['Harness', 'Role', 'Maturity', 'Runtime', 'Tools', 'Source', 'Launch'],
+        style: { head: ['cyan'] },
+      });
+
+      for (const definition of definitions) {
+        table.push([
+          definition.id,
+          definition.primary ? 'primary' : 'supported',
+          definition.maturity,
+          definition.runtime || 'n/a',
+          definition.toolCallCount ? `${definition.toolCallCount} source-backed` : 'external/unknown',
+          definition.submodulePath || 'built-in',
+          definition.launchCommand || definition.upstream || definition.description,
+        ]);
+      }
+
+      console.log(chalk.bold.cyan('\n  CLI Harnesses\n'));
+      console.log(chalk.dim(`  Source-backed: ${parity.sourceBackedHarnessCount}/${parity.totalHarnesses} harnesses, ${parity.sourceBackedToolCount} enumerated HyperCode tool calls`));
+      console.log(chalk.dim(`  Metadata-only: ${parity.metadataOnlyHarnessCount}, operator-defined: ${parity.operatorDefinedHarnessCount}\n`));
+      console.log(table.toString());
+      if (opts.verbose) {
+        for (const definition of definitions) {
+          console.log('');
+          console.log(chalk.cyan(`  ${definition.id}`));
+          console.log(chalk.dim(`    Inventory: ${definition.toolInventoryStatus}`));
+          console.log(chalk.dim(`    Level:  ${definition.integrationLevel}`));
+          if (definition.parityNotes) {
+            console.log(chalk.dim(`    Note:   ${definition.parityNotes}`));
+          }
+          if (definition.toolInventorySource) {
+            console.log(chalk.dim(`    Tools:  ${definition.toolInventorySource}`));
+          }
+          if (definition.toolCallNames?.length) {
+            console.log(chalk.dim(`    Calls:  ${definition.toolCallNames.join(', ')}`));
+          }
+        }
+      }
+      console.log('');
+    });
+
+  session
     .command('start <workdir>')
     .description('Start a new development session in the given directory')
-    .option('-h, --harness <harness>', 'CLI harness: opencode, claude, codex, gemini, goose, custom', 'opencode')
+    .option('-h, --harness <harness>', `CLI harness: ${formatCliHarnessList()}`, PRIMARY_CLI_HARNESS)
     .option('-m, --model <model>', 'AI model to use')
     .option('-p, --provider <provider>', 'Provider to use')
     .option('-n, --name <name>', 'Session name')
@@ -47,17 +112,53 @@ export function registerSessionCommand(program: Command): void {
     .addHelpText('after', `
 Examples:
   $ borg session start ./my-app
+  $ borg session start ./my-app --harness hypercode
   $ borg session start ./my-app --harness claude --model claude-opus-4
   $ borg session start ./my-app --supervisor --auto-restart
+
+Harnesses:
+${formatCliHarnessHelpLines()}
     `)
     .action(async (workdir, opts) => {
       const chalk = (await import('chalk')).default;
+      const definition = resolveCliHarnessDefinition(opts.harness);
+      if (!definition) {
+        console.error(
+          chalk.red(
+            `  ✗ Unknown harness '${opts.harness}'. Supported harnesses: ${formatCliHarnessList()}`
+          )
+        );
+        process.exitCode = 1;
+        return;
+      }
       const id = `sess_${Date.now().toString(36)}`;
       console.log(chalk.green(`  ✓ Session started: ${id}`));
       console.log(chalk.dim(`    Workdir:  ${workdir}`));
       console.log(chalk.dim(`    Harness:  ${opts.harness}`));
+      console.log(chalk.dim(`    Maturity: ${definition.maturity}`));
       console.log(chalk.dim(`    Model:    ${opts.model || 'auto'}`));
       console.log(chalk.dim(`    Restart:  ${opts.autoRestart ? 'enabled' : 'disabled'}`));
+      if (definition.primary) {
+        console.log(chalk.cyan(`    Role:     primary Borg CLI harness lane`));
+      }
+      if (definition.submodulePath) {
+        console.log(chalk.dim(`    Source:   ${definition.submodulePath}`));
+      }
+      if (definition.launchCommand) {
+        console.log(chalk.dim(`    Launch:   ${definition.launchCommand}`));
+      }
+      if (definition.capabilities?.length) {
+        console.log(chalk.dim(`    Features: ${definition.capabilities.join(', ')}`));
+      }
+      if (definition.toolCallCount) {
+        console.log(chalk.dim(`    Tools:    ${definition.toolCallCount} source-backed HyperCode tool calls`));
+      }
+      if (definition.toolInventorySource) {
+        console.log(chalk.dim(`    Source:   ${definition.toolInventorySource}`));
+      }
+      if (definition.parityNotes) {
+        console.log(chalk.dim(`    Notes:    ${definition.parityNotes}`));
+      }
     });
 
   session

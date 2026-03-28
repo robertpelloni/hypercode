@@ -9,9 +9,22 @@ export interface CliHarnessCatalogEntry {
     category: 'cli' | 'cloud' | 'editor';
     sessionCapable: boolean;
     versionArgs: string[];
+    detectionMode?: 'command' | 'manual';
 }
 
 export const CLI_HARNESS_CATALOG: CliHarnessCatalogEntry[] = [
+    {
+        id: 'hypercode',
+        name: 'HyperCode',
+        command: 'hypercode',
+        args: [],
+        homepage: 'https://github.com/robertpelloni/hypercode',
+        docsUrl: 'https://github.com/robertpelloni/hypercode',
+        installHint: 'Use Borg\'s tracked `submodules/hypercode` checkout or install HyperCode and ensure `hypercode` is on PATH.',
+        category: 'cli',
+        sessionCapable: true,
+        versionArgs: ['version'],
+    },
     {
         id: 'aider',
         name: 'Aider',
@@ -23,6 +36,19 @@ export const CLI_HARNESS_CATALOG: CliHarnessCatalogEntry[] = [
         category: 'cli',
         sessionCapable: true,
         versionArgs: ['--version'],
+    },
+    {
+        id: 'antigravity',
+        name: 'Antigravity',
+        command: 'antigravity',
+        args: [],
+        homepage: 'https://antigravity.google/',
+        docsUrl: 'https://antigravity.google/docs/home',
+        installHint: 'Download the Antigravity desktop app from https://antigravity.google/download and launch it directly; Borg does not currently detect it as a PATH CLI.',
+        category: 'editor',
+        sessionCapable: false,
+        versionArgs: [],
+        detectionMode: 'manual',
     },
     {
         id: 'claude',
@@ -70,6 +96,30 @@ export const CLI_HARNESS_CATALOG: CliHarnessCatalogEntry[] = [
         installHint: 'Install OpenCode and ensure `opencode` is on PATH.',
         category: 'cli',
         sessionCapable: true,
+        versionArgs: ['--version'],
+    },
+    {
+        id: 'cursor',
+        name: 'Cursor CLI',
+        command: 'cursor',
+        args: [],
+        homepage: 'https://cursor.com/',
+        docsUrl: 'https://cursor.com/docs',
+        installHint: 'Install Cursor and enable its shell command so `cursor` is available on PATH.',
+        category: 'editor',
+        sessionCapable: false,
+        versionArgs: ['--version'],
+    },
+    {
+        id: 'copilot',
+        name: 'GitHub Copilot CLI',
+        command: 'github-copilot-cli',
+        args: [],
+        homepage: 'https://github.com/features/copilot',
+        docsUrl: 'https://docs.github.com/en/copilot',
+        installHint: 'Install GitHub Copilot CLI and ensure `github-copilot-cli` or `gh copilot` is available.',
+        category: 'cli',
+        sessionCapable: false,
         versionArgs: ['--version'],
     },
     {
@@ -148,6 +198,6 @@ export const CLI_HARNESS_CATALOG: CliHarnessCatalogEntry[] = [
 
 export const DEFAULT_SUPERVISED_COMMANDS = Object.fromEntries(
     CLI_HARNESS_CATALOG
-        .filter((entry) => entry.sessionCapable)
+        .filter((entry) => entry.sessionCapable && entry.detectionMode !== 'manual')
         .map((entry) => [entry.id, { command: entry.command, args: [...entry.args] }]),
 ) as Record<string, { command: string; args: string[] }>;

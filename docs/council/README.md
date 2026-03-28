@@ -1,10 +1,8 @@
-# Borg Orchestrator
-
-[![CI](https://github.com/your-org/borg-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/borg-orchestrator/actions/workflows/ci.yml)
+# cli-orchestrator Council
 
 A multi-model AI council for autonomous development guidance. Multiple AI supervisors debate and vote on code changes through a democratic process.
 
-This document describes the legacy standalone council architecture that has now been assimilated into the Borg monorepo. The canonical product name is **Borg Orchestrator**. Legacy `AUTOPILOT_*` environment variables remain supported for compatibility, but new deployments should prefer `BORG_ORCHESTRATOR_*`.
+This document describes the legacy standalone council architecture that has now been assimilated into the Borg monorepo. The canonical product name is **cli-orchestrator**. Legacy `AUTOPILOT_*` environment variables remain supported for compatibility, but new deployments should prefer `BORG_ORCHESTRATOR_*`. This is no longer documented as a separate `borg-orchestrator` repository.
 
 ## Architecture
 

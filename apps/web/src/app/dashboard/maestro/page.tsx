@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * Maestro Dashboard Page
+ * electron-orchestrator Dashboard Page
  *
- * Shows status and controls for the Maestro Electron desktop shell.
- * Maestro is the native desktop companion for Borg — providing system tray
+ * Shows status and controls for the electron-orchestrator desktop shell.
+ * electron-orchestrator is the native desktop companion for Borg — providing system tray
  * controls, OS-level integration, and native orchestration capabilities.
  *
- * This page checks whether Maestro is running by probing its IPC or HTTP
+ * This page checks whether electron-orchestrator is running by probing its IPC or HTTP
  * health endpoint, and provides links to launch/configure it.
  */
 
@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { PageStatusBanner } from "@/components/PageStatusBanner";
 
-// Maestro communicates via the same orchestrator port by default
+// electron-orchestrator communicates via the same orchestrator port by default
 const MAESTRO_URL = process.env.NEXT_PUBLIC_MAESTRO_URL || "http://localhost:3847";
 
 interface MaestroHealth {
@@ -82,7 +82,7 @@ export default function MaestroDashboardPage() {
                 <div>
                     <h1 className="text-xl font-bold flex items-center gap-2">
                         <MonitorPlay className="h-5 w-5 text-cyan-400" />
-                        Maestro Orchestrator
+                        electron-orchestrator
                     </h1>
                     <p className="text-zinc-400 text-sm">
                         Native desktop shell for Borg — system tray, OS integration, and local orchestration
@@ -120,8 +120,8 @@ export default function MaestroDashboardPage() {
             <div className="p-4">
                 <PageStatusBanner
                     status="experimental"
-                    message="Maestro desktop integration"
-                    note="The Maestro Electron shell is an experimental companion app. It shares the Borg backend on port 3847 and provides native OS capabilities."
+                    message="electron-orchestrator desktop integration"
+                    note="The electron-orchestrator desktop shell is an experimental companion app. It shares the Borg backend on port 3847 and provides native OS capabilities."
                 />
             </div>
 
@@ -131,10 +131,10 @@ export default function MaestroDashboardPage() {
                     <div className="border border-amber-700/50 bg-amber-950/20 rounded-lg px-4 py-3 flex items-start gap-3">
                         <AlertCircle className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
                         <div>
-                            <p className="text-amber-200 font-medium text-sm">Maestro is not running</p>
+                            <p className="text-amber-200 font-medium text-sm">electron-orchestrator is not running</p>
                             <p className="text-amber-300/70 text-xs mt-1">
-                                Start Maestro from the <code className="bg-amber-950/50 px-1 rounded">apps/maestro</code> directory,
-                                or launch it from the system tray. Maestro connects to the Borg backend at{" "}
+                                Start electron-orchestrator from the <code className="bg-amber-950/50 px-1 rounded">apps/maestro</code> directory,
+                                or launch it from the system tray. electron-orchestrator connects to the Borg backend at{" "}
                                 <code className="bg-amber-950/50 px-1 rounded">{MAESTRO_URL}</code>.
                             </p>
                             <div className="flex flex-wrap gap-2 mt-3">
@@ -145,7 +145,7 @@ export default function MaestroDashboardPage() {
                                     className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-xs flex items-center gap-1.5"
                                 >
                                     <Download className="h-3 w-3" />
-                                    Get Maestro
+                                    Get electron-orchestrator
                                 </a>
                                 <a
                                     href={MAESTRO_URL}
@@ -164,7 +164,7 @@ export default function MaestroDashboardPage() {
                 {status === "checking" && (
                     <div className="border border-zinc-700 bg-zinc-900 rounded-lg px-4 py-3 flex items-center gap-2 text-sm text-zinc-400">
                         <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                        Connecting to Maestro at {MAESTRO_URL}…
+                        Connecting to electron-orchestrator at {MAESTRO_URL}…
                     </div>
                 )}
 
@@ -173,7 +173,7 @@ export default function MaestroDashboardPage() {
                         <div className="border border-emerald-700/50 bg-emerald-950/20 rounded-lg px-4 py-3 flex items-start gap-3">
                             <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
                             <div>
-                                <p className="text-emerald-200 font-medium text-sm">Maestro is running</p>
+                                <p className="text-emerald-200 font-medium text-sm">electron-orchestrator is running</p>
                                 <p className="text-emerald-300/70 text-xs mt-1">
                                     Connected to Borg backend at {MAESTRO_URL}
                                 </p>

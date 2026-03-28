@@ -1,3 +1,4 @@
+import { splitCommandSpec } from '../cli-registry.js';
 import { describe, test, expect, beforeEach } from 'vitest';
 
 // Create a testable version of the CLI registry
@@ -208,6 +209,24 @@ describe('CLIRegistry', () => {
 
     test('returns unknown for invalid version', () => {
       expect(registry.parseVersion('no version here')).toBe('unknown');
+    });
+  });
+
+  describe('splitCommandSpec', () => {
+    test('splits simple single-word commands', () => {
+      expect(splitCommandSpec('codex')).toEqual({ command: 'codex', args: [] });
+    });
+
+    test('splits command specs with subcommands', () => {
+      expect(splitCommandSpec('gh copilot')).toEqual({ command: 'gh', args: ['copilot'] });
+      expect(splitCommandSpec('python -m aider')).toEqual({ command: 'python', args: ['-m', 'aider'] });
+    });
+
+    test('preserves quoted executable paths', () => {
+      expect(splitCommandSpec('"C:\\Program Files\\Tool\\tool.exe" serve')).toEqual({
+        command: 'C:\\Program Files\\Tool\\tool.exe',
+        args: ['serve'],
+      });
     });
   });
 });
