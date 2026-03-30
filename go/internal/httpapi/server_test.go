@@ -336,6 +336,250 @@ func TestSupervisorSessionBridgeRoutes(t *testing.T) {
 	}
 }
 
+func TestMCPBridgeRoutes(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "application/json")
+		switch r.URL.Path {
+		case "/trpc/mcp.listTools":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": []map[string]any{
+							{"name": "search_tools", "server": "core", "alwaysOn": true},
+						},
+					},
+				},
+			})
+		case "/trpc/mcp.searchTools":
+			if got := r.URL.Query().Get("input"); got != "" {
+				t.Fatalf("expected POST-style body bridge without input query param, got %q", got)
+			}
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				t.Fatalf("failed to read searchTools body: %v", err)
+			}
+			if !strings.Contains(string(body), `"query":"search"`) || !strings.Contains(string(body), `"profile":"repo-coding"`) {
+				t.Fatalf("expected bridged search payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": []map[string]any{
+							{"name": "search_tools", "server": "core", "alwaysShow": true},
+						},
+					},
+				},
+			})
+		case "/trpc/mcp.callTool":
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				t.Fatalf("failed to read callTool body: %v", err)
+			}
+			if !strings.Contains(string(body), `"name":"search_tools"`) {
+				t.Fatalf("expected tool name in bridged callTool body, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": map[string]any{
+							"ok": true,
+							"result": map[string]any{
+								"content": []map[string]any{{"type": "text", "text": "done"}},
+							},
+						},
+					},
+				},
+			})
+		case "/trpc/mcp.getToolPreferences":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": map[string]any{
+							"importantTools":          []string{"search_tools"},
+							"alwaysLoadedTools":       []string{"search_tools"},
+							"autoLoadMinConfidence":   0.85,
+							"maxLoadedTools":          16,
+							"maxHydratedSchemas":      8,
+							"idleEvictionThresholdMs": 300000,
+						},
+					},
+				},
+			})
+		case "/trpc/mcp.setToolPreferences":
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				t.Fatalf("failed to read setToolPreferences body: %v", err)
+			}
+			if !strings.Contains(string(body), `"importantTools":["search_tools"]`) {
+				t.Fatalf("expected preference payload in bridged body, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": map[string]any{
+							"ok":                      true,
+							"importantTools":          []string{"search_tools"},
+							"alwaysLoadedTools":       []string{"search_tools"},
+							"autoLoadMinConfidence":   0.85,
+							"maxLoadedTools":          16,
+							"maxHydratedSchemas":      8,
+							"idleEvictionThresholdMs": 300000,
+						},
+					},
+				},
+			})
+		case "/trpc/mcp.getWorkingSet":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": map[string]any{
+							"limits": map[string]any{"maxLoadedTools": 16},
+							"tools":  []map[string]any{{"name": "search_tools", "hydrated": true}},
+						},
+					},
+				},
+			})
+		case "/trpc/mcp.loadTool":
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				t.Fatalf("failed to read loadTool body: %v", err)
+			}
+			if !strings.Contains(string(body), `"name":"search_tools"`) {
+				t.Fatalf("expected loadTool payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": map[string]any{"ok": true, "message": "loaded"},
+					},
+				},
+			})
+		case "/trpc/mcp.unloadTool":
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				t.Fatalf("failed to read unloadTool body: %v", err)
+			}
+			if !strings.Contains(string(body), `"name":"search_tools"`) {
+				t.Fatalf("expected unloadTool payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": map[string]any{"ok": true, "message": "unloaded"},
+					},
+				},
+			})
+		case "/trpc/mcp.getToolSchema":
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				t.Fatalf("failed to read getToolSchema body: %v", err)
+			}
+			if !strings.Contains(string(body), `"name":"search_tools"`) {
+				t.Fatalf("expected getToolSchema payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": map[string]any{"inputSchema": map[string]any{"type": "object"}},
+					},
+				},
+			})
+		case "/trpc/mcp.getStatus":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": map[string]any{"connected": true, "serverCount": 1, "toolCount": 1},
+					},
+				},
+			})
+		case "/trpc/mcp.listServers":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": []map[string]any{
+							{"name": "core", "runtimeConnected": true, "toolCount": 1},
+						},
+					},
+				},
+			})
+		case "/trpc/mcpServers.list":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": []map[string]any{
+							{"uuid": "srv-1", "name": "core"},
+						},
+					},
+				},
+			})
+		case "/trpc/mcpServers.registrySnapshot":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": []map[string]any{
+							{"id": "mcp-1", "name": "Core MCP", "url": "https://example.com/mcp"},
+						},
+					},
+				},
+			})
+		default:
+			t.Fatalf("unexpected upstream path %s", r.URL.Path)
+		}
+	}))
+	defer upstream.Close()
+
+	t.Setenv("BORG_TRPC_UPSTREAM", upstream.URL+"/trpc")
+
+	server := New(config.Default(), stubDetector{})
+
+	cases := []struct {
+		name      string
+		method    string
+		path      string
+		body      string
+		contains  string
+		procedure string
+	}{
+		{name: "list tools", method: http.MethodGet, path: "/api/mcp/tools", contains: "\"search_tools\"", procedure: "\"procedure\":\"mcp.listTools\""},
+		{name: "search tools", method: http.MethodGet, path: "/api/mcp/tools/search?query=search&profile=repo-coding", contains: "\"alwaysShow\":true", procedure: "\"procedure\":\"mcp.searchTools\""},
+		{name: "call tool", method: http.MethodPost, path: "/api/mcp/tools/call", body: `{"name":"search_tools","args":{"query":"borg"}}`, contains: "\"ok\":true", procedure: "\"procedure\":\"mcp.callTool\""},
+		{name: "get preferences", method: http.MethodGet, path: "/api/mcp/preferences", contains: "\"importantTools\":[\"search_tools\"]", procedure: "\"procedure\":\"mcp.getToolPreferences\""},
+		{name: "set preferences", method: http.MethodPost, path: "/api/mcp/preferences", body: `{"importantTools":["search_tools"]}`, contains: "\"ok\":true", procedure: "\"procedure\":\"mcp.setToolPreferences\""},
+		{name: "working set", method: http.MethodGet, path: "/api/mcp/working-set", contains: "\"hydrated\":true", procedure: "\"procedure\":\"mcp.getWorkingSet\""},
+		{name: "load tool", method: http.MethodPost, path: "/api/mcp/working-set/load", body: `{"name":"search_tools"}`, contains: "\"message\":\"loaded\"", procedure: "\"procedure\":\"mcp.loadTool\""},
+		{name: "unload tool", method: http.MethodPost, path: "/api/mcp/working-set/unload", body: `{"name":"search_tools"}`, contains: "\"message\":\"unloaded\"", procedure: "\"procedure\":\"mcp.unloadTool\""},
+		{name: "tool schema", method: http.MethodPost, path: "/api/mcp/tools/schema", body: `{"name":"search_tools"}`, contains: "\"inputSchema\"", procedure: "\"procedure\":\"mcp.getToolSchema\""},
+		{name: "status", method: http.MethodGet, path: "/api/mcp/status", contains: "\"connected\":true", procedure: "\"procedure\":\"mcp.getStatus\""},
+		{name: "runtime servers", method: http.MethodGet, path: "/api/mcp/servers/runtime", contains: "\"runtimeConnected\":true", procedure: "\"procedure\":\"mcp.listServers\""},
+		{name: "configured servers", method: http.MethodGet, path: "/api/mcp/servers/configured", contains: "\"uuid\":\"srv-1\"", procedure: "\"procedure\":\"mcpServers.list\""},
+		{name: "registry snapshot", method: http.MethodGet, path: "/api/mcp/servers/registry-snapshot", contains: "\"Core MCP\"", procedure: "\"procedure\":\"mcpServers.registrySnapshot\""},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var body io.Reader
+			if tc.body != "" {
+				body = strings.NewReader(tc.body)
+			}
+			request := httptest.NewRequest(tc.method, tc.path, body)
+			if tc.body != "" {
+				request.Header.Set("content-type", "application/json")
+			}
+			recorder := httptest.NewRecorder()
+			server.Handler().ServeHTTP(recorder, request)
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+			}
+			if !strings.Contains(recorder.Body.String(), tc.contains) {
+				t.Fatalf("expected response to contain %s, got %s", tc.contains, recorder.Body.String())
+			}
+			if !strings.Contains(recorder.Body.String(), tc.procedure) {
+				t.Fatalf("expected bridge metadata %s, got %s", tc.procedure, recorder.Body.String())
+			}
+		})
+	}
+}
+
 func TestCLIToolsEndpoint(t *testing.T) {
 	server := New(config.Default(), stubDetector{
 		tools: []controlplane.Tool{

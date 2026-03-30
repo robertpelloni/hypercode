@@ -245,6 +245,18 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/sessions/supervisor/start", s.handleSupervisorSessionStart)
 	s.mux.HandleFunc("/api/sessions/supervisor/stop", s.handleSupervisorSessionStop)
 	s.mux.HandleFunc("/api/sessions/supervisor/restart", s.handleSupervisorSessionRestart)
+	s.mux.HandleFunc("/api/mcp/status", s.handleMCPStatus)
+	s.mux.HandleFunc("/api/mcp/servers/runtime", s.handleMCPRuntimeServers)
+	s.mux.HandleFunc("/api/mcp/servers/configured", s.handleMCPConfiguredServers)
+	s.mux.HandleFunc("/api/mcp/servers/registry-snapshot", s.handleMCPRegistrySnapshot)
+	s.mux.HandleFunc("/api/mcp/tools", s.handleMCPTools)
+	s.mux.HandleFunc("/api/mcp/tools/search", s.handleMCPSearchTools)
+	s.mux.HandleFunc("/api/mcp/tools/call", s.handleMCPCallTool)
+	s.mux.HandleFunc("/api/mcp/tools/schema", s.handleMCPToolSchema)
+	s.mux.HandleFunc("/api/mcp/preferences", s.handleMCPToolPreferences)
+	s.mux.HandleFunc("/api/mcp/working-set", s.handleMCPWorkingSet)
+	s.mux.HandleFunc("/api/mcp/working-set/load", s.handleMCPLoadTool)
+	s.mux.HandleFunc("/api/mcp/working-set/unload", s.handleMCPUnloadTool)
 	s.mux.HandleFunc("/api/cli/tools", s.handleCLITools)
 	s.mux.HandleFunc("/api/cli/harnesses", s.handleHarnesses)
 	s.mux.HandleFunc("/api/cli/summary", s.handleCLISummary)
@@ -301,6 +313,18 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/sessions/supervisor/start", Category: "sessions", Description: "Start a supervised session through the TypeScript control plane."},
 				{Path: "/api/sessions/supervisor/stop", Category: "sessions", Description: "Stop a supervised session through the TypeScript control plane."},
 				{Path: "/api/sessions/supervisor/restart", Category: "sessions", Description: "Restart a supervised session through the TypeScript control plane."},
+				{Path: "/api/mcp/status", Category: "mcp", Description: "Bridge to TypeScript MCP runtime status and pool state."},
+				{Path: "/api/mcp/servers/runtime", Category: "mcp", Description: "Bridge to TypeScript runtime MCP server visibility."},
+				{Path: "/api/mcp/servers/configured", Category: "mcp", Description: "Bridge to configured MCP server records managed by the TypeScript control plane."},
+				{Path: "/api/mcp/servers/registry-snapshot", Category: "mcp", Description: "Bridge to the TypeScript MCP registry snapshot."},
+				{Path: "/api/mcp/tools", Category: "mcp", Description: "Bridge to aggregated MCP tools from the TypeScript control plane."},
+				{Path: "/api/mcp/tools/search", Category: "mcp", Description: "Bridge to TypeScript MCP tool search with optional profile hinting."},
+				{Path: "/api/mcp/tools/call", Category: "mcp", Description: "Execute an MCP tool through the TypeScript control plane."},
+				{Path: "/api/mcp/tools/schema", Category: "mcp", Description: "Hydrate and return a specific MCP tool schema through the TypeScript control plane."},
+				{Path: "/api/mcp/preferences", Category: "mcp", Description: "Get or update MCP tool-selection preferences via the TypeScript control plane."},
+				{Path: "/api/mcp/working-set", Category: "mcp", Description: "Bridge to the TypeScript MCP working-set snapshot."},
+				{Path: "/api/mcp/working-set/load", Category: "mcp", Description: "Load an MCP tool into the TypeScript working set."},
+				{Path: "/api/mcp/working-set/unload", Category: "mcp", Description: "Unload an MCP tool from the TypeScript working set."},
 				{Path: "/api/cli/tools", Category: "cli", Description: "Detected local CLI tools and versions."},
 				{Path: "/api/cli/harnesses", Category: "cli", Description: "Harness registry metadata and install visibility."},
 				{Path: "/api/cli/summary", Category: "cli", Description: "Compact CLI and harness readiness summary."},
@@ -422,6 +446,72 @@ func (s *Server) handleSupervisorSessionRestart(w http.ResponseWriter, r *http.R
 	s.handleSessionBridgeBodyCall(w, r, "session.restart")
 }
 
+func (s *Server) handleMCPStatus(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcp.getStatus", nil)
+}
+
+func (s *Server) handleMCPRuntimeServers(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcp.listServers", nil)
+}
+
+func (s *Server) handleMCPConfiguredServers(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcpServers.list", nil)
+}
+
+func (s *Server) handleMCPRegistrySnapshot(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcpServers.registrySnapshot", nil)
+}
+
+func (s *Server) handleMCPTools(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcp.listTools", nil)
+}
+
+func (s *Server) handleMCPSearchTools(w http.ResponseWriter, r *http.Request) {
+	query := strings.TrimSpace(r.URL.Query().Get("query"))
+	profile := strings.TrimSpace(r.URL.Query().Get("profile"))
+	payload := map[string]any{
+		"query": query,
+	}
+	if profile != "" {
+		payload["profile"] = profile
+	}
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcp.searchTools", payload)
+}
+
+func (s *Server) handleMCPCallTool(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "mcp.callTool")
+}
+
+func (s *Server) handleMCPToolSchema(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "mcp.getToolSchema")
+}
+
+func (s *Server) handleMCPToolPreferences(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcp.getToolPreferences", nil)
+	case http.MethodPost:
+		s.handleTRPCBridgeBodyCall(w, r, "mcp.setToolPreferences")
+	default:
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
+			"success": false,
+			"error":   "method not allowed",
+		})
+	}
+}
+
+func (s *Server) handleMCPWorkingSet(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcp.getWorkingSet", nil)
+}
+
+func (s *Server) handleMCPLoadTool(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "mcp.loadTool")
+}
+
+func (s *Server) handleMCPUnloadTool(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "mcp.unloadTool")
+}
+
 func (s *Server) handleSessionBridgeBodyCall(w http.ResponseWriter, r *http.Request, procedure string) {
 	var payload map[string]any
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -431,10 +521,26 @@ func (s *Server) handleSessionBridgeBodyCall(w http.ResponseWriter, r *http.Requ
 		})
 		return
 	}
-	s.handleSessionBridgeCall(w, r, http.MethodPost, procedure, payload)
+	s.handleTRPCBridgeCall(w, r, http.MethodPost, procedure, payload)
 }
 
 func (s *Server) handleSessionBridgeCall(w http.ResponseWriter, r *http.Request, method string, procedure string, payload any) {
+	s.handleTRPCBridgeCall(w, r, method, procedure, payload)
+}
+
+func (s *Server) handleTRPCBridgeBodyCall(w http.ResponseWriter, r *http.Request, procedure string) {
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{
+			"success": false,
+			"error":   "invalid JSON body",
+		})
+		return
+	}
+	s.handleTRPCBridgeCall(w, r, http.MethodPost, procedure, payload)
+}
+
+func (s *Server) handleTRPCBridgeCall(w http.ResponseWriter, r *http.Request, method string, procedure string, payload any) {
 	if r.Method != method {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
 			"success": false,
