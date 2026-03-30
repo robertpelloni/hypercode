@@ -386,6 +386,19 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/workflows/canvases", s.handleWorkflowCanvases)
 	s.mux.HandleFunc("/api/workflows/canvas", s.handleWorkflowCanvas)
 	s.mux.HandleFunc("/api/workflows/canvas/save", s.handleWorkflowCanvasSave)
+	s.mux.HandleFunc("/api/symbols", s.handleSymbolsList)
+	s.mux.HandleFunc("/api/symbols/find", s.handleSymbolsFind)
+	s.mux.HandleFunc("/api/symbols/pin", s.handleSymbolsPin)
+	s.mux.HandleFunc("/api/symbols/unpin", s.handleSymbolsUnpin)
+	s.mux.HandleFunc("/api/symbols/priority", s.handleSymbolsUpdatePriority)
+	s.mux.HandleFunc("/api/symbols/notes", s.handleSymbolsAddNotes)
+	s.mux.HandleFunc("/api/symbols/clear", s.handleSymbolsClear)
+	s.mux.HandleFunc("/api/symbols/file", s.handleSymbolsForFile)
+	s.mux.HandleFunc("/api/lsp/find-symbol", s.handleLSPFindSymbol)
+	s.mux.HandleFunc("/api/lsp/find-references", s.handleLSPFindReferences)
+	s.mux.HandleFunc("/api/lsp/symbols", s.handleLSPGetSymbols)
+	s.mux.HandleFunc("/api/lsp/search", s.handleLSPSearchSymbols)
+	s.mux.HandleFunc("/api/lsp/index", s.handleLSPIndexProject)
 	s.mux.HandleFunc("/api/cli/tools", s.handleCLITools)
 	s.mux.HandleFunc("/api/cli/harnesses", s.handleHarnesses)
 	s.mux.HandleFunc("/api/cli/summary", s.handleCLISummary)
@@ -582,6 +595,19 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/workflows/canvases", Category: "workflow", Description: "List saved TypeScript workflow canvases."},
 				{Path: "/api/workflows/canvas", Category: "workflow", Description: "Load a saved TypeScript workflow canvas."},
 				{Path: "/api/workflows/canvas/save", Category: "workflow", Description: "Save a TypeScript workflow canvas."},
+				{Path: "/api/symbols", Category: "code", Description: "List pinned symbols through the TypeScript symbols router."},
+				{Path: "/api/symbols/find", Category: "code", Description: "Search symbols through the TypeScript symbols router."},
+				{Path: "/api/symbols/pin", Category: "code", Description: "Pin a symbol through the TypeScript symbols router."},
+				{Path: "/api/symbols/unpin", Category: "code", Description: "Unpin a symbol through the TypeScript symbols router."},
+				{Path: "/api/symbols/priority", Category: "code", Description: "Update symbol priority through the TypeScript symbols router."},
+				{Path: "/api/symbols/notes", Category: "code", Description: "Add symbol notes through the TypeScript symbols router."},
+				{Path: "/api/symbols/clear", Category: "code", Description: "Clear pinned symbols through the TypeScript symbols router."},
+				{Path: "/api/symbols/file", Category: "code", Description: "List pinned symbols for a file through the TypeScript symbols router."},
+				{Path: "/api/lsp/find-symbol", Category: "code", Description: "Bridge to the TypeScript LSP find-symbol surface."},
+				{Path: "/api/lsp/find-references", Category: "code", Description: "Bridge to the TypeScript LSP reference search surface."},
+				{Path: "/api/lsp/symbols", Category: "code", Description: "Bridge to the TypeScript LSP file-symbol surface."},
+				{Path: "/api/lsp/search", Category: "code", Description: "Bridge to the TypeScript LSP symbol-search surface."},
+				{Path: "/api/lsp/index", Category: "code", Description: "Trigger TypeScript LSP indexing through the bridge."},
 				{Path: "/api/cli/tools", Category: "cli", Description: "Detected local CLI tools and versions."},
 				{Path: "/api/cli/harnesses", Category: "cli", Description: "Harness registry metadata and install visibility."},
 				{Path: "/api/cli/summary", Category: "cli", Description: "Compact CLI and harness readiness summary."},
@@ -1596,6 +1622,97 @@ func (s *Server) handleWorkflowCanvas(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleWorkflowCanvasSave(w http.ResponseWriter, r *http.Request) {
 	s.handleTRPCBridgeBodyCall(w, r, "workflow.saveCanvas")
+}
+
+func (s *Server) handleSymbolsList(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "symbols.list", nil)
+}
+
+func (s *Server) handleSymbolsFind(w http.ResponseWriter, r *http.Request) {
+	query := strings.TrimSpace(r.URL.Query().Get("query"))
+	if query == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing query query parameter"})
+		return
+	}
+	payload := map[string]any{"query": query}
+	if limit := strings.TrimSpace(r.URL.Query().Get("limit")); limit != "" {
+		if parsed, err := strconv.Atoi(limit); err == nil {
+			payload["limit"] = parsed
+		}
+	}
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "symbols.find", payload)
+}
+
+func (s *Server) handleSymbolsPin(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "symbols.pin")
+}
+
+func (s *Server) handleSymbolsUnpin(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "symbols.unpin")
+}
+
+func (s *Server) handleSymbolsUpdatePriority(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "symbols.updatePriority")
+}
+
+func (s *Server) handleSymbolsAddNotes(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "symbols.addNotes")
+}
+
+func (s *Server) handleSymbolsClear(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "symbols.clear")
+}
+
+func (s *Server) handleSymbolsForFile(w http.ResponseWriter, r *http.Request) {
+	filePath := strings.TrimSpace(r.URL.Query().Get("filePath"))
+	if filePath == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing filePath query parameter"})
+		return
+	}
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "symbols.forFile", map[string]any{"filePath": filePath})
+}
+
+func (s *Server) handleLSPFindSymbol(w http.ResponseWriter, r *http.Request) {
+	filePath := strings.TrimSpace(r.URL.Query().Get("filePath"))
+	symbolName := strings.TrimSpace(r.URL.Query().Get("symbolName"))
+	if filePath == "" || symbolName == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing filePath or symbolName query parameter"})
+		return
+	}
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "lsp.findSymbol", map[string]any{"filePath": filePath, "symbolName": symbolName})
+}
+
+func (s *Server) handleLSPFindReferences(w http.ResponseWriter, r *http.Request) {
+	filePath := strings.TrimSpace(r.URL.Query().Get("filePath"))
+	line, lineErr := strconv.Atoi(strings.TrimSpace(r.URL.Query().Get("line")))
+	character, charErr := strconv.Atoi(strings.TrimSpace(r.URL.Query().Get("character")))
+	if filePath == "" || lineErr != nil || charErr != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing or invalid filePath, line, or character query parameter"})
+		return
+	}
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "lsp.findReferences", map[string]any{"filePath": filePath, "line": line, "character": character})
+}
+
+func (s *Server) handleLSPGetSymbols(w http.ResponseWriter, r *http.Request) {
+	filePath := strings.TrimSpace(r.URL.Query().Get("filePath"))
+	if filePath == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing filePath query parameter"})
+		return
+	}
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "lsp.getSymbols", map[string]any{"filePath": filePath})
+}
+
+func (s *Server) handleLSPSearchSymbols(w http.ResponseWriter, r *http.Request) {
+	query := strings.TrimSpace(r.URL.Query().Get("query"))
+	if query == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing query query parameter"})
+		return
+	}
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "lsp.searchSymbols", map[string]any{"query": query})
+}
+
+func (s *Server) handleLSPIndexProject(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "lsp.indexProject")
 }
 
 func (s *Server) handleSessionBridgeBodyCall(w http.ResponseWriter, r *http.Request, procedure string) {

@@ -1683,6 +1683,120 @@ func TestWorkflowBridgeRoutes(t *testing.T) {
 	}
 }
 
+func TestSymbolsAndLSPBridgeRoutes(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "application/json")
+		switch r.URL.Path {
+		case "/trpc/symbols.list":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"id": "sym-1", "name": "RunServer"}}}}})
+		case "/trpc/symbols.find":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"query":"Run"`) {
+				t.Fatalf("expected symbols.find payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"name": "RunServer"}}}}})
+		case "/trpc/symbols.pin":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"id": "sym-1"}}}})
+		case "/trpc/symbols.unpin":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": true}}})
+		case "/trpc/symbols.updatePriority":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": true}}})
+		case "/trpc/symbols.addNotes":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": true}}})
+		case "/trpc/symbols.clear":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": 2}}})
+		case "/trpc/symbols.forFile":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"filePath":"src/app.ts"`) {
+				t.Fatalf("expected symbols.forFile payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"id": "sym-1", "file": "src/app.ts"}}}}})
+		case "/trpc/lsp.findSymbol":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"symbolName":"RunServer"`) {
+				t.Fatalf("expected lsp.findSymbol payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"filePath": "src/app.ts", "line": 10}}}})
+		case "/trpc/lsp.findReferences":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"character":3`) {
+				t.Fatalf("expected lsp.findReferences payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"filePath": "src/app.ts", "line": 10}}}}})
+		case "/trpc/lsp.getSymbols":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"filePath":"src/app.ts"`) {
+				t.Fatalf("expected lsp.getSymbols payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"name": "RunServer"}}}}})
+		case "/trpc/lsp.searchSymbols":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"query":"Run"`) {
+				t.Fatalf("expected lsp.searchSymbols payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"name": "RunServer"}}}}})
+		case "/trpc/lsp.indexProject":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
+		default:
+			t.Fatalf("unexpected upstream path %s", r.URL.Path)
+		}
+	}))
+	defer upstream.Close()
+
+	t.Setenv("BORG_TRPC_UPSTREAM", upstream.URL+"/trpc")
+
+	cfg := config.Default()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	cases := []struct {
+		name      string
+		method    string
+		path      string
+		body      string
+		contains  string
+		procedure string
+	}{
+		{name: "symbols list", method: http.MethodGet, path: "/api/symbols", contains: `"sym-1"`, procedure: `"procedure":"symbols.list"`},
+		{name: "symbols find", method: http.MethodGet, path: "/api/symbols/find?query=Run&limit=5", contains: `"RunServer"`, procedure: `"procedure":"symbols.find"`},
+		{name: "symbols pin", method: http.MethodPost, path: "/api/symbols/pin", body: `{"name":"RunServer","file":"src/app.ts","type":"function"}`, contains: `"id":"sym-1"`, procedure: `"procedure":"symbols.pin"`},
+		{name: "symbols unpin", method: http.MethodPost, path: "/api/symbols/unpin", body: `{"id":"sym-1"}`, contains: `"data":true`, procedure: `"procedure":"symbols.unpin"`},
+		{name: "symbols priority", method: http.MethodPost, path: "/api/symbols/priority", body: `{"id":"sym-1","priority":7}`, contains: `"data":true`, procedure: `"procedure":"symbols.updatePriority"`},
+		{name: "symbols notes", method: http.MethodPost, path: "/api/symbols/notes", body: `{"id":"sym-1","notes":"important"}`, contains: `"data":true`, procedure: `"procedure":"symbols.addNotes"`},
+		{name: "symbols clear", method: http.MethodPost, path: "/api/symbols/clear", body: `{}`, contains: `"data":2`, procedure: `"procedure":"symbols.clear"`},
+		{name: "symbols for file", method: http.MethodGet, path: "/api/symbols/file?filePath=src%2Fapp.ts", contains: `"src/app.ts"`, procedure: `"procedure":"symbols.forFile"`},
+		{name: "lsp find symbol", method: http.MethodGet, path: "/api/lsp/find-symbol?filePath=src%2Fapp.ts&symbolName=RunServer", contains: `"line":10`, procedure: `"procedure":"lsp.findSymbol"`},
+		{name: "lsp references", method: http.MethodGet, path: "/api/lsp/find-references?filePath=src%2Fapp.ts&line=10&character=3", contains: `"src/app.ts"`, procedure: `"procedure":"lsp.findReferences"`},
+		{name: "lsp symbols", method: http.MethodGet, path: "/api/lsp/symbols?filePath=src%2Fapp.ts", contains: `"RunServer"`, procedure: `"procedure":"lsp.getSymbols"`},
+		{name: "lsp search", method: http.MethodGet, path: "/api/lsp/search?query=Run", contains: `"RunServer"`, procedure: `"procedure":"lsp.searchSymbols"`},
+		{name: "lsp index", method: http.MethodPost, path: "/api/lsp/index", body: `{}`, contains: `"success":true`, procedure: `"procedure":"lsp.indexProject"`},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var body io.Reader
+			if tc.body != "" {
+				body = strings.NewReader(tc.body)
+			}
+			request := httptest.NewRequest(tc.method, tc.path, body)
+			if tc.body != "" {
+				request.Header.Set("content-type", "application/json")
+			}
+			recorder := httptest.NewRecorder()
+			server.Handler().ServeHTTP(recorder, request)
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+			}
+			if !strings.Contains(recorder.Body.String(), tc.contains) {
+				t.Fatalf("expected response to contain %s, got %s", tc.contains, recorder.Body.String())
+			}
+			if !strings.Contains(recorder.Body.String(), tc.procedure) {
+				t.Fatalf("expected bridge metadata %s, got %s", tc.procedure, recorder.Body.String())
+			}
+		})
+	}
+}
+
 func TestCLIToolsEndpoint(t *testing.T) {
 	server := New(config.Default(), stubDetector{
 		tools: []controlplane.Tool{
