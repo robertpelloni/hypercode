@@ -270,6 +270,7 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/mcp/tools", s.handleMCPTools)
 	s.mux.HandleFunc("/api/mcp/tools/search", s.handleMCPSearchTools)
 	s.mux.HandleFunc("/api/mcp/tools/call", s.handleMCPCallTool)
+	s.mux.HandleFunc("/api/mcp/tool-ads", s.handleMCPToolAdvertisements)
 	s.mux.HandleFunc("/api/mcp/tools/schema", s.handleMCPToolSchema)
 	s.mux.HandleFunc("/api/mcp/preferences", s.handleMCPToolPreferences)
 	s.mux.HandleFunc("/api/mcp/traffic", s.handleMCPTraffic)
@@ -606,6 +607,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/mcp/tools", Category: "mcp", Description: "Bridge to aggregated MCP tools from the TypeScript control plane."},
 				{Path: "/api/mcp/tools/search", Category: "mcp", Description: "Bridge to TypeScript MCP tool search with optional profile hinting."},
 				{Path: "/api/mcp/tools/call", Category: "mcp", Description: "Execute an MCP tool through the TypeScript control plane."},
+				{Path: "/api/mcp/tool-ads", Category: "mcp", Description: "Bridge goal/objective-aware tool advertisements through the TypeScript list_all_tools helper."},
 				{Path: "/api/mcp/tools/schema", Category: "mcp", Description: "Hydrate and return a specific MCP tool schema through the TypeScript control plane."},
 				{Path: "/api/mcp/preferences", Category: "mcp", Description: "Get or update MCP tool-selection preferences via the TypeScript control plane."},
 				{Path: "/api/mcp/traffic", Category: "mcp", Description: "Bridge to recent TypeScript MCP server traffic events."},
@@ -1117,6 +1119,30 @@ func (s *Server) handleMCPSearchTools(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleMCPCallTool(w http.ResponseWriter, r *http.Request) {
 	s.handleTRPCBridgeBodyCall(w, r, "mcp.callTool")
+}
+
+func (s *Server) handleMCPToolAdvertisements(w http.ResponseWriter, r *http.Request) {
+	query := strings.TrimSpace(r.URL.Query().Get("query"))
+	goal := strings.TrimSpace(r.URL.Query().Get("goal"))
+	objective := strings.TrimSpace(r.URL.Query().Get("objective"))
+	if query == "" {
+		query = strings.TrimSpace(strings.Join([]string{objective, goal}, " "))
+	}
+
+	limit := 8
+	if rawLimit := strings.TrimSpace(r.URL.Query().Get("limit")); rawLimit != "" {
+		if parsed, err := strconv.Atoi(rawLimit); err == nil && parsed > 0 && parsed <= 32 {
+			limit = parsed
+		}
+	}
+
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcp.callTool", map[string]any{
+		"name": "list_all_tools",
+		"args": map[string]any{
+			"query": query,
+			"limit": limit,
+		},
+	})
 }
 
 func (s *Server) handleMCPToolSchema(w http.ResponseWriter, r *http.Request) {

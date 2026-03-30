@@ -533,8 +533,13 @@ func TestMCPBridgeRoutes(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to read callTool body: %v", err)
 			}
-			if !strings.Contains(string(body), `"name":"search_tools"`) {
-				t.Fatalf("expected tool name in bridged callTool body, got %s", string(body))
+			bodyText := string(body)
+			if !strings.Contains(bodyText, `"name":"search_tools"`) && !strings.Contains(bodyText, `"name":"list_all_tools"`) {
+				t.Fatalf("expected supported tool name in bridged callTool body, got %s", bodyText)
+			}
+			contentText := "done"
+			if strings.Contains(bodyText, `"name":"list_all_tools"`) {
+				contentText = "list_all_tools"
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"result": map[string]any{
@@ -542,7 +547,7 @@ func TestMCPBridgeRoutes(t *testing.T) {
 						"json": map[string]any{
 							"ok": true,
 							"result": map[string]any{
-								"content": []map[string]any{{"type": "text", "text": "done"}},
+								"content": []map[string]any{{"type": "text", "text": contentText}},
 							},
 						},
 					},
@@ -855,6 +860,7 @@ func TestMCPBridgeRoutes(t *testing.T) {
 		{name: "list tools", method: http.MethodGet, path: "/api/mcp/tools", contains: "\"search_tools\"", procedure: "\"procedure\":\"mcp.listTools\""},
 		{name: "search tools", method: http.MethodGet, path: "/api/mcp/tools/search?query=search&profile=repo-coding", contains: "\"alwaysShow\":true", procedure: "\"procedure\":\"mcp.searchTools\""},
 		{name: "call tool", method: http.MethodPost, path: "/api/mcp/tools/call", body: `{"name":"search_tools","args":{"query":"borg"}}`, contains: "\"ok\":true", procedure: "\"procedure\":\"mcp.callTool\""},
+		{name: "tool advertisements", method: http.MethodGet, path: "/api/mcp/tool-ads?goal=ship&objective=find%20tool&limit=6", contains: "\"list_all_tools\"", procedure: "\"procedure\":\"mcp.callTool\""},
 		{name: "get preferences", method: http.MethodGet, path: "/api/mcp/preferences", contains: "\"importantTools\":[\"search_tools\"]", procedure: "\"procedure\":\"mcp.getToolPreferences\""},
 		{name: "set preferences", method: http.MethodPost, path: "/api/mcp/preferences", body: `{"importantTools":["search_tools"]}`, contains: "\"ok\":true", procedure: "\"procedure\":\"mcp.setToolPreferences\""},
 		{name: "working set", method: http.MethodGet, path: "/api/mcp/working-set", contains: "\"hydrated\":true", procedure: "\"procedure\":\"mcp.getWorkingSet\""},
