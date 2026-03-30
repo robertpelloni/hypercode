@@ -16,6 +16,7 @@ import (
 	"github.com/borghq/borg-go/internal/interop"
 	"github.com/borghq/borg-go/internal/lockfile"
 	"github.com/borghq/borg-go/internal/memorystore"
+	"github.com/borghq/borg-go/internal/providers"
 	"github.com/borghq/borg-go/internal/sessionimport"
 )
 
@@ -117,8 +118,28 @@ func TestProviderStatusEndpoint(t *testing.T) {
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected status 200, got %d", recorder.Code)
 	}
-	if !strings.Contains(recorder.Body.String(), "\"openai\"") {
-		t.Fatalf("expected openai in payload, got %s", recorder.Body.String())
+
+	var payload struct {
+		Success bool               `json:"success"`
+		Data    []providers.Status `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("expected JSON payload, got decode error: %v", err)
+	}
+	if !payload.Success {
+		t.Fatalf("expected success payload, got %s", recorder.Body.String())
+	}
+	if len(payload.Data) != 8 {
+		t.Fatalf("expected 8 provider statuses, got %d", len(payload.Data))
+	}
+	if payload.Data[0].Provider != "openai" || payload.Data[0].AuthMethod != "api_key" {
+		t.Fatalf("expected openai provider first, got %+v", payload.Data[0])
+	}
+	if !payload.Data[0].Configured || !payload.Data[0].Authenticated || payload.Data[0].EnvVar != "OPENAI_API_KEY" {
+		t.Fatalf("expected configured openai provider, got %+v", payload.Data[0])
+	}
+	if payload.Data[3].Provider != "google-oauth" || payload.Data[3].AuthMethod != "oauth" {
+		t.Fatalf("expected google-oauth provider in payload, got %+v", payload.Data[3])
 	}
 }
 
