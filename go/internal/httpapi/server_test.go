@@ -147,6 +147,74 @@ func TestMeshEndpoints(t *testing.T) {
 	}
 }
 
+func TestStartupStatusEndpoint(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/trpc/health":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": map[string]any{"status": "ok"},
+					},
+				},
+			})
+		case "/trpc/session.catalog":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": map[string]any{"sessions": []any{}},
+					},
+				},
+			})
+		case "/trpc/mesh.getCapabilities":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"result": map[string]any{
+					"data": map[string]any{
+						"json": map[string]any{},
+					},
+				},
+			})
+		default:
+			t.Fatalf("unexpected bridge path %s", r.URL.Path)
+		}
+	}))
+	defer upstream.Close()
+
+	t.Setenv("BORG_TRPC_UPSTREAM", upstream.URL+"/trpc")
+
+	workspaceRoot := t.TempDir()
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	cfg.ConfigDir = filepath.Join(workspaceRoot, ".borg-go")
+	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".borg")
+	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
+		t.Fatalf("failed to create go config dir: %v", err)
+	}
+	if err := os.MkdirAll(cfg.MainConfigDir, 0o755); err != nil {
+		t.Fatalf("failed to create main config dir: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".borg", "memory"), 0o755); err != nil {
+		t.Fatalf("failed to create memory dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".borg", "memory", "claude_mem.json"), []byte(`{"default":[]}`), 0o644); err != nil {
+		t.Fatalf("failed to seed memory store: %v", err)
+	}
+
+	server := New(cfg, stubDetector{})
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/startup/status", nil))
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected startup status 200, got %d", recorder.Code)
+	}
+	if !strings.Contains(recorder.Body.String(), "\"ready\":true") {
+		t.Fatalf("expected ready startup payload, got %s", recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), "\"mainControlPlane\"") {
+		t.Fatalf("expected main control plane checks, got %s", recorder.Body.String())
+	}
+}
+
 func TestConfigStatusEndpoint(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	cfg := config.Default()
