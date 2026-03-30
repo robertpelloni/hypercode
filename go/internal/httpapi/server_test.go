@@ -1082,6 +1082,130 @@ func TestAgentMemoryBridgeRoutes(t *testing.T) {
 	}
 }
 
+func TestCodeBridgeRoutes(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "application/json")
+		switch r.URL.Path {
+		case "/trpc/graph.get":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"nodes": []map[string]any{{"id": "file-a"}}, "links": []any{}, "dependencies": map[string]any{"file-a": []string{"file-b"}}}}}})
+		case "/trpc/graph.rebuild":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true, "nodes": []map[string]any{{"id": "file-b"}}}}}})
+		case "/trpc/graph.getConsumers":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"filePath":"src/app.ts"`) {
+				t.Fatalf("expected graph.getConsumers payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []string{"src/consumer.ts"}}}})
+		case "/trpc/graph.getDependencies":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"filePath":"src/app.ts"`) {
+				t.Fatalf("expected graph.getDependencies payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []string{"src/dep.ts"}}}})
+		case "/trpc/graph.getSymbolsGraph":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"nodes": []map[string]any{{"id": "sym-1", "name": "demo"}}, "links": []map[string]any{{"source": "src/demo.ts", "target": "sym-1", "type": "defines"}}}}}})
+		case "/trpc/borgContext.list":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []string{"src/app.ts"}}}})
+		case "/trpc/borgContext.add":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": "added src/app.ts"}}})
+		case "/trpc/borgContext.remove":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": "removed src/app.ts"}}})
+		case "/trpc/borgContext.clear":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": "cleared"}}})
+		case "/trpc/borgContext.getPrompt":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": "Prompt context"}}})
+		case "/trpc/git.getModules":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []map[string]any{{"name": "hypercode", "path": "submodules/hypercode"}}}}})
+		case "/trpc/git.getLog":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"limit":5`) {
+				t.Fatalf("expected git.getLog limit payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []map[string]any{{"hash": "abc123", "message": "ship bridge"}}}}})
+		case "/trpc/git.getStatus":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"branch": "main", "clean": false}}}})
+		case "/trpc/git.revert":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
+		case "/trpc/tests.status":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"isRunning": true, "results": map[string]any{"src/app.ts": map[string]any{"status": "passed"}}}}}})
+		case "/trpc/tests.start":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
+		case "/trpc/tests.stop":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
+		case "/trpc/tests.run":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"filePath":"src/app.ts"`) {
+				t.Fatalf("expected tests.run payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true, "testFile": "src/app.test.ts"}}}})
+		case "/trpc/tests.results":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []map[string]any{{"file": "src/app.test.ts", "status": "passed"}}}}})
+		default:
+			t.Fatalf("unexpected upstream path %s", r.URL.Path)
+		}
+	}))
+	defer upstream.Close()
+
+	t.Setenv("BORG_TRPC_UPSTREAM", upstream.URL+"/trpc")
+
+	cfg := config.Default()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	cases := []struct {
+		name      string
+		method    string
+		path      string
+		body      string
+		contains  string
+		procedure string
+	}{
+		{name: "graph get", method: http.MethodGet, path: "/api/graph", contains: "\"file-a\"", procedure: "\"procedure\":\"graph.get\""},
+		{name: "graph rebuild", method: http.MethodPost, path: "/api/graph/rebuild", contains: "\"success\":true", procedure: "\"procedure\":\"graph.rebuild\""},
+		{name: "graph consumers", method: http.MethodGet, path: "/api/graph/consumers?filePath=src/app.ts", contains: "\"src/consumer.ts\"", procedure: "\"procedure\":\"graph.getConsumers\""},
+		{name: "graph dependencies", method: http.MethodGet, path: "/api/graph/dependencies?filePath=src/app.ts", contains: "\"src/dep.ts\"", procedure: "\"procedure\":\"graph.getDependencies\""},
+		{name: "graph symbols", method: http.MethodGet, path: "/api/graph/symbols", contains: "\"sym-1\"", procedure: "\"procedure\":\"graph.getSymbolsGraph\""},
+		{name: "context list", method: http.MethodGet, path: "/api/context/list", contains: "\"src/app.ts\"", procedure: "\"procedure\":\"borgContext.list\""},
+		{name: "context add", method: http.MethodPost, path: "/api/context/add", body: "{\"filePath\":\"src/app.ts\"}", contains: "added src/app.ts", procedure: "\"procedure\":\"borgContext.add\""},
+		{name: "context remove", method: http.MethodPost, path: "/api/context/remove", body: "{\"filePath\":\"src/app.ts\"}", contains: "removed src/app.ts", procedure: "\"procedure\":\"borgContext.remove\""},
+		{name: "context clear", method: http.MethodPost, path: "/api/context/clear", contains: "cleared", procedure: "\"procedure\":\"borgContext.clear\""},
+		{name: "context prompt", method: http.MethodGet, path: "/api/context/prompt", contains: "Prompt context", procedure: "\"procedure\":\"borgContext.getPrompt\""},
+		{name: "git modules", method: http.MethodGet, path: "/api/git/modules", contains: "\"hypercode\"", procedure: "\"procedure\":\"git.getModules\""},
+		{name: "git log", method: http.MethodGet, path: "/api/git/log?limit=5", contains: "\"abc123\"", procedure: "\"procedure\":\"git.getLog\""},
+		{name: "git status", method: http.MethodGet, path: "/api/git/status", contains: "\"branch\":\"main\"", procedure: "\"procedure\":\"git.getStatus\""},
+		{name: "git revert", method: http.MethodPost, path: "/api/git/revert", body: "{\"hash\":\"abc123\"}", contains: "\"success\":true", procedure: "\"procedure\":\"git.revert\""},
+		{name: "tests status", method: http.MethodGet, path: "/api/tests/status", contains: "\"isRunning\":true", procedure: "\"procedure\":\"tests.status\""},
+		{name: "tests start", method: http.MethodPost, path: "/api/tests/start", contains: "\"success\":true", procedure: "\"procedure\":\"tests.start\""},
+		{name: "tests stop", method: http.MethodPost, path: "/api/tests/stop", contains: "\"success\":true", procedure: "\"procedure\":\"tests.stop\""},
+		{name: "tests run", method: http.MethodPost, path: "/api/tests/run", body: "{\"filePath\":\"src/app.ts\"}", contains: "\"testFile\":\"src/app.test.ts\"", procedure: "\"procedure\":\"tests.run\""},
+		{name: "tests results", method: http.MethodGet, path: "/api/tests/results", contains: "\"src/app.test.ts\"", procedure: "\"procedure\":\"tests.results\""},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var body io.Reader
+			if tc.body != "" {
+				body = strings.NewReader(tc.body)
+			}
+			request := httptest.NewRequest(tc.method, tc.path, body)
+			if tc.body != "" {
+				request.Header.Set("content-type", "application/json")
+			}
+			recorder := httptest.NewRecorder()
+			server.Handler().ServeHTTP(recorder, request)
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+			}
+			if !strings.Contains(recorder.Body.String(), tc.contains) {
+				t.Fatalf("expected response to contain %s, got %s", tc.contains, recorder.Body.String())
+			}
+			if !strings.Contains(recorder.Body.String(), tc.procedure) {
+				t.Fatalf("expected bridge metadata %s, got %s", tc.procedure, recorder.Body.String())
+			}
+		})
+	}
+}
+
 func TestCLIToolsEndpoint(t *testing.T) {
 	server := New(config.Default(), stubDetector{
 		tools: []controlplane.Tool{

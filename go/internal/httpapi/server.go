@@ -304,6 +304,25 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/agent-memory/handoff", s.handleAgentMemoryHandoff)
 	s.mux.HandleFunc("/api/agent-memory/pickup", s.handleAgentMemoryPickup)
 	s.mux.HandleFunc("/api/agent-memory/stats", s.handleAgentMemoryStats)
+	s.mux.HandleFunc("/api/graph", s.handleGraphGet)
+	s.mux.HandleFunc("/api/graph/rebuild", s.handleGraphRebuild)
+	s.mux.HandleFunc("/api/graph/consumers", s.handleGraphConsumers)
+	s.mux.HandleFunc("/api/graph/dependencies", s.handleGraphDependencies)
+	s.mux.HandleFunc("/api/graph/symbols", s.handleGraphSymbols)
+	s.mux.HandleFunc("/api/context/list", s.handleContextList)
+	s.mux.HandleFunc("/api/context/add", s.handleContextAdd)
+	s.mux.HandleFunc("/api/context/remove", s.handleContextRemove)
+	s.mux.HandleFunc("/api/context/clear", s.handleContextClear)
+	s.mux.HandleFunc("/api/context/prompt", s.handleContextPrompt)
+	s.mux.HandleFunc("/api/git/modules", s.handleGitModules)
+	s.mux.HandleFunc("/api/git/log", s.handleGitLog)
+	s.mux.HandleFunc("/api/git/status", s.handleGitStatus)
+	s.mux.HandleFunc("/api/git/revert", s.handleGitRevert)
+	s.mux.HandleFunc("/api/tests/status", s.handleTestsStatus)
+	s.mux.HandleFunc("/api/tests/start", s.handleTestsStart)
+	s.mux.HandleFunc("/api/tests/stop", s.handleTestsStop)
+	s.mux.HandleFunc("/api/tests/run", s.handleTestsRun)
+	s.mux.HandleFunc("/api/tests/results", s.handleTestsResults)
 	s.mux.HandleFunc("/api/cli/tools", s.handleCLITools)
 	s.mux.HandleFunc("/api/cli/harnesses", s.handleHarnesses)
 	s.mux.HandleFunc("/api/cli/summary", s.handleCLISummary)
@@ -418,6 +437,25 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/agent-memory/handoff", Category: "memory", Description: "Create an agent-memory handoff artifact through the TypeScript control plane."},
 				{Path: "/api/agent-memory/pickup", Category: "memory", Description: "Restore an agent-memory handoff artifact through the TypeScript control plane."},
 				{Path: "/api/agent-memory/stats", Category: "memory", Description: "Bridge to TypeScript agent-memory counts by tier."},
+				{Path: "/api/graph", Category: "code", Description: "Bridge to the TypeScript repository graph snapshot."},
+				{Path: "/api/graph/rebuild", Category: "code", Description: "Rebuild the TypeScript repository graph and return the latest snapshot."},
+				{Path: "/api/graph/consumers", Category: "code", Description: "Bridge to repository graph consumers for a given file path."},
+				{Path: "/api/graph/dependencies", Category: "code", Description: "Bridge to repository graph dependencies for a given file path."},
+				{Path: "/api/graph/symbols", Category: "code", Description: "Bridge to the TypeScript symbols graph snapshot."},
+				{Path: "/api/context/list", Category: "code", Description: "Bridge to the current TypeScript context file list."},
+				{Path: "/api/context/add", Category: "code", Description: "Add a file to the TypeScript context manager."},
+				{Path: "/api/context/remove", Category: "code", Description: "Remove a file from the TypeScript context manager."},
+				{Path: "/api/context/clear", Category: "code", Description: "Clear the TypeScript context manager state."},
+				{Path: "/api/context/prompt", Category: "code", Description: "Bridge to the TypeScript context prompt output."},
+				{Path: "/api/git/modules", Category: "code", Description: "Bridge to parsed git submodule metadata from the TypeScript control plane."},
+				{Path: "/api/git/log", Category: "code", Description: "Bridge to git log output from the TypeScript control plane."},
+				{Path: "/api/git/status", Category: "code", Description: "Bridge to git status output from the TypeScript control plane."},
+				{Path: "/api/git/revert", Category: "code", Description: "Request a git revert through the TypeScript control plane."},
+				{Path: "/api/tests/status", Category: "code", Description: "Bridge to TypeScript auto-test service status."},
+				{Path: "/api/tests/start", Category: "code", Description: "Start the TypeScript auto-test service."},
+				{Path: "/api/tests/stop", Category: "code", Description: "Stop the TypeScript auto-test service."},
+				{Path: "/api/tests/run", Category: "code", Description: "Run the relevant TypeScript test file for a given source path."},
+				{Path: "/api/tests/results", Category: "code", Description: "Bridge to recent TypeScript auto-test results."},
 				{Path: "/api/cli/tools", Category: "cli", Description: "Detected local CLI tools and versions."},
 				{Path: "/api/cli/harnesses", Category: "cli", Description: "Harness registry metadata and install visibility."},
 				{Path: "/api/cli/summary", Category: "cli", Description: "Compact CLI and harness readiness summary."},
@@ -971,6 +1009,98 @@ func (s *Server) handleAgentMemoryPickup(w http.ResponseWriter, r *http.Request)
 
 func (s *Server) handleAgentMemoryStats(w http.ResponseWriter, r *http.Request) {
 	s.handleTRPCBridgeCall(w, r, http.MethodGet, "agentMemory.stats", nil)
+}
+
+func (s *Server) handleGraphGet(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "graph.get", nil)
+}
+
+func (s *Server) handleGraphRebuild(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodPost, "graph.rebuild", nil)
+}
+
+func (s *Server) handleGraphConsumers(w http.ResponseWriter, r *http.Request) {
+	filePath := strings.TrimSpace(r.URL.Query().Get("filePath"))
+	if filePath == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing filePath query parameter"})
+		return
+	}
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "graph.getConsumers", map[string]any{"filePath": filePath})
+}
+
+func (s *Server) handleGraphDependencies(w http.ResponseWriter, r *http.Request) {
+	filePath := strings.TrimSpace(r.URL.Query().Get("filePath"))
+	if filePath == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing filePath query parameter"})
+		return
+	}
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "graph.getDependencies", map[string]any{"filePath": filePath})
+}
+
+func (s *Server) handleGraphSymbols(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "graph.getSymbolsGraph", nil)
+}
+
+func (s *Server) handleContextList(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "borgContext.list", nil)
+}
+
+func (s *Server) handleContextAdd(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "borgContext.add")
+}
+
+func (s *Server) handleContextRemove(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "borgContext.remove")
+}
+
+func (s *Server) handleContextClear(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodPost, "borgContext.clear", nil)
+}
+
+func (s *Server) handleContextPrompt(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "borgContext.getPrompt", nil)
+}
+
+func (s *Server) handleGitModules(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "git.getModules", nil)
+}
+
+func (s *Server) handleGitLog(w http.ResponseWriter, r *http.Request) {
+	payload := map[string]any{}
+	if limit := strings.TrimSpace(r.URL.Query().Get("limit")); limit != "" {
+		if parsed, err := strconv.Atoi(limit); err == nil {
+			payload["limit"] = parsed
+		}
+	}
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "git.getLog", payload)
+}
+
+func (s *Server) handleGitStatus(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "git.getStatus", nil)
+}
+
+func (s *Server) handleGitRevert(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "git.revert")
+}
+
+func (s *Server) handleTestsStatus(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "tests.status", nil)
+}
+
+func (s *Server) handleTestsStart(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodPost, "tests.start", nil)
+}
+
+func (s *Server) handleTestsStop(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodPost, "tests.stop", nil)
+}
+
+func (s *Server) handleTestsRun(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "tests.run")
+}
+
+func (s *Server) handleTestsResults(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeCall(w, r, http.MethodGet, "tests.results", nil)
 }
 
 func (s *Server) handleSessionBridgeBodyCall(w http.ResponseWriter, r *http.Request, procedure string) {
