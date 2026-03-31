@@ -2456,7 +2456,56 @@ func (s *Server) handleMCPToolAdvertisements(w http.ResponseWriter, r *http.Requ
 }
 
 func (s *Server) handleMCPToolSchema(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "mcp.getToolSchema")
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
+			"success": false,
+			"error":   "method not allowed",
+		})
+		return
+	}
+
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{
+			"success": false,
+			"error":   "invalid JSON body",
+		})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.getToolSchema", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "mcp.getToolSchema",
+			},
+		})
+		return
+	}
+
+	fallbackResult, fallbackErr := localFallbackToolSchema(payload)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   err.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    fallbackResult,
+		"bridge": map[string]any{
+			"fallback":  "go-local-mcp",
+			"procedure": "mcp.getToolSchema",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMCPToolPreferences(w http.ResponseWriter, r *http.Request) {
@@ -5204,6 +5253,72 @@ func (s *Server) localCallMCPMetaTool(r *http.Request, payload map[string]any) (
 		}, nil
 	default:
 		return nil, errors.New("unsupported tool fallback: " + name)
+	}
+}
+
+func localFallbackToolSchema(payload map[string]any) (map[string]any, error) {
+	name, _ := payload["name"].(string)
+	switch name {
+	case "search_tools":
+		return map[string]any{
+			"inputSchema": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"query": map[string]any{
+						"type":        "string",
+						"description": "Tool intent or keyword search query.",
+					},
+					"limit": map[string]any{
+						"type":        "number",
+						"description": "Maximum number of results to return (default 10).",
+					},
+				},
+				"required": []string{"query"},
+			},
+			"evictedHydratedTools": []any{},
+		}, nil
+	case "list_all_tools":
+		return map[string]any{
+			"inputSchema": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"query": map[string]any{
+						"type":        "string",
+						"description": "Optional keyword filter applied across tool names, descriptions, server names, and advertised names.",
+					},
+					"limit": map[string]any{
+						"type":        "number",
+						"description": "Maximum number of tools to return after filtering. Defaults to 100.",
+					},
+					"category": map[string]any{
+						"type":        "string",
+						"description": "Optional category filter.",
+						"enum":        []string{"all", "meta", "compatibility", "native", "saved-script", "downstream"},
+					},
+				},
+			},
+			"evictedHydratedTools": []any{},
+		}, nil
+	case "auto_call_tool":
+		return map[string]any{
+			"inputSchema": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"objective": map[string]any{
+						"type":        "string",
+						"description": "The objective or task you want to accomplish using a tool.",
+					},
+					"context": map[string]any{
+						"type":        "string",
+						"description": "Any necessary variables, file paths, or text snippets required to fill the tool arguments.",
+					},
+				},
+				"required": []string{"objective", "context"},
+			},
+			"evictedHydratedTools": []any{},
+		}, nil
+	default:
+		return nil, errors.New("unsupported tool schema fallback: " + name)
 	}
 }
 

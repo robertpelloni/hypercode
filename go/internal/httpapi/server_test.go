@@ -4230,6 +4230,31 @@ var ListAllTools = struct{
 	}
 }
 
+func TestMCPToolSchemaFallsBackToLocalMetaSchemas(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = t.TempDir()
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	request := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/schema", strings.NewReader(`{"name":"search_tools"}`))
+	request.Header.Set("content-type", "application/json")
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected fallback schema status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"fallback":"go-local-mcp"`) || !strings.Contains(recorder.Body.String(), `"procedure":"mcp.getToolSchema"`) {
+		t.Fatalf("expected local schema fallback metadata, got %s", recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"query"`) || !strings.Contains(recorder.Body.String(), `"inputSchema"`) {
+		t.Fatalf("expected local search_tools schema payload, got %s", recorder.Body.String())
+	}
+}
+
 func TestMCPRegistrySnapshotFallsBackToMasterIndex(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	indexContent := `{
