@@ -54,15 +54,64 @@ func (s *Server) handleSessionContext(w http.ResponseWriter, r *http.Request) {
 	var bootstrap SessionBootstrapPayload
 	bootstrapBase, err := s.callUpstreamJSON(r.Context(), "memory.getSessionBootstrap", bootstrapPayload, &bootstrap)
 	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": err.Error()})
-		return
+		promptParts := make([]string, 0, 3)
+		promptParts = append(promptParts, "Memory bootstrap:")
+		if strings.TrimSpace(activeGoal) != "" {
+			promptParts = append(promptParts, "Current goal: "+activeGoal)
+		}
+		if strings.TrimSpace(lastObjective) != "" {
+			promptParts = append(promptParts, "Last objective: "+lastObjective)
+		}
+		promptParts = append(promptParts, "No relevant prior memory was found.")
+		bootstrap = SessionBootstrapPayload{
+			Goal:                   activeGoal,
+			Objective:              lastObjective,
+			SummaryCount:           0,
+			ObservationCount:       0,
+			ToolAdvertisementCount: 0,
+			Prompt:                 strings.Join(promptParts, "\n"),
+		}
+		bootstrapBase = ""
 	}
 
 	query := strings.TrimSpace(strings.Join([]string{lastObjective, activeGoal}, " "))
 	toolSuggestions, err := s.buildToolSuggestionSnapshot(r, query)
 	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": err.Error()})
-		return
+		_, summary, fallbackErr := s.localMCPSummary(r.Context())
+		if fallbackErr != nil {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": err.Error(), "detail": fallbackErr.Error()})
+			return
+		}
+		searchResults := fallbackSearchMCPTools(summary.InstalledHarnesses, query)
+		toolSuggestions = ToolSuggestionSnapshot{
+			RecommendedTools: searchResults,
+			RelatedTools: map[string]any{
+				"toolName": "list_all_tools",
+				"args": map[string]any{
+					"query": query,
+					"limit": 8,
+				},
+				"preview": map[string]any{
+					"ok": true,
+					"result": map[string]any{
+						"content": []map[string]any{{"type": "text", "text": "list_all_tools"}},
+					},
+				},
+			},
+			Bridge: map[string]any{
+				"recommendedTools": map[string]any{
+					"fallback":  "go-local-mcp",
+					"procedure": "mcp.searchTools",
+					"reason":    err.Error(),
+				},
+				"toolAds": map[string]any{
+					"fallback":  "go-local-mcp",
+					"procedure": "mcp.callTool",
+					"toolName":  "list_all_tools",
+					"reason":    err.Error(),
+				},
+			},
+		}
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{

@@ -2912,7 +2912,50 @@ func (s *Server) handleMemorySessionBootstrap(w http.ResponseWriter, r *http.Req
 	if lastObjective := strings.TrimSpace(r.URL.Query().Get("lastObjective")); lastObjective != "" {
 		payload["lastObjective"] = lastObjective
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "memory.getSessionBootstrap", payload)
+
+	var result map[string]any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.getSessionBootstrap", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.getSessionBootstrap",
+			},
+		})
+		return
+	}
+
+	activeGoal, _ := payload["activeGoal"].(string)
+	lastObjective, _ := payload["lastObjective"].(string)
+	promptParts := make([]string, 0, 3)
+	promptParts = append(promptParts, "Memory bootstrap:")
+	if strings.TrimSpace(activeGoal) != "" {
+		promptParts = append(promptParts, "Current goal: "+activeGoal)
+	}
+	if strings.TrimSpace(lastObjective) != "" {
+		promptParts = append(promptParts, "Last objective: "+lastObjective)
+	}
+	promptParts = append(promptParts, "No relevant prior memory was found.")
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"activeGoal":             activeGoal,
+			"lastObjective":          lastObjective,
+			"goal":                   activeGoal,
+			"objective":              lastObjective,
+			"summaryCount":           0,
+			"observationCount":       0,
+			"toolAdvertisementCount": 0,
+			"prompt":                 strings.Join(promptParts, "\n"),
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.getSessionBootstrap",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMemoryToolContext(w http.ResponseWriter, r *http.Request) {
