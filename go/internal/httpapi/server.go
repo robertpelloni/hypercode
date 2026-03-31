@@ -2898,7 +2898,29 @@ func (s *Server) handleMemorySearch(w http.ResponseWriter, r *http.Request) {
 			payload["limit"] = parsed
 		}
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "memory.query", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.query", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.query",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.query",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMemoryContexts(w http.ResponseWriter, r *http.Request) {
@@ -2950,7 +2972,29 @@ func (s *Server) handleMemoryContextGet(w http.ResponseWriter, r *http.Request) 
 		})
 		return
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "memory.getContext", map[string]any{"id": id})
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.getContext", map[string]any{"id": id}, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.getContext",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    nil,
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.getContext",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMemoryContextDelete(w http.ResponseWriter, r *http.Request) {
@@ -3021,7 +3065,29 @@ func (s *Server) handleMemoryAgentSearch(w http.ResponseWriter, r *http.Request)
 	if memoryType := strings.TrimSpace(r.URL.Query().Get("type")); memoryType != "" {
 		payload["type"] = memoryType
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "memory.searchAgentMemory", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.searchAgentMemory", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.searchAgentMemory",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.searchAgentMemory",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMemoryAddFact(w http.ResponseWriter, r *http.Request) {
@@ -3045,7 +3111,29 @@ func (s *Server) handleMemoryRecentObservations(w http.ResponseWriter, r *http.R
 	if observationType := strings.TrimSpace(r.URL.Query().Get("type")); observationType != "" {
 		payload["type"] = observationType
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "memory.getRecentObservations", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.getRecentObservations", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.getRecentObservations",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.getRecentObservations",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMemorySearchObservations(w http.ResponseWriter, r *http.Request) {
@@ -3069,7 +3157,29 @@ func (s *Server) handleMemorySearchObservations(w http.ResponseWriter, r *http.R
 	if observationType := strings.TrimSpace(r.URL.Query().Get("type")); observationType != "" {
 		payload["type"] = observationType
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "memory.searchObservations", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.searchObservations", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.searchObservations",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.searchObservations",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMemoryCaptureUserPrompt(w http.ResponseWriter, r *http.Request) {
@@ -3086,7 +3196,29 @@ func (s *Server) handleMemoryRecentUserPrompts(w http.ResponseWriter, r *http.Re
 	if role := strings.TrimSpace(r.URL.Query().Get("role")); role != "" {
 		payload["role"] = role
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "memory.getRecentUserPrompts", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.getRecentUserPrompts", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.getRecentUserPrompts",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.getRecentUserPrompts",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMemorySearchUserPrompts(w http.ResponseWriter, r *http.Request) {
@@ -3107,7 +3239,29 @@ func (s *Server) handleMemorySearchUserPrompts(w http.ResponseWriter, r *http.Re
 	if role := strings.TrimSpace(r.URL.Query().Get("role")); role != "" {
 		payload["role"] = role
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "memory.searchUserPrompts", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.searchUserPrompts", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.searchUserPrompts",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.searchUserPrompts",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMemorySearchPivot(w http.ResponseWriter, r *http.Request) {
@@ -3243,7 +3397,29 @@ func (s *Server) handleMemoryRecentSessionSummaries(w http.ResponseWriter, r *ht
 			payload["limit"] = parsed
 		}
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "memory.getRecentSessionSummaries", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.getRecentSessionSummaries", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.getRecentSessionSummaries",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.getRecentSessionSummaries",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMemorySearchSessionSummaries(w http.ResponseWriter, r *http.Request) {
@@ -3261,7 +3437,29 @@ func (s *Server) handleMemorySearchSessionSummaries(w http.ResponseWriter, r *ht
 			payload["limit"] = parsed
 		}
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "memory.searchSessionSummaries", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.searchSessionSummaries", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.searchSessionSummaries",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.searchSessionSummaries",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMemorySectionedStatus(w http.ResponseWriter, r *http.Request) {
