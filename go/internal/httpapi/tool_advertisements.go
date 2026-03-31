@@ -12,6 +12,10 @@ type ToolSuggestionSnapshot struct {
 }
 
 func (s *Server) buildToolSuggestionSnapshot(r *http.Request, query string) (ToolSuggestionSnapshot, error) {
+	return s.buildToolSuggestionSnapshotWithLimit(r, query, 8)
+}
+
+func (s *Server) buildToolSuggestionSnapshotWithLimit(r *http.Request, query string, limit int) (ToolSuggestionSnapshot, error) {
 	normalizedQuery := strings.TrimSpace(query)
 	searchPayload := map[string]any{
 		"query": normalizedQuery,
@@ -31,7 +35,7 @@ func (s *Server) buildToolSuggestionSnapshot(r *http.Request, query string) (Too
 		"name": "list_all_tools",
 		"args": map[string]any{
 			"query": normalizedQuery,
-			"limit": 8,
+			"limit": limit,
 		},
 	}, &relatedTools)
 	if err != nil {
@@ -50,6 +54,7 @@ func (s *Server) buildToolSuggestionSnapshot(r *http.Request, query string) (Too
 				"upstreamBase": relatedToolsBase,
 				"procedure":    "mcp.callTool",
 				"toolName":     "list_all_tools",
+				"limit":        limit,
 			},
 		},
 	}, nil

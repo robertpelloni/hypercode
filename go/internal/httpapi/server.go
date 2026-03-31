@@ -1627,11 +1627,21 @@ func (s *Server) handleMCPToolAdvertisements(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcp.callTool", map[string]any{
-		"name": "list_all_tools",
-		"args": map[string]any{
-			"query": query,
-			"limit": limit,
+	toolSuggestions, err := s.buildToolSuggestionSnapshotWithLimit(r, query, limit)
+	if err != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": err.Error()})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"recommendedTools": toolSuggestions.RecommendedTools,
+			"relatedTools":     toolSuggestions.RelatedTools,
+		},
+		"bridge": map[string]any{
+			"recommendedTools": toolSuggestions.Bridge["recommendedTools"],
+			"relatedTools":     toolSuggestions.Bridge["relatedTools"],
 		},
 	})
 }

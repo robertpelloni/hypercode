@@ -581,19 +581,28 @@ func TestAutonomyBridgeRoutes(t *testing.T) {
 				}
 			case "tool advertisements":
 				var result struct {
-					Ok     bool `json:"ok"`
-					Result struct {
-						Content []struct {
-							Type string `json:"type"`
-							Text string `json:"text"`
-						} `json:"content"`
-					} `json:"result"`
+					RecommendedTools []map[string]any `json:"recommendedTools"`
+					RelatedTools     struct {
+						Ok     bool `json:"ok"`
+						Result struct {
+							Content []struct {
+								Type string `json:"type"`
+								Text string `json:"text"`
+							} `json:"content"`
+						} `json:"result"`
+					} `json:"relatedTools"`
 				}
 				if err := json.Unmarshal(payload.Data, &result); err != nil {
 					t.Fatalf("expected tool advertisement payload, got decode error: %v", err)
 				}
-				if payload.Bridge.Procedure != "mcp.callTool" || !result.Ok || len(result.Result.Content) != 1 || result.Result.Content[0].Text != "list_all_tools" {
-					t.Fatalf("expected list_all_tools advertisement bridge result, got bridge=%+v data=%+v", payload.Bridge, result)
+				if len(result.RecommendedTools) != 1 || result.RecommendedTools[0]["name"] != "search_tools" {
+					t.Fatalf("expected recommended search_tools payload, got %+v", result.RecommendedTools)
+				}
+				if !result.RelatedTools.Ok || len(result.RelatedTools.Result.Content) != 1 || result.RelatedTools.Result.Content[0].Text != "list_all_tools" {
+					t.Fatalf("expected list_all_tools advertisement payload, got %+v", result)
+				}
+				if !strings.Contains(recorder.Body.String(), "\"procedure\":\"mcp.searchTools\"") || !strings.Contains(recorder.Body.String(), "\"toolName\":\"list_all_tools\"") {
+					t.Fatalf("expected mixed bridge metadata for tool advertisements, got %s", recorder.Body.String())
 				}
 			}
 		})
@@ -3520,7 +3529,7 @@ func TestMCPBridgeRoutes(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to read searchTools body: %v", err)
 			}
-			if !strings.Contains(string(body), `"query":"search"`) || !strings.Contains(string(body), `"profile":"repo-coding"`) {
+			if !strings.Contains(string(body), `"profile":"repo-coding"`) || (!strings.Contains(string(body), `"query":"search"`) && !strings.Contains(string(body), `"query":"find tool ship"`)) {
 				t.Fatalf("expected bridged search payload, got %s", string(body))
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{
@@ -3543,6 +3552,9 @@ func TestMCPBridgeRoutes(t *testing.T) {
 			}
 			contentText := "done"
 			if strings.Contains(bodyText, `"name":"list_all_tools"`) {
+				if strings.Contains(bodyText, `"query":"find tool ship"`) && !strings.Contains(bodyText, `"limit":6`) {
+					t.Fatalf("expected list_all_tools advertisement limit in payload, got %s", bodyText)
+				}
 				contentText = "list_all_tools"
 			} else if strings.Contains(bodyText, `"name":"auto_call_tool"`) {
 				if !strings.Contains(bodyText, `"objective":"find the right tool"`) || !strings.Contains(bodyText, `"context":"repo: borg"`) {
