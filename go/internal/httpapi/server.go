@@ -376,6 +376,11 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/council/history/supervisor", s.handleCouncilHistorySupervisor)
 	s.mux.HandleFunc("/api/council/history/clear", s.handleCouncilHistoryClear)
 	s.mux.HandleFunc("/api/council/history/initialize", s.handleCouncilHistoryInitialize)
+	s.mux.HandleFunc("/api/council/smart-pilot/status", s.handleCouncilSmartPilotStatus)
+	s.mux.HandleFunc("/api/council/smart-pilot/config", s.handleCouncilSmartPilotConfig)
+	s.mux.HandleFunc("/api/council/smart-pilot/trigger", s.handleCouncilSmartPilotTrigger)
+	s.mux.HandleFunc("/api/council/smart-pilot/reset-count", s.handleCouncilSmartPilotResetCount)
+	s.mux.HandleFunc("/api/council/smart-pilot/reset-all", s.handleCouncilSmartPilotResetAll)
 	s.mux.HandleFunc("/api/council/visual/system-diagram", s.handleCouncilVisualSystemDiagram)
 	s.mux.HandleFunc("/api/council/visual/plan-diagram", s.handleCouncilVisualPlanDiagram)
 	s.mux.HandleFunc("/api/council/visual/parse-plan", s.handleCouncilVisualParsePlan)
@@ -888,6 +893,11 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/council/history/supervisor", Category: "governance", Description: "Read council supervisor vote history through the TypeScript history router."},
 				{Path: "/api/council/history/clear", Category: "governance", Description: "Clear council debate-history through the TypeScript history router."},
 				{Path: "/api/council/history/initialize", Category: "governance", Description: "Initialize council debate-history through the TypeScript history router."},
+				{Path: "/api/council/smart-pilot/status", Category: "governance", Description: "Read council smart-pilot status through the TypeScript smartPilot router."},
+				{Path: "/api/council/smart-pilot/config", Category: "governance", Description: "Read or update council smart-pilot config through the TypeScript smartPilot router."},
+				{Path: "/api/council/smart-pilot/trigger", Category: "governance", Description: "Trigger a smart-pilot task through the TypeScript smartPilot router."},
+				{Path: "/api/council/smart-pilot/reset-count", Category: "governance", Description: "Reset a smart-pilot approval count through the TypeScript smartPilot router."},
+				{Path: "/api/council/smart-pilot/reset-all", Category: "governance", Description: "Reset all smart-pilot approval counts through the TypeScript smartPilot router."},
 				{Path: "/api/council/visual/system-diagram", Category: "governance", Description: "Read the council system diagram through the TypeScript visual router."},
 				{Path: "/api/council/visual/plan-diagram", Category: "governance", Description: "Render a council plan diagram through the TypeScript visual router."},
 				{Path: "/api/council/visual/parse-plan", Category: "governance", Description: "Parse a council Mermaid plan through the TypeScript visual router."},

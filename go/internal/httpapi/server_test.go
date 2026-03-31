@@ -1258,6 +1258,87 @@ func TestCouncilBaseBridgeRoutes(t *testing.T) {
 	}
 }
 
+func TestCouncilSmartPilotBridgeRoutes(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "application/json")
+		switch r.URL.Path {
+		case "/trpc/council.smartPilot.status":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"enabled": true, "activePlans": []any{map[string]any{"sessionId": "sess-1"}}}}}})
+		case "/trpc/council.smartPilot.getConfig":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"enabled": true, "autoApproveThreshold": 0.8}}}})
+		case "/trpc/council.smartPilot.updateConfig":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"enabled":true`) {
+				t.Fatalf("expected council.smartPilot.updateConfig payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"enabled": true}}}})
+		case "/trpc/council.smartPilot.trigger":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"sessionId":"sess-1"`) {
+				t.Fatalf("expected council.smartPilot.trigger payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
+		case "/trpc/council.smartPilot.resetCount":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"sessionId":"sess-1"`) {
+				t.Fatalf("expected council.smartPilot.resetCount payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
+		case "/trpc/council.smartPilot.resetAllCounts":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
+		default:
+			t.Fatalf("unexpected upstream path %s", r.URL.Path)
+		}
+	}))
+	defer upstream.Close()
+
+	t.Setenv("BORG_TRPC_UPSTREAM", upstream.URL+"/trpc")
+
+	cfg := config.Default()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	cases := []struct {
+		name      string
+		method    string
+		path      string
+		body      string
+		contains  string
+		procedure string
+	}{
+		{name: "smartpilot status", method: http.MethodGet, path: "/api/council/smart-pilot/status", contains: `"sessionId":"sess-1"`, procedure: `"procedure":"council.smartPilot.status"`},
+		{name: "smartpilot get config", method: http.MethodGet, path: "/api/council/smart-pilot/config", contains: `"autoApproveThreshold":0.8`, procedure: `"procedure":"council.smartPilot.getConfig"`},
+		{name: "smartpilot update config", method: http.MethodPost, path: "/api/council/smart-pilot/config", body: `{"enabled":true}`, contains: `"enabled":true`, procedure: `"procedure":"council.smartPilot.updateConfig"`},
+		{name: "smartpilot trigger", method: http.MethodPost, path: "/api/council/smart-pilot/trigger", body: `{"sessionId":"sess-1","task":{"id":"task-1"}}`, contains: `"success":true`, procedure: `"procedure":"council.smartPilot.trigger"`},
+		{name: "smartpilot reset count", method: http.MethodPost, path: "/api/council/smart-pilot/reset-count", body: `{"sessionId":"sess-1"}`, contains: `"success":true`, procedure: `"procedure":"council.smartPilot.resetCount"`},
+		{name: "smartpilot reset all", method: http.MethodPost, path: "/api/council/smart-pilot/reset-all", contains: `"success":true`, procedure: `"procedure":"council.smartPilot.resetAllCounts"`},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var body io.Reader
+			if tc.body != "" {
+				body = strings.NewReader(tc.body)
+			}
+			request := httptest.NewRequest(tc.method, tc.path, body)
+			if tc.body != "" {
+				request.Header.Set("content-type", "application/json")
+			}
+			recorder := httptest.NewRecorder()
+			server.Handler().ServeHTTP(recorder, request)
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+			}
+			if !strings.Contains(recorder.Body.String(), tc.contains) {
+				t.Fatalf("expected response to contain %s, got %s", tc.contains, recorder.Body.String())
+			}
+			if !strings.Contains(recorder.Body.String(), tc.procedure) {
+				t.Fatalf("expected bridge metadata %s, got %s", tc.procedure, recorder.Body.String())
+			}
+		})
+	}
+}
+
 func TestConfigStatusEndpoint(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	cfg := config.Default()
