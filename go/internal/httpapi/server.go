@@ -2684,11 +2684,29 @@ func (s *Server) handleMCPSetLifecycleModes(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *Server) handleMCPAddServer(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "mcp.addServer")
+	s.handleConfiguredServerMutation(w, r, "mcp.addServer", func(payload map[string]any) (any, error) {
+		result, err := s.localCreateConfiguredServer(payload)
+		if err != nil {
+			return nil, err
+		}
+		name, _ := payload["name"].(string)
+		return map[string]any{
+			"success": true,
+			"name":    name,
+			"server":  result,
+		}, nil
+	})
 }
 
 func (s *Server) handleMCPRemoveServer(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "mcp.removeServer")
+	s.handleConfiguredServerMutation(w, r, "mcp.removeServer", func(payload map[string]any) (any, error) {
+		if _, err := s.localDeleteConfiguredServer(payload); err != nil {
+			return nil, err
+		}
+		return map[string]any{
+			"success": true,
+		}, nil
+	})
 }
 
 func (s *Server) handleMCPJsoncConfig(w http.ResponseWriter, r *http.Request) {

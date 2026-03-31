@@ -786,6 +786,40 @@ func TestMemoryServiceBackedMutationsFallBackLocally(t *testing.T) {
 	}
 }
 
+func TestMCPAddAndRemoveServerFallBackToLocalConfiguredServers(t *testing.T) {
+	workspaceRoot := t.TempDir()
+	borgDir := filepath.Join(workspaceRoot, ".borg")
+	if err := os.MkdirAll(borgDir, 0o755); err != nil {
+		t.Fatalf("failed to create .borg dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(borgDir, "mcp.jsonc"), []byte("{\"mcpServers\":{}}"), 0o644); err != nil {
+		t.Fatalf("failed to seed mcp.jsonc: %v", err)
+	}
+
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	addReq := httptest.NewRequest(http.MethodPost, "/api/mcp/runtime-servers/add", strings.NewReader(`{"name":"local-test","command":"npx","args":["-y","test-server"]}`))
+	addReq.Header.Set("content-type", "application/json")
+	addRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(addRecorder, addReq)
+	if addRecorder.Code != http.StatusOK || !strings.Contains(addRecorder.Body.String(), `"fallback":"go-local-jsonc"`) || !strings.Contains(addRecorder.Body.String(), `"name":"local-test"`) {
+		t.Fatalf("expected local addServer fallback response, got %d %s", addRecorder.Code, addRecorder.Body.String())
+	}
+
+	removeReq := httptest.NewRequest(http.MethodPost, "/api/mcp/runtime-servers/remove", strings.NewReader(`{"name":"local-test"}`))
+	removeReq.Header.Set("content-type", "application/json")
+	removeRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(removeRecorder, removeReq)
+	if removeRecorder.Code != http.StatusOK || !strings.Contains(removeRecorder.Body.String(), `"fallback":"go-local-jsonc"`) || !strings.Contains(removeRecorder.Body.String(), `"success":true`) {
+		t.Fatalf("expected local removeServer fallback response, got %d %s", removeRecorder.Code, removeRecorder.Body.String())
+	}
+}
+
 func TestAutonomyBridgeRoutes(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")
