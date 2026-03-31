@@ -946,6 +946,131 @@ func TestCouncilVisualBridgeRoutes(t *testing.T) {
 	}
 }
 
+func TestCloudDevBridgeRoutes(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "application/json")
+		switch r.URL.Path {
+		case "/trpc/cloudDev.listProviders":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{
+				map[string]any{"provider": "jules", "enabled": true, "hasApiKey": true},
+			}}}})
+		case "/trpc/cloudDev.createSession":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"provider":"jules"`) {
+				t.Fatalf("expected cloudDev.createSession payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"id": "cds-1", "status": "pending"}}}})
+		case "/trpc/cloudDev.listSessions":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"provider":"jules"`) || !strings.Contains(string(body), `"status":"active"`) {
+				t.Fatalf("expected cloudDev.listSessions payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{
+				map[string]any{"id": "cds-1", "status": "active"},
+			}}}})
+		case "/trpc/cloudDev.getSession":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"sessionId":"cds-1"`) {
+				t.Fatalf("expected cloudDev.getSession payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"id": "cds-1", "messages": []any{}}}}})
+		case "/trpc/cloudDev.updateSessionStatus":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"id": "cds-1", "status": "awaiting_approval"}}}})
+		case "/trpc/cloudDev.deleteSession":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
+		case "/trpc/cloudDev.sendMessage":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"message": map[string]any{"id": "msg-1"}, "session": map[string]any{"id": "cds-1"}}}}})
+		case "/trpc/cloudDev.broadcastMessage":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"delivered": 1, "skipped": 0}}}})
+		case "/trpc/cloudDev.previewBroadcastRecipients":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"force":true`) {
+				t.Fatalf("expected cloudDev.previewBroadcastRecipients payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"targeted": 1, "sessionIds": []any{"cds-1"}}}}})
+		case "/trpc/cloudDev.acceptPlan":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"id": "cds-1", "status": "active"}}}})
+		case "/trpc/cloudDev.setAutoAcceptPlan":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"id": "cds-1", "autoAcceptPlan": true}}}})
+		case "/trpc/cloudDev.getMessages":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"sessionId":"cds-1"`) || !strings.Contains(string(body), `"limit":50`) {
+				t.Fatalf("expected cloudDev.getMessages payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{
+				map[string]any{"id": "msg-1", "content": "hello"},
+			}}}})
+		case "/trpc/cloudDev.getLogs":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"sessionId":"cds-1"`) || !strings.Contains(string(body), `"limit":25`) {
+				t.Fatalf("expected cloudDev.getLogs payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{
+				map[string]any{"id": "log-1", "message": "created"},
+			}}}})
+		case "/trpc/cloudDev.stats":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"totalSessions": 1, "enabledProviders": 1}}}})
+		default:
+			t.Fatalf("unexpected upstream path %s", r.URL.Path)
+		}
+	}))
+	defer upstream.Close()
+
+	t.Setenv("BORG_TRPC_UPSTREAM", upstream.URL+"/trpc")
+
+	cfg := config.Default()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	cases := []struct {
+		name      string
+		method    string
+		path      string
+		body      string
+		contains  string
+		procedure string
+	}{
+		{name: "clouddev providers", method: http.MethodGet, path: "/api/clouddev/providers", contains: `"jules"`, procedure: `"procedure":"cloudDev.listProviders"`},
+		{name: "clouddev create session", method: http.MethodPost, path: "/api/clouddev/sessions/create", body: `{"provider":"jules","projectName":"borg","task":"ship","autoAcceptPlan":false}`, contains: `"status":"pending"`, procedure: `"procedure":"cloudDev.createSession"`},
+		{name: "clouddev list sessions", method: http.MethodGet, path: "/api/clouddev/sessions?provider=jules&status=active", contains: `"status":"active"`, procedure: `"procedure":"cloudDev.listSessions"`},
+		{name: "clouddev get session", method: http.MethodGet, path: "/api/clouddev/sessions/get?sessionId=cds-1", contains: `"id":"cds-1"`, procedure: `"procedure":"cloudDev.getSession"`},
+		{name: "clouddev update status", method: http.MethodPost, path: "/api/clouddev/sessions/status", body: `{"sessionId":"cds-1","status":"awaiting_approval"}`, contains: `"awaiting_approval"`, procedure: `"procedure":"cloudDev.updateSessionStatus"`},
+		{name: "clouddev delete session", method: http.MethodPost, path: "/api/clouddev/sessions/delete", body: `{"sessionId":"cds-1"}`, contains: `"success":true`, procedure: `"procedure":"cloudDev.deleteSession"`},
+		{name: "clouddev send message", method: http.MethodPost, path: "/api/clouddev/messages/send", body: `{"sessionId":"cds-1","content":"hello","force":false}`, contains: `"msg-1"`, procedure: `"procedure":"cloudDev.sendMessage"`},
+		{name: "clouddev broadcast", method: http.MethodPost, path: "/api/clouddev/messages/broadcast", body: `{"content":"hello all","force":false}`, contains: `"delivered":1`, procedure: `"procedure":"cloudDev.broadcastMessage"`},
+		{name: "clouddev preview recipients", method: http.MethodPost, path: "/api/clouddev/messages/preview-recipients", body: `{"force":true}`, contains: `"targeted":1`, procedure: `"procedure":"cloudDev.previewBroadcastRecipients"`},
+		{name: "clouddev accept plan", method: http.MethodPost, path: "/api/clouddev/plan/accept", body: `{"sessionId":"cds-1"}`, contains: `"status":"active"`, procedure: `"procedure":"cloudDev.acceptPlan"`},
+		{name: "clouddev auto accept", method: http.MethodPost, path: "/api/clouddev/plan/auto-accept", body: `{"sessionId":"cds-1","enabled":true}`, contains: `"autoAcceptPlan":true`, procedure: `"procedure":"cloudDev.setAutoAcceptPlan"`},
+		{name: "clouddev get messages", method: http.MethodGet, path: "/api/clouddev/messages/get?sessionId=cds-1&limit=50", contains: `"hello"`, procedure: `"procedure":"cloudDev.getMessages"`},
+		{name: "clouddev get logs", method: http.MethodGet, path: "/api/clouddev/logs?sessionId=cds-1&limit=25", contains: `"created"`, procedure: `"procedure":"cloudDev.getLogs"`},
+		{name: "clouddev stats", method: http.MethodGet, path: "/api/clouddev/stats", contains: `"totalSessions":1`, procedure: `"procedure":"cloudDev.stats"`},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var body io.Reader
+			if tc.body != "" {
+				body = strings.NewReader(tc.body)
+			}
+			request := httptest.NewRequest(tc.method, tc.path, body)
+			if tc.body != "" {
+				request.Header.Set("content-type", "application/json")
+			}
+			recorder := httptest.NewRecorder()
+			server.Handler().ServeHTTP(recorder, request)
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+			}
+			if !strings.Contains(recorder.Body.String(), tc.contains) {
+				t.Fatalf("expected response to contain %s, got %s", tc.contains, recorder.Body.String())
+			}
+			if !strings.Contains(recorder.Body.String(), tc.procedure) {
+				t.Fatalf("expected bridge metadata %s, got %s", tc.procedure, recorder.Body.String())
+			}
+		})
+	}
+}
+
 func TestConfigStatusEndpoint(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	cfg := config.Default()

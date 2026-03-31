@@ -369,6 +369,20 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/healer/diagnose", s.handleHealerDiagnose)
 	s.mux.HandleFunc("/api/healer/heal", s.handleHealerHeal)
 	s.mux.HandleFunc("/api/healer/history", s.handleHealerHistory)
+	s.mux.HandleFunc("/api/clouddev/providers", s.handleCloudDevListProviders)
+	s.mux.HandleFunc("/api/clouddev/sessions/create", s.handleCloudDevCreateSession)
+	s.mux.HandleFunc("/api/clouddev/sessions", s.handleCloudDevListSessions)
+	s.mux.HandleFunc("/api/clouddev/sessions/get", s.handleCloudDevGetSession)
+	s.mux.HandleFunc("/api/clouddev/sessions/status", s.handleCloudDevUpdateSessionStatus)
+	s.mux.HandleFunc("/api/clouddev/sessions/delete", s.handleCloudDevDeleteSession)
+	s.mux.HandleFunc("/api/clouddev/messages/send", s.handleCloudDevSendMessage)
+	s.mux.HandleFunc("/api/clouddev/messages/broadcast", s.handleCloudDevBroadcastMessage)
+	s.mux.HandleFunc("/api/clouddev/messages/preview-recipients", s.handleCloudDevPreviewBroadcastRecipients)
+	s.mux.HandleFunc("/api/clouddev/plan/accept", s.handleCloudDevAcceptPlan)
+	s.mux.HandleFunc("/api/clouddev/plan/auto-accept", s.handleCloudDevSetAutoAcceptPlan)
+	s.mux.HandleFunc("/api/clouddev/messages/get", s.handleCloudDevGetMessages)
+	s.mux.HandleFunc("/api/clouddev/logs", s.handleCloudDevGetLogs)
+	s.mux.HandleFunc("/api/clouddev/stats", s.handleCloudDevStats)
 	s.mux.HandleFunc("/api/metrics/stats", s.handleMetricsStats)
 	s.mux.HandleFunc("/api/metrics/track", s.handleMetricsTrack)
 	s.mux.HandleFunc("/api/metrics/system-snapshot", s.handleMetricsSystemSnapshot)
@@ -850,6 +864,20 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/healer/diagnose", Category: "operator", Description: "Analyze an error through the TypeScript healer router."},
 				{Path: "/api/healer/heal", Category: "operator", Description: "Attempt a heal action through the TypeScript healer router."},
 				{Path: "/api/healer/history", Category: "operator", Description: "Read healer history through the TypeScript healer router."},
+				{Path: "/api/clouddev/providers", Category: "operator", Description: "List cloud development providers through the TypeScript cloudDev router."},
+				{Path: "/api/clouddev/sessions/create", Category: "operator", Description: "Create a cloud development session through the TypeScript cloudDev router."},
+				{Path: "/api/clouddev/sessions", Category: "operator", Description: "List cloud development sessions through the TypeScript cloudDev router."},
+				{Path: "/api/clouddev/sessions/get", Category: "operator", Description: "Read a cloud development session through the TypeScript cloudDev router."},
+				{Path: "/api/clouddev/sessions/status", Category: "operator", Description: "Update a cloud development session status through the TypeScript cloudDev router."},
+				{Path: "/api/clouddev/sessions/delete", Category: "operator", Description: "Delete a cloud development session through the TypeScript cloudDev router."},
+				{Path: "/api/clouddev/messages/send", Category: "operator", Description: "Send a cloud development session message through the TypeScript cloudDev router."},
+				{Path: "/api/clouddev/messages/broadcast", Category: "operator", Description: "Broadcast a cloud development session message through the TypeScript cloudDev router."},
+				{Path: "/api/clouddev/messages/preview-recipients", Category: "operator", Description: "Preview cloud development broadcast recipients through the TypeScript cloudDev router."},
+				{Path: "/api/clouddev/plan/accept", Category: "operator", Description: "Accept a cloud development plan through the TypeScript cloudDev router."},
+				{Path: "/api/clouddev/plan/auto-accept", Category: "operator", Description: "Toggle cloud development auto-accept through the TypeScript cloudDev router."},
+				{Path: "/api/clouddev/messages/get", Category: "operator", Description: "Read cloud development session messages through the TypeScript cloudDev router."},
+				{Path: "/api/clouddev/logs", Category: "operator", Description: "Read cloud development session logs through the TypeScript cloudDev router."},
+				{Path: "/api/clouddev/stats", Category: "operator", Description: "Read aggregate cloud development stats through the TypeScript cloudDev router."},
 				{Path: "/api/policies", Category: "governance", Description: "List policies through the TypeScript policies router."},
 				{Path: "/api/policies/get", Category: "governance", Description: "Read a policy through the TypeScript policies router."},
 				{Path: "/api/policies/create", Category: "governance", Description: "Create a policy through the TypeScript policies router."},
