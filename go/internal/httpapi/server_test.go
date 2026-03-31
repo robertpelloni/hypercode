@@ -4552,6 +4552,60 @@ func TestMCPConfiguredServerMutationsFallBackToLocalJsonc(t *testing.T) {
 	}
 }
 
+func TestMCPConfiguredServerMetadataMutationsFallBackToLocalJsonc(t *testing.T) {
+	mainConfigDir := t.TempDir()
+	jsoncContent := `// Borg MCP configuration
+{
+  "mcpServers": {
+    "core": {
+      "command": "node",
+      "args": ["server.js"],
+      "_meta": {
+        "status": "ready",
+        "toolCount": 2,
+        "tools": [{"name":"search"}]
+      }
+    }
+  }
+}
+`
+	if err := os.WriteFile(filepath.Join(mainConfigDir, "mcp.jsonc"), []byte(jsoncContent), 0o644); err != nil {
+		t.Fatalf("failed to seed local mcp jsonc: %v", err)
+	}
+
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	cfg := config.Default()
+	cfg.WorkspaceRoot = t.TempDir()
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = mainConfigDir
+	server := New(cfg, stubDetector{})
+
+	uuid := syntheticServerUUID("core")
+	reloadRequest := httptest.NewRequest(http.MethodPost, "/api/mcp/servers/reload-metadata", strings.NewReader(`{"uuid":"`+uuid+`","mode":"binary"}`))
+	reloadRequest.Header.Set("content-type", "application/json")
+	reloadRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(reloadRecorder, reloadRequest)
+	if reloadRecorder.Code != http.StatusOK || !strings.Contains(reloadRecorder.Body.String(), `"reloadDecision":"go-local-placeholder"`) || !strings.Contains(reloadRecorder.Body.String(), `"fallback":"go-local-jsonc"`) {
+		t.Fatalf("expected reload metadata fallback response, got %d %s", reloadRecorder.Code, reloadRecorder.Body.String())
+	}
+
+	clearRequest := httptest.NewRequest(http.MethodPost, "/api/mcp/servers/clear-metadata-cache", strings.NewReader(`{"uuid":"`+uuid+`"}`))
+	clearRequest.Header.Set("content-type", "application/json")
+	clearRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(clearRecorder, clearRequest)
+	if clearRecorder.Code != http.StatusOK || !strings.Contains(clearRecorder.Body.String(), `"toolCount":0`) || !strings.Contains(clearRecorder.Body.String(), `"ok":true`) {
+		t.Fatalf("expected clear metadata fallback response, got %d %s", clearRecorder.Code, clearRecorder.Body.String())
+	}
+
+	written, err := os.ReadFile(filepath.Join(mainConfigDir, "mcp.jsonc"))
+	if err != nil {
+		t.Fatalf("expected updated jsonc file: %v", err)
+	}
+	if !strings.Contains(string(written), `"status": "pending"`) || !strings.Contains(string(written), `"toolCount": 0`) || !strings.Contains(string(written), `Cache cleared at`) {
+		t.Fatalf("expected cleared metadata cache state, got %s", string(written))
+	}
+}
+
 func TestSkillsFallBackToLocalSkillRegistry(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	skillDir := filepath.Join(workspaceRoot, ".borg", "skills", "debug")

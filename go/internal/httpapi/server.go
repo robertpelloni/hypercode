@@ -2001,11 +2001,15 @@ func (s *Server) handleMCPConfiguredServerBulkImport(w http.ResponseWriter, r *h
 }
 
 func (s *Server) handleMCPConfiguredServerReloadMetadata(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "mcpServers.reloadMetadata")
+	s.handleConfiguredServerMutation(w, r, "mcpServers.reloadMetadata", func(payload map[string]any) (any, error) {
+		return s.localReloadConfiguredServerMetadata(payload)
+	})
 }
 
 func (s *Server) handleMCPConfiguredServerClearMetadataCache(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "mcpServers.clearMetadataCache")
+	s.handleConfiguredServerMutation(w, r, "mcpServers.clearMetadataCache", func(payload map[string]any) (any, error) {
+		return s.localClearConfiguredServerMetadata(payload)
+	})
 }
 
 func (s *Server) handleMCPRegistrySnapshot(w http.ResponseWriter, r *http.Request) {
@@ -5578,6 +5582,115 @@ func (s *Server) localDeleteConfiguredServer(payload map[string]any) (any, error
 		return nil, err
 	}
 	return map[string]any{"ok": true}, nil
+}
+
+func (s *Server) localReloadConfiguredServerMetadata(payload map[string]any) (any, error) {
+	uuid, _ := payload["uuid"].(string)
+	mode, _ := payload["mode"].(string)
+	if strings.TrimSpace(mode) == "" {
+		mode = "binary"
+	}
+	config, err := s.readLocalMCPConfigObject()
+	if err != nil {
+		return nil, err
+	}
+	servers, _ := config["mcpServers"].(map[string]any)
+	if servers == nil {
+		return nil, errors.New("no configured servers")
+	}
+	targetName := strings.TrimSpace(nameForSyntheticUUID(servers, uuid))
+	if targetName == "" {
+		return nil, errors.New("configured server not found")
+	}
+	entry, _ := servers[targetName].(map[string]any)
+	if entry == nil {
+		entry = map[string]any{}
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	meta, _ := entry["_meta"].(map[string]any)
+	if meta == nil {
+		meta = map[string]any{}
+	}
+	meta["status"] = "pending"
+	meta["metadataVersion"] = 2
+	meta["metadataSource"] = "derived"
+	meta["cacheHydratedAt"] = now
+	meta["lastAttemptedBinaryLoadAt"] = now
+	meta["reloadableFromCache"] = false
+	if _, ok := meta["toolCount"]; !ok {
+		meta["toolCount"] = 0
+	}
+	if _, ok := meta["tools"]; !ok {
+		meta["tools"] = []any{}
+	}
+	meta["error"] = "Go fallback refreshed metadata cache placeholder using local configuration only (" + mode + ")."
+	entry["_meta"] = meta
+	servers[targetName] = entry
+	config["mcpServers"] = servers
+	if err := s.writeLocalMCPConfigObject(config); err != nil {
+		return nil, err
+	}
+	server, err := s.localConfiguredServerByName(targetName)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"server":         server,
+		"metadata":       meta,
+		"toolCount":      meta["toolCount"],
+		"reloadDecision": "go-local-placeholder",
+		"ok":             true,
+	}, nil
+}
+
+func (s *Server) localClearConfiguredServerMetadata(payload map[string]any) (any, error) {
+	uuid, _ := payload["uuid"].(string)
+	config, err := s.readLocalMCPConfigObject()
+	if err != nil {
+		return nil, err
+	}
+	servers, _ := config["mcpServers"].(map[string]any)
+	if servers == nil {
+		return nil, errors.New("no configured servers")
+	}
+	targetName := strings.TrimSpace(nameForSyntheticUUID(servers, uuid))
+	if targetName == "" {
+		return nil, errors.New("configured server not found")
+	}
+	entry, _ := servers[targetName].(map[string]any)
+	if entry == nil {
+		entry = map[string]any{}
+	}
+	clearedAt := time.Now().UTC().Format(time.RFC3339)
+	meta := map[string]any{
+		"status":                     "pending",
+		"metadataVersion":            2,
+		"metadataSource":             "derived",
+		"reloadableFromCache":        false,
+		"toolCount":                  0,
+		"tools":                      []any{},
+		"error":                      "Cache cleared at " + clearedAt,
+		"cacheHydratedAt":            nil,
+		"discoveredAt":               nil,
+		"lastAttemptedBinaryLoadAt":  nil,
+		"lastSuccessfulBinaryLoadAt": nil,
+	}
+	entry["_meta"] = meta
+	servers[targetName] = entry
+	config["mcpServers"] = servers
+	if err := s.writeLocalMCPConfigObject(config); err != nil {
+		return nil, err
+	}
+	server, err := s.localConfiguredServerByName(targetName)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"server":    server,
+		"metadata":  meta,
+		"toolCount": 0,
+		"ok":        true,
+	}, nil
 }
 
 func (s *Server) localBulkImportConfiguredServers(payload []map[string]any) (any, error) {
