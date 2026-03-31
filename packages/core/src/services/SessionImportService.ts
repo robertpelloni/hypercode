@@ -850,6 +850,13 @@ export class SessionImportService {
                 filePatterns: ['**/*.{md,txt,log,json,jsonl}'],
                 fileNameHints: ['session', 'memory', 'handoff', 'history'],
             },
+            {
+                sourceTool: 'vscode-extensions',
+                roots: [path.join(this.workspaceRoot, '.vscode')],
+                filePatterns: ['**/*.{json,jsonl,md,txt,log}'],
+                fileNameHints: ['session', 'chat', 'conversation', 'history', 'transcript', 'messages'],
+                ignoredPathHints: ['settings.json', 'extensions.json', 'workspace.json'],
+            },
         ];
 
         if (!this.includeHomeDirectories) {
@@ -961,6 +968,28 @@ export class SessionImportService {
                 roots: [path.join(homeDir, '.borg')],
                 filePatterns: ['**/*.{md,txt,log,json,jsonl}'],
                 fileNameHints: ['session', 'memory', 'handoff', 'history'],
+            },
+            {
+                sourceTool: 'vscode-extensions',
+                roots: [
+                    path.join(appData, 'Code', 'User', 'globalStorage'),
+                    path.join(appData, 'Code - Insiders', 'User', 'globalStorage'),
+                ],
+                filePatterns: ['**/*.{json,jsonl,md,txt,log}'],
+                fileNameHints: ['session', 'chat', 'conversation', 'history', 'transcript', 'messages'],
+                ignoredPathHints: [
+                    'emptywindowchatsessions',
+                    'github.copilot-chat',
+                    'commandembeddings',
+                    'settingembeddings',
+                    'memory-tool',
+                    'ask-agent',
+                    'explore-agent',
+                    'plan-agent',
+                    'debugcommand',
+                    'copilotcli\\copilot.',
+                    'copilotcli.session.metadata',
+                ],
             },
         ];
     }

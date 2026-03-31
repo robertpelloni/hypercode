@@ -209,6 +209,53 @@ describe('SessionImportService', () => {
         expect(captureSessionSummary).toHaveBeenCalledTimes(1);
     });
 
+    it('imports VS Code extension chat history from global storage without duplicating copilot-chat roots', async () => {
+        const root = await createTempRoot();
+        const fakeHome = await createTempRoot();
+        const fakeAppData = await createTempRoot();
+        const extensionDir = path.join(fakeAppData, 'Code', 'User', 'globalStorage', 'some-extension');
+        await fs.mkdir(extensionDir, { recursive: true });
+        await fs.writeFile(
+            path.join(extensionDir, 'chat-history.jsonl'),
+            [
+                JSON.stringify({ role: 'user', content: 'Remember to import VS Code extension chats.' }),
+                JSON.stringify({ role: 'assistant', content: 'Keep durable instructions in long-term memory.' }),
+            ].join('\n'),
+            'utf-8',
+        );
+
+        vi.spyOn(os, 'homedir').mockReturnValue(fakeHome);
+        vi.stubEnv('APPDATA', fakeAppData);
+        vi.stubEnv('LOCALAPPDATA', fakeAppData);
+
+        const store = createFakeStore();
+        const addLongTerm = vi.fn(async () => ({}));
+        const captureSessionSummary = vi.fn(async () => ({}));
+        const service = new SessionImportService({
+            generateText: vi.fn(async () => {
+                throw new Error('no llm');
+            }),
+        } as any, {
+            addLongTerm,
+            captureSessionSummary,
+        } as any, root, {
+            store: store as any,
+            includeHomeDirectories: true,
+            maxFilesPerRoot: 20,
+        });
+
+        const result = await service.scanAndImport();
+
+        expect(result.discoveredCount).toBe(1);
+        expect(result.importedCount).toBe(1);
+        expect(result.tools).toContain('vscode-extensions');
+        expect(store.sessions[0]?.sourceTool).toBe('vscode-extensions');
+        expect(store.sessions[0]?.sourcePath).toContain('globalStorage');
+        expect(store.sessions[0]?.sourcePath).toContain('some-extension');
+        expect(addLongTerm).toHaveBeenCalled();
+        expect(captureSessionSummary).toHaveBeenCalledTimes(1);
+    });
+
     it('imports OpenAI or ChatGPT JSON history from explicit home-directory roots', async () => {
         const root = await createTempRoot();
         const fakeHome = await createTempRoot();
