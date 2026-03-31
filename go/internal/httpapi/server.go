@@ -1730,11 +1730,99 @@ func (s *Server) handleImportedSessionInstructionDocs(w http.ResponseWriter, r *
 }
 
 func (s *Server) handleMCPStatus(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcp.getStatus", nil)
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
+			"success": false,
+			"error":   "method not allowed",
+		})
+		return
+	}
+
+	var status map[string]any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.getStatus", nil, &status)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    status,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "mcp.getStatus",
+			},
+		})
+		return
+	}
+
+	tools, summary, fallbackErr := s.localMCPSummary(r.Context())
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   err.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	sourceBackedServers := sourceBackedInstalledHarnesses(summary.InstalledHarnesses)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"connected":                false,
+			"serverCount":              len(sourceBackedServers),
+			"toolCount":                sourceBackedToolCount(summary.InstalledHarnesses),
+			"availableToolCount":       len(tools),
+			"harnessCount":             summary.HarnessCount,
+			"sourceBackedHarnessCount": summary.SourceBackedHarnessCount,
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-mcp",
+			"procedure": "mcp.getStatus",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMCPRuntimeServers(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcp.listServers", nil)
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
+			"success": false,
+			"error":   "method not allowed",
+		})
+		return
+	}
+
+	var servers []map[string]any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.listServers", nil, &servers)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    servers,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "mcp.listServers",
+			},
+		})
+		return
+	}
+
+	_, summary, fallbackErr := s.localMCPSummary(r.Context())
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   err.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    fallbackRuntimeServers(summary.InstalledHarnesses),
+		"bridge": map[string]any{
+			"fallback":  "go-local-mcp",
+			"procedure": "mcp.listServers",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMCPConfiguredServers(w http.ResponseWriter, r *http.Request) {
@@ -1806,7 +1894,47 @@ func (s *Server) handleMCPSyncClientConfig(w http.ResponseWriter, r *http.Reques
 }
 
 func (s *Server) handleMCPTools(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcp.listTools", nil)
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
+			"success": false,
+			"error":   "method not allowed",
+		})
+		return
+	}
+
+	var tools []map[string]any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.listTools", nil, &tools)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    tools,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "mcp.listTools",
+			},
+		})
+		return
+	}
+
+	_, summary, fallbackErr := s.localMCPSummary(r.Context())
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   err.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    fallbackMCPTools(summary.InstalledHarnesses),
+		"bridge": map[string]any{
+			"fallback":  "go-local-mcp",
+			"procedure": "mcp.listTools",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMCPSearchTools(w http.ResponseWriter, r *http.Request) {
@@ -4130,6 +4258,79 @@ func summarizeCLI(workspaceRoot string, tools []controlplane.Tool) CLISummary {
 		AvailableTools:              availableTools,
 		InstalledHarnesses:          installedHarnesses,
 	}
+}
+
+func (s *Server) localMCPSummary(ctx context.Context) ([]controlplane.Tool, CLISummary, error) {
+	tools, err := s.detector.DetectAll(ctx)
+	if err != nil {
+		return nil, CLISummary{}, err
+	}
+	summary := summarizeCLI(s.cfg.WorkspaceRoot, tools)
+	return tools, summary, nil
+}
+
+func sourceBackedInstalledHarnesses(definitions []harnesses.Definition) []harnesses.Definition {
+	filtered := make([]harnesses.Definition, 0, len(definitions))
+	for _, definition := range definitions {
+		if !definition.Installed || definition.ToolInventoryStatus != "source-backed" {
+			continue
+		}
+		filtered = append(filtered, definition)
+	}
+	return filtered
+}
+
+func sourceBackedToolCount(definitions []harnesses.Definition) int {
+	total := 0
+	for _, definition := range definitions {
+		if !definition.Installed || definition.ToolInventoryStatus != "source-backed" {
+			continue
+		}
+		total += definition.ToolCallCount
+	}
+	return total
+}
+
+func fallbackRuntimeServers(definitions []harnesses.Definition) []map[string]any {
+	servers := make([]map[string]any, 0)
+	for _, definition := range sourceBackedInstalledHarnesses(definitions) {
+		servers = append(servers, map[string]any{
+			"name":                definition.ID,
+			"runtimeConnected":    false,
+			"toolCount":           definition.ToolCallCount,
+			"toolInventoryStatus": definition.ToolInventoryStatus,
+			"integrationLevel":    definition.IntegrationLevel,
+			"source":              definition.ToolSource,
+		})
+	}
+	return servers
+}
+
+func fallbackMCPTools(definitions []harnesses.Definition) []map[string]any {
+	tools := make([]map[string]any, 0)
+	for _, definition := range sourceBackedInstalledHarnesses(definitions) {
+		for _, name := range definition.ToolCallNames {
+			tools = append(tools, map[string]any{
+				"name":         name,
+				"server":       definition.ID,
+				"alwaysOn":     false,
+				"alwaysShow":   false,
+				"source":       definition.ToolSource,
+				"availability": "source-backed",
+			})
+		}
+	}
+	sort.Slice(tools, func(i, j int) bool {
+		leftServer, _ := tools[i]["server"].(string)
+		rightServer, _ := tools[j]["server"].(string)
+		if leftServer == rightServer {
+			leftName, _ := tools[i]["name"].(string)
+			rightName, _ := tools[j]["name"].(string)
+			return leftName < rightName
+		}
+		return leftServer < rightServer
+	})
+	return tools
 }
 
 func (s *Server) handleRuntimeLocks(w http.ResponseWriter, _ *http.Request) {
