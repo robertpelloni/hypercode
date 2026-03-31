@@ -3995,6 +3995,60 @@ func TestMCPBridgeRoutes(t *testing.T) {
 	}
 }
 
+func TestMCPAutoCallToolNormalizesAliasInputs(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "application/json")
+		if r.URL.Path != "/trpc/mcp.callTool" {
+			t.Fatalf("unexpected upstream path %s", r.URL.Path)
+		}
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("failed to read callTool body: %v", err)
+		}
+		bodyText := string(body)
+		if !strings.Contains(bodyText, `"name":"auto_call_tool"`) {
+			t.Fatalf("expected auto_call_tool name, got %s", bodyText)
+		}
+		if !strings.Contains(bodyText, `"objective":"find the right tool"`) {
+			t.Fatalf("expected alias query to normalize into objective, got %s", bodyText)
+		}
+		if !strings.Contains(bodyText, `"context":"path: src/app.ts; cwd: C:/repo"`) {
+			t.Fatalf("expected synthesized context from path/cwd, got %s", bodyText)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"result": map[string]any{
+				"data": map[string]any{
+					"json": map[string]any{
+						"ok": true,
+						"result": map[string]any{
+							"content": []map[string]any{{"type": "text", "text": "auto_call_tool"}},
+						},
+					},
+				},
+			},
+		})
+	}))
+	defer upstream.Close()
+
+	t.Setenv("BORG_TRPC_UPSTREAM", upstream.URL+"/trpc")
+
+	cfg := config.Default()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	request := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/auto-call", strings.NewReader(`{"query":"find the right tool","path":"src/app.ts","cwd":"C:/repo"}`))
+	request.Header.Set("content-type", "application/json")
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"auto_call_tool"`) {
+		t.Fatalf("expected auto_call_tool response, got %s", recorder.Body.String())
+	}
+}
+
 func TestImportedSessionBridgeRoutes(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")

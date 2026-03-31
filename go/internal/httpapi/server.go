@@ -1597,8 +1597,8 @@ func (s *Server) handleMCPAutoCallTool(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var args any
-	if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
+	var rawArgs map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&rawArgs); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]any{
 			"success": false,
 			"error":   "invalid JSON body",
@@ -1606,10 +1606,58 @@ func (s *Server) handleMCPAutoCallTool(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	args := normalizeAutoCallArgs(rawArgs)
+
 	s.handleTRPCBridgeCall(w, r, http.MethodPost, "mcp.callTool", map[string]any{
 		"name": "auto_call_tool",
 		"args": args,
 	})
+}
+
+func normalizeAutoCallArgs(input map[string]any) map[string]any {
+	args := map[string]any{}
+	for key, value := range input {
+		args[key] = value
+	}
+
+	readString := func(keys ...string) string {
+		for _, key := range keys {
+			value, ok := input[key]
+			if !ok {
+				continue
+			}
+			text, ok := value.(string)
+			if !ok {
+				continue
+			}
+			trimmed := strings.TrimSpace(text)
+			if trimmed != "" {
+				return trimmed
+			}
+		}
+		return ""
+	}
+
+	objective := readString("objective", "query", "task", "goal", "prompt", "instruction")
+	if objective != "" {
+		args["objective"] = objective
+	}
+
+	if contextValue := readString("context", "details", "description", "notes"); contextValue != "" {
+		args["context"] = contextValue
+	} else {
+		contextParts := make([]string, 0, 4)
+		for _, key := range []string{"path", "file", "filePath", "selection", "cwd"} {
+			if value := readString(key); value != "" {
+				contextParts = append(contextParts, key+": "+value)
+			}
+		}
+		if len(contextParts) > 0 {
+			args["context"] = strings.Join(contextParts, "; ")
+		}
+	}
+
+	return args
 }
 
 func (s *Server) handleMCPToolAdvertisements(w http.ResponseWriter, r *http.Request) {
