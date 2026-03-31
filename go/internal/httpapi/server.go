@@ -2758,7 +2758,39 @@ func (s *Server) handleMemorySearch(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleMemoryContexts(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "memory.listContexts", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.listContexts", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.listContexts",
+			},
+		})
+		return
+	}
+
+	contexts, fallbackErr := s.localMemoryContexts()
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   err.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    contexts,
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.listContexts",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMemoryContextSave(w http.ResponseWriter, r *http.Request) {
@@ -5609,6 +5641,28 @@ func (s *Server) saveLocalMCPJsonc(content string) error {
 		compatibility[key] = value
 	}
 	return os.WriteFile(jsonPath, []byte(prettyJSON(compatibility)+"\n"), 0o644)
+}
+
+func (s *Server) localMemoryContexts() ([]map[string]any, error) {
+	contextsPath := filepath.Join(s.cfg.WorkspaceRoot, ".borg", "memory", "contexts.json")
+	raw, err := os.ReadFile(contextsPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []map[string]any{}, nil
+		}
+		return nil, err
+	}
+
+	trimmed := strings.TrimSpace(string(raw))
+	if trimmed == "" {
+		return []map[string]any{}, nil
+	}
+
+	var contexts []map[string]any
+	if err := json.Unmarshal(raw, &contexts); err != nil {
+		return nil, err
+	}
+	return contexts, nil
 }
 
 func (s *Server) localConfiguredMCPServers() ([]map[string]any, error) {

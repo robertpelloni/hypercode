@@ -611,6 +611,36 @@ func TestMemorySectionedStatusAndFormatsFallBackLocally(t *testing.T) {
 	}
 }
 
+func TestMemoryContextsFallsBackToLocalRegistry(t *testing.T) {
+	workspaceRoot := t.TempDir()
+	contextsDir := filepath.Join(workspaceRoot, ".borg", "memory")
+	if err := os.MkdirAll(contextsDir, 0o755); err != nil {
+		t.Fatalf("failed to create memory dir: %v", err)
+	}
+	contexts := `[{"id":"ctx-local-1","title":"Saved context","source":"docs","createdAt":12345,"chunks":2,"metadata":{"topic":"parity"}}]`
+	if err := os.WriteFile(filepath.Join(contextsDir, "contexts.json"), []byte(contexts), 0o644); err != nil {
+		t.Fatalf("failed to seed contexts registry: %v", err)
+	}
+
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/memory/contexts", nil))
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", recorder.Code)
+	}
+	body := recorder.Body.String()
+	if !strings.Contains(body, `"ctx-local-1"`) || !strings.Contains(body, `"fallback":"go-local-memory"`) {
+		t.Fatalf("expected local contexts fallback response, got %s", body)
+	}
+}
+
 func TestAutonomyBridgeRoutes(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")
