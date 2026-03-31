@@ -57,8 +57,19 @@ func (s *Server) handleToolsContext(w http.ResponseWriter, r *http.Request) {
 	var toolContext ToolContextPayload
 	toolContextBase, err := s.callUpstreamJSON(r.Context(), "memory.getToolContext", toolContextPayload, &toolContext)
 	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": err.Error()})
-		return
+		query := strings.TrimSpace(strings.Join([]string{toolName, lastObjective, activeGoal}, " "))
+		if query == "" {
+			query = toolName
+		}
+		toolContext = ToolContextPayload{
+			ToolName:         toolName,
+			Query:            query,
+			MatchedPaths:     []string{},
+			ObservationCount: 0,
+			SummaryCount:     0,
+			Prompt:           "JIT tool context for " + toolName + ":\nNo relevant prior memory was found.",
+		}
+		toolContextBase = ""
 	}
 
 	toolAdsQuery := strings.TrimSpace(toolContext.Query)
@@ -68,8 +79,47 @@ func (s *Server) handleToolsContext(w http.ResponseWriter, r *http.Request) {
 
 	toolSuggestions, err := s.buildToolSuggestionSnapshot(r, toolAdsQuery)
 	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": err.Error()})
-		return
+		_, summary, fallbackErr := s.localMCPSummary(r.Context())
+		if fallbackErr != nil {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": err.Error(), "detail": fallbackErr.Error()})
+			return
+		}
+		searchResults := fallbackSearchMCPTools(summary.InstalledHarnesses, toolAdsQuery)
+		related := map[string]any{
+			"toolName": "list_all_tools",
+			"args": map[string]any{
+				"query": toolAdsQuery,
+				"limit": 8,
+			},
+			"preview": map[string]any{
+				"ok": true,
+				"result": map[string]any{
+					"content": []map[string]any{
+						{
+							"type": "text",
+							"text": "list_all_tools",
+						},
+					},
+				},
+			},
+		}
+		toolSuggestions = ToolSuggestionSnapshot{
+			RecommendedTools: searchResults,
+			RelatedTools:     related,
+			Bridge: map[string]any{
+				"recommendedTools": map[string]any{
+					"fallback":  "go-local-mcp",
+					"procedure": "mcp.searchTools",
+					"reason":    err.Error(),
+				},
+				"relatedTools": map[string]any{
+					"fallback":  "go-local-mcp",
+					"procedure": "mcp.callTool",
+					"toolName":  "list_all_tools",
+					"reason":    err.Error(),
+				},
+			},
+		}
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{

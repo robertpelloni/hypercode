@@ -449,6 +449,52 @@ func TestToolsContextEndpoint(t *testing.T) {
 	}
 }
 
+func TestToolsContextFallsBackToLocalPrompt(t *testing.T) {
+	workspaceRoot := t.TempDir()
+	toolsDir := filepath.Join(workspaceRoot, "submodules", "hypercode", "tools")
+	if err := os.MkdirAll(toolsDir, 0o755); err != nil {
+		t.Fatalf("failed to create hypercode tools dir: %v", err)
+	}
+	toolSource := `package tools
+
+var SearchTools = struct{
+	Name string
+}{
+	Name: "search_tools",
+}
+
+var ListAllTools = struct{
+	Name string
+}{
+	Name: "list_all_tools",
+}
+`
+	if err := os.WriteFile(filepath.Join(toolsDir, "registry.go"), []byte(toolSource), 0o644); err != nil {
+		t.Fatalf("failed to write hypercode tool source: %v", err)
+	}
+
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{tools: []controlplane.Tool{{Type: "go", Name: "Go", Command: "go", Available: true}}})
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/api/tools/context?toolName=search_tools&activeGoal=ship%20go%20parity&lastObjective=surface%20jit%20tool%20context", nil)
+	server.Handler().ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected fallback tools context 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `No relevant prior memory was found.`) {
+		t.Fatalf("expected local fallback prompt, got %s", recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"recommendedTools"`) || !strings.Contains(recorder.Body.String(), `"fallback":"go-local-mcp"`) {
+		t.Fatalf("expected local tool advertisement fallback, got %s", recorder.Body.String())
+	}
+}
+
 func TestAutonomyBridgeRoutes(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")
