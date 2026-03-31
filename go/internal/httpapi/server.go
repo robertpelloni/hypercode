@@ -2300,9 +2300,82 @@ func (s *Server) handleMCPToolSchema(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleMCPToolPreferences(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		s.handleTRPCBridgeCall(w, r, http.MethodGet, "mcp.getToolPreferences", nil)
+		var preferences map[string]any
+		upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.getToolPreferences", nil, &preferences)
+		if err == nil {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"success": true,
+				"data":    preferences,
+				"bridge": map[string]any{
+					"upstreamBase": upstreamBase,
+					"procedure":    "mcp.getToolPreferences",
+				},
+			})
+			return
+		}
+
+		fallbackPreferences, fallbackErr := s.localToolPreferences()
+		if fallbackErr != nil {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+				"success": false,
+				"error":   err.Error(),
+				"detail":  fallbackErr.Error(),
+			})
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    fallbackPreferences,
+			"bridge": map[string]any{
+				"fallback":  "go-local-jsonc",
+				"procedure": "mcp.getToolPreferences",
+				"reason":    err.Error(),
+			},
+		})
 	case http.MethodPost:
-		s.handleTRPCBridgeBodyCall(w, r, "mcp.setToolPreferences")
+		var payload map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]any{
+				"success": false,
+				"error":   "invalid JSON body",
+			})
+			return
+		}
+
+		var result map[string]any
+		upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.setToolPreferences", payload, &result)
+		if err == nil {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"success": true,
+				"data":    result,
+				"bridge": map[string]any{
+					"upstreamBase": upstreamBase,
+					"procedure":    "mcp.setToolPreferences",
+				},
+			})
+			return
+		}
+
+		fallbackPreferences, fallbackErr := s.saveLocalToolPreferences(payload)
+		if fallbackErr != nil {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+				"success": false,
+				"error":   err.Error(),
+				"detail":  fallbackErr.Error(),
+			})
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    fallbackPreferences,
+			"bridge": map[string]any{
+				"fallback":  "go-local-jsonc",
+				"procedure": "mcp.setToolPreferences",
+				"reason":    err.Error(),
+			},
+		})
 	default:
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
 			"success": false,
@@ -5063,6 +5136,167 @@ func buildClientConfigMCPServers(servers []map[string]any) map[string]any {
 		result[name] = definition
 	}
 	return result
+}
+
+func (s *Server) localToolPreferences() (map[string]any, error) {
+	editor, err := s.localMCPJsoncEditor()
+	if err != nil {
+		return nil, err
+	}
+	content, _ := editor["content"].(string)
+	var parsed map[string]any
+	if err := json.Unmarshal([]byte(stripJSONCLineComments(content)), &parsed); err != nil {
+		return nil, err
+	}
+	settings, _ := parsed["settings"].(map[string]any)
+	toolSelection, _ := settings["toolSelection"].(map[string]any)
+	return normalizeToolPreferences(toolSelection), nil
+}
+
+func (s *Server) saveLocalToolPreferences(payload map[string]any) (map[string]any, error) {
+	editor, err := s.localMCPJsoncEditor()
+	if err != nil {
+		return nil, err
+	}
+	content, _ := editor["content"].(string)
+	var parsed map[string]any
+	if err := json.Unmarshal([]byte(stripJSONCLineComments(content)), &parsed); err != nil {
+		return nil, err
+	}
+	settings, _ := parsed["settings"].(map[string]any)
+	if settings == nil {
+		settings = map[string]any{}
+	}
+	currentToolSelection, _ := settings["toolSelection"].(map[string]any)
+	current := normalizeToolPreferences(currentToolSelection)
+	next := applyToolPreferencePatch(current, payload)
+	settings["toolSelection"] = next
+	parsed["settings"] = settings
+	if _, ok := parsed["mcpServers"]; !ok {
+		parsed["mcpServers"] = map[string]any{}
+	}
+	if err := s.saveLocalMCPJsonc(prettyJSON(parsed)); err != nil {
+		return nil, err
+	}
+	result := make(map[string]any, len(next)+1)
+	for key, value := range next {
+		result[key] = value
+	}
+	result["ok"] = true
+	return result, nil
+}
+
+func normalizeToolPreferences(raw map[string]any) map[string]any {
+	return map[string]any{
+		"importantTools":          normalizeToolNameList(raw["importantTools"]),
+		"alwaysLoadedTools":       normalizeAlwaysLoadedTools(raw["alwaysLoadedTools"]),
+		"autoLoadMinConfidence":   clampFloat(raw["autoLoadMinConfidence"], 0.85, 0.5, 0.99),
+		"maxLoadedTools":          clampInt(raw["maxLoadedTools"], 16, 4, 64),
+		"maxHydratedSchemas":      clampInt(raw["maxHydratedSchemas"], 8, 2, 32),
+		"idleEvictionThresholdMs": clampInt(raw["idleEvictionThresholdMs"], 5*60*1000, 10_000, 24*60*60*1000),
+	}
+}
+
+func applyToolPreferencePatch(current map[string]any, patch map[string]any) map[string]any {
+	next := map[string]any{
+		"importantTools":          current["importantTools"],
+		"alwaysLoadedTools":       current["alwaysLoadedTools"],
+		"autoLoadMinConfidence":   current["autoLoadMinConfidence"],
+		"maxLoadedTools":          current["maxLoadedTools"],
+		"maxHydratedSchemas":      current["maxHydratedSchemas"],
+		"idleEvictionThresholdMs": current["idleEvictionThresholdMs"],
+	}
+	for _, key := range []string{"importantTools", "alwaysLoadedTools", "autoLoadMinConfidence", "maxLoadedTools", "maxHydratedSchemas", "idleEvictionThresholdMs"} {
+		if value, ok := patch[key]; ok {
+			next[key] = value
+		}
+	}
+	normalizedPatch := map[string]any{
+		"importantTools":          next["importantTools"],
+		"alwaysLoadedTools":       next["alwaysLoadedTools"],
+		"autoLoadMinConfidence":   next["autoLoadMinConfidence"],
+		"maxLoadedTools":          next["maxLoadedTools"],
+		"maxHydratedSchemas":      next["maxHydratedSchemas"],
+		"idleEvictionThresholdMs": next["idleEvictionThresholdMs"],
+	}
+	return normalizeToolPreferences(normalizedPatch)
+}
+
+func normalizeToolNameList(value any) []string {
+	result := []string{}
+	seen := map[string]struct{}{}
+	switch typed := value.(type) {
+	case []any:
+		for _, raw := range typed {
+			name, _ := raw.(string)
+			trimmed := strings.TrimSpace(name)
+			if trimmed == "" {
+				continue
+			}
+			if _, ok := seen[trimmed]; ok {
+				continue
+			}
+			seen[trimmed] = struct{}{}
+			result = append(result, trimmed)
+		}
+	case []string:
+		for _, name := range typed {
+			trimmed := strings.TrimSpace(name)
+			if trimmed == "" {
+				continue
+			}
+			if _, ok := seen[trimmed]; ok {
+				continue
+			}
+			seen[trimmed] = struct{}{}
+			result = append(result, trimmed)
+		}
+	}
+	return result
+}
+
+func normalizeAlwaysLoadedTools(value any) []string {
+	if value == nil {
+		return []string{"search_tools", "read_file", "write_file", "grep_search", "execute_command", "browser__open"}
+	}
+	return normalizeToolNameList(value)
+}
+
+func clampFloat(value any, fallback float64, min float64, max float64) float64 {
+	number, ok := value.(float64)
+	if !ok {
+		if intValue, ok := value.(int); ok {
+			number = float64(intValue)
+		} else {
+			return fallback
+		}
+	}
+	if number < min {
+		return min
+	}
+	if number > max {
+		return max
+	}
+	return number
+}
+
+func clampInt(value any, fallback int, min int, max int) int {
+	number := fallback
+	switch typed := value.(type) {
+	case float64:
+		number = int(typed)
+	case int:
+		number = typed
+	default:
+		return fallback
+	}
+	if number < min {
+		return min
+	}
+	if number > max {
+		return max
+	}
+	return number
 }
 
 func stripServerMeta(value any) any {

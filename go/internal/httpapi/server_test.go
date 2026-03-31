@@ -4412,6 +4412,69 @@ func TestMCPSyncTargetsAndExportFallBackToLocalJsonc(t *testing.T) {
 	}
 }
 
+func TestMCPToolPreferencesFallBackToLocalJsonc(t *testing.T) {
+	mainConfigDir := t.TempDir()
+	jsoncContent := `// Borg MCP configuration
+{
+  "mcpServers": {},
+  "settings": {
+    "toolSelection": {
+      "importantTools": ["search_tools"],
+      "alwaysLoadedTools": ["search_tools"],
+      "autoLoadMinConfidence": 0.9,
+      "maxLoadedTools": 12,
+      "maxHydratedSchemas": 6,
+      "idleEvictionThresholdMs": 120000
+    }
+  }
+}
+`
+	if err := os.WriteFile(filepath.Join(mainConfigDir, "mcp.jsonc"), []byte(jsoncContent), 0o644); err != nil {
+		t.Fatalf("failed to write local mcp jsonc: %v", err)
+	}
+
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = t.TempDir()
+	cfg.MainConfigDir = mainConfigDir
+	server := New(cfg, stubDetector{})
+
+	getRequest := httptest.NewRequest(http.MethodGet, "/api/mcp/preferences", nil)
+	getRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(getRecorder, getRequest)
+
+	if getRecorder.Code != http.StatusOK {
+		t.Fatalf("expected get fallback status 200, got %d with body %s", getRecorder.Code, getRecorder.Body.String())
+	}
+	if !strings.Contains(getRecorder.Body.String(), `"fallback":"go-local-jsonc"`) {
+		t.Fatalf("expected go-local-jsonc fallback metadata, got %s", getRecorder.Body.String())
+	}
+	if !strings.Contains(getRecorder.Body.String(), `"importantTools":["search_tools"]`) || !strings.Contains(getRecorder.Body.String(), `"maxLoadedTools":12`) {
+		t.Fatalf("expected local tool preferences payload, got %s", getRecorder.Body.String())
+	}
+
+	postRequest := httptest.NewRequest(http.MethodPost, "/api/mcp/preferences", strings.NewReader(`{"importantTools":["search_tools","auto_call_tool"],"maxLoadedTools":20}`))
+	postRequest.Header.Set("content-type", "application/json")
+	postRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(postRecorder, postRequest)
+
+	if postRecorder.Code != http.StatusOK {
+		t.Fatalf("expected post fallback status 200, got %d with body %s", postRecorder.Code, postRecorder.Body.String())
+	}
+	if !strings.Contains(postRecorder.Body.String(), `"ok":true`) || !strings.Contains(postRecorder.Body.String(), `"auto_call_tool"`) {
+		t.Fatalf("expected updated tool preferences response, got %s", postRecorder.Body.String())
+	}
+
+	jsoncWritten, err := os.ReadFile(filepath.Join(mainConfigDir, "mcp.jsonc"))
+	if err != nil {
+		t.Fatalf("expected updated jsonc preferences file: %v", err)
+	}
+	if !strings.Contains(string(jsoncWritten), `"auto_call_tool"`) || !strings.Contains(string(jsoncWritten), `"maxLoadedTools": 20`) {
+		t.Fatalf("expected persisted updated preferences, got %s", string(jsoncWritten))
+	}
+}
+
 func TestImportedSessionBridgeRoutes(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")
