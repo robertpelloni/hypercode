@@ -381,6 +381,10 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/council/smart-pilot/trigger", s.handleCouncilSmartPilotTrigger)
 	s.mux.HandleFunc("/api/council/smart-pilot/reset-count", s.handleCouncilSmartPilotResetCount)
 	s.mux.HandleFunc("/api/council/smart-pilot/reset-all", s.handleCouncilSmartPilotResetAll)
+	s.mux.HandleFunc("/api/council/hooks", s.handleCouncilHooksList)
+	s.mux.HandleFunc("/api/council/hooks/register", s.handleCouncilHooksRegister)
+	s.mux.HandleFunc("/api/council/hooks/unregister", s.handleCouncilHooksUnregister)
+	s.mux.HandleFunc("/api/council/hooks/clear", s.handleCouncilHooksClear)
 	s.mux.HandleFunc("/api/council/visual/system-diagram", s.handleCouncilVisualSystemDiagram)
 	s.mux.HandleFunc("/api/council/visual/plan-diagram", s.handleCouncilVisualPlanDiagram)
 	s.mux.HandleFunc("/api/council/visual/parse-plan", s.handleCouncilVisualParsePlan)
@@ -898,6 +902,10 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/council/smart-pilot/trigger", Category: "governance", Description: "Trigger a smart-pilot task through the TypeScript smartPilot router."},
 				{Path: "/api/council/smart-pilot/reset-count", Category: "governance", Description: "Reset a smart-pilot approval count through the TypeScript smartPilot router."},
 				{Path: "/api/council/smart-pilot/reset-all", Category: "governance", Description: "Reset all smart-pilot approval counts through the TypeScript smartPilot router."},
+				{Path: "/api/council/hooks", Category: "governance", Description: "List registered council auto-continue hooks through the TypeScript hooks router."},
+				{Path: "/api/council/hooks/register", Category: "governance", Description: "Register a council auto-continue hook through the TypeScript hooks router."},
+				{Path: "/api/council/hooks/unregister", Category: "governance", Description: "Unregister a council auto-continue hook through the TypeScript hooks router."},
+				{Path: "/api/council/hooks/clear", Category: "governance", Description: "Clear all registered council auto-continue hooks through the TypeScript hooks router."},
 				{Path: "/api/council/visual/system-diagram", Category: "governance", Description: "Read the council system diagram through the TypeScript visual router."},
 				{Path: "/api/council/visual/plan-diagram", Category: "governance", Description: "Render a council plan diagram through the TypeScript visual router."},
 				{Path: "/api/council/visual/parse-plan", Category: "governance", Description: "Parse a council Mermaid plan through the TypeScript visual router."},

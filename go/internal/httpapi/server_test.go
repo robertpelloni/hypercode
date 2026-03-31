@@ -1339,6 +1339,77 @@ func TestCouncilSmartPilotBridgeRoutes(t *testing.T) {
 	}
 }
 
+func TestCouncilHooksBridgeRoutes(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "application/json")
+		switch r.URL.Path {
+		case "/trpc/council.hooks.list":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"hooks": []any{map[string]any{"id": "hook-1", "phase": "pre-debate"}}}}}})
+		case "/trpc/council.hooks.register":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"phase":"pre-debate"`) {
+				t.Fatalf("expected council.hooks.register payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true, "hookId": "hook-1"}}}})
+		case "/trpc/council.hooks.unregister":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"id":"hook-1"`) {
+				t.Fatalf("expected council.hooks.unregister payload, got %s", string(body))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
+		case "/trpc/council.hooks.clear":
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
+		default:
+			t.Fatalf("unexpected upstream path %s", r.URL.Path)
+		}
+	}))
+	defer upstream.Close()
+
+	t.Setenv("BORG_TRPC_UPSTREAM", upstream.URL+"/trpc")
+
+	cfg := config.Default()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	cases := []struct {
+		name      string
+		method    string
+		path      string
+		body      string
+		contains  string
+		procedure string
+	}{
+		{name: "hooks list", method: http.MethodGet, path: "/api/council/hooks", contains: `"id":"hook-1"`, procedure: `"procedure":"council.hooks.list"`},
+		{name: "hooks register", method: http.MethodPost, path: "/api/council/hooks/register", body: `{"phase":"pre-debate","webhookUrl":"https://example.com/hook","priority":5}`, contains: `"hookId":"hook-1"`, procedure: `"procedure":"council.hooks.register"`},
+		{name: "hooks unregister", method: http.MethodPost, path: "/api/council/hooks/unregister", body: `{"id":"hook-1"}`, contains: `"success":true`, procedure: `"procedure":"council.hooks.unregister"`},
+		{name: "hooks clear", method: http.MethodPost, path: "/api/council/hooks/clear", contains: `"success":true`, procedure: `"procedure":"council.hooks.clear"`},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var body io.Reader
+			if tc.body != "" {
+				body = strings.NewReader(tc.body)
+			}
+			request := httptest.NewRequest(tc.method, tc.path, body)
+			if tc.body != "" {
+				request.Header.Set("content-type", "application/json")
+			}
+			recorder := httptest.NewRecorder()
+			server.Handler().ServeHTTP(recorder, request)
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+			}
+			if !strings.Contains(recorder.Body.String(), tc.contains) {
+				t.Fatalf("expected response to contain %s, got %s", tc.contains, recorder.Body.String())
+			}
+			if !strings.Contains(recorder.Body.String(), tc.procedure) {
+				t.Fatalf("expected bridge metadata %s, got %s", tc.procedure, recorder.Body.String())
+			}
+		})
+	}
+}
+
 func TestConfigStatusEndpoint(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	cfg := config.Default()
