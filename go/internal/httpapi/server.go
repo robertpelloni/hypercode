@@ -2931,7 +2931,44 @@ func (s *Server) handleMemoryToolContext(w http.ResponseWriter, r *http.Request)
 	if lastObjective := strings.TrimSpace(r.URL.Query().Get("lastObjective")); lastObjective != "" {
 		payload["lastObjective"] = lastObjective
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "memory.getToolContext", payload)
+
+	var result map[string]any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.getToolContext", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.getToolContext",
+			},
+		})
+		return
+	}
+
+	query := toolName
+	if lastObjective, _ := payload["lastObjective"].(string); strings.TrimSpace(lastObjective) != "" {
+		query = strings.TrimSpace(strings.Join([]string{toolName, lastObjective}, " "))
+	}
+	if activeGoal, _ := payload["activeGoal"].(string); strings.TrimSpace(activeGoal) != "" {
+		query = strings.TrimSpace(strings.Join([]string{query, activeGoal}, " "))
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"toolName":         toolName,
+			"query":            query,
+			"matchedPaths":     []string{},
+			"observationCount": 0,
+			"summaryCount":     0,
+			"prompt":           "JIT tool context for " + toolName + ":\nNo relevant prior memory was found.",
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.getToolContext",
+			"reason":    err.Error(),
+		},
+	})
 }
 
 func (s *Server) handleMemoryCaptureSessionSummary(w http.ResponseWriter, r *http.Request) {
