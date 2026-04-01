@@ -6089,6 +6089,34 @@ func TestSymbolsReadRoutesFallBackToEmptyResults(t *testing.T) {
 	}
 }
 
+func TestGraphSymbolsFallsBackToEmptyGraph(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = t.TempDir()
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/graph/symbols", nil))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected graph symbols 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	for _, needle := range []string{
+		`"fallback":"go-local-graph"`,
+		`"procedure":"graph.getSymbolsGraph"`,
+		`symbol graph data is not initialized`,
+		`"nodes":[]`,
+		`"links":[]`,
+	} {
+		if !strings.Contains(recorder.Body.String(), needle) {
+			t.Fatalf("expected graph symbols fallback to contain %s, got %s", needle, recorder.Body.String())
+		}
+	}
+}
+
 func TestToolAliasResolveFallsBackToUnresolvedState(t *testing.T) {
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 

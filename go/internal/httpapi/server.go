@@ -1034,7 +1034,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/graph/rebuild", Category: "code", Description: "Rebuild the TypeScript repository graph and return the latest snapshot."},
 				{Path: "/api/graph/consumers", Category: "code", Description: "Bridge to repository graph consumers for a given file path."},
 				{Path: "/api/graph/dependencies", Category: "code", Description: "Bridge to repository graph dependencies for a given file path."},
-				{Path: "/api/graph/symbols", Category: "code", Description: "Bridge to the TypeScript symbols graph snapshot."},
+				{Path: "/api/graph/symbols", Category: "code", Description: "Bridge to the TypeScript symbol graph, with an explicit empty graph fallback when symbol graph data is unavailable."},
 				{Path: "/api/context/list", Category: "code", Description: "Bridge to the current TypeScript context file list, with a local empty-state fallback when the TypeScript context manager is unavailable."},
 				{Path: "/api/context/add", Category: "code", Description: "Add a file to the TypeScript context manager."},
 				{Path: "/api/context/remove", Category: "code", Description: "Remove a file from the TypeScript context manager."},
@@ -4241,7 +4241,32 @@ func (s *Server) handleGraphDependencies(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) handleGraphSymbols(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "graph.getSymbolsGraph", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "graph.getSymbolsGraph", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "graph.getSymbolsGraph",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"nodes": []map[string]any{},
+			"links": []map[string]any{},
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-graph",
+			"procedure": "graph.getSymbolsGraph",
+			"reason":    "upstream unavailable; symbol graph data is not initialized",
+		},
+	})
 }
 
 func (s *Server) handleContextList(w http.ResponseWriter, r *http.Request) {
