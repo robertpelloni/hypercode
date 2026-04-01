@@ -463,7 +463,7 @@ function initializeSchema(database: InstanceType<typeof Database>): void {
         CREATE INDEX IF NOT EXISTS pmvr_outcome_idx ON published_mcp_validation_runs(outcome);
         CREATE INDEX IF NOT EXISTS pmvr_created_at_idx ON published_mcp_validation_runs(created_at);
 
-        -- links_backlog: canonical Borg link backlog (BobbyBookmarks + future sources)
+        -- links_backlog: canonical HyperCode link backlog (BobbyBookmarks + future sources)
         CREATE TABLE IF NOT EXISTS links_backlog (
             uuid TEXT PRIMARY KEY,
             url TEXT NOT NULL,
@@ -606,6 +606,10 @@ function initializeSchema(database: InstanceType<typeof Database>): void {
             excerpt TEXT,
             working_directory TEXT,
             transcript_hash TEXT NOT NULL UNIQUE,
+            transcript_archive_path TEXT,
+            transcript_metadata_archive_path TEXT,
+            transcript_archive_format TEXT,
+            transcript_stored_bytes INTEGER,
             normalized_session TEXT NOT NULL,
             metadata TEXT NOT NULL DEFAULT '{}',
             discovered_at INTEGER NOT NULL,
@@ -665,6 +669,26 @@ function initializeSchema(database: InstanceType<typeof Database>): void {
         }
     } catch (err) {
         console.warn("[DB Migration] Failed to alter tools table:", err);
+    }
+
+    try {
+        const tableInfo = database.pragma("table_info(imported_sessions)") as Array<{ name: string }>;
+        const ensureColumn = (name: string, sqlText: string) => {
+            if (!tableInfo.some((col) => col.name === name)) {
+                database.exec(sqlText);
+                console.info(`[DB Migration] Added '${name}' column to imported_sessions table.`);
+            }
+        };
+
+        ensureColumn("transcript_archive_path", `ALTER TABLE imported_sessions ADD COLUMN transcript_archive_path TEXT;`);
+        ensureColumn(
+            "transcript_metadata_archive_path",
+            `ALTER TABLE imported_sessions ADD COLUMN transcript_metadata_archive_path TEXT;`,
+        );
+        ensureColumn("transcript_archive_format", `ALTER TABLE imported_sessions ADD COLUMN transcript_archive_format TEXT;`);
+        ensureColumn("transcript_stored_bytes", `ALTER TABLE imported_sessions ADD COLUMN transcript_stored_bytes INTEGER;`);
+    } catch (err) {
+        console.warn("[DB Migration] Failed to alter imported_sessions table:", err);
     }
 }
 

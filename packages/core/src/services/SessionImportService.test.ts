@@ -26,7 +26,7 @@ type FakeImportedSession = {
 const tempRoots: string[] = [];
 
 async function createTempRoot(): Promise<string> {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'borg-session-import-'));
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'hypercode-session-import-'));
     tempRoots.push(root);
     return root;
 }
@@ -89,8 +89,8 @@ describe('SessionImportService', () => {
         await fs.writeFile(
             path.join(claudeDir, 'session-1.jsonl'),
             [
-                JSON.stringify({ role: 'user', content: 'Use port 4000 for the Borg control plane.' }),
-                JSON.stringify({ role: 'assistant', content: 'Always prefer PowerShell on Windows for Borg shell commands.' }),
+                JSON.stringify({ role: 'user', content: 'Use port 4000 for the HyperCode control plane.' }),
+                JSON.stringify({ role: 'assistant', content: 'Always prefer PowerShell on Windows for HyperCode shell commands.' }),
             ].join('\n'),
             'utf-8',
         );
@@ -126,7 +126,7 @@ describe('SessionImportService', () => {
         expect(docs).toHaveLength(1);
         const content = await fs.readFile(docs[0].path, 'utf-8');
         expect(content).toContain('Auto-imported Agent Instructions');
-        expect(content).toContain('Always prefer PowerShell on Windows for Borg shell commands.');
+        expect(content).toContain('Always prefer PowerShell on Windows for HyperCode shell commands.');
     });
 
     it('skips already imported transcript hashes unless force is requested', async () => {
@@ -172,7 +172,7 @@ describe('SessionImportService', () => {
         await fs.writeFile(
             path.join(emptyWindowDir, '6eebfd4c-8213-460d-bc4e-219ff6aada7b.jsonl'),
             [
-                JSON.stringify({ request: { message: 'Remember that Borg runs on port 4000.' } }),
+                JSON.stringify({ request: { message: 'Remember that HyperCode runs on port 4000.' } }),
                 JSON.stringify({ response: { message: 'Always use PowerShell paths on Windows.' } }),
             ].join('\n'),
             'utf-8',
@@ -266,7 +266,7 @@ describe('SessionImportService', () => {
             JSON.stringify([
                 {
                     role: 'user',
-                    content: 'Remember that Borg should import durable chat history automatically.',
+                    content: 'Remember that HyperCode should import durable chat history automatically.',
                     created_at: 1711500000,
                 },
                 {
@@ -309,7 +309,7 @@ describe('SessionImportService', () => {
         expect(result.importedCount).toBe(1);
         expect(result.tools).toContain('openai');
         expect(store.sessions[0]?.sourceTool).toBe('openai');
-        expect(store.sessions[0]?.transcript).toContain('User: Remember that Borg should import durable chat history automatically.');
+        expect(store.sessions[0]?.transcript).toContain('User: Remember that HyperCode should import durable chat history automatically.');
         expect(store.sessions[0]?.transcript).toContain('Assistant: Prefer truthful, stabilization-first imports over noisy crawling.');
         expect(store.sessions[0]?.transcript).toContain('[Tool Use: session_search_memory]');
         expect(addLongTerm).toHaveBeenCalled();
@@ -326,7 +326,7 @@ describe('SessionImportService', () => {
             JSON.stringify([
                 {
                     id: 'conv-1',
-                    title: 'Borg stabilization plan',
+                    title: 'HyperCode stabilization plan',
                     create_time: 1711500100,
                     update_time: 1711500500,
                     current_node: 'assistant-final',
@@ -425,7 +425,7 @@ describe('SessionImportService', () => {
         expect(store.sessions[0]?.sourceTool).toBe('openai');
         expect(store.sessions[0]?.sessionFormat).toBe('chatgpt-export');
         expect(String(store.sessions[0]?.sourcePath)).toContain('#conversation:conv-1');
-        expect(store.sessions[0]?.title).toBe('Borg stabilization plan');
+        expect(store.sessions[0]?.title).toBe('HyperCode stabilization plan');
         expect(String(store.sessions[0]?.transcript)).toContain('User: Remember the next stabilization fix should be truthful and testable.');
         expect(String(store.sessions[0]?.transcript)).toContain('Assistant: Prefer fixes that close real runtime gaps before broad expansion.');
         expect(String(store.sessions[0]?.transcript)).toContain('Assistant: Then validate with focused tests and the repo suite.');
@@ -540,7 +540,7 @@ describe('SessionImportService', () => {
 
     it('skips a discovered session file that disappears before import', async () => {
         const root = await createTempRoot();
-        const borgSessionDir = path.join(root, '.borg', 'sessions');
+        const borgSessionDir = path.join(root, '.hypercode', 'sessions');
         const sessionPath = path.join(borgSessionDir, 'session_123.json');
         await fs.mkdir(borgSessionDir, { recursive: true });
         await fs.writeFile(sessionPath, JSON.stringify({ summary: 'Transient session file' }), 'utf-8');
@@ -598,7 +598,7 @@ describe('SessionImportService', () => {
         );
         await fs.writeFile(
             path.join(path.dirname(cursorStorageDir), 'workspace.json'),
-            JSON.stringify({ folder: 'C:\\Users\\hyper\\workspace\\borg' }),
+            JSON.stringify({ folder: 'C:\\Users\\hyper\\workspace\\hypercode' }),
             'utf-8',
         );
 
@@ -721,12 +721,12 @@ describe('SessionImportService', () => {
             `)
             .run(
                 'ledger-1',
-                'borg',
+                'hypercode',
                 'conversation-1',
-                'Integrated the Prism session importer into Borg.',
+                'Integrated the Prism session importer into HyperCode.',
                 JSON.stringify(['Add dashboard visibility for Prism memory state']),
                 JSON.stringify(['packages/core/src/services/SessionImportService.ts']),
-                JSON.stringify(['Prefer importing Prism ledger summaries into Borg memory']),
+                JSON.stringify(['Prefer importing Prism ledger summaries into HyperCode memory']),
                 JSON.stringify(['prism', 'memory', 'import']),
                 'dev',
                 'correction',
@@ -741,15 +741,15 @@ describe('SessionImportService', () => {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `)
             .run(
-                'borg',
-                'Prism handoff summary for Borg.',
+                'hypercode',
+                'Prism handoff summary for HyperCode.',
                 JSON.stringify(['Keep assimilating Prism features carefully']),
-                JSON.stringify(['Use Borg as the operator-facing control plane']),
+                JSON.stringify(['Use HyperCode as the operator-facing control plane']),
                 JSON.stringify(['prism', 'handoff']),
                 'Current focus: bridge durable memory and imported sessions.',
                 'main',
                 7,
-                JSON.stringify({ cwd: 'C:\\Users\\hyper\\workspace\\borg' }),
+                JSON.stringify({ cwd: 'C:\\Users\\hyper\\workspace\\hypercode' }),
                 '2026-03-27T03:00:00.000Z',
             );
         prismDb.close();
@@ -783,16 +783,16 @@ describe('SessionImportService', () => {
         expect(store.sessions.map((session) => session.sourcePath)).toEqual(
             expect.arrayContaining([
                 expect.stringContaining('#session_ledger:ledger-1'),
-                expect.stringContaining('#session_handoffs:borg'),
+                expect.stringContaining('#session_handoffs:hypercode'),
             ]),
         );
-        expect(store.sessions.map((session) => session.workingDirectory)).toContain('C:\\Users\\hyper\\workspace\\borg');
+        expect(store.sessions.map((session) => session.workingDirectory)).toContain('C:\\Users\\hyper\\workspace\\hypercode');
         const prismLedger = store.sessions.find((session) => session.sessionFormat === 'prism-ledger');
         expect(prismLedger?.metadata).toMatchObject({
             prismEventType: 'correction',
             prismConfidenceScore: 92,
             prismImportance: 5,
-            behavioralWarnings: ['Integrated the Prism session importer into Borg.'],
+            behavioralWarnings: ['Integrated the Prism session importer into HyperCode.'],
         });
         expect(String(prismLedger?.transcript)).toContain('Event type: correction');
         expect(String(prismLedger?.transcript)).toContain('Confidence score: 92');
@@ -854,7 +854,7 @@ describe('SessionImportService', () => {
         `);
         llmDb
             .prepare('INSERT INTO conversations (id, name, model) VALUES (?, ?, ?)')
-            .run('conv-1', 'Borg import strategy', 'anthropic/claude-3-5-sonnet');
+            .run('conv-1', 'HyperCode import strategy', 'anthropic/claude-3-5-sonnet');
         llmDb
             .prepare(`
                 INSERT INTO responses (
@@ -864,7 +864,7 @@ describe('SessionImportService', () => {
             .run(
                 'resp-1',
                 'anthropic/claude-3-5-sonnet',
-                'How should Borg import llm CLI logs?',
+                'How should HyperCode import llm CLI logs?',
                 'Be concise and durable.',
                 'Use the shared session importer so logs become searchable memory.',
                 'conv-1',
@@ -926,7 +926,7 @@ describe('SessionImportService', () => {
         expect(store.sessions[0]?.sessionFormat).toBe('llm-conversation');
         expect(String(store.sessions[0]?.sourcePath)).toContain('#conversation:conv-1');
         expect(String(store.sessions[0]?.transcript)).toContain('System: Be concise and durable.');
-        expect(String(store.sessions[0]?.transcript)).toContain('User: How should Borg import llm CLI logs?');
+        expect(String(store.sessions[0]?.transcript)).toContain('User: How should HyperCode import llm CLI logs?');
         expect(String(store.sessions[0]?.transcript)).toContain('Assistant: Use the shared session importer so logs become searchable memory.');
         expect(String(store.sessions[0]?.transcript)).toContain('[Tool Call: search_docs]');
         expect(String(store.sessions[0]?.transcript)).toContain('[Tool Result: search_docs]');

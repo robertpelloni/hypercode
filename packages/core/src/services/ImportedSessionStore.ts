@@ -1,4 +1,7 @@
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import zlib from 'zlib';
 
 import { sqliteInstance } from '../db/index.js';
 
@@ -58,6 +61,20 @@ export interface ImportedSessionRecord {
     parsedMemories: ImportedSessionMemoryRecord[];
 }
 
+type ImportedSessionRow = Record<string, unknown> & {
+    transcript_archive_path?: string | null;
+    transcript_metadata_archive_path?: string | null;
+    transcript_archive_format?: string | null;
+    transcript_stored_bytes?: number | null;
+};
+
+interface TranscriptArchiveInfo {
+    transcriptArchivePath: string;
+    transcriptMetadataArchivePath: string;
+    transcriptArchiveFormat: string;
+    transcriptStoredBytes: number;
+}
+
 function safeJsonParse<T>(value: unknown, fallback: T): T {
     if (typeof value !== 'string' || !value.trim()) {
         return fallback;
@@ -83,36 +100,183 @@ function mapMemoryRow(row: Record<string, unknown>): ImportedSessionMemoryRecord
     };
 }
 
-function mapSessionRow(row: Record<string, unknown>, parsedMemories: ImportedSessionMemoryRecord[]): ImportedSessionRecord {
-    return {
-        id: String(row.uuid),
-        sourceTool: String(row.source_tool ?? ''),
-        sourcePath: String(row.source_path ?? ''),
-        externalSessionId: typeof row.external_session_id === 'string' ? row.external_session_id : null,
-        title: typeof row.title === 'string' ? row.title : null,
-        sessionFormat: String(row.session_format ?? 'generic'),
-        transcript: String(row.transcript ?? ''),
-        excerpt: typeof row.excerpt === 'string' ? row.excerpt : null,
-        workingDirectory: typeof row.working_directory === 'string' ? row.working_directory : null,
-        transcriptHash: String(row.transcript_hash ?? ''),
-        normalizedSession: safeJsonParse<Record<string, unknown>>(row.normalized_session, {}),
-        metadata: safeJsonParse<Record<string, unknown>>(row.metadata, {}),
-        discoveredAt: Number(row.discovered_at ?? 0),
-        importedAt: Number(row.imported_at ?? 0),
-        lastModifiedAt: row.last_modified_at == null ? null : Number(row.last_modified_at),
-        createdAt: Number(row.created_at ?? 0),
-        updatedAt: Number(row.updated_at ?? 0),
-        parsedMemories,
-    };
+function ensureDir(dirPath: string): void {
+    fs.mkdirSync(dirPath, { recursive: true });
+}
+
+function toRelativeArchivePath(root: string, filePath: string): string {
+    return path.relative(root, filePath).split(path.sep).join('/');
 }
 
 export class ImportedSessionStore {
+    private archiveRoot: string;
+
+    constructor(archiveRoot: string = path.join(process.cwd(), '.hypercode', 'imported_sessions', 'archive')) {
+        this.archiveRoot = archiveRoot;
+        ensureDir(this.archiveRoot);
+    }
+
+    private getAbsoluteArchivePath(relativePath: string | null | undefined): string | null {
+        if (typeof relativePath !== 'string' || !relativePath.trim()) {
+            return null;
+        }
+
+        return path.join(this.archiveRoot, ...relativePath.split(/[\\/]+/));
+    }
+
+    private readArchivedTranscript(row: ImportedSessionRow): string {
+        const archivePath = this.getAbsoluteArchivePath(
+            typeof row.transcript_archive_path === 'string' ? row.transcript_archive_path : null,
+        );
+
+        if (archivePath && fs.existsSync(archivePath)) {
+            return zlib.gunzipSync(fs.readFileSync(archivePath)).toString('utf-8');
+        }
+
+        return String(row.transcript ?? '');
+    }
+
+    private buildArchiveMetadata(input: ImportedSessionRecordInput): Record<string, unknown> {
+        return {
+            sourceTool: input.sourceTool,
+            sourcePath: input.sourcePath,
+            sessionFormat: input.sessionFormat,
+            transcriptHash: input.transcriptHash,
+            title: input.title ?? null,
+            workingDirectory: input.workingDirectory ?? null,
+            transcriptLength: input.transcript.length,
+            excerpt: input.excerpt ?? null,
+            durableMemoryCount: input.parsedMemories.length,
+            durableInstructionCount: input.parsedMemories.filter((memory) => memory.kind === 'instruction').length,
+            memoryTags: Array.from(new Set(input.parsedMemories.flatMap((memory) => memory.tags ?? []))).slice(0, 24),
+            archivedAt: Date.now(),
+        };
+    }
+
+    private writeTranscriptArchive(sessionId: string, input: ImportedSessionRecordInput): TranscriptArchiveInfo {
+        const subdir = path.join(input.transcriptHash.slice(0, 2), input.transcriptHash.slice(2, 4));
+        const archiveDir = path.join(this.archiveRoot, subdir);
+        ensureDir(archiveDir);
+
+        const transcriptFile = path.join(archiveDir, `${input.transcriptHash}.txt.gz`);
+        const metadataFile = path.join(archiveDir, `${input.transcriptHash}.meta.json.gz`);
+        const transcriptBuffer = Buffer.from(input.transcript, 'utf-8');
+        const compressedTranscript = zlib.gzipSync(transcriptBuffer, { level: 9 });
+        const compressedMetadata = zlib.gzipSync(
+            Buffer.from(
+                JSON.stringify(
+                    {
+                        sessionId,
+                        ...this.buildArchiveMetadata(input),
+                    },
+                    null,
+                    2,
+                ),
+                'utf-8',
+            ),
+            { level: 9 },
+        );
+
+        fs.writeFileSync(transcriptFile, compressedTranscript);
+        fs.writeFileSync(metadataFile, compressedMetadata);
+
+        return {
+            transcriptArchivePath: toRelativeArchivePath(this.archiveRoot, transcriptFile),
+            transcriptMetadataArchivePath: toRelativeArchivePath(this.archiveRoot, metadataFile),
+            transcriptArchiveFormat: 'gzip-text-v1',
+            transcriptStoredBytes: transcriptBuffer.byteLength,
+        };
+    }
+
+    private mapSessionRow(row: ImportedSessionRow, parsedMemories: ImportedSessionMemoryRecord[]): ImportedSessionRecord {
+        return {
+            id: String(row.uuid),
+            sourceTool: String(row.source_tool ?? ''),
+            sourcePath: String(row.source_path ?? ''),
+            externalSessionId: typeof row.external_session_id === 'string' ? row.external_session_id : null,
+            title: typeof row.title === 'string' ? row.title : null,
+            sessionFormat: String(row.session_format ?? 'generic'),
+            transcript: this.readArchivedTranscript(row),
+            excerpt: typeof row.excerpt === 'string' ? row.excerpt : null,
+            workingDirectory: typeof row.working_directory === 'string' ? row.working_directory : null,
+            transcriptHash: String(row.transcript_hash ?? ''),
+            normalizedSession: safeJsonParse<Record<string, unknown>>(row.normalized_session, {}),
+            metadata: safeJsonParse<Record<string, unknown>>(row.metadata, {}),
+            discoveredAt: Number(row.discovered_at ?? 0),
+            importedAt: Number(row.imported_at ?? 0),
+            lastModifiedAt: row.last_modified_at == null ? null : Number(row.last_modified_at),
+            createdAt: Number(row.created_at ?? 0),
+            updatedAt: Number(row.updated_at ?? 0),
+            parsedMemories,
+        };
+    }
+
     hasTranscriptHash(transcriptHash: string): boolean {
         const row = sqliteInstance
             .prepare('SELECT uuid FROM imported_sessions WHERE transcript_hash = ? LIMIT 1')
             .get(transcriptHash) as Record<string, unknown> | undefined;
 
         return Boolean(row?.uuid);
+    }
+
+    compactInlineTranscripts(limit: number = 100): number {
+        const rows = sqliteInstance.prepare(`
+            SELECT *
+            FROM imported_sessions
+            WHERE (transcript_archive_path IS NULL OR transcript_archive_path = '')
+              AND LENGTH(transcript) > 0
+            ORDER BY imported_at ASC
+            LIMIT ?
+        `).all(limit) as ImportedSessionRow[];
+
+        let compacted = 0;
+        const updateStatement = sqliteInstance.prepare(`
+            UPDATE imported_sessions
+            SET transcript = '',
+                transcript_archive_path = ?,
+                transcript_metadata_archive_path = ?,
+                transcript_archive_format = ?,
+                transcript_stored_bytes = ?,
+                updated_at = ?
+            WHERE uuid = ?
+        `);
+
+        for (const row of rows) {
+            const transcript = String(row.transcript ?? '');
+            if (!transcript.trim()) {
+                continue;
+            }
+
+            const input: ImportedSessionRecordInput = {
+                sourceTool: String(row.source_tool ?? ''),
+                sourcePath: String(row.source_path ?? ''),
+                externalSessionId: typeof row.external_session_id === 'string' ? row.external_session_id : null,
+                title: typeof row.title === 'string' ? row.title : null,
+                sessionFormat: String(row.session_format ?? 'generic'),
+                transcript,
+                excerpt: typeof row.excerpt === 'string' ? row.excerpt : null,
+                workingDirectory: typeof row.working_directory === 'string' ? row.working_directory : null,
+                transcriptHash: String(row.transcript_hash ?? ''),
+                normalizedSession: safeJsonParse<Record<string, unknown>>(row.normalized_session, {}),
+                metadata: safeJsonParse<Record<string, unknown>>(row.metadata, {}),
+                discoveredAt: Number(row.discovered_at ?? 0),
+                importedAt: Number(row.imported_at ?? 0),
+                lastModifiedAt: row.last_modified_at == null ? null : Number(row.last_modified_at),
+                parsedMemories: [],
+            };
+            const archiveInfo = this.writeTranscriptArchive(String(row.uuid), input);
+            updateStatement.run(
+                archiveInfo.transcriptArchivePath,
+                archiveInfo.transcriptMetadataArchivePath,
+                archiveInfo.transcriptArchiveFormat,
+                archiveInfo.transcriptStoredBytes,
+                Date.now(),
+                String(row.uuid),
+            );
+            compacted += 1;
+        }
+
+        return compacted;
     }
 
     upsertSession(input: ImportedSessionRecordInput): ImportedSessionRecord {
@@ -124,6 +288,7 @@ export class ImportedSessionStore {
         const sessionId = typeof existing?.uuid === 'string' ? existing.uuid : crypto.randomUUID();
         const metadata = JSON.stringify(input.metadata ?? {});
         const normalizedSession = JSON.stringify(input.normalizedSession);
+        const archiveInfo = this.writeTranscriptArchive(sessionId, input);
 
         sqliteInstance.prepare(`
             INSERT INTO imported_sessions (
@@ -139,12 +304,16 @@ export class ImportedSessionStore {
                 transcript_hash,
                 normalized_session,
                 metadata,
+                transcript_archive_path,
+                transcript_metadata_archive_path,
+                transcript_archive_format,
+                transcript_stored_bytes,
                 discovered_at,
                 imported_at,
                 last_modified_at,
                 created_at,
                 updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(uuid) DO UPDATE SET
                 source_tool = excluded.source_tool,
                 source_path = excluded.source_path,
@@ -157,6 +326,10 @@ export class ImportedSessionStore {
                 transcript_hash = excluded.transcript_hash,
                 normalized_session = excluded.normalized_session,
                 metadata = excluded.metadata,
+                transcript_archive_path = excluded.transcript_archive_path,
+                transcript_metadata_archive_path = excluded.transcript_metadata_archive_path,
+                transcript_archive_format = excluded.transcript_archive_format,
+                transcript_stored_bytes = excluded.transcript_stored_bytes,
                 discovered_at = excluded.discovered_at,
                 imported_at = excluded.imported_at,
                 last_modified_at = excluded.last_modified_at,
@@ -168,12 +341,16 @@ export class ImportedSessionStore {
             input.externalSessionId ?? null,
             input.title ?? null,
             input.sessionFormat,
-            input.transcript,
+            '',
             input.excerpt ?? null,
             input.workingDirectory ?? null,
             input.transcriptHash,
             normalizedSession,
             metadata,
+            archiveInfo.transcriptArchivePath,
+            archiveInfo.transcriptMetadataArchivePath,
+            archiveInfo.transcriptArchiveFormat,
+            archiveInfo.transcriptStoredBytes,
             input.discoveredAt,
             input.importedAt,
             input.lastModifiedAt ?? null,
@@ -227,9 +404,9 @@ export class ImportedSessionStore {
             FROM imported_sessions
             ORDER BY imported_at DESC
             LIMIT ?
-        `).all(limit) as Record<string, unknown>[];
+        `).all(limit) as ImportedSessionRow[];
 
-        return rows.map((row) => mapSessionRow(row, this.listParsedMemories(String(row.uuid))));
+        return rows.map((row) => this.mapSessionRow(row, this.listParsedMemories(String(row.uuid))));
     }
 
     listParsedMemories(importedSessionId: string): ImportedSessionMemoryRecord[] {
@@ -249,13 +426,13 @@ export class ImportedSessionStore {
             FROM imported_sessions
             WHERE uuid = ?
             LIMIT 1
-        `).get(id) as Record<string, unknown> | undefined;
+        `).get(id) as ImportedSessionRow | undefined;
 
         if (!row) {
             return null;
         }
 
-        return mapSessionRow(row, this.listParsedMemories(id));
+        return this.mapSessionRow(row, this.listParsedMemories(id));
     }
 
     listInstructionMemories(limit: number = 200): ImportedSessionMemoryRecord[] {

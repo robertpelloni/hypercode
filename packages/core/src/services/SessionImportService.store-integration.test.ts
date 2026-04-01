@@ -32,6 +32,10 @@ function createSchema(database: Database.Database): void {
             excerpt TEXT,
             working_directory TEXT,
             transcript_hash TEXT NOT NULL UNIQUE,
+            transcript_archive_path TEXT,
+            transcript_metadata_archive_path TEXT,
+            transcript_archive_format TEXT,
+            transcript_stored_bytes INTEGER,
             normalized_session TEXT NOT NULL DEFAULT '{}',
             metadata TEXT NOT NULL DEFAULT '{}',
             discovered_at INTEGER NOT NULL,
@@ -58,7 +62,7 @@ function createSchema(database: Database.Database): void {
 }
 
 async function createTempRoot(): Promise<string> {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'borg-session-import-store-'));
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'hypercode-session-import-store-'));
     tempRoots.push(root);
     return root;
 }
@@ -120,6 +124,7 @@ describe('SessionImportService with ImportedSessionStore', () => {
         expect(result.tools).toContain('antigravity');
         expect(sessions).toHaveLength(1);
         expect(sessions[0]?.sourceTool).toBe('antigravity');
+        expect(sessions[0]?.transcript).toContain('Keep Antigravity import explicitly experimental.');
         expect(sessions[0]?.metadata).toMatchObject({
             antigravityImportSurface: 'experimental',
             antigravityDiscoveryRoot: 'brain',
