@@ -1869,7 +1869,7 @@ func (s *Server) handleImportedSessionMaintenanceStats(w http.ResponseWriter, r 
 			"bridge": map[string]any{
 				"fallback":  "go-sessionimport",
 				"procedure": "session.importedMaintenanceStats",
-				"reason":    err.Error(),
+				"reason":    "upstream unavailable; using archived imported session maintenance stats",
 			},
 		})
 		return
@@ -1879,7 +1879,7 @@ func (s *Server) handleImportedSessionMaintenanceStats(w http.ResponseWriter, r 
 	if scanErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
-			"error":   err.Error(),
+			"error":   scanErr.Error(),
 			"detail":  scanErr.Error(),
 		})
 		return
@@ -1897,7 +1897,7 @@ func (s *Server) handleImportedSessionMaintenanceStats(w http.ResponseWriter, r 
 		"bridge": map[string]any{
 			"fallback":  "go-sessionimport",
 			"procedure": "session.importedMaintenanceStats",
-			"reason":    err.Error(),
+			"reason":    "upstream unavailable; using scan-only imported session maintenance stats",
 		},
 	})
 }

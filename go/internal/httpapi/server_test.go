@@ -5748,6 +5748,9 @@ func TestImportedSessionMaintenanceStatsFallsBackToGoScanner(t *testing.T) {
 	if !strings.Contains(recorder.Body.String(), `"fallback":"go-sessionimport"`) {
 		t.Fatalf("expected go-sessionimport fallback metadata, got %s", recorder.Body.String())
 	}
+	if !strings.Contains(recorder.Body.String(), `using scan-only imported session maintenance stats`) {
+		t.Fatalf("expected scan-only maintenance fallback reason, got %s", recorder.Body.String())
+	}
 	if !strings.Contains(recorder.Body.String(), `"inlineTranscriptCount":0`) {
 		t.Fatalf("expected scan-only fallback to report zero inline transcripts, got %s", recorder.Body.String())
 	}
@@ -5817,6 +5820,9 @@ func TestImportedSessionMaintenanceStatsFallsBackToArchivedRecords(t *testing.T)
 
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected fallback status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `using archived imported session maintenance stats`) {
+		t.Fatalf("expected archived maintenance fallback reason, got %s", recorder.Body.String())
 	}
 	if !strings.Contains(recorder.Body.String(), `"archivedTranscriptCount":1`) {
 		t.Fatalf("expected archived transcript fallback count, got %s", recorder.Body.String())
