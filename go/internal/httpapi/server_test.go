@@ -5605,6 +5605,56 @@ func TestPoliciesListFallsBackToEmptyState(t *testing.T) {
 	}
 }
 
+func TestPulseAndBrowserStatsFallBackToLocalPreview(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	server := New(config.Default(), stubDetector{})
+
+	cases := []struct {
+		name     string
+		path     string
+		contains []string
+	}{
+		{
+			name: "pulse status",
+			path: "/api/pulse/status",
+			contains: []string{
+				`"fallback":"go-local-pulse"`,
+				`"procedure":"pulse.getSystemStatus"`,
+				`using local offline pulse status`,
+				`"status":"offline"`,
+			},
+		},
+		{
+			name: "browser stats",
+			path: "/api/browser-extension/stats",
+			contains: []string{
+				`"fallback":"go-local-browser-memory"`,
+				`"procedure":"browserExtension.stats"`,
+				`using local zero-state browser memory stats`,
+				`"totalMemories":0`,
+				`"uniqueUrls":0`,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, tc.path, nil))
+
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+			}
+			for _, needle := range tc.contains {
+				if !strings.Contains(recorder.Body.String(), needle) {
+					t.Fatalf("expected response to contain %s, got %s", needle, recorder.Body.String())
+				}
+			}
+		})
+	}
+}
+
 func TestMCPSearchToolsFallsBackToLocalInventory(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	toolsDir := filepath.Join(workspaceRoot, "submodules", "hypercode", "tools")
