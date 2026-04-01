@@ -1110,7 +1110,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/agent/tool", Category: "agents", Description: "Run a tool through the TypeScript agent router."},
 				{Path: "/api/agent/chat", Category: "agents", Description: "Bridge to the TypeScript agent chat surface."},
 				{Path: "/api/commands/execute", Category: "agents", Description: "Execute a TypeScript command-registry entry."},
-				{Path: "/api/commands", Category: "agents", Description: "Bridge to the TypeScript command registry list."},
+				{Path: "/api/commands", Category: "agents", Description: "Bridge to the TypeScript command registry list, with a local empty-state fallback when the registry is unavailable."},
 				{Path: "/api/skills", Category: "agents", Description: "Bridge to the TypeScript skill registry list."},
 				{Path: "/api/skills/summary", Category: "agents", Description: "List skills with progressive-disclosure metadata only (id, name, folder)."},
 				{Path: "/api/skills/read", Category: "agents", Description: "Read a skill through the TypeScript skill registry."},
@@ -1358,7 +1358,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/submodules/build", Category: "ui", Description: "Build a submodule through the TypeScript submodule router."},
 				{Path: "/api/submodules/enable", Category: "ui", Description: "Enable a submodule through the TypeScript submodule router."},
 				{Path: "/api/submodules/capabilities", Category: "ui", Description: "Read submodule capabilities through the TypeScript submodule router."},
-				{Path: "/api/suggestions", Category: "ui", Description: "List suggestions through the TypeScript suggestions router."},
+				{Path: "/api/suggestions", Category: "ui", Description: "List suggestions through the TypeScript suggestions router, with a local empty-state fallback when suggestions are unavailable."},
 				{Path: "/api/suggestions/resolve", Category: "ui", Description: "Resolve a suggestion through the TypeScript suggestions router."},
 				{Path: "/api/suggestions/clear", Category: "ui", Description: "Clear suggestions through the TypeScript suggestions router."},
 				{Path: "/api/plan/mode", Category: "ui", Description: "Read or update plan mode through the TypeScript plan router."},
@@ -1379,16 +1379,16 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/rag/text", Category: "knowledge", Description: "Ingest text into RAG through the TypeScript RAG router."},
 				{Path: "/api/directory", Category: "knowledge", Description: "List unified directory items through the TypeScript unified directory router."},
 				{Path: "/api/directory/stats", Category: "knowledge", Description: "Read unified directory stats through the TypeScript unified directory router."},
-				{Path: "/api/tool-chains/aliases", Category: "tools", Description: "List tool aliases through the TypeScript tool chaining router."},
+				{Path: "/api/tool-chains/aliases", Category: "tools", Description: "List tool aliases through the TypeScript tool chaining router, with a local empty-state fallback when aliases are unavailable."},
 				{Path: "/api/tool-chains/aliases/create", Category: "tools", Description: "Create a tool alias through the TypeScript tool chaining router."},
 				{Path: "/api/tool-chains/aliases/remove", Category: "tools", Description: "Remove a tool alias through the TypeScript tool chaining router."},
 				{Path: "/api/tool-chains/aliases/resolve", Category: "tools", Description: "Resolve a tool alias through the TypeScript tool chaining router."},
-				{Path: "/api/tool-chains", Category: "tools", Description: "List tool chains through the TypeScript tool chaining router."},
+				{Path: "/api/tool-chains", Category: "tools", Description: "List tool chains through the TypeScript tool chaining router, with a local empty-state fallback when chains are unavailable."},
 				{Path: "/api/tool-chains/get", Category: "tools", Description: "Read a tool chain through the TypeScript tool chaining router."},
 				{Path: "/api/tool-chains/create", Category: "tools", Description: "Create a tool chain through the TypeScript tool chaining router."},
 				{Path: "/api/tool-chains/execute", Category: "tools", Description: "Execute a tool chain through the TypeScript tool chaining router."},
 				{Path: "/api/tool-chains/delete", Category: "tools", Description: "Delete a tool chain through the TypeScript tool chaining router."},
-				{Path: "/api/tool-chains/lazy", Category: "tools", Description: "Read lazy tool states through the TypeScript tool chaining router."},
+				{Path: "/api/tool-chains/lazy", Category: "tools", Description: "Read lazy tool states through the TypeScript tool chaining router, with a local empty-state fallback when no lazy tools are registered."},
 				{Path: "/api/tool-chains/lazy/register", Category: "tools", Description: "Register a lazy tool through the TypeScript tool chaining router."},
 				{Path: "/api/tool-chains/lazy/mark-loaded", Category: "tools", Description: "Mark a lazy tool as loaded through the TypeScript tool chaining router."},
 				{Path: "/api/browser-controls/scrape", Category: "browser", Description: "Scrape a page through the TypeScript browser controls router."},
@@ -5002,7 +5002,29 @@ func (s *Server) handleCommandsExecute(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleCommandsList(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "commands.list", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "commands.list", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "commands.list",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-registry",
+			"procedure": "commands.list",
+			"reason":    "upstream unavailable; using local empty command registry",
+		},
+	})
 }
 
 func (s *Server) handleSkillsList(w http.ResponseWriter, r *http.Request) {
@@ -5968,7 +5990,29 @@ func (s *Server) handleSubmoduleCapabilities(w http.ResponseWriter, r *http.Requ
 }
 
 func (s *Server) handleSuggestionsList(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "suggestions.list", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "suggestions.list", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "suggestions.list",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-registry",
+			"procedure": "suggestions.list",
+			"reason":    "upstream unavailable; using local empty suggestions list",
+		},
+	})
 }
 
 func (s *Server) handleSuggestionsResolve(w http.ResponseWriter, r *http.Request) {
@@ -6091,7 +6135,29 @@ func (s *Server) handleUnifiedDirectoryStats(w http.ResponseWriter, r *http.Requ
 }
 
 func (s *Server) handleToolChainAliases(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "toolChaining.listAliases", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "toolChaining.listAliases", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "toolChaining.listAliases",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-registry",
+			"procedure": "toolChaining.listAliases",
+			"reason":    "upstream unavailable; using local empty tool alias registry",
+		},
+	})
 }
 
 func (s *Server) handleToolChainCreateAlias(w http.ResponseWriter, r *http.Request) {
@@ -6112,7 +6178,29 @@ func (s *Server) handleToolChainResolveAlias(w http.ResponseWriter, r *http.Requ
 }
 
 func (s *Server) handleToolChainsList(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "toolChaining.listChains", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "toolChaining.listChains", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "toolChaining.listChains",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-registry",
+			"procedure": "toolChaining.listChains",
+			"reason":    "upstream unavailable; using local empty tool chain registry",
+		},
+	})
 }
 
 func (s *Server) handleToolChainsGet(w http.ResponseWriter, r *http.Request) {
@@ -6137,7 +6225,29 @@ func (s *Server) handleToolChainsDelete(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *Server) handleToolChainsLazyStates(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "toolChaining.lazyStates", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "toolChaining.lazyStates", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "toolChaining.lazyStates",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-registry",
+			"procedure": "toolChaining.lazyStates",
+			"reason":    "upstream unavailable; using local empty lazy-tool state",
+		},
+	})
 }
 
 func (s *Server) handleToolChainsRegisterLazy(w http.ResponseWriter, r *http.Request) {

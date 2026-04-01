@@ -183,12 +183,12 @@ func TestBridgeRouteReportsProcedureFailure(t *testing.T) {
 	server := New(config.Default(), stubDetector{})
 	recorder := httptest.NewRecorder()
 
-	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/suggestions", nil))
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/plan/summary", nil))
 
 	if recorder.Code != http.StatusServiceUnavailable {
 		t.Fatalf("expected status 503, got %d with body %s", recorder.Code, recorder.Body.String())
 	}
-	if !strings.Contains(recorder.Body.String(), `failed to call upstream procedure suggestions.list:`) {
+	if !strings.Contains(recorder.Body.String(), `failed to call upstream procedure plan.getSummary:`) {
 		t.Fatalf("expected bridge procedure error, got %s", recorder.Body.String())
 	}
 }
@@ -5260,6 +5260,85 @@ func TestTestsReadEndpointsFallBackToLocalZeroState(t *testing.T) {
 				`"fallback":"go-local-tests"`,
 				`"procedure":"tests.results"`,
 				`using local empty test results`,
+				`"data":[]`,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, tc.path, nil))
+
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+			}
+			for _, needle := range tc.contains {
+				if !strings.Contains(recorder.Body.String(), needle) {
+					t.Fatalf("expected response to contain %s, got %s", needle, recorder.Body.String())
+				}
+			}
+		})
+	}
+}
+
+func TestZeroStateRegistryReadEndpointsFallBackLocally(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	server := New(config.Default(), stubDetector{})
+
+	cases := []struct {
+		name     string
+		path     string
+		contains []string
+	}{
+		{
+			name: "commands list",
+			path: "/api/commands",
+			contains: []string{
+				`"fallback":"go-local-registry"`,
+				`"procedure":"commands.list"`,
+				`using local empty command registry`,
+				`"data":[]`,
+			},
+		},
+		{
+			name: "suggestions list",
+			path: "/api/suggestions",
+			contains: []string{
+				`"fallback":"go-local-registry"`,
+				`"procedure":"suggestions.list"`,
+				`using local empty suggestions list`,
+				`"data":[]`,
+			},
+		},
+		{
+			name: "tool aliases",
+			path: "/api/tool-chains/aliases",
+			contains: []string{
+				`"fallback":"go-local-registry"`,
+				`"procedure":"toolChaining.listAliases"`,
+				`using local empty tool alias registry`,
+				`"data":[]`,
+			},
+		},
+		{
+			name: "tool chains",
+			path: "/api/tool-chains",
+			contains: []string{
+				`"fallback":"go-local-registry"`,
+				`"procedure":"toolChaining.listChains"`,
+				`using local empty tool chain registry`,
+				`"data":[]`,
+			},
+		},
+		{
+			name: "tool chains lazy",
+			path: "/api/tool-chains/lazy",
+			contains: []string{
+				`"fallback":"go-local-registry"`,
+				`"procedure":"toolChaining.lazyStates"`,
+				`using local empty lazy-tool state`,
 				`"data":[]`,
 			},
 		},
