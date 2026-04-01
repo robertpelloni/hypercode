@@ -9877,6 +9877,35 @@ func TestKnowledgeAndChainingBridgeRoutes(t *testing.T) {
 	}
 }
 
+func TestKnowledgeGraphFallsBackToEmptyGraph(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = t.TempDir()
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/knowledge/graph?query=mcp&depth=2", nil))
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	for _, needle := range []string{
+		`"fallback":"go-local-knowledge"`,
+		`"procedure":"knowledge.getGraph"`,
+		`knowledge graph data is unavailable`,
+		`"nodes":[]`,
+		`"edges":[]`,
+	} {
+		if !strings.Contains(recorder.Body.String(), needle) {
+			t.Fatalf("expected knowledge graph fallback to contain %s, got %s", needle, recorder.Body.String())
+		}
+	}
+}
+
 func TestCLIToolsEndpoint(t *testing.T) {
 	server := New(config.Default(), stubDetector{
 		tools: []controlplane.Tool{

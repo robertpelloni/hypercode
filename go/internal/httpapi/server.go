@@ -1374,7 +1374,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/plan/create-checkpoint", Category: "ui", Description: "Create a plan checkpoint through the TypeScript plan router."},
 				{Path: "/api/plan/rollback", Category: "ui", Description: "Rollback a plan checkpoint through the TypeScript plan router."},
 				{Path: "/api/plan/clear", Category: "ui", Description: "Clear plan sandbox state through the TypeScript plan router."},
-				{Path: "/api/knowledge/graph", Category: "knowledge", Description: "Read the knowledge graph through the TypeScript knowledge router."},
+				{Path: "/api/knowledge/graph", Category: "knowledge", Description: "Read the knowledge graph through the TypeScript knowledge router, with an explicit empty-graph fallback when graph data is unavailable."},
 				{Path: "/api/knowledge/stats", Category: "knowledge", Description: "Read knowledge stats through the TypeScript knowledge router, with a local Go memory-context fallback when the router is unavailable."},
 				{Path: "/api/knowledge/ingest", Category: "knowledge", Description: "Ingest a knowledge URL through the TypeScript knowledge router."},
 				{Path: "/api/knowledge/resources", Category: "knowledge", Description: "Read knowledge resources through the TypeScript knowledge router, with a local Go resources.json fallback when the router is unavailable."},
@@ -7354,7 +7354,32 @@ func (s *Server) handleKnowledgeGraph(w http.ResponseWriter, r *http.Request) {
 			payload["depth"] = parsed
 		}
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "knowledge.getGraph", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "knowledge.getGraph", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "knowledge.getGraph",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"nodes": []map[string]any{},
+			"edges": []map[string]any{},
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-knowledge",
+			"procedure": "knowledge.getGraph",
+			"reason":    "upstream unavailable; knowledge graph data is unavailable",
+		},
+	})
 }
 
 func (s *Server) handleKnowledgeStats(w http.ResponseWriter, r *http.Request) {
