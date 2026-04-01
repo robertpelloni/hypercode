@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
@@ -1015,7 +1016,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/memory/session-summaries/search", Category: "memory", Description: "Bridge to session-summary memory search from the TypeScript control plane."},
 				{Path: "/api/memory/sectioned-status", Category: "memory", Description: "Bridge to the TypeScript sectioned-memory status snapshot."},
 				{Path: "/api/memory/interchange-formats", Category: "memory", Description: "Bridge to the TypeScript memory interchange-format list."},
-				{Path: "/api/memory/export", Category: "memory", Description: "Bridge to TypeScript memory export."},
+				{Path: "/api/memory/export", Category: "memory", Description: "Bridge to TypeScript memory export, with a local export fallback from memory.json or the contexts registry when upstream is unavailable."},
 				{Path: "/api/memory/import", Category: "memory", Description: "Bridge to TypeScript memory import."},
 				{Path: "/api/memory/convert", Category: "memory", Description: "Bridge to TypeScript memory format conversion."},
 				{Path: "/api/agent-memory/search", Category: "memory", Description: "Bridge to TypeScript agent-memory search across namespaces and tiers, with an explicit empty-result fallback when agent memory is unavailable."},
@@ -3954,7 +3955,45 @@ func (s *Server) handleMemoryExport(w http.ResponseWriter, r *http.Request) {
 	if format := strings.TrimSpace(r.URL.Query().Get("format")); format != "" {
 		payload["format"] = format
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "memory.exportMemories", payload)
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.exportMemories", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.exportMemories",
+			},
+		})
+		return
+	}
+
+	userID, _ := payload["userId"].(string)
+	format, _ := payload["format"].(string)
+	localExport, fallbackErr := s.localMemoryExport(userID, format)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"data":       localExport,
+			"format":     format,
+			"exportedAt": time.Now().UTC().Format(time.RFC3339),
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.exportMemories",
+			"reason":    "upstream unavailable; using local memory export sources",
+		},
+	})
 }
 
 func (s *Server) handleMemoryImport(w http.ResponseWriter, r *http.Request) {
@@ -9433,6 +9472,278 @@ func (s *Server) localMemoryContexts() ([]map[string]any, error) {
 		return nil, err
 	}
 	return contexts, nil
+}
+
+func (s *Server) localMemoryExport(userID, format string) (string, error) {
+	if strings.TrimSpace(userID) == "" {
+		userID = "default"
+	}
+
+	if format == "" {
+		format = "json"
+	}
+
+	if format == "json-provider" {
+		snapshot, err := s.tryReadLocalMemorySnapshot()
+		if err != nil {
+			return "", err
+		}
+		if snapshot != "" {
+			return snapshot, nil
+		}
+	}
+
+	memories, err := s.localMemoryExportRecords(userID)
+	if err != nil {
+		return "", err
+	}
+
+	switch format {
+	case "json", "json-provider":
+		data, err := json.MarshalIndent(memories, "", "  ")
+		if err != nil {
+			return "", err
+		}
+		return string(data), nil
+	case "jsonl":
+		lines := make([]string, 0, len(memories))
+		for _, memory := range memories {
+			data, err := json.Marshal(memory)
+			if err != nil {
+				return "", err
+			}
+			lines = append(lines, string(data))
+		}
+		return strings.Join(lines, "\n"), nil
+	case "csv":
+		return serializeLocalMemoryCSV(memories), nil
+	case "sectioned-memory-store":
+		data, err := json.MarshalIndent(localMemorySectionedStore(memories), "", "  ")
+		if err != nil {
+			return "", err
+		}
+		return string(data), nil
+	default:
+		return "", errors.New("unsupported memory export format: " + format)
+	}
+}
+
+func (s *Server) tryReadLocalMemorySnapshot() (string, error) {
+	path := filepath.Join(s.cfg.WorkspaceRoot, "memory.json")
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", err
+	}
+	return strings.TrimSpace(string(raw)), nil
+}
+
+func (s *Server) localMemoryExportRecords(userID string) ([]map[string]any, error) {
+	snapshot, err := s.tryReadLocalMemorySnapshot()
+	if err != nil {
+		return nil, err
+	}
+	if snapshot != "" {
+		var memories []map[string]any
+		if err := json.Unmarshal([]byte(snapshot), &memories); err == nil {
+			return ensureLocalMemoryExportFields(memories, userID), nil
+		}
+	}
+
+	contexts, err := s.localMemoryContexts()
+	if err != nil {
+		return nil, err
+	}
+
+	memories := make([]map[string]any, 0, len(contexts))
+	for index, context := range contexts {
+		uuid := stringValue(context["uuid"])
+		if uuid == "" {
+			uuid = stringValue(context["id"])
+		}
+		if uuid == "" {
+			uuid = "context-" + strconv.Itoa(index+1)
+		}
+
+		createdAt := time.Now().UTC().Format(time.RFC3339)
+		if raw := context["createdAt"]; raw != nil {
+			switch value := raw.(type) {
+			case string:
+				if strings.TrimSpace(value) != "" {
+					createdAt = value
+				}
+			case float64:
+				createdAt = time.UnixMilli(int64(value)).UTC().Format(time.RFC3339)
+			case int64:
+				createdAt = time.UnixMilli(value).UTC().Format(time.RFC3339)
+			case int:
+				createdAt = time.UnixMilli(int64(value)).UTC().Format(time.RFC3339)
+			}
+		}
+
+		metadata, _ := context["metadata"].(map[string]any)
+		if metadata == nil {
+			metadata = map[string]any{}
+		}
+
+		memories = append(memories, map[string]any{
+			"uuid":      uuid,
+			"content":   stringValue(context["content"]),
+			"metadata":  metadata,
+			"userId":    userID,
+			"createdAt": createdAt,
+		})
+	}
+
+	return memories, nil
+}
+
+func ensureLocalMemoryExportFields(memories []map[string]any, userID string) []map[string]any {
+	normalized := make([]map[string]any, 0, len(memories))
+	for index, memory := range memories {
+		item := cloneMap(memory)
+		uuid := stringValue(item["uuid"])
+		if uuid == "" {
+			uuid = stringValue(item["id"])
+		}
+		if uuid == "" {
+			uuid = "memory-" + strconv.Itoa(index+1)
+		}
+		item["uuid"] = uuid
+
+		if stringValue(item["userId"]) == "" {
+			item["userId"] = userID
+		}
+
+		if _, ok := item["metadata"].(map[string]any); !ok {
+			item["metadata"] = map[string]any{}
+		}
+
+		if stringValue(item["createdAt"]) == "" {
+			item["createdAt"] = time.Now().UTC().Format(time.RFC3339)
+		}
+
+		if _, ok := item["content"]; !ok {
+			item["content"] = ""
+		}
+
+		normalized = append(normalized, item)
+	}
+	return normalized
+}
+
+func serializeLocalMemoryCSV(memories []map[string]any) string {
+	rows := []string{"uuid,content,userId,agentId,createdAt,metadata"}
+	for _, memory := range memories {
+		metadataJSON, _ := json.Marshal(memory["metadata"])
+		rows = append(rows, strings.Join([]string{
+			stringValue(memory["uuid"]),
+			csvQuote(stringValue(memory["content"])),
+			stringValue(memory["userId"]),
+			stringValue(memory["agentId"]),
+			stringValue(memory["createdAt"]),
+			csvQuote(string(metadataJSON)),
+		}, ","))
+	}
+	return strings.Join(rows, "\n")
+}
+
+func localMemorySectionedStore(memories []map[string]any) map[string]any {
+	defaultSections := []string{"project_context", "user_facts", "style_preferences", "commands", "general"}
+	sections := map[string][]map[string]any{}
+	for _, section := range defaultSections {
+		sections[section] = []map[string]any{}
+	}
+
+	for _, memory := range memories {
+		metadata, _ := memory["metadata"].(map[string]any)
+		sectionName := "general"
+		if metadata != nil && stringValue(metadata["section"]) != "" {
+			sectionName = stringValue(metadata["section"])
+		}
+		entry := map[string]any{
+			"uuid":      stringValue(memory["uuid"]),
+			"content":   stringValue(memory["content"]),
+			"tags":      stringArray(metadata["tags"]),
+			"createdAt": stringValue(memory["createdAt"]),
+			"source":    localMemorySource(metadata, stringValue(memory["agentId"])),
+		}
+		sections[sectionName] = append(sections[sectionName], entry)
+	}
+
+	ordered := make([]map[string]any, 0, len(sections))
+	seen := map[string]bool{}
+	for _, section := range defaultSections {
+		ordered = append(ordered, map[string]any{"section": section, "entries": sections[section]})
+		seen[section] = true
+	}
+	extra := make([]string, 0)
+	for section := range sections {
+		if !seen[section] {
+			extra = append(extra, section)
+		}
+	}
+	sort.Strings(extra)
+	for _, section := range extra {
+		ordered = append(ordered, map[string]any{"section": section, "entries": sections[section]})
+	}
+
+	return map[string]any{
+		"version":  "1.0.0",
+		"sections": ordered,
+	}
+}
+
+func csvQuote(value string) string {
+	return `"` + strings.ReplaceAll(value, `"`, `""`) + `"`
+}
+
+func localMemorySource(metadata map[string]any, agentID string) string {
+	if metadata != nil && stringValue(metadata["source"]) != "" {
+		return stringValue(metadata["source"])
+	}
+	if agentID != "" {
+		return "agent"
+	}
+	return "user"
+}
+
+func stringValue(value any) string {
+	switch typed := value.(type) {
+	case string:
+		return typed
+	case []byte:
+		return string(typed)
+	case nil:
+		return ""
+	default:
+		return fmt.Sprint(value)
+	}
+}
+
+func stringArray(value any) []string {
+	switch typed := value.(type) {
+	case []string:
+		return typed
+	case []any:
+		items := make([]string, 0, len(typed))
+		for _, item := range typed {
+			items = append(items, stringValue(item))
+		}
+		return items
+	default:
+		return []string{}
+	}
+}
+
+func cloneMap(input map[string]any) map[string]any {
+	output := make(map[string]any, len(input))
+	for key, value := range input {
+		output[key] = value
+	}
+	return output
 }
 
 func (s *Server) handleReadOnlyMemoryBodyFallback(w http.ResponseWriter, r *http.Request, procedure string) {

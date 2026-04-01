@@ -5991,6 +5991,114 @@ func TestToolAliasResolveFallsBackToUnresolvedState(t *testing.T) {
 	}
 }
 
+func TestMemoryExportFallsBackToLocalSnapshotAndRegistry(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	t.Run("json_provider_snapshot", func(t *testing.T) {
+		workspaceRoot := t.TempDir()
+		snapshot := `[
+  {
+    "uuid": "mem-1",
+    "content": "Saved memory",
+    "metadata": {
+      "section": "user_facts"
+    },
+    "userId": "default",
+    "createdAt": "2026-01-01T00:00:00Z"
+  }
+]`
+		if err := os.WriteFile(filepath.Join(workspaceRoot, "memory.json"), []byte(snapshot), 0o644); err != nil {
+			t.Fatalf("failed to seed memory.json: %v", err)
+		}
+
+		cfg := config.Default()
+		cfg.WorkspaceRoot = workspaceRoot
+		cfg.ConfigDir = t.TempDir()
+		cfg.MainConfigDir = t.TempDir()
+		server := New(cfg, stubDetector{})
+
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/memory/export?userId=default&format=json-provider", nil))
+
+		if recorder.Code != http.StatusOK {
+			t.Fatalf("expected snapshot export 200, got %d with body %s", recorder.Code, recorder.Body.String())
+		}
+
+		body := recorder.Body.String()
+		for _, needle := range []string{
+			`"fallback":"go-local-memory"`,
+			`"procedure":"memory.exportMemories"`,
+			`using local memory export sources`,
+			`"format":"json-provider"`,
+			`\n  {\n    \"uuid\": \"mem-1\"`,
+		} {
+			if !strings.Contains(body, needle) {
+				t.Fatalf("expected snapshot export fallback to contain %s, got %s", needle, body)
+			}
+		}
+	})
+
+	t.Run("registry_formats", func(t *testing.T) {
+		workspaceRoot := t.TempDir()
+		contextsDir := filepath.Join(workspaceRoot, ".hypercode", "memory")
+		if err := os.MkdirAll(contextsDir, 0o755); err != nil {
+			t.Fatalf("failed to create memory dir: %v", err)
+		}
+		contexts := `[
+  {
+    "id": "ctx-local-1",
+    "title": "Saved context",
+    "source": "docs",
+    "createdAt": 1704067200000,
+    "metadata": {
+      "section": "project_context",
+      "tags": ["go", "parity"],
+      "source": "docs"
+    }
+  }
+]`
+		if err := os.WriteFile(filepath.Join(contextsDir, "contexts.json"), []byte(contexts), 0o644); err != nil {
+			t.Fatalf("failed to seed contexts registry: %v", err)
+		}
+
+		cfg := config.Default()
+		cfg.WorkspaceRoot = workspaceRoot
+		cfg.ConfigDir = t.TempDir()
+		cfg.MainConfigDir = t.TempDir()
+		server := New(cfg, stubDetector{})
+
+		checks := []struct {
+			path     string
+			contains []string
+		}{
+			{path: "/api/memory/export?userId=default&format=json", contains: []string{`"format":"json"`, `\"uuid\": \"ctx-local-1\"`}},
+			{path: "/api/memory/export?userId=default&format=jsonl", contains: []string{`"format":"jsonl"`, `\"uuid\":\"ctx-local-1\"`}},
+			{path: "/api/memory/export?userId=default&format=csv", contains: []string{`"format":"csv"`, `uuid,content,userId,agentId,createdAt,metadata`, `ctx-local-1`}},
+			{path: "/api/memory/export?userId=default&format=sectioned-memory-store", contains: []string{`"format":"sectioned-memory-store"`, `\"section\": \"project_context\"`, `\"uuid\": \"ctx-local-1\"`}},
+		}
+
+		for _, tc := range checks {
+			recorder := httptest.NewRecorder()
+			server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, tc.path, nil))
+
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected registry export 200 for %s, got %d with body %s", tc.path, recorder.Code, recorder.Body.String())
+			}
+
+			body := recorder.Body.String()
+			if !strings.Contains(body, `"fallback":"go-local-memory"`) || !strings.Contains(body, `"procedure":"memory.exportMemories"`) {
+				t.Fatalf("expected local export fallback metadata for %s, got %s", tc.path, body)
+			}
+
+			for _, needle := range tc.contains {
+				if !strings.Contains(body, needle) {
+					t.Fatalf("expected export body for %s to contain %s, got %s", tc.path, needle, body)
+				}
+			}
+		}
+	})
+}
+
 func TestAgentMemoryStatsFallsBackToZeroState(t *testing.T) {
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 
