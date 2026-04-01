@@ -2160,7 +2160,7 @@ func (s *Server) handleMCPConfiguredServerBulkImport(w http.ResponseWriter, r *h
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
-			"error":   err.Error(),
+			"error":   fallbackErr.Error(),
 			"detail":  fallbackErr.Error(),
 		})
 		return
@@ -2172,7 +2172,7 @@ func (s *Server) handleMCPConfiguredServerBulkImport(w http.ResponseWriter, r *h
 		"bridge": map[string]any{
 			"fallback":  "go-local-jsonc",
 			"procedure": "mcpServers.bulkImport",
-			"reason":    err.Error(),
+			"reason":    "upstream unavailable; using local JSONC bulk import",
 		},
 	})
 }
@@ -2216,7 +2216,7 @@ func (s *Server) handleMCPRegistrySnapshot(w http.ResponseWriter, r *http.Reques
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
-			"error":   err.Error(),
+			"error":   fallbackErr.Error(),
 			"detail":  fallbackErr.Error(),
 		})
 		return
@@ -2228,7 +2228,7 @@ func (s *Server) handleMCPRegistrySnapshot(w http.ResponseWriter, r *http.Reques
 		"bridge": map[string]any{
 			"fallback":  "go-master-index",
 			"procedure": "mcpServers.registrySnapshot",
-			"reason":    err.Error(),
+			"reason":    "upstream unavailable; using local master index registry snapshot",
 		},
 	})
 }
@@ -2260,7 +2260,7 @@ func (s *Server) handleMCPSyncTargets(w http.ResponseWriter, r *http.Request) {
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
-			"error":   err.Error(),
+			"error":   fallbackErr.Error(),
 			"detail":  fallbackErr.Error(),
 		})
 		return
@@ -2272,7 +2272,7 @@ func (s *Server) handleMCPSyncTargets(w http.ResponseWriter, r *http.Request) {
 		"bridge": map[string]any{
 			"fallback":  "go-local-jsonc",
 			"procedure": "mcpServers.syncTargets",
-			"reason":    err.Error(),
+			"reason":    "upstream unavailable; using local JSONC sync targets",
 		},
 	})
 }
@@ -2310,7 +2310,7 @@ func (s *Server) handleMCPExportClientConfig(w http.ResponseWriter, r *http.Requ
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
-			"error":   err.Error(),
+			"error":   fallbackErr.Error(),
 			"detail":  fallbackErr.Error(),
 		})
 		return
@@ -2322,7 +2322,7 @@ func (s *Server) handleMCPExportClientConfig(w http.ResponseWriter, r *http.Requ
 		"bridge": map[string]any{
 			"fallback":  "go-local-jsonc",
 			"procedure": "mcpServers.exportClientConfig",
-			"reason":    err.Error(),
+			"reason":    "upstream unavailable; using local JSONC client config export preview",
 		},
 	})
 }
@@ -2706,7 +2706,7 @@ func (s *Server) handleMCPToolPreferences(w http.ResponseWriter, r *http.Request
 		if fallbackErr != nil {
 			writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 				"success": false,
-				"error":   err.Error(),
+				"error":   fallbackErr.Error(),
 				"detail":  fallbackErr.Error(),
 			})
 			return
@@ -2718,7 +2718,7 @@ func (s *Server) handleMCPToolPreferences(w http.ResponseWriter, r *http.Request
 			"bridge": map[string]any{
 				"fallback":  "go-local-jsonc",
 				"procedure": "mcp.getToolPreferences",
-				"reason":    err.Error(),
+				"reason":    "upstream unavailable; using local JSONC tool preferences",
 			},
 		})
 	case http.MethodPost:
@@ -2749,7 +2749,7 @@ func (s *Server) handleMCPToolPreferences(w http.ResponseWriter, r *http.Request
 		if fallbackErr != nil {
 			writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 				"success": false,
-				"error":   err.Error(),
+				"error":   fallbackErr.Error(),
 				"detail":  fallbackErr.Error(),
 			})
 			return
@@ -2761,7 +2761,7 @@ func (s *Server) handleMCPToolPreferences(w http.ResponseWriter, r *http.Request
 			"bridge": map[string]any{
 				"fallback":  "go-local-jsonc",
 				"procedure": "mcp.setToolPreferences",
-				"reason":    err.Error(),
+				"reason":    "upstream unavailable; saving tool preferences to local JSONC",
 			},
 		})
 	default:

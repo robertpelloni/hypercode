@@ -4789,6 +4789,9 @@ func TestMCPRegistrySnapshotFallsBackToMasterIndex(t *testing.T) {
 	if !strings.Contains(recorder.Body.String(), `"fallback":"go-master-index"`) {
 		t.Fatalf("expected go-master-index fallback metadata, got %s", recorder.Body.String())
 	}
+	if !strings.Contains(recorder.Body.String(), `using local master index registry snapshot`) {
+		t.Fatalf("expected master index registry fallback reason, got %s", recorder.Body.String())
+	}
 	if !strings.Contains(recorder.Body.String(), `"name":"Core MCP"`) {
 		t.Fatalf("expected MCP-like registry entry, got %s", recorder.Body.String())
 	}
@@ -4966,6 +4969,9 @@ func TestMCPSyncTargetsAndExportFallBackToLocalJsonc(t *testing.T) {
 	if !strings.Contains(syncRecorder.Body.String(), `"fallback":"go-local-jsonc"`) {
 		t.Fatalf("expected go-local-jsonc fallback metadata, got %s", syncRecorder.Body.String())
 	}
+	if !strings.Contains(syncRecorder.Body.String(), `using local JSONC sync targets`) {
+		t.Fatalf("expected sync-target fallback reason, got %s", syncRecorder.Body.String())
+	}
 	if !strings.Contains(syncRecorder.Body.String(), `"client":"claude-desktop"`) {
 		t.Fatalf("expected claude-desktop sync target, got %s", syncRecorder.Body.String())
 	}
@@ -4979,6 +4985,9 @@ func TestMCPSyncTargetsAndExportFallBackToLocalJsonc(t *testing.T) {
 	}
 	if !strings.Contains(exportRecorder.Body.String(), `"procedure":"mcpServers.exportClientConfig"`) {
 		t.Fatalf("expected export procedure metadata, got %s", exportRecorder.Body.String())
+	}
+	if !strings.Contains(exportRecorder.Body.String(), `using local JSONC client config export preview`) {
+		t.Fatalf("expected export preview fallback reason, got %s", exportRecorder.Body.String())
 	}
 	if !strings.Contains(exportRecorder.Body.String(), `"client":"claude-desktop"`) || !strings.Contains(exportRecorder.Body.String(), `"core"`) || !strings.Contains(exportRecorder.Body.String(), `"command":"node"`) {
 		t.Fatalf("expected local client config preview, got %s", exportRecorder.Body.String())
@@ -5023,6 +5032,9 @@ func TestMCPToolPreferencesFallBackToLocalJsonc(t *testing.T) {
 	if !strings.Contains(getRecorder.Body.String(), `"fallback":"go-local-jsonc"`) {
 		t.Fatalf("expected go-local-jsonc fallback metadata, got %s", getRecorder.Body.String())
 	}
+	if !strings.Contains(getRecorder.Body.String(), `using local JSONC tool preferences`) {
+		t.Fatalf("expected local preferences fallback reason, got %s", getRecorder.Body.String())
+	}
 	if !strings.Contains(getRecorder.Body.String(), `"importantTools":["search_tools"]`) || !strings.Contains(getRecorder.Body.String(), `"maxLoadedTools":12`) {
 		t.Fatalf("expected local tool preferences payload, got %s", getRecorder.Body.String())
 	}
@@ -5034,6 +5046,9 @@ func TestMCPToolPreferencesFallBackToLocalJsonc(t *testing.T) {
 
 	if postRecorder.Code != http.StatusOK {
 		t.Fatalf("expected post fallback status 200, got %d with body %s", postRecorder.Code, postRecorder.Body.String())
+	}
+	if !strings.Contains(postRecorder.Body.String(), `saving tool preferences to local JSONC`) {
+		t.Fatalf("expected local preference save fallback reason, got %s", postRecorder.Body.String())
 	}
 	if !strings.Contains(postRecorder.Body.String(), `"ok":true`) {
 		t.Fatalf("expected updated tool preferences response, got %s", postRecorder.Body.String())
@@ -5096,6 +5111,9 @@ func TestMCPConfiguredServerMutationsFallBackToLocalJsonc(t *testing.T) {
 	server.Handler().ServeHTTP(bulkRecorder, bulkRequest)
 	if bulkRecorder.Code != http.StatusOK || !strings.Contains(bulkRecorder.Body.String(), `"name":"beta"`) {
 		t.Fatalf("expected bulk import fallback response, got %d %s", bulkRecorder.Code, bulkRecorder.Body.String())
+	}
+	if !strings.Contains(bulkRecorder.Body.String(), `using local JSONC bulk import`) {
+		t.Fatalf("expected bulk import fallback reason, got %s", bulkRecorder.Body.String())
 	}
 
 	syncRequest := httptest.NewRequest(http.MethodPost, "/api/mcp/servers/sync-client-config", strings.NewReader(`{"client":"claude-desktop"}`))
