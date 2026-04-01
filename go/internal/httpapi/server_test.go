@@ -7059,6 +7059,46 @@ func TestWorkflowCanvasRoutesFallBackToLocalDB(t *testing.T) {
 	}
 }
 
+func TestDirectorConfigGetFallsBackToLocalConfig(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	workspaceRoot := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".hypercode"), 0o755); err != nil {
+		t.Fatalf("failed to create .hypercode dir: %v", err)
+	}
+	if err := os.WriteFile(
+		filepath.Join(workspaceRoot, ".hypercode", "config.json"),
+		[]byte(`{"persona":"professional","defaultTopic":"mcp","enableCouncil":true}`),
+		0o644,
+	); err != nil {
+		t.Fatalf("failed to write config.json: %v", err)
+	}
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/director-config", nil))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected director-config 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	for _, needle := range []string{
+		`"procedure":"directorConfig.get"`,
+		`"fallback":"go-local-hypercode-config"`,
+		`"persona":"professional"`,
+		`"defaultTopic":"mcp"`,
+		`"enableCouncil":true`,
+	} {
+		if !strings.Contains(recorder.Body.String(), needle) {
+			t.Fatalf("expected director config fallback to contain %s, got %s", needle, recorder.Body.String())
+		}
+	}
+}
+
 func TestInfrastructureStatusFallsBackToLocalProbe(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	userProfile := t.TempDir()

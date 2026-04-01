@@ -19,7 +19,30 @@ func (s *Server) handleDirectorUpdateConfig(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *Server) handleDirectorConfigGet(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "directorConfig.get", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "directorConfig.get", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "directorConfig.get",
+			},
+		})
+		return
+	}
+
+	result = localSettingsConfig(s.cfg.WorkspaceRoot)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    result,
+		"bridge": map[string]any{
+			"fallback":  "go-local-hypercode-config",
+			"procedure": "directorConfig.get",
+			"reason":    "upstream unavailable; using local .hypercode/config.json",
+		},
+	})
 }
 
 func (s *Server) handleDirectorConfigTest(w http.ResponseWriter, r *http.Request) {
