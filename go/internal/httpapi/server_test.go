@@ -6117,6 +6117,50 @@ func TestGraphSymbolsFallsBackToEmptyGraph(t *testing.T) {
 	}
 }
 
+func TestWorkflowReadRoutesFallBackToEngineZeroState(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = t.TempDir()
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	cases := []struct {
+		name      string
+		path      string
+		procedure string
+		contains  []string
+	}{
+		{name: "list", path: "/api/workflows", procedure: "workflow.list", contains: []string{`"data":[]`}},
+		{name: "graph", path: "/api/workflows/graph?workflowId=wf-1", procedure: "workflow.getGraph", contains: []string{`"nodes":[]`, `"edges":[]`}},
+		{name: "executions", path: "/api/workflows/executions", procedure: "workflow.listExecutions", contains: []string{`"data":[]`}},
+		{name: "execution", path: "/api/workflows/execution?executionId=exec-1", procedure: "workflow.getExecution", contains: []string{`"data":null`}},
+		{name: "history", path: "/api/workflows/history?executionId=exec-1", procedure: "workflow.getHistory", contains: []string{`"data":[]`}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, tc.path, nil))
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected %s 200, got %d with body %s", tc.name, recorder.Code, recorder.Body.String())
+			}
+
+			baseNeedles := []string{
+				`"fallback":"go-local-workflow"`,
+				`"procedure":"` + tc.procedure + `"`,
+				`workflow engine is not initialized`,
+			}
+			for _, needle := range append(baseNeedles, tc.contains...) {
+				if !strings.Contains(recorder.Body.String(), needle) {
+					t.Fatalf("expected %s fallback to contain %s, got %s", tc.name, needle, recorder.Body.String())
+				}
+			}
+		})
+	}
+}
+
 func TestToolAliasResolveFallsBackToUnresolvedState(t *testing.T) {
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 

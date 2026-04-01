@@ -5792,7 +5792,29 @@ func (s *Server) handleSkillMutation(w http.ResponseWriter, r *http.Request, pro
 }
 
 func (s *Server) handleWorkflowList(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "workflow.list", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "workflow.list", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "workflow.list",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-workflow",
+			"procedure": "workflow.list",
+			"reason":    "upstream unavailable; workflow engine is not initialized",
+		},
+	})
 }
 
 func (s *Server) handleWorkflowGraph(w http.ResponseWriter, r *http.Request) {
@@ -5801,7 +5823,32 @@ func (s *Server) handleWorkflowGraph(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing workflowId query parameter"})
 		return
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "workflow.getGraph", map[string]any{"workflowId": workflowID})
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "workflow.getGraph", map[string]any{"workflowId": workflowID}, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "workflow.getGraph",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"nodes": []map[string]any{},
+			"edges": []map[string]any{},
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-workflow",
+			"procedure": "workflow.getGraph",
+			"reason":    "upstream unavailable; workflow engine is not initialized",
+		},
+	})
 }
 
 func (s *Server) handleWorkflowStart(w http.ResponseWriter, r *http.Request) {
@@ -5809,7 +5856,29 @@ func (s *Server) handleWorkflowStart(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleWorkflowExecutions(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "workflow.listExecutions", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "workflow.listExecutions", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "workflow.listExecutions",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-workflow",
+			"procedure": "workflow.listExecutions",
+			"reason":    "upstream unavailable; workflow engine is not initialized",
+		},
+	})
 }
 
 func (s *Server) handleWorkflowExecution(w http.ResponseWriter, r *http.Request) {
@@ -5818,7 +5887,29 @@ func (s *Server) handleWorkflowExecution(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing executionId query parameter"})
 		return
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "workflow.getExecution", map[string]any{"executionId": executionID})
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "workflow.getExecution", map[string]any{"executionId": executionID}, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "workflow.getExecution",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    nil,
+		"bridge": map[string]any{
+			"fallback":  "go-local-workflow",
+			"procedure": "workflow.getExecution",
+			"reason":    "upstream unavailable; workflow engine is not initialized",
+		},
+	})
 }
 
 func (s *Server) handleWorkflowHistory(w http.ResponseWriter, r *http.Request) {
@@ -5827,7 +5918,29 @@ func (s *Server) handleWorkflowHistory(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing executionId query parameter"})
 		return
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "workflow.getHistory", map[string]any{"executionId": executionID})
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "workflow.getHistory", map[string]any{"executionId": executionID}, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "workflow.getHistory",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-workflow",
+			"procedure": "workflow.getHistory",
+			"reason":    "upstream unavailable; workflow engine is not initialized",
+		},
+	})
 }
 
 func (s *Server) handleWorkflowResume(w http.ResponseWriter, r *http.Request) {
