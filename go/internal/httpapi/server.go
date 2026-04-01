@@ -6883,7 +6883,39 @@ func (s *Server) handleOAuthSessionGetByServer(w http.ResponseWriter, r *http.Re
 		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing mcpServerUuid query parameter"})
 		return
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "oauth.sessions.getByServer", map[string]any{"mcpServerUuid": serverUUID})
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "oauth.sessions.getByServer", map[string]any{"mcpServerUuid": serverUUID}, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "oauth.sessions.getByServer",
+			},
+		})
+		return
+	}
+
+	session, fallbackErr := s.localOAuthSessionByServer(serverUUID)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    session,
+		"bridge": map[string]any{
+			"fallback":  "go-local-oauth-sessions-db",
+			"procedure": "oauth.sessions.getByServer",
+			"reason":    "upstream unavailable; using local metamcp oauth session record",
+		},
+	})
 }
 
 func (s *Server) handleOAuthExchange(w http.ResponseWriter, r *http.Request) {
@@ -9078,6 +9110,56 @@ func (s *Server) localOAuthClient(clientID string) (any, error) {
 	}, nil
 }
 
+func (s *Server) localOAuthSessionByServer(serverUUID string) (any, error) {
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	var (
+		uuid              string
+		mcpServerUUID     string
+		clientInformation string
+		tokensRaw         sql.NullString
+		codeVerifier      sql.NullString
+		createdAtRaw      int64
+		updatedAtRaw      int64
+	)
+
+	row := db.QueryRow(`
+		SELECT uuid, mcp_server_uuid, client_information, tokens, code_verifier, created_at, updated_at
+		FROM oauth_sessions
+		WHERE mcp_server_uuid = ?
+		LIMIT 1
+	`, serverUUID)
+	if err := row.Scan(
+		&uuid, &mcpServerUUID, &clientInformation, &tokensRaw, &codeVerifier, &createdAtRaw, &updatedAtRaw,
+	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	clientInfo := jsonObjectOrEmpty(clientInformation)
+
+	var tokens any
+	if tokensRaw.Valid {
+		tokens = jsonObjectOrNil(tokensRaw.String)
+	}
+
+	return map[string]any{
+		"uuid":               uuid,
+		"mcp_server_uuid":    mcpServerUUID,
+		"client_information": clientInfo,
+		"tokens":             tokens,
+		"code_verifier":      nullStringToAny(codeVerifier),
+		"created_at":         unixTimestampToRFC3339(createdAtRaw),
+		"updated_at":         unixTimestampToRFC3339(updatedAtRaw),
+	}, nil
+}
+
 func unixTimestampToRFC3339(value int64) string {
 	if value <= 0 {
 		return time.Unix(0, 0).UTC().Format(time.RFC3339)
@@ -9110,6 +9192,22 @@ func jsonArrayOrEmpty(raw string) any {
 	var value any
 	if err := json.Unmarshal([]byte(raw), &value); err != nil {
 		return []any{}
+	}
+	return value
+}
+
+func jsonObjectOrEmpty(raw string) any {
+	var value any
+	if err := json.Unmarshal([]byte(raw), &value); err != nil {
+		return map[string]any{}
+	}
+	return value
+}
+
+func jsonObjectOrNil(raw string) any {
+	var value any
+	if err := json.Unmarshal([]byte(raw), &value); err != nil {
+		return nil
 	}
 	return value
 }

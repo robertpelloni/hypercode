@@ -6075,6 +6075,66 @@ func TestOAuthClientGetFallsBackToLocalDB(t *testing.T) {
 	}
 }
 
+func TestOAuthSessionGetByServerFallsBackToLocalDB(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	workspace := t.TempDir()
+	dbPath := filepath.Join(workspace, "metamcp.db")
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("failed to open sqlite db: %v", err)
+	}
+	defer db.Close()
+
+	if _, err := db.Exec(`
+		CREATE TABLE oauth_sessions (
+			uuid TEXT PRIMARY KEY,
+			mcp_server_uuid TEXT NOT NULL,
+			client_information TEXT NOT NULL DEFAULT '{}',
+			tokens TEXT,
+			code_verifier TEXT,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL
+		);
+		CREATE UNIQUE INDEX oauth_sessions_unique_per_server_idx ON oauth_sessions(mcp_server_uuid);
+		INSERT INTO oauth_sessions (
+			uuid, mcp_server_uuid, client_information, tokens, code_verifier, created_at, updated_at
+		) VALUES (
+			'session-1', 'server-1', '{"client_id":"client-1","client_name":"Client One"}',
+			'{"access_token":"token-1","token_type":"Bearer"}', 'verifier-1', 1711958300, 1711958460
+		);
+	`); err != nil {
+		t.Fatalf("failed to seed sqlite db: %v", err)
+	}
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspace
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/oauth/sessions/by-server?mcpServerUuid=server-1", nil))
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	for _, needle := range []string{
+		`"fallback":"go-local-oauth-sessions-db"`,
+		`"procedure":"oauth.sessions.getByServer"`,
+		`using local metamcp oauth session record`,
+		`"uuid":"session-1"`,
+		`"mcp_server_uuid":"server-1"`,
+		`"client_information":{"client_id":"client-1","client_name":"Client One"}`,
+		`"tokens":{"access_token":"token-1","token_type":"Bearer"}`,
+	} {
+		if !strings.Contains(recorder.Body.String(), needle) {
+			t.Fatalf("expected oauth session fallback to contain %s, got %s", needle, recorder.Body.String())
+		}
+	}
+}
+
 func TestInfrastructureStatusFallsBackToLocalProbe(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	userProfile := t.TempDir()
