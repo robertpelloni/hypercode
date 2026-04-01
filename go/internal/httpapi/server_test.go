@@ -5557,9 +5557,39 @@ func TestOperatorListEndpointsFallBackToEmptyState(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(homeDir, "AppData", "Roaming", "Microsoft", "Windows", "PowerShell", "PSReadLine"), 0o755); err != nil {
 		t.Fatalf("failed to create powershell history dir: %v", err)
 	}
-	configJSON := `{"scripts":[{"uuid":"script-local-1","name":"Deploy local","description":"ship it","code":"echo hi"}],"toolSets":[{"uuid":"toolset-local-1","name":"Core local tools","tools":["search_tools","read_file"]}]}`
+	configJSON := `{"scripts":[{"uuid":"script-local-1","name":"Deploy local","description":"ship it","code":"echo hi"}]}`
 	if err := os.WriteFile(filepath.Join(workspaceRoot, ".hypercode", "config.json"), []byte(configJSON), 0o644); err != nil {
 		t.Fatalf("failed to write local config: %v", err)
+	}
+	dbPath := filepath.Join(workspaceRoot, "metamcp.db")
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("failed to open sqlite db: %v", err)
+	}
+	defer db.Close()
+	if _, err := db.Exec(`
+		CREATE TABLE tool_sets (
+			uuid TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			description TEXT,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL,
+			user_id TEXT
+		);
+		CREATE TABLE tool_set_items (
+			uuid TEXT PRIMARY KEY,
+			tool_set_uuid TEXT NOT NULL,
+			tool_uuid TEXT NOT NULL,
+			created_at INTEGER NOT NULL
+		);
+		INSERT INTO tool_sets (uuid, name, description, created_at, updated_at, user_id)
+		VALUES ('toolset-local-1', 'Core local tools', 'Local DB-backed set', 1711958400, 1711958460, NULL);
+		INSERT INTO tool_set_items (uuid, tool_set_uuid, tool_uuid, created_at)
+		VALUES
+			('tsi-1', 'toolset-local-1', 'search_tools', 1711958401),
+			('tsi-2', 'toolset-local-1', 'read_file', 1711958402);
+	`); err != nil {
+		t.Fatalf("failed to seed sqlite db: %v", err)
 	}
 	historyJSON := `[{"id":"cmd-1","command":"pnpm test","cwd":"C:\\repo","timestamp":1700000000000,"outputSnippet":"tests passed","session":"sess-1"}]`
 	if err := os.WriteFile(filepath.Join(workspaceRoot, ".hypercode", "shell_history.json"), []byte(historyJSON), 0o644); err != nil {
@@ -5619,9 +5649,10 @@ func TestOperatorListEndpointsFallBackToEmptyState(t *testing.T) {
 			contains: []string{
 				`"fallback":"go-local-operator"`,
 				`"procedure":"toolSets.list"`,
-				`using local tool sets from HyperCode config`,
+				`using local tool sets from metamcp.db`,
 				`"toolset-local-1"`,
 				`"Core local tools"`,
+				`"read_file"`,
 			},
 		},
 		{
@@ -5630,9 +5661,10 @@ func TestOperatorListEndpointsFallBackToEmptyState(t *testing.T) {
 			contains: []string{
 				`"fallback":"go-local-operator"`,
 				`"procedure":"toolSets.get"`,
-				`using local tool set from HyperCode config`,
+				`using local tool set from metamcp.db`,
 				`"toolset-local-1"`,
 				`"Core local tools"`,
+				`"search_tools"`,
 			},
 		},
 		{

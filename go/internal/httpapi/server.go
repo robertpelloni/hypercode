@@ -5693,7 +5693,7 @@ func (s *Server) handleToolSetsList(w http.ResponseWriter, r *http.Request) {
 		"bridge": map[string]any{
 			"fallback":  "go-local-operator",
 			"procedure": "toolSets.list",
-			"reason":    "upstream unavailable; using local tool sets from HyperCode config",
+			"reason":    "upstream unavailable; using local tool sets from metamcp.db",
 		},
 	})
 }
@@ -5735,7 +5735,7 @@ func (s *Server) handleToolSetsGet(w http.ResponseWriter, r *http.Request) {
 				"bridge": map[string]any{
 					"fallback":  "go-local-operator",
 					"procedure": "toolSets.get",
-					"reason":    "upstream unavailable; using local tool set from HyperCode config",
+					"reason":    "upstream unavailable; using local tool set from metamcp.db",
 				},
 			})
 			return
@@ -5748,7 +5748,7 @@ func (s *Server) handleToolSetsGet(w http.ResponseWriter, r *http.Request) {
 		"bridge": map[string]any{
 			"fallback":  "go-local-operator",
 			"procedure": "toolSets.get",
-			"reason":    "upstream unavailable; tool set was not found in local HyperCode config",
+			"reason":    "upstream unavailable; tool set was not found in local metamcp.db",
 		},
 	})
 }
@@ -11845,19 +11845,66 @@ func (s *Server) localSavedScripts() ([]map[string]any, error) {
 }
 
 func (s *Server) localToolSets() ([]map[string]any, error) {
-	config := localSettingsConfig(s.cfg.WorkspaceRoot)
-	rawToolSets, ok := config["toolSets"].([]any)
-	if !ok {
-		return []map[string]any{}, nil
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
 	}
+	defer db.Close()
 
-	toolSets := make([]map[string]any, 0, len(rawToolSets))
-	for _, entry := range rawToolSets {
-		toolSet, ok := entry.(map[string]any)
-		if !ok {
-			continue
+	rows, err := db.Query(`
+		SELECT uuid, name, description
+		FROM tool_sets
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	toolSets := make([]map[string]any, 0)
+	for rows.Next() {
+		var (
+			uuid        string
+			name        string
+			description sql.NullString
+		)
+		if err := rows.Scan(&uuid, &name, &description); err != nil {
+			return nil, err
 		}
-		toolSets = append(toolSets, cloneMap(toolSet))
+
+		toolRows, err := db.Query(`
+			SELECT tool_uuid
+			FROM tool_set_items
+			WHERE tool_set_uuid = ?
+			ORDER BY created_at ASC, uuid ASC
+		`, uuid)
+		if err != nil {
+			return nil, err
+		}
+
+		tools := make([]string, 0)
+		for toolRows.Next() {
+			var toolUUID string
+			if err := toolRows.Scan(&toolUUID); err != nil {
+				toolRows.Close()
+				return nil, err
+			}
+			tools = append(tools, toolUUID)
+		}
+		if err := toolRows.Err(); err != nil {
+			toolRows.Close()
+			return nil, err
+		}
+		toolRows.Close()
+
+		toolSets = append(toolSets, map[string]any{
+			"uuid":        uuid,
+			"name":        name,
+			"description": nullStringToAny(description),
+			"tools":       tools,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return toolSets, nil
