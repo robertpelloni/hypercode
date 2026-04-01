@@ -3366,6 +3366,28 @@ func TestProviderReadEndpointsFallBackToLocalProviderSnapshot(t *testing.T) {
 	}
 }
 
+func TestConfigAuthProvidersFallsBackToLocalOIDCAvailability(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	t.Setenv("OIDC_CLIENT_ID", "client")
+	t.Setenv("OIDC_CLIENT_SECRET", "secret")
+	t.Setenv("OIDC_DISCOVERY_URL", "https://issuer.example/.well-known/openid-configuration")
+
+	server := New(config.Default(), stubDetector{})
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/api/config/auth-providers", nil)
+	server.Handler().ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected auth providers fallback 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"fallback":"go-local-config"`) {
+		t.Fatalf("expected local config fallback metadata, got %s", recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"id":"oidc"`) || !strings.Contains(recorder.Body.String(), `"enabled":true`) {
+		t.Fatalf("expected local OIDC auth provider availability, got %s", recorder.Body.String())
+	}
+}
+
 func TestBrowserBridgeRoutes(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")

@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -95,7 +96,38 @@ func (s *Server) handleConfigSetBasicAuthDisabled(w http.ResponseWriter, r *http
 }
 
 func (s *Server) handleConfigGetAuthProviders(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "config.getAuthProviders", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "config.getAuthProviders", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "config.getAuthProviders",
+			},
+		})
+		return
+	}
+
+	providers := []map[string]any{}
+	if os.Getenv("OIDC_CLIENT_ID") != "" && os.Getenv("OIDC_CLIENT_SECRET") != "" && os.Getenv("OIDC_DISCOVERY_URL") != "" {
+		providers = append(providers, map[string]any{
+			"id":      "oidc",
+			"name":    "OIDC",
+			"enabled": true,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    providers,
+		"bridge": map[string]any{
+			"fallback":  "go-local-config",
+			"procedure": "config.getAuthProviders",
+			"reason":    "upstream unavailable; using local auth provider availability",
+		},
+	})
 }
 
 func (s *Server) handleConfigGetAlwaysVisibleTools(w http.ResponseWriter, r *http.Request) {
