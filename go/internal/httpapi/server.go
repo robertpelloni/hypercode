@@ -1143,7 +1143,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/lsp/symbols", Category: "code", Description: "Bridge to the TypeScript LSP file-symbol surface."},
 				{Path: "/api/lsp/search", Category: "code", Description: "Bridge to the TypeScript LSP symbol-search surface."},
 				{Path: "/api/lsp/index", Category: "code", Description: "Trigger TypeScript LSP indexing through the bridge."},
-				{Path: "/api/api-keys", Category: "governance", Description: "List API keys through the TypeScript API keys router."},
+				{Path: "/api/api-keys", Category: "governance", Description: "List API keys through the TypeScript API keys router, with a local empty-state fallback when the key store is unavailable."},
 				{Path: "/api/api-keys/get", Category: "governance", Description: "Read an API key through the TypeScript API keys router."},
 				{Path: "/api/api-keys/create", Category: "governance", Description: "Create an API key through the TypeScript API keys router."},
 				{Path: "/api/api-keys/update", Category: "governance", Description: "Update an API key through the TypeScript API keys router."},
@@ -1151,7 +1151,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/api-keys/validate", Category: "governance", Description: "Validate an API key through the TypeScript API keys router."},
 				{Path: "/api/audit", Category: "governance", Description: "List audit logs through the TypeScript audit router."},
 				{Path: "/api/audit/query", Category: "governance", Description: "Query audit logs through the TypeScript audit router."},
-				{Path: "/api/scripts", Category: "operator", Description: "List saved scripts through the TypeScript saved scripts router."},
+				{Path: "/api/scripts", Category: "operator", Description: "List saved scripts through the TypeScript saved scripts router, with a local empty-state fallback when the script store is unavailable."},
 				{Path: "/api/scripts/get", Category: "operator", Description: "Read a saved script through the TypeScript saved scripts router."},
 				{Path: "/api/scripts/create", Category: "operator", Description: "Create a saved script through the TypeScript saved scripts router."},
 				{Path: "/api/scripts/update", Category: "operator", Description: "Update a saved script through the TypeScript saved scripts router."},
@@ -5387,7 +5387,29 @@ func (s *Server) handleLSPIndexProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleAPIKeysList(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "apiKeys.list", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "apiKeys.list", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "apiKeys.list",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-operator",
+			"procedure": "apiKeys.list",
+			"reason":    "upstream unavailable; using local empty API key list",
+		},
+	})
 }
 
 func (s *Server) handleAPIKeysGet(w http.ResponseWriter, r *http.Request) {
@@ -5445,7 +5467,29 @@ func (s *Server) handleAuditQuery(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleSavedScriptsList(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "savedScripts.list", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "savedScripts.list", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "savedScripts.list",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []map[string]any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-operator",
+			"procedure": "savedScripts.list",
+			"reason":    "upstream unavailable; using local empty saved script list",
+		},
+	})
 }
 
 func (s *Server) handleSavedScriptsGet(w http.ResponseWriter, r *http.Request) {
