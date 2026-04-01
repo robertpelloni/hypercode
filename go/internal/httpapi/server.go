@@ -2615,7 +2615,7 @@ func (s *Server) handleMCPToolAdvertisements(w http.ResponseWriter, r *http.Requ
 
 	toolSuggestions, err := s.buildToolSuggestionSnapshotWithLimit(r, query, limit)
 	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": err.Error()})
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": "failed to build tool advertisement snapshot: " + err.Error()})
 		return
 	}
 

@@ -593,6 +593,27 @@ var ListAllTools = struct{
 	}
 }
 
+func TestMCPToolAdvertisementsReportSnapshotFailure(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = string([]byte{0})
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/api/mcp/tool-ads?goal=ship&objective=find%20tool", nil)
+	server.Handler().ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected tool advertisement failure status 503, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `failed to build tool advertisement snapshot:`) {
+		t.Fatalf("expected tool advertisement snapshot error, got %s", recorder.Body.String())
+	}
+}
+
 func TestMemoryToolContextFallsBackToLocalPrompt(t *testing.T) {
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 	cfg := config.Default()
