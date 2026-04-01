@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -4840,16 +4841,22 @@ func (s *Server) handleMetricsRoutingHistory(w http.ResponseWriter, r *http.Requ
 
 func (s *Server) handleLogsList(w http.ResponseWriter, r *http.Request) {
 	payload := map[string]any{}
+	filter := localLogsFilter{limit: 100}
 	if limit := strings.TrimSpace(r.URL.Query().Get("limit")); limit != "" {
 		if parsed, err := strconv.Atoi(limit); err == nil {
 			payload["limit"] = parsed
+			if parsed > 0 {
+				filter.limit = parsed
+			}
 		}
 	}
 	if sessionID := strings.TrimSpace(r.URL.Query().Get("sessionId")); sessionID != "" {
 		payload["sessionId"] = sessionID
+		filter.sessionID = sessionID
 	}
 	if serverName := strings.TrimSpace(r.URL.Query().Get("serverName")); serverName != "" {
 		payload["serverName"] = serverName
+		filter.serverName = serverName
 	}
 	var result any
 	upstreamBase, err := s.callUpstreamJSON(r.Context(), "logs.list", payload, &result)
@@ -4865,22 +4872,32 @@ func (s *Server) handleLogsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logs, fallbackErr := s.localObservabilityLogs(filter)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": fallbackErr.Error()})
+		return
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    []any{},
+		"data":    logs,
 		"bridge": map[string]any{
 			"fallback":  "go-local-observability",
 			"procedure": "logs.list",
-			"reason":    "upstream unavailable; local log store is not implemented",
+			"reason":    "upstream unavailable; using local tool_call_logs records",
 		},
 	})
 }
 
 func (s *Server) handleLogsSummary(w http.ResponseWriter, r *http.Request) {
 	payload := map[string]any{}
+	filter := localLogsFilter{limit: 1000}
 	if limit := strings.TrimSpace(r.URL.Query().Get("limit")); limit != "" {
 		if parsed, err := strconv.Atoi(limit); err == nil {
 			payload["limit"] = parsed
+			if parsed > 0 {
+				filter.limit = parsed
+			}
 		}
 	}
 	var result any
@@ -4897,23 +4914,19 @@ func (s *Server) handleLogsSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	summary, fallbackErr := s.localObservabilitySummary(filter)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": fallbackErr.Error()})
+		return
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data": map[string]any{
-			"totals": map[string]any{
-				"totalCalls":    0,
-				"errorCount":    0,
-				"errorRate":     0,
-				"avgDurationMs": 0,
-				"successRate":   100,
-			},
-			"topTools":       []any{},
-			"recentActivity": []any{},
-		},
+		"data":    summary,
 		"bridge": map[string]any{
 			"fallback":  "go-local-observability",
 			"procedure": "logs.summary",
-			"reason":    "upstream unavailable; local log store is not implemented",
+			"reason":    "upstream unavailable; summarizing local tool_call_logs records",
 		},
 	})
 }
@@ -4932,7 +4945,242 @@ func (s *Server) handleLogsClear(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	s.handleLogsClearFallback(w)
+}
 
+type localLogsFilter struct {
+	limit      int
+	sessionID  string
+	serverName string
+}
+
+type localObservabilityLog struct {
+	ID             string
+	Timestamp      int64
+	ServerName     string
+	Level          string
+	Message        string
+	ToolName       string
+	Error          any
+	Arguments      any
+	Result         any
+	DurationMs     string
+	SessionID      string
+	ParentCallUUID any
+}
+
+func (s *Server) localObservabilityLogs(filter localLogsFilter) ([]map[string]any, error) {
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	if filter.limit <= 0 {
+		filter.limit = 100
+	}
+
+	query := `
+		SELECT l.uuid, l.created_at, COALESCE(m.name, ''), l.tool_name, l.error, l.args, l.result, l.duration_ms, COALESCE(l.session_id, ''), l.parent_call_uuid
+		FROM tool_call_logs l
+		LEFT JOIN mcp_servers m ON l.mcp_server_uuid = m.uuid
+		WHERE (? = '' OR l.session_id = ?)
+		  AND (? = '' OR m.name = ?)
+		ORDER BY l.created_at DESC
+		LIMIT ?
+	`
+	rows, err := db.Query(query, filter.sessionID, filter.sessionID, filter.serverName, filter.serverName, filter.limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	logs := []map[string]any{}
+	for rows.Next() {
+		log, scanErr := scanObservabilityLog(rows)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		logs = append(logs, log)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return logs, nil
+}
+
+func (s *Server) localObservabilitySummary(filter localLogsFilter) (map[string]any, error) {
+	logs, err := s.localObservabilityLogs(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	totalCalls := len(logs)
+	errorCount := 0
+	durationSum := 0
+	toolMap := map[string]map[string]any{}
+	recentActivity := make([]map[string]any, 0, min(30, len(logs)))
+
+	for i, entry := range logs {
+		level := strings.ToLower(jsonString(entry["level"]))
+		isError := level == "error" || entry["error"] != nil
+		if isError {
+			errorCount++
+		}
+		duration := atoiDefault(jsonString(entry["durationMs"]), 0)
+		durationSum += duration
+
+		toolName := jsonString(entry["toolName"])
+		if toolName == "" {
+			toolName = "unknown"
+		}
+		current := toolMap[toolName]
+		if current == nil {
+			current = map[string]any{"name": toolName, "count": 0, "errors": 0}
+		}
+		current["count"] = anyInt64(current["count"]) + 1
+		if isError {
+			current["errors"] = anyInt64(current["errors"]) + 1
+		}
+		toolMap[toolName] = current
+
+		if i < 30 {
+			recentActivity = append(recentActivity, map[string]any{
+				"toolName":   toolName,
+				"durationMs": duration,
+				"error":      isError,
+				"timestamp":  entry["timestamp"],
+			})
+		}
+	}
+
+	avgDurationMs := 0
+	errorRate := 0.0
+	successRate := 100.0
+	if totalCalls > 0 {
+		avgDurationMs = int(math.Round(float64(durationSum) / float64(totalCalls)))
+		errorRate = math.Round((float64(errorCount)/float64(totalCalls))*1000) / 10
+		successRate = math.Round((100-errorRate)*10) / 10
+	}
+
+	topTools := make([]map[string]any, 0, len(toolMap))
+	for _, entry := range toolMap {
+		topTools = append(topTools, entry)
+	}
+	sort.Slice(topTools, func(i, j int) bool {
+		return anyInt64(topTools[i]["count"]) > anyInt64(topTools[j]["count"])
+	})
+	if len(topTools) > 10 {
+		topTools = topTools[:10]
+	}
+
+	return map[string]any{
+		"totals": map[string]any{
+			"totalCalls":    totalCalls,
+			"errorCount":    errorCount,
+			"errorRate":     errorRate,
+			"avgDurationMs": avgDurationMs,
+			"successRate":   successRate,
+		},
+		"topTools":       topTools,
+		"recentActivity": recentActivity,
+	}, nil
+}
+
+func (s *Server) clearLocalObservabilityLogs() error {
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`DELETE FROM tool_call_logs`)
+	return err
+}
+
+func scanObservabilityLog(scanner interface{ Scan(dest ...any) error }) (map[string]any, error) {
+	var (
+		id             string
+		createdAt      int64
+		serverName     string
+		toolName       string
+		errorValue     sql.NullString
+		argsRaw        sql.NullString
+		resultRaw      sql.NullString
+		durationMs     sql.NullInt64
+		sessionID      string
+		parentCallUUID sql.NullString
+	)
+	if err := scanner.Scan(&id, &createdAt, &serverName, &toolName, &errorValue, &argsRaw, &resultRaw, &durationMs, &sessionID, &parentCallUUID); err != nil {
+		return nil, err
+	}
+
+	level := "info"
+	if errorValue.Valid && strings.TrimSpace(errorValue.String) != "" {
+		level = "error"
+	}
+
+	return map[string]any{
+		"id":             id,
+		"timestamp":      unixTimestampToRFC3339(createdAt),
+		"serverName":     emptyStringToNilAny(serverName),
+		"level":          level,
+		"message":        "Tool call: " + toolName,
+		"toolName":       toolName,
+		"error":          nullStringToAny(errorValue),
+		"arguments":      jsonNullStringObjectOrNil(argsRaw),
+		"result":         jsonNullStringObjectOrNil(resultRaw),
+		"durationMs":     nullInt64ToStringAny(durationMs),
+		"sessionId":      emptyStringToNilAny(sessionID),
+		"parentCallUuid": nullStringToAny(parentCallUUID),
+	}, nil
+}
+
+func jsonNullStringObjectOrNil(raw sql.NullString) any {
+	if !raw.Valid || strings.TrimSpace(raw.String) == "" {
+		return nil
+	}
+	var parsed any
+	if err := json.Unmarshal([]byte(raw.String), &parsed); err != nil {
+		return nil
+	}
+	return parsed
+}
+
+func nullInt64ToStringAny(value sql.NullInt64) any {
+	if !value.Valid {
+		return nil
+	}
+	return strconv.FormatInt(value.Int64, 10)
+}
+
+func atoiDefault(raw string, fallback int) int {
+	value, err := strconv.Atoi(strings.TrimSpace(raw))
+	if err != nil {
+		return fallback
+	}
+	return value
+}
+
+func jsonString(value any) string {
+	if s, ok := value.(string); ok {
+		return s
+	}
+	return ""
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func (s *Server) handleLogsClearFallback(w http.ResponseWriter) {
+	if err := s.clearLocalObservabilityLogs(); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": err.Error()})
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
 		"data": map[string]any{
@@ -4942,7 +5190,7 @@ func (s *Server) handleLogsClear(w http.ResponseWriter, r *http.Request) {
 		"bridge": map[string]any{
 			"fallback":  "go-local-observability",
 			"procedure": "logs.clear",
-			"reason":    "upstream unavailable; local log store is not implemented",
+			"reason":    "upstream unavailable; cleared local tool_call_logs records",
 		},
 	})
 }

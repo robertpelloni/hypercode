@@ -3500,7 +3500,45 @@ func TestConfigAuthProvidersFallsBackToLocalOIDCAvailability(t *testing.T) {
 func TestObservabilityReadEndpointsFallBackToLocalPreview(t *testing.T) {
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 
-	server := New(config.Default(), stubDetector{})
+	workspaceRoot := t.TempDir()
+	dbPath := filepath.Join(workspaceRoot, "metamcp.db")
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("failed to open sqlite db: %v", err)
+	}
+	defer db.Close()
+	if _, err := db.Exec(`
+		CREATE TABLE mcp_servers (
+			uuid TEXT PRIMARY KEY,
+			name TEXT NOT NULL
+		);
+		CREATE TABLE tool_call_logs (
+			uuid TEXT PRIMARY KEY,
+			tool_name TEXT NOT NULL,
+			mcp_server_uuid TEXT,
+			namespace_uuid TEXT,
+			endpoint_uuid TEXT,
+			args TEXT,
+			result TEXT,
+			error TEXT,
+			duration_ms INTEGER,
+			session_id TEXT,
+			parent_call_uuid TEXT,
+			created_at INTEGER NOT NULL
+		);
+		INSERT INTO mcp_servers (uuid, name) VALUES ('srv-1', 'core');
+		INSERT INTO tool_call_logs (uuid, tool_name, mcp_server_uuid, args, result, error, duration_ms, session_id, parent_call_uuid, created_at) VALUES
+			('log-1', 'search_tools', 'srv-1', '{"query":"search"}', '{"count":1}', NULL, 42, 'sess-1', NULL, 1711980000),
+			('log-2', 'read_file', 'srv-1', '{"path":"README.md"}', NULL, 'boom', 84, 'sess-1', NULL, 1711980100);
+	`); err != nil {
+		t.Fatalf("failed to seed sqlite db: %v", err)
+	}
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
 
 	systemSnapshotRecorder := httptest.NewRecorder()
 	systemSnapshotRequest := httptest.NewRequest(http.MethodGet, "/api/metrics/system-snapshot", nil)
@@ -3521,8 +3559,8 @@ func TestObservabilityReadEndpointsFallBackToLocalPreview(t *testing.T) {
 	if logsListRecorder.Code != http.StatusOK {
 		t.Fatalf("expected logs list fallback 200, got %d with body %s", logsListRecorder.Code, logsListRecorder.Body.String())
 	}
-	if !strings.Contains(logsListRecorder.Body.String(), `"fallback":"go-local-observability"`) || !strings.Contains(logsListRecorder.Body.String(), `"data":[]`) {
-		t.Fatalf("expected empty logs list fallback, got %s", logsListRecorder.Body.String())
+	if !strings.Contains(logsListRecorder.Body.String(), `"fallback":"go-local-observability"`) || !strings.Contains(logsListRecorder.Body.String(), `"toolName":"search_tools"`) {
+		t.Fatalf("expected local DB-backed logs list fallback, got %s", logsListRecorder.Body.String())
 	}
 
 	logsSummaryRecorder := httptest.NewRecorder()
@@ -3531,8 +3569,8 @@ func TestObservabilityReadEndpointsFallBackToLocalPreview(t *testing.T) {
 	if logsSummaryRecorder.Code != http.StatusOK {
 		t.Fatalf("expected logs summary fallback 200, got %d with body %s", logsSummaryRecorder.Code, logsSummaryRecorder.Body.String())
 	}
-	if !strings.Contains(logsSummaryRecorder.Body.String(), `"fallback":"go-local-observability"`) || !strings.Contains(logsSummaryRecorder.Body.String(), `"totalCalls":0`) {
-		t.Fatalf("expected empty logs summary fallback, got %s", logsSummaryRecorder.Body.String())
+	if !strings.Contains(logsSummaryRecorder.Body.String(), `"fallback":"go-local-observability"`) || !strings.Contains(logsSummaryRecorder.Body.String(), `"totalCalls":2`) {
+		t.Fatalf("expected local DB-backed logs summary fallback, got %s", logsSummaryRecorder.Body.String())
 	}
 
 	logsClearRecorder := httptest.NewRecorder()
@@ -3543,6 +3581,13 @@ func TestObservabilityReadEndpointsFallBackToLocalPreview(t *testing.T) {
 	}
 	if !strings.Contains(logsClearRecorder.Body.String(), `"fallback":"go-local-observability"`) || !strings.Contains(logsClearRecorder.Body.String(), `"message":"Logs cleared"`) {
 		t.Fatalf("expected local logs clear fallback, got %s", logsClearRecorder.Body.String())
+	}
+	var remaining int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM tool_call_logs`).Scan(&remaining); err != nil {
+		t.Fatalf("failed to count cleared logs: %v", err)
+	}
+	if remaining != 0 {
+		t.Fatalf("expected local logs clear fallback to delete rows, got %d remaining", remaining)
 	}
 }
 
