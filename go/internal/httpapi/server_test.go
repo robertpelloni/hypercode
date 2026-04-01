@@ -6804,6 +6804,76 @@ func TestBrowserControlsReadRoutesFallBackToLocalDB(t *testing.T) {
 	}
 }
 
+func TestConfigReadRoutesFallBackToLocalDB(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	workspace := t.TempDir()
+	dbPath := filepath.Join(workspace, "metamcp.db")
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("failed to open sqlite db: %v", err)
+	}
+	defer db.Close()
+
+	if _, err := db.Exec(`
+		CREATE TABLE config (
+			id TEXT PRIMARY KEY,
+			value TEXT NOT NULL,
+			description TEXT,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL
+		);
+		INSERT INTO config (id, value, created_at, updated_at) VALUES
+			('theme', 'dark', 1711958300, 1711958460),
+			('MCP_TIMEOUT', '15000', 1711958300, 1711958460),
+			('MCP_MAX_ATTEMPTS', '4', 1711958300, 1711958460),
+			('MCP_MAX_TOTAL_TIMEOUT', '30000', 1711958300, 1711958460),
+			('MCP_RESET_TIMEOUT_ON_PROGRESS', 'false', 1711958300, 1711958460),
+			('SESSION_LIFETIME', '3600000', 1711958300, 1711958460),
+			('DISABLE_SSO_SIGNUP', 'true', 1711958300, 1711958460);
+	`); err != nil {
+		t.Fatalf("failed to seed sqlite db: %v", err)
+	}
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspace
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	cases := []struct {
+		name     string
+		path     string
+		contains []string
+	}{
+		{"config list", "/api/config/list", []string{`"procedure":"config.list"`, `"key":"theme"`, `"value":"dark"`}},
+		{"config get", "/api/config/get?key=theme", []string{`"procedure":"config.get"`, `"data":"dark"`}},
+		{"mcp timeout", "/api/config/mcp-timeout", []string{`"procedure":"config.getMcpTimeout"`, `"data":15000`}},
+		{"mcp max attempts", "/api/config/mcp-max-attempts", []string{`"procedure":"config.getMcpMaxAttempts"`, `"data":4`}},
+		{"mcp max total timeout", "/api/config/mcp-max-total-timeout", []string{`"procedure":"config.getMcpMaxTotalTimeout"`, `"data":30000`}},
+		{"mcp reset on progress", "/api/config/mcp-reset-timeout-on-progress", []string{`"procedure":"config.getMcpResetTimeoutOnProgress"`, `"data":true`}},
+		{"session lifetime", "/api/config/session-lifetime", []string{`"procedure":"config.getSessionLifetime"`, `"data":3600000`}},
+		{"signup disabled default", "/api/config/signup-disabled", []string{`"procedure":"config.getSignupDisabled"`, `"data":false`}},
+		{"sso signup disabled", "/api/config/sso-signup-disabled", []string{`"procedure":"config.getSsoSignupDisabled"`, `"data":true`}},
+		{"basic auth disabled default", "/api/config/basic-auth-disabled", []string{`"procedure":"config.getBasicAuthDisabled"`, `"data":false`}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, tc.path, nil))
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
+			}
+			for _, needle := range tc.contains {
+				if !strings.Contains(recorder.Body.String(), needle) {
+					t.Fatalf("expected config fallback to contain %s, got %s", needle, recorder.Body.String())
+				}
+			}
+		})
+	}
+}
+
 func TestInfrastructureStatusFallsBackToLocalProbe(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	userProfile := t.TempDir()
