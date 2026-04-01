@@ -1,5 +1,5 @@
 @echo off
-echo Starting Borg...
+echo Starting HyperCode...
 
 where pnpm >nul 2>nul
 if errorlevel 1 (
