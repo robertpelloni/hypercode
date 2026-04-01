@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -5790,6 +5791,75 @@ func TestResearchQueueFallsBackToLocalFiles(t *testing.T) {
 	} {
 		if !strings.Contains(recorder.Body.String(), needle) {
 			t.Fatalf("expected response to contain %s, got %s", needle, recorder.Body.String())
+		}
+	}
+}
+
+func TestSettingsReadEndpointsFallBackLocally(t *testing.T) {
+	workspaceRoot := t.TempDir()
+	mainConfigDir := filepath.Join(workspaceRoot, ".hypercode")
+	if err := os.MkdirAll(mainConfigDir, 0o755); err != nil {
+		t.Fatalf("failed to create config dir: %v", err)
+	}
+
+	configBody := `{
+  "mcpServers": {
+    "core": {
+      "command": "node",
+      "args": ["server.js"],
+      "description": "Core MCP server",
+      "always_on": true
+    }
+  }
+}`
+	if err := os.WriteFile(filepath.Join(mainConfigDir, "mcp.jsonc"), []byte(configBody), 0o644); err != nil {
+		t.Fatalf("failed to write mcp config: %v", err)
+	}
+
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	t.Setenv("NODE_ENV", "test")
+	t.Setenv("PORT", "4310")
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	cfg.MainConfigDir = mainConfigDir
+	server := New(cfg, stubDetector{})
+
+	environmentRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(environmentRecorder, httptest.NewRequest(http.MethodGet, "/api/settings/environment", nil))
+	if environmentRecorder.Code != http.StatusOK {
+		t.Fatalf("expected environment status 200, got %d with body %s", environmentRecorder.Code, environmentRecorder.Body.String())
+	}
+	for _, needle := range []string{
+		`"fallback":"go-local-settings"`,
+		`"procedure":"settings.getEnvironment"`,
+		`using local Go runtime environment diagnostics`,
+		`"platform":"` + runtime.GOOS + `"`,
+		`"arch":"` + runtime.GOARCH + `"`,
+		`"NODE_ENV":"test"`,
+		`"PORT":"4310"`,
+	} {
+		if !strings.Contains(environmentRecorder.Body.String(), needle) {
+			t.Fatalf("expected environment response to contain %s, got %s", needle, environmentRecorder.Body.String())
+		}
+	}
+
+	serversRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(serversRecorder, httptest.NewRequest(http.MethodGet, "/api/settings/mcp-servers", nil))
+	if serversRecorder.Code != http.StatusOK {
+		t.Fatalf("expected mcp servers status 200, got %d with body %s", serversRecorder.Code, serversRecorder.Body.String())
+	}
+	for _, needle := range []string{
+		`"fallback":"go-local-settings"`,
+		`"procedure":"settings.getMcpServers"`,
+		`using local MCP config servers`,
+		`"name":"core"`,
+		`"description":"Core MCP server"`,
+		`"always_on":true`,
+		`"command":"node"`,
+	} {
+		if !strings.Contains(serversRecorder.Body.String(), needle) {
+			t.Fatalf("expected mcp servers response to contain %s, got %s", needle, serversRecorder.Body.String())
 		}
 	}
 }

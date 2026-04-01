@@ -1082,8 +1082,8 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/settings/update", Category: "control", Description: "Update the TypeScript configuration object with a partial config payload."},
 				{Path: "/api/settings/providers", Category: "control", Description: "Read provider visibility, with a local Go provider catalog fallback when the TypeScript settings router is unavailable."},
 				{Path: "/api/settings/test-connection", Category: "control", Description: "Test a provider connection through the TypeScript control plane."},
-				{Path: "/api/settings/environment", Category: "control", Description: "Bridge to TypeScript environment diagnostics."},
-				{Path: "/api/settings/mcp-servers", Category: "control", Description: "Bridge to configured MCP servers from the TypeScript settings layer."},
+				{Path: "/api/settings/environment", Category: "control", Description: "Read environment diagnostics through the TypeScript settings router, with a local Go runtime fallback when the router is unavailable."},
+				{Path: "/api/settings/mcp-servers", Category: "control", Description: "Read configured MCP servers through the TypeScript settings router, with a local Go config fallback when the router is unavailable."},
 				{Path: "/api/settings/provider-key", Category: "control", Description: "Persist a provider key through the TypeScript settings layer."},
 				{Path: "/api/tools", Category: "control", Description: "List tools, with a local source-backed Go inventory fallback when the TypeScript tools router is unavailable."},
 				{Path: "/api/tools/by-server", Category: "control", Description: "List tools filtered by MCP server, with a local source-backed Go inventory fallback when the TypeScript tools router is unavailable."},
@@ -4650,11 +4650,65 @@ func (s *Server) handleSettingsTestConnection(w http.ResponseWriter, r *http.Req
 }
 
 func (s *Server) handleSettingsEnvironment(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "settings.getEnvironment", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "settings.getEnvironment", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "settings.getEnvironment",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    localSettingsEnvironment(),
+		"bridge": map[string]any{
+			"fallback":  "go-local-settings",
+			"procedure": "settings.getEnvironment",
+			"reason":    "upstream unavailable; using local Go runtime environment diagnostics",
+		},
+	})
 }
 
 func (s *Server) handleSettingsMCPServers(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "settings.getMcpServers", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "settings.getMcpServers", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "settings.getMcpServers",
+			},
+		})
+		return
+	}
+
+	servers, fallbackErr := s.localConfiguredMCPServers()
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    servers,
+		"bridge": map[string]any{
+			"fallback":  "go-local-settings",
+			"procedure": "settings.getMcpServers",
+			"reason":    "upstream unavailable; using local MCP config servers",
+		},
+	})
 }
 
 func (s *Server) handleSettingsProviderKey(w http.ResponseWriter, r *http.Request) {
@@ -7331,6 +7385,35 @@ func localInfrastructureStatus(workspaceRoot string) map[string]any {
 			return nil
 		}(),
 	}
+}
+
+func localSettingsEnvironment() map[string]any {
+	return map[string]any{
+		"nodeVersion": "",
+		"platform":    runtime.GOOS,
+		"arch":        runtime.GOARCH,
+		"cwd":         mustGetwd(),
+		"env": map[string]any{
+			"NODE_ENV": coalesceEnv("NODE_ENV", "development"),
+			"PORT":     coalesceEnv("PORT", "3000"),
+		},
+	}
+}
+
+func mustGetwd() string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "."
+	}
+	return cwd
+}
+
+func coalesceEnv(key string, fallback string) string {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+	return value
 }
 
 func normalizeResearchURL(raw string) string {
