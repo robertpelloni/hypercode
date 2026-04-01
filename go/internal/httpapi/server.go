@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -1321,7 +1322,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/research/ingest", Category: "research", Description: "Ingest a research URL through the TypeScript research router."},
 				{Path: "/api/research/recursive", Category: "research", Description: "Run recursive research through the TypeScript research router."},
 				{Path: "/api/research/queries", Category: "research", Description: "Generate research queries through the TypeScript research router, with a local topic-as-query fallback when the deep research service is unavailable."},
-				{Path: "/api/research/queue", Category: "research", Description: "Read research ingestion queue state through the TypeScript research router."},
+				{Path: "/api/research/queue", Category: "research", Description: "Read research ingestion queue state through the TypeScript research router, with a local file-backed fallback when the router is unavailable."},
 				{Path: "/api/research/retry-failed", Category: "research", Description: "Retry a failed research URL through the TypeScript research router."},
 				{Path: "/api/research/retry-all-failed", Category: "research", Description: "Retry all failed research URLs through the TypeScript research router."},
 				{Path: "/api/research/enqueue", Category: "research", Description: "Enqueue a research URL through the TypeScript research router."},
@@ -5911,7 +5912,39 @@ func (s *Server) handleResearchQueries(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleResearchQueue(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "research.ingestionQueue", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "research.ingestionQueue", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "research.ingestionQueue",
+			},
+		})
+		return
+	}
+
+	data, fallbackErr := s.localResearchQueue()
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    data,
+		"bridge": map[string]any{
+			"fallback":  "go-local-research",
+			"procedure": "research.ingestionQueue",
+			"reason":    "upstream unavailable; using local research queue files",
+		},
+	})
 }
 
 func (s *Server) handleResearchRetryFailed(w http.ResponseWriter, r *http.Request) {
@@ -7298,6 +7331,136 @@ func localInfrastructureStatus(workspaceRoot string) map[string]any {
 			return nil
 		}(),
 	}
+}
+
+func normalizeResearchURL(raw string) string {
+	parsed, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return strings.TrimSpace(raw)
+	}
+	parsed.Fragment = ""
+	cleanPath := strings.TrimRight(parsed.Path, "/")
+	if cleanPath == "" {
+		cleanPath = "/"
+	}
+	parsed.Path = cleanPath
+	normalized := parsed.String()
+	return strings.TrimRight(normalized, "/")
+}
+
+func (s *Server) localResearchQueue() (map[string]any, error) {
+	statusPath := filepath.Join(s.cfg.WorkspaceRoot, "scripts", "ingestion-status.json")
+	indexPath := filepath.Join(s.cfg.WorkspaceRoot, "BORG_MASTER_INDEX.jsonc")
+
+	var statusDoc struct {
+		Processed []string `json:"processed"`
+		Pending   []string `json:"pending"`
+		Failed    []struct {
+			URL           string `json:"url"`
+			Error         string `json:"error"`
+			Source        string `json:"source"`
+			Attempts      int    `json:"attempts"`
+			LastAttemptAt string `json:"last_attempt_at"`
+		} `json:"failed"`
+	}
+	if raw, err := os.ReadFile(statusPath); err == nil {
+		_ = json.Unmarshal(raw, &statusDoc)
+	}
+
+	metaByURL := map[string]map[string]any{}
+	if raw, err := os.ReadFile(indexPath); err == nil {
+		var parsed struct {
+			Categories map[string][]map[string]any `json:"categories"`
+		}
+		if err := json.Unmarshal([]byte(stripJSONCLineComments(string(raw))), &parsed); err == nil {
+			for category, items := range parsed.Categories {
+				for _, item := range items {
+					rawURL, _ := item["url"].(string)
+					normalized := normalizeResearchURL(rawURL)
+					if normalized == "" {
+						continue
+					}
+					name, _ := item["name"].(string)
+					if strings.TrimSpace(name) == "" {
+						name = normalized
+					}
+					metaByURL[normalized] = map[string]any{
+						"id":       item["id"],
+						"name":     name,
+						"category": category,
+					}
+				}
+			}
+		}
+	}
+
+	buildEntry := func(rawURL string) map[string]any {
+		normalized := normalizeResearchURL(rawURL)
+		meta := metaByURL[normalized]
+		if meta == nil {
+			meta = map[string]any{
+				"id":       nil,
+				"name":     normalized,
+				"category": nil,
+			}
+		}
+		return map[string]any{
+			"url":      normalized,
+			"name":     meta["name"],
+			"id":       meta["id"],
+			"category": meta["category"],
+		}
+	}
+
+	processed := make([]map[string]any, 0, len(statusDoc.Processed))
+	for _, item := range statusDoc.Processed {
+		processed = append(processed, buildEntry(item))
+	}
+
+	pending := make([]map[string]any, 0, len(statusDoc.Pending))
+	for _, item := range statusDoc.Pending {
+		pending = append(pending, buildEntry(item))
+	}
+
+	failed := make([]map[string]any, 0, len(statusDoc.Failed))
+	for _, item := range statusDoc.Failed {
+		entry := buildEntry(item.URL)
+		if strings.TrimSpace(item.Error) == "" {
+			entry["error"] = "Unknown fetch failure"
+		} else {
+			entry["error"] = item.Error
+		}
+		if item.Attempts <= 0 {
+			entry["attempts"] = 1
+		} else {
+			entry["attempts"] = item.Attempts
+		}
+		if strings.TrimSpace(item.LastAttemptAt) == "" {
+			entry["lastAttemptAt"] = nil
+		} else {
+			entry["lastAttemptAt"] = item.LastAttemptAt
+		}
+		if strings.TrimSpace(item.Source) == "" {
+			entry["source"] = "unknown"
+		} else {
+			entry["source"] = item.Source
+		}
+		failed = append(failed, entry)
+	}
+
+	return map[string]any{
+		"queue": map[string]any{
+			"processed": processed,
+			"pending":   pending,
+			"failed":    failed,
+		},
+		"totals": map[string]any{
+			"processed": len(processed),
+			"pending":   len(pending),
+			"failed":    len(failed),
+		},
+		"updatedAt": time.Now().UTC().Format(time.RFC3339),
+	}, nil
 }
 
 func (s *Server) localMCPSummary(ctx context.Context) ([]controlplane.Tool, CLISummary, error) {

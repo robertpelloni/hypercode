@@ -5728,6 +5728,72 @@ func TestResearchQueriesFallsBackToTopicQuery(t *testing.T) {
 	}
 }
 
+func TestResearchQueueFallsBackToLocalFiles(t *testing.T) {
+	workspaceRoot := t.TempDir()
+	scriptsDir := filepath.Join(workspaceRoot, "scripts")
+	if err := os.MkdirAll(scriptsDir, 0o755); err != nil {
+		t.Fatalf("failed to create scripts dir: %v", err)
+	}
+
+	statusContent := `{
+  "processed": ["https://example.com/processed"],
+  "pending": ["https://example.com/pending", "https://example.com/pending-2"],
+  "failed": [
+    {
+      "url": "https://example.com/failed",
+      "error": "timeout",
+      "source": "fetcher",
+      "attempts": 3,
+      "last_attempt_at": "2026-04-01T00:00:00.000Z"
+    }
+  ]
+}`
+	if err := os.WriteFile(filepath.Join(scriptsDir, "ingestion-status.json"), []byte(statusContent), 0o644); err != nil {
+		t.Fatalf("failed to write ingestion status: %v", err)
+	}
+
+	indexContent := `{
+  "categories": {
+    "research": [
+      {"id":"processed-1","name":"Processed Link","url":"https://example.com/processed"},
+      {"id":"pending-1","name":"Pending Link","url":"https://example.com/pending"},
+      {"id":"failed-1","name":"Failed Link","url":"https://example.com/failed"}
+    ]
+  }
+}`
+	if err := os.WriteFile(filepath.Join(workspaceRoot, "BORG_MASTER_INDEX.jsonc"), []byte(indexContent), 0o644); err != nil {
+		t.Fatalf("failed to write master index: %v", err)
+	}
+
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	server := New(cfg, stubDetector{})
+
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/research/queue", nil))
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	for _, needle := range []string{
+		`"fallback":"go-local-research"`,
+		`"procedure":"research.ingestionQueue"`,
+		`using local research queue files`,
+		`"processed":1`,
+		`"pending":2`,
+		`"failed":1`,
+		`"name":"Processed Link"`,
+		`"name":"Failed Link"`,
+	} {
+		if !strings.Contains(recorder.Body.String(), needle) {
+			t.Fatalf("expected response to contain %s, got %s", needle, recorder.Body.String())
+		}
+	}
+}
+
 func TestMCPSearchToolsFallsBackToLocalInventory(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	toolsDir := filepath.Join(workspaceRoot, "submodules", "hypercode", "tools")
