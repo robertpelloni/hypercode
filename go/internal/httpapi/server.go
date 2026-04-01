@@ -1320,7 +1320,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/research/conduct", Category: "research", Description: "Run a research task through the TypeScript research router."},
 				{Path: "/api/research/ingest", Category: "research", Description: "Ingest a research URL through the TypeScript research router."},
 				{Path: "/api/research/recursive", Category: "research", Description: "Run recursive research through the TypeScript research router."},
-				{Path: "/api/research/queries", Category: "research", Description: "Generate research queries through the TypeScript research router."},
+				{Path: "/api/research/queries", Category: "research", Description: "Generate research queries through the TypeScript research router, with a local topic-as-query fallback when the deep research service is unavailable."},
 				{Path: "/api/research/queue", Category: "research", Description: "Read research ingestion queue state through the TypeScript research router."},
 				{Path: "/api/research/retry-failed", Category: "research", Description: "Retry a failed research URL through the TypeScript research router."},
 				{Path: "/api/research/retry-all-failed", Category: "research", Description: "Retry all failed research URLs through the TypeScript research router."},
@@ -5882,7 +5882,32 @@ func (s *Server) handleResearchQueries(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing topic query parameter"})
 		return
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "research.generateQueries", map[string]any{"topic": topic})
+	payload := map[string]any{"topic": topic}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "research.generateQueries", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "research.generateQueries",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"queries": []string{topic},
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-research",
+			"procedure": "research.generateQueries",
+			"reason":    "upstream unavailable; using topic-as-query research fallback",
+		},
+	})
 }
 
 func (s *Server) handleResearchQueue(w http.ResponseWriter, r *http.Request) {
