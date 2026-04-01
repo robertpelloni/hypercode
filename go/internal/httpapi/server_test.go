@@ -5388,6 +5388,36 @@ func TestImportedSessionScanFallsBackToGoScanner(t *testing.T) {
 	}
 }
 
+func TestImportedSessionScanFallsBackToArchivedRecords(t *testing.T) {
+	workspaceRoot := t.TempDir()
+	seedArchivedImportedSession(t, workspaceRoot)
+
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	request := httptest.NewRequest(http.MethodPost, "/api/sessions/imported/scan", strings.NewReader(`{"force":true}`))
+	request.Header.Set("content-type", "application/json")
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected archived fallback status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"procedure":"session.importedScan"`) {
+		t.Fatalf("expected imported scan fallback metadata, got %s", recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"importedCount":1`) {
+		t.Fatalf("expected archived importedCount=1, got %s", recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"storedMemoryCount":3`) {
+		t.Fatalf("expected archived storedMemoryCount=3, got %s", recorder.Body.String())
+	}
+}
+
 func TestImportedSessionListFallsBackToGoScanner(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".claude"), 0o755); err != nil {

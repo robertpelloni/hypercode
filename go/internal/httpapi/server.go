@@ -1719,13 +1719,13 @@ func (s *Server) handleImportedSessionScan(w http.ResponseWriter, r *http.Reques
 	}
 
 	if archivedRecords, archiveErr := s.loadArchivedImportedSessionRecords(); archiveErr == nil && len(archivedRecords) > 0 {
-		fallbackStats := archivedImportedSessionMaintenanceStats(archivedRecords)
+		fallbackSummary := archivedImportedSessionScanSummary(archivedRecords)
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
-			"data":    fallbackStats,
+			"data":    fallbackSummary,
 			"bridge": map[string]any{
 				"fallback":  "go-sessionimport",
-				"procedure": "session.importedMaintenanceStats",
+				"procedure": "session.importedScan",
 				"reason":    err.Error(),
 			},
 		})
@@ -7730,6 +7730,48 @@ func archivedImportedSessionMaintenanceStats(records []ImportedSessionRecord) Im
 		}
 	}
 	return stats
+}
+
+func archivedImportedSessionScanSummary(records []ImportedSessionRecord) map[string]any {
+	toolsSet := make(map[string]struct{})
+	storedMemoryCount := 0
+	for _, record := range records {
+		if record.SourceTool != "" {
+			toolsSet[record.SourceTool] = struct{}{}
+		}
+		storedMemoryCount += intNumber(record.Metadata["durableMemoryCount"])
+		storedMemoryCount += intNumber(record.Metadata["durableInstructionCount"])
+	}
+
+	tools := make([]string, 0, len(toolsSet))
+	for tool := range toolsSet {
+		tools = append(tools, tool)
+	}
+	sort.Strings(tools)
+
+	return map[string]any{
+		"discoveredCount":    len(records),
+		"importedCount":      len(records),
+		"skippedCount":       0,
+		"storedMemoryCount":  storedMemoryCount,
+		"instructionDocPath": nil,
+		"tools":              tools,
+	}
+}
+
+func intNumber(value any) int {
+	switch typed := value.(type) {
+	case int:
+		return typed
+	case int32:
+		return int(typed)
+	case int64:
+		return int(typed)
+	case float64:
+		return int(typed)
+	default:
+		return 0
+	}
 }
 
 func (s *Server) importedSessionFallbackRecords(candidates []sessionimport.ValidationResult) []ImportedSessionRecord {
