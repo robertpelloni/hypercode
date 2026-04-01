@@ -5520,7 +5520,7 @@ func (s *Server) handleTRPCBridgeCall(w http.ResponseWriter, r *http.Request, me
 	if err != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
-			"error":   err.Error(),
+			"error":   "failed to call upstream procedure " + procedure + ": " + err.Error(),
 		})
 		return
 	}

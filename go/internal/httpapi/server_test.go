@@ -177,6 +177,22 @@ func TestMeshEndpoints(t *testing.T) {
 	}
 }
 
+func TestBridgeRouteReportsProcedureFailure(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	server := New(config.Default(), stubDetector{})
+	recorder := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/tools", nil))
+
+	if recorder.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected status 503, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `failed to call upstream procedure tools.list:`) {
+		t.Fatalf("expected bridge procedure error, got %s", recorder.Body.String())
+	}
+}
+
 func TestStartupStatusEndpoint(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
