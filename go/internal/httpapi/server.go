@@ -6782,29 +6782,73 @@ func (s *Server) handleMarketplacePublish(w http.ResponseWriter, r *http.Request
 
 func (s *Server) handleCatalogList(w http.ResponseWriter, r *http.Request) {
 	payload := map[string]any{}
+	limitValue := 50
+	offsetValue := 0
+	searchValue := ""
+	statusValue := ""
+	transportValue := ""
+	installMethodValue := ""
 	if limit := strings.TrimSpace(r.URL.Query().Get("limit")); limit != "" {
 		if parsed, err := strconv.Atoi(limit); err == nil {
+			limitValue = parsed
 			payload["limit"] = parsed
 		}
 	}
 	if offset := strings.TrimSpace(r.URL.Query().Get("offset")); offset != "" {
 		if parsed, err := strconv.Atoi(offset); err == nil {
+			offsetValue = parsed
 			payload["offset"] = parsed
 		}
 	}
 	if search := strings.TrimSpace(r.URL.Query().Get("search")); search != "" {
+		searchValue = search
 		payload["search"] = search
 	}
 	if status := strings.TrimSpace(r.URL.Query().Get("status")); status != "" {
+		statusValue = status
 		payload["status"] = status
 	}
 	if transport := strings.TrimSpace(r.URL.Query().Get("transport")); transport != "" {
+		transportValue = transport
 		payload["transport"] = transport
 	}
 	if installMethod := strings.TrimSpace(r.URL.Query().Get("install_method")); installMethod != "" {
+		installMethodValue = installMethod
 		payload["install_method"] = installMethod
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "catalog.list", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "catalog.list", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "catalog.list",
+			},
+		})
+		return
+	}
+
+	listPayload, fallbackErr := s.localCatalogList(limitValue, offsetValue, searchValue, statusValue, transportValue, installMethodValue)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    listPayload,
+		"bridge": map[string]any{
+			"fallback":  "go-local-published-catalog-db",
+			"procedure": "catalog.list",
+			"reason":    "upstream unavailable; using local metamcp published catalog list",
+		},
+	})
 }
 
 func (s *Server) handleCatalogGet(w http.ResponseWriter, r *http.Request) {
@@ -9518,6 +9562,35 @@ func (s *Server) localCatalogLinkedServers(publishedServerUUID string) ([]map[st
 	return servers, nil
 }
 
+func (s *Server) localCatalogList(limit, offset int, search, status, transport, installMethod string) (any, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	items, err := listPublishedCatalogServers(db, limit, offset, search, status, transport, installMethod)
+	if err != nil {
+		return nil, err
+	}
+	total, err := countPublishedCatalogServersFiltered(db, search, status, transport, installMethod)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]any{
+		"servers": items,
+		"total":   total,
+	}, nil
+}
+
 func unixTimestampToRFC3339(value int64) string {
 	if value <= 0 {
 		return time.Unix(0, 0).UTC().Format(time.RFC3339)
@@ -9571,29 +9644,6 @@ func jsonObjectOrNil(raw string) any {
 }
 
 func localPublishedCatalogServer(db *sql.DB, uuid string) (any, error) {
-	var (
-		serverUUID     string
-		canonicalID    string
-		displayName    string
-		description    sql.NullString
-		author         sql.NullString
-		repositoryURL  sql.NullString
-		homepageURL    sql.NullString
-		iconURL        sql.NullString
-		transport      string
-		installMethod  string
-		authModel      string
-		status         string
-		confidence     int64
-		tagsRaw        string
-		categoriesRaw  string
-		stars          sql.NullInt64
-		lastSeenAt     sql.NullInt64
-		lastVerifiedAt sql.NullInt64
-		createdAtRaw   int64
-		updatedAtRaw   int64
-	)
-
 	row := db.QueryRow(`
 		SELECT uuid, canonical_id, display_name, description, author, repository_url, homepage_url, icon_url,
 		       transport, install_method, auth_model, status, confidence, tags, categories, stars,
@@ -9602,39 +9652,14 @@ func localPublishedCatalogServer(db *sql.DB, uuid string) (any, error) {
 		WHERE uuid = ?
 		LIMIT 1
 	`, uuid)
-	if err := row.Scan(
-		&serverUUID, &canonicalID, &displayName, &description, &author, &repositoryURL, &homepageURL, &iconURL,
-		&transport, &installMethod, &authModel, &status, &confidence, &tagsRaw, &categoriesRaw, &stars,
-		&lastSeenAt, &lastVerifiedAt, &createdAtRaw, &updatedAtRaw,
-	); err != nil {
+	server, err := scanPublishedCatalogServer(row)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
-
-	return map[string]any{
-		"uuid":             serverUUID,
-		"canonical_id":     canonicalID,
-		"display_name":     displayName,
-		"description":      nullStringToAny(description),
-		"author":           nullStringToAny(author),
-		"repository_url":   nullStringToAny(repositoryURL),
-		"homepage_url":     nullStringToAny(homepageURL),
-		"icon_url":         nullStringToAny(iconURL),
-		"transport":        transport,
-		"install_method":   installMethod,
-		"auth_model":       authModel,
-		"status":           status,
-		"confidence":       confidence,
-		"tags":             jsonArrayOrEmpty(tagsRaw),
-		"categories":       jsonArrayOrEmpty(categoriesRaw),
-		"stars":            nullInt64ToAny(stars),
-		"last_seen_at":     nullTimestampToAny(lastSeenAt),
-		"last_verified_at": nullTimestampToAny(lastVerifiedAt),
-		"created_at":       unixTimestampToRFC3339(createdAtRaw),
-		"updated_at":       unixTimestampToRFC3339(updatedAtRaw),
-	}, nil
+	return server, nil
 }
 
 func localPublishedCatalogLatestRun(db *sql.DB, serverUUID string) (any, error) {
@@ -9758,6 +9783,85 @@ func countPublishedCatalogServers(db *sql.DB, status string) (int64, error) {
 	return count, nil
 }
 
+func countPublishedCatalogServersFiltered(db *sql.DB, search, status, transport, installMethod string) (int64, error) {
+	args := []any{}
+	where := buildPublishedCatalogWhere(&args, search, status, transport, installMethod, false)
+	query := `SELECT count(*) FROM published_mcp_servers`
+	if where != "" {
+		query += " WHERE " + where
+	}
+
+	row := db.QueryRow(query, args...)
+	var count int64
+	if err := row.Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func listPublishedCatalogServers(db *sql.DB, limit, offset int, search, status, transport, installMethod string) ([]map[string]any, error) {
+	args := []any{}
+	where := buildPublishedCatalogWhere(&args, search, status, transport, installMethod, true)
+	query := `
+		SELECT uuid, canonical_id, display_name, description, author, repository_url, homepage_url, icon_url,
+		       transport, install_method, auth_model, status, confidence, tags, categories, stars,
+		       last_seen_at, last_verified_at, created_at, updated_at
+		FROM published_mcp_servers`
+	if where != "" {
+		query += " WHERE " + where
+	}
+	query += " ORDER BY confidence DESC, updated_at DESC LIMIT ? OFFSET ?"
+	args = append(args, limit, offset)
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	servers := []map[string]any{}
+	for rows.Next() {
+		server, scanErr := scanPublishedCatalogServer(rows)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		servers = append(servers, server)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return servers, nil
+}
+
+func buildPublishedCatalogWhere(args *[]any, search, status, transport, installMethod string, includeAuthorInSearch bool) string {
+	conditions := []string{}
+	if strings.TrimSpace(status) != "" {
+		conditions = append(conditions, "status = ?")
+		*args = append(*args, status)
+	}
+	if strings.TrimSpace(transport) != "" {
+		conditions = append(conditions, "transport = ?")
+		*args = append(*args, transport)
+	}
+	if strings.TrimSpace(installMethod) != "" {
+		conditions = append(conditions, "install_method = ?")
+		*args = append(*args, installMethod)
+	}
+	if trimmed := strings.TrimSpace(search); trimmed != "" {
+		term := "%" + trimmed + "%"
+		searchConditions := []string{"display_name LIKE ?", "description LIKE ?", "canonical_id LIKE ?"}
+		searchArgs := []any{term, term, term}
+		if includeAuthorInSearch {
+			searchConditions = append(searchConditions, "author LIKE ?")
+			searchArgs = append(searchArgs, term)
+		}
+		conditions = append(conditions, "("+strings.Join(searchConditions, " OR ")+")")
+		*args = append(*args, searchArgs...)
+	}
+	return strings.Join(conditions, " AND ")
+}
+
 func countPublishedCatalogRecentlyUpdated(db *sql.DB, hours int) (int64, error) {
 	if hours < 1 {
 		hours = 1
@@ -9823,6 +9927,66 @@ func scanLocalMCPServer(scanner localMCPServerScanner) (map[string]any, error) {
 
 type publishedCatalogRunScanner interface {
 	Scan(dest ...any) error
+}
+
+type publishedCatalogServerScanner interface {
+	Scan(dest ...any) error
+}
+
+func scanPublishedCatalogServer(scanner publishedCatalogServerScanner) (map[string]any, error) {
+	var (
+		serverUUID     string
+		canonicalID    string
+		displayName    string
+		description    sql.NullString
+		author         sql.NullString
+		repositoryURL  sql.NullString
+		homepageURL    sql.NullString
+		iconURL        sql.NullString
+		transport      string
+		installMethod  string
+		authModel      string
+		status         string
+		confidence     int64
+		tagsRaw        string
+		categoriesRaw  string
+		stars          sql.NullInt64
+		lastSeenAt     sql.NullInt64
+		lastVerifiedAt sql.NullInt64
+		createdAtRaw   int64
+		updatedAtRaw   int64
+	)
+
+	if err := scanner.Scan(
+		&serverUUID, &canonicalID, &displayName, &description, &author, &repositoryURL, &homepageURL, &iconURL,
+		&transport, &installMethod, &authModel, &status, &confidence, &tagsRaw, &categoriesRaw, &stars,
+		&lastSeenAt, &lastVerifiedAt, &createdAtRaw, &updatedAtRaw,
+	); err != nil {
+		return nil, err
+	}
+
+	return map[string]any{
+		"uuid":             serverUUID,
+		"canonical_id":     canonicalID,
+		"display_name":     displayName,
+		"description":      nullStringToAny(description),
+		"author":           nullStringToAny(author),
+		"repository_url":   nullStringToAny(repositoryURL),
+		"homepage_url":     nullStringToAny(homepageURL),
+		"icon_url":         nullStringToAny(iconURL),
+		"transport":        transport,
+		"install_method":   installMethod,
+		"auth_model":       authModel,
+		"status":           status,
+		"confidence":       confidence,
+		"tags":             jsonArrayOrEmpty(tagsRaw),
+		"categories":       jsonArrayOrEmpty(categoriesRaw),
+		"stars":            nullInt64ToAny(stars),
+		"last_seen_at":     nullTimestampToAny(lastSeenAt),
+		"last_verified_at": nullTimestampToAny(lastVerifiedAt),
+		"created_at":       unixTimestampToRFC3339(createdAtRaw),
+		"updated_at":       unixTimestampToRFC3339(updatedAtRaw),
+	}, nil
 }
 
 func scanPublishedCatalogRun(scanner publishedCatalogRunScanner) (map[string]any, error) {

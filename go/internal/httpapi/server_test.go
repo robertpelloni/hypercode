@@ -6557,6 +6557,81 @@ func TestCatalogLinkedServersFallsBackToLocalDB(t *testing.T) {
 	}
 }
 
+func TestCatalogListFallsBackToLocalDB(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	workspace := t.TempDir()
+	dbPath := filepath.Join(workspace, "metamcp.db")
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("failed to open sqlite db: %v", err)
+	}
+	defer db.Close()
+
+	if _, err := db.Exec(`
+		CREATE TABLE published_mcp_servers (
+			uuid TEXT PRIMARY KEY,
+			canonical_id TEXT NOT NULL UNIQUE,
+			display_name TEXT NOT NULL,
+			description TEXT,
+			author TEXT,
+			repository_url TEXT,
+			homepage_url TEXT,
+			icon_url TEXT,
+			transport TEXT NOT NULL DEFAULT 'unknown',
+			install_method TEXT NOT NULL DEFAULT 'unknown',
+			auth_model TEXT NOT NULL DEFAULT 'unknown',
+			status TEXT NOT NULL DEFAULT 'discovered',
+			confidence INTEGER NOT NULL DEFAULT 0,
+			tags TEXT NOT NULL DEFAULT '[]',
+			categories TEXT NOT NULL DEFAULT '[]',
+			stars INTEGER,
+			last_seen_at INTEGER,
+			last_verified_at INTEGER,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL
+		);
+		INSERT INTO published_mcp_servers (
+			uuid, canonical_id, display_name, description, author, transport, install_method, auth_model, status, confidence, tags, categories, created_at, updated_at
+		) VALUES
+			('catalog-1', 'registry/catalog-1', 'MCP Filesystem', 'MCP file tools', 'Hyper', 'STDIO', 'npm', 'none', 'validated', 90, '["mcp"]', '["devtools"]', 1711958300, 1711958600),
+			('catalog-2', 'registry/catalog-2', 'Other Server', 'Different', 'Someone', 'SSE', 'docker', 'oauth', 'validated', 10, '[]', '[]', 1711958300, 1711958500),
+			('catalog-3', 'registry/catalog-3', 'MCP Browser', 'MCP browser tools', 'Hyper', 'STDIO', 'npm', 'oauth', 'broken', 50, '["mcp"]', '["browser"]', 1711958300, 1711958550);
+	`); err != nil {
+		t.Fatalf("failed to seed sqlite db: %v", err)
+	}
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspace
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/catalog?limit=10&offset=0&search=mcp&status=validated&transport=STDIO&install_method=npm", nil))
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	for _, needle := range []string{
+		`"fallback":"go-local-published-catalog-db"`,
+		`"procedure":"catalog.list"`,
+		`using local metamcp published catalog list`,
+		`"servers":[{"auth_model":"none"`,
+		`"uuid":"catalog-1"`,
+		`"display_name":"MCP Filesystem"`,
+		`"total":1`,
+	} {
+		if !strings.Contains(recorder.Body.String(), needle) {
+			t.Fatalf("expected catalog list fallback to contain %s, got %s", needle, recorder.Body.String())
+		}
+	}
+	if strings.Contains(recorder.Body.String(), `"uuid":"catalog-2"`) || strings.Contains(recorder.Body.String(), `"uuid":"catalog-3"`) {
+		t.Fatalf("expected filtered catalog list fallback to exclude non-matching rows, got %s", recorder.Body.String())
+	}
+}
+
 func TestInfrastructureStatusFallsBackToLocalProbe(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	userProfile := t.TempDir()
