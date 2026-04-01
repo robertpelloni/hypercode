@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { CLAUDE_MEM_CAPABILITIES, getClaudeMemOperatorGuidance, getClaudeMemStatusSummary } from './claude-mem-status';
 
-describe('borg-memory status helpers', () => {
-    it('summarizes the current Borg borg-memory parity state honestly', () => {
+describe('hypercode-memory status helpers', () => {
+    it('summarizes the current HyperCode hypercode-memory parity state honestly', () => {
         expect(getClaudeMemStatusSummary({ ready: true }, [
             { id: 'browser-extension-chromium', status: 'ready' },
             { id: 'browser-extension-firefox', status: 'ready' },
@@ -103,6 +103,28 @@ describe('borg-memory status helpers', () => {
         });
     });
 
+    it('ignores non-ready telemetry blocks such as imported session counts', () => {
+        expect(getClaudeMemStatusSummary({
+            ready: true,
+            checks: {
+                configSync: { ready: true },
+                importedSessions: {
+                    totalSessions: 12,
+                    inlineTranscriptCount: 8,
+                    archivedTranscriptCount: 4,
+                    missingRetentionSummaryCount: 0,
+                },
+            },
+        }, [
+            { id: 'browser-extension-chromium', status: 'ready' },
+            { id: 'browser-extension-firefox', status: 'ready' },
+        ])).toMatchObject({
+            pendingStartupChecks: 0,
+            coreStatusTone: 'ready',
+            coreStatusLabel: 'Core ready',
+        });
+    });
+
     it('guides operators when the adapter store has not been created yet', () => {
         expect(getClaudeMemOperatorGuidance({
             exists: false,
@@ -118,7 +140,7 @@ describe('borg-memory status helpers', () => {
             },
         })).toEqual({
             title: 'Adapter store not created yet',
-            detail: 'No Borg-managed claude_mem store exists yet. When the adapter initializes, it seeds 5 default buckets for project context, user facts, style preferences, commands, and general notes.',
+            detail: 'No HyperCode-managed claude_mem store exists yet. When the adapter initializes, it seeds 5 default buckets for project context, user facts, style preferences, commands, and general notes.',
             tone: 'warning',
         });
     });
@@ -144,7 +166,7 @@ describe('borg-memory status helpers', () => {
         });
     });
 
-    it('warns when borg-memory is not part of the active memory pipeline', () => {
+    it('warns when hypercode-memory is not part of the active memory pipeline', () => {
         expect(getClaudeMemOperatorGuidance({
             exists: true,
             totalEntries: 3,
@@ -159,8 +181,8 @@ describe('borg-memory status helpers', () => {
                 claudeMemEnabled: false,
             },
         })).toEqual({
-            title: 'borg-memory adapter not active in the runtime pipeline',
-            detail: 'Core reports the active memory pipeline as json with json. The adapter file can still exist on disk, but Borg is not currently writing new memories through borg-memory.',
+            title: 'hypercode-memory adapter not active in the runtime pipeline',
+            detail: 'Core reports the active memory pipeline as json with json. The adapter file can still exist on disk, but HyperCode is not currently writing new memories through hypercode-memory.',
             tone: 'warning',
         });
     });
