@@ -1803,7 +1803,20 @@ func (s *Server) handleImportedSessionInstructionDocs(w http.ResponseWriter, r *
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    []map[string]any{},
+		"data": func() []map[string]any {
+			document := interop.ReadImportedInstructions(s.cfg.ImportedInstructionsPath())
+			if !document.Available {
+				return []map[string]any{}
+			}
+			return []map[string]any{
+				{
+					"path":       document.Path,
+					"name":       filepath.Base(document.Path),
+					"modifiedAt": document.ModifiedAt,
+					"size":       document.Size,
+				},
+			}
+		}(),
 		"bridge": map[string]any{
 			"fallback":  "go-sessionimport",
 			"procedure": "session.importedInstructionDocs",

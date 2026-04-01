@@ -5624,6 +5624,35 @@ func TestImportedInstructionDocsFallsBackToEmptyList(t *testing.T) {
 	}
 }
 
+func TestImportedInstructionDocsFallsBackToWorkspaceDoc(t *testing.T) {
+	workspaceRoot := t.TempDir()
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	cfg.MainConfigDir = t.TempDir()
+
+	docPath := cfg.ImportedInstructionsPath()
+	if err := os.MkdirAll(filepath.Dir(docPath), 0o755); err != nil {
+		t.Fatalf("failed to create imported instructions directory: %v", err)
+	}
+	if err := os.WriteFile(docPath, []byte("# Auto-imported Agent Instructions\n"), 0o644); err != nil {
+		t.Fatalf("failed to write imported instructions doc: %v", err)
+	}
+
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	server := New(cfg, stubDetector{})
+
+	request := httptest.NewRequest(http.MethodGet, "/api/sessions/imported/instruction-docs", nil)
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected fallback status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"auto-imported-agent-instructions.md"`) {
+		t.Fatalf("expected workspace imported instructions doc, got %s", recorder.Body.String())
+	}
+}
+
 func TestImportedSessionMaintenanceStatsFallsBackToGoScanner(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".claude"), 0o755); err != nil {
