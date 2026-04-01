@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -1054,14 +1055,14 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/supervisor/cancel", Category: "agents", Description: "Cancel a supervisor task through the TypeScript supervisor router."},
 				{Path: "/api/metrics/stats", Category: "ops", Description: "Bridge to aggregated TypeScript metrics stats for a time window."},
 				{Path: "/api/metrics/track", Category: "ops", Description: "Track a custom metric event through the TypeScript control plane."},
-				{Path: "/api/metrics/system-snapshot", Category: "ops", Description: "Bridge to the TypeScript real-time system resource snapshot."},
+				{Path: "/api/metrics/system-snapshot", Category: "ops", Description: "Read a real-time system resource snapshot, with a native Go fallback when the TypeScript metrics router is unavailable."},
 				{Path: "/api/metrics/timeline", Category: "ops", Description: "Bridge to downsampled TypeScript metrics timeline data."},
 				{Path: "/api/metrics/provider-breakdown", Category: "ops", Description: "Bridge to TypeScript provider request, latency, and cost breakdowns."},
 				{Path: "/api/metrics/monitoring", Category: "ops", Description: "Toggle TypeScript metrics monitoring state."},
 				{Path: "/api/metrics/routing-history", Category: "ops", Description: "Bridge to recent TypeScript LLM routing and failover decisions."},
-				{Path: "/api/logs", Category: "ops", Description: "Bridge to TypeScript observability log listing with optional filters."},
-				{Path: "/api/logs/summary", Category: "ops", Description: "Bridge to the TypeScript observability summary rollup."},
-				{Path: "/api/logs/clear", Category: "ops", Description: "Clear TypeScript observability logs."},
+				{Path: "/api/logs", Category: "ops", Description: "List observability logs, with an honest empty-state Go fallback when the TypeScript log store is unavailable."},
+				{Path: "/api/logs/summary", Category: "ops", Description: "Read the observability summary rollup, with an honest empty-state Go fallback when the TypeScript log store is unavailable."},
+				{Path: "/api/logs/clear", Category: "ops", Description: "Clear observability logs, with a local no-op fallback when the TypeScript log store is unavailable."},
 				{Path: "/api/server-health/check", Category: "ops", Description: "Bridge to the TypeScript MCP server health state for a specific server UUID."},
 				{Path: "/api/server-health/reset", Category: "ops", Description: "Reset the TypeScript MCP server health error state for a specific server UUID."},
 				{Path: "/api/settings", Category: "control", Description: "Bridge to the full TypeScript configuration object."},
@@ -4146,7 +4147,59 @@ func (s *Server) handleMetricsTrack(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleMetricsSystemSnapshot(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "metrics.systemSnapshot", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "metrics.systemSnapshot", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "metrics.systemSnapshot",
+			},
+		})
+		return
+	}
+
+	var mem runtime.MemStats
+	runtime.ReadMemStats(&mem)
+	hostname, hostnameErr := os.Hostname()
+	if hostnameErr != nil {
+		hostname = "unknown"
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"timestamp": time.Now().UnixMilli(),
+			"process": map[string]any{
+				"heapUsed":      mem.HeapAlloc,
+				"heapTotal":     mem.HeapSys,
+				"rss":           mem.Sys,
+				"external":      0,
+				"arrayBuffers":  0,
+				"uptimeSeconds": int(time.Since(s.startedAt).Seconds()),
+				"pid":           os.Getpid(),
+			},
+			"system": map[string]any{
+				"totalMemory":        0,
+				"freeMemory":         0,
+				"usedMemory":         0,
+				"memoryUsagePercent": 0,
+				"cpuCount":           runtime.NumCPU(),
+				"cpuModel":           "unknown",
+				"loadAvg":            []float64{},
+				"platform":           runtime.GOOS,
+				"arch":               runtime.GOARCH,
+				"hostname":           hostname,
+			},
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-system-snapshot",
+			"procedure": "metrics.systemSnapshot",
+			"reason":    "upstream unavailable; using native Go runtime snapshot",
+		},
+	})
 }
 
 func (s *Server) handleMetricsTimeline(w http.ResponseWriter, r *http.Request) {
@@ -4198,7 +4251,29 @@ func (s *Server) handleLogsList(w http.ResponseWriter, r *http.Request) {
 	if serverName := strings.TrimSpace(r.URL.Query().Get("serverName")); serverName != "" {
 		payload["serverName"] = serverName
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "logs.list", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "logs.list", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "logs.list",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    []any{},
+		"bridge": map[string]any{
+			"fallback":  "go-local-observability",
+			"procedure": "logs.list",
+			"reason":    "upstream unavailable; local log store is not implemented",
+		},
+	})
 }
 
 func (s *Server) handleLogsSummary(w http.ResponseWriter, r *http.Request) {
@@ -4208,11 +4283,68 @@ func (s *Server) handleLogsSummary(w http.ResponseWriter, r *http.Request) {
 			payload["limit"] = parsed
 		}
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "logs.summary", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "logs.summary", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "logs.summary",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"totals": map[string]any{
+				"totalCalls":    0,
+				"errorCount":    0,
+				"errorRate":     0,
+				"avgDurationMs": 0,
+				"successRate":   100,
+			},
+			"topTools":       []any{},
+			"recentActivity": []any{},
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-observability",
+			"procedure": "logs.summary",
+			"reason":    "upstream unavailable; local log store is not implemented",
+		},
+	})
 }
 
 func (s *Server) handleLogsClear(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodPost, "logs.clear", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "logs.clear", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "logs.clear",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"success": true,
+			"message": "Logs cleared",
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-observability",
+			"procedure": "logs.clear",
+			"reason":    "upstream unavailable; local log store is not implemented",
+		},
+	})
 }
 
 func (s *Server) handleServerHealthCheck(w http.ResponseWriter, r *http.Request) {

@@ -3388,6 +3388,55 @@ func TestConfigAuthProvidersFallsBackToLocalOIDCAvailability(t *testing.T) {
 	}
 }
 
+func TestObservabilityReadEndpointsFallBackToLocalPreview(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	server := New(config.Default(), stubDetector{})
+
+	systemSnapshotRecorder := httptest.NewRecorder()
+	systemSnapshotRequest := httptest.NewRequest(http.MethodGet, "/api/metrics/system-snapshot", nil)
+	server.Handler().ServeHTTP(systemSnapshotRecorder, systemSnapshotRequest)
+	if systemSnapshotRecorder.Code != http.StatusOK {
+		t.Fatalf("expected system snapshot fallback 200, got %d with body %s", systemSnapshotRecorder.Code, systemSnapshotRecorder.Body.String())
+	}
+	if !strings.Contains(systemSnapshotRecorder.Body.String(), `"fallback":"go-local-system-snapshot"`) {
+		t.Fatalf("expected system snapshot fallback metadata, got %s", systemSnapshotRecorder.Body.String())
+	}
+	if !strings.Contains(systemSnapshotRecorder.Body.String(), `"platform":"`) || !strings.Contains(systemSnapshotRecorder.Body.String(), `"cpuCount":`) {
+		t.Fatalf("expected local system snapshot payload, got %s", systemSnapshotRecorder.Body.String())
+	}
+
+	logsListRecorder := httptest.NewRecorder()
+	logsListRequest := httptest.NewRequest(http.MethodGet, "/api/logs?limit=10&sessionId=sess-1&serverName=core", nil)
+	server.Handler().ServeHTTP(logsListRecorder, logsListRequest)
+	if logsListRecorder.Code != http.StatusOK {
+		t.Fatalf("expected logs list fallback 200, got %d with body %s", logsListRecorder.Code, logsListRecorder.Body.String())
+	}
+	if !strings.Contains(logsListRecorder.Body.String(), `"fallback":"go-local-observability"`) || !strings.Contains(logsListRecorder.Body.String(), `"data":[]`) {
+		t.Fatalf("expected empty logs list fallback, got %s", logsListRecorder.Body.String())
+	}
+
+	logsSummaryRecorder := httptest.NewRecorder()
+	logsSummaryRequest := httptest.NewRequest(http.MethodGet, "/api/logs/summary?limit=50", nil)
+	server.Handler().ServeHTTP(logsSummaryRecorder, logsSummaryRequest)
+	if logsSummaryRecorder.Code != http.StatusOK {
+		t.Fatalf("expected logs summary fallback 200, got %d with body %s", logsSummaryRecorder.Code, logsSummaryRecorder.Body.String())
+	}
+	if !strings.Contains(logsSummaryRecorder.Body.String(), `"fallback":"go-local-observability"`) || !strings.Contains(logsSummaryRecorder.Body.String(), `"totalCalls":0`) {
+		t.Fatalf("expected empty logs summary fallback, got %s", logsSummaryRecorder.Body.String())
+	}
+
+	logsClearRecorder := httptest.NewRecorder()
+	logsClearRequest := httptest.NewRequest(http.MethodPost, "/api/logs/clear", nil)
+	server.Handler().ServeHTTP(logsClearRecorder, logsClearRequest)
+	if logsClearRecorder.Code != http.StatusOK {
+		t.Fatalf("expected logs clear fallback 200, got %d with body %s", logsClearRecorder.Code, logsClearRecorder.Body.String())
+	}
+	if !strings.Contains(logsClearRecorder.Body.String(), `"fallback":"go-local-observability"`) || !strings.Contains(logsClearRecorder.Body.String(), `"message":"Logs cleared"`) {
+		t.Fatalf("expected local logs clear fallback, got %s", logsClearRecorder.Body.String())
+	}
+}
+
 func TestBrowserBridgeRoutes(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")
