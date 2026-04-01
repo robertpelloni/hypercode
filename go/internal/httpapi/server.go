@@ -1462,7 +1462,7 @@ func (s *Server) handleSessions(w http.ResponseWriter, _ *http.Request) {
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]any{
 			"success": false,
-			"error":   err.Error(),
+			"error":   "failed to discover sessions: " + err.Error(),
 		})
 		return
 	}
@@ -1478,7 +1478,7 @@ func (s *Server) handleSessionSummary(w http.ResponseWriter, _ *http.Request) {
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]any{
 			"success": false,
-			"error":   err.Error(),
+			"error":   "failed to summarize sessions: " + err.Error(),
 		})
 		return
 	}
@@ -5549,7 +5549,7 @@ func (s *Server) handleCLITools(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeJSON(w, http.StatusGatewayTimeout, map[string]any{
 			"success": false,
-			"error":   err.Error(),
+			"error":   "failed to detect CLI tools: " + err.Error(),
 		})
 		return
 	}
@@ -5637,7 +5637,7 @@ func (s *Server) handleImportValidate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeJSON(w, http.StatusNotFound, map[string]any{
 			"success": false,
-			"error":   err.Error(),
+			"error":   "failed to stat import path: " + err.Error(),
 		})
 		return
 	}
@@ -5777,7 +5777,7 @@ func (s *Server) handleRuntimeStatus(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]any{
 			"success": false,
-			"error":   err.Error(),
+			"error":   "failed to scan import sources: " + err.Error(),
 		})
 		return
 	}

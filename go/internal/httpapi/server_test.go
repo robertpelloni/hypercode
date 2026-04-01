@@ -3678,6 +3678,24 @@ func TestSessionsEndpointReturnsDiscoveredSessions(t *testing.T) {
 	}
 }
 
+func TestSessionsEndpointReportsDiscoveryFailure(t *testing.T) {
+	cfg := config.Default()
+	cfg.WorkspaceRoot = string([]byte{0})
+
+	server := New(cfg, stubDetector{})
+	request := httptest.NewRequest(http.MethodGet, "/api/sessions", nil)
+	recorder := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status 500, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `failed to discover sessions:`) {
+		t.Fatalf("expected session discovery error, got %s", recorder.Body.String())
+	}
+}
+
 func TestSessionSummaryEndpoint(t *testing.T) {
 	tempDir := t.TempDir()
 	homeDir := t.TempDir()
@@ -7702,6 +7720,21 @@ func TestCLIToolsEndpoint(t *testing.T) {
 	}
 }
 
+func TestCLIToolsEndpointReportsDetectorFailure(t *testing.T) {
+	server := New(config.Default(), stubDetector{err: io.EOF})
+	request := httptest.NewRequest(http.MethodGet, "/api/cli/tools", nil)
+	recorder := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusGatewayTimeout {
+		t.Fatalf("expected status 504, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `failed to detect CLI tools: EOF`) {
+		t.Fatalf("expected CLI tools detector error, got %s", recorder.Body.String())
+	}
+}
+
 func TestCLIHarnessesEndpoint(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(workspaceRoot, "submodules", "hypercode"), 0o755); err != nil {
@@ -8126,6 +8159,21 @@ func TestImportValidateEndpoint(t *testing.T) {
 	}
 	if len(payload.Data.Errors) != 0 {
 		t.Fatalf("expected no validation errors, got %+v", payload.Data)
+	}
+}
+
+func TestImportValidateEndpointReportsStatFailure(t *testing.T) {
+	server := New(config.Default(), stubDetector{})
+	request := httptest.NewRequest(http.MethodGet, "/api/import/validate?path=C:\\definitely-missing-session.jsonl", nil)
+	recorder := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusNotFound {
+		t.Fatalf("expected status 404, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `failed to stat import path:`) {
+		t.Fatalf("expected import stat error, got %s", recorder.Body.String())
 	}
 }
 
