@@ -6632,6 +6632,100 @@ func TestCatalogListFallsBackToLocalDB(t *testing.T) {
 	}
 }
 
+func TestBrowserControlsReadRoutesFallBackToLocalDB(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	workspace := t.TempDir()
+	dbPath := filepath.Join(workspace, "metamcp.db")
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("failed to open sqlite db: %v", err)
+	}
+	defer db.Close()
+
+	if _, err := db.Exec(`
+		CREATE TABLE browser_history (
+			id TEXT PRIMARY KEY,
+			url TEXT NOT NULL,
+			title TEXT NOT NULL,
+			domain TEXT NOT NULL,
+			visited_at INTEGER NOT NULL,
+			visit_count INTEGER NOT NULL DEFAULT 1
+		);
+		CREATE TABLE browser_console_logs (
+			id TEXT PRIMARY KEY,
+			level TEXT NOT NULL,
+			message TEXT NOT NULL,
+			source TEXT NOT NULL,
+			url TEXT,
+			line_number INTEGER,
+			timestamp INTEGER NOT NULL
+		);
+		INSERT INTO browser_history (id, url, title, domain, visited_at, visit_count) VALUES
+			('hist-1', 'https://example.com/a', 'Example A', 'example.com', 200, 3),
+			('hist-2', 'https://other.com/b', 'Other B', 'other.com', 100, 1);
+		INSERT INTO browser_console_logs (id, level, message, source, url, line_number, timestamp) VALUES
+			('log-1', 'error', 'err one', 'console', 'https://example.com/a', 12, 300),
+			('log-2', 'warn', 'warn two', 'console', NULL, NULL, 200);
+	`); err != nil {
+		t.Fatalf("failed to seed sqlite db: %v", err)
+	}
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspace
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	historyRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(historyRecorder, httptest.NewRequest(http.MethodGet, "/api/browser-controls/history/query?query=example&limit=10&since=150&domain=example.com", nil))
+	if historyRecorder.Code != http.StatusOK {
+		t.Fatalf("expected history status 200, got %d with body %s", historyRecorder.Code, historyRecorder.Body.String())
+	}
+	for _, needle := range []string{
+		`"fallback":"go-local-browser-data-db"`,
+		`"procedure":"browserControls.queryHistory"`,
+		`"title":"Example A"`,
+		`"total":1`,
+	} {
+		if !strings.Contains(historyRecorder.Body.String(), needle) {
+			t.Fatalf("expected history fallback to contain %s, got %s", needle, historyRecorder.Body.String())
+		}
+	}
+
+	logsRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(logsRecorder, httptest.NewRequest(http.MethodGet, "/api/browser-controls/logs/query?level=error&search=err&limit=10", nil))
+	if logsRecorder.Code != http.StatusOK {
+		t.Fatalf("expected logs status 200, got %d with body %s", logsRecorder.Code, logsRecorder.Body.String())
+	}
+	for _, needle := range []string{
+		`"procedure":"browserControls.queryConsoleLogs"`,
+		`"message":"err one"`,
+		`"total":1`,
+	} {
+		if !strings.Contains(logsRecorder.Body.String(), needle) {
+			t.Fatalf("expected logs fallback to contain %s, got %s", needle, logsRecorder.Body.String())
+		}
+	}
+
+	statsRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(statsRecorder, httptest.NewRequest(http.MethodGet, "/api/browser-controls/stats", nil))
+	if statsRecorder.Code != http.StatusOK {
+		t.Fatalf("expected stats status 200, got %d with body %s", statsRecorder.Code, statsRecorder.Body.String())
+	}
+	for _, needle := range []string{
+		`"procedure":"browserControls.stats"`,
+		`"historyCount":2`,
+		`"uniqueDomains":2`,
+		`"consoleLogCount":2`,
+		`"consoleErrors":1`,
+	} {
+		if !strings.Contains(statsRecorder.Body.String(), needle) {
+			t.Fatalf("expected stats fallback to contain %s, got %s", needle, statsRecorder.Body.String())
+		}
+	}
+}
+
 func TestInfrastructureStatusFallsBackToLocalProbe(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	userProfile := t.TempDir()

@@ -8162,23 +8162,63 @@ func (s *Server) handleBrowserControlsPushHistory(w http.ResponseWriter, r *http
 
 func (s *Server) handleBrowserControlsQueryHistory(w http.ResponseWriter, r *http.Request) {
 	payload := map[string]any{}
+	queryValue := ""
+	limitValue := 50
+	sinceValue := int64(0)
+	domainValue := ""
 	if query := strings.TrimSpace(r.URL.Query().Get("query")); query != "" {
+		queryValue = query
 		payload["query"] = query
 	}
 	if limit := strings.TrimSpace(r.URL.Query().Get("limit")); limit != "" {
 		if parsed, err := strconv.Atoi(limit); err == nil {
+			limitValue = parsed
 			payload["limit"] = parsed
 		}
 	}
 	if since := strings.TrimSpace(r.URL.Query().Get("since")); since != "" {
 		if parsed, err := strconv.ParseInt(since, 10, 64); err == nil {
+			sinceValue = parsed
 			payload["since"] = parsed
 		}
 	}
 	if domain := strings.TrimSpace(r.URL.Query().Get("domain")); domain != "" {
+		domainValue = domain
 		payload["domain"] = domain
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "browserControls.queryHistory", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "browserControls.queryHistory", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "browserControls.queryHistory",
+			},
+		})
+		return
+	}
+
+	history, fallbackErr := s.localBrowserHistoryQuery(queryValue, limitValue, sinceValue, domainValue)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    history,
+		"bridge": map[string]any{
+			"fallback":  "go-local-browser-data-db",
+			"procedure": "browserControls.queryHistory",
+			"reason":    "upstream unavailable; using local metamcp browser history",
+		},
+	})
 }
 
 func (s *Server) handleBrowserControlsPushLogs(w http.ResponseWriter, r *http.Request) {
@@ -8187,22 +8227,92 @@ func (s *Server) handleBrowserControlsPushLogs(w http.ResponseWriter, r *http.Re
 
 func (s *Server) handleBrowserControlsQueryLogs(w http.ResponseWriter, r *http.Request) {
 	payload := map[string]any{}
+	levelValue := ""
+	searchValue := ""
+	limitValue := 100
 	if level := strings.TrimSpace(r.URL.Query().Get("level")); level != "" {
+		levelValue = level
 		payload["level"] = level
 	}
 	if search := strings.TrimSpace(r.URL.Query().Get("search")); search != "" {
+		searchValue = search
 		payload["search"] = search
 	}
 	if limit := strings.TrimSpace(r.URL.Query().Get("limit")); limit != "" {
 		if parsed, err := strconv.Atoi(limit); err == nil {
+			limitValue = parsed
 			payload["limit"] = parsed
 		}
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "browserControls.queryConsoleLogs", payload)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "browserControls.queryConsoleLogs", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "browserControls.queryConsoleLogs",
+			},
+		})
+		return
+	}
+
+	logs, fallbackErr := s.localBrowserConsoleLogsQuery(levelValue, searchValue, limitValue)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    logs,
+		"bridge": map[string]any{
+			"fallback":  "go-local-browser-data-db",
+			"procedure": "browserControls.queryConsoleLogs",
+			"reason":    "upstream unavailable; using local metamcp browser console logs",
+		},
+	})
 }
 
 func (s *Server) handleBrowserControlsStats(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "browserControls.stats", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "browserControls.stats", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "browserControls.stats",
+			},
+		})
+		return
+	}
+
+	stats, fallbackErr := s.localBrowserControlsStats()
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    stats,
+		"bridge": map[string]any{
+			"fallback":  "go-local-browser-data-db",
+			"procedure": "browserControls.stats",
+			"reason":    "upstream unavailable; using local metamcp browser data stats",
+		},
+	})
 }
 
 func (s *Server) handleSessionBridgeBodyCall(w http.ResponseWriter, r *http.Request, procedure string) {
@@ -9588,6 +9698,201 @@ func (s *Server) localCatalogList(limit, offset int, search, status, transport, 
 	return map[string]any{
 		"servers": items,
 		"total":   total,
+	}, nil
+}
+
+func (s *Server) localBrowserHistoryQuery(query string, limit int, since int64, domain string) (any, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+		SELECT id, url, title, domain, visited_at, visit_count
+		FROM browser_history
+		ORDER BY visited_at DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	entries := []map[string]any{}
+	queryLower := strings.ToLower(strings.TrimSpace(query))
+	for rows.Next() {
+		var (
+			id         string
+			urlValue   string
+			title      string
+			domainName string
+			visitedAt  int64
+			visitCount int64
+		)
+		if err := rows.Scan(&id, &urlValue, &title, &domainName, &visitedAt, &visitCount); err != nil {
+			return nil, err
+		}
+		if queryLower != "" && !strings.Contains(strings.ToLower(title), queryLower) && !strings.Contains(strings.ToLower(urlValue), queryLower) {
+			continue
+		}
+		if strings.TrimSpace(domain) != "" && domainName != domain {
+			continue
+		}
+		if since > 0 && visitedAt < since {
+			continue
+		}
+		entries = append(entries, map[string]any{
+			"id":         id,
+			"url":        urlValue,
+			"title":      title,
+			"domain":     domainName,
+			"visitedAt":  visitedAt,
+			"visitCount": visitCount,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	total := len(entries)
+	if len(entries) > limit {
+		entries = entries[:limit]
+	}
+
+	return map[string]any{
+		"entries": entries,
+		"total":   total,
+	}, nil
+}
+
+func (s *Server) localBrowserConsoleLogsQuery(level, search string, limit int) (any, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	args := []any{}
+	query := `
+		SELECT id, level, message, source, url, line_number, timestamp
+		FROM browser_console_logs`
+	if strings.TrimSpace(level) != "" {
+		query += " WHERE level = ?"
+		args = append(args, level)
+	}
+	query += " ORDER BY timestamp DESC"
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	logs := []map[string]any{}
+	searchLower := strings.ToLower(strings.TrimSpace(search))
+	for rows.Next() {
+		var (
+			id         string
+			levelValue string
+			message    string
+			source     string
+			urlValue   sql.NullString
+			lineNumber sql.NullInt64
+			timestamp  int64
+		)
+		if err := rows.Scan(&id, &levelValue, &message, &source, &urlValue, &lineNumber, &timestamp); err != nil {
+			return nil, err
+		}
+		if searchLower != "" && !strings.Contains(strings.ToLower(message), searchLower) {
+			continue
+		}
+		logs = append(logs, map[string]any{
+			"id":         id,
+			"level":      levelValue,
+			"message":    message,
+			"source":     source,
+			"url":        nullStringToAny(urlValue),
+			"lineNumber": nullInt64ToAny(lineNumber),
+			"timestamp":  timestamp,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	total := len(logs)
+	if len(logs) > limit {
+		logs = logs[:limit]
+	}
+
+	return map[string]any{
+		"logs":  logs,
+		"total": total,
+	}, nil
+}
+
+func (s *Server) localBrowserControlsStats() (any, error) {
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	historyRows, err := db.Query(`SELECT domain FROM browser_history`)
+	if err != nil {
+		return nil, err
+	}
+	defer historyRows.Close()
+
+	historyCount := 0
+	domains := map[string]struct{}{}
+	for historyRows.Next() {
+		var domain string
+		if err := historyRows.Scan(&domain); err != nil {
+			return nil, err
+		}
+		historyCount++
+		domains[domain] = struct{}{}
+	}
+	if err := historyRows.Err(); err != nil {
+		return nil, err
+	}
+
+	logRows, err := db.Query(`SELECT level FROM browser_console_logs`)
+	if err != nil {
+		return nil, err
+	}
+	defer logRows.Close()
+
+	consoleLogCount := 0
+	consoleErrors := 0
+	for logRows.Next() {
+		var level string
+		if err := logRows.Scan(&level); err != nil {
+			return nil, err
+		}
+		consoleLogCount++
+		if level == "error" {
+			consoleErrors++
+		}
+	}
+	if err := logRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return map[string]any{
+		"historyCount":    historyCount,
+		"uniqueDomains":   len(domains),
+		"consoleLogCount": consoleLogCount,
+		"consoleErrors":   consoleErrors,
 	}, nil
 }
 
