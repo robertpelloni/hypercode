@@ -8516,3 +8516,37 @@ func demo() {
 		t.Fatalf("expected claude-code jsonl import candidate at %s, got %+v", claudePath, candidate)
 	}
 }
+
+func TestRuntimeStatusEndpointReportsDetectorFailure(t *testing.T) {
+	tempDir := t.TempDir()
+	cfg := config.Default()
+	cfg.WorkspaceRoot = tempDir
+	cfg.ConfigDir = filepath.Join(tempDir, ".hypercode-go")
+	cfg.MainConfigDir = filepath.Join(tempDir, ".hypercode")
+
+	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
+		t.Fatalf("failed to create go config dir: %v", err)
+	}
+	if err := os.MkdirAll(cfg.MainConfigDir, 0o755); err != nil {
+		t.Fatalf("failed to create main config dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tempDir, "hypercode.config.json"), []byte("{}"), 0o644); err != nil {
+		t.Fatalf("failed to create hypercode config file: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tempDir, "mcp.jsonc"), []byte("{}"), 0o644); err != nil {
+		t.Fatalf("failed to create mcp config file: %v", err)
+	}
+
+	server := New(cfg, stubDetector{err: io.EOF})
+	request := httptest.NewRequest(http.MethodGet, "/api/runtime/status", nil)
+	recorder := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusGatewayTimeout {
+		t.Fatalf("expected status 504, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `failed to detect CLI tools: EOF`) {
+		t.Fatalf("expected detector-specific runtime error, got %s", recorder.Body.String())
+	}
+}
