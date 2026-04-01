@@ -1079,7 +1079,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/logs/clear", Category: "ops", Description: "Clear observability logs, with a local no-op fallback when the TypeScript log store is unavailable."},
 				{Path: "/api/server-health/check", Category: "ops", Description: "Bridge to the TypeScript MCP server health state for a specific server UUID."},
 				{Path: "/api/server-health/reset", Category: "ops", Description: "Reset the TypeScript MCP server health error state for a specific server UUID."},
-				{Path: "/api/settings", Category: "control", Description: "Bridge to the full TypeScript configuration object."},
+				{Path: "/api/settings", Category: "control", Description: "Bridge to the full TypeScript configuration object, with a local Go .hypercode/config.json fallback when unavailable."},
 				{Path: "/api/settings/update", Category: "control", Description: "Update the TypeScript configuration object with a partial config payload."},
 				{Path: "/api/settings/providers", Category: "control", Description: "Read provider visibility, with a local Go provider catalog fallback when the TypeScript settings router is unavailable."},
 				{Path: "/api/settings/test-connection", Category: "control", Description: "Test a provider connection through the TypeScript control plane."},
@@ -4661,7 +4661,29 @@ func (s *Server) handleServerHealthReset(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) handleSettingsGet(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "settings.get", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "settings.get", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "settings.get",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    localSettingsConfig(s.cfg.WorkspaceRoot),
+		"bridge": map[string]any{
+			"fallback":  "go-local-settings",
+			"procedure": "settings.get",
+			"reason":    "upstream unavailable; using local .hypercode config fallback",
+		},
+	})
 }
 
 func (s *Server) handleSettingsUpdate(w http.ResponseWriter, r *http.Request) {
@@ -7875,6 +7897,23 @@ func localSettingsEnvironment() map[string]any {
 			"PORT":     coalesceEnv("PORT", "3000"),
 		},
 	}
+}
+
+func localSettingsConfig(workspaceRoot string) map[string]any {
+	configPath := filepath.Join(workspaceRoot, ".hypercode", "config.json")
+	raw, err := os.ReadFile(configPath)
+	if err != nil {
+		return map[string]any{}
+	}
+
+	var parsed map[string]any
+	if err := json.Unmarshal(raw, &parsed); err != nil {
+		return map[string]any{}
+	}
+	if parsed == nil {
+		return map[string]any{}
+	}
+	return parsed
 }
 
 func mustGetwd() string {

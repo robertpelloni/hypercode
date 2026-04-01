@@ -5802,6 +5802,9 @@ func TestSettingsReadEndpointsFallBackLocally(t *testing.T) {
 	if err := os.MkdirAll(mainConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create config dir: %v", err)
 	}
+	if err := os.WriteFile(filepath.Join(mainConfigDir, "config.json"), []byte(`{"theme":"local-dark","nested":{"enabled":true}}`), 0o644); err != nil {
+		t.Fatalf("failed to write local settings config: %v", err)
+	}
 
 	configBody := `{
   "mcpServers": {
@@ -5825,6 +5828,23 @@ func TestSettingsReadEndpointsFallBackLocally(t *testing.T) {
 	cfg.WorkspaceRoot = workspaceRoot
 	cfg.MainConfigDir = mainConfigDir
 	server := New(cfg, stubDetector{})
+
+	settingsRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(settingsRecorder, httptest.NewRequest(http.MethodGet, "/api/settings", nil))
+	if settingsRecorder.Code != http.StatusOK {
+		t.Fatalf("expected settings status 200, got %d with body %s", settingsRecorder.Code, settingsRecorder.Body.String())
+	}
+	for _, needle := range []string{
+		`"fallback":"go-local-settings"`,
+		`"procedure":"settings.get"`,
+		`using local .hypercode config fallback`,
+		`"theme":"local-dark"`,
+		`"enabled":true`,
+	} {
+		if !strings.Contains(settingsRecorder.Body.String(), needle) {
+			t.Fatalf("expected settings response to contain %s, got %s", needle, settingsRecorder.Body.String())
+		}
+	}
 
 	environmentRecorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(environmentRecorder, httptest.NewRequest(http.MethodGet, "/api/settings/environment", nil))
