@@ -1154,8 +1154,8 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/api-keys/validate", Category: "governance", Description: "Validate an API key through the TypeScript API keys router."},
 				{Path: "/api/audit", Category: "governance", Description: "List audit logs through the TypeScript audit router, with a local empty-state fallback when the audit service is unavailable."},
 				{Path: "/api/audit/query", Category: "governance", Description: "Query audit logs through the TypeScript audit router, with a local empty-state fallback when the audit service is unavailable."},
-				{Path: "/api/scripts", Category: "operator", Description: "List saved scripts through the TypeScript saved scripts router, with a local empty-state fallback when the script store is unavailable."},
-				{Path: "/api/scripts/get", Category: "operator", Description: "Read a saved script through the TypeScript saved scripts router."},
+				{Path: "/api/scripts", Category: "operator", Description: "List saved scripts through the TypeScript saved scripts router, with a local HyperCode config fallback when unavailable."},
+				{Path: "/api/scripts/get", Category: "operator", Description: "Read a saved script through the TypeScript saved scripts router, with a local HyperCode config fallback when unavailable."},
 				{Path: "/api/scripts/create", Category: "operator", Description: "Create a saved script through the TypeScript saved scripts router."},
 				{Path: "/api/scripts/update", Category: "operator", Description: "Update a saved script through the TypeScript saved scripts router."},
 				{Path: "/api/scripts/delete", Category: "operator", Description: "Delete a saved script through the TypeScript saved scripts router."},
@@ -5921,13 +5921,22 @@ func (s *Server) handleSavedScriptsList(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	scripts, fallbackErr := s.localSavedScripts()
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+		})
+		return
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    []map[string]any{},
+		"data":    scripts,
 		"bridge": map[string]any{
 			"fallback":  "go-local-operator",
 			"procedure": "savedScripts.list",
-			"reason":    "upstream unavailable; using local empty saved script list",
+			"reason":    "upstream unavailable; using local saved scripts from HyperCode config",
 		},
 	})
 }
@@ -5938,7 +5947,54 @@ func (s *Server) handleSavedScriptsGet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing uuid query parameter"})
 		return
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "savedScripts.get", map[string]any{"uuid": uuid})
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "savedScripts.get", map[string]any{"uuid": uuid}, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "savedScripts.get",
+			},
+		})
+		return
+	}
+
+	scripts, fallbackErr := s.localSavedScripts()
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+		})
+		return
+	}
+
+	for _, script := range scripts {
+		if stringValue(script["uuid"]) == uuid {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"success": true,
+				"data":    script,
+				"bridge": map[string]any{
+					"fallback":  "go-local-operator",
+					"procedure": "savedScripts.get",
+					"reason":    "upstream unavailable; using local saved script from HyperCode config",
+				},
+			})
+			return
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    nil,
+		"bridge": map[string]any{
+			"fallback":  "go-local-operator",
+			"procedure": "savedScripts.get",
+			"reason":    "upstream unavailable; saved script was not found in local HyperCode config",
+		},
+	})
 }
 
 func (s *Server) handleSavedScriptsCreate(w http.ResponseWriter, r *http.Request) {
@@ -8161,6 +8217,25 @@ func localSettingsConfig(workspaceRoot string) map[string]any {
 		return map[string]any{}
 	}
 	return parsed
+}
+
+func (s *Server) localSavedScripts() ([]map[string]any, error) {
+	config := localSettingsConfig(s.cfg.WorkspaceRoot)
+	rawScripts, ok := config["scripts"].([]any)
+	if !ok {
+		return []map[string]any{}, nil
+	}
+
+	scripts := make([]map[string]any, 0, len(rawScripts))
+	for _, entry := range rawScripts {
+		script, ok := entry.(map[string]any)
+		if !ok {
+			continue
+		}
+		scripts = append(scripts, cloneMap(script))
+	}
+
+	return scripts, nil
 }
 
 func mustGetwd() string {

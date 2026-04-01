@@ -5395,7 +5395,20 @@ func TestZeroStateRegistryReadEndpointsFallBackLocally(t *testing.T) {
 func TestOperatorListEndpointsFallBackToEmptyState(t *testing.T) {
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 
-	server := New(config.Default(), stubDetector{})
+	workspaceRoot := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".hypercode"), 0o755); err != nil {
+		t.Fatalf("failed to create .hypercode dir: %v", err)
+	}
+	configJSON := `{"scripts":[{"uuid":"script-local-1","name":"Deploy local","description":"ship it","code":"echo hi"}]}`
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".hypercode", "config.json"), []byte(configJSON), 0o644); err != nil {
+		t.Fatalf("failed to write local config: %v", err)
+	}
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
 
 	cases := []struct {
 		name     string
@@ -5418,8 +5431,20 @@ func TestOperatorListEndpointsFallBackToEmptyState(t *testing.T) {
 			contains: []string{
 				`"fallback":"go-local-operator"`,
 				`"procedure":"savedScripts.list"`,
-				`using local empty saved script list`,
-				`"data":[]`,
+				`using local saved scripts from HyperCode config`,
+				`"script-local-1"`,
+				`"Deploy local"`,
+			},
+		},
+		{
+			name: "scripts get",
+			path: "/api/scripts/get?uuid=script-local-1",
+			contains: []string{
+				`"fallback":"go-local-operator"`,
+				`"procedure":"savedScripts.get"`,
+				`using local saved script from HyperCode config`,
+				`"script-local-1"`,
+				`"Deploy local"`,
 			},
 		},
 	}
