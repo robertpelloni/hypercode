@@ -3217,6 +3217,53 @@ func TestBillingRoutingReadEndpointsFallBackToLocalProviderRouting(t *testing.T)
 	}
 }
 
+func TestBillingReadEndpointsFallBackToLocalProviderPreview(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	t.Setenv("OPENAI_API_KEY", "openai")
+	t.Setenv("ANTHROPIC_API_KEY", "anthropic")
+
+	server := New(config.Default(), stubDetector{})
+
+	statusRecorder := httptest.NewRecorder()
+	statusRequest := httptest.NewRequest(http.MethodGet, "/api/billing/status", nil)
+	server.Handler().ServeHTTP(statusRecorder, statusRequest)
+
+	if statusRecorder.Code != http.StatusOK {
+		t.Fatalf("expected local billing status 200, got %d with body %s", statusRecorder.Code, statusRecorder.Body.String())
+	}
+	if !strings.Contains(statusRecorder.Body.String(), `"fallback":"go-local-provider-routing"`) || !strings.Contains(statusRecorder.Body.String(), `"currentMonth":0`) {
+		t.Fatalf("expected local billing status preview payload, got %s", statusRecorder.Body.String())
+	}
+	if !strings.Contains(statusRecorder.Body.String(), `"openai":true`) {
+		t.Fatalf("expected configured provider key visibility in local billing status, got %s", statusRecorder.Body.String())
+	}
+
+	quotasRecorder := httptest.NewRecorder()
+	quotasRequest := httptest.NewRequest(http.MethodGet, "/api/billing/provider-quotas", nil)
+	server.Handler().ServeHTTP(quotasRecorder, quotasRequest)
+
+	if quotasRecorder.Code != http.StatusOK {
+		t.Fatalf("expected local provider quotas 200, got %d with body %s", quotasRecorder.Code, quotasRecorder.Body.String())
+	}
+	if !strings.Contains(quotasRecorder.Body.String(), `"fallback":"go-local-provider-routing"`) || !strings.Contains(quotasRecorder.Body.String(), `"quotaConfidence":"estimated"`) {
+		t.Fatalf("expected local provider quota preview metadata, got %s", quotasRecorder.Body.String())
+	}
+	if !strings.Contains(quotasRecorder.Body.String(), `"provider":"openai"`) || !strings.Contains(quotasRecorder.Body.String(), `"source":"go-env-preview"`) {
+		t.Fatalf("expected local provider quota preview entries, got %s", quotasRecorder.Body.String())
+	}
+
+	depletedRecorder := httptest.NewRecorder()
+	depletedRequest := httptest.NewRequest(http.MethodGet, "/api/billing/depleted-models", nil)
+	server.Handler().ServeHTTP(depletedRecorder, depletedRequest)
+
+	if depletedRecorder.Code != http.StatusOK {
+		t.Fatalf("expected local depleted models 200, got %d with body %s", depletedRecorder.Code, depletedRecorder.Body.String())
+	}
+	if !strings.Contains(depletedRecorder.Body.String(), `"fallback":"go-local-provider-routing"`) || !strings.Contains(depletedRecorder.Body.String(), `"data":[]`) {
+		t.Fatalf("expected local depleted models preview payload, got %s", depletedRecorder.Body.String())
+	}
+}
+
 func TestBrowserBridgeRoutes(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")
