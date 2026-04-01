@@ -1028,7 +1028,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/agent-memory/export", Category: "memory", Description: "Bridge to TypeScript agent-memory export."},
 				{Path: "/api/agent-memory/handoff", Category: "memory", Description: "Create an agent-memory handoff artifact through the TypeScript control plane."},
 				{Path: "/api/agent-memory/pickup", Category: "memory", Description: "Restore an agent-memory handoff artifact through the TypeScript control plane."},
-				{Path: "/api/agent-memory/stats", Category: "memory", Description: "Bridge to TypeScript agent-memory counts by tier."},
+				{Path: "/api/agent-memory/stats", Category: "memory", Description: "Bridge to TypeScript agent-memory counts by tier, with an explicit zero-state fallback when agent memory is unavailable."},
 				{Path: "/api/graph", Category: "code", Description: "Bridge to the TypeScript repository graph snapshot."},
 				{Path: "/api/graph/rebuild", Category: "code", Description: "Rebuild the TypeScript repository graph and return the latest snapshot."},
 				{Path: "/api/graph/consumers", Category: "code", Description: "Bridge to repository graph consumers for a given file path."},
@@ -4051,7 +4051,34 @@ func (s *Server) handleAgentMemoryPickup(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) handleAgentMemoryStats(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "agentMemory.stats", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "agentMemory.stats", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "agentMemory.stats",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"session":  0,
+			"working":  0,
+			"longTerm": 0,
+			"total":    0,
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-agent-memory",
+			"procedure": "agentMemory.stats",
+			"reason":    "upstream unavailable; local agent memory runtime is not initialized",
+		},
+	})
 }
 
 func (s *Server) handleGraphGet(w http.ResponseWriter, r *http.Request) {
