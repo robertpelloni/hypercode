@@ -1,4 +1,4 @@
-﻿package httpapi
+package httpapi
 
 import (
 	"context"
@@ -55,6 +55,7 @@ func (s *Server) buildStartupStatus(ctx context.Context) (StartupStatus, error) 
 
 	upstreamReady, upstreamBase := s.checkUpstreamProcedure(ctx, "health", nil)
 	supervisorReady, supervisorBase := s.checkUpstreamProcedure(ctx, "session.catalog", nil)
+	importedStats := s.importedSessionMaintenanceStats(ctx)
 
 	blockingReasons := make([]StartupBlockingReason, 0, 4)
 	if !configStatus.WorkspaceRoot.Exists {
@@ -132,8 +133,33 @@ func (s *Server) buildStartupStatus(ctx context.Context) (StartupStatus, error) 
 				"nodeId":     meshStatus.NodeID,
 				"peersCount": meshStatus.PeersCount,
 			},
+			"importedSessions": map[string]any{
+				"totalSessions":                importedStats.TotalSessions,
+				"inlineTranscriptCount":        importedStats.InlineTranscriptCount,
+				"archivedTranscriptCount":      importedStats.ArchivedTranscriptCount,
+				"missingRetentionSummaryCount": importedStats.MissingRetentionSummaryCount,
+			},
 		},
 	}, nil
+}
+
+func (s *Server) importedSessionMaintenanceStats(ctx context.Context) ImportedSessionMaintenanceStats {
+	var stats ImportedSessionMaintenanceStats
+	if _, err := s.callUpstreamJSON(ctx, "session.importedMaintenanceStats", nil, &stats); err == nil {
+		return stats
+	}
+
+	candidates, err := s.scanValidatedImportSources()
+	if err != nil {
+		return ImportedSessionMaintenanceStats{}
+	}
+
+	return ImportedSessionMaintenanceStats{
+		TotalSessions:                len(candidates),
+		InlineTranscriptCount:        len(candidates),
+		ArchivedTranscriptCount:      0,
+		MissingRetentionSummaryCount: len(candidates),
+	}
 }
 
 func (s *Server) checkUpstreamProcedure(ctx context.Context, procedure string, payload any) (bool, string) {
