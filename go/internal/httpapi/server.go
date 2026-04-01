@@ -2118,7 +2118,7 @@ func (s *Server) handleMCPConfiguredServers(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	fallbackServers, fallbackErr := s.localConfiguredMCPServers()
+	fallbackServers, fallbackErr := s.localConfiguredMCPServersFromDB()
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
@@ -2132,9 +2132,9 @@ func (s *Server) handleMCPConfiguredServers(w http.ResponseWriter, r *http.Reque
 		"success": true,
 		"data":    fallbackServers,
 		"bridge": map[string]any{
-			"fallback":  "go-local-jsonc",
+			"fallback":  "go-local-mcp-db",
 			"procedure": "mcpServers.list",
-			"reason":    "upstream unavailable; using local configured MCP server definitions",
+			"reason":    "upstream unavailable; using local MCP server definitions from metamcp.db with JSONC metadata overlay",
 		},
 	})
 }
@@ -2163,7 +2163,7 @@ func (s *Server) handleMCPConfiguredServerGet(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	fallbackServers, fallbackErr := s.localConfiguredMCPServers()
+	fallbackServer, fallbackErr := s.localConfiguredMCPServerFromDB(uuid)
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
@@ -2172,28 +2172,26 @@ func (s *Server) handleMCPConfiguredServerGet(w http.ResponseWriter, r *http.Req
 		})
 		return
 	}
-	for _, fallbackServer := range fallbackServers {
-		if fallbackUUID, _ := fallbackServer["uuid"].(string); fallbackUUID == uuid {
-			writeJSON(w, http.StatusOK, map[string]any{
-				"success": true,
-				"data":    fallbackServer,
-				"bridge": map[string]any{
-					"fallback":  "go-local-jsonc",
-					"procedure": "mcpServers.get",
-					"reason":    "upstream unavailable; using local configured MCP server definition",
-				},
-			})
-			return
-		}
+	if fallbackServer != nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    fallbackServer,
+			"bridge": map[string]any{
+				"fallback":  "go-local-mcp-db",
+				"procedure": "mcpServers.get",
+				"reason":    "upstream unavailable; using local MCP server definition from metamcp.db with JSONC metadata overlay",
+			},
+		})
+		return
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
 		"data":    nil,
 		"bridge": map[string]any{
-			"fallback":  "go-local-jsonc",
+			"fallback":  "go-local-mcp-db",
 			"procedure": "mcpServers.get",
-			"reason":    "upstream unavailable; configured MCP server not present in local JSONC fallback",
+			"reason":    "upstream unavailable; configured MCP server not present in local metamcp.db fallback",
 		},
 	})
 }
@@ -14362,6 +14360,170 @@ func (s *Server) localConfiguredMCPServers() ([]map[string]any, error) {
 		return leftName < rightName
 	})
 	return results, nil
+}
+
+func (s *Server) localConfiguredMCPServersFromDB() ([]map[string]any, error) {
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+		SELECT uuid, name, description, type, command, args, env, url, error_status, created_at,
+		       bearer_token, headers, always_on, user_id, source_published_server_uuid
+		FROM mcp_servers
+		ORDER BY name ASC
+	`)
+	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "no such table") {
+			return []map[string]any{}, nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	servers := make([]map[string]any, 0)
+	for rows.Next() {
+		server, scanErr := scanLocalMCPServer(rows)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		servers = append(servers, server)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	secretEnv, err := s.localWorkspaceSecretEnv()
+	if err != nil {
+		return nil, err
+	}
+	metaByName, err := s.localConfiguredMCPServerMetaByName()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, server := range servers {
+		mergeServerEnv(server, secretEnv)
+		if name, _ := server["name"].(string); strings.TrimSpace(name) != "" {
+			server["_meta"] = metaByName[name]
+		}
+	}
+
+	return servers, nil
+}
+
+func (s *Server) localConfiguredMCPServerFromDB(uuid string) (map[string]any, error) {
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	row := db.QueryRow(`
+		SELECT uuid, name, description, type, command, args, env, url, error_status, created_at,
+		       bearer_token, headers, always_on, user_id, source_published_server_uuid
+		FROM mcp_servers
+		WHERE uuid = ?
+		LIMIT 1
+	`, uuid)
+	server, err := scanLocalMCPServer(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	secretEnv, err := s.localWorkspaceSecretEnv()
+	if err != nil {
+		return nil, err
+	}
+	mergeServerEnv(server, secretEnv)
+
+	metaByName, err := s.localConfiguredMCPServerMetaByName()
+	if err != nil {
+		return nil, err
+	}
+	if name, _ := server["name"].(string); strings.TrimSpace(name) != "" {
+		server["_meta"] = metaByName[name]
+	}
+
+	return server, nil
+}
+
+func (s *Server) localConfiguredMCPServerMetaByName() (map[string]any, error) {
+	editor, err := s.localMCPJsoncEditor()
+	if err != nil {
+		return nil, err
+	}
+	content, _ := editor["content"].(string)
+	var parsed map[string]any
+	if err := json.Unmarshal([]byte(stripJSONCLineComments(content)), &parsed); err != nil {
+		return nil, err
+	}
+
+	rawServers, _ := parsed["mcpServers"].(map[string]any)
+	results := make(map[string]any, len(rawServers))
+	for name, rawServer := range rawServers {
+		serverMap, _ := rawServer.(map[string]any)
+		if serverMap == nil {
+			results[name] = nil
+			continue
+		}
+		results[name] = serverMap["_meta"]
+	}
+	return results, nil
+}
+
+func (s *Server) localWorkspaceSecretEnv() (map[string]string, error) {
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+		SELECT key, value
+		FROM workspace_secrets
+	`)
+	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "no such table") {
+			return map[string]string{}, nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	secretEnv := make(map[string]string)
+	for rows.Next() {
+		var (
+			key   string
+			value string
+		)
+		if err := rows.Scan(&key, &value); err != nil {
+			return nil, err
+		}
+		secretEnv[key] = value
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return secretEnv, nil
+}
+
+func mergeServerEnv(server map[string]any, secretEnv map[string]string) {
+	envValue, _ := server["env"].(map[string]any)
+	merged := make(map[string]any, len(secretEnv)+len(envValue))
+	for key, value := range secretEnv {
+		merged[key] = value
+	}
+	for key, value := range envValue {
+		merged[key] = value
+	}
+	server["env"] = merged
 }
 
 func (s *Server) localSkillsMetadata() ([]map[string]any, error) {

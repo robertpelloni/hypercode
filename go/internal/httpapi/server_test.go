@@ -8940,13 +8940,11 @@ func TestMCPJsoncEditorSaveFallsBackToLocalWrite(t *testing.T) {
 
 func TestMCPConfiguredServersFallBackToLocalJsonc(t *testing.T) {
 	mainConfigDir := t.TempDir()
+	workspaceRoot := t.TempDir()
 	jsoncContent := `// HyperCode MCP configuration
 {
   "mcpServers": {
     "core": {
-      "command": "node",
-      "args": ["server.js"],
-      "description": "Core server",
       "_meta": {
         "toolCount": 1
       }
@@ -8961,8 +8959,49 @@ func TestMCPConfiguredServersFallBackToLocalJsonc(t *testing.T) {
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 
 	cfg := config.Default()
-	cfg.WorkspaceRoot = t.TempDir()
+	cfg.WorkspaceRoot = workspaceRoot
 	cfg.MainConfigDir = mainConfigDir
+
+	db, err := sql.Open("sqlite", filepath.Join(workspaceRoot, "metamcp.db"))
+	if err != nil {
+		t.Fatalf("failed to open sqlite db: %v", err)
+	}
+	defer db.Close()
+	if _, err := db.Exec(`
+		CREATE TABLE mcp_servers (
+			uuid TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			description TEXT,
+			type TEXT NOT NULL DEFAULT 'STDIO',
+			command TEXT,
+			args TEXT NOT NULL DEFAULT '[]',
+			env TEXT NOT NULL DEFAULT '{}',
+			url TEXT,
+			error_status TEXT NOT NULL DEFAULT 'NONE',
+			created_at INTEGER NOT NULL,
+			bearer_token TEXT,
+			headers TEXT NOT NULL DEFAULT '{}',
+			always_on INTEGER NOT NULL DEFAULT 0,
+			user_id TEXT NOT NULL,
+			source_published_server_uuid TEXT
+		);
+		CREATE TABLE workspace_secrets (
+			key TEXT PRIMARY KEY,
+			value TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL
+		);
+		INSERT INTO workspace_secrets (key, value, created_at, updated_at)
+		VALUES ('OPENAI_API_KEY', 'secret-one', 1711958400, 1711958460);
+		INSERT INTO mcp_servers (
+			uuid, name, description, type, command, args, env, url, error_status, created_at, bearer_token, headers, always_on, user_id, source_published_server_uuid
+		) VALUES (
+			'srv-db-1', 'core', 'Core server from db', 'STDIO', 'node', '["server.js"]', '{"LOCAL_ONLY":"1"}', NULL, 'NONE', 1711958460, NULL, '{"x-test":"1"}', 1, 'system', NULL
+		);
+	`); err != nil {
+		t.Fatalf("failed to seed sqlite db: %v", err)
+	}
+
 	server := New(cfg, stubDetector{})
 
 	listRequest := httptest.NewRequest(http.MethodGet, "/api/mcp/servers/configured", nil)
@@ -8972,17 +9011,23 @@ func TestMCPConfiguredServersFallBackToLocalJsonc(t *testing.T) {
 	if listRecorder.Code != http.StatusOK {
 		t.Fatalf("expected fallback list status 200, got %d with body %s", listRecorder.Code, listRecorder.Body.String())
 	}
-	if !strings.Contains(listRecorder.Body.String(), `"fallback":"go-local-jsonc"`) {
-		t.Fatalf("expected go-local-jsonc fallback metadata, got %s", listRecorder.Body.String())
+	if !strings.Contains(listRecorder.Body.String(), `"fallback":"go-local-mcp-db"`) {
+		t.Fatalf("expected go-local-mcp-db fallback metadata, got %s", listRecorder.Body.String())
 	}
-	if !strings.Contains(listRecorder.Body.String(), `using local configured MCP server definitions`) {
+	if !strings.Contains(listRecorder.Body.String(), `using local MCP server definitions from metamcp.db with JSONC metadata overlay`) {
 		t.Fatalf("expected configured server list fallback reason, got %s", listRecorder.Body.String())
 	}
-	if !strings.Contains(listRecorder.Body.String(), `"name":"core"`) || !strings.Contains(listRecorder.Body.String(), `"command":"node"`) {
-		t.Fatalf("expected configured server from local jsonc, got %s", listRecorder.Body.String())
+	if !strings.Contains(listRecorder.Body.String(), `"uuid":"srv-db-1"`) || !strings.Contains(listRecorder.Body.String(), `"command":"node"`) {
+		t.Fatalf("expected configured server from local db, got %s", listRecorder.Body.String())
+	}
+	if !strings.Contains(listRecorder.Body.String(), `"LOCAL_ONLY":"1"`) || !strings.Contains(listRecorder.Body.String(), `"OPENAI_API_KEY":"secret-one"`) {
+		t.Fatalf("expected db env plus workspace secret injection, got %s", listRecorder.Body.String())
+	}
+	if !strings.Contains(listRecorder.Body.String(), `"toolCount":1`) {
+		t.Fatalf("expected jsonc _meta overlay, got %s", listRecorder.Body.String())
 	}
 
-	expectedUUID := syntheticServerUUID("core")
+	expectedUUID := "srv-db-1"
 	getRequest := httptest.NewRequest(http.MethodGet, "/api/mcp/servers/get?uuid="+expectedUUID, nil)
 	getRecorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(getRecorder, getRequest)
@@ -8990,11 +9035,11 @@ func TestMCPConfiguredServersFallBackToLocalJsonc(t *testing.T) {
 	if getRecorder.Code != http.StatusOK {
 		t.Fatalf("expected fallback get status 200, got %d with body %s", getRecorder.Code, getRecorder.Body.String())
 	}
-	if !strings.Contains(getRecorder.Body.String(), `using local configured MCP server definition`) {
+	if !strings.Contains(getRecorder.Body.String(), `using local MCP server definition from metamcp.db with JSONC metadata overlay`) {
 		t.Fatalf("expected configured server get fallback reason, got %s", getRecorder.Body.String())
 	}
 	if !strings.Contains(getRecorder.Body.String(), `"uuid":"`+expectedUUID+`"`) {
-		t.Fatalf("expected synthetic uuid %s, got %s", expectedUUID, getRecorder.Body.String())
+		t.Fatalf("expected db uuid %s, got %s", expectedUUID, getRecorder.Body.String())
 	}
 	if !strings.Contains(getRecorder.Body.String(), `"name":"core"`) {
 		t.Fatalf("expected configured server get payload, got %s", getRecorder.Body.String())
