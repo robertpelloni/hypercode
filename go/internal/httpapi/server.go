@@ -6467,7 +6467,39 @@ func (s *Server) handleLinksBacklogGet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing uuid query parameter"})
 		return
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "linksBacklog.get", map[string]any{"uuid": uuid})
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "linksBacklog.get", map[string]any{"uuid": uuid}, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "linksBacklog.get",
+			},
+		})
+		return
+	}
+
+	item, fallbackErr := s.localLinksBacklogItem(uuid)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    item,
+		"bridge": map[string]any{
+			"fallback":  "go-local-links-db",
+			"procedure": "linksBacklog.get",
+			"reason":    "upstream unavailable; using local metamcp links backlog record",
+		},
+	})
 }
 
 func (s *Server) handleLinksBacklogSync(w http.ResponseWriter, r *http.Request) {
@@ -8849,6 +8881,95 @@ func (s *Server) localAPIKey(uuid string) (any, error) {
 	}, nil
 }
 
+func (s *Server) localLinksBacklogItem(uuid string) (any, error) {
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	var (
+		itemUUID                 string
+		urlValue                 string
+		normalizedURL            string
+		title                    sql.NullString
+		description              sql.NullString
+		tagsRaw                  string
+		source                   string
+		isDuplicate              bool
+		duplicateOf              sql.NullString
+		researchStatus           string
+		httpStatus               sql.NullInt64
+		pageTitle                sql.NullString
+		pageDescription          sql.NullString
+		faviconURL               sql.NullString
+		researchedAt             sql.NullInt64
+		clusterID                sql.NullString
+		bobbyBookmarksBookmarkID sql.NullInt64
+		importSessionID          sql.NullInt64
+		rawPayloadText           sql.NullString
+		syncedAt                 sql.NullInt64
+		createdAtRaw             int64
+		updatedAtRaw             int64
+	)
+
+	row := db.QueryRow(`
+		SELECT uuid, url, normalized_url, title, description, tags, source, is_duplicate, duplicate_of,
+		       research_status, http_status, page_title, page_description, favicon_url, researched_at,
+		       cluster_id, bobbybookmarks_bookmark_id, import_session_id, raw_payload, synced_at, created_at, updated_at
+		FROM links_backlog
+		WHERE uuid = ?
+		LIMIT 1
+	`, uuid)
+	if err := row.Scan(
+		&itemUUID, &urlValue, &normalizedURL, &title, &description, &tagsRaw, &source, &isDuplicate, &duplicateOf,
+		&researchStatus, &httpStatus, &pageTitle, &pageDescription, &faviconURL, &researchedAt,
+		&clusterID, &bobbyBookmarksBookmarkID, &importSessionID, &rawPayloadText, &syncedAt, &createdAtRaw, &updatedAtRaw,
+	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var tags any
+	if err := json.Unmarshal([]byte(tagsRaw), &tags); err != nil {
+		tags = []any{}
+	}
+
+	var rawPayload any
+	if rawPayloadText.Valid {
+		if err := json.Unmarshal([]byte(rawPayloadText.String), &rawPayload); err != nil {
+			rawPayload = nil
+		}
+	}
+
+	return map[string]any{
+		"uuid":                       itemUUID,
+		"url":                        urlValue,
+		"normalized_url":             normalizedURL,
+		"title":                      nullStringToAny(title),
+		"description":                nullStringToAny(description),
+		"tags":                       tags,
+		"source":                     source,
+		"is_duplicate":               isDuplicate,
+		"duplicate_of":               nullStringToAny(duplicateOf),
+		"research_status":            researchStatus,
+		"http_status":                nullInt64ToAny(httpStatus),
+		"page_title":                 nullStringToAny(pageTitle),
+		"page_description":           nullStringToAny(pageDescription),
+		"favicon_url":                nullStringToAny(faviconURL),
+		"researched_at":              nullTimestampToAny(researchedAt),
+		"cluster_id":                 nullStringToAny(clusterID),
+		"bobbybookmarks_bookmark_id": nullInt64ToAny(bobbyBookmarksBookmarkID),
+		"import_session_id":          nullInt64ToAny(importSessionID),
+		"raw_payload":                rawPayload,
+		"synced_at":                  nullTimestampToAny(syncedAt),
+		"created_at":                 unixTimestampToRFC3339(createdAtRaw),
+		"updated_at":                 unixTimestampToRFC3339(updatedAtRaw),
+	}, nil
+}
+
 func unixTimestampToRFC3339(value int64) string {
 	if value <= 0 {
 		return time.Unix(0, 0).UTC().Format(time.RFC3339)
@@ -8859,6 +8980,20 @@ func unixTimestampToRFC3339(value int64) string {
 func nullStringToAny(value sql.NullString) any {
 	if value.Valid {
 		return value.String
+	}
+	return nil
+}
+
+func nullInt64ToAny(value sql.NullInt64) any {
+	if value.Valid {
+		return value.Int64
+	}
+	return nil
+}
+
+func nullTimestampToAny(value sql.NullInt64) any {
+	if value.Valid {
+		return unixTimestampToRFC3339(value.Int64)
 	}
 	return nil
 }
