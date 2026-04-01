@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +16,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/borghq/hypercode-go/internal/config"
 	"github.com/borghq/hypercode-go/internal/controlplane"
@@ -6403,6 +6405,87 @@ func TestCatalogRunsFallsBackToLocalDB(t *testing.T) {
 	}
 	if strings.Contains(recorder.Body.String(), `"uuid":"run-1"`) {
 		t.Fatalf("expected limit=1 to exclude older run, got %s", recorder.Body.String())
+	}
+}
+
+func TestCatalogStatsFallsBackToLocalDB(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	workspace := t.TempDir()
+	dbPath := filepath.Join(workspace, "metamcp.db")
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("failed to open sqlite db: %v", err)
+	}
+	defer db.Close()
+
+	now := time.Now().UTC().Unix()
+	old := now - (48 * 60 * 60)
+
+	if _, err := db.Exec(fmt.Sprintf(`
+		CREATE TABLE published_mcp_servers (
+			uuid TEXT PRIMARY KEY,
+			canonical_id TEXT NOT NULL UNIQUE,
+			display_name TEXT NOT NULL,
+			description TEXT,
+			author TEXT,
+			repository_url TEXT,
+			homepage_url TEXT,
+			icon_url TEXT,
+			transport TEXT NOT NULL DEFAULT 'unknown',
+			install_method TEXT NOT NULL DEFAULT 'unknown',
+			auth_model TEXT NOT NULL DEFAULT 'unknown',
+			status TEXT NOT NULL DEFAULT 'discovered',
+			confidence INTEGER NOT NULL DEFAULT 0,
+			tags TEXT NOT NULL DEFAULT '[]',
+			categories TEXT NOT NULL DEFAULT '[]',
+			stars INTEGER,
+			last_seen_at INTEGER,
+			last_verified_at INTEGER,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL
+		);
+		INSERT INTO published_mcp_servers (
+			uuid, canonical_id, display_name, status, created_at, updated_at
+		) VALUES
+			('catalog-1', 'registry/1', 'One', 'validated', %d, %d),
+			('catalog-2', 'registry/2', 'Two', 'broken', %d, %d),
+			('catalog-3', 'registry/3', 'Three', 'validated', %d, %d),
+			('catalog-4', 'registry/4', 'Four', 'archived', %d, %d),
+			('catalog-5', 'registry/5', 'Five', 'discovered', %d, %d);
+	`, old, now, old, old, old, now, old, old, old, now)); err != nil {
+		t.Fatalf("failed to seed sqlite db: %v", err)
+	}
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspace
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/catalog/stats", nil))
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	for _, needle := range []string{
+		`"fallback":"go-local-published-catalog-db"`,
+		`"procedure":"catalog.stats"`,
+		`using local metamcp published catalog aggregates`,
+		`"total":5`,
+		`"validated":2`,
+		`"broken":1`,
+		`"recentlyUpdated":3`,
+		`"status":"archived"`,
+		`"count":1`,
+		`"status":"validated"`,
+		`"count":2`,
+	} {
+		if !strings.Contains(recorder.Body.String(), needle) {
+			t.Fatalf("expected catalog stats fallback to contain %s, got %s", needle, recorder.Body.String())
+		}
 	}
 }
 

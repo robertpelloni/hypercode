@@ -6914,7 +6914,39 @@ func (s *Server) handleCatalogValidateBatch(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *Server) handleCatalogStats(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "catalog.stats", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "catalog.stats", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "catalog.stats",
+			},
+		})
+		return
+	}
+
+	stats, fallbackErr := s.localCatalogStats()
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    stats,
+		"bridge": map[string]any{
+			"fallback":  "go-local-published-catalog-db",
+			"procedure": "catalog.stats",
+			"reason":    "upstream unavailable; using local metamcp published catalog aggregates",
+		},
+	})
 }
 
 func (s *Server) handleCatalogLinkedServers(w http.ResponseWriter, r *http.Request) {
@@ -9375,6 +9407,52 @@ func (s *Server) localCatalogRuns(serverUUID string, limit int) ([]map[string]an
 	return runs, nil
 }
 
+func (s *Server) localCatalogStats() (any, error) {
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	total, err := countPublishedCatalogServers(db, "")
+	if err != nil {
+		return nil, err
+	}
+	validated, err := countPublishedCatalogServers(db, "validated")
+	if err != nil {
+		return nil, err
+	}
+	broken, err := countPublishedCatalogServers(db, "broken")
+	if err != nil {
+		return nil, err
+	}
+	recentlyUpdated, err := countPublishedCatalogRecentlyUpdated(db, 24)
+	if err != nil {
+		return nil, err
+	}
+
+	statuses := []string{"discovered", "normalized", "probeable", "validated", "certified", "broken", "archived"}
+	statusCounts := make([]map[string]any, 0, len(statuses))
+	for _, status := range statuses {
+		count, countErr := countPublishedCatalogServers(db, status)
+		if countErr != nil {
+			return nil, countErr
+		}
+		statusCounts = append(statusCounts, map[string]any{
+			"status": status,
+			"count":  count,
+		})
+	}
+
+	return map[string]any{
+		"total":           total,
+		"validated":       validated,
+		"broken":          broken,
+		"recentlyUpdated": recentlyUpdated,
+		"statusCounts":    statusCounts,
+	}, nil
+}
+
 func unixTimestampToRFC3339(value int64) string {
 	if value <= 0 {
 		return time.Unix(0, 0).UTC().Format(time.RFC3339)
@@ -9598,6 +9676,35 @@ func localPublishedCatalogSources(db *sql.DB, serverUUID string) ([]map[string]a
 		return nil, err
 	}
 	return sources, nil
+}
+
+func countPublishedCatalogServers(db *sql.DB, status string) (int64, error) {
+	var row *sql.Row
+	if strings.TrimSpace(status) == "" {
+		row = db.QueryRow(`SELECT count(*) FROM published_mcp_servers`)
+	} else {
+		row = db.QueryRow(`SELECT count(*) FROM published_mcp_servers WHERE status = ?`, status)
+	}
+
+	var count int64
+	if err := row.Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func countPublishedCatalogRecentlyUpdated(db *sql.DB, hours int) (int64, error) {
+	if hours < 1 {
+		hours = 1
+	}
+	threshold := time.Now().UTC().Add(-time.Duration(hours) * time.Hour).Unix()
+	row := db.QueryRow(`SELECT count(*) FROM published_mcp_servers WHERE updated_at >= ?`, threshold)
+
+	var count int64
+	if err := row.Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 type publishedCatalogRunScanner interface {
