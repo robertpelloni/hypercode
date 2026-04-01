@@ -5276,7 +5276,38 @@ func (s *Server) handleToolsAlwaysOn(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleToolSetsList(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "toolSets.list", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "toolSets.list", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "toolSets.list",
+			},
+		})
+		return
+	}
+
+	toolSets, fallbackErr := s.localToolSets()
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    toolSets,
+		"bridge": map[string]any{
+			"fallback":  "go-local-operator",
+			"procedure": "toolSets.list",
+			"reason":    "upstream unavailable; using local tool sets from HyperCode config",
+		},
+	})
 }
 
 func (s *Server) handleToolSetsGet(w http.ResponseWriter, r *http.Request) {
@@ -5285,7 +5316,53 @@ func (s *Server) handleToolSetsGet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing uuid query parameter"})
 		return
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "toolSets.get", map[string]any{"uuid": uuid})
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "toolSets.get", map[string]any{"uuid": uuid}, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "toolSets.get",
+			},
+		})
+		return
+	}
+
+	toolSets, fallbackErr := s.localToolSets()
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+		})
+		return
+	}
+
+	for _, toolSet := range toolSets {
+		if stringValue(toolSet["uuid"]) == uuid {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"success": true,
+				"data":    toolSet,
+				"bridge": map[string]any{
+					"fallback":  "go-local-operator",
+					"procedure": "toolSets.get",
+					"reason":    "upstream unavailable; using local tool set from HyperCode config",
+				},
+			})
+			return
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    nil,
+		"bridge": map[string]any{
+			"fallback":  "go-local-operator",
+			"procedure": "toolSets.get",
+			"reason":    "upstream unavailable; tool set was not found in local HyperCode config",
+		},
+	})
 }
 
 func (s *Server) handleToolSetsCreate(w http.ResponseWriter, r *http.Request) {
@@ -8236,6 +8313,25 @@ func (s *Server) localSavedScripts() ([]map[string]any, error) {
 	}
 
 	return scripts, nil
+}
+
+func (s *Server) localToolSets() ([]map[string]any, error) {
+	config := localSettingsConfig(s.cfg.WorkspaceRoot)
+	rawToolSets, ok := config["toolSets"].([]any)
+	if !ok {
+		return []map[string]any{}, nil
+	}
+
+	toolSets := make([]map[string]any, 0, len(rawToolSets))
+	for _, entry := range rawToolSets {
+		toolSet, ok := entry.(map[string]any)
+		if !ok {
+			continue
+		}
+		toolSets = append(toolSets, cloneMap(toolSet))
+	}
+
+	return toolSets, nil
 }
 
 func mustGetwd() string {

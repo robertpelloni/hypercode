@@ -5399,7 +5399,7 @@ func TestOperatorListEndpointsFallBackToEmptyState(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".hypercode"), 0o755); err != nil {
 		t.Fatalf("failed to create .hypercode dir: %v", err)
 	}
-	configJSON := `{"scripts":[{"uuid":"script-local-1","name":"Deploy local","description":"ship it","code":"echo hi"}]}`
+	configJSON := `{"scripts":[{"uuid":"script-local-1","name":"Deploy local","description":"ship it","code":"echo hi"}],"toolSets":[{"uuid":"toolset-local-1","name":"Core local tools","tools":["search_tools","read_file"]}]}`
 	if err := os.WriteFile(filepath.Join(workspaceRoot, ".hypercode", "config.json"), []byte(configJSON), 0o644); err != nil {
 		t.Fatalf("failed to write local config: %v", err)
 	}
@@ -5445,6 +5445,28 @@ func TestOperatorListEndpointsFallBackToEmptyState(t *testing.T) {
 				`using local saved script from HyperCode config`,
 				`"script-local-1"`,
 				`"Deploy local"`,
+			},
+		},
+		{
+			name: "tool sets list",
+			path: "/api/tool-sets",
+			contains: []string{
+				`"fallback":"go-local-operator"`,
+				`"procedure":"toolSets.list"`,
+				`using local tool sets from HyperCode config`,
+				`"toolset-local-1"`,
+				`"Core local tools"`,
+			},
+		},
+		{
+			name: "tool sets get",
+			path: "/api/tool-sets/get?uuid=toolset-local-1",
+			contains: []string{
+				`"fallback":"go-local-operator"`,
+				`"procedure":"toolSets.get"`,
+				`using local tool set from HyperCode config`,
+				`"toolset-local-1"`,
+				`"Core local tools"`,
 			},
 		},
 	}
