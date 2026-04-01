@@ -1719,7 +1719,7 @@ func (s *Server) handleImportedSessionScan(w http.ResponseWriter, r *http.Reques
 	}
 
 	if archivedRecords, archiveErr := s.loadArchivedImportedSessionRecords(); archiveErr == nil && len(archivedRecords) > 0 {
-		fallbackSummary := archivedImportedSessionScanSummary(archivedRecords)
+		fallbackSummary := s.archivedImportedSessionScanSummary(archivedRecords)
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"data":    fallbackSummary,
@@ -1767,7 +1767,7 @@ func (s *Server) handleImportedSessionScan(w http.ResponseWriter, r *http.Reques
 			"importedCount":      importedCount,
 			"skippedCount":       skippedCount,
 			"storedMemoryCount":  0,
-			"instructionDocPath": nil,
+			"instructionDocPath": s.importedInstructionDocPath(),
 			"tools":              tools,
 		},
 		"bridge": map[string]any{
@@ -7745,7 +7745,15 @@ func archivedImportedSessionMaintenanceStats(records []ImportedSessionRecord) Im
 	return stats
 }
 
-func archivedImportedSessionScanSummary(records []ImportedSessionRecord) map[string]any {
+func (s *Server) importedInstructionDocPath() *string {
+	document := interop.ReadImportedInstructions(s.cfg.ImportedInstructionsPath())
+	if !document.Available {
+		return nil
+	}
+	return &document.Path
+}
+
+func (s *Server) archivedImportedSessionScanSummary(records []ImportedSessionRecord) map[string]any {
 	toolsSet := make(map[string]struct{})
 	storedMemoryCount := 0
 	for _, record := range records {
@@ -7767,7 +7775,7 @@ func archivedImportedSessionScanSummary(records []ImportedSessionRecord) map[str
 		"importedCount":      len(records),
 		"skippedCount":       0,
 		"storedMemoryCount":  storedMemoryCount,
-		"instructionDocPath": nil,
+		"instructionDocPath": s.importedInstructionDocPath(),
 		"tools":              tools,
 	}
 }

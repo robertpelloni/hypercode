@@ -5418,6 +5418,49 @@ func TestImportedSessionScanFallsBackToArchivedRecords(t *testing.T) {
 	}
 }
 
+func TestImportedSessionScanFallsBackToWorkspaceInstructionDoc(t *testing.T) {
+	workspaceRoot := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".claude"), 0o755); err != nil {
+		t.Fatalf("failed to create claude root: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".claude", "session.jsonl"), []byte("{\"model\":\"claude\"}\n"), 0o644); err != nil {
+		t.Fatalf("failed to seed claude session: %v", err)
+	}
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	cfg.MainConfigDir = t.TempDir()
+	docPath := cfg.ImportedInstructionsPath()
+	if err := os.MkdirAll(filepath.Dir(docPath), 0o755); err != nil {
+		t.Fatalf("failed to create imported instructions directory: %v", err)
+	}
+	if err := os.WriteFile(docPath, []byte("# Auto-imported Agent Instructions\n"), 0o644); err != nil {
+		t.Fatalf("failed to write imported instructions doc: %v", err)
+	}
+
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	t.Setenv("HOME", workspaceRoot)
+	t.Setenv("USERPROFILE", workspaceRoot)
+	t.Setenv("APPDATA", workspaceRoot)
+	t.Setenv("LOCALAPPDATA", workspaceRoot)
+	server := New(cfg, stubDetector{})
+
+	request := httptest.NewRequest(http.MethodPost, "/api/sessions/imported/scan", strings.NewReader(`{"force":true}`))
+	request.Header.Set("content-type", "application/json")
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected fallback status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"instructionDocPath":"`) {
+		t.Fatalf("expected workspace instruction doc path in fallback summary, got %s", recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `auto-imported-agent-instructions.md`) {
+		t.Fatalf("expected workspace instruction doc filename in fallback summary, got %s", recorder.Body.String())
+	}
+}
+
 func TestImportedSessionListFallsBackToGoScanner(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".claude"), 0o755); err != nil {
