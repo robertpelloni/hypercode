@@ -1066,7 +1066,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/server-health/reset", Category: "ops", Description: "Reset the TypeScript MCP server health error state for a specific server UUID."},
 				{Path: "/api/settings", Category: "control", Description: "Bridge to the full TypeScript configuration object."},
 				{Path: "/api/settings/update", Category: "control", Description: "Update the TypeScript configuration object with a partial config payload."},
-				{Path: "/api/settings/providers", Category: "control", Description: "Bridge to masked TypeScript provider key visibility."},
+				{Path: "/api/settings/providers", Category: "control", Description: "Read provider visibility, with a local Go provider catalog fallback when the TypeScript settings router is unavailable."},
 				{Path: "/api/settings/test-connection", Category: "control", Description: "Test a provider connection through the TypeScript control plane."},
 				{Path: "/api/settings/environment", Category: "control", Description: "Bridge to TypeScript environment diagnostics."},
 				{Path: "/api/settings/mcp-servers", Category: "control", Description: "Bridge to configured MCP servers from the TypeScript settings layer."},
@@ -1314,7 +1314,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/research/enqueue", Category: "research", Description: "Enqueue a research URL through the TypeScript research router."},
 				{Path: "/api/pulse/events", Category: "observability", Description: "Read pulse event history through the TypeScript pulse router."},
 				{Path: "/api/pulse/status", Category: "observability", Description: "Read pulse system status through the TypeScript pulse router."},
-				{Path: "/api/pulse/providers", Category: "observability", Description: "Check local provider status through the TypeScript pulse router."},
+				{Path: "/api/pulse/providers", Category: "observability", Description: "Check local provider status, with a local Go provider availability fallback when the TypeScript pulse router is unavailable."},
 				{Path: "/api/session-export/export", Category: "sessions", Description: "Export sessions through the TypeScript session export router."},
 				{Path: "/api/session-export/import", Category: "sessions", Description: "Import sessions through the TypeScript session export router."},
 				{Path: "/api/session-export/detect-format", Category: "sessions", Description: "Detect session export format through the TypeScript session export router."},
@@ -4237,7 +4237,29 @@ func (s *Server) handleSettingsUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleSettingsProviders(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "settings.getProviders", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "settings.getProviders", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "settings.getProviders",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    providers.Catalog(providers.Snapshot()),
+		"bridge": map[string]any{
+			"fallback":  "go-local-provider-routing",
+			"procedure": "settings.getProviders",
+			"reason":    "upstream unavailable; using local provider catalog visibility",
+		},
+	})
 }
 
 func (s *Server) handleSettingsTestConnection(w http.ResponseWriter, r *http.Request) {
@@ -5140,7 +5162,46 @@ func (s *Server) handlePulseStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePulseProviders(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "pulse.checkLocalProviders", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "pulse.checkLocalProviders", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "pulse.checkLocalProviders",
+			},
+		})
+		return
+	}
+
+	statuses := providers.Snapshot()
+	data := map[string]bool{
+		"openai":     false,
+		"anthropic":  false,
+		"google":     false,
+		"openrouter": false,
+		"deepseek":   false,
+		"xai":        false,
+		"ollama":     false,
+		"lmstudio":   false,
+	}
+	for _, status := range statuses {
+		if _, ok := data[status.Provider]; ok {
+			data[status.Provider] = status.Configured || status.Authenticated
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    data,
+		"bridge": map[string]any{
+			"fallback":  "go-local-provider-routing",
+			"procedure": "pulse.checkLocalProviders",
+			"reason":    "upstream unavailable; using local provider availability snapshot",
+		},
+	})
 }
 
 func (s *Server) handleSessionExport(w http.ResponseWriter, r *http.Request) {

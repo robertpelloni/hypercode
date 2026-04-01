@@ -3329,6 +3329,43 @@ func TestBillingClearFallbackHistoryFallsBackToLocalNoOp(t *testing.T) {
 	}
 }
 
+func TestProviderReadEndpointsFallBackToLocalProviderSnapshot(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	t.Setenv("OPENAI_API_KEY", "openai")
+	t.Setenv("ANTHROPIC_API_KEY", "anthropic")
+	t.Setenv("OLLAMA_API_KEY", "")
+
+	server := New(config.Default(), stubDetector{})
+
+	settingsProvidersRecorder := httptest.NewRecorder()
+	settingsProvidersRequest := httptest.NewRequest(http.MethodGet, "/api/settings/providers", nil)
+	server.Handler().ServeHTTP(settingsProvidersRecorder, settingsProvidersRequest)
+
+	if settingsProvidersRecorder.Code != http.StatusOK {
+		t.Fatalf("expected settings providers fallback 200, got %d with body %s", settingsProvidersRecorder.Code, settingsProvidersRecorder.Body.String())
+	}
+	if !strings.Contains(settingsProvidersRecorder.Body.String(), `"fallback":"go-local-provider-routing"`) {
+		t.Fatalf("expected local provider catalog fallback metadata, got %s", settingsProvidersRecorder.Body.String())
+	}
+	if !strings.Contains(settingsProvidersRecorder.Body.String(), `"provider":"openai"`) || !strings.Contains(settingsProvidersRecorder.Body.String(), `"configured":true`) {
+		t.Fatalf("expected local provider catalog payload, got %s", settingsProvidersRecorder.Body.String())
+	}
+
+	pulseProvidersRecorder := httptest.NewRecorder()
+	pulseProvidersRequest := httptest.NewRequest(http.MethodGet, "/api/pulse/providers", nil)
+	server.Handler().ServeHTTP(pulseProvidersRecorder, pulseProvidersRequest)
+
+	if pulseProvidersRecorder.Code != http.StatusOK {
+		t.Fatalf("expected pulse providers fallback 200, got %d with body %s", pulseProvidersRecorder.Code, pulseProvidersRecorder.Body.String())
+	}
+	if !strings.Contains(pulseProvidersRecorder.Body.String(), `"fallback":"go-local-provider-routing"`) {
+		t.Fatalf("expected local provider availability fallback metadata, got %s", pulseProvidersRecorder.Body.String())
+	}
+	if !strings.Contains(pulseProvidersRecorder.Body.String(), `"openai":true`) || !strings.Contains(pulseProvidersRecorder.Body.String(), `"ollama":false`) {
+		t.Fatalf("expected local provider availability snapshot, got %s", pulseProvidersRecorder.Body.String())
+	}
+}
+
 func TestBrowserBridgeRoutes(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")
