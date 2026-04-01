@@ -5817,13 +5817,38 @@ func TestStatusReadEndpointsFallBackToLocalPreview(t *testing.T) {
 	}
 }
 
-func TestMarketplaceListFallsBackToEmptyList(t *testing.T) {
+func TestMarketplaceListFallsBackToLocalRegistries(t *testing.T) {
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 
+	workspaceRoot := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, "packages", "core", "data"), 0o755); err != nil {
+		t.Fatalf("failed to create skills registry dir: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, "packages", "mcp-registry", "src"), 0o755); err != nil {
+		t.Fatalf("failed to create mcp registry dir: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".hypercode", "skills", "alpha-tool"), 0o755); err != nil {
+		t.Fatalf("failed to create installed skill dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workspaceRoot, "packages", "core", "data", "skills_registry.json"), []byte(`{
+		"directories": [{"name":"alpha-tool","url":"https://example.com/alpha","tags":["tool","alpha"]}],
+		"skills": [{"name":"beta-skill","url":"https://example.com/beta","tags":["skill"]}]
+	}`), 0o644); err != nil {
+		t.Fatalf("failed to seed skills registry: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workspaceRoot, "packages", "mcp-registry", "src", "registry.json"), []byte(`{
+		"servers": [{"name":"Tool Box","description":"Helpful tool server","package":"@example/tool-box","type":"stdio","env":[]}]
+	}`), 0o644); err != nil {
+		t.Fatalf("failed to seed mcp registry: %v", err)
+	}
+
 	cfg := config.Default()
-	cfg.WorkspaceRoot = t.TempDir()
+	cfg.WorkspaceRoot = workspaceRoot
 	cfg.ConfigDir = t.TempDir()
 	cfg.MainConfigDir = t.TempDir()
+	if err := os.WriteFile(filepath.Join(cfg.MainConfigDir, "mcp.jsonc"), []byte("// HyperCode MCP configuration\n{\n  \"mcpServers\": {\n    \"tool-box\": {\n      \"command\": \"npx\",\n      \"args\": [\"@example/tool-box\"]\n    }\n  }\n}\n"), 0o644); err != nil {
+		t.Fatalf("failed to seed mcp jsonc: %v", err)
+	}
 	server := New(cfg, stubDetector{})
 
 	recorder := httptest.NewRecorder()
@@ -5836,8 +5861,11 @@ func TestMarketplaceListFallsBackToEmptyList(t *testing.T) {
 	for _, needle := range []string{
 		`"fallback":"go-local-marketplace"`,
 		`"procedure":"marketplace.list"`,
-		`marketplace service is unavailable`,
-		`"data":[]`,
+		`local marketplace registries and install-state checks`,
+		`"id":"alpha-tool"`,
+		`"installed":true`,
+		`"id":"@example/tool-box"`,
+		`"name":"Tool Box"`,
 	} {
 		if !strings.Contains(recorder.Body.String(), needle) {
 			t.Fatalf("expected marketplace fallback to contain %s, got %s", needle, recorder.Body.String())

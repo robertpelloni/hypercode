@@ -1151,9 +1151,9 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/metrics/provider-breakdown", Category: "ops", Description: "Read provider request, latency, and cost breakdowns, with a local zero-usage Go fallback when the TypeScript metrics router is unavailable."},
 				{Path: "/api/metrics/monitoring", Category: "ops", Description: "Toggle TypeScript metrics monitoring state."},
 				{Path: "/api/metrics/routing-history", Category: "ops", Description: "Read recent LLM routing and failover decisions, with a local empty-state Go fallback when the TypeScript metrics router is unavailable."},
-				{Path: "/api/logs", Category: "ops", Description: "List observability logs, with an honest empty-state Go fallback when the TypeScript log store is unavailable."},
-				{Path: "/api/logs/summary", Category: "ops", Description: "Read the observability summary rollup, with an honest empty-state Go fallback when the TypeScript log store is unavailable."},
-				{Path: "/api/logs/clear", Category: "ops", Description: "Clear observability logs, with a local no-op fallback when the TypeScript log store is unavailable."},
+				{Path: "/api/logs", Category: "ops", Description: "List observability logs, with a local metamcp.db fallback when the TypeScript log store is unavailable."},
+				{Path: "/api/logs/summary", Category: "ops", Description: "Read the observability summary rollup, with a local metamcp.db fallback when the TypeScript log store is unavailable."},
+				{Path: "/api/logs/clear", Category: "ops", Description: "Clear observability logs, with a local metamcp.db fallback when the TypeScript log store is unavailable."},
 				{Path: "/api/server-health/check", Category: "ops", Description: "Bridge to the TypeScript MCP server health state for a specific server UUID, with a local cached mcp.jsonc metadata fallback when unavailable."},
 				{Path: "/api/server-health/reset", Category: "ops", Description: "Reset the TypeScript MCP server health error state for a specific server UUID."},
 				{Path: "/api/settings", Category: "control", Description: "Bridge to the full TypeScript configuration object, with a local Go .hypercode/config.json fallback when unavailable."},
@@ -7189,7 +7189,9 @@ func (s *Server) handleSecretsDelete(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleMarketplaceList(w http.ResponseWriter, r *http.Request) {
 	payload := map[string]any{}
+	filterValue := ""
 	if filter := strings.TrimSpace(r.URL.Query().Get("filter")); filter != "" {
+		filterValue = filter
 		payload["filter"] = filter
 	}
 	var result any
@@ -7206,13 +7208,23 @@ func (s *Server) handleMarketplaceList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	entries, fallbackErr := s.localMarketplaceList(filterValue)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    []map[string]any{},
+		"data":    entries,
 		"bridge": map[string]any{
 			"fallback":  "go-local-marketplace",
 			"procedure": "marketplace.list",
-			"reason":    "upstream unavailable; marketplace service is unavailable",
+			"reason":    "upstream unavailable; using local marketplace registries and install-state checks",
 		},
 	})
 }
@@ -10040,6 +10052,203 @@ func (s *Server) localCatalogGet(uuid string) (any, error) {
 		"activeRecipe": activeRecipe,
 		"sources":      sources,
 	}, nil
+}
+
+type marketplaceLegacyRegistryItem struct {
+	Name string   `json:"name"`
+	URL  string   `json:"url"`
+	Tags []string `json:"tags"`
+}
+
+type marketplaceLegacyRegistryData struct {
+	Directories []marketplaceLegacyRegistryItem `json:"directories"`
+	Skills      []marketplaceLegacyRegistryItem `json:"skills"`
+}
+
+type marketplaceMCPRegistryDocument struct {
+	Servers []marketplaceMCPRegistryItem `json:"servers"`
+}
+
+type marketplaceMCPRegistryItem struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Package     string   `json:"package"`
+	Type        string   `json:"type"`
+	Env         []string `json:"env"`
+}
+
+func (s *Server) localMarketplaceList(filter string) ([]map[string]any, error) {
+	entries := []map[string]any{}
+
+	legacyEntries, err := s.localMarketplaceLegacyEntries(filter)
+	if err != nil {
+		return nil, err
+	}
+	entries = append(entries, legacyEntries...)
+
+	mcpEntries, err := s.localMarketplaceMCPRegistryEntries(filter)
+	if err != nil {
+		return nil, err
+	}
+	entries = append(entries, mcpEntries...)
+
+	return entries, nil
+}
+
+func (s *Server) localMarketplaceLegacyEntries(filter string) ([]map[string]any, error) {
+	registryPath := filepath.Join(s.cfg.WorkspaceRoot, "packages", "core", "data", "skills_registry.json")
+	raw, err := os.ReadFile(registryPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []map[string]any{}, nil
+		}
+		return nil, err
+	}
+
+	var document marketplaceLegacyRegistryData
+	if err := json.Unmarshal(raw, &document); err != nil {
+		return nil, err
+	}
+
+	items := append([]marketplaceLegacyRegistryItem{}, document.Directories...)
+	items = append(items, document.Skills...)
+	filterLower := strings.ToLower(strings.TrimSpace(filter))
+	entries := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		if strings.TrimSpace(item.Name) == "" {
+			continue
+		}
+		if filterLower != "" {
+			matches := strings.Contains(strings.ToLower(item.Name), filterLower)
+			if !matches {
+				for _, tag := range item.Tags {
+					if strings.Contains(strings.ToLower(tag), filterLower) {
+						matches = true
+						break
+					}
+				}
+			}
+			if !matches {
+				continue
+			}
+		}
+		entries = append(entries, map[string]any{
+			"id":          item.Name,
+			"name":        item.Name,
+			"description": "Official Skill",
+			"author":      "HyperCode Ecosystem",
+			"type":        "skill",
+			"source":      "official",
+			"url":         emptyStringToNilAny(item.URL),
+			"verified":    true,
+			"peerCount":   1,
+			"installed":   s.localMarketplaceSkillInstalled(item.Name),
+			"tags":        append([]string(nil), item.Tags...),
+		})
+	}
+	return entries, nil
+}
+
+func (s *Server) localMarketplaceMCPRegistryEntries(filter string) ([]map[string]any, error) {
+	registryPath := filepath.Join(s.cfg.WorkspaceRoot, "packages", "mcp-registry", "src", "registry.json")
+	raw, err := os.ReadFile(registryPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []map[string]any{}, nil
+		}
+		return nil, err
+	}
+
+	var document marketplaceMCPRegistryDocument
+	if err := json.Unmarshal(raw, &document); err != nil {
+		return nil, err
+	}
+
+	filterLower := strings.ToLower(strings.TrimSpace(filter))
+	entries := make([]map[string]any, 0, len(document.Servers))
+	for _, server := range document.Servers {
+		if strings.TrimSpace(server.Name) == "" || strings.TrimSpace(server.Package) == "" {
+			continue
+		}
+		if filterLower != "" &&
+			!strings.Contains(strings.ToLower(server.Name), filterLower) &&
+			!strings.Contains(strings.ToLower(server.Description), filterLower) {
+			continue
+		}
+		serverType := strings.TrimSpace(server.Type)
+		if serverType == "" {
+			serverType = "stdio"
+		}
+		entries = append(entries, map[string]any{
+			"id":          server.Package,
+			"name":        server.Name,
+			"description": server.Description,
+			"author":      "MCP Registry",
+			"type":        "tool",
+			"source":      "official",
+			"url":         "https://www.npmjs.com/package/" + server.Package,
+			"verified":    true,
+			"peerCount":   1,
+			"installed":   s.localMarketplaceMCPInstalled(server.Package),
+			"tags":        []string{"mcp", serverType},
+		})
+	}
+	return entries, nil
+}
+
+func (s *Server) localMarketplaceSkillInstalled(id string) bool {
+	if strings.TrimSpace(id) == "" {
+		return false
+	}
+	_, err := os.Stat(filepath.Join(s.cfg.WorkspaceRoot, ".hypercode", "skills", id))
+	return err == nil
+}
+
+func (s *Server) localMarketplaceMCPInstalled(id string) bool {
+	if strings.TrimSpace(id) == "" {
+		return false
+	}
+	document, err := s.localMarketplaceMCPConfig()
+	if err != nil {
+		return false
+	}
+	servers, _ := document["mcpServers"].(map[string]any)
+	for _, raw := range servers {
+		serialized := prettyJSON(raw)
+		if strings.Contains(serialized, id) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Server) localMarketplaceMCPConfig() (map[string]any, error) {
+	paths := []string{
+		filepath.Join(s.cfg.MainConfigDir, "mcp.jsonc"),
+		filepath.Join(s.cfg.MainConfigDir, "mcp.json"),
+	}
+	for _, path := range paths {
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return nil, err
+		}
+		content := string(raw)
+		if strings.HasSuffix(strings.ToLower(path), ".jsonc") {
+			content = stripJSONCLineComments(content)
+		}
+		var document map[string]any
+		if err := json.Unmarshal([]byte(content), &document); err != nil {
+			return nil, err
+		}
+		if _, ok := document["mcpServers"]; !ok {
+			document["mcpServers"] = map[string]any{}
+		}
+		return document, nil
+	}
+	return map[string]any{"mcpServers": map[string]any{}}, nil
 }
 
 func (s *Server) localCatalogRuns(serverUUID string, limit int) ([]map[string]any, error) {
