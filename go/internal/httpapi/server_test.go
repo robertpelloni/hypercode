@@ -6489,6 +6489,74 @@ func TestCatalogStatsFallsBackToLocalDB(t *testing.T) {
 	}
 }
 
+func TestCatalogLinkedServersFallsBackToLocalDB(t *testing.T) {
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	workspace := t.TempDir()
+	dbPath := filepath.Join(workspace, "metamcp.db")
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("failed to open sqlite db: %v", err)
+	}
+	defer db.Close()
+
+	if _, err := db.Exec(`
+		CREATE TABLE mcp_servers (
+			uuid TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			description TEXT,
+			type TEXT NOT NULL DEFAULT 'STDIO',
+			command TEXT,
+			args TEXT NOT NULL DEFAULT '[]',
+			env TEXT NOT NULL DEFAULT '{}',
+			url TEXT,
+			error_status TEXT NOT NULL DEFAULT 'NONE',
+			created_at INTEGER NOT NULL,
+			bearer_token TEXT,
+			headers TEXT NOT NULL DEFAULT '{}',
+			always_on INTEGER NOT NULL DEFAULT 0,
+			user_id TEXT NOT NULL,
+			source_published_server_uuid TEXT
+		);
+		INSERT INTO mcp_servers (
+			uuid, name, description, type, command, args, env, url, error_status, created_at, bearer_token, headers, always_on, user_id, source_published_server_uuid
+		) VALUES
+			('managed-1', 'linked-one', 'Linked server', 'STDIO', 'npx', '["server"]', '{"TOKEN":"x"}', NULL, 'NONE', 1711958460, NULL, '{}', 1, 'system', 'catalog-1'),
+			('managed-2', 'other-one', 'Other server', 'STDIO', 'npx', '["other"]', '{}', NULL, 'NONE', 1711958460, NULL, '{}', 0, 'system', 'catalog-2');
+	`); err != nil {
+		t.Fatalf("failed to seed sqlite db: %v", err)
+	}
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspace
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/catalog/linked-servers?published_server_uuid=catalog-1", nil))
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	for _, needle := range []string{
+		`"fallback":"go-local-published-catalog-db"`,
+		`"procedure":"catalog.listLinkedServers"`,
+		`using local metamcp linked managed servers`,
+		`"uuid":"managed-1"`,
+		`"name":"linked-one"`,
+		`"source_published_server_uuid":"catalog-1"`,
+	} {
+		if !strings.Contains(recorder.Body.String(), needle) {
+			t.Fatalf("expected catalog linked servers fallback to contain %s, got %s", needle, recorder.Body.String())
+		}
+	}
+	if strings.Contains(recorder.Body.String(), `"uuid":"managed-2"`) {
+		t.Fatalf("expected linked servers fallback to exclude unrelated server, got %s", recorder.Body.String())
+	}
+}
+
 func TestInfrastructureStatusFallsBackToLocalProbe(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	userProfile := t.TempDir()

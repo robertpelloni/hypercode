@@ -6955,7 +6955,39 @@ func (s *Server) handleCatalogLinkedServers(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing published_server_uuid query parameter"})
 		return
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "catalog.listLinkedServers", map[string]any{"published_server_uuid": publishedServerUUID})
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "catalog.listLinkedServers", map[string]any{"published_server_uuid": publishedServerUUID}, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "catalog.listLinkedServers",
+			},
+		})
+		return
+	}
+
+	servers, fallbackErr := s.localCatalogLinkedServers(publishedServerUUID)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    servers,
+		"bridge": map[string]any{
+			"fallback":  "go-local-published-catalog-db",
+			"procedure": "catalog.listLinkedServers",
+			"reason":    "upstream unavailable; using local metamcp linked managed servers",
+		},
+	})
 }
 
 func (s *Server) handleOAuthClientCreate(w http.ResponseWriter, r *http.Request) {
@@ -9453,6 +9485,39 @@ func (s *Server) localCatalogStats() (any, error) {
 	}, nil
 }
 
+func (s *Server) localCatalogLinkedServers(publishedServerUUID string) ([]map[string]any, error) {
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+		SELECT uuid, name, description, type, command, args, env, url, error_status, created_at,
+		       bearer_token, headers, always_on, user_id, source_published_server_uuid
+		FROM mcp_servers
+		WHERE source_published_server_uuid = ?
+	`, publishedServerUUID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	servers := []map[string]any{}
+	for rows.Next() {
+		server, scanErr := scanLocalMCPServer(rows)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		servers = append(servers, server)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return servers, nil
+}
+
 func unixTimestampToRFC3339(value int64) string {
 	if value <= 0 {
 		return time.Unix(0, 0).UTC().Format(time.RFC3339)
@@ -9705,6 +9770,55 @@ func countPublishedCatalogRecentlyUpdated(db *sql.DB, hours int) (int64, error) 
 		return 0, err
 	}
 	return count, nil
+}
+
+type localMCPServerScanner interface {
+	Scan(dest ...any) error
+}
+
+func scanLocalMCPServer(scanner localMCPServerScanner) (map[string]any, error) {
+	var (
+		uuid                      string
+		name                      string
+		description               sql.NullString
+		serverType                string
+		command                   sql.NullString
+		argsRaw                   string
+		envRaw                    string
+		urlValue                  sql.NullString
+		errorStatus               string
+		createdAtRaw              int64
+		bearerToken               sql.NullString
+		headersRaw                string
+		alwaysOn                  bool
+		userID                    string
+		sourcePublishedServerUUID sql.NullString
+	)
+
+	if err := scanner.Scan(
+		&uuid, &name, &description, &serverType, &command, &argsRaw, &envRaw, &urlValue, &errorStatus, &createdAtRaw,
+		&bearerToken, &headersRaw, &alwaysOn, &userID, &sourcePublishedServerUUID,
+	); err != nil {
+		return nil, err
+	}
+
+	return map[string]any{
+		"uuid":                         uuid,
+		"name":                         name,
+		"description":                  nullStringToAny(description),
+		"type":                         serverType,
+		"command":                      nullStringToAny(command),
+		"args":                         jsonArrayOrEmpty(argsRaw),
+		"env":                          jsonObjectOrEmpty(envRaw),
+		"url":                          nullStringToAny(urlValue),
+		"error_status":                 errorStatus,
+		"created_at":                   unixTimestampToRFC3339(createdAtRaw),
+		"bearerToken":                  nullStringToAny(bearerToken),
+		"headers":                      jsonObjectOrEmpty(headersRaw),
+		"always_on":                    alwaysOn,
+		"user_id":                      userID,
+		"source_published_server_uuid": nullStringToAny(sourcePublishedServerUUID),
+	}, nil
 }
 
 type publishedCatalogRunScanner interface {
