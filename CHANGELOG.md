@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CLI MCP Namespace Truthfulness**: `hypercode mcp add --namespace <ns>` now fails explicitly for non-default namespaces because the live `mcpServers.create` contract still has no namespace field or mapping mutation; the CLI no longer echoes namespace assignment as if it succeeded.
 - **CLI Provider Fallback Mutation Truthfulness**: `hypercode provider fallback --strategy` now calls the live `billing.setRoutingStrategy` mutation using the backend's real strategy set (`cheapest`, `best`, `round-robin`), while unsupported `provider fallback --set` now fails explicitly instead of printing success-shaped guidance for a nonexistent fallback-chain mutation route.
 - **CLI Session Broadcast Truthfulness**: `hypercode session broadcast --cloud` now calls the live `cloudDev.broadcastMessage` control-plane mutation with structured `--json` output, while unsupported local-session broadcast and `session cloud --transfer` now fail explicitly instead of printing fake success or soft placeholder copy.
 - **CLI Remaining Stub Hardening**: `hypercode session pause`, `tools rename`, `mcp start`, `mcp stop`, `mcp restart`, and `mcp install` no longer print fabricated success. They now fail explicitly with structured live-unavailable errors because the control plane still has no real pause, rename, MCP lifecycle, or MCP install routes behind those commands.

@@ -872,6 +872,23 @@ Validation:
 - `pnpm -C packages\cli exec tsc --noEmit`
 - `pnpm -C packages\cli exec vitest run src\commands\provider.test.ts src\commands\config.test.ts src\commands\mcp.test.ts src\commands\tools.test.ts src\commands\session.test.ts src\control-plane.test.ts`
 
+### 39. `harden-cli-mcp-namespace-flag`
+
+Status: **completed**
+
+What changed:
+
+- `packages/cli/src/commands/mcp.ts` no longer accepts non-default `hypercode mcp add --namespace <ns>` values as if namespace assignment were really wired
+- audit showed the live `mcpServers.create` route and `McpServerCreateInputSchema` have no namespace field, and the repository create path performs no namespace mapping step, so the old CLI behavior was implying configuration that never persisted
+- the CLI now fails explicitly for non-default namespace assignment requests instead of echoing the requested namespace back as though it had been applied
+- default MCP add behavior remains live and unchanged; only the unsupported namespace-shaped option path is hardened
+- focused CLI coverage in `packages/cli/src/commands/mcp.test.ts` now locks in the explicit unsupported-namespace failure
+
+Validation:
+
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\mcp.test.ts src\commands\provider.test.ts src\commands\session.test.ts src\commands\tools.test.ts src\control-plane.test.ts`
+
 ### 9. `workflow-canvas-save-truthfulness`
 
 Status: **completed**

@@ -302,6 +302,17 @@ describe('registerMcpCommand', () => {
     }, null, 2));
   });
 
+  it('rejects unsupported MCP namespace assignment explicitly on add', async () => {
+    const program = createProgram();
+    await program.parseAsync(['mcp', 'add', 'filesystem', 'npx', '--namespace', 'ops', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      error: "Live MCP add does not yet support namespace assignment ('ops'): the control plane create route has no namespace field or mapping mutation.",
+    }, null, 2));
+    expect(process.exitCode).toBe(1);
+  });
+
   it('fails MCP start explicitly instead of returning fake success', async () => {
     const program = createProgram();
     await program.parseAsync(['mcp', 'start', 'filesystem', '--json'], { from: 'user' });

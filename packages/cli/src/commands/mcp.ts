@@ -428,6 +428,9 @@ Examples:
       await withMcpErrorHandling(async () => {
         const chalk = (await import('chalk')).default;
         const transport = String(opts.transport);
+        if (opts.namespace && opts.namespace !== 'default') {
+          throw new Error(`Live MCP add does not yet support namespace assignment ('${opts.namespace}'): the control plane create route has no namespace field or mapping mutation.`);
+        }
         const env = parseEnvVars(opts.env);
         const created = await queryTrpc<McpServerMutationResult>('mcpServers.create', {
           name,
@@ -447,7 +450,7 @@ Examples:
 
         console.log(chalk.green(`  ✓ Added MCP server '${name}' (${transport})`));
         console.log(chalk.dim(`    Command: ${command}`));
-        console.log(chalk.dim(`    Namespace: ${opts.namespace}`));
+        console.log(chalk.dim('    Namespace: default'));
       }, opts);
     });
 
