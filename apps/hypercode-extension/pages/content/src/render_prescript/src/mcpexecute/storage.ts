@@ -25,6 +25,51 @@ interface URLBasedFunctionHistory {
 
 // Storage key for the executed functions
 const STORAGE_KEY = 'mcp_url_based_function_history';
+let inMemoryStorage: URLBasedFunctionHistory | null = null;
+
+function hasExtensionStorage(): boolean {
+  return typeof chrome !== 'undefined' && !!chrome.storage?.local;
+}
+
+function cloneStorage(storage: URLBasedFunctionHistory): URLBasedFunctionHistory {
+  return Object.fromEntries(
+    Object.entries(storage).map(([url, functions]) => [url, { ...functions }]),
+  );
+}
+
+function loadLocalStorageSnapshot(): URLBasedFunctionHistory {
+  try {
+    const storedData = safeLocalStorageGetItem(STORAGE_KEY);
+    return storedData ? JSON.parse(storedData) as URLBasedFunctionHistory : {};
+  } catch (error) {
+    logger.error('Failed to retrieve URL-based function history:', error);
+    return {};
+  }
+}
+
+function getStorageSnapshot(): URLBasedFunctionHistory {
+  if (inMemoryStorage !== null) {
+    return inMemoryStorage;
+  }
+
+  const initialStorage = hasExtensionStorage() ? {} : loadLocalStorageSnapshot();
+  inMemoryStorage = initialStorage;
+  return initialStorage;
+}
+
+function persistStorageSnapshot(storage: URLBasedFunctionHistory): void {
+  inMemoryStorage = cloneStorage(storage);
+
+  if (hasExtensionStorage()) {
+    return;
+  }
+
+  try {
+    safeLocalStorageSetItem(STORAGE_KEY, JSON.stringify(storage));
+  } catch (error) {
+    logger.error('Failed to persist executed function history:', error);
+  }
+}
 
 /**
  * Store information about an executed function with race condition prevention
@@ -57,7 +102,7 @@ export const storeExecutedFunction = (
   const executionKey = generateExecutionKey(functionName, callId, contentSignature);
 
   // Use transaction pattern to prevent race conditions
-  const storage = getURLBasedStorage();
+  const storage = cloneStorage(getStorageSnapshot());
 
   // Ensure this URL exists in storage
   if (!storage[url]) {
@@ -75,7 +120,7 @@ export const storeExecutedFunction = (
 
     while (!saved && retries < maxRetries) {
       try {
-        safeLocalStorageSetItem(STORAGE_KEY, JSON.stringify(storage));
+        persistStorageSnapshot(storage);
         saved = true;
       } catch (error) {
         retries++;
@@ -108,13 +153,7 @@ const generateExecutionKey = (functionName: string, callId: string, contentSigna
  * @returns URL-based function history storage
  */
 const getURLBasedStorage = (): URLBasedFunctionHistory => {
-  try {
-    const storedData = safeLocalStorageGetItem(STORAGE_KEY);
-    return storedData ? JSON.parse(storedData) : {};
-  } catch (error) {
-    logger.error('Failed to retrieve URL-based function history:', error);
-    return {};
-  }
+  return cloneStorage(getStorageSnapshot());
 };
 
 /**
