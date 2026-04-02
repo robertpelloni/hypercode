@@ -282,11 +282,26 @@ Validation:
 
 - `pnpm -C apps\web exec tsc --noEmit --pretty false`
 
+### 6. `workflow-engine-empty-state-truthfulness`
+
+Status: **completed**
+
+What changed:
+
+- `packages/core/src/routers/workflowRouter.ts` now requires a live workflow engine for definitions and execution read routes instead of returning fake empty arrays or `null`
+- missing workflow-engine runtime now surfaces as `Workflow engine is unavailable for this run.` for definitions, execution lists, execution detail, and history reads
+- focused degraded-state router coverage was added in `packages/core/src/routers/workflowRouter.test.ts`
+
+Validation:
+
+- `pnpm -C packages\core exec vitest run src\routers\workflowRouter.test.ts`
+- `pnpm -C packages\core exec tsc --noEmit`
+
 ## High-signal follow-ups
 
 Recommended next steps:
 
-1. Continue the remaining workflow-surface truthfulness sweep now that workflow save failures and malformed saved-canvas payloads are surfaced explicitly.
+1. Continue the remaining workflow-surface truthfulness sweep now that workflow save failures, malformed saved-canvas payloads, and fake empty engine-unavailable reads are surfaced explicitly.
 2. Re-run the browser/dashboard flow that originally produced storage-access console errors and confirm whether the content-script store migration removed the main noise.
 3. Resume the electron-orchestrator native ABI lane after the highest-signal startup/runtime reliability gaps are quieter.
 
@@ -296,6 +311,7 @@ Successfully validated in this session:
 
 - `pnpm -C packages\core exec vitest run src\services\published-catalog-validator.test.ts`
 - `pnpm -C packages\core exec vitest run src\services\published-catalog-ingestor.test.ts`
+- `pnpm -C packages\core exec vitest run src\routers\workflowRouter.test.ts`
 - `pnpm -C packages\core exec tsc --noEmit`
 - `pnpm exec vitest run apps/web/src/lib/orchestrator-config.test.ts`
 - `pnpm -C apps\web exec tsc --noEmit --pretty false`

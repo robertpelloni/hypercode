@@ -1,7 +1,20 @@
 import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 import { t, publicProcedure, adminProcedure } from '../lib/trpc-core.js';
 import { getWorkflowEngine, getWorkflowDefinitions } from '../lib/trpc-core.js';
 import { visualWorkflowsRepo } from '../db/repositories/visual-workflows.repo.js';
+import { rethrowSqliteUnavailableAsTrpc } from './sqliteTrpc.js';
+
+function requireWorkflowEngine() {
+    const engine = getWorkflowEngine();
+    if (!engine) {
+        throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Workflow engine is unavailable for this run.',
+        });
+    }
+    return engine;
+}
 
 export const workflowRouter = t.router({
     // --- Visual Canvas DB State ---
@@ -14,36 +27,47 @@ export const workflowRouter = t.router({
             edges: z.array(z.any()),
         }))
         .mutation(async ({ input }) => {
-            if (input.id) {
-                await visualWorkflowsRepo.updateWorkflow(input.id, {
-                    name: input.name,
-                    description: input.description,
-                    nodes: input.nodes,
-                    edges: input.edges,
-                });
-                return { id: input.id };
-            } else {
-                const res = await visualWorkflowsRepo.createWorkflow(input);
-                return { id: res.id };
+            try {
+                if (input.id) {
+                    await visualWorkflowsRepo.updateWorkflow(input.id, {
+                        name: input.name,
+                        description: input.description,
+                        nodes: input.nodes,
+                        edges: input.edges,
+                    });
+                    return { id: input.id };
+                } else {
+                    const res = await visualWorkflowsRepo.createWorkflow(input);
+                    return { id: res.id };
+                }
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Workflow canvas storage is unavailable', error);
             }
         }),
 
     loadCanvas: adminProcedure
         .input(z.object({ id: z.string() }))
         .query(async ({ input }) => {
-            return await visualWorkflowsRepo.getWorkflow(input.id);
+            try {
+                return await visualWorkflowsRepo.getWorkflow(input.id);
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Workflow canvas storage is unavailable', error);
+            }
         }),
 
     listCanvases: adminProcedure
         .query(async () => {
-            return await visualWorkflowsRepo.listWorkflows();
+            try {
+                return await visualWorkflowsRepo.listWorkflows();
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Workflow canvas storage is unavailable', error);
+            }
         }),
 
     // --- Workflow Definitions ---
 
     list: publicProcedure.query(() => {
-        const engine = getWorkflowEngine();
-        if (!engine) return [];
+        const engine = requireWorkflowEngine();
         return getWorkflowDefinitions(engine).map((w) => ({
             id: w.id,
             name: w.name ?? w.id,
@@ -57,8 +81,7 @@ export const workflowRouter = t.router({
     getGraph: publicProcedure
         .input(z.object({ workflowId: z.string() }))
         .query(({ input }) => {
-            const engine = getWorkflowEngine();
-            if (!engine) throw new Error("Workflow Engine not initialized");
+            const engine = requireWorkflowEngine();
             return engine.getGraph(input.workflowId) || { nodes: [], edges: [] };
         }),
 
@@ -70,31 +93,27 @@ export const workflowRouter = t.router({
             initialState: z.record(z.unknown()).optional()
         }))
         .mutation(async ({ input }) => {
-            const engine = getWorkflowEngine();
-            if (!engine) throw new Error("Workflow Engine not initialized");
+            const engine = requireWorkflowEngine();
             const execution = await engine.start(input.workflowId, input.initialState || {});
             return execution;
         }),
 
     listExecutions: publicProcedure.query(() => {
-        const engine = getWorkflowEngine();
-        if (!engine) return [];
+        const engine = requireWorkflowEngine();
         return engine.listExecutions();
     }),
 
     getExecution: publicProcedure
         .input(z.object({ executionId: z.string() }))
         .query(({ input }) => {
-            const engine = getWorkflowEngine();
-            if (!engine) return null;
+            const engine = requireWorkflowEngine();
             return engine.getExecution(input.executionId);
         }),
 
     getHistory: publicProcedure
         .input(z.object({ executionId: z.string() }))
         .query(({ input }) => {
-            const engine = getWorkflowEngine();
-            if (!engine) return [];
+            const engine = requireWorkflowEngine();
             return engine.getHistory(input.executionId);
         }),
 
@@ -103,8 +122,7 @@ export const workflowRouter = t.router({
     resume: adminProcedure
         .input(z.object({ executionId: z.string() }))
         .mutation(async ({ input }) => {
-            const engine = getWorkflowEngine();
-            if (!engine) throw new Error("Workflow Engine not initialized");
+            const engine = requireWorkflowEngine();
             await engine.resume(input.executionId);
             return { success: true };
         }),
@@ -112,8 +130,7 @@ export const workflowRouter = t.router({
     pause: adminProcedure
         .input(z.object({ executionId: z.string() }))
         .mutation(({ input }) => {
-            const engine = getWorkflowEngine();
-            if (!engine) throw new Error("Workflow Engine not initialized");
+            const engine = requireWorkflowEngine();
             engine.pause(input.executionId);
             return { success: true };
         }),
@@ -121,8 +138,7 @@ export const workflowRouter = t.router({
     approve: adminProcedure
         .input(z.object({ executionId: z.string() }))
         .mutation(async ({ input }) => {
-            const engine = getWorkflowEngine();
-            if (!engine) throw new Error("Workflow Engine not initialized");
+            const engine = requireWorkflowEngine();
             await engine.approve(input.executionId);
             return { success: true };
         }),
@@ -133,8 +149,7 @@ export const workflowRouter = t.router({
             reason: z.string().optional()
         }))
         .mutation(({ input }) => {
-            const engine = getWorkflowEngine();
-            if (!engine) throw new Error("Workflow Engine not initialized");
+            const engine = requireWorkflowEngine();
             engine.reject(input.executionId, input.reason);
             return { success: true };
         })
