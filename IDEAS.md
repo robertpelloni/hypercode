@@ -25,3 +25,13 @@ Integrate an offline WebGPU-accelerated Whisper model in the web browser. The op
 ## 6. Language Porting / Refactoring
 *   **Rust rewrite of `core` event loop:** Port the PTY supervisor and session multiplexer from Node.js to Rust. Expose it back to Node via N-API (Neon/napi-rs). Node.js is excellent for TRPC and tying tools together, but heavy interactive PTY shell streams might suffer under the V8 event loop under heavy load.
 *   **React Native / Expo Mobile App:** A dedicated iOS/Android control pane using React Native that connects to the local Borg server via generic WebSocket tunnels (e.g., ngrok or Cloudflare Tunnels), allowing the operator to monitor multi-agent debates while away from the keyboard.
+
+## 7. Unified In-Memory SQLite Read-Replica for Stdio Proxy
+*Observation:* The `stdioLoader` is currently forced to read from a flat JSON cache file (`.hypercode/mcp-cache.json`) to remain fast and dependency-free (avoiding the 500ms `better-sqlite3` boot penalty). 
+*Idea:* We could compile a tiny, dependency-free WebAssembly (WASM) build of SQLite (like `sql.js` or `wa-sqlite`) that runs strictly in-memory within the stdio proxy. The main control plane could serialize the necessary MCP registry tables to a static binary block that the proxy loads instantly.
+*Impact:* The proxy gets full SQL query capabilities (like filtering `always_on` tools or matching semantic keywords) without the heavy Node.js native addon boot time, completely eliminating the need for fragile JSON cache synchronization.
+
+## 8. Deep-Research Crawler Worker (BobbyBookmarks Expansion)
+*Observation:* We successfully migrated `bookmarks.txt` (16,000+ links) into the `resources.db` SQLite database using a Python script. However, the system currently requires manual triggering of `auto_process.py` or `assimilate_all.py` to index those bookmarks through Gemini.
+*Idea:* Implement a dedicated lightweight Python or Go worker process (part of the `hyperingest` family) that runs constantly in the background. It would pop a raw URL from the `bookmarks` table, utilize a free-tier or local LLM to extract metadata (favicon, title, AI categorization, tags, long description), and save the structured knowledge back to SQLite.
+*Impact:* Zero-touch transformation of unstructured knowledge piles into semantic memory search results available to all coding agents.
