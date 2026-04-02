@@ -2,22 +2,27 @@
 
 import React from 'react';
 import { trpc } from '@/utils/trpc';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@borg/ui';
-import { Badge } from "@borg/ui";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@hypercode/ui';
+import { Badge } from "@hypercode/ui";
 import { Activity, File, Terminal, Zap, Cpu, Clock } from 'lucide-react';
 import { normalizeDashboardEvents, normalizeDashboardSystemStatus } from './events-page-normalizers';
 
 export default function EventsPage() {
     // Fetch real events from EventBus via pulse router
-    const { data: events = [], isLoading } = trpc.pulse.getLatestEvents.useQuery(
+    const eventsQuery = trpc.pulse.getLatestEvents.useQuery(
         { limit: 50 },
         { refetchInterval: 3000 } // Poll every 3s for real-time feel
     );
-    const { data: systemStatus } = trpc.pulse.getSystemStatus.useQuery(undefined, {
+    const systemStatusQuery = trpc.pulse.getSystemStatus.useQuery(undefined, {
         refetchInterval: 5000,
     });
-    const normalizedEvents = React.useMemo(() => normalizeDashboardEvents(events), [events]);
-    const normalizedSystemStatus = React.useMemo(() => normalizeDashboardSystemStatus(systemStatus), [systemStatus]);
+    const normalizedEventsResult = React.useMemo(() => normalizeDashboardEvents(eventsQuery.data), [eventsQuery.data]);
+    const normalizedSystemStatusResult = React.useMemo(() => normalizeDashboardSystemStatus(systemStatusQuery.data), [systemStatusQuery.data]);
+    const normalizedEvents = normalizedEventsResult.data;
+    const normalizedSystemStatus = normalizedSystemStatusResult.data;
+    const eventsUnavailable = eventsQuery.isError || normalizedEventsResult.invalid;
+    const systemStatusUnavailable = systemStatusQuery.isError || normalizedSystemStatusResult.invalid;
+    const pulseOffline = !systemStatusUnavailable && normalizedSystemStatus.status !== 'online';
 
     // Categorize events by type
     const eventTypeColors: Record<string, string> = {
@@ -48,14 +53,14 @@ export default function EventsPage() {
                     <p className="text-muted-foreground">Real-time event stream from sensors and reactors.</p>
                 </div>
                 <div className="flex gap-3 items-center">
-                    {systemStatus && (
+                    {!systemStatusUnavailable && systemStatusQuery.data && (
                         <Badge variant="outline" className="border-zinc-700">
                             <Clock className="w-3 h-3 mr-1" />
                             {Math.round(normalizedSystemStatus.uptime)}s uptime
                         </Badge>
                     )}
-                    <Badge variant="outline" className={normalizedEvents.length > 0 ? "text-green-400 border-green-900 bg-green-950/30 animate-pulse" : "text-zinc-500 border-zinc-700"}>
-                        <Activity className="w-3 h-3 mr-2" /> {normalizedEvents.length > 0 ? 'Live' : 'Idle'}
+                    <Badge variant="outline" className={eventsUnavailable || systemStatusUnavailable ? "text-red-300 border-red-900 bg-red-950/30" : normalizedEvents.length > 0 ? "text-green-400 border-green-900 bg-green-950/30 animate-pulse" : pulseOffline ? "text-rose-300 border-rose-900 bg-rose-950/30" : "text-zinc-500 border-zinc-700"}>
+                        <Activity className="w-3 h-3 mr-2" /> {eventsUnavailable || systemStatusUnavailable ? 'Unavailable' : normalizedEvents.length > 0 ? 'Live' : pulseOffline ? 'Offline' : 'Idle'}
                     </Badge>
                 </div>
             </div>
@@ -64,14 +69,14 @@ export default function EventsPage() {
             <div className="grid grid-cols-4 gap-4">
                 <Card className="border-zinc-800 bg-zinc-950/50">
                     <CardContent className="pt-4 text-center">
-                        <div className="text-2xl font-bold text-white">{normalizedEvents.length}</div>
+                        <div className="text-2xl font-bold text-white">{eventsUnavailable ? '—' : normalizedEvents.length}</div>
                         <div className="text-xs text-muted-foreground">Total Events</div>
                     </CardContent>
                 </Card>
                 <Card className="border-zinc-800 bg-zinc-950/50">
                     <CardContent className="pt-4 text-center">
                         <div className="text-2xl font-bold text-blue-400">
-                            {normalizedEvents.filter((e) => e.type.startsWith('file:')).length}
+                            {eventsUnavailable ? '—' : normalizedEvents.filter((e) => e.type.startsWith('file:')).length}
                         </div>
                         <div className="text-xs text-muted-foreground">File Events</div>
                     </CardContent>
@@ -79,7 +84,7 @@ export default function EventsPage() {
                 <Card className="border-zinc-800 bg-zinc-950/50">
                     <CardContent className="pt-4 text-center">
                         <div className="text-2xl font-bold text-purple-400">
-                            {normalizedEvents.filter((e) => e.type.startsWith('agent:')).length}
+                            {eventsUnavailable ? '—' : normalizedEvents.filter((e) => e.type.startsWith('agent:')).length}
                         </div>
                         <div className="text-xs text-muted-foreground">Agent Events</div>
                     </CardContent>
@@ -87,7 +92,7 @@ export default function EventsPage() {
                 <Card className="border-zinc-800 bg-zinc-950/50">
                     <CardContent className="pt-4 text-center">
                         <div className="text-2xl font-bold text-green-400">
-                            {normalizedSystemStatus.agents.length}
+                            {systemStatusUnavailable ? '—' : normalizedSystemStatus.agents.length}
                         </div>
                         <div className="text-xs text-muted-foreground">Active Agents</div>
                     </CardContent>
@@ -104,10 +109,10 @@ export default function EventsPage() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Cpu className="w-5 h-5 text-green-400" />
-                                <span>Borg Core</span>
+                                <span>HyperCode Core</span>
                             </div>
-                            <Badge className={normalizedSystemStatus.status === 'online' ? "bg-green-600" : "bg-red-600"}>
-                                {normalizedSystemStatus.status === 'online' ? 'Online' : 'Offline'}
+                            <Badge className={systemStatusUnavailable ? "bg-red-700" : normalizedSystemStatus.status === 'online' ? "bg-green-600" : "bg-red-600"}>
+                                {systemStatusUnavailable ? 'Unavailable' : normalizedSystemStatus.status === 'online' ? 'Online' : 'Offline'}
                             </Badge>
                         </div>
                         <div className="flex items-center justify-between">
@@ -115,18 +120,18 @@ export default function EventsPage() {
                                 <File className="w-5 h-5 text-blue-400" />
                                 <span>File Sensor</span>
                             </div>
-                            <Badge className="bg-green-600">Active</Badge>
+                            <Badge className={systemStatusUnavailable || pulseOffline ? "bg-zinc-700" : "bg-green-600"}>{systemStatusUnavailable || pulseOffline ? "Unknown" : "Active"}</Badge>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Terminal className="w-5 h-5 text-yellow-400" />
                                 <span>Terminal Sensor</span>
                             </div>
-                            <Badge className="bg-green-600">Active</Badge>
+                            <Badge className={systemStatusUnavailable || pulseOffline ? "bg-zinc-700" : "bg-green-600"}>{systemStatusUnavailable || pulseOffline ? "Unknown" : "Active"}</Badge>
                         </div>
 
                         {/* Active Agents */}
-                        {normalizedSystemStatus.agents.length > 0 && (
+                        {!systemStatusUnavailable && normalizedSystemStatus.agents.length > 0 && (
                             <div className="mt-4 pt-4 border-t border-zinc-800">
                                 <div className="text-xs text-muted-foreground mb-2 uppercase">Active Agents</div>
                                 {normalizedSystemStatus.agents.map((agent, i: number) => (
@@ -145,11 +150,17 @@ export default function EventsPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="h-[500px] overflow-y-auto pr-4 space-y-2">
-                            {isLoading ? (
+                            {eventsQuery.isLoading ? (
                                 <div className="text-zinc-500 text-center py-10">Loading events...</div>
+                            ) : eventsUnavailable || systemStatusUnavailable ? (
+                                <div className="text-center py-10 italic text-red-300">
+                                    Event telemetry unavailable{eventsQuery.isError ? `: ${eventsQuery.error.message}` : systemStatusQuery.isError ? `: ${systemStatusQuery.error.message}` : ' due to malformed data'}.
+                                </div>
                             ) : normalizedEvents.length === 0 ? (
-                                <div className="text-zinc-500 text-center py-10 italic">
-                                    No events recorded yet. Events will appear as the system operates.
+                                <div className={`text-center py-10 italic ${pulseOffline ? 'text-rose-300' : 'text-zinc-500'}`}>
+                                    {pulseOffline
+                                        ? 'Pulse runtime is offline. Event history is unavailable until the runtime reconnects.'
+                                        : 'No events recorded yet. Events will appear as the system operates.'}
                                 </div>
                             ) : (
                                 normalizedEvents.slice().reverse().map((event, i: number) => (

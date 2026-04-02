@@ -11,6 +11,16 @@ export interface DashboardSystemStatus {
     agents: string[];
 }
 
+export interface NormalizedDashboardEventsResult {
+    data: DashboardEventRow[];
+    invalid: boolean;
+}
+
+export interface NormalizedDashboardSystemStatusResult {
+    data: DashboardSystemStatus;
+    invalid: boolean;
+}
+
 function isObject(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
 }
@@ -49,17 +59,22 @@ function normalizeTimestamp(value: unknown): number | null {
     return null;
 }
 
-export function normalizeDashboardEvents(payload: unknown): DashboardEventRow[] {
+export function normalizeDashboardEvents(payload: unknown): NormalizedDashboardEventsResult {
     if (!Array.isArray(payload)) {
-        return [];
+        return { data: [], invalid: payload != null };
     }
 
-    return payload.reduce<DashboardEventRow[]>((acc, item, index) => {
+    let invalid = false;
+    const data = payload.reduce<DashboardEventRow[]>((acc, item, index) => {
         if (!isObject(item)) {
+            invalid = true;
             return acc;
         }
 
         const rawType = typeof item.type === 'string' ? item.type.trim() : '';
+        if (rawType.length === 0) {
+            invalid = true;
+        }
         const rawSource = typeof item.source === 'string' ? item.source.trim() : '';
 
         acc.push({
@@ -71,14 +86,19 @@ export function normalizeDashboardEvents(payload: unknown): DashboardEventRow[] 
 
         return acc;
     }, []);
+
+    return { data, invalid };
 }
 
-export function normalizeDashboardSystemStatus(payload: unknown): DashboardSystemStatus {
+export function normalizeDashboardSystemStatus(payload: unknown): NormalizedDashboardSystemStatusResult {
     if (!isObject(payload)) {
         return {
-            status: 'offline',
-            uptime: 0,
-            agents: [],
+            data: {
+                status: 'offline',
+                uptime: 0,
+                agents: [],
+            },
+            invalid: payload != null,
         };
     }
 
@@ -87,10 +107,16 @@ export function normalizeDashboardSystemStatus(payload: unknown): DashboardSyste
     const agents = Array.isArray(payload.agents)
         ? payload.agents.filter((agent): agent is string => typeof agent === 'string' && agent.trim().length > 0).map((agent) => agent.trim())
         : [];
+    const invalid = (payload.status !== 'online' && payload.status !== 'offline')
+        || !(typeof payload.uptime === 'number' && Number.isFinite(payload.uptime))
+        || !Array.isArray(payload.agents);
 
     return {
-        status,
-        uptime,
-        agents,
+        data: {
+            status,
+            uptime,
+            agents,
+        },
+        invalid,
     };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Badge, Button, ScrollArea } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent, Badge, Button, ScrollArea } from "@hypercode/ui";
 import { Terminal, Play, Loader2, ChevronRight, Search, Trash2 } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -14,6 +14,22 @@ type CommandResult = {
     timestamp: number;
 };
 
+type CommandDefinition = {
+    name: string;
+    description?: string | null;
+};
+
+function isCommandDefinition(value: unknown): value is CommandDefinition {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { name?: unknown }).name === 'string'
+        && (
+            (value as { description?: unknown }).description === undefined
+            || (value as { description?: unknown }).description === null
+            || typeof (value as { description?: unknown }).description === 'string'
+        );
+}
+
 export default function CommandDashboard() {
     const [input, setInput] = useState('');
     const [history, setHistory] = useState<CommandResult[]>([]);
@@ -21,6 +37,9 @@ export default function CommandDashboard() {
     const [filter, setFilter] = useState('');
 
     const commandsQuery = trpc.commands.list.useQuery();
+    const commandsUnavailable = commandsQuery.isError
+        || (commandsQuery.data !== undefined && (!Array.isArray(commandsQuery.data) || !commandsQuery.data.every(isCommandDefinition)));
+    const commandsErrorMessage = commandsQuery.error?.message ?? 'Command inventory is unavailable.';
     const executeMutation = trpc.commands.execute.useMutation({
         onSuccess: (result) => {
             setHistory(prev => [{
@@ -68,7 +87,10 @@ export default function CommandDashboard() {
         }
     };
 
-    const filteredCommands = (commandsQuery.data ?? []).filter(
+    const commandList: CommandDefinition[] = !commandsUnavailable && Array.isArray(commandsQuery.data)
+        ? (commandsQuery.data as CommandDefinition[])
+        : [];
+    const filteredCommands = commandList.filter(
         cmd => !filter || cmd.name.toLowerCase().includes(filter.toLowerCase()) || cmd.description?.toLowerCase().includes(filter.toLowerCase())
     );
 
@@ -80,9 +102,15 @@ export default function CommandDashboard() {
                     Command Center
                 </h1>
                 <p className="text-zinc-500 mt-2">
-                    Execute slash commands and inspect available command handlers registered with Borg Core.
+                    Execute slash commands and inspect available command handlers registered with HyperCode Core.
                 </p>
             </div>
+
+            {commandsUnavailable ? (
+                <div className="rounded-lg border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-300">
+                    {commandsErrorMessage}
+                </div>
+            ) : null}
 
             <div className="grid gap-8 lg:grid-cols-2">
                 {/* Left: Available Commands */}
@@ -90,7 +118,7 @@ export default function CommandDashboard() {
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Available Commands</h2>
                         <Badge variant="secondary" className="text-xs">
-                            {filteredCommands.length} of {commandsQuery.data?.length ?? 0}
+                            {commandsUnavailable ? '— of —' : `${filteredCommands.length} of ${commandList.length}`}
                         </Badge>
                     </div>
 
@@ -110,6 +138,10 @@ export default function CommandDashboard() {
                         {commandsQuery.isLoading ? (
                             <div className="flex justify-center p-8">
                                 <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+                            </div>
+                        ) : commandsUnavailable ? (
+                            <div className="text-center p-8 text-red-300 text-sm border border-red-900/40 bg-red-950/20 rounded-lg">
+                                {commandsErrorMessage}
                             </div>
                         ) : filteredCommands.length === 0 ? (
                             <div className="text-center p-8 text-zinc-600 text-sm border border-dashed border-zinc-800 rounded-lg">
