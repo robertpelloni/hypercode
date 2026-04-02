@@ -9,10 +9,54 @@ import {
 import { toast } from "sonner";
 import { normalizeMarketplaceEntries } from './marketplace-page-normalizers';
 
+function isMarketplaceEntryPayload(value: unknown): value is Array<{
+    id: string;
+    name: string;
+    type: 'agent' | 'tool' | 'skill';
+    source: string;
+    installed?: boolean;
+    description?: string;
+    tags?: string[];
+    verified?: boolean;
+}> {
+    return Array.isArray(value) && value.every((entry) =>
+        typeof entry === "object"
+        && entry !== null
+        && typeof (entry as { id?: unknown }).id === "string"
+        && typeof (entry as { name?: unknown }).name === "string"
+        && (
+            (entry as { type?: unknown }).type === "agent"
+            || (entry as { type?: unknown }).type === "tool"
+            || (entry as { type?: unknown }).type === "skill"
+        )
+        && typeof (entry as { source?: unknown }).source === "string"
+        && (
+            (entry as { installed?: unknown }).installed === undefined
+            || typeof (entry as { installed?: unknown }).installed === "boolean"
+        )
+        && (
+            (entry as { description?: unknown }).description === undefined
+            || typeof (entry as { description?: unknown }).description === "string"
+        )
+        && (
+            (entry as { tags?: unknown }).tags === undefined
+            || (
+                Array.isArray((entry as { tags?: unknown }).tags)
+                && ((entry as { tags: unknown[] }).tags).every((tag) => typeof tag === "string")
+            )
+        )
+        && (
+            (entry as { verified?: unknown }).verified === undefined
+            || typeof (entry as { verified?: unknown }).verified === "boolean"
+        )
+    );
+}
+
 export default function MarketplacePage() {
     const [filter, setFilter] = useState("");
-    const { data: entries, isLoading, refetch } = trpc.marketplace.list.useQuery({ filter });
-    const normalizedEntries = normalizeMarketplaceEntries(entries);
+    const { data: entries, isLoading, error } = trpc.marketplace.list.useQuery({ filter });
+    const entriesUnavailable = Boolean(error) || (entries !== undefined && !isMarketplaceEntryPayload(entries));
+    const normalizedEntries = normalizeMarketplaceEntries(entriesUnavailable ? undefined : entries);
     const utils = trpc.useContext();
 
     const installMutation = trpc.marketplace.install.useMutation({
@@ -60,6 +104,10 @@ export default function MarketplacePage() {
             {/* Grid */}
             {isLoading ? (
                 <div className="text-zinc-500">Loading marketplace...</div>
+            ) : entriesUnavailable ? (
+                <div className="rounded-lg border border-red-900/30 bg-red-950/10 p-4 text-sm text-red-300">
+                    {error?.message ?? "Marketplace catalog is unavailable."}
+                </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {normalizedEntries.map((entry) => (
