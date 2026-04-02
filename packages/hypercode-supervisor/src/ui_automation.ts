@@ -453,6 +453,7 @@ function buildSetTextScript(
     text: string,
     clearExisting: boolean,
     delays: Pick<SupervisorSettings, 'inputSettleDelayMs'>,
+    inputControlTypes: string[],
     windowTitle?: string,
     processName?: string
 ): string {
@@ -462,7 +463,7 @@ function buildSetTextScript(
 $window = Get-TargetWindow ${toPowerShellString(windowTitle ?? '')} ${toPowerShellString(processName ?? '')}
 $targetText = ${toPowerShellString(text)}
 $clearExisting = ${clearMode}
-$inputElements = Get-InteractiveAutomationElements $window @('Edit', 'Document')
+$inputElements = Get-InteractiveAutomationElements $window ${powerShellStringArray(inputControlTypes)}
 $target = $null
 
 foreach ($candidate in $inputElements) {
@@ -525,6 +526,7 @@ $result | ConvertTo-Json -Depth 8 -Compress`;
 function buildSubmitScript(
     keyChord: string,
     delays: Pick<SupervisorSettings, 'focusDelayMs'>,
+    inputControlTypes: string[],
     windowTitle?: string,
     processName?: string
 ): string {
@@ -542,7 +544,7 @@ function buildSubmitScript(
 
     return `${UI_AUTOMATION_BASE}
 $window = Get-TargetWindow ${toPowerShellString(windowTitle ?? '')} ${toPowerShellString(processName ?? '')}
-$inputElements = Get-InteractiveAutomationElements $window @('Edit', 'Document')
+$inputElements = Get-InteractiveAutomationElements $window ${powerShellStringArray(inputControlTypes)}
 $target = $null
 
 foreach ($candidate in $inputElements) {
@@ -678,12 +680,19 @@ export class UiAutomationManager {
     }
 
     async setChatInput(text: string, options?: { clearExisting?: boolean; windowTitle?: string; processName?: string }): Promise<SetInputResult> {
-        const settings = await this.getSettings();
+        const [settings, surface] = await Promise.all([
+            this.getSettings(),
+            this.detectChatSurface()
+        ]);
+        const inputControlTypes = surface.surfaceProfile.inputControlTypes.length > 0
+            ? surface.surfaceProfile.inputControlTypes
+            : DEFAULT_SURFACE_PROFILE.inputControlTypes;
         return runPowerShellJson<SetInputResult>(
             buildSetTextScript(
                 text,
                 options?.clearExisting ?? true,
                 settings,
+                inputControlTypes,
                 options?.windowTitle,
                 options?.processName
             )
@@ -691,8 +700,14 @@ export class UiAutomationManager {
     }
 
     async submitChatInput(keyChord = 'alt+enter', windowTitle?: string, processName?: string): Promise<SubmitInputResult> {
-        const settings = await this.getSettings();
-        return runPowerShellJson<SubmitInputResult>(buildSubmitScript(keyChord, settings, windowTitle, processName));
+        const [settings, surface] = await Promise.all([
+            this.getSettings(),
+            this.detectChatSurface()
+        ]);
+        const inputControlTypes = surface.surfaceProfile.inputControlTypes.length > 0
+            ? surface.surfaceProfile.inputControlTypes
+            : DEFAULT_SURFACE_PROFILE.inputControlTypes;
+        return runPowerShellJson<SubmitInputResult>(buildSubmitScript(keyChord, settings, inputControlTypes, windowTitle, processName));
     }
 
     async advanceChat(options?: {
