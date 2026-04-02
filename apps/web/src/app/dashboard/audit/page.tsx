@@ -2,13 +2,22 @@
 
 import { useState } from 'react';
 import { PageStatusBanner } from '@/components/PageStatusBanner';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@borg/ui";
-import { Button } from "@borg/ui";
-import { Input } from "@borg/ui";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@borg/ui";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
+import { Input } from "@hypercode/ui";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@hypercode/ui";
 import { FileText, Search, RefreshCcw } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
+
+type AuditLogEntry = {
+    id?: string;
+    timestamp: number | string;
+    level?: string;
+    agentId?: string;
+    action?: string;
+    details?: unknown;
+};
 
 function formatTime(timestamp: number | string) {
     const d = new Date(timestamp);
@@ -23,12 +32,28 @@ function formatTime(timestamp: number | string) {
     });
 }
 
+function isAuditLogEntry(value: unknown): value is AuditLogEntry {
+    return typeof value === 'object'
+        && value !== null
+        && (
+            typeof (value as { timestamp?: unknown }).timestamp === 'string'
+            || typeof (value as { timestamp?: unknown }).timestamp === 'number'
+        )
+        && ((value as { level?: unknown }).level === undefined || typeof (value as { level?: unknown }).level === 'string')
+        && ((value as { agentId?: unknown }).agentId === undefined || typeof (value as { agentId?: unknown }).agentId === 'string')
+        && ((value as { action?: unknown }).action === undefined || typeof (value as { action?: unknown }).action === 'string');
+}
+
 export default function AuditDashboard() {
     const [searchQuery, setSearchQuery] = useState("");
     const [limit, setLimit] = useState(100);
 
     // Fetch audit entries
-    const { data: auditLogs, refetch, isFetching } = trpc.audit.list.useQuery({ limit });
+    const auditQuery = trpc.audit.list.useQuery({ limit });
+    const { refetch, isFetching } = auditQuery;
+    const auditUnavailable = auditQuery.isError
+        || (auditQuery.data !== undefined && (!Array.isArray(auditQuery.data) || !auditQuery.data.every(isAuditLogEntry)));
+    const auditErrorMessage = auditQuery.error?.message ?? 'Audit log service is unavailable.';
 
     const handleRefresh = async () => {
         await refetch();
@@ -36,8 +61,10 @@ export default function AuditDashboard() {
     };
 
     // Filter audit logs client-side
-    const typedAuditLogs = (auditLogs as any[] | undefined) ?? [];
-    const filteredLogs = typedAuditLogs.filter((log: any) => {
+    const typedAuditLogs: AuditLogEntry[] = !auditUnavailable && Array.isArray(auditQuery.data)
+        ? (auditQuery.data as AuditLogEntry[])
+        : [];
+    const filteredLogs = typedAuditLogs.filter((log) => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
         return (
@@ -73,6 +100,12 @@ export default function AuditDashboard() {
                 </Button>
             </div>
 
+            {auditUnavailable ? (
+                <div className="rounded-lg border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-300">
+                    {auditErrorMessage}
+                </div>
+            ) : null}
+
             {/* Main Content Area */}
             <Card className="bg-zinc-900 border-zinc-800 overflow-hidden">
                  <CardHeader className="pb-4 bg-zinc-950/50 border-b border-zinc-800">
@@ -87,7 +120,7 @@ export default function AuditDashboard() {
                             />
                         </div>
                         <div className="flex items-center gap-2 text-sm text-zinc-500 ml-auto">
-                            <span>Showing {filteredLogs.length} events</span>
+                            <span>{auditUnavailable ? 'Showing — events' : `Showing ${filteredLogs.length} events`}</span>
                         </div>
                     </div>
                 </CardHeader>
@@ -103,14 +136,20 @@ export default function AuditDashboard() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredLogs.length === 0 ? (
+                            {auditUnavailable ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="h-32 text-center text-red-300">
+                                        {auditErrorMessage}
+                                    </TableCell>
+                                </TableRow>
+                            ) : filteredLogs.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="h-32 text-center text-zinc-500">
                                         No audit records found matching your criteria.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filteredLogs.map((log: any, index: number) => {
+                                filteredLogs.map((log, index: number) => {
                                     // Make level colored based on severity
                                     const levelColors: Record<string, string> = {
                                         info: 'text-blue-400',
