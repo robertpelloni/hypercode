@@ -587,7 +587,24 @@ Validation:
 - `pnpm -C packages\cli exec tsc --noEmit`
 - `pnpm -C packages\cli exec vitest run src\commands\session.test.ts src\commands\status.test.ts src\commands\provider.test.ts src\commands\config.test.ts src\commands\mcp.test.ts src\commands\agent.test.ts src\commands\tools.test.ts src\commands\memory.test.ts src\control-plane.test.ts`
 
-### 23. `harden-published-catalog-ingestion`
+### 23. `wire-cli-session-stop`
+
+Status: **completed**
+
+What changed:
+
+- `packages/cli/src/commands/session.ts` no longer prints a fabricated success line for `hypercode session stop <id>`
+- `session stop` now calls the live `session.stop` control-plane mutation, forwards `--force`, and renders the actual returned session status/harness/workdir snapshot
+- `--json` now emits the structured stopped-session payload for automation and troubleshooting
+- command failures now flow through the existing structured session control-plane error handling path
+- focused CLI coverage in `packages/cli/src/commands/session.test.ts` now includes the session-stop JSON flow
+
+Validation:
+
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\session.test.ts src\commands\status.test.ts src\commands\provider.test.ts src\commands\config.test.ts src\commands\mcp.test.ts src\commands\agent.test.ts src\commands\tools.test.ts src\commands\memory.test.ts src\control-plane.test.ts`
+
+### 24. `harden-published-catalog-ingestion`
 
 Status: **completed**
 

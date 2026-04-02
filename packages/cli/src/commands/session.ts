@@ -401,9 +401,27 @@ Harnesses:
     .command('stop <id>')
     .description('Stop a running session')
     .option('-f, --force', 'Force stop')
-    .action(async (id) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.green(`  ✓ Session '${id}' stopped`));
+    .option('--json', 'Output as JSON')
+    .action(async (id, opts) => {
+      await withSessionErrorHandling(async () => {
+        const chalk = (await import('chalk')).default;
+        const stopped = await queryTrpc<SessionRecord>('session.stop', {
+          id,
+          force: opts.force || undefined,
+        });
+
+        if (opts.json) {
+          console.log(JSON.stringify({
+            session: stopped,
+          }, null, 2));
+          return;
+        }
+
+        console.log(chalk.green(`  ✓ Session '${stopped.id}' stop requested`));
+        console.log(chalk.dim(`    Status:   ${normalizeText(stopped.status)}`));
+        console.log(chalk.dim(`    Harness:  ${normalizeText(stopped.cliType)}`));
+        console.log(chalk.dim(`    Workdir:  ${normalizeText(stopped.workingDirectory)}`));
+      }, opts);
     });
 
   session

@@ -210,6 +210,33 @@ describe('registerSessionCommand', () => {
     expect(process.exitCode).toBe(1);
   });
 
+  it('stops a live session as JSON', async () => {
+    queryTrpcMock.mockResolvedValue({
+      id: 'sess_live_1',
+      name: 'repo-fix',
+      cliType: 'hypercode',
+      workingDirectory: 'C:\\repo',
+      status: 'stopping',
+    });
+
+    const program = createProgram();
+    await program.parseAsync(['session', 'stop', 'sess_live_1', '--force', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).toHaveBeenCalledWith('session.stop', {
+      id: 'sess_live_1',
+      force: true,
+    });
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      session: {
+        id: 'sess_live_1',
+        name: 'repo-fix',
+        cliType: 'hypercode',
+        workingDirectory: 'C:\\repo',
+        status: 'stopping',
+      },
+    }, null, 2));
+  });
+
   it('reports control-plane failures without throwing out of the command', async () => {
     queryTrpcMock.mockRejectedValue(new Error('control plane unavailable'));
 
