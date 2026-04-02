@@ -1,18 +1,160 @@
 /**
- * `borg mcp` - MCP Router management commands
+ * `hypercode mcp` - MCP Router management commands
  *
  * Comprehensive MCP server lifecycle management, tool browsing,
  * traffic inspection, config sync, and directory access.
- *
- * @example
- *   borg mcp list                    # List all MCP servers
- *   borg mcp start filesystem        # Start a specific server
- *   borg mcp traffic                 # Watch live MCP traffic
- *   borg mcp install @anthropic/mcp  # Install from directory
- *   borg mcp sync                    # Sync configs to all AI tools
  */
 
 import type { Command } from 'commander';
+
+import { queryTrpc, resolveControlPlaneLocation } from '../control-plane.js';
+
+type McpServerRecord = {
+  name: string;
+  displayName?: string;
+  tags?: string[];
+  status?: string;
+  runtimeState?: string;
+  warmupState?: string;
+  runtimeConnected?: boolean;
+  toolCount?: number;
+  advertisedToolCount?: number;
+  advertisedSource?: string;
+  lastConnectedAt?: string | null;
+  lastError?: string | null;
+  alwaysOn?: boolean;
+  config?: {
+    command?: string;
+    args?: string[];
+    env?: string[];
+  };
+};
+
+type McpToolRecord = {
+  name: string;
+  description?: string;
+  server?: string;
+  serverDisplayName?: string;
+  semanticGroup?: string;
+  semanticGroupLabel?: string;
+  keywords?: string[];
+  alwaysOn?: boolean;
+  loaded?: boolean;
+  hydrated?: boolean;
+  deferred?: boolean;
+  requiresSchemaHydration?: boolean;
+  matchReason?: string;
+  rank?: number;
+};
+
+type McpRegistryEntry = {
+  id: string;
+  name: string;
+  url: string;
+  category: string;
+  description: string;
+  tags: string[];
+};
+
+function normalizeText(value: string | null | undefined): string {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : '—';
+}
+
+function normalizeArray(values: string[] | undefined): string {
+  return Array.isArray(values) && values.length > 0 ? values.join(', ') : '—';
+}
+
+function parsePositiveInt(value: string, fieldName: string): number {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed) || parsed < 1) {
+    throw new Error(`${fieldName} must be a positive integer`);
+  }
+
+  return parsed;
+}
+
+async function withMcpErrorHandling(
+  action: () => Promise<void>,
+  opts: { json?: boolean } = {},
+): Promise<void> {
+  try {
+    await action();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (opts.json) {
+      console.log(JSON.stringify({ error: message }, null, 2));
+    } else {
+      const chalk = (await import('chalk')).default;
+      const location = resolveControlPlaneLocation();
+      console.error(chalk.red(`  ✗ ${message}`));
+      console.error(chalk.dim(`  Control plane: ${location.baseUrl} (${location.source})`));
+      console.error(chalk.dim('  Start HyperCode with `hypercode start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
+    }
+    process.exitCode = 1;
+  }
+}
+
+function filterServers(
+  servers: McpServerRecord[],
+  opts: { running?: boolean; namespace?: string },
+): McpServerRecord[] {
+  return servers.filter((server) => {
+    if (opts.running && !server.runtimeConnected && server.status !== 'connected') {
+      return false;
+    }
+
+    if (opts.namespace) {
+      const tags = server.tags ?? [];
+      return tags.some((tag) => tag.toLowerCase() === opts.namespace?.toLowerCase());
+    }
+
+    return true;
+  });
+}
+
+function filterTools(
+  tools: McpToolRecord[],
+  opts: { server?: string; namespace?: string },
+): McpToolRecord[] {
+  return tools.filter((tool) => {
+    if (opts.server && tool.server?.toLowerCase() !== opts.server.toLowerCase()) {
+      return false;
+    }
+
+    if (opts.namespace && tool.semanticGroup?.toLowerCase() !== opts.namespace.toLowerCase()) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function filterRegistryEntries(
+  entries: McpRegistryEntry[],
+  query: string,
+  category?: string,
+): McpRegistryEntry[] {
+  const normalizedQuery = query.trim().toLowerCase();
+  return entries.filter((entry) => {
+    if (category && entry.category.toLowerCase() !== category.toLowerCase()) {
+      return false;
+    }
+
+    if (normalizedQuery.length === 0) {
+      return true;
+    }
+
+    const haystack = [
+      entry.name,
+      entry.description,
+      entry.category,
+      entry.url,
+      ...(entry.tags ?? []),
+    ].join(' ').toLowerCase();
+
+    return haystack.includes(normalizedQuery);
+  });
+}
 
 export function registerMcpCommand(program: Command): void {
   const mcp = program
@@ -24,24 +166,48 @@ export function registerMcpCommand(program: Command): void {
     .description('List all configured MCP servers with status, transport, latency, and tool count')
     .option('--json', 'Output as JSON')
     .option('--running', 'Show only running servers')
-    .option('--namespace <ns>', 'Filter by namespace')
+    .option('--namespace <ns>', 'Filter by namespace tag')
     .action(async (opts) => {
-      const chalk = (await import('chalk')).default;
-      const Table = (await import('cli-table3')).default;
+      await withMcpErrorHandling(async () => {
+        const servers = await queryTrpc<McpServerRecord[]>('mcp.listServers');
+        const filtered = filterServers(servers, opts);
 
-      if (opts.json) {
-        console.log(JSON.stringify({ servers: [] }, null, 2));
-        return;
-      }
+        if (opts.json) {
+          console.log(JSON.stringify({ servers: filtered }, null, 2));
+          return;
+        }
 
-      const table = new Table({
-        head: ['Name', 'Status', 'Transport', 'Namespace', 'Tools', 'Latency', 'Uptime'],
-        style: { head: ['cyan'] },
-      });
+        const chalk = (await import('chalk')).default;
+        const Table = (await import('cli-table3')).default;
 
-      // Placeholder - will connect to core API
-      console.log(chalk.bold.cyan('\n  MCP Servers\n'));
-      console.log(chalk.dim('  No servers configured. Use `borg mcp add` to add one.\n'));
+        console.log(chalk.bold.cyan('\n  MCP Servers\n'));
+        if (filtered.length === 0) {
+          console.log(chalk.dim('  No matching MCP servers found.\n'));
+          return;
+        }
+
+        const table = new Table({
+          head: ['Name', 'Status', 'Warmup', 'Tools', 'Always On', 'Tags'],
+          style: { head: ['cyan'] },
+          wordWrap: true,
+          colWidths: [24, 14, 14, 10, 12, 36],
+        });
+
+        for (const server of filtered) {
+          const status = normalizeText(server.status ?? server.runtimeState);
+          table.push([
+            `${server.displayName ?? server.name}\n${chalk.dim(server.name)}`,
+            status,
+            normalizeText(server.warmupState),
+            String(server.toolCount ?? server.advertisedToolCount ?? 0),
+            server.alwaysOn ? chalk.green('yes') : chalk.dim('no'),
+            normalizeArray(server.tags),
+          ]);
+        }
+
+        console.log(table.toString());
+        console.log('');
+      }, opts);
     });
 
   mcp
@@ -81,9 +247,9 @@ export function registerMcpCommand(program: Command): void {
     .option('--auto-start', 'Auto-start on HyperCode launch', true)
     .addHelpText('after', `
 Examples:
-  $ borg mcp add filesystem npx -- -y @modelcontextprotocol/server-filesystem /home
-  $ borg mcp add github npx -- -y @modelcontextprotocol/server-github --env GITHUB_TOKEN=xxx
-  $ borg mcp add remote-api http://localhost:8080/mcp -t streamable-http
+  $ hypercode mcp add filesystem npx -- -y @modelcontextprotocol/server-filesystem /home
+  $ hypercode mcp add github npx -- -y @modelcontextprotocol/server-github --env GITHUB_TOKEN=xxx
+  $ hypercode mcp add remote-api http://localhost:8080/mcp -t streamable-http
     `)
     .action(async (name, command, opts) => {
       const chalk = (await import('chalk')).default;
@@ -121,7 +287,7 @@ Examples:
     .option('--server <name>', 'Filter by server name')
     .option('--method <method>', 'Filter by JSON-RPC method')
     .option('-n, --limit <count>', 'Max messages to show', '50')
-    .action(async (opts) => {
+    .action(async (_opts) => {
       const chalk = (await import('chalk')).default;
       console.log(chalk.bold.cyan('  MCP Traffic Inspector'));
       console.log(chalk.dim('  Watching for MCP traffic... (Ctrl+C to stop)\n'));
@@ -135,12 +301,60 @@ Examples:
     .option('--namespace <ns>', 'Filter by namespace')
     .option('-s, --search <query>', 'Semantic search for tools')
     .action(async (opts) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.bold.cyan('\n  MCP Tools\n'));
-      if (opts.search) {
-        console.log(chalk.dim(`  Searching for: "${opts.search}"\n`));
-      }
-      console.log(chalk.dim('  No tools available. Start some MCP servers first.\n'));
+      await withMcpErrorHandling(async () => {
+        const tools = opts.search
+          ? await queryTrpc<McpToolRecord[]>('mcp.searchTools', { query: opts.search })
+          : await queryTrpc<McpToolRecord[]>('mcp.listTools');
+        const filtered = filterTools(tools, opts);
+
+        if (opts.json) {
+          console.log(JSON.stringify({
+            query: opts.search ?? null,
+            tools: filtered,
+          }, null, 2));
+          return;
+        }
+
+        const chalk = (await import('chalk')).default;
+        const Table = (await import('cli-table3')).default;
+
+        console.log(chalk.bold.cyan('\n  MCP Tools\n'));
+        if (opts.search) {
+          console.log(chalk.dim(`  Search: ${opts.search}\n`));
+        }
+
+        if (filtered.length === 0) {
+          console.log(chalk.dim('  No matching MCP tools found.\n'));
+          return;
+        }
+
+        const table = new Table({
+          head: ['Tool', 'Server', 'Group', 'State', 'Why'],
+          style: { head: ['cyan'] },
+          wordWrap: true,
+          colWidths: [28, 20, 20, 24, 42],
+        });
+
+        for (const tool of filtered) {
+          const state: string[] = [];
+          if (tool.alwaysOn) state.push('always-on');
+          if (tool.loaded) state.push('loaded');
+          if (tool.hydrated) state.push('hydrated');
+          if (tool.deferred) state.push('deferred');
+          if (tool.requiresSchemaHydration) state.push('needs schema');
+
+          table.push([
+            `${tool.name}${tool.description ? `\n${chalk.dim(tool.description)}` : ''}`,
+            normalizeText(tool.serverDisplayName ?? tool.server),
+            normalizeText(tool.semanticGroupLabel ?? tool.semanticGroup),
+            state.length > 0 ? state.join(', ') : chalk.dim('available'),
+            normalizeText(tool.matchReason),
+          ]);
+        }
+
+        console.log(table.toString());
+        console.log('');
+      }, opts);
     });
 
   mcp
@@ -178,9 +392,9 @@ Examples:
     .option('--github <repo>', 'Install from GitHub repo')
     .addHelpText('after', `
 Examples:
-  $ borg mcp install @modelcontextprotocol/server-filesystem
-  $ borg mcp install --pip mcp-server-sqlite
-  $ borg mcp install --github anthropics/mcp-servers
+  $ hypercode mcp install @modelcontextprotocol/server-filesystem
+  $ hypercode mcp install --pip mcp-server-sqlite
+  $ hypercode mcp install --github anthropics/mcp-servers
     `)
     .action(async (pkg) => {
       const chalk = (await import('chalk')).default;
@@ -193,16 +407,52 @@ Examples:
     .description('Search the MCP directory for available servers')
     .option('-c, --category <cat>', 'Filter by category')
     .option('-n, --limit <count>', 'Max results', '20')
-    .action(async (query) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.bold.cyan(`\n  MCP Directory Search: "${query}"\n`));
-      console.log(chalk.dim('  No results found. Directory not yet populated.\n'));
+    .option('--json', 'Output as JSON')
+    .action(async (query, opts) => {
+      await withMcpErrorHandling(async () => {
+        const limit = parsePositiveInt(opts.limit, 'limit');
+        const entries = await queryTrpc<McpRegistryEntry[]>('mcpServers.registrySnapshot');
+        const filtered = filterRegistryEntries(entries, query, opts.category).slice(0, limit);
+
+        if (opts.json) {
+          console.log(JSON.stringify({ query, category: opts.category ?? null, results: filtered }, null, 2));
+          return;
+        }
+
+        const chalk = (await import('chalk')).default;
+        const Table = (await import('cli-table3')).default;
+
+        console.log(chalk.bold.cyan(`\n  MCP Directory Search: "${query}"\n`));
+        if (filtered.length === 0) {
+          console.log(chalk.dim('  No matching registry entries found.\n'));
+          return;
+        }
+
+        const table = new Table({
+          head: ['Name', 'Category', 'Tags', 'URL'],
+          style: { head: ['cyan'] },
+          wordWrap: true,
+          colWidths: [28, 18, 24, 54],
+        });
+
+        for (const entry of filtered) {
+          table.push([
+            `${entry.name}\n${chalk.dim(entry.description)}`,
+            normalizeText(entry.category),
+            normalizeArray(entry.tags),
+            normalizeText(entry.url),
+          ]);
+        }
+
+        console.log(table.toString());
+        console.log('');
+      }, opts);
     });
 
   mcp
     .command('export')
     .description('Export MCP configuration to JSON file')
-    .option('-o, --output <file>', 'Output file path', 'borg-mcp-export.json')
+    .option('-o, --output <file>', 'Output file path', 'hypercode-mcp-export.json')
     .action(async (opts) => {
       const chalk = (await import('chalk')).default;
       console.log(chalk.green(`  ✓ Exported MCP config to ${opts.output}`));

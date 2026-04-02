@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CLI MCP Operator Surface**: `hypercode mcp list`, `hypercode mcp tools`, and `hypercode mcp search` now query live control-plane MCP inventory and registry snapshot surfaces instead of placeholder empty-state output, including JSON mode, server/namespace filtering, registry-category filtering, and actionable control-plane error reporting.
 - **CLI Tool Detail Surface**: `hypercode tools info <name>` now queries the live control plane via `tools.get`, supports JSON output, and renders real server/schema detail instead of a placeholder message.
 - **CLI Tools Operator Surface**: `hypercode tools list` and `hypercode tools search` now query the live control plane via `mcp.listTools` and `mcp.searchTools` instead of placeholder output, including JSON mode, list filters, top-k limiting, ranked search result state, and actionable control-plane error reporting.
 - **Architecture Rollout Map**: Documented the recommended HyperCode binary family, ownership boundaries, binary-to-package evolution, and first preferred extraction seams (`hypercoded` first, then `hypermcpd`) across `AGENTS.md`, `HANDOFF.md`, `CLAUDE.md`, `GEMINI.md`, `README.md`, `ROADMAP.md`, and `TODO.md` so future implementation work converges on one modular-monolith-first plan.

@@ -281,7 +281,24 @@ Validation:
 - `pnpm -C packages\cli exec tsc --noEmit`
 - `pnpm -C packages\cli exec vitest run src\commands\tools.test.ts src\control-plane.test.ts`
 
-### 5. `harden-published-catalog-ingestion`
+### 5. `wire-cli-mcp-command`
+
+Status: **completed**
+
+What changed:
+
+- `packages/cli/src/commands/mcp.ts` no longer leaves `hypercode mcp list`, `hypercode mcp tools`, and `hypercode mcp search` as placeholder empty-state shells
+- `hypercode mcp list` now queries the live control plane through `mcp.listServers`, supports `--json`, `--running`, and namespace-tag filtering, and renders real server status/warmup/tool-count/always-on data
+- `hypercode mcp tools` now uses `mcp.listTools` or `mcp.searchTools` depending on `--search`, supports `--json`, `--server`, and `--namespace`, and surfaces real tool state/match metadata instead of pretending no tools are loaded
+- `hypercode mcp search <query>` now searches the live MCP registry snapshot via `mcpServers.registrySnapshot`, supports `--json`, `--category`, and `--limit`, and renders real registry entries instead of the old hardcoded "directory not yet populated" message
+- focused CLI coverage was added in `packages/cli/src/commands/mcp.test.ts`
+
+Validation:
+
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\mcp.test.ts src\commands\tools.test.ts src\control-plane.test.ts`
+
+### 6. `harden-published-catalog-ingestion`
 
 Status: **completed**
 
@@ -305,7 +322,7 @@ Validation:
 - `pnpm -C packages\core exec vitest run src\services\published-catalog-ingestor.test.ts`
 - `pnpm -C packages\core exec tsc --noEmit`
 
-### 6. `workflow-canvas-save-truthfulness`
+### 7. `workflow-canvas-save-truthfulness`
 
 Status: **completed**
 
@@ -319,7 +336,7 @@ Validation:
 
 - `pnpm -C apps\web exec tsc --noEmit --pretty false`
 
-### 7. `workflow-canvas-payload-truthfulness`
+### 8. `workflow-canvas-payload-truthfulness`
 
 Status: **completed**
 
@@ -333,7 +350,7 @@ Validation:
 
 - `pnpm -C apps\web exec tsc --noEmit --pretty false`
 
-### 8. `workflow-engine-empty-state-truthfulness`
+### 9. `workflow-engine-empty-state-truthfulness`
 
 Status: **completed**
 
@@ -349,7 +366,7 @@ Validation:
 - `pnpm -C packages\core exec vitest run src\routers\workflowRouter.test.ts`
 - `pnpm -C packages\core exec tsc --noEmit`
 
-### 9. `workflow-designer-fetch-truthfulness`
+### 10. `workflow-designer-fetch-truthfulness`
 
 Status: **completed**
 
