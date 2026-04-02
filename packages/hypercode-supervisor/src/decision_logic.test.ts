@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { DEFAULT_SETTINGS } from './settings.js';
 import { DEFAULT_SURFACE_PROFILE, resolveSurfaceProfile } from './surface_profiles.js';
 import {
+    classifyBrowserFamily,
     collectInspectionHints,
+    detectSurfaceName,
     inspectionLooksLikeAntigravity,
     normalizeComparableLabel,
     resolveActionLabels
@@ -99,4 +101,38 @@ test('resolveActionLabels falls back to surface profile outside antigravity', ()
     }), DEFAULT_SETTINGS);
 
     assert.deepEqual(labels, resolveSurfaceProfile('claude-web').actionLabels);
+});
+
+test('classifyBrowserFamily detects firefox and chromium browsers', () => {
+    assert.equal(classifyBrowserFamily('firefox'), 'firefox');
+    assert.equal(classifyBrowserFamily('chrome'), 'chromium');
+    assert.equal(classifyBrowserFamily('brave'), 'chromium');
+    assert.equal(classifyBrowserFamily('msedge'), 'edge');
+    assert.equal(classifyBrowserFamily('cursor'), null);
+});
+
+test('detectSurfaceName prefers explicit title matches', () => {
+    assert.deepEqual(detectSurfaceName('Antigravity - Task', 'firefox'), {
+        detectedSurface: 'antigravity',
+        heuristics: ['window title contains "antigravity"']
+    });
+    assert.deepEqual(detectSurfaceName('Claude', 'firefox'), {
+        detectedSurface: 'claude-web',
+        heuristics: ['window title contains "claude"']
+    });
+});
+
+test('detectSurfaceName falls back to process-based browser/editor detection', () => {
+    assert.deepEqual(detectSurfaceName('Untitled', 'firefox'), {
+        detectedSurface: 'browser-chat',
+        heuristics: ['active process looks like a browser']
+    });
+    assert.deepEqual(detectSurfaceName('Workspace', 'Code'), {
+        detectedSurface: 'vscode',
+        heuristics: ['active process looks like VS Code']
+    });
+    assert.deepEqual(detectSurfaceName('Untitled', 'unknown'), {
+        detectedSurface: 'unknown',
+        heuristics: ['no known chat-surface heuristic matched']
+    });
 });

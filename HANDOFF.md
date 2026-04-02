@@ -373,6 +373,32 @@ Validated with:
 
 - `pnpm -C apps\web exec tsc --noEmit --pretty false`
 
+### 0.16. Surface classification is now part of the tested supervisor decision layer
+
+Finding:
+
+- title/process-based surface detection was still embedded in `ui_automation.ts`
+- that made one of the most important pieces of supervisor behavior harder to test and easier to regress than the already-extracted Antigravity hint/action-label logic
+
+What changed:
+
+- moved `classifyBrowserFamily(...)` and `detectSurfaceName(...)` into `packages/hypercode-supervisor/src/decision_logic.ts`
+- added direct Node test coverage for:
+  - browser family classification
+  - explicit title matches (`antigravity`, `claude`, etc.)
+  - process-based browser/editor fallback
+- `ui_automation.ts` now imports those helpers instead of defining them inline
+
+Behavior change:
+
+- runtime behavior is unchanged in intent, but the surface-classification rules are now easier to reason about and protected by tests alongside the existing Antigravity promotion/action-label logic
+
+Validated with:
+
+- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
+- `pnpm -C packages\hypercode-supervisor run build`
+- `pnpm -C packages\hypercode-supervisor run test`
+
 ### 1. Published catalog stdio entries are no longer labeled "unsafe"
 
 Updated `packages/core/src/services/published-catalog-validator.ts` so stdio-backed published catalog entries are labeled as transport-skipped instead of `stdio_unsafe`.

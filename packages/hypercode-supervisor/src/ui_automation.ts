@@ -2,7 +2,7 @@ import activeWin from 'active-win';
 import { runPowerShell, runPowerShellJson, toPowerShellString } from './powershell.js';
 import { DEFAULT_ACTION_LABELS, SupervisorSettings, SupervisorSettingsManager } from './settings.js';
 import { DEFAULT_SURFACE_PROFILE, listSurfaceProfiles, resolveSurfaceProfile, SurfaceProfile } from './surface_profiles.js';
-import { inspectionLooksLikeAntigravity, resolveActionLabels } from './decision_logic.js';
+import { classifyBrowserFamily, detectSurfaceName, inspectionLooksLikeAntigravity, resolveActionLabels } from './decision_logic.js';
 
 export interface WindowBounds {
     left: number;
@@ -428,76 +428,6 @@ $result = @{
     bounds = Convert-Bounds $window.Current.BoundingRectangle
 }
 $result | ConvertTo-Json -Depth 6 -Compress`;
-}
-
-function classifyBrowserFamily(processName: string | null): string | null {
-    if (!processName) {
-        return null;
-    }
-
-    const normalized = processName.toLowerCase();
-
-    if (normalized.includes('firefox')) {
-        return 'firefox';
-    }
-
-    if (normalized.includes('chrome') || normalized.includes('brave')) {
-        return 'chromium';
-    }
-
-    if (normalized.includes('edge')) {
-        return 'edge';
-    }
-
-    return null;
-}
-
-function detectSurfaceName(title: string, processName: string | null): { detectedSurface: string; heuristics: string[] } {
-    const normalizedTitle = title.toLowerCase();
-    const normalizedProcess = (processName ?? '').toLowerCase();
-    const heuristics: string[] = [];
-
-    if (normalizedTitle.includes('antigravity')) {
-        heuristics.push('window title contains "antigravity"');
-        return { detectedSurface: 'antigravity', heuristics };
-    }
-
-    if (normalizedTitle.includes('gemini')) {
-        heuristics.push('window title contains "gemini"');
-        return { detectedSurface: 'gemini-web', heuristics };
-    }
-
-    if (normalizedTitle.includes('claude')) {
-        heuristics.push('window title contains "claude"');
-        return { detectedSurface: 'claude-web', heuristics };
-    }
-
-    if (normalizedTitle.includes('chatgpt')) {
-        heuristics.push('window title contains "chatgpt"');
-        return { detectedSurface: 'chatgpt-web', heuristics };
-    }
-
-    if (normalizedTitle.includes('copilot')) {
-        heuristics.push('window title contains "copilot"');
-        return { detectedSurface: 'copilot', heuristics };
-    }
-
-    if (normalizedTitle.includes('cursor')) {
-        heuristics.push('window title contains "cursor"');
-        return { detectedSurface: 'cursor', heuristics };
-    }
-
-    if (normalizedProcess.includes('firefox') || normalizedProcess.includes('chrome') || normalizedProcess.includes('msedge') || normalizedProcess.includes('brave')) {
-        heuristics.push('active process looks like a browser');
-        return { detectedSurface: 'browser-chat', heuristics };
-    }
-
-    if (normalizedProcess.includes('code')) {
-        heuristics.push('active process looks like VS Code');
-        return { detectedSurface: 'vscode', heuristics };
-    }
-
-    return { detectedSurface: 'unknown', heuristics: ['no known chat-surface heuristic matched'] };
 }
 
 function buildClickScript(labels: string[], delays: Pick<SupervisorSettings, 'afterClickDelayMs'>, windowTitle?: string, processName?: string): string {

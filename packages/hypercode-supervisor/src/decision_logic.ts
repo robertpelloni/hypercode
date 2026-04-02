@@ -49,3 +49,73 @@ export function resolveActionLabels(explicitLabels: string[] | undefined, surfac
 
     return surface.surfaceProfile.actionLabels ?? settings.actionLabels ?? [...DEFAULT_ACTION_LABELS];
 }
+
+export function classifyBrowserFamily(processName: string | null): string | null {
+    if (!processName) {
+        return null;
+    }
+
+    const normalized = processName.toLowerCase();
+
+    if (normalized.includes('firefox')) {
+        return 'firefox';
+    }
+
+    if (normalized.includes('chrome') || normalized.includes('brave')) {
+        return 'chromium';
+    }
+
+    if (normalized.includes('edge')) {
+        return 'edge';
+    }
+
+    return null;
+}
+
+export function detectSurfaceName(title: string, processName: string | null): { detectedSurface: string; heuristics: string[] } {
+    const normalizedTitle = title.toLowerCase();
+    const normalizedProcess = (processName ?? '').toLowerCase();
+    const heuristics: string[] = [];
+
+    if (normalizedTitle.includes('antigravity')) {
+        heuristics.push('window title contains "antigravity"');
+        return { detectedSurface: 'antigravity', heuristics };
+    }
+
+    if (normalizedTitle.includes('gemini')) {
+        heuristics.push('window title contains "gemini"');
+        return { detectedSurface: 'gemini-web', heuristics };
+    }
+
+    if (normalizedTitle.includes('claude')) {
+        heuristics.push('window title contains "claude"');
+        return { detectedSurface: 'claude-web', heuristics };
+    }
+
+    if (normalizedTitle.includes('chatgpt')) {
+        heuristics.push('window title contains "chatgpt"');
+        return { detectedSurface: 'chatgpt-web', heuristics };
+    }
+
+    if (normalizedTitle.includes('copilot')) {
+        heuristics.push('window title contains "copilot"');
+        return { detectedSurface: 'copilot', heuristics };
+    }
+
+    if (normalizedTitle.includes('cursor')) {
+        heuristics.push('window title contains "cursor"');
+        return { detectedSurface: 'cursor', heuristics };
+    }
+
+    if (normalizedProcess.includes('firefox') || normalizedProcess.includes('chrome') || normalizedProcess.includes('msedge') || normalizedProcess.includes('brave')) {
+        heuristics.push('active process looks like a browser');
+        return { detectedSurface: 'browser-chat', heuristics };
+    }
+
+    if (normalizedProcess.includes('code')) {
+        heuristics.push('active process looks like VS Code');
+        return { detectedSurface: 'vscode', heuristics };
+    }
+
+    return { detectedSurface: 'unknown', heuristics: ['no known chat-surface heuristic matched'] };
+}
