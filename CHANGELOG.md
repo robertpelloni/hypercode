@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CLI Provider Fallback Default Surface**: `hypercode provider fallback` without `--show` now reads the live `billing.getFallbackChain` route instead of printing a fabricated "not configured" summary, so the default read path is truthful and consistent with `--show`.
 - **CLI Secrets Write Surface**: `hypercode config secrets --set` and `hypercode config secrets --delete` now call the live `secrets.set` and `secrets.delete` control-plane mutations instead of printing placeholder success, with scriptable `--value` support, structured `--json` output, non-interactive safeguards, and actionable control-plane error reporting.
 - **CLI Provider Readiness Surface**: `hypercode provider test <name>` now queries the live `settings.getProviders` and `billing.getProviderQuotas` control-plane routes instead of printing a fabricated connectivity check, with structured `--json` output, truthful configured/authenticated/availability reporting, and actionable control-plane error reporting.
 - **CLI MCP Traffic Surface**: `hypercode mcp traffic` now reads the live `mcp.traffic` route instead of printing a static watcher banner, with structured `--json` output, server/method filtering, bounded history, and actionable control-plane error reporting.

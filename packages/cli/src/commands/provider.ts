@@ -309,7 +309,7 @@ Examples:
       await withProviderErrorHandling(async () => {
         const chalk = (await import('chalk')).default;
 
-        if (opts.show) {
+        if (opts.show || !opts.set) {
           const fallback = await queryTrpc<BillingFallbackResponse>('billing.getFallbackChain', opts.taskType
             ? { taskType: opts.taskType }
             : undefined);
@@ -351,8 +351,7 @@ Examples:
 
         console.log(chalk.bold.cyan('\n  Model Fallback Chain\n'));
         console.log(chalk.dim('  Strategy: ') + (opts.strategy || 'quota-aware'));
-        console.log(chalk.dim('  Chain:    ') + 'not configured');
-        console.log(chalk.dim('\n  Use --show to inspect or --set to configure the fallback order.\n'));
+        console.log(chalk.dim('\n  Use --set to configure the fallback order.\n'));
       }, opts);
     });
 }

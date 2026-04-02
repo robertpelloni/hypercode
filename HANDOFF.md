@@ -553,7 +553,24 @@ Validation:
 - `pnpm -C packages\cli exec tsc --noEmit`
 - `pnpm -C packages\cli exec vitest run src\commands\config.test.ts src\commands\provider.test.ts src\commands\mcp.test.ts src\commands\agent.test.ts src\commands\tools.test.ts src\commands\memory.test.ts src\commands\session.test.ts src\commands\status.test.ts src\control-plane.test.ts`
 
-### 21. `harden-published-catalog-ingestion`
+### 21. `wire-cli-provider-fallback-default`
+
+Status: **completed**
+
+What changed:
+
+- `packages/cli/src/commands/provider.ts` no longer prints a fabricated "not configured" fallback summary when `hypercode provider fallback` is invoked without `--show`
+- the default read path now calls the live `billing.getFallbackChain` route, so bare `provider fallback` and `provider fallback --show` both expose truthful current chain data
+- `--json` on the bare command now returns the same structured live fallback snapshot instead of a placeholder summary
+- the remaining local fallback output is now limited to the explicit `--set` path, which still only provides non-mutating guidance text
+- focused CLI coverage in `packages/cli/src/commands/provider.test.ts` now includes the default fallback JSON flow
+
+Validation:
+
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\provider.test.ts src\commands\config.test.ts src\commands\mcp.test.ts src\commands\agent.test.ts src\commands\tools.test.ts src\commands\memory.test.ts src\commands\session.test.ts src\commands\status.test.ts src\control-plane.test.ts`
+
+### 22. `harden-published-catalog-ingestion`
 
 Status: **completed**
 

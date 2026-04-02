@@ -152,6 +152,36 @@ describe('registerProviderCommand', () => {
     }, null, 2));
   });
 
+  it('shows the live fallback chain by default as JSON', async () => {
+    queryTrpcMock.mockResolvedValue({
+      selectedTaskType: null,
+      chain: [
+        {
+          priority: 1,
+          provider: 'openai',
+          model: 'gpt-5.2',
+          reason: 'GLOBAL_DEFAULT',
+        },
+      ],
+    });
+
+    const program = createProgram();
+    await program.parseAsync(['provider', 'fallback', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).toHaveBeenCalledWith('billing.getFallbackChain', undefined);
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      selectedTaskType: null,
+      chain: [
+        {
+          priority: 1,
+          provider: 'openai',
+          model: 'gpt-5.2',
+          reason: 'GLOBAL_DEFAULT',
+        },
+      ],
+    }, null, 2));
+  });
+
   it('shows live provider readiness as JSON from control-plane data', async () => {
     queryTrpcMock
       .mockResolvedValueOnce([
