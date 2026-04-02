@@ -1,5 +1,6 @@
 import activeWin from 'active-win';
 import { runPowerShell, runPowerShellJson, toPowerShellString } from './powershell.js';
+import { DEFAULT_ACTION_LABELS, SupervisorSettings, SupervisorSettingsManager } from './settings.js';
 
 export interface WindowBounds {
     left: number;
@@ -78,19 +79,6 @@ export interface AdvanceChatResult {
     detail: string;
 }
 
-const DEFAULT_ACTION_LABELS = [
-    'Run',
-    'Expand',
-    'Always Allow',
-    'Retry',
-    'Accept all',
-    'Accept',
-    'Allow',
-    'Approve',
-    'Proceed',
-    'Keep'
-];
-
 const UI_AUTOMATION_BASE = String.raw`
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName UIAutomationClient | Out-Null
@@ -150,6 +138,24 @@ function Normalize-Label([string]$value) {
     $normalized = [System.Text.RegularExpressions.Regex]::Replace($normalized, '\s+', ' ')
     $normalized = $normalized.Trim()
     return $normalized
+}
+
+function Get-ComparableLabel([string]$value) {
+    $normalized = Normalize-Label $value
+    if ([string]::IsNullOrWhiteSpace($normalized)) { return '' }
+    $normalized = [System.Text.RegularExpressions.Regex]::Replace($normalized, '[^a-z0-9]+', ' ')
+    $normalized = [System.Text.RegularExpressions.Regex]::Replace($normalized, '\s+', ' ')
+    return $normalized.Trim()
+}
+
+function Test-ExactishLabelMatch([string]$elementName, [string]$targetLabel) {
+    $left = Get-ComparableLabel $elementName
+    $right = Get-ComparableLabel $targetLabel
+    if ([string]::IsNullOrWhiteSpace($left) -or [string]::IsNullOrWhiteSpace($right)) {
+        return $false
+    }
+
+    return $left -eq $right
 }
 
 function Get-ForegroundAutomationWindow() {
@@ -252,9 +258,6 @@ function Get-BestMatchingElement(
     [System.Windows.Automation.AutomationElement[]]$elements,
     [string[]]$targetLabels
 ) {
-    $best = $null
-    $bestScore = -1
-
     foreach ($element in $elements) {
         if (-not $element.Current.IsEnabled -or $element.Current.IsOffscreen) {
             continue
@@ -266,28 +269,18 @@ function Get-BestMatchingElement(
         }
 
         foreach ($targetLabel in $targetLabels) {
-            $normalizedTarget = Normalize-Label $targetLabel
+            $normalizedTarget = Get-ComparableLabel $targetLabel
             if ([string]::IsNullOrWhiteSpace($normalizedTarget)) {
                 continue
             }
 
-            $score = -1
-            if ($elementName -eq $normalizedTarget) {
-                $score = 100
-            } elseif ($elementName.StartsWith($normalizedTarget + ' ')) {
-                $score = 60
-            } elseif ($elementName.Contains($normalizedTarget)) {
-                $score = 30
-            }
-
-            if ($score -gt $bestScore) {
-                $best = $element
-                $bestScore = $score
+            if (Test-ExactishLabelMatch $elementName $normalizedTarget) {
+                return $element
             }
         }
     }
 
-    return $best
+    return $null
 }
 
 function Get-InteractiveAutomationElements([System.Windows.Automation.AutomationElement]$window, [string[]]$controlTypes) {
@@ -420,7 +413,7 @@ function detectSurfaceName(title: string, processName: string | null): { detecte
     return { detectedSurface: 'unknown', heuristics: ['no known chat-surface heuristic matched'] };
 }
 
-function buildClickScript(labels: string[], windowTitle?: string, processName?: string): string {
+function buildClickScript(labels: string[], delays: Pick<SupervisorSettings, 'afterClickDelayMs'>, windowTitle?: string, processName?: string): string {
     return `${UI_AUTOMATION_BASE}
 $window = Get-TargetWindow ${toPowerShellString(windowTitle ?? '')} ${toPowerShellString(processName ?? '')}
 $targets = ${powerShellStringArray(labels)}
@@ -437,7 +430,7 @@ foreach ($target in $targets) {
 
     Invoke-Element $match | Out-Null
     $clicked += (Convert-Element $match)
-    Start-Sleep -Milliseconds 150
+    Start-Sleep -Milliseconds ${delays.afterClickDelayMs}
 }
 
 $result = @{
@@ -454,7 +447,13 @@ $result = @{
 $result | ConvertTo-Json -Depth 8 -Compress`;
 }
 
-function buildSetTextScript(text: string, clearExisting: boolean, windowTitle?: string, processName?: string): string {
+function buildSetTextScript(
+    text: string,
+    clearExisting: boolean,
+    delays: Pick<SupervisorSettings, 'inputSettleDelayMs'>,
+    windowTitle?: string,
+    processName?: string
+): string {
     const clearMode = clearExisting ? '$true' : '$false';
 
     return `${UI_AUTOMATION_BASE}
@@ -495,7 +494,7 @@ if ($target.TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Patte
     $method = 'value-pattern'
 } else {
     $target.SetFocus()
-    Start-Sleep -Milliseconds 120
+    Start-Sleep -Milliseconds ${delays.inputSettleDelayMs}
     $wshell = New-Object -ComObject wscript.shell
     if ($clearExisting) {
         $wshell.SendKeys('^a')
@@ -521,7 +520,12 @@ $result = @{
 $result | ConvertTo-Json -Depth 8 -Compress`;
 }
 
-function buildSubmitScript(keyChord: string, windowTitle?: string, processName?: string): string {
+function buildSubmitScript(
+    keyChord: string,
+    delays: Pick<SupervisorSettings, 'focusDelayMs'>,
+    windowTitle?: string,
+    processName?: string
+): string {
     const normalizedKeyChord = keyChord.toLowerCase();
 
     const sendKeysExpression = normalizedKeyChord === 'alt+enter'
@@ -557,7 +561,7 @@ if ($null -eq $target) {
 
 if ($null -ne $target) {
     $target.SetFocus()
-    Start-Sleep -Milliseconds 100
+    Start-Sleep -Milliseconds ${delays.focusDelayMs}
 }
 
 $wshell = New-Object -ComObject wscript.shell
@@ -577,6 +581,20 @@ $result | ConvertTo-Json -Depth 8 -Compress`;
 }
 
 export class UiAutomationManager {
+    private readonly settingsManager: SupervisorSettingsManager;
+
+    constructor(settingsManager?: SupervisorSettingsManager) {
+        this.settingsManager = settingsManager ?? new SupervisorSettingsManager();
+    }
+
+    async getSettings(): Promise<SupervisorSettings> {
+        return this.settingsManager.getSettings();
+    }
+
+    async updateSettings(update: Partial<SupervisorSettings>): Promise<SupervisorSettings> {
+        return this.settingsManager.updateSettings(update);
+    }
+
     async inspectWindow(windowTitle?: string, processName?: string): Promise<UiInspection> {
         return runPowerShellJson<UiInspection>(buildInspectionScript(windowTitle, processName));
     }
@@ -612,7 +630,8 @@ export class UiAutomationManager {
         };
     }
 
-    async detectChatState(windowTitle?: string, processName?: string): Promise<ChatStateInfo> {
+    async detectChatState(windowTitle?: string, processName?: string, actionLabels?: string[]): Promise<ChatStateInfo> {
+        const resolvedActionLabels = actionLabels ?? [...DEFAULT_ACTION_LABELS];
         const [surface, inspection] = await Promise.all([
             this.detectChatSurface(),
             this.inspectWindow(windowTitle, processName)
@@ -620,7 +639,7 @@ export class UiAutomationManager {
 
         const pendingActionButtons = inspection.buttons
             .map((button) => button.name)
-            .filter((name) => DEFAULT_ACTION_LABELS.some((label) => name?.trim().toLowerCase() === label.toLowerCase()));
+            .filter((name) => resolvedActionLabels.some((label) => name?.trim().toLowerCase() === label.toLowerCase()));
 
         const reasoning: string[] = [];
         let state: ChatStateInfo['state'] = 'unknown';
@@ -644,15 +663,19 @@ export class UiAutomationManager {
         };
     }
 
-    async clickActionButtons(labels = DEFAULT_ACTION_LABELS, windowTitle?: string, processName?: string): Promise<ClickActionResult> {
-        return runPowerShellJson<ClickActionResult>(buildClickScript(labels, windowTitle, processName));
+    async clickActionButtons(labels?: string[], windowTitle?: string, processName?: string): Promise<ClickActionResult> {
+        const settings = await this.getSettings();
+        const resolvedLabels = labels ?? [...DEFAULT_ACTION_LABELS];
+        return runPowerShellJson<ClickActionResult>(buildClickScript(resolvedLabels, settings, windowTitle, processName));
     }
 
     async setChatInput(text: string, options?: { clearExisting?: boolean; windowTitle?: string; processName?: string }): Promise<SetInputResult> {
+        const settings = await this.getSettings();
         return runPowerShellJson<SetInputResult>(
             buildSetTextScript(
                 text,
                 options?.clearExisting ?? true,
+                settings,
                 options?.windowTitle,
                 options?.processName
             )
@@ -660,7 +683,8 @@ export class UiAutomationManager {
     }
 
     async submitChatInput(keyChord = 'alt+enter', windowTitle?: string, processName?: string): Promise<SubmitInputResult> {
-        return runPowerShellJson<SubmitInputResult>(buildSubmitScript(keyChord, windowTitle, processName));
+        const settings = await this.getSettings();
+        return runPowerShellJson<SubmitInputResult>(buildSubmitScript(keyChord, settings, windowTitle, processName));
     }
 
     async advanceChat(options?: {
@@ -671,11 +695,17 @@ export class UiAutomationManager {
         windowTitle?: string;
         processName?: string;
     }): Promise<AdvanceChatResult> {
-        const state = await this.detectChatState(options?.windowTitle, options?.processName);
-        const actionLabels = options?.actionLabels ?? DEFAULT_ACTION_LABELS;
+        const settings = await this.getSettings();
+        const actionLabels = options?.actionLabels ?? settings.actionLabels;
+        const bumpText = options?.bumpText ?? settings.bumpText;
+        const submitAfterTyping = options?.submitAfterTyping ?? settings.submitAfterTyping;
+        const submitKeyChord = options?.submitKeyChord ?? settings.submitKeyChord;
+        const windowTitle = options?.windowTitle;
+        const processName = options?.processName;
+        const state = await this.detectChatState(windowTitle, processName, actionLabels);
 
         if (state.state === 'awaiting_action') {
-            const clickResult = await this.clickActionButtons(actionLabels, options?.windowTitle, options?.processName);
+            const clickResult = await this.clickActionButtons(actionLabels, windowTitle, processName);
             return {
                 state,
                 clicked: clickResult.clicked,
@@ -687,21 +717,21 @@ export class UiAutomationManager {
             };
         }
 
-        if (state.state === 'ready_for_input' && options?.bumpText) {
-            await this.setChatInput(options.bumpText, {
+        if (state.state === 'ready_for_input' && bumpText) {
+            await this.setChatInput(bumpText, {
                 clearExisting: true,
-                windowTitle: options.windowTitle,
-                processName: options.processName
+                windowTitle,
+                processName
             });
 
-            if (options.submitAfterTyping ?? true) {
-                await this.submitChatInput(options.submitKeyChord ?? 'alt+enter', options?.windowTitle, options?.processName);
+            if (submitAfterTyping) {
+                await this.submitChatInput(submitKeyChord, windowTitle, processName);
                 return {
                     state,
                     clicked: [],
                     typed: true,
                     submitted: true,
-                    detail: `Typed bump text and submitted with ${options.submitKeyChord ?? 'alt+enter'}`
+                    detail: `Typed bump text and submitted with ${submitKeyChord}`
                 };
             }
 

@@ -235,6 +235,52 @@ class SupervisorServer {
                                 }
                             }
                         }
+                    },
+                    {
+                        name: "get_supervisor_settings",
+                        description: "Read the persisted supervisor defaults for bump text, action labels, submit behavior, and timing",
+                        inputSchema: {
+                            type: "object",
+                            properties: {}
+                        }
+                    },
+                    {
+                        name: "update_supervisor_settings",
+                        description: "Persist supervisor defaults for bump text, action labels, submit behavior, and timing",
+                        inputSchema: {
+                            type: "object",
+                            properties: {
+                                bumpText: {
+                                    type: "string",
+                                    description: "Default bump text used by advance_chat"
+                                },
+                                actionLabels: {
+                                    type: "array",
+                                    items: { type: "string" },
+                                    description: "Default action labels to match exactly"
+                                },
+                                submitAfterTyping: {
+                                    type: "boolean",
+                                    description: "Whether advance_chat submits after typing"
+                                },
+                                submitKeyChord: {
+                                    type: "string",
+                                    description: "Default key chord used for submission"
+                                },
+                                focusDelayMs: {
+                                    type: "number",
+                                    description: "Focus settle delay before submission"
+                                },
+                                afterClickDelayMs: {
+                                    type: "number",
+                                    description: "Delay after clicking an action button"
+                                },
+                                inputSettleDelayMs: {
+                                    type: "number",
+                                    description: "Delay after focusing an input before typing"
+                                }
+                            }
+                        }
                     }
                 ]
             };
@@ -358,6 +404,30 @@ class SupervisorServer {
                         processName
                     });
                     logger.info("Advance Chat Completed", { detail: result.detail });
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+                    };
+                }
+
+                if (request.params.name === "get_supervisor_settings") {
+                    const result = await this.uiAutomationManager.getSettings();
+                    logger.info("Supervisor Settings Read");
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+                    };
+                }
+
+                if (request.params.name === "update_supervisor_settings") {
+                    const result = await this.uiAutomationManager.updateSettings({
+                        bumpText: request.params.arguments?.bumpText as string | undefined,
+                        actionLabels: request.params.arguments?.actionLabels as string[] | undefined,
+                        submitAfterTyping: request.params.arguments?.submitAfterTyping as boolean | undefined,
+                        submitKeyChord: request.params.arguments?.submitKeyChord as string | undefined,
+                        focusDelayMs: request.params.arguments?.focusDelayMs as number | undefined,
+                        afterClickDelayMs: request.params.arguments?.afterClickDelayMs as number | undefined,
+                        inputSettleDelayMs: request.params.arguments?.inputSettleDelayMs as number | undefined
+                    });
+                    logger.info("Supervisor Settings Updated", result);
                     return {
                         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
                     };
