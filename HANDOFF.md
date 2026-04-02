@@ -570,7 +570,24 @@ Validation:
 - `pnpm -C packages\cli exec tsc --noEmit`
 - `pnpm -C packages\cli exec vitest run src\commands\provider.test.ts src\commands\config.test.ts src\commands\mcp.test.ts src\commands\agent.test.ts src\commands\tools.test.ts src\commands\memory.test.ts src\commands\session.test.ts src\commands\status.test.ts src\control-plane.test.ts`
 
-### 22. `harden-published-catalog-ingestion`
+### 22. `wire-cli-session-start`
+
+Status: **completed**
+
+What changed:
+
+- `packages/cli/src/commands/session.ts` no longer fabricates a timestamp-based session id or fake success summary for `hypercode session start <workdir>`
+- `session start` now calls the live `session.create` and `session.start` control-plane mutations, preserves harness/model/provider metadata, and renders the actual started session id/status returned by the supervisor
+- `--json` now emits the structured live started-session payload plus harness metadata for automation and troubleshooting
+- unknown harness failures now flow through the same structured control-plane style error handling as the other wired CLI commands
+- focused CLI coverage in `packages/cli/src/commands/session.test.ts` now includes the session-start JSON flow and unknown-harness JSON failure case
+
+Validation:
+
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\session.test.ts src\commands\status.test.ts src\commands\provider.test.ts src\commands\config.test.ts src\commands\mcp.test.ts src\commands\agent.test.ts src\commands\tools.test.ts src\commands\memory.test.ts src\control-plane.test.ts`
+
+### 23. `harden-published-catalog-ingestion`
 
 Status: **completed**
 

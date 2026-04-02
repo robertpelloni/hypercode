@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CLI Session Start Surface**: `hypercode session start <workdir>` now calls the live `session.create` and `session.start` control-plane mutations instead of fabricating a timestamp-based session id, with structured `--json` output, truthful started-session metadata, and actionable control-plane error reporting.
 - **CLI Provider Fallback Default Surface**: `hypercode provider fallback` without `--show` now reads the live `billing.getFallbackChain` route instead of printing a fabricated "not configured" summary, so the default read path is truthful and consistent with `--show`.
 - **CLI Secrets Write Surface**: `hypercode config secrets --set` and `hypercode config secrets --delete` now call the live `secrets.set` and `secrets.delete` control-plane mutations instead of printing placeholder success, with scriptable `--value` support, structured `--json` output, non-interactive safeguards, and actionable control-plane error reporting.
 - **CLI Provider Readiness Surface**: `hypercode provider test <name>` now queries the live `settings.getProviders` and `billing.getProviderQuotas` control-plane routes instead of printing a fabricated connectivity check, with structured `--json` output, truthful configured/authenticated/availability reporting, and actionable control-plane error reporting.

@@ -70,6 +70,23 @@ type ListedSession = {
   active: boolean;
 };
 
+type SessionCreateInput = {
+  name?: string;
+  cliType: string;
+  workingDirectory: string;
+  autoRestart?: boolean;
+  metadata?: Record<string, unknown>;
+};
+
+type SessionRecord = {
+  id: string;
+  name?: string | null;
+  cliType: string;
+  workingDirectory: string;
+  status?: string;
+  metadata?: Record<string, unknown>;
+};
+
 function normalizeText(value: string | null | undefined): string {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : '—';
 }
@@ -289,6 +306,7 @@ export function registerSessionCommand(program: Command): void {
     .option('-m, --model <model>', 'AI model to use')
     .option('-p, --provider <provider>', 'Provider to use')
     .option('-n, --name <name>', 'Session name')
+    .option('--json', 'Output as JSON')
     .option('--auto-restart', 'Auto-restart on crash', true)
     .option('--supervisor', 'Enable supervisor mode')
     .addHelpText('after', `
@@ -299,48 +317,84 @@ Examples:
   $ hypercode session start ./my-app --supervisor --auto-restart
 
 Harnesses:
-${formatCliHarnessHelpLines()}
+    ${formatCliHarnessHelpLines()}
     `)
     .action(async (workdir, opts) => {
-      const chalk = (await import('chalk')).default;
-      const definition = resolveCliHarnessDefinition(opts.harness);
-      if (!definition) {
-        console.error(
-          chalk.red(
-            `  ✗ Unknown harness '${opts.harness}'. Supported harnesses: ${formatCliHarnessList()}`
-          )
-        );
-        process.exitCode = 1;
-        return;
-      }
-      const id = `sess_${Date.now().toString(36)}`;
-      console.log(chalk.green(`  ✓ Session started: ${id}`));
-      console.log(chalk.dim(`    Workdir:  ${workdir}`));
-      console.log(chalk.dim(`    Harness:  ${opts.harness}`));
-      console.log(chalk.dim(`    Maturity: ${definition.maturity}`));
-      console.log(chalk.dim(`    Model:    ${opts.model || 'auto'}`));
-      console.log(chalk.dim(`    Restart:  ${opts.autoRestart ? 'enabled' : 'disabled'}`));
-      if (definition.primary) {
-        console.log(chalk.cyan(`    Role:     primary HyperCode CLI harness lane`));
-      }
-      if (definition.submodulePath) {
-        console.log(chalk.dim(`    Source:   ${definition.submodulePath}`));
-      }
-      if (definition.launchCommand) {
-        console.log(chalk.dim(`    Launch:   ${definition.launchCommand}`));
-      }
-      if (definition.capabilities?.length) {
-        console.log(chalk.dim(`    Features: ${definition.capabilities.join(', ')}`));
-      }
-      if (definition.toolCallCount) {
-        console.log(chalk.dim(`    Tools:    ${definition.toolCallCount} source-backed HyperCode tool calls`));
-      }
-      if (definition.toolInventorySource) {
-        console.log(chalk.dim(`    Source:   ${definition.toolInventorySource}`));
-      }
-      if (definition.parityNotes) {
-        console.log(chalk.dim(`    Notes:    ${definition.parityNotes}`));
-      }
+      await withSessionErrorHandling(async () => {
+        const chalk = (await import('chalk')).default;
+        const definition = resolveCliHarnessDefinition(opts.harness);
+        if (!definition) {
+          throw new Error(`Unknown harness '${opts.harness}'. Supported harnesses: ${formatCliHarnessList()}`);
+        }
+
+        const metadata: Record<string, unknown> = {};
+        if (opts.model) {
+          metadata.model = opts.model;
+        }
+        if (opts.provider) {
+          metadata.provider = opts.provider;
+        }
+        if (opts.supervisor) {
+          metadata.supervisor = true;
+        }
+        if (definition.maturity) {
+          metadata.harnessMaturity = definition.maturity;
+        }
+        if (definition.primary) {
+          metadata.harnessRole = 'primary';
+        }
+
+        const createInput: SessionCreateInput = {
+          name: opts.name,
+          cliType: opts.harness,
+          workingDirectory: workdir,
+          autoRestart: opts.autoRestart,
+          metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+        };
+
+        const created = await queryTrpc<SessionRecord>('session.create', createInput);
+        const started = await queryTrpc<SessionRecord>('session.start', { id: created.id });
+
+        if (opts.json) {
+          console.log(JSON.stringify({
+            session: started,
+            harness: definition.id,
+            maturity: definition.maturity,
+            launchCommand: definition.launchCommand ?? null,
+            toolInventorySource: definition.toolInventorySource ?? null,
+          }, null, 2));
+          return;
+        }
+
+        console.log(chalk.green(`  ✓ Session started: ${started.id}`));
+        console.log(chalk.dim(`    Workdir:  ${started.workingDirectory || workdir}`));
+        console.log(chalk.dim(`    Harness:  ${started.cliType || opts.harness}`));
+        console.log(chalk.dim(`    Status:   ${normalizeText(started.status)}`));
+        console.log(chalk.dim(`    Maturity: ${definition.maturity}`));
+        console.log(chalk.dim(`    Model:    ${opts.model || extractSessionModel(started.metadata) || 'auto'}`));
+        console.log(chalk.dim(`    Restart:  ${opts.autoRestart ? 'enabled' : 'disabled'}`));
+        if (definition.primary) {
+          console.log(chalk.cyan('    Role:     primary HyperCode CLI harness lane'));
+        }
+        if (definition.submodulePath) {
+          console.log(chalk.dim(`    Source:   ${definition.submodulePath}`));
+        }
+        if (definition.launchCommand) {
+          console.log(chalk.dim(`    Launch:   ${definition.launchCommand}`));
+        }
+        if (definition.capabilities?.length) {
+          console.log(chalk.dim(`    Features: ${definition.capabilities.join(', ')}`));
+        }
+        if (definition.toolCallCount) {
+          console.log(chalk.dim(`    Tools:    ${definition.toolCallCount} source-backed HyperCode tool calls`));
+        }
+        if (definition.toolInventorySource) {
+          console.log(chalk.dim(`    Source:   ${definition.toolInventorySource}`));
+        }
+        if (definition.parityNotes) {
+          console.log(chalk.dim(`    Notes:    ${definition.parityNotes}`));
+        }
+      }, opts);
     });
 
   session

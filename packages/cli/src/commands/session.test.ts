@@ -122,6 +122,94 @@ describe('registerSessionCommand', () => {
     }, null, 2));
   });
 
+  it('starts a live session as JSON', async () => {
+    queryTrpcMock
+      .mockResolvedValueOnce({
+        id: 'sess_live_1',
+        name: 'repo-fix',
+        cliType: 'hypercode',
+        workingDirectory: 'C:\\repo',
+        status: 'created',
+        metadata: {
+          model: 'gpt-5.4',
+          provider: 'openai',
+          harnessMaturity: 'Experimental',
+          harnessRole: 'primary',
+        },
+      })
+      .mockResolvedValueOnce({
+        id: 'sess_live_1',
+        name: 'repo-fix',
+        cliType: 'hypercode',
+        workingDirectory: 'C:\\repo',
+        status: 'running',
+        metadata: {
+          model: 'gpt-5.4',
+          provider: 'openai',
+          harnessMaturity: 'Experimental',
+          harnessRole: 'primary',
+        },
+      });
+
+    const program = createProgram();
+    await program.parseAsync([
+      'session',
+      'start',
+      'C:\\repo',
+      '--name',
+      'repo-fix',
+      '--model',
+      'gpt-5.4',
+      '--provider',
+      'openai',
+      '--json',
+    ], { from: 'user' });
+
+    expect(queryTrpcMock).toHaveBeenNthCalledWith(1, 'session.create', {
+      name: 'repo-fix',
+      cliType: 'hypercode',
+      workingDirectory: 'C:\\repo',
+      autoRestart: true,
+      metadata: {
+        model: 'gpt-5.4',
+        provider: 'openai',
+        harnessMaturity: 'Experimental',
+        harnessRole: 'primary',
+      },
+    });
+    expect(queryTrpcMock).toHaveBeenNthCalledWith(2, 'session.start', { id: 'sess_live_1' });
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      session: {
+        id: 'sess_live_1',
+        name: 'repo-fix',
+        cliType: 'hypercode',
+        workingDirectory: 'C:\\repo',
+        status: 'running',
+        metadata: {
+          model: 'gpt-5.4',
+          provider: 'openai',
+          harnessMaturity: 'Experimental',
+          harnessRole: 'primary',
+        },
+      },
+      harness: 'hypercode',
+      maturity: 'Experimental',
+      launchCommand: 'go run .',
+      toolInventorySource: null,
+    }, null, 2));
+  });
+
+  it('reports unknown harness as structured JSON on session start', async () => {
+    const program = createProgram();
+    await program.parseAsync(['session', 'start', 'C:\\repo', '--harness', 'unknown', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).not.toHaveBeenCalled();
+    const payload = logSpy.mock.calls.at(-1)?.[0];
+    expect(typeof payload).toBe('string');
+    expect(payload).toContain("\"error\": \"Unknown harness 'unknown'. Supported harnesses:");
+    expect(process.exitCode).toBe(1);
+  });
+
   it('reports control-plane failures without throwing out of the command', async () => {
     queryTrpcMock.mockRejectedValue(new Error('control plane unavailable'));
 
