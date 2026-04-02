@@ -238,13 +238,14 @@ What changed:
 - `apps/maestro/src/main/native/better-sqlite3-runtime.ts` now reports both isolated and shared load failures explicitly and tells operators that the startup preflight already tried the isolated Electron-native path
 - `apps/maestro/BUILDING_WINDOWS.md` now documents that `pnpm install` can succeed while the real Electron-native repair still happens at runtime via `scripts/ensure-native-runtime.mjs`, and it adds concrete Windows troubleshooting guidance for strict runtime diagnostics
 - `apps/maestro/src/__tests__/main/stats/integration.test.ts` now describes the isolated native-modules contract truthfully and accepts either isolated or shared `better_sqlite3.node` locations when checking for a native binding on dev machines
+- `apps/maestro/scripts/ensure-native-runtime.mjs` now uses `electron-rebuild` directly for the isolated `native-modules` tree instead of asking npm 11 to pass Electron targeting through deprecated config/env keys
 
 What remains:
 
 - focused Maestro stats integration coverage passed after the doc/test/runtime-message updates
 - `node scripts/ensure-native-runtime.mjs` still exits 0 in non-strict mode after warning that stats-backed features may remain unavailable
-- `MAESTRO_STRICT_NATIVE_RUNTIME=1 node scripts/ensure-native-runtime.mjs` still fails on this machine, confirming that the remaining gap is a real native rebuild/toolchain outage rather than a missing wrapper or stale test assumption
-- `scripts/ensure-native-runtime.mjs` now captures and forwards rebuild stdout/stderr when available, but this machine's failing rebuild still returns no useful child-process text through `spawnSync`, so the next ABI follow-up should target concrete rebuild observability or native-toolchain repair guidance, not another broad consumer audit
+- `MAESTRO_STRICT_NATIVE_RUNTIME=1 node scripts/ensure-native-runtime.mjs` still fails on this machine, but the remaining blocker is now more specific: `electron-rebuild` reports success while the final Electron probe still sees `better_sqlite3.node` built for NODE_MODULE_VERSION 137 instead of Electron 28 / Node 18 ABI 119
+- the next ABI follow-up should therefore inspect why the isolated artifact remains Node-ABI 137 after an `electron-rebuild` pass, including whether shared pnpm store state, stale copied artifacts, or the isolated module layout is causing the wrong binary to survive
 
 ### 3. `harden-published-catalog-ingestion`
 
