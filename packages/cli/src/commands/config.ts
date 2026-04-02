@@ -28,6 +28,19 @@ type SecretMutationResult = {
   success: boolean;
 };
 
+type ConfigResetResult = {
+  success: boolean;
+  section: string | null;
+  removed: number;
+  keys: string[];
+};
+
+type ConfigInitResult = {
+  success: boolean;
+  scope: 'global' | 'local';
+  path: string;
+};
+
 function normalizeText(value: string | null | undefined): string {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : '—';
 }
@@ -254,10 +267,23 @@ Examples:
     .description('Reset configuration to defaults')
     .option('-f, --force', 'Skip confirmation')
     .option('--section <section>', 'Reset only a specific section')
+    .option('--json', 'Output as JSON')
     .action(async (opts) => {
-      const chalk = (await import('chalk')).default;
-      const scope = opts.section || 'all';
-      console.log(chalk.green(`  ✓ Configuration reset (${scope})`));
+      await withConfigErrorHandling(async () => {
+        const chalk = (await import('chalk')).default;
+        const result = await queryTrpc<ConfigResetResult>('config.reset', {
+          section: opts.section,
+        });
+
+        if (opts.json) {
+          console.log(JSON.stringify(result, null, 2));
+          return;
+        }
+
+        const scope = result.section || 'all';
+        console.log(chalk.green(`  ✓ Configuration reset (${scope})`));
+        console.log(chalk.dim(`    Removed overrides: ${result.removed}`));
+      }, opts);
     });
 
   config
@@ -355,9 +381,20 @@ Examples:
     .description('Initialize HyperCode configuration in current directory or globally')
     .option('--global', 'Initialize global config at ~/.hypercode/')
     .option('--local', 'Initialize local .hypercode/ config in current directory')
+    .option('--json', 'Output as JSON')
     .action(async (opts) => {
-      const chalk = (await import('chalk')).default;
-      const scope = opts.global ? 'global (~/.hypercode/)' : 'local (.hypercode/)';
-      console.log(chalk.green(`  ✓ Configuration initialized (${scope})`));
+      await withConfigErrorHandling(async () => {
+        const chalk = (await import('chalk')).default;
+        const scope = opts.global ? 'global' : 'local';
+        const result = await queryTrpc<ConfigInitResult>('config.init', { scope });
+
+        if (opts.json) {
+          console.log(JSON.stringify(result, null, 2));
+          return;
+        }
+
+        console.log(chalk.green(`  ✓ Configuration initialized (${result.scope})`));
+        console.log(chalk.dim(`    Path: ${result.path}`));
+      }, opts);
     });
 }

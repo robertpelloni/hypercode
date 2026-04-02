@@ -82,6 +82,48 @@ describe('registerConfigCommand', () => {
     }, null, 2));
   });
 
+  it('resets config through the live control plane as JSON', async () => {
+    queryTrpcMock.mockResolvedValue({
+      success: true,
+      section: 'server',
+      removed: 2,
+      keys: ['server.port', 'server.host'],
+    });
+
+    const program = createProgram();
+    await program.parseAsync(['config', 'reset', '--section', 'server', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).toHaveBeenCalledWith('config.reset', {
+      section: 'server',
+    });
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      success: true,
+      section: 'server',
+      removed: 2,
+      keys: ['server.port', 'server.host'],
+    }, null, 2));
+  });
+
+  it('initializes config through the live control plane as JSON', async () => {
+    queryTrpcMock.mockResolvedValue({
+      success: true,
+      scope: 'global',
+      path: 'C:\\Users\\hyper\\.hypercode',
+    });
+
+    const program = createProgram();
+    await program.parseAsync(['config', 'init', '--global', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).toHaveBeenCalledWith('config.init', {
+      scope: 'global',
+    });
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      success: true,
+      scope: 'global',
+      path: 'C:\\Users\\hyper\\.hypercode',
+    }, null, 2));
+  });
+
   it('lists live secrets from the control plane as JSON', async () => {
     queryTrpcMock.mockResolvedValue([
       {

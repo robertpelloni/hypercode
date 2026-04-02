@@ -706,7 +706,26 @@ Validation:
 - `pnpm -C packages\cli exec tsc --noEmit`
 - `pnpm -C packages\cli exec vitest run src\commands\session.test.ts src\commands\mcp.test.ts src\commands\tools.test.ts src\commands\status.test.ts src\commands\provider.test.ts src\commands\config.test.ts src\commands\agent.test.ts src\commands\memory.test.ts src\control-plane.test.ts`
 
-### 30. `harden-published-catalog-ingestion`
+### 30. `wire-cli-config-reset-init`
+
+Status: **completed**
+
+What changed:
+
+- `packages/core/src/routers/configRouter.ts` now exposes live `config.reset` and `config.init` admin mutations
+- `config.reset` now clears stored config overrides, optionally scoped to a section prefix, and returns the removed keys/count instead of relying on fabricated CLI success
+- `config.init` now creates real HyperCode config files in either the global config dir or the local `.hypercode` directory and returns the initialized path/scope
+- `packages/cli/src/commands/config.ts` no longer prints fabricated success for `hypercode config reset` or `hypercode config init`; both commands now call the live mutations and support structured `--json` output
+- focused core coverage in `packages/core/src/routers/configRouter.test.ts` now verifies scoped reset and local init behavior
+- focused CLI coverage in `packages/cli/src/commands/config.test.ts` now includes reset/init JSON flows
+
+Validation:
+
+- `pnpm -C packages\core exec vitest run src\routers\configRouter.test.ts`
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\config.test.ts src\commands\session.test.ts src\commands\mcp.test.ts src\commands\tools.test.ts src\commands\status.test.ts src\commands\provider.test.ts src\commands\agent.test.ts src\commands\memory.test.ts src\control-plane.test.ts`
+
+### 31. `harden-published-catalog-ingestion`
 
 Status: **completed**
 
