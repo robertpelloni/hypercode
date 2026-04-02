@@ -1,11 +1,11 @@
 {
-    "name": "@borg/supervisor",
+    "name": "@hypercode/supervisor",
     "version": "0.99.1",
-    "description": "Borg Supervisor - Watchdog and Automation Agent",
+    "description": "HyperCode Supervisor - Watchdog and Automation Agent",
     "type": "module",
     "main": "dist/index.js",
     "bin": {
-        "borg-supervisor": "./dist/index.js"
+        "hypercode-supervisor": "./dist/index.js"
     },
     "scripts": {
         "build": "tsc",

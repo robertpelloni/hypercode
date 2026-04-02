@@ -8,7 +8,7 @@ export class Logger {
 
     constructor() {
         const homeDir = os.homedir();
-        const logDir = path.join(homeDir, '.borg', 'logs');
+        const logDir = path.join(homeDir, '.hypercode', 'logs');
         this.logPath = path.join(logDir, 'supervisor.log');
 
         // Ensure log directory exists

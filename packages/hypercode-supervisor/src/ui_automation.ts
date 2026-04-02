@@ -1,0 +1,754 @@
+import activeWin from 'active-win';
+import { runPowerShell, runPowerShellJson, toPowerShellString } from './powershell.js';
+
+export interface WindowBounds {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+}
+
+export interface WindowInfo {
+    title: string;
+    processName?: string | null;
+    processId?: number | null;
+    bounds?: WindowBounds | null;
+}
+
+export interface UiElementInfo {
+    name: string;
+    automationId?: string | null;
+    className?: string | null;
+    controlType?: string | null;
+    isEnabled: boolean;
+    isOffscreen: boolean;
+    hasKeyboardFocus: boolean;
+    bounds?: WindowBounds | null;
+}
+
+export interface UiInspection {
+    window: WindowInfo;
+    buttons: UiElementInfo[];
+    inputs: UiElementInfo[];
+    labels: string[];
+}
+
+export interface ChatSurfaceInfo {
+    title: string;
+    processName: string | null;
+    processPath: string | null;
+    processId: number | null;
+    bounds: WindowBounds | null;
+    browserFamily: string | null;
+    detectedSurface: string;
+    heuristics: string[];
+}
+
+export interface ChatStateInfo {
+    surface: ChatSurfaceInfo;
+    inspection: UiInspection;
+    state: 'awaiting_action' | 'ready_for_input' | 'unknown';
+    pendingActionButtons: string[];
+    reasoning: string[];
+}
+
+export interface ClickActionResult {
+    window: WindowInfo;
+    clicked: UiElementInfo[];
+    missing: string[];
+}
+
+export interface SetInputResult {
+    window: WindowInfo;
+    target: UiElementInfo | null;
+    method: 'value-pattern' | 'focus-sendkeys';
+    textLength: number;
+}
+
+export interface SubmitInputResult {
+    window: WindowInfo;
+    keyChord: string;
+}
+
+export interface AdvanceChatResult {
+    state: ChatStateInfo;
+    clicked: UiElementInfo[];
+    typed: boolean;
+    submitted: boolean;
+    detail: string;
+}
+
+const DEFAULT_ACTION_LABELS = [
+    'Run',
+    'Expand',
+    'Always Allow',
+    'Retry',
+    'Accept all',
+    'Accept',
+    'Allow',
+    'Approve',
+    'Proceed',
+    'Keep'
+];
+
+const UI_AUTOMATION_BASE = String.raw`
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName UIAutomationClient | Out-Null
+Add-Type -AssemblyName UIAutomationTypes | Out-Null
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+
+public static class HyperCodeNativeAutomation {
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetCursorPos(int x, int y);
+
+    [DllImport("user32.dll")]
+    public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, UIntPtr dwExtraInfo);
+}
+"@ | Out-Null
+
+function Get-ControlTypeName($element) {
+    $controlType = $element.Current.ControlType
+    if ($null -eq $controlType) { return $null }
+    $name = $controlType.ProgrammaticName
+    if ([string]::IsNullOrWhiteSpace($name)) { return $null }
+    if ($name.StartsWith('ControlType.')) { return $name.Substring(12) }
+    return $name
+}
+
+function Convert-Bounds($rect) {
+    if ($null -eq $rect) { return $null }
+    return @{
+        left = [int][Math]::Round($rect.Left)
+        top = [int][Math]::Round($rect.Top)
+        width = [int][Math]::Round($rect.Width)
+        height = [int][Math]::Round($rect.Height)
+    }
+}
+
+function Convert-Element($element) {
+    return @{
+        name = $element.Current.Name
+        automationId = $element.Current.AutomationId
+        className = $element.Current.ClassName
+        controlType = Get-ControlTypeName $element
+        isEnabled = [bool]$element.Current.IsEnabled
+        isOffscreen = [bool]$element.Current.IsOffscreen
+        hasKeyboardFocus = [bool]$element.Current.HasKeyboardFocus
+        bounds = Convert-Bounds $element.Current.BoundingRectangle
+    }
+}
+
+function Normalize-Label([string]$value) {
+    if ([string]::IsNullOrWhiteSpace($value)) { return '' }
+    $normalized = $value.ToLowerInvariant()
+    $normalized = [System.Text.RegularExpressions.Regex]::Replace($normalized, '\s+', ' ')
+    $normalized = $normalized.Trim()
+    return $normalized
+}
+
+function Get-ForegroundAutomationWindow() {
+    $handle = [HyperCodeNativeAutomation]::GetForegroundWindow()
+    if ($handle -eq [IntPtr]::Zero) {
+        throw 'No foreground window available'
+    }
+
+    return [System.Windows.Automation.AutomationElement]::FromHandle($handle)
+}
+
+function Get-WindowProcessName($window) {
+    $pid = $window.Current.ProcessId
+    if (-not $pid) { return $null }
+    try {
+        return (Get-Process -Id $pid -ErrorAction Stop).ProcessName
+    } catch {
+        return $null
+    }
+}
+
+function Get-TargetWindow([string]$windowTitle, [string]$processName) {
+    if ([string]::IsNullOrWhiteSpace($windowTitle) -and [string]::IsNullOrWhiteSpace($processName)) {
+        return Get-ForegroundAutomationWindow
+    }
+
+    $windows = [System.Windows.Automation.AutomationElement]::RootElement.FindAll(
+        [System.Windows.Automation.TreeScope]::Children,
+        [System.Windows.Automation.Condition]::TrueCondition
+    )
+
+    foreach ($candidate in $windows) {
+        $candidateTitle = $candidate.Current.Name
+        $candidateProcessName = Get-WindowProcessName $candidate
+
+        if (-not [string]::IsNullOrWhiteSpace($windowTitle)) {
+            if ([string]::IsNullOrWhiteSpace($candidateTitle) -or -not $candidateTitle.ToLowerInvariant().Contains($windowTitle.ToLowerInvariant())) {
+                continue
+            }
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($processName)) {
+            if ([string]::IsNullOrWhiteSpace($candidateProcessName) -or $candidateProcessName.ToLowerInvariant() -ne $processName.ToLowerInvariant()) {
+                continue
+            }
+        }
+
+        return $candidate
+    }
+
+    throw "No matching window found"
+}
+
+function Get-Inspection([System.Windows.Automation.AutomationElement]$window) {
+    $descendants = $window.FindAll(
+        [System.Windows.Automation.TreeScope]::Descendants,
+        [System.Windows.Automation.Condition]::TrueCondition
+    )
+
+    $buttons = @()
+    $inputs = @()
+    $labels = New-Object System.Collections.Generic.List[string]
+
+    foreach ($element in $descendants) {
+        $dto = Convert-Element $element
+        $controlType = $dto.controlType
+        $name = $dto.name
+
+        if (-not [string]::IsNullOrWhiteSpace($name) -and $labels.Count -lt 80) {
+            $normalizedName = Normalize-Label $name
+            if (-not [string]::IsNullOrWhiteSpace($normalizedName)) {
+                $labels.Add($name)
+            }
+        }
+
+        if ($controlType -in @('Button', 'Hyperlink', 'MenuItem', 'SplitButton', 'TabItem')) {
+            $buttons += $dto
+            continue
+        }
+
+        if ($controlType -in @('Edit', 'Document')) {
+            $inputs += $dto
+        }
+    }
+
+    return @{
+        window = @{
+            title = $window.Current.Name
+            processName = Get-WindowProcessName $window
+            processId = $window.Current.ProcessId
+            bounds = Convert-Bounds $window.Current.BoundingRectangle
+        }
+        buttons = $buttons
+        inputs = $inputs
+        labels = $labels
+    }
+}
+
+function Get-BestMatchingElement(
+    [System.Windows.Automation.AutomationElement[]]$elements,
+    [string[]]$targetLabels
+) {
+    $best = $null
+    $bestScore = -1
+
+    foreach ($element in $elements) {
+        if (-not $element.Current.IsEnabled -or $element.Current.IsOffscreen) {
+            continue
+        }
+
+        $elementName = Normalize-Label $element.Current.Name
+        if ([string]::IsNullOrWhiteSpace($elementName)) {
+            continue
+        }
+
+        foreach ($targetLabel in $targetLabels) {
+            $normalizedTarget = Normalize-Label $targetLabel
+            if ([string]::IsNullOrWhiteSpace($normalizedTarget)) {
+                continue
+            }
+
+            $score = -1
+            if ($elementName -eq $normalizedTarget) {
+                $score = 100
+            } elseif ($elementName.StartsWith($normalizedTarget + ' ')) {
+                $score = 60
+            } elseif ($elementName.Contains($normalizedTarget)) {
+                $score = 30
+            }
+
+            if ($score -gt $bestScore) {
+                $best = $element
+                $bestScore = $score
+            }
+        }
+    }
+
+    return $best
+}
+
+function Get-InteractiveAutomationElements([System.Windows.Automation.AutomationElement]$window, [string[]]$controlTypes) {
+    $descendants = $window.FindAll(
+        [System.Windows.Automation.TreeScope]::Descendants,
+        [System.Windows.Automation.Condition]::TrueCondition
+    )
+
+    $matches = New-Object System.Collections.Generic.List[System.Windows.Automation.AutomationElement]
+
+    foreach ($element in $descendants) {
+        $typeName = Get-ControlTypeName $element
+        if ($controlTypes -contains $typeName) {
+            $matches.Add($element)
+        }
+    }
+
+    return $matches.ToArray()
+}
+
+function Invoke-Element([System.Windows.Automation.AutomationElement]$element) {
+    $invokePattern = $null
+    if ($element.TryGetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern, [ref]$invokePattern)) {
+        $invokePattern.Invoke()
+        return 'invoke-pattern'
+    }
+
+    $selectionPattern = $null
+    if ($element.TryGetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern, [ref]$selectionPattern)) {
+        $selectionPattern.Select()
+        return 'selection-pattern'
+    }
+
+    $element.SetFocus()
+    Start-Sleep -Milliseconds 100
+
+    $rect = $element.Current.BoundingRectangle
+    if ($rect.Width -gt 0 -and $rect.Height -gt 0) {
+        $x = [int][Math]::Round($rect.Left + ($rect.Width / 2))
+        $y = [int][Math]::Round($rect.Top + ($rect.Height / 2))
+        [HyperCodeNativeAutomation]::SetCursorPos($x, $y) | Out-Null
+        Start-Sleep -Milliseconds 50
+        [HyperCodeNativeAutomation]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero)
+        [HyperCodeNativeAutomation]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero)
+        return 'mouse-click'
+    }
+
+    throw 'Unable to invoke element'
+}
+`;
+
+function powerShellStringArray(values: string[]): string {
+    return `@(${values.map((value) => toPowerShellString(value)).join(', ')})`;
+}
+
+function buildInspectionScript(windowTitle?: string, processName?: string): string {
+    return `${UI_AUTOMATION_BASE}
+$window = Get-TargetWindow ${toPowerShellString(windowTitle ?? '')} ${toPowerShellString(processName ?? '')}
+$result = Get-Inspection $window
+$result | ConvertTo-Json -Depth 8 -Compress`;
+}
+
+function classifyBrowserFamily(processName: string | null): string | null {
+    if (!processName) {
+        return null;
+    }
+
+    const normalized = processName.toLowerCase();
+
+    if (normalized.includes('firefox')) {
+        return 'firefox';
+    }
+
+    if (normalized.includes('chrome') || normalized.includes('brave')) {
+        return 'chromium';
+    }
+
+    if (normalized.includes('edge')) {
+        return 'edge';
+    }
+
+    return null;
+}
+
+function detectSurfaceName(title: string, processName: string | null): { detectedSurface: string; heuristics: string[] } {
+    const normalizedTitle = title.toLowerCase();
+    const normalizedProcess = (processName ?? '').toLowerCase();
+    const heuristics: string[] = [];
+
+    if (normalizedTitle.includes('antigravity')) {
+        heuristics.push('window title contains "antigravity"');
+        return { detectedSurface: 'antigravity', heuristics };
+    }
+
+    if (normalizedTitle.includes('gemini')) {
+        heuristics.push('window title contains "gemini"');
+        return { detectedSurface: 'gemini-web', heuristics };
+    }
+
+    if (normalizedTitle.includes('claude')) {
+        heuristics.push('window title contains "claude"');
+        return { detectedSurface: 'claude-web', heuristics };
+    }
+
+    if (normalizedTitle.includes('chatgpt')) {
+        heuristics.push('window title contains "chatgpt"');
+        return { detectedSurface: 'chatgpt-web', heuristics };
+    }
+
+    if (normalizedTitle.includes('copilot')) {
+        heuristics.push('window title contains "copilot"');
+        return { detectedSurface: 'copilot', heuristics };
+    }
+
+    if (normalizedTitle.includes('cursor')) {
+        heuristics.push('window title contains "cursor"');
+        return { detectedSurface: 'cursor', heuristics };
+    }
+
+    if (normalizedProcess.includes('firefox') || normalizedProcess.includes('chrome') || normalizedProcess.includes('msedge') || normalizedProcess.includes('brave')) {
+        heuristics.push('active process looks like a browser');
+        return { detectedSurface: 'browser-chat', heuristics };
+    }
+
+    if (normalizedProcess.includes('code')) {
+        heuristics.push('active process looks like VS Code');
+        return { detectedSurface: 'vscode', heuristics };
+    }
+
+    return { detectedSurface: 'unknown', heuristics: ['no known chat-surface heuristic matched'] };
+}
+
+function buildClickScript(labels: string[], windowTitle?: string, processName?: string): string {
+    return `${UI_AUTOMATION_BASE}
+$window = Get-TargetWindow ${toPowerShellString(windowTitle ?? '')} ${toPowerShellString(processName ?? '')}
+$targets = ${powerShellStringArray(labels)}
+$buttonElements = Get-InteractiveAutomationElements $window @('Button', 'Hyperlink', 'MenuItem', 'SplitButton', 'TabItem')
+$clicked = @()
+$missing = New-Object System.Collections.Generic.List[string]
+
+foreach ($target in $targets) {
+    $match = Get-BestMatchingElement $buttonElements @($target)
+    if ($null -eq $match) {
+        $missing.Add($target)
+        continue
+    }
+
+    Invoke-Element $match | Out-Null
+    $clicked += (Convert-Element $match)
+    Start-Sleep -Milliseconds 150
+}
+
+$result = @{
+    window = @{
+        title = $window.Current.Name
+        processName = Get-WindowProcessName $window
+        processId = $window.Current.ProcessId
+        bounds = Convert-Bounds $window.Current.BoundingRectangle
+    }
+    clicked = $clicked
+    missing = $missing
+}
+
+$result | ConvertTo-Json -Depth 8 -Compress`;
+}
+
+function buildSetTextScript(text: string, clearExisting: boolean, windowTitle?: string, processName?: string): string {
+    const clearMode = clearExisting ? '$true' : '$false';
+
+    return `${UI_AUTOMATION_BASE}
+$window = Get-TargetWindow ${toPowerShellString(windowTitle ?? '')} ${toPowerShellString(processName ?? '')}
+$targetText = ${toPowerShellString(text)}
+$clearExisting = ${clearMode}
+$inputElements = Get-InteractiveAutomationElements $window @('Edit', 'Document')
+$target = $null
+
+foreach ($candidate in $inputElements) {
+    if ($candidate.Current.HasKeyboardFocus -and $candidate.Current.IsEnabled -and -not $candidate.Current.IsOffscreen) {
+        $target = $candidate
+        break
+    }
+}
+
+if ($null -eq $target) {
+    foreach ($candidate in $inputElements) {
+        if ($candidate.Current.IsEnabled -and -not $candidate.Current.IsOffscreen) {
+            $target = $candidate
+            break
+        }
+    }
+}
+
+if ($null -eq $target) {
+    throw 'No enabled text input found in target window'
+}
+
+$method = 'focus-sendkeys'
+$valuePattern = $null
+if ($target.TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern, [ref]$valuePattern) -and -not $valuePattern.Current.IsReadOnly) {
+    $nextValue = $targetText
+    if (-not $clearExisting) {
+        $nextValue = $valuePattern.Current.Value + $targetText
+    }
+    $valuePattern.SetValue($nextValue)
+    $method = 'value-pattern'
+} else {
+    $target.SetFocus()
+    Start-Sleep -Milliseconds 120
+    $wshell = New-Object -ComObject wscript.shell
+    if ($clearExisting) {
+        $wshell.SendKeys('^a')
+        Start-Sleep -Milliseconds 60
+        $wshell.SendKeys('{BACKSPACE}')
+        Start-Sleep -Milliseconds 60
+    }
+    $wshell.SendKeys($targetText)
+}
+
+$result = @{
+    window = @{
+        title = $window.Current.Name
+        processName = Get-WindowProcessName $window
+        processId = $window.Current.ProcessId
+        bounds = Convert-Bounds $window.Current.BoundingRectangle
+    }
+    target = Convert-Element $target
+    method = $method
+    textLength = $targetText.Length
+}
+
+$result | ConvertTo-Json -Depth 8 -Compress`;
+}
+
+function buildSubmitScript(keyChord: string, windowTitle?: string, processName?: string): string {
+    const normalizedKeyChord = keyChord.toLowerCase();
+
+    const sendKeysExpression = normalizedKeyChord === 'alt+enter'
+        ? "'%{ENTER}'"
+        : normalizedKeyChord === 'ctrl+enter' || normalizedKeyChord === 'control+enter'
+            ? "'^{ENTER}'"
+            : normalizedKeyChord === 'shift+enter'
+                ? "'+{ENTER}'"
+                : normalizedKeyChord === 'enter'
+                    ? "'{ENTER}'"
+                    : toPowerShellString(keyChord);
+
+    return `${UI_AUTOMATION_BASE}
+$window = Get-TargetWindow ${toPowerShellString(windowTitle ?? '')} ${toPowerShellString(processName ?? '')}
+$inputElements = Get-InteractiveAutomationElements $window @('Edit', 'Document')
+$target = $null
+
+foreach ($candidate in $inputElements) {
+    if ($candidate.Current.HasKeyboardFocus -and $candidate.Current.IsEnabled -and -not $candidate.Current.IsOffscreen) {
+        $target = $candidate
+        break
+    }
+}
+
+if ($null -eq $target) {
+    foreach ($candidate in $inputElements) {
+        if ($candidate.Current.IsEnabled -and -not $candidate.Current.IsOffscreen) {
+            $target = $candidate
+            break
+        }
+    }
+}
+
+if ($null -ne $target) {
+    $target.SetFocus()
+    Start-Sleep -Milliseconds 100
+}
+
+$wshell = New-Object -ComObject wscript.shell
+$wshell.SendKeys(${sendKeysExpression})
+
+$result = @{
+    window = @{
+        title = $window.Current.Name
+        processName = Get-WindowProcessName $window
+        processId = $window.Current.ProcessId
+        bounds = Convert-Bounds $window.Current.BoundingRectangle
+    }
+    keyChord = ${toPowerShellString(keyChord)}
+}
+
+$result | ConvertTo-Json -Depth 8 -Compress`;
+}
+
+export class UiAutomationManager {
+    async inspectWindow(windowTitle?: string, processName?: string): Promise<UiInspection> {
+        return runPowerShellJson<UiInspection>(buildInspectionScript(windowTitle, processName));
+    }
+
+    async detectChatSurface(): Promise<ChatSurfaceInfo> {
+        const activeWindow = await activeWin();
+
+        const title = activeWindow?.title ?? '';
+        const processName = activeWindow?.owner?.name ?? null;
+        const processPath = activeWindow?.owner?.path ?? null;
+        const processId = activeWindow?.owner?.processId ?? null;
+        const bounds = activeWindow?.bounds
+            ? {
+                left: activeWindow.bounds.x,
+                top: activeWindow.bounds.y,
+                width: activeWindow.bounds.width,
+                height: activeWindow.bounds.height
+            }
+            : null;
+
+        const browserFamily = classifyBrowserFamily(processName);
+        const detection = detectSurfaceName(title, processName);
+
+        return {
+            title,
+            processName,
+            processPath,
+            processId,
+            bounds,
+            browserFamily,
+            detectedSurface: detection.detectedSurface,
+            heuristics: detection.heuristics
+        };
+    }
+
+    async detectChatState(windowTitle?: string, processName?: string): Promise<ChatStateInfo> {
+        const [surface, inspection] = await Promise.all([
+            this.detectChatSurface(),
+            this.inspectWindow(windowTitle, processName)
+        ]);
+
+        const pendingActionButtons = inspection.buttons
+            .map((button) => button.name)
+            .filter((name) => DEFAULT_ACTION_LABELS.some((label) => name?.trim().toLowerCase() === label.toLowerCase()));
+
+        const reasoning: string[] = [];
+        let state: ChatStateInfo['state'] = 'unknown';
+
+        if (pendingActionButtons.length > 0) {
+            state = 'awaiting_action';
+            reasoning.push('Found actionable approval/continue buttons in the active window');
+        } else if (inspection.inputs.some((input) => input.isEnabled && !input.isOffscreen)) {
+            state = 'ready_for_input';
+            reasoning.push('Found an enabled visible text input and no pending action buttons');
+        } else {
+            reasoning.push('Did not find a pending action button or a usable text input');
+        }
+
+        return {
+            surface,
+            inspection,
+            state,
+            pendingActionButtons,
+            reasoning
+        };
+    }
+
+    async clickActionButtons(labels = DEFAULT_ACTION_LABELS, windowTitle?: string, processName?: string): Promise<ClickActionResult> {
+        return runPowerShellJson<ClickActionResult>(buildClickScript(labels, windowTitle, processName));
+    }
+
+    async setChatInput(text: string, options?: { clearExisting?: boolean; windowTitle?: string; processName?: string }): Promise<SetInputResult> {
+        return runPowerShellJson<SetInputResult>(
+            buildSetTextScript(
+                text,
+                options?.clearExisting ?? true,
+                options?.windowTitle,
+                options?.processName
+            )
+        );
+    }
+
+    async submitChatInput(keyChord = 'alt+enter', windowTitle?: string, processName?: string): Promise<SubmitInputResult> {
+        return runPowerShellJson<SubmitInputResult>(buildSubmitScript(keyChord, windowTitle, processName));
+    }
+
+    async advanceChat(options?: {
+        bumpText?: string;
+        actionLabels?: string[];
+        submitAfterTyping?: boolean;
+        submitKeyChord?: string;
+        windowTitle?: string;
+        processName?: string;
+    }): Promise<AdvanceChatResult> {
+        const state = await this.detectChatState(options?.windowTitle, options?.processName);
+        const actionLabels = options?.actionLabels ?? DEFAULT_ACTION_LABELS;
+
+        if (state.state === 'awaiting_action') {
+            const clickResult = await this.clickActionButtons(actionLabels, options?.windowTitle, options?.processName);
+            return {
+                state,
+                clicked: clickResult.clicked,
+                typed: false,
+                submitted: false,
+                detail: clickResult.clicked.length > 0
+                    ? `Clicked ${clickResult.clicked.map((item) => item.name).join(', ')}`
+                    : 'No matching action buttons were clicked'
+            };
+        }
+
+        if (state.state === 'ready_for_input' && options?.bumpText) {
+            await this.setChatInput(options.bumpText, {
+                clearExisting: true,
+                windowTitle: options.windowTitle,
+                processName: options.processName
+            });
+
+            if (options.submitAfterTyping ?? true) {
+                await this.submitChatInput(options.submitKeyChord ?? 'alt+enter', options?.windowTitle, options?.processName);
+                return {
+                    state,
+                    clicked: [],
+                    typed: true,
+                    submitted: true,
+                    detail: `Typed bump text and submitted with ${options.submitKeyChord ?? 'alt+enter'}`
+                };
+            }
+
+            return {
+                state,
+                clicked: [],
+                typed: true,
+                submitted: false,
+                detail: 'Typed bump text without submitting'
+            };
+        }
+
+        return {
+            state,
+            clicked: [],
+            typed: false,
+            submitted: false,
+            detail: 'No action taken because the current UI state was unknown or no bump text was provided'
+        };
+    }
+
+    async sendKeys(keys: string, windowTitle?: string): Promise<string> {
+        const keyMap: Record<string, string> = {
+            'ctrl+r': '^{r}',
+            'f5': '{F5}',
+            'enter': '{ENTER}',
+            'esc': '{ESC}',
+            'control+enter': '^{ENTER}',
+            'ctrl+enter': '^{ENTER}',
+            'shift+enter': '+{ENTER}',
+            'alt+enter': '%{ENTER}'
+        };
+
+        const command = keyMap[keys.toLowerCase()] || keys;
+        const activationScript = windowTitle
+            ? `
+$window = Get-TargetWindow ${toPowerShellString(windowTitle)} ''
+$window.SetFocus()
+Start-Sleep -Milliseconds 100
+`
+            : '';
+
+        await runPowerShell(`${UI_AUTOMATION_BASE}
+${activationScript}
+$wshell = New-Object -ComObject wscript.shell
+$wshell.SendKeys(${toPowerShellString(command)})`);
+
+        return `Successfully sent keys: ${keys}${windowTitle ? ` to '${windowTitle}'` : ''}`;
+    }
+}
