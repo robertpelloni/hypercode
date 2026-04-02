@@ -95,40 +95,68 @@ const initialEdges: Edge[] = [
   { id: 'e2-3', source: '2', target: '3', animated: true }
 ];
 
+type SavedWorkflowCanvas = {
+  id: string;
+  name: string;
+  nodes_json: Node[];
+  edges_json: Edge[];
+};
+
+function isSavedWorkflowCanvas(value: unknown): value is SavedWorkflowCanvas {
+  return typeof value === 'object'
+    && value !== null
+    && typeof (value as { id?: unknown }).id === 'string'
+    && typeof (value as { name?: unknown }).name === 'string'
+    && Array.isArray((value as { nodes_json?: unknown }).nodes_json)
+    && Array.isArray((value as { edges_json?: unknown }).edges_json);
+}
+
 function CanvasInner() {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
   const [currentId, setCurrentId] = useState<string | undefined>(undefined);
   const [name, setName] = useState<string>('My Autonomous Pipeline');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const { screenToFlowPosition } = useReactFlow();
   const utils = trpc.useUtils();
 
-  const { data: savedFlows } = trpc.workflow.listCanvases.useQuery();
+  const { data: savedFlows, error: savedFlowsError } = trpc.workflow.listCanvases.useQuery();
+  const savedFlowsUnavailable = Boolean(savedFlowsError) || (savedFlows !== undefined && !Array.isArray(savedFlows));
+  const savedFlowList = !savedFlowsUnavailable && Array.isArray(savedFlows)
+    ? savedFlows.filter(isSavedWorkflowCanvas)
+    : [];
+  const savedFlowsShapeError = !savedFlowsUnavailable && Array.isArray(savedFlows) && savedFlows.length !== savedFlowList.length;
   
   const saveMutation = trpc.workflow.saveCanvas.useMutation({
     onSuccess: (data) => {
+      setSaveError(null);
       setCurrentId(data.id);
       utils.workflow.listCanvases.invalidate();
+    },
+    onError: (error) => {
+      setSaveError(error.message);
     }
   });
 
   const handleSave = () => {
+    setSaveError(null);
     saveMutation.mutate({ id: currentId, name, nodes, edges });
   };
 
   const handleLoad = (flowId: string) => {
     if (!flowId) return;
-    const flow = savedFlows?.find(f => f.id === flowId);
+    const flow = savedFlowList.find((f) => f.id === flowId);
     if (!flow) return;
     
     setCurrentId(flow.id);
     setName(flow.name);
-    setNodes(flow.nodes_json || []);
-    setEdges(flow.edges_json || []);
+    setNodes(flow.nodes_json);
+    setEdges(flow.edges_json);
   };
 
   const handleClear = () => {
+    setSaveError(null);
     setCurrentId(undefined);
     setName('New Pipeline ' + Date.now());
     setNodes([]);
@@ -185,18 +213,28 @@ function CanvasInner() {
 
   return (
     <div className="flex-1 h-full w-full relative bg-gray-950">
+      {savedFlowsUnavailable || savedFlowsShapeError ? (
+        <div className="absolute left-4 top-4 z-20 max-w-md rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200 shadow-xl backdrop-blur-md">
+          Workflow canvases unavailable: {savedFlowsError?.message ?? 'Workflow canvases returned an invalid payload.'}
+        </div>
+      ) : null}
+      {saveError ? (
+        <div className="absolute left-4 top-20 z-20 max-w-md rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200 shadow-xl backdrop-blur-md">
+          Workflow save failed: {saveError}
+        </div>
+      ) : null}
       
       {/* ── Top Bar Overlay ── */}
       <div className="absolute top-4 right-4 z-10 flex gap-2 items-center bg-gray-900/80 p-2 rounded-md border border-gray-700 shadow-xl backdrop-blur-md">
-         <input 
-           value={name} 
-           onChange={(e) => setName(e.target.value)} 
-           className="bg-gray-800 text-sm text-emerald-400 font-semibold px-2 py-1 rounded border border-gray-700 w-48"
-         />
-         <select onChange={(e) => handleLoad(e.target.value)} value={currentId || ''} className="bg-gray-800 text-sm text-gray-200 px-2 py-1 rounded border border-gray-700 w-40">
-           <option value="">-- Load Pipeline --</option>
-           {savedFlows?.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-         </select>
+          <input 
+            value={name} 
+            onChange={(e) => setName(e.target.value)} 
+            className="bg-gray-800 text-sm text-emerald-400 font-semibold px-2 py-1 rounded border border-gray-700 w-48"
+          />
+          <select onChange={(e) => handleLoad(e.target.value)} value={currentId || ''} disabled={savedFlowsUnavailable || savedFlowsShapeError} className="bg-gray-800 text-sm text-gray-200 px-2 py-1 rounded border border-gray-700 w-40 disabled:opacity-60">
+            <option value="">-- Load Pipeline --</option>
+            {savedFlowList.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+          </select>
          <button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded text-sm disabled:opacity-50 transition-colors" disabled={saveMutation.isPending}>
            {saveMutation.isPending ? 'Saving...' : '💾 Save'}
          </button>
