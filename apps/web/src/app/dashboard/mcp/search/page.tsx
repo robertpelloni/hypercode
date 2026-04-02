@@ -481,9 +481,10 @@ function SearchDashboardContent() {
     const searchError = searchQuery.error?.message ?? (searchResultsUnavailable ? 'Tool search results are unavailable.' : null);
     const workingSetUnavailable = Boolean(workingSetQuery.error)
         || (workingSetQuery.data !== undefined && !isWorkingSetSnapshot(workingSetQuery.data));
-    const workingSet: WorkingSetTool[] = !workingSetUnavailable && isWorkingSetSnapshot(workingSetQuery.data)
-        ? workingSetQuery.data.tools
-        : [];
+    const workingSetSnapshot = !workingSetUnavailable && isWorkingSetSnapshot(workingSetQuery.data)
+        ? workingSetQuery.data
+        : null;
+    const workingSet: WorkingSetTool[] = workingSetSnapshot?.tools ?? [];
     const workingSetError = workingSetQuery.error?.message ?? (workingSetUnavailable ? 'Working set snapshot is unavailable.' : null);
     const allToolsQuery = trpc.mcp.listTools.useQuery(undefined, { refetchInterval: 15000 });
     const allToolsUnavailable = Boolean(allToolsQuery.error)
@@ -731,8 +732,12 @@ function SearchDashboardContent() {
     const preferencesError = preferencesQuery.error?.message ?? (preferencesUnavailable ? 'Tool preferences are unavailable.' : null);
     const importantTools = new Set(preferences.importantTools);
     const alwaysLoadedTools = new Set(preferences.alwaysLoadedTools);
-    const loadedToolNames = new Set(workingSet.map((tool) => tool.name));
-    const workingSetByName = new Map(workingSet.map((tool) => [tool.name, tool]));
+    const loadedToolNames = new Set<string>();
+    const workingSetByName = new Map<string, WorkingSetTool>();
+    for (const tool of workingSet) {
+        loadedToolNames.add(tool.name);
+        workingSetByName.set(tool.name, tool);
+    }
     const alwaysOnAdvertisedNames = new Set(
         allKnownTools
             .filter((tool) => Boolean(tool.alwaysOn))
@@ -751,9 +756,7 @@ function SearchDashboardContent() {
         .filter((tool) => alwaysLoadedTools.has(tool.name) && !alwaysOnAdvertisedNames.has(tool.name))
         .sort((left, right) => left.name.localeCompare(right.name));
     const hydratedCount = workingSet.filter((tool) => tool.hydrated).length;
-    const workingSetLimits = !workingSetUnavailable && isWorkingSetSnapshot(workingSetQuery.data)
-        ? workingSetQuery.data.limits
-        : undefined;
+    const workingSetLimits = workingSetSnapshot?.limits;
     const idleEvictionThresholdMs = Math.max(
         0,
         (workingSetLimits?.idleEvictionThresholdMs ?? 0),
