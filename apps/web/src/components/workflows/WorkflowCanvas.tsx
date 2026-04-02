@@ -102,13 +102,53 @@ type SavedWorkflowCanvas = {
   edges_json: Edge[];
 };
 
+function isFlowPosition(value: unknown): value is { x: number; y: number } {
+  return typeof value === 'object'
+    && value !== null
+    && typeof (value as { x?: unknown }).x === 'number'
+    && typeof (value as { y?: unknown }).y === 'number';
+}
+
+function isFlowNode(value: unknown): value is Node {
+  return typeof value === 'object'
+    && value !== null
+    && typeof (value as { id?: unknown }).id === 'string'
+    && isFlowPosition((value as { position?: unknown }).position)
+    && (
+      (value as { type?: unknown }).type === undefined
+      || typeof (value as { type?: unknown }).type === 'string'
+    )
+    && typeof (value as { data?: unknown }).data === 'object'
+    && (value as { data?: unknown }).data !== null;
+}
+
+function isFlowEdge(value: unknown): value is Edge {
+  return typeof value === 'object'
+    && value !== null
+    && typeof (value as { id?: unknown }).id === 'string'
+    && typeof (value as { source?: unknown }).source === 'string'
+    && typeof (value as { target?: unknown }).target === 'string'
+    && (
+      (value as { sourceHandle?: unknown }).sourceHandle === undefined
+      || typeof (value as { sourceHandle?: unknown }).sourceHandle === 'string'
+      || (value as { sourceHandle?: unknown }).sourceHandle === null
+    )
+    && (
+      (value as { targetHandle?: unknown }).targetHandle === undefined
+      || typeof (value as { targetHandle?: unknown }).targetHandle === 'string'
+      || (value as { targetHandle?: unknown }).targetHandle === null
+    );
+}
+
 function isSavedWorkflowCanvas(value: unknown): value is SavedWorkflowCanvas {
   return typeof value === 'object'
     && value !== null
     && typeof (value as { id?: unknown }).id === 'string'
     && typeof (value as { name?: unknown }).name === 'string'
     && Array.isArray((value as { nodes_json?: unknown }).nodes_json)
-    && Array.isArray((value as { edges_json?: unknown }).edges_json);
+    && Array.isArray((value as { edges_json?: unknown }).edges_json)
+    && (value as { nodes_json: unknown[] }).nodes_json.every(isFlowNode)
+    && (value as { edges_json: unknown[] }).edges_json.every(isFlowEdge);
 }
 
 function CanvasInner() {
