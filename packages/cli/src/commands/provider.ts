@@ -62,6 +62,12 @@ type BillingRoutingStrategyResult = {
   strategy: BillingRoutingStrategy;
 };
 
+type BillingTaskRoutingStrategyResult = {
+  ok: boolean;
+  taskType: string;
+  strategy: BillingRoutingStrategy;
+};
+
 function normalizeText(value: string | null | undefined): string {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : '—';
 }
@@ -401,10 +407,20 @@ Examples:
 
         if (opts.strategy) {
           const strategy = parseRoutingStrategy(String(opts.strategy));
-          const result = await queryTrpc<BillingRoutingStrategyResult>('billing.setRoutingStrategy', { strategy });
+          const result = opts.taskType
+            ? await queryTrpc<BillingTaskRoutingStrategyResult>('billing.setTaskRoutingRule', {
+              taskType: opts.taskType,
+              strategy,
+            })
+            : await queryTrpc<BillingRoutingStrategyResult>('billing.setRoutingStrategy', { strategy });
 
           if (opts.json) {
             console.log(JSON.stringify(result, null, 2));
+            return;
+          }
+
+          if ('taskType' in result) {
+            console.log(chalk.green(`  ✓ Provider routing strategy for ${result.taskType} set to ${result.strategy}`));
             return;
           }
 

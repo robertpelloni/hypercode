@@ -274,6 +274,27 @@ describe('registerProviderCommand', () => {
     }, null, 2));
   });
 
+  it('sets the live task-specific routing strategy through the billing router', async () => {
+    queryTrpcMock.mockResolvedValue({
+      ok: true,
+      taskType: 'planning',
+      strategy: 'best',
+    });
+
+    const program = createProgram();
+    await program.parseAsync(['provider', 'fallback', '--task-type', 'planning', '--strategy', 'best', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).toHaveBeenCalledWith('billing.setTaskRoutingRule', {
+      taskType: 'planning',
+      strategy: 'best',
+    });
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      ok: true,
+      taskType: 'planning',
+      strategy: 'best',
+    }, null, 2));
+  });
+
   it('rejects unsupported fallback strategy names explicitly', async () => {
     const program = createProgram();
     await program.parseAsync(['provider', 'fallback', '--strategy', 'quota-aware', '--json'], { from: 'user' });

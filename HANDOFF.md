@@ -872,6 +872,22 @@ Validation:
 - `pnpm -C packages\cli exec tsc --noEmit`
 - `pnpm -C packages\cli exec vitest run src\commands\provider.test.ts src\commands\config.test.ts src\commands\mcp.test.ts src\commands\tools.test.ts src\commands\session.test.ts src\control-plane.test.ts`
 
+### 40. `wire-cli-provider-task-routing`
+
+Status: **completed**
+
+What changed:
+
+- `packages/cli/src/commands/provider.ts` now forwards `hypercode provider fallback --task-type <type> --strategy <strategy>` to the live `billing.setTaskRoutingRule` mutation instead of always mutating only the global routing strategy
+- the CLI now exposes the backend's real split correctly: global strategy changes use `billing.setRoutingStrategy`, while task-scoped changes use `billing.setTaskRoutingRule`
+- JSON output now returns the real task-specific routing mutation payload when `--task-type` is supplied, so scriptable automation can distinguish global vs per-task updates truthfully
+- focused CLI coverage in `packages/cli/src/commands/provider.test.ts` now locks in task-specific routing mutation behavior in addition to the existing global-strategy and unsupported-option checks
+
+Validation:
+
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\provider.test.ts src\commands\config.test.ts src\commands\mcp.test.ts src\commands\tools.test.ts src\commands\session.test.ts src\control-plane.test.ts`
+
 ### 39. `harden-cli-mcp-namespace-flag`
 
 Status: **completed**
