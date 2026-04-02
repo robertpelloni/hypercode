@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@hypercode/ui";
 import { Loader2, Activity, Play, Square, Target, Crosshair, HelpCircle, ActivitySquare, RotateCcw } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -17,15 +17,82 @@ import {
     normalizeSessionState,
 } from './session-page-normalizers';
 
+function isSessionStatePayload(value: unknown): value is {
+    activeGoal?: string;
+    lastObjective?: string;
+    isAutoDriveActive?: boolean;
+} {
+    return typeof value === 'object'
+        && value !== null
+        && (
+            (value as { activeGoal?: unknown }).activeGoal === undefined
+            || typeof (value as { activeGoal?: unknown }).activeGoal === 'string'
+        )
+        && (
+            (value as { lastObjective?: unknown }).lastObjective === undefined
+            || typeof (value as { lastObjective?: unknown }).lastObjective === 'string'
+        )
+        && (
+            (value as { isAutoDriveActive?: unknown }).isAutoDriveActive === undefined
+            || typeof (value as { isAutoDriveActive?: unknown }).isAutoDriveActive === 'boolean'
+        );
+}
+
+function isSessionCatalogEntryPayload(value: unknown): value is {
+    id: string;
+    name?: string;
+    installed?: boolean;
+} {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { id?: unknown }).id === 'string'
+        && (
+            (value as { name?: unknown }).name === undefined
+            || typeof (value as { name?: unknown }).name === 'string'
+        )
+        && (
+            (value as { installed?: unknown }).installed === undefined
+            || typeof (value as { installed?: unknown }).installed === 'boolean'
+        );
+}
+
+function isSessionRowPayload(value: unknown): value is {
+    id: string;
+    name?: string;
+    cliType?: string;
+    status?: string;
+    autoRestart?: boolean;
+} {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { id?: unknown }).id === 'string'
+        && (
+            (value as { name?: unknown }).name === undefined
+            || typeof (value as { name?: unknown }).name === 'string'
+        )
+        && (
+            (value as { cliType?: unknown }).cliType === undefined
+            || typeof (value as { cliType?: unknown }).cliType === 'string'
+        )
+        && (
+            (value as { status?: unknown }).status === undefined
+            || typeof (value as { status?: unknown }).status === 'string'
+        )
+        && (
+            (value as { autoRestart?: unknown }).autoRestart === undefined
+            || typeof (value as { autoRestart?: unknown }).autoRestart === 'boolean'
+        );
+}
+
 export default function SessionDashboard() {
     const utils = trpc.useUtils();
-    const { data: sessionState, isLoading, refetch } = trpc.session.getState.useQuery(undefined, { refetchInterval: 3000 });
+    const sessionStateQuery = trpc.session.getState.useQuery(undefined, { refetchInterval: 3000 });
     const sessionsQuery = trpc.session.list.useQuery(undefined, { refetchInterval: 3000 });
     const catalogQuery = trpc.session.catalog.useQuery(undefined, { refetchInterval: 15000 });
     const updateMutation = trpc.session.updateState.useMutation({
         onSuccess: () => {
             toast.success("Session state updated");
-            refetch();
+            sessionStateQuery.refetch();
         },
         onError: (err) => {
             toast.error(`Update failed: ${err.message}`);
@@ -35,7 +102,7 @@ export default function SessionDashboard() {
     const clearMutation = trpc.session.clear.useMutation({
         onSuccess: () => {
             toast.success("Session state cleared");
-            refetch();
+            sessionStateQuery.refetch();
         }
     });
 
@@ -95,7 +162,14 @@ export default function SessionDashboard() {
     const [goalInput, setGoalInput] = useState("");
     const [objectiveInput, setObjectiveInput] = useState("");
 
-    const normalizedSessionState = normalizeSessionState(sessionState);
+    const sessionState = sessionStateQuery.data;
+    const statePayloadInvalid = sessionState != null && !isSessionStatePayload(sessionState);
+    const normalizedSessionState = normalizeSessionState(statePayloadInvalid ? undefined : sessionState);
+    const sessionsPayloadInvalid = sessionsQuery.data != null && (!Array.isArray(sessionsQuery.data) || !sessionsQuery.data.every(isSessionRowPayload));
+    const catalogPayloadInvalid = catalogQuery.data != null && (!Array.isArray(catalogQuery.data) || !catalogQuery.data.every(isSessionCatalogEntryPayload));
+    const sessionsUnavailable = sessionsQuery.isError || sessionsPayloadInvalid;
+    const catalogUnavailable = catalogQuery.isError || catalogPayloadInvalid;
+    const stateUnavailable = sessionStateQuery.isError || statePayloadInvalid;
 
     // Keep inputs synced with external state changes only if user hasn't typed
     useEffect(() => {
@@ -117,8 +191,8 @@ export default function SessionDashboard() {
         updateMutation.mutate({ isAutoDriveActive: !normalizedSessionState.isAutoDriveActive });
     };
 
-    const sessions = normalizeSessionList(sessionsQuery.data);
-    const catalog = normalizeSessionCatalog(catalogQuery.data);
+    const sessions = normalizeSessionList(sessionsUnavailable ? undefined : sessionsQuery.data);
+    const catalog = normalizeSessionCatalog(catalogUnavailable ? undefined : catalogQuery.data);
     const installedHarnessCount = catalog.filter((entry) => entry.installed).length;
     const runningSessionCount = sessions.filter((session) => session.status === 'running').length;
     const autoRestartSessionCount = sessions.filter((session) => session.autoRestart !== false).length;
@@ -129,8 +203,9 @@ export default function SessionDashboard() {
         const maxRestartAttempts = Math.max(0, session.maxRestartAttempts ?? 0);
         return session.autoRestart !== false && session.status === 'error' && restartCount >= maxRestartAttempts;
     }).length;
+    const sessionStateErrorMessage = sessionStateQuery.error?.message ?? 'Session state is unavailable.';
 
-    if (isLoading) {
+    if (sessionStateQuery.isLoading) {
         return <div className="p-8 flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-zinc-500" /></div>;
     }
 
@@ -153,11 +228,17 @@ export default function SessionDashboard() {
                 </div>
                 <div className="flex gap-2">
                     <SessionCreateDialog catalog={catalog} onCreated={refreshSessions} />
-                    <Button variant="outline" onClick={() => clearMutation.mutate()} className="border-red-500/20 text-red-500 hover:bg-red-500/10">
+                    <Button variant="outline" onClick={() => clearMutation.mutate()} disabled={clearMutation.isPending || stateUnavailable} className="border-red-500/20 text-red-500 hover:bg-red-500/10">
                         Reset Session
                     </Button>
                 </div>
             </div>
+
+            {stateUnavailable ? (
+                <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-4 text-sm text-red-300">
+                    Session state unavailable: {sessionStateErrorMessage}
+                </div>
+            ) : null}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Auto-Drive Control */}
@@ -179,7 +260,7 @@ export default function SessionDashboard() {
                         </p>
                         <Button
                             onClick={toggleAutoDrive}
-                            disabled={updateMutation.isPending}
+                            disabled={updateMutation.isPending || stateUnavailable}
                             className={`w-full py-6 font-bold tracking-widest ${normalizedSessionState.isAutoDriveActive ? 'bg-red-900/50 hover:bg-red-900/80 text-red-400' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
                         >
                             {updateMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> :
@@ -197,11 +278,17 @@ export default function SessionDashboard() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="flex-1">
-                        <div className="bg-black border border-zinc-800 rounded-md p-4 h-full">
-                            <pre className="text-xs text-green-400 font-mono overflow-auto overflow-wrap-anywhere">
-                                {JSON.stringify(sessionState, null, 2)}
-                            </pre>
-                        </div>
+                        {stateUnavailable ? (
+                            <div className="rounded-md border border-red-900/40 bg-red-950/30 p-4 text-sm text-red-300">
+                                Session state unavailable: {sessionStateQuery.error.message}
+                            </div>
+                        ) : (
+                            <div className="bg-black border border-zinc-800 rounded-md p-4 h-full">
+                                <pre className="text-xs text-green-400 font-mono overflow-auto overflow-wrap-anywhere">
+                                    {JSON.stringify(sessionState, null, 2)}
+                                </pre>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -218,10 +305,11 @@ export default function SessionDashboard() {
                             <input
                                 value={goalInput}
                                 onChange={e => setGoalInput(e.target.value)}
+                                disabled={stateUnavailable}
                                 className="flex-1 bg-black border border-zinc-800 rounded-md p-3 text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none"
                                 placeholder="Enter global objective for the system..."
                             />
-                            <Button onClick={handleSaveGoal} disabled={updateMutation.isPending || goalInput === normalizedSessionState.activeGoal} className="bg-indigo-600 hover:bg-indigo-500">
+                            <Button onClick={handleSaveGoal} disabled={updateMutation.isPending || stateUnavailable || goalInput === normalizedSessionState.activeGoal} className="bg-indigo-600 hover:bg-indigo-500">
                                 Set Goal
                             </Button>
                         </div>
@@ -233,10 +321,11 @@ export default function SessionDashboard() {
                                 <input
                                     value={objectiveInput}
                                     onChange={e => setObjectiveInput(e.target.value)}
+                                    disabled={stateUnavailable}
                                     className="flex-1 bg-black border border-zinc-800 rounded-md p-2 text-sm text-zinc-300 focus:ring-1 focus:ring-zinc-600 outline-none"
                                     placeholder="Enter current micro-task..."
                                 />
-                                <Button variant="secondary" onClick={handleSaveObjective} disabled={updateMutation.isPending || objectiveInput === normalizedSessionState.lastObjective}>
+                                <Button variant="secondary" onClick={handleSaveObjective} disabled={updateMutation.isPending || stateUnavailable || objectiveInput === normalizedSessionState.lastObjective}>
                                     Update
                                 </Button>
                             </div>
@@ -252,10 +341,10 @@ export default function SessionDashboard() {
                                 Supervised CLI Sessions
                             </div>
                             <div className="flex items-center gap-2 text-xs text-zinc-400">
-                                <Badge variant="secondary">{runningSessionCount}/{sessions.length} running</Badge>
-                                <Badge variant="secondary">{installedHarnessCount}/{catalog.length} harnesses detected</Badge>
-                                <Badge variant="secondary">{autoRestartSessionCount} auto</Badge>
-                                <Badge variant="secondary">{manualRestartSessionCount} manual</Badge>
+                                <Badge variant="secondary">{sessionsUnavailable ? '—/— running' : `${runningSessionCount}/${sessions.length} running`}</Badge>
+                                <Badge variant="secondary">{catalogUnavailable ? '—/— harnesses detected' : `${installedHarnessCount}/${catalog.length} harnesses detected`}</Badge>
+                                <Badge variant="secondary">{sessionsUnavailable ? '— auto' : `${autoRestartSessionCount} auto`}</Badge>
+                                <Badge variant="secondary">{sessionsUnavailable ? '— manual' : `${manualRestartSessionCount} manual`}</Badge>
                                 {pendingAutoRestartCount > 0 ? (
                                     <Badge variant="secondary" className="bg-amber-950 text-amber-300 border border-amber-800/60">
                                         {pendingAutoRestartCount} restart queued
@@ -276,9 +365,22 @@ export default function SessionDashboard() {
                                 Sessions tagged <span className="text-amber-300">Manual Restart</span> never auto-restart. If a session crashes after consuming its auto budget, it remains in <span className="text-red-300">error</span> until an operator restarts it.
                             </div>
                         ) : null}
-                        {sessions.length === 0 ? (
+                        {sessionsUnavailable || catalogUnavailable ? (
+                            <div className="rounded-lg border border-red-900/40 bg-red-950/30 p-4 text-sm text-red-300 space-y-2">
+                                {sessionsUnavailable ? (
+                                    <div>
+                                        Session inventory unavailable{sessionsQuery.isError ? `: ${sessionsQuery.error.message}` : ' due to malformed data'}.
+                                    </div>
+                                ) : null}
+                                {catalogUnavailable ? (
+                                    <div>
+                                        Harness catalog unavailable{catalogQuery.isError ? `: ${catalogQuery.error.message}` : ' due to malformed data'}.
+                                    </div>
+                                ) : null}
+                            </div>
+                        ) : sessions.length === 0 ? (
                             <div className="rounded-lg border border-dashed border-zinc-800 bg-black/40 p-6 text-sm text-zinc-400">
-                                No supervised sessions exist yet. Create one to launch Aider, Claude Code, Gemini CLI, Codex, or OpenCode under Borg supervision.
+                                No supervised sessions exist yet. Create one to launch Aider, Claude Code, Gemini CLI, Codex, or OpenCode under HyperCode supervision.
                             </div>
                         ) : sessions.map((session) => {
                             const latestLog = session.logs.length > 0 ? session.logs[session.logs.length - 1] : null;
