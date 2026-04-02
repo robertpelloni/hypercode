@@ -481,7 +481,9 @@ function SearchDashboardContent() {
     const searchError = searchQuery.error?.message ?? (searchResultsUnavailable ? 'Tool search results are unavailable.' : null);
     const workingSetUnavailable = Boolean(workingSetQuery.error)
         || (workingSetQuery.data !== undefined && !isWorkingSetSnapshot(workingSetQuery.data));
-    const workingSet = !workingSetUnavailable && isWorkingSetSnapshot(workingSetQuery.data) ? workingSetQuery.data.tools : [];
+    const workingSet: WorkingSetTool[] = !workingSetUnavailable && isWorkingSetSnapshot(workingSetQuery.data)
+        ? workingSetQuery.data.tools
+        : [];
     const workingSetError = workingSetQuery.error?.message ?? (workingSetUnavailable ? 'Working set snapshot is unavailable.' : null);
     const allToolsQuery = trpc.mcp.listTools.useQuery(undefined, { refetchInterval: 15000 });
     const allToolsUnavailable = Boolean(allToolsQuery.error)
