@@ -354,6 +354,25 @@ Validated with:
 
 - `pnpm -C apps\web exec tsc --noEmit --pretty false`
 
+### 0.15. Dashboard docs now expose `surfaceOverride` wherever the runtime supports it
+
+Finding:
+
+- after the main docs sync, several supervisor tools in the dashboard page still omitted `surfaceOverride`
+- the live MCP schema already supported it on `detect_chat_state`, `click_action_buttons`, `set_chat_input`, and `submit_chat_input`, so the docs were still understating the operator-facing contract
+
+What changed:
+
+- `apps/web/src/app/docs/tools/page.tsx` now documents `surfaceOverride` on those four tools too
+
+Behavior change:
+
+- the dashboard docs now reflect the actual supported override surface instead of forcing operators to discover it from source or schema inspection
+
+Validated with:
+
+- `pnpm -C apps\web exec tsc --noEmit --pretty false`
+
 ### 1. Published catalog stdio entries are no longer labeled "unsafe"
 
 Updated `packages/core/src/services/published-catalog-validator.ts` so stdio-backed published catalog entries are labeled as transport-skipped instead of `stdio_unsafe`.

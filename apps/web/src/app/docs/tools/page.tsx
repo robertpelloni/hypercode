@@ -479,7 +479,8 @@ const TOOL_CATEGORIES: ToolCategory[] = [
                 description: 'Detect whether the current chat appears to be waiting on action buttons or ready for text input',
                 parameters: [
                     { name: 'windowTitle', type: 'string', required: false, description: 'Optional partial window title to target' },
-                    { name: 'processName', type: 'string', required: false, description: 'Optional process name to target' }
+                    { name: 'processName', type: 'string', required: false, description: 'Optional process name to target' },
+                    { name: 'surfaceOverride', type: 'string', required: false, description: 'Optional explicit surface/profile id to force' }
                 ],
                 example: 'detect_chat_state({ processName: "chrome" })',
                 returns: 'Chat state classification, pending action buttons, and reasoning'
@@ -490,7 +491,8 @@ const TOOL_CATEGORIES: ToolCategory[] = [
                 parameters: [
                     { name: 'labels', type: 'string[]', required: false, description: 'Button labels to match; defaults to Run/Expand/Accept style actions' },
                     { name: 'windowTitle', type: 'string', required: false, description: 'Optional partial window title to target' },
-                    { name: 'processName', type: 'string', required: false, description: 'Optional process name to target' }
+                    { name: 'processName', type: 'string', required: false, description: 'Optional process name to target' },
+                    { name: 'surfaceOverride', type: 'string', required: false, description: 'Optional explicit surface/profile id to force' }
                 ],
                 example: 'click_action_buttons({ labels: ["Run", "Accept all"], processName: "firefox" })',
                 returns: 'Clicked controls and any requested labels that were not found'
@@ -502,7 +504,8 @@ const TOOL_CATEGORIES: ToolCategory[] = [
                     { name: 'text', type: 'string', required: true, description: 'Text to place in the composer' },
                     { name: 'clearExisting', type: 'boolean', required: false, description: 'Whether to replace existing content (default true)' },
                     { name: 'windowTitle', type: 'string', required: false, description: 'Optional partial window title to target' },
-                    { name: 'processName', type: 'string', required: false, description: 'Optional process name to target' }
+                    { name: 'processName', type: 'string', required: false, description: 'Optional process name to target' },
+                    { name: 'surfaceOverride', type: 'string', required: false, description: 'Optional explicit surface/profile id to force' }
                 ],
                 example: 'set_chat_input({ text: "keep going!", processName: "firefox" })',
                 returns: 'Target input metadata, text length, and the method used'
@@ -513,7 +516,8 @@ const TOOL_CATEGORIES: ToolCategory[] = [
                 parameters: [
                     { name: 'keyChord', type: 'string', required: false, description: 'Submission key chord (default alt+enter)' },
                     { name: 'windowTitle', type: 'string', required: false, description: 'Optional partial window title to target' },
-                    { name: 'processName', type: 'string', required: false, description: 'Optional process name to target' }
+                    { name: 'processName', type: 'string', required: false, description: 'Optional process name to target' },
+                    { name: 'surfaceOverride', type: 'string', required: false, description: 'Optional explicit surface/profile id to force' }
                 ],
                 example: 'submit_chat_input({ keyChord: "alt+enter", processName: "firefox" })',
                 returns: 'Confirmation of the submission chord used'
