@@ -41,6 +41,23 @@ type CloudSessionRecord = {
   updatedAt: string;
 };
 
+type CloudProviderRecord = {
+  provider: string;
+  name: string;
+  enabled: boolean;
+  hasApiKey?: boolean;
+};
+
+type CloudStatsRecord = {
+  totalSessions: number;
+  byProvider: Record<string, number>;
+  byStatus: Record<string, number>;
+  totalMessages: number;
+  totalLogs: number;
+  providers: number;
+  enabledProviders: number;
+};
+
 type ListedSession = {
   source: 'local' | 'cloud';
   id: string;
@@ -383,10 +400,77 @@ ${formatCliHarnessHelpLines()}
     .command('cloud')
     .description('Manage cloud development sessions (Jules, Devin, Codex)')
     .option('--list', 'List cloud sessions')
+    .option('--json', 'Output as JSON')
     .option('--transfer <id>', 'Transfer local session to cloud')
     .action(async (opts) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.bold.cyan('\n  Cloud Dev Sessions\n'));
-      console.log(chalk.dim('  No cloud sessions configured.\n'));
+      await withSessionErrorHandling(async () => {
+        if (opts.transfer) {
+          const chalk = (await import('chalk')).default;
+          console.log(chalk.yellow(`  Cloud transfer for session '${opts.transfer}' is not implemented yet.`));
+          return;
+        }
+
+        const [providers, sessions, stats] = await Promise.all([
+          queryTrpc<CloudProviderRecord[]>('cloudDev.listProviders'),
+          queryTrpc<CloudSessionRecord[]>('cloudDev.listSessions'),
+          queryTrpc<CloudStatsRecord>('cloudDev.stats'),
+        ]);
+
+        if (opts.json) {
+          console.log(JSON.stringify({ providers, sessions, stats }, null, 2));
+          return;
+        }
+
+        const chalk = (await import('chalk')).default;
+        const Table = (await import('cli-table3')).default;
+
+        console.log(chalk.bold.cyan('\n  Cloud Dev Sessions\n'));
+        console.log(chalk.dim(`  Providers: ${stats.enabledProviders}/${stats.providers} enabled | Sessions: ${stats.totalSessions} | Messages: ${stats.totalMessages} | Logs: ${stats.totalLogs}\n`));
+
+        if (providers.length > 0) {
+          const providersTable = new Table({
+            head: ['Provider', 'Enabled', 'API Key'],
+            style: { head: ['cyan'] },
+            colWidths: [28, 12, 12],
+          });
+
+          for (const provider of providers) {
+            providersTable.push([
+              `${provider.name}\n${chalk.dim(provider.provider)}`,
+              provider.enabled ? chalk.green('yes') : chalk.dim('no'),
+              provider.hasApiKey ? chalk.green('yes') : chalk.dim('no'),
+            ]);
+          }
+
+          console.log(providersTable.toString());
+          console.log('');
+        }
+
+        if (sessions.length === 0) {
+          console.log(chalk.dim('  No cloud sessions found.\n'));
+          return;
+        }
+
+        const sessionsTable = new Table({
+          head: ['ID', 'Project', 'Provider', 'Status', 'Last Update'],
+          style: { head: ['cyan'] },
+          wordWrap: true,
+          colWidths: [18, 28, 18, 20, 28],
+        });
+
+        for (const entry of sessions) {
+          const active = isCloudSessionActive(entry.status);
+          sessionsTable.push([
+            entry.id,
+            `${entry.projectName}\n${chalk.dim(entry.task)}`,
+            entry.provider,
+            active ? chalk.green(entry.status) : chalk.dim(entry.status),
+            formatLastActivity(entry.updatedAt),
+          ]);
+        }
+
+        console.log(sessionsTable.toString());
+        console.log('');
+      }, opts);
     });
 }

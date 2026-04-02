@@ -131,4 +131,71 @@ describe('registerSessionCommand', () => {
     expect(errorSpy).toHaveBeenCalled();
     expect(process.exitCode).toBe(1);
   });
+
+  it('shows live cloud session inventory as JSON', async () => {
+    queryTrpcMock
+      .mockResolvedValueOnce([
+        {
+          provider: 'jules',
+          name: 'Jules (Google)',
+          enabled: true,
+          hasApiKey: true,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'cds_1',
+          provider: 'jules',
+          projectName: 'cloud-project',
+          task: 'Investigate CI failure',
+          status: 'active',
+          updatedAt: '2026-04-02T09:00:00.000Z',
+        },
+      ])
+      .mockResolvedValueOnce({
+        totalSessions: 1,
+        byProvider: { jules: 1 },
+        byStatus: { active: 1 },
+        totalMessages: 3,
+        totalLogs: 5,
+        providers: 4,
+        enabledProviders: 1,
+      });
+
+    const program = createProgram();
+    await program.parseAsync(['session', 'cloud', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).toHaveBeenNthCalledWith(1, 'cloudDev.listProviders');
+    expect(queryTrpcMock).toHaveBeenNthCalledWith(2, 'cloudDev.listSessions');
+    expect(queryTrpcMock).toHaveBeenNthCalledWith(3, 'cloudDev.stats');
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      providers: [
+        {
+          provider: 'jules',
+          name: 'Jules (Google)',
+          enabled: true,
+          hasApiKey: true,
+        },
+      ],
+      sessions: [
+        {
+          id: 'cds_1',
+          provider: 'jules',
+          projectName: 'cloud-project',
+          task: 'Investigate CI failure',
+          status: 'active',
+          updatedAt: '2026-04-02T09:00:00.000Z',
+        },
+      ],
+      stats: {
+        totalSessions: 1,
+        byProvider: { jules: 1 },
+        byStatus: { active: 1 },
+        totalMessages: 3,
+        totalLogs: 5,
+        providers: 4,
+        enabledProviders: 1,
+      },
+    }, null, 2));
+  });
 });
