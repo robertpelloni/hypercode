@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { trpc } from "@/utils/trpc";
 import type { inferRouterOutputs } from "@trpc/server";
-import type { AppRouter } from "@borg/core";
+import type { AppRouter } from "@hypercode/core";
 import { useSearchParams } from "next/navigation";
 import { BookMarked, ExternalLink, Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +14,42 @@ type LinkItem = RouterOutput["linksBacklog"]["list"]["items"][number];
 
 const PAGE_SIZE = 50;
 const RESEARCH_FILTERS = ["", "pending", "running", "done", "failed", "skipped"] as const;
+
+function isLinkItem(value: unknown): value is LinkItem {
+    return typeof value === "object"
+        && value !== null
+        && typeof (value as { uuid?: unknown }).uuid === "string"
+        && typeof (value as { url?: unknown }).url === "string"
+        && typeof (value as { normalized_url?: unknown }).normalized_url === "string"
+        && typeof (value as { research_status?: unknown }).research_status === "string"
+        && typeof (value as { source?: unknown }).source === "string";
+}
+
+function isLinksListPayload(value: unknown): value is { items: LinkItem[]; total: number } {
+    return typeof value === "object"
+        && value !== null
+        && Array.isArray((value as { items?: unknown }).items)
+        && ((value as { items: unknown[] }).items).every(isLinkItem)
+        && typeof (value as { total?: unknown }).total === "number";
+}
+
+function isLinksStatsPayload(value: unknown): value is {
+    total: number;
+    unique: number;
+    duplicates: number;
+    pending: number;
+    researched: number;
+    sources: number;
+} {
+    return typeof value === "object"
+        && value !== null
+        && typeof (value as { total?: unknown }).total === "number"
+        && typeof (value as { unique?: unknown }).unique === "number"
+        && typeof (value as { duplicates?: unknown }).duplicates === "number"
+        && typeof (value as { pending?: unknown }).pending === "number"
+        && typeof (value as { researched?: unknown }).researched === "number"
+        && typeof (value as { sources?: unknown }).sources === "number";
+}
 
 export default function LinksBacklogPage() {
     return (
@@ -52,8 +88,8 @@ function LinksBacklogPageContent() {
     }, [querySearch, queryStatus, queryShowDuplicates]);
 
     const utils = trpc.useUtils();
-    const { data: stats } = trpc.linksBacklog.stats.useQuery();
-    const { data, isLoading, isFetching } = trpc.linksBacklog.list.useQuery({
+    const { data: stats, error: statsError } = trpc.linksBacklog.stats.useQuery();
+    const { data, isLoading, isFetching, error: listError } = trpc.linksBacklog.list.useQuery({
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE,
         search: search.trim() || undefined,
@@ -74,13 +110,15 @@ function LinksBacklogPageContent() {
         },
     });
 
-    const items = data?.items ?? [];
-    const total = data?.total ?? 0;
+    const statsUnavailable = Boolean(statsError) || (stats !== undefined && !isLinksStatsPayload(stats));
+    const listUnavailable = Boolean(listError) || (data !== undefined && !isLinksListPayload(data));
+    const items = !listUnavailable && data ? data.items : [];
+    const total = !listUnavailable && data ? data.total : 0;
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
     const sourceSummary = useMemo(() => {
-        return stats ? `${stats.total} total · ${stats.unique} unique · ${stats.duplicates} duplicates` : null;
-    }, [stats]);
+        return !statsUnavailable && stats ? `${stats.total} total · ${stats.unique} unique · ${stats.duplicates} duplicates` : null;
+    }, [stats, statsUnavailable]);
 
     const handleSync = () => {
         if (!syncBaseUrl.trim()) {
@@ -100,7 +138,7 @@ function LinksBacklogPageContent() {
             <PageStatusBanner
                 status="beta"
                 message="Link Backlog"
-                note="Canonical Borg backlog for BobbyBookmarks-powered link sync, research status, and future universal MCP directory integration."
+                note="Canonical HyperCode backlog for BobbyBookmarks-powered link sync, research status, and future universal MCP directory integration."
             />
 
             <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -137,7 +175,11 @@ function LinksBacklogPageContent() {
                 </div>
             </div>
 
-            {stats ? (
+            {statsUnavailable ? (
+                <div className="rounded-lg border border-red-900/30 bg-red-950/10 p-4 text-sm text-red-300">
+                    {statsError?.message ?? "Backlog stats are unavailable."}
+                </div>
+            ) : stats ? (
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                     <StatCard label="Total" value={stats.total} />
                     <StatCard label="Unique" value={stats.unique} tone="emerald" />
@@ -206,6 +248,12 @@ function LinksBacklogPageContent() {
                                 <tr>
                                     <td colSpan={5} className="px-4 py-10 text-center text-zinc-500">
                                         <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                                    </td>
+                                </tr>
+                            ) : listUnavailable ? (
+                                <tr>
+                                    <td colSpan={5} className="px-4 py-10 text-center text-red-300">
+                                        {listError?.message ?? "Backlog entries are unavailable."}
                                     </td>
                                 </tr>
                             ) : items.length === 0 ? (
