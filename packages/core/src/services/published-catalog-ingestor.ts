@@ -16,9 +16,9 @@
  * in `INGESTION_ADAPTERS`. The `ingestAll()` method runs all adapters sequentially.
  *
  * Currently implemented adapters:
- *   1. GlamaAiAdapter      — hits api.glama.ai public MCP offerings endpoint
+ *   1. GlamaAiAdapter      — best-effort fetch against Glama's historical public listing endpoint
  *   2. SmitheryAiAdapter   — hits smithery.ai registry API
- *   3. McpRunAdapter       — hits mcp.run/api/servers (soft failure if unavailable)
+ *   3. McpRunAdapter       — best-effort fetch against mcp.run's historical listing endpoint (soft failure if unavailable)
  *   4. NpmRegistryAdapter  — searches npm for @modelcontextprotocol/* and mcp-server-* packages
  *   5. GitHubTopicAdapter  — searches GitHub repos tagged with topic:mcp-server (top 300 by stars)
  *
@@ -299,21 +299,50 @@ export interface CatalogSourceAdapter {
 // ---------------------------------------------------------------------------
 
 const FETCH_TIMEOUT_MS = 15_000;
+const SEARCH_FETCH_TIMEOUT_MS = 30_000;
 
 function toErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
 }
 
-async function safeFetch(url: string): Promise<unknown> {
+function readHeader(
+    headers: Response["headers"] | Record<string, string> | undefined,
+    name: string,
+): string | null {
+    if (!headers) return null;
+    if (typeof (headers as Response["headers"]).get === "function") {
+        return (headers as Response["headers"]).get(name);
+    }
+    const record = headers as Record<string, string>;
+    return record[name] ?? record[name.toLowerCase()] ?? record[name.toUpperCase()] ?? null;
+}
+
+function summarizeResponseText(body: string): string {
+    const normalized = body.replace(/\s+/g, " ").trim();
+    if (normalized.length === 0) return "<empty>";
+    return normalized.slice(0, 160);
+}
+
+async function safeFetch(url: string, options?: { timeoutMs?: number }): Promise<unknown> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    const timeout = setTimeout(() => controller.abort(), options?.timeoutMs ?? FETCH_TIMEOUT_MS);
     try {
         const response = await fetch(url, {
             signal: controller.signal,
-            headers: { "Accept": "application/json", "User-Agent": "Borg/MCP-Catalog-Ingestor" },
+            headers: { "Accept": "application/json", "User-Agent": "HyperCode/MCP-Catalog-Ingestor" },
         });
+        const contentType = (readHeader(response.headers, "content-type") ?? "").toLowerCase();
         if (!response.ok) {
+            if (contentType.includes("text/html")) {
+                throw new Error(`HTTP ${response.status} (received HTML error page)`);
+            }
             throw new Error(`HTTP ${response.status}`);
+        }
+        if (!contentType.includes("json")) {
+            const body = typeof response.text === "function" ? await response.text() : "";
+            throw new Error(
+                `Expected JSON but received ${contentType || "unknown content-type"}: ${summarizeResponseText(body)}`
+            );
         }
         try {
             return await response.json();
@@ -329,8 +358,8 @@ async function safeFetch(url: string): Promise<unknown> {
 
 // ---------------------------------------------------------------------------
 // Adapter 1: Glama.ai
-// Public endpoint: https://glama.ai/api/mcp/servers
-// Returns a list of MCP servers with metadata.
+// Historical public endpoint: https://glama.ai/api/mcp/servers
+// This source is currently best-effort because live responses may drift to HTML.
 // ---------------------------------------------------------------------------
 
 type GlamaServer = {
@@ -453,7 +482,7 @@ export class SmitheryAiAdapter implements CatalogSourceAdapter {
         };
 
         try {
-            const payload = await safeFetch(`${this.baseUrl}?pageSize=200`) as any;
+            const payload = await safeFetch(`${this.baseUrl}?limit=200`) as any;
             const servers: SmitheryServer[] = Array.isArray(payload?.servers)
                 ? payload.servers
                 : [];
@@ -516,7 +545,8 @@ export class SmitheryAiAdapter implements CatalogSourceAdapter {
 
 // ---------------------------------------------------------------------------
 // Adapter 3: MCP.run public registry
-// Public endpoint: https://mcp.run/api/servers (undocumented but public)
+// Historical public endpoint: https://mcp.run/api/servers
+// Keep this source non-fatal until a live listing endpoint is re-verified.
 // ---------------------------------------------------------------------------
 
 export class McpRunAdapter implements CatalogSourceAdapter {
@@ -647,7 +677,7 @@ export class NpmRegistryAdapter implements CatalogSourceAdapter {
         for (const text of queries) {
             try {
                 const url = `${this.searchBase}?text=${encodeURIComponent(text)}&size=250`;
-                const payload = await safeFetch(url) as NpmSearchResponse;
+                const payload = await safeFetch(url, { timeoutMs: SEARCH_FETCH_TIMEOUT_MS }) as NpmSearchResponse;
                 const objects = payload?.objects ?? [];
 
                 for (const obj of objects) {
@@ -785,7 +815,7 @@ export class GitHubTopicAdapter implements CatalogSourceAdapter {
                 `&sort=stars&order=desc&per_page=100&page=${page}`;
 
             try {
-                const payload = await safeFetch(url) as GitHubSearchResponse;
+                const payload = await safeFetch(url, { timeoutMs: SEARCH_FETCH_TIMEOUT_MS }) as GitHubSearchResponse;
                 const items: GitHubRepo[] = payload?.items ?? [];
 
                 if (items.length === 0) break; // no more pages
@@ -886,6 +916,23 @@ export type IngestionReport = {
     total_errors: number;
 };
 
+function summarizeCatalogErrors(errors: string[], limit: number = 2): string {
+    if (errors.length === 0) {
+        return 'none';
+    }
+
+    const preview = errors.slice(0, limit).join(' | ');
+    const remaining = errors.length - limit;
+    return remaining > 0
+        ? `${preview} | +${remaining} more`
+        : preview;
+}
+
+function summarizeCatalogFailure(error: unknown): string {
+    const message = error instanceof Error ? error.message : String(error);
+    return message.replace(/\s+/g, ' ').trim();
+}
+
 /**
  * Run all registered ingestion adapters and return a consolidated report.
  * Each adapter's failures are captured without aborting the others.
@@ -910,7 +957,9 @@ export async function ingestPublishedCatalog(
             `[CatalogIngestor] ${adapter.name}: fetched=${result.fetched} upserted=${result.upserted} errors=${result.errors.length}`
         );
         if (result.errors.length > 0) {
-            console.warn(`[CatalogIngestor] ${adapter.name} errors:`, result.errors);
+            console.warn(
+                `[CatalogIngestor] ${adapter.name} warnings: ${summarizeCatalogErrors(result.errors)}`
+            );
         }
     }
 
@@ -932,7 +981,7 @@ export async function ingestPublishedCatalog(
             console.info(`[CatalogIngestor] Normalization pass: advanced ${normalized} discovered → normalized`);
         }
     } catch (err) {
-        console.warn("[CatalogIngestor] Normalization pass failed:", err);
+        console.warn(`[CatalogIngestor] Normalization pass failed: ${summarizeCatalogFailure(err)}`);
     }
 
     // --- Configurator baseline recipe pass ---
@@ -967,7 +1016,7 @@ export async function ingestPublishedCatalog(
             console.info(`[CatalogIngestor] Baseline recipe pass: created ${created} active recipes`);
         }
     } catch (err) {
-        console.warn("[CatalogIngestor] Baseline recipe pass failed:", err);
+        console.warn(`[CatalogIngestor] Baseline recipe pass failed: ${summarizeCatalogFailure(err)}`);
     }
 
     const finishedAt = new Date().toISOString();

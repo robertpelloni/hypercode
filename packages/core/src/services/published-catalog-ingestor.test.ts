@@ -7,7 +7,14 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildBaselineRecipe, GlamaAiAdapter, NpmRegistryAdapter } from './published-catalog-ingestor.js';
+import {
+    buildBaselineRecipe,
+    GlamaAiAdapter,
+    NpmRegistryAdapter,
+    SmitheryAiAdapter,
+    ingestPublishedCatalog,
+} from './published-catalog-ingestor.js';
+import { publishedCatalogRepository } from '../db/repositories/published-catalog.repo.js';
 
 afterEach(() => {
     vi.restoreAllMocks();
@@ -278,6 +285,9 @@ describe('CatalogIngestor — Error Reporting', () => {
             vi.fn().mockResolvedValue({
                 ok: false,
                 status: 404,
+                headers: {
+                    get: () => 'application/json',
+                },
             })
         );
 
@@ -287,6 +297,47 @@ describe('CatalogIngestor — Error Reporting', () => {
         expect(result.upserted).toBe(0);
         expect(result.errors).toHaveLength(1);
         expect(result.errors[0]).toContain('Request to https://glama.ai/api/mcp/servers?limit=200 failed: HTTP 404');
+    });
+
+    it('reports HTML error pages truthfully instead of as JSON parse failures', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue({
+                ok: false,
+                status: 403,
+                headers: {
+                    get: (name: string) => name.toLowerCase() === 'content-type' ? 'text/html; charset=utf-8' : null,
+                },
+            })
+        );
+
+        const result = await new GlamaAiAdapter().ingest();
+
+        expect(result.fetched).toBe(0);
+        expect(result.upserted).toBe(0);
+        expect(result.errors).toHaveLength(1);
+        expect(result.errors[0]).toContain('HTTP 403 (received HTML error page)');
+        expect(result.errors[0]).not.toContain('Failed to parse JSON');
+    });
+
+    it('uses the verified smithery limit query shape', async () => {
+        const fetchMock = vi.fn().mockResolvedValue({
+            ok: true,
+            status: 200,
+            headers: {
+                get: (name: string) => name.toLowerCase() === 'content-type' ? 'application/json; charset=utf-8' : null,
+            },
+            json: async () => ({ servers: [] }),
+        });
+        vi.stubGlobal('fetch', fetchMock);
+
+        const result = await new SmitheryAiAdapter().ingest();
+
+        expect(result.fetched).toBe(0);
+        expect(result.upserted).toBe(0);
+        expect(result.errors).toHaveLength(0);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock.mock.calls[0]?.[0]).toBe('https://registry.smithery.ai/servers?limit=200');
     });
 
     it('records per-query fetch failures for npm ingestion summaries', async () => {
@@ -303,6 +354,59 @@ describe('CatalogIngestor — Error Reporting', () => {
         expect(result.errors[0]).toContain('npm query "scope:modelcontextprotocol" failed');
         expect(result.errors[1]).toContain('npm query "keywords:mcp-server" failed');
         expect(result.errors[2]).toContain('npm query "mcp-server" failed');
+    });
+
+    it('logs catalog warnings as a concise preview instead of dumping full error arrays', async () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+        const report = await ingestPublishedCatalog([
+            {
+                name: 'glama.ai',
+                ingest: vi.fn(async () => ({
+                    source: 'glama.ai',
+                    fetched: 0,
+                    upserted: 0,
+                    errors: [
+                        'fetch failed: Request to https://glama.ai/api/mcp/servers?limit=200 failed: HTTP 404',
+                        'fetch failed: Request to https://glama.ai/api/mcp/servers?limit=200 failed: HTTP 403 (received HTML error page)',
+                        'fetch failed: Request to https://glama.ai/api/mcp/servers?limit=200 failed: HTTP 400',
+                    ],
+                })),
+            },
+        ]);
+
+        expect(report.total_errors).toBe(3);
+        expect(infoSpy).toHaveBeenCalledWith('[CatalogIngestor] glama.ai: fetched=0 upserted=0 errors=3');
+        expect(warnSpy).toHaveBeenCalledWith(
+            '[CatalogIngestor] glama.ai warnings: fetch failed: Request to https://glama.ai/api/mcp/servers?limit=200 failed: HTTP 404 | fetch failed: Request to https://glama.ai/api/mcp/servers?limit=200 failed: HTTP 403 (received HTML error page) | +1 more'
+        );
+    });
+
+    it('logs normalization and baseline pass failures as single-string warnings', async () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+        vi.spyOn(publishedCatalogRepository, 'listServers')
+            .mockRejectedValueOnce(new Error('normalization store unavailable'))
+            .mockRejectedValueOnce(new Error('baseline store unavailable'));
+
+        const report = await ingestPublishedCatalog([
+            {
+                name: 'mcp.run',
+                ingest: vi.fn(async () => ({
+                    source: 'mcp.run',
+                    fetched: 0,
+                    upserted: 0,
+                    errors: [],
+                })),
+            },
+        ]);
+
+        expect(report.total_errors).toBe(0);
+        expect(infoSpy).toHaveBeenCalledWith('[CatalogIngestor] mcp.run: fetched=0 upserted=0 errors=0');
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[CatalogIngestor\] Normalization pass failed: .+/));
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[CatalogIngestor\] Baseline recipe pass failed: .+/));
+        expect(warnSpy.mock.calls.every((call) => call.length === 1 && typeof call[0] === 'string')).toBe(true);
     });
 });
 

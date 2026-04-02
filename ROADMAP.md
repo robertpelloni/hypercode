@@ -47,6 +47,7 @@ Focus on the strongest product shape already present:
 - reduce SSE or subscription edge cases
 - remove startup and port mismatch drift
 - improve honest degradation when services are unavailable
+- harden published MCP catalog ingestion against stale third-party registry endpoints and misleading HTML/error-page responses
 
 #### 4. Release discipline
 - unify version story
@@ -63,6 +64,7 @@ Focus on the strongest product shape already present:
 - better working-set management
 - groundwork for a canonical internal MCP server library with ingestion, dedupe, and provenance tracking
 - groundwork for benchmarking, ranking, and operator review loops across discovered MCP servers
+- keep registry-source adapters truthful about source drift, partial availability, and non-fatal ingestion failures instead of treating stale registries as healthy empty catalogs
 
 ### B. Memory quality
 - better provenance

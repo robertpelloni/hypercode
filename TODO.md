@@ -10,6 +10,7 @@ Make HyperCode feel trustworthy in daily operator use.
 - [ ] Finish the highest-value dashboard truth pass
 - [ ] Verify critical routes show real state, not reassuring fiction
 - [ ] Reduce startup and port mismatch confusion
+- [ ] Harden published MCP catalog ingestion against stale registry endpoints and misleading error handling
 - [ ] Align `README.md`, `ROADMAP.md`, `TODO.md`, and `VISION.md` around one release story
 - [ ] Verify first-run and recovery flows are reproducible
 - [ ] Tighten docs so public claims match implementation
