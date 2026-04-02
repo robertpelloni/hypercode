@@ -122,6 +122,36 @@ describe('registerProviderCommand', () => {
     }, null, 2));
   });
 
+  it('shows the live fallback chain as JSON from the billing router', async () => {
+    queryTrpcMock.mockResolvedValue({
+      selectedTaskType: 'planning',
+      chain: [
+        {
+          priority: 1,
+          provider: 'anthropic',
+          model: 'claude-sonnet-4-20250514',
+          reason: 'TASK_TYPE_PLANNING',
+        },
+      ],
+    });
+
+    const program = createProgram();
+    await program.parseAsync(['provider', 'fallback', '--show', '--task-type', 'planning', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).toHaveBeenCalledWith('billing.getFallbackChain', { taskType: 'planning' });
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      selectedTaskType: 'planning',
+      chain: [
+        {
+          priority: 1,
+          provider: 'anthropic',
+          model: 'claude-sonnet-4-20250514',
+          reason: 'TASK_TYPE_PLANNING',
+        },
+      ],
+    }, null, 2));
+  });
+
   it('reports control-plane failures without throwing out of the command', async () => {
     queryTrpcMock.mockRejectedValue(new Error('control plane unavailable'));
 

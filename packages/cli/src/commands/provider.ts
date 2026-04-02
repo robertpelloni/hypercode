@@ -36,6 +36,18 @@ type BillingProviderQuota = {
   quotaRefreshedAt?: string | null;
 };
 
+type BillingFallbackEntry = {
+  priority: number;
+  provider: string;
+  model?: string;
+  reason?: string;
+};
+
+type BillingFallbackResponse = {
+  selectedTaskType: string | null;
+  chain: BillingFallbackEntry[];
+};
+
 function normalizeText(value: string | null | undefined): string {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : '—';
 }
@@ -241,7 +253,9 @@ OAuth-capable subscription services:
     .command('fallback')
     .description('Manage the automatic model fallback chain')
     .option('--show', 'Show current fallback chain')
+    .option('--json', 'Output as JSON')
     .option('--set <models...>', 'Set fallback chain (ordered list)')
+    .option('--task-type <type>', 'Show the fallback chain for a specific task type')
     .option('--strategy <strategy>', 'Fallback strategy: priority, cost-optimized, quota-aware, round-robin', 'quota-aware')
     .addHelpText('after', `
 The fallback chain determines which model to use when the primary model's
@@ -253,10 +267,53 @@ Examples:
   $ hypercode provider fallback --strategy cost-optimized
     `)
     .action(async (opts) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.bold.cyan('\n  Model Fallback Chain\n'));
-      console.log(chalk.dim('  Strategy: ') + (opts.strategy || 'quota-aware'));
-      console.log(chalk.dim('  Chain:    ') + 'not configured');
-      console.log(chalk.dim('\n  Use --set to configure the fallback order.\n'));
+      await withProviderErrorHandling(async () => {
+        const chalk = (await import('chalk')).default;
+
+        if (opts.show) {
+          const fallback = await queryTrpc<BillingFallbackResponse>('billing.getFallbackChain', opts.taskType
+            ? { taskType: opts.taskType }
+            : undefined);
+
+          if (opts.json) {
+            console.log(JSON.stringify(fallback, null, 2));
+            return;
+          }
+
+          console.log(chalk.bold.cyan('\n  Model Fallback Chain\n'));
+          console.log(chalk.dim('  Task type: ') + normalizeText(fallback.selectedTaskType));
+
+          if (fallback.chain.length === 0) {
+            console.log(chalk.dim('  No fallback chain is currently configured.\n'));
+            return;
+          }
+
+          const Table = (await import('cli-table3')).default;
+          const table = new Table({
+            head: ['Priority', 'Provider', 'Model', 'Reason'],
+            style: { head: ['cyan'] },
+            wordWrap: true,
+            colWidths: [10, 18, 30, 28],
+          });
+
+          for (const entry of fallback.chain) {
+            table.push([
+              String(entry.priority),
+              entry.provider,
+              normalizeText(entry.model),
+              normalizeText(entry.reason),
+            ]);
+          }
+
+          console.log(table.toString());
+          console.log('');
+          return;
+        }
+
+        console.log(chalk.bold.cyan('\n  Model Fallback Chain\n'));
+        console.log(chalk.dim('  Strategy: ') + (opts.strategy || 'quota-aware'));
+        console.log(chalk.dim('  Chain:    ') + 'not configured');
+        console.log(chalk.dim('\n  Use --show to inspect or --set to configure the fallback order.\n'));
+      }, opts);
     });
 }

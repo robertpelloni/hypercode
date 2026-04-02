@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CLI Provider Fallback Surface**: `hypercode provider fallback --show` now queries the live `billing.getFallbackChain` control-plane route instead of printing a fabricated "not configured" chain, with structured `--json` output, task-type filtering, and actionable control-plane error reporting.
 - **CLI Secrets Inventory Surface**: `hypercode config secrets --list` now queries the live `secrets.list` control-plane route instead of always printing a fake empty state, with structured `--json` output, masked table rendering, and actionable control-plane error reporting.
 - **CLI Tool Group Surface**: `hypercode tools groups` now queries live tool-set inventory from the control plane instead of always printing an empty-state placeholder, with structured `--json` output and actionable control-plane error reporting.
 - **CLI Memory Read Surfaces**: `hypercode memory search`, `hypercode memory list`, and `hypercode memory stats` now query live control-plane memory routes instead of fabricated empty or zero state, with structured `--json` output and actionable control-plane error reporting.

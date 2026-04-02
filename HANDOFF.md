@@ -434,7 +434,24 @@ Validation:
 - `pnpm -C packages\cli exec tsc --noEmit`
 - `pnpm -C packages\cli exec vitest run src\commands\config.test.ts src\commands\tools.test.ts src\commands\memory.test.ts src\commands\session.test.ts src\commands\status.test.ts src\commands\provider.test.ts src\commands\mcp.test.ts src\control-plane.test.ts`
 
-### 14. `harden-published-catalog-ingestion`
+### 14. `wire-cli-provider-fallback-show`
+
+Status: **completed**
+
+What changed:
+
+- `packages/cli/src/commands/provider.ts` no longer prints a fabricated "not configured" chain for `hypercode provider fallback --show`
+- `provider fallback --show` now queries the live `billing.getFallbackChain` route and renders truthful ranked provider/model/reason rows instead of a stubbed fallback summary
+- `--json` now emits the structured live fallback-chain snapshot, and `--task-type` can request the task-specific routing chain
+- command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
+- focused CLI coverage in `packages/cli/src/commands/provider.test.ts` now includes the fallback-chain JSON flow
+
+Validation:
+
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\provider.test.ts src\commands\config.test.ts src\commands\tools.test.ts src\commands\memory.test.ts src\commands\session.test.ts src\commands\status.test.ts src\commands\mcp.test.ts src\control-plane.test.ts`
+
+### 15. `harden-published-catalog-ingestion`
 
 Status: **completed**
 
