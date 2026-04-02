@@ -56,6 +56,11 @@ type McpRegistryEntry = {
   tags: string[];
 };
 
+type ConfigEntry = {
+  key: string;
+  value: string;
+};
+
 function normalizeText(value: string | null | undefined): string {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : '—';
 }
@@ -154,6 +159,71 @@ function filterRegistryEntries(
 
     return haystack.includes(normalizedQuery);
   });
+}
+
+function parseMaybeJson(value: string): unknown {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return '';
+  if (trimmed === 'true') return true;
+  if (trimmed === 'false') return false;
+  if (trimmed === 'null') return null;
+
+  const numeric = Number(trimmed);
+  if (!Number.isNaN(numeric) && trimmed === String(numeric)) {
+    return numeric;
+  }
+
+  if (
+    (trimmed.startsWith('{') && trimmed.endsWith('}'))
+    || (trimmed.startsWith('[') && trimmed.endsWith(']'))
+  ) {
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return value;
+    }
+  }
+
+  return value;
+}
+
+function groupConfigEntries(entries: ConfigEntry[]): Record<string, unknown> {
+  const grouped: Record<string, unknown> = {};
+
+  for (const entry of entries) {
+    const parts = entry.key.split('.');
+    let cursor: Record<string, unknown> = grouped;
+
+    for (let index = 0; index < parts.length; index += 1) {
+      const part = parts[index];
+      const isLeaf = index === parts.length - 1;
+
+      if (isLeaf) {
+        cursor[part] = parseMaybeJson(entry.value);
+        continue;
+      }
+
+      const next = cursor[part];
+      if (!next || typeof next !== 'object' || Array.isArray(next)) {
+        cursor[part] = {};
+      }
+      cursor = cursor[part] as Record<string, unknown>;
+    }
+  }
+
+  return grouped;
+}
+
+function printConfigObject(obj: Record<string, unknown>, chalk: typeof import('chalk').default, prefix = '  '): void {
+  for (const [key, value] of Object.entries(obj)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      console.log(chalk.bold(`${prefix}${key}:`));
+      printConfigObject(value as Record<string, unknown>, chalk, `${prefix}  `);
+      continue;
+    }
+
+    console.log(chalk.dim(`${prefix}${key}: `) + JSON.stringify(value));
+  }
 }
 
 export function registerMcpCommand(program: Command): void {
@@ -362,26 +432,24 @@ Examples:
     .description('Show or edit MCP router configuration')
     .option('--json', 'Output raw JSON config')
     .action(async (opts) => {
-      const chalk = (await import('chalk')).default;
-      const config = {
-        namespaces: { default: { enabled: true } },
-        progressiveDisclosure: true,
-        semanticSearch: true,
-        toonFormat: false,
-        codeMode: false,
-        toolRenaming: true,
-        keepAlive: true,
-        heartbeatInterval: 30000,
-      };
-      if (opts.json) {
-        console.log(JSON.stringify(config, null, 2));
-      } else {
-        console.log(chalk.bold.cyan('\n  MCP Router Config\n'));
-        for (const [key, val] of Object.entries(config)) {
-          console.log(chalk.dim(`  ${key}: `) + JSON.stringify(val));
+      await withMcpErrorHandling(async () => {
+        const entries = await queryTrpc<ConfigEntry[]>('config.list');
+        const config = groupConfigEntries(entries).mcp;
+
+        if (!config || typeof config !== 'object' || Array.isArray(config)) {
+          throw new Error("MCP configuration section 'mcp' was not found");
         }
+
+        if (opts.json) {
+          console.log(JSON.stringify(config, null, 2));
+          return;
+        }
+
+        const chalk = (await import('chalk')).default;
+        console.log(chalk.bold.cyan('\n  MCP Router Config\n'));
+        printConfigObject(config as Record<string, unknown>, chalk);
         console.log('');
-      }
+      }, opts);
     });
 
   mcp

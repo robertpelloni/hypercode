@@ -468,7 +468,24 @@ Validation:
 - `pnpm -C packages\cli exec tsc --noEmit`
 - `pnpm -C packages\cli exec vitest run src\commands\agent.test.ts src\commands\provider.test.ts src\commands\config.test.ts src\commands\tools.test.ts src\commands\memory.test.ts src\commands\session.test.ts src\commands\status.test.ts src\commands\mcp.test.ts src\control-plane.test.ts`
 
-### 16. `harden-published-catalog-ingestion`
+### 16. `wire-cli-mcp-config`
+
+Status: **completed**
+
+What changed:
+
+- `packages/cli/src/commands/mcp.ts` no longer prints a fabricated MCP router config for `hypercode mcp config`
+- `mcp config` now reads the live `config.list` store, reconstructs the `mcp` section from dotted keys, and renders truthful MCP router settings instead of invented defaults
+- `--json` now emits the structured live MCP config section for automation and troubleshooting
+- command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
+- focused CLI coverage in `packages/cli/src/commands/mcp.test.ts` now includes the MCP config JSON flow
+
+Validation:
+
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\mcp.test.ts src\commands\agent.test.ts src\commands\provider.test.ts src\commands\config.test.ts src\commands\tools.test.ts src\commands\memory.test.ts src\commands\session.test.ts src\commands\status.test.ts src\control-plane.test.ts`
+
+### 17. `harden-published-catalog-ingestion`
 
 Status: **completed**
 

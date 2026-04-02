@@ -129,6 +129,24 @@ describe('registerMcpCommand', () => {
     }, null, 2));
   });
 
+  it('shows live MCP config as JSON from the config router', async () => {
+    queryTrpcMock.mockResolvedValue([
+      { key: 'mcp.progressiveDisclosure', value: 'true' },
+      { key: 'mcp.toonFormat', value: 'false' },
+      { key: 'mcp.heartbeatInterval', value: '30000' },
+    ]);
+
+    const program = createProgram();
+    await program.parseAsync(['mcp', 'config', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).toHaveBeenCalledWith('config.list');
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      progressiveDisclosure: true,
+      toonFormat: false,
+      heartbeatInterval: 30000,
+    }, null, 2));
+  });
+
   it('reports control-plane failures without throwing out of the command', async () => {
     queryTrpcMock.mockRejectedValue(new Error('control plane unavailable'));
 

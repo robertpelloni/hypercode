@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CLI MCP Config Surface**: `hypercode mcp config` now reads the live `config.list` MCP section instead of printing a fabricated router config, with structured `--json` output and actionable control-plane error reporting.
 - **CLI Agent Council Status Surface**: `hypercode agent council --status` now queries the live `director.status`, `supervisor.status`, and `council.status` control-plane routes instead of printing hardcoded "not configured" state, with structured `--json` output and actionable control-plane error reporting.
 - **CLI Provider Fallback Surface**: `hypercode provider fallback --show` now queries the live `billing.getFallbackChain` control-plane route instead of printing a fabricated "not configured" chain, with structured `--json` output, task-type filtering, and actionable control-plane error reporting.
 - **CLI Secrets Inventory Surface**: `hypercode config secrets --list` now queries the live `secrets.list` control-plane route instead of always printing a fake empty state, with structured `--json` output, masked table rendering, and actionable control-plane error reporting.
