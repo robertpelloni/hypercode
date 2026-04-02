@@ -13,7 +13,7 @@
  *  4. Cloud coding tool dashboards – direct links to Cloud Orchestrator, Copilot Workspace,
  *     Claude for cloud, OpenAI Codex Cloud, Devin, Blocks, Cursor, etc.
  *
- * Auth status is pulled from the Borg billing router (`getProviderQuotas`)
+ * Auth status is pulled from the HyperCode billing router (`getProviderQuotas`)
  * so the page reflects real configuration state rather than hardcoded data.
  */
 
@@ -41,6 +41,7 @@ import { PageStatusBanner } from "@/components/PageStatusBanner";
 import {
     getProviderPortalCards,
     getProviderQuickAccessSections,
+    type BillingProviderQuotaSummary,
     type ProviderPortalCard,
 } from "../billing/billing-portal-data";
 
@@ -263,6 +264,14 @@ const KIND_INFO: Record<string, { label: string; icon: React.ReactNode; class: s
     docs:      { label: "Docs",      icon: <Bot className="h-3 w-3" />,          class: "bg-zinc-900 text-zinc-400 border-zinc-700" },
 };
 
+function isBillingProviderQuotaSummary(value: unknown): value is BillingProviderQuotaSummary {
+    return typeof value === "object"
+        && value !== null
+        && typeof (value as { provider?: unknown }).provider === "string"
+        && typeof (value as { name?: unknown }).name === "string"
+        && typeof (value as { configured?: unknown }).configured === "boolean";
+}
+
 function ActionBadge({ kind, label, href }: { kind: string; label: string; href: string }) {
     const info = KIND_INFO[kind] ?? KIND_INFO.console;
     return (
@@ -353,15 +362,26 @@ export default function ProvidersHubPage() {
     const providerQuotasQuery = trpc.billing.getProviderQuotas.useQuery(undefined, {
         refetchInterval: 30000,
     });
+    const quotasUnavailable = providerQuotasQuery.isError
+        || (
+            providerQuotasQuery.data !== undefined
+            && (
+                !Array.isArray(providerQuotasQuery.data)
+                || !providerQuotasQuery.data.every(isBillingProviderQuotaSummary)
+            )
+        );
+    const safeProviderQuotas = !quotasUnavailable && Array.isArray(providerQuotasQuery.data)
+        ? providerQuotasQuery.data
+        : undefined;
 
     const providerCards = useMemo(
-        () => getProviderPortalCards(providerQuotasQuery.data as any),
-        [providerQuotasQuery.data]
+        () => getProviderPortalCards(safeProviderQuotas),
+        [safeProviderQuotas]
     );
 
     const quickAccessSections = useMemo(
-        () => getProviderQuickAccessSections(providerQuotasQuery.data as any),
-        [providerQuotasQuery.data]
+        () => getProviderQuickAccessSections(safeProviderQuotas),
+        [safeProviderQuotas]
     );
 
     const q = filter.trim().toLowerCase();
@@ -408,7 +428,7 @@ export default function ProvidersHubPage() {
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-zinc-500">
-                        {configuredCount} / {providerCards.length} configured
+                        {quotasUnavailable ? '— / — configured' : `${configuredCount} / ${providerCards.length} configured`}
                     </span>
                     <button
                         onClick={() => void providerQuotasQuery.refetch()}
@@ -424,11 +444,16 @@ export default function ProvidersHubPage() {
                 <PageStatusBanner
                     status="experimental"
                     message="AI Providers Hub"
-                    note="Provider auth status is live via the Borg billing router. All external links open the provider's own portal in a new tab."
+                    note="Provider auth status is live via the HyperCode billing router. All external links open the provider's own portal in a new tab."
                 />
             </div>
 
             <div className="flex-1 p-4 space-y-8">
+                {quotasUnavailable ? (
+                    <div className="rounded-lg border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-300">
+                        {providerQuotasQuery.error?.message ?? 'Provider quota status is unavailable.'}
+                    </div>
+                ) : null}
 
                 {/* Search bar */}
                 <div className="relative max-w-lg">
@@ -482,7 +507,9 @@ export default function ProvidersHubPage() {
                     <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
                         <Key className="h-4 w-4 text-cyan-400" /> Providers &amp; Portals
                     </h2>
-                    {filteredCards.length === 0 ? (
+                    {quotasUnavailable ? (
+                        <p className="text-sm text-red-300">{providerQuotasQuery.error?.message ?? 'Provider portal status is unavailable.'}</p>
+                    ) : filteredCards.length === 0 ? (
                         <p className="text-sm text-zinc-600">No providers match &quot;{filter}&quot;.</p>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
