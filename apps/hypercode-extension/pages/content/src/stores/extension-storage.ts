@@ -196,7 +196,7 @@ export async function getExtensionStorageValue(name: string): Promise<string | n
     }
   } catch (error) {
     logExtensionStorageFallback(error);
-    return legacyValue;
+    return null;
   }
 
   return null;
@@ -207,8 +207,10 @@ export async function setExtensionStorageValue(name: string, value: string): Pro
   if (extensionStorage) {
     try {
       await extensionStorage.set({ [name]: value });
+      return;
     } catch (error) {
       logExtensionStorageFallback(error);
+      return;
     }
   }
 
@@ -220,8 +222,10 @@ export async function removeExtensionStorageValue(name: string): Promise<void> {
   if (extensionStorage) {
     try {
       await extensionStorage.remove(name);
+      return;
     } catch (error) {
       logExtensionStorageFallback(error);
+      return;
     }
   }
 
@@ -249,8 +253,8 @@ export async function setExtensionStorageJson(name: string, value: unknown): Pro
  * Persist state in extension-scoped storage when available.
  *
  * Content-script `localStorage` is page-origin scoped, which fragments saved data by site.
- * This adapter promotes the source of truth to extension storage while still falling back to
- * localStorage in tests or non-extension environments.
+ * This adapter promotes the source of truth to extension storage and only falls back to
+ * localStorage in tests or non-extension environments where extension storage does not exist.
  */
 export function createExtensionStateStorage(): StateStorage {
   return {

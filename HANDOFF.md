@@ -209,11 +209,17 @@ What is known:
 - HyperCode-owned content script logs include `Content script loaded - initializing with Session 10 architecture`
 - restricted browser contexts can throw storage access errors before normal UX initializes
 - persisted store initialization is now safer
+- `apps/hypercode-extension/pages/content/src/stores/extension-storage.ts` no longer falls back to page `localStorage` when extension storage exists but rejects access, so restricted pages stop mirroring extension state into page-scoped storage after `Access to storage is not allowed from this context`
 
 What remains:
 
 - verify whether the remaining console noise is fully addressed by the store adapter migration
 - audit direct runtime `localStorage` reads in content components that may still execute on restricted pages
+
+Validation note:
+
+- focused extension-storage regression coverage was updated in `apps/hypercode-extension/pages/content/src/stores/extension-storage.test.ts`
+- running that test from this repo root is currently blocked because `apps/hypercode-extension` is excluded from the root pnpm workspace and the content package's `tsconfig.json` extends `@extension/tsconfig/base`, which is not resolvable from the root Vitest environment
 
 ### 2. `fix-electron-orchestrator-stats-abi`
 
