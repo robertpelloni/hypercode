@@ -34,6 +34,80 @@ function createProgram(): Command {
 }
 
 describe('registerProviderCommand', () => {
+  it('adds an API-key-backed provider through the live settings route', async () => {
+    queryTrpcMock
+      .mockResolvedValueOnce([
+        {
+          id: 'openai',
+          name: 'OpenAI',
+          envVar: 'OPENAI_API_KEY',
+          configured: false,
+          keyPreview: null,
+        },
+      ])
+      .mockResolvedValueOnce({
+        success: true,
+        updatedKey: 'OPENAI_API_KEY',
+      });
+
+    const program = createProgram();
+    await program.parseAsync(['provider', 'add', 'openai', '--api-key', 'sk-live-1234', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).toHaveBeenNthCalledWith(1, 'settings.getProviders');
+    expect(queryTrpcMock).toHaveBeenNthCalledWith(2, 'settings.updateProviderKey', {
+      provider: 'openai',
+      key: 'sk-live-1234',
+    });
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      ok: true,
+      provider: 'openai',
+      envVar: 'OPENAI_API_KEY',
+    }, null, 2));
+  });
+
+  it('removes a provider through the live settings route', async () => {
+    queryTrpcMock
+      .mockResolvedValueOnce([
+        {
+          id: 'openai',
+          name: 'OpenAI',
+          envVar: 'OPENAI_API_KEY',
+          configured: true,
+          keyPreview: 'sk-a...1234',
+        },
+      ])
+      .mockResolvedValueOnce({
+        success: true,
+        removedKey: 'OPENAI_API_KEY',
+        removedAny: true,
+      });
+
+    const program = createProgram();
+    await program.parseAsync(['provider', 'remove', 'openai', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).toHaveBeenNthCalledWith(1, 'settings.getProviders');
+    expect(queryTrpcMock).toHaveBeenNthCalledWith(2, 'settings.removeProviderKey', {
+      provider: 'openai',
+    });
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      ok: true,
+      provider: 'openai',
+      envVar: 'OPENAI_API_KEY',
+      removedAny: true,
+    }, null, 2));
+  });
+
+  it('rejects unsupported OAuth provider add explicitly', async () => {
+    const program = createProgram();
+    await program.parseAsync(['provider', 'add', 'openai', '--oauth', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      error: 'Live provider add does not yet support OAuth flows.',
+    }, null, 2));
+    expect(process.exitCode).toBe(1);
+  });
+
   it('lists providers as JSON from live control-plane data', async () => {
     queryTrpcMock
       .mockResolvedValueOnce([

@@ -48,12 +48,29 @@ type BillingFallbackResponse = {
   chain: BillingFallbackEntry[];
 };
 
+type ProviderKeyMutationResult = {
+  success: boolean;
+  updatedKey?: string;
+  removedKey?: string;
+  removedAny?: boolean;
+};
+
 function normalizeText(value: string | null | undefined): string {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : '—';
 }
 
 function formatNumber(value: number | null | undefined): string {
   return typeof value === 'number' ? String(value) : '—';
+}
+
+function findProviderByName(
+  providers: SettingsProviderRecord[],
+  name: string,
+): SettingsProviderRecord | undefined {
+  const normalized = name.trim().toLowerCase();
+  return providers.find((entry) => (
+    entry.id.toLowerCase() === normalized || entry.name.toLowerCase() === normalized
+  ));
 }
 
 async function withProviderErrorHandling(
@@ -148,6 +165,7 @@ export function registerProviderCommand(program: Command): void {
     .option('--oauth', 'Use OAuth login flow (for subscription services)')
     .option('--base-url <url>', 'Custom API base URL')
     .option('--models <models...>', 'Enabled models for this provider')
+    .option('--json', 'Output as JSON')
     .addHelpText('after', `
 Supported providers:
   openai       OpenAI API (GPT-5, Codex, etc.)
@@ -168,25 +186,77 @@ OAuth-capable subscription services:
   $ hypercode provider add openai --oauth       # ChatGPT Plus subscription
     `)
     .action(async (name, opts) => {
-      const chalk = (await import('chalk')).default;
-      if (opts.oauth) {
-        console.log(chalk.yellow(`  Starting OAuth flow for ${name}...`));
-        console.log(chalk.dim('  (OAuth login not yet implemented)'));
-      } else if (opts.apiKey) {
-        console.log(chalk.green(`  ✓ Provider '${name}' added with API key`));
-      } else {
-        console.log(chalk.yellow('  Set API key via environment variable or --api-key flag'));
-        console.log(chalk.dim(`  Example: export ${name.toUpperCase()}_API_KEY=sk-...`));
-      }
+      await withProviderErrorHandling(async () => {
+        if (opts.oauth) {
+          throw new Error('Live provider add does not yet support OAuth flows.');
+        }
+        if (opts.baseUrl) {
+          throw new Error('Live provider add does not yet support custom base URLs.');
+        }
+        if (opts.models?.length) {
+          throw new Error('Live provider add does not yet support model allowlists.');
+        }
+        if (!opts.apiKey) {
+          throw new Error(`Live provider add requires --api-key for '${name}'.`);
+        }
+
+        const providers = await queryTrpc<SettingsProviderRecord[]>('settings.getProviders');
+        const providerRecord = findProviderByName(providers, name);
+        if (!providerRecord) {
+          throw new Error(`Provider '${name}' was not found`);
+        }
+
+        const result = await queryTrpc<ProviderKeyMutationResult>('settings.updateProviderKey', {
+          provider: providerRecord.id,
+          key: opts.apiKey,
+        });
+
+        if (opts.json) {
+          console.log(JSON.stringify({
+            ok: result.success,
+            provider: providerRecord.id,
+            envVar: providerRecord.envVar,
+          }, null, 2));
+          return;
+        }
+
+        const chalk = (await import('chalk')).default;
+        console.log(chalk.green(`  ✓ Provider '${providerRecord.name}' configured`));
+        console.log(chalk.dim(`    Env var: ${providerRecord.envVar}`));
+      }, opts);
     });
 
   provider
     .command('remove <name>')
     .description('Remove a configured provider')
     .option('-f, --force', 'Skip confirmation')
-    .action(async (name) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.green(`  ✓ Provider '${name}' removed`));
+    .option('--json', 'Output as JSON')
+    .action(async (name, opts) => {
+      await withProviderErrorHandling(async () => {
+        const providers = await queryTrpc<SettingsProviderRecord[]>('settings.getProviders');
+        const providerRecord = findProviderByName(providers, name);
+        if (!providerRecord) {
+          throw new Error(`Provider '${name}' was not found`);
+        }
+
+        const result = await queryTrpc<ProviderKeyMutationResult>('settings.removeProviderKey', {
+          provider: providerRecord.id,
+        });
+
+        if (opts.json) {
+          console.log(JSON.stringify({
+            ok: result.success,
+            provider: providerRecord.id,
+            envVar: providerRecord.envVar,
+            removedAny: result.removedAny ?? false,
+          }, null, 2));
+          return;
+        }
+
+        const chalk = (await import('chalk')).default;
+        console.log(chalk.green(`  ✓ Provider '${providerRecord.name}' removed`));
+        console.log(chalk.dim(`    Env var: ${providerRecord.envVar}`));
+      }, opts);
     });
 
   provider

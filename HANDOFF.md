@@ -761,7 +761,26 @@ Validation:
 - `pnpm -C packages\cli exec tsc --noEmit`
 - `pnpm -C packages\cli exec vitest run src\commands\mcp.test.ts src\commands\tools.test.ts src\commands\config.test.ts src\control-plane.test.ts`
 
-### 33. `harden-published-catalog-ingestion`
+### 33. `wire-cli-provider-add-remove`
+
+Status: **completed**
+
+What changed:
+
+- `packages/cli/src/commands/provider.ts` no longer prints fabricated success for `hypercode provider add` and `hypercode provider remove`
+- `provider add` now resolves the requested provider through the live `settings.getProviders` inventory and configures API-key-backed providers through `settings.updateProviderKey`
+- `provider remove` now resolves the requested provider through the same live inventory and clears env-backed provider configuration through the new `settings.removeProviderKey` mutation
+- `packages/core/src/routers/settingsRouter.ts` now exposes `removeProviderKey`, which removes the provider env var from in-memory state plus `.env` / `packages/core/.env` persistence when present
+- unsupported placeholder-only options now fail explicitly instead of pretending to work: OAuth flows, custom base URLs, and model allowlists are still not implemented for the live add path
+- focused core coverage in `packages/core/src/routers/settingsRouter.test.ts` now verifies provider-key add/remove persistence behavior, and focused CLI coverage in `packages/cli/src/commands/provider.test.ts` now covers live add/remove plus explicit unsupported-OAuth failure
+
+Validation:
+
+- `pnpm -C packages\core exec vitest run src\routers\settingsRouter.test.ts`
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\provider.test.ts src\commands\config.test.ts src\commands\mcp.test.ts src\control-plane.test.ts`
+
+### 34. `harden-published-catalog-ingestion`
 
 Status: **completed**
 

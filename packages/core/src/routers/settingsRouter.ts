@@ -10,6 +10,60 @@ function getErrorMessage(error: unknown): string {
     return typeof error === 'string' ? error : 'Unknown error';
 }
 
+const providerEnvBindings = [
+    { id: 'openai', envVar: 'OPENAI_API_KEY' },
+    { id: 'anthropic', envVar: 'ANTHROPIC_API_KEY' },
+    { id: 'gemini', envVar: 'GEMINI_API_KEY' },
+    { id: 'google', envVar: 'GEMINI_API_KEY' },
+    { id: 'xai', envVar: 'XAI_API_KEY' },
+    { id: 'deepseek', envVar: 'DEEPSEEK_API_KEY' },
+    { id: 'mistral', envVar: 'MISTRAL_API_KEY' },
+    { id: 'openrouter', envVar: 'OPENROUTER_API_KEY' },
+    { id: 'copilot', envVar: 'COPILOT_API_KEY' },
+    { id: 'cohere', envVar: 'COHERE_API_KEY' },
+    { id: 'groq', envVar: 'GROQ_API_KEY' },
+    { id: 'together', envVar: 'TOGETHER_API_KEY' },
+    { id: 'fireworks', envVar: 'FIREWORKS_API_KEY' },
+    { id: 'google-oauth', envVar: 'GOOGLE_OAUTH_ACCESS_TOKEN' },
+] as const;
+
+function resolveProviderEnvVar(providerId: string): string {
+    const target = providerEnvBindings.find((provider) => provider.id === providerId);
+    if (!target) {
+        throw new Error(`Unknown provider ID: ${providerId}`);
+    }
+    return target.envVar;
+}
+
+function upsertEnvValue(content: string, envKey: string, envValue: string): string {
+    const regex = new RegExp(`^${envKey}=.*\\n?`, 'm');
+    if (regex.test(content)) {
+        return content.replace(regex, `${envKey}="${envValue}"\n`);
+    }
+
+    const leadingNewline = content.length > 0 && !content.endsWith('\n') ? '\n' : '';
+    return `${content}${leadingNewline}${envKey}="${envValue}"\n`;
+}
+
+function removeEnvValue(content: string, envKey: string): { content: string; removed: boolean } {
+    const lines = content.split(/\r?\n/);
+    let removed = false;
+    const kept = lines.filter((line) => {
+        if (line.startsWith(`${envKey}=`)) {
+            removed = true;
+            return false;
+        }
+        return true;
+    });
+
+    let nextContent = kept.join('\n');
+    if (nextContent.length > 0 && !nextContent.endsWith('\n')) {
+        nextContent += '\n';
+    }
+
+    return { content: nextContent, removed };
+}
+
 export const settingsRouter = t.router({
     /** Get the full configuration object */
     get: publicProcedure.query(() => {
@@ -110,30 +164,7 @@ export const settingsRouter = t.router({
         provider: z.string(),
         key: z.string(),
     })).mutation(async ({ input }) => {
-        // Find which env var controls this provider
-        const providers = [
-            { id: 'openai', envVar: 'OPENAI_API_KEY' },
-            { id: 'anthropic', envVar: 'ANTHROPIC_API_KEY' },
-            { id: 'gemini', envVar: 'GEMINI_API_KEY' },
-            { id: 'google', envVar: 'GEMINI_API_KEY' }, // map both google and gemini to GEMINI_API_KEY just in case
-            { id: 'xai', envVar: 'XAI_API_KEY' },
-            { id: 'deepseek', envVar: 'DEEPSEEK_API_KEY' },
-            { id: 'mistral', envVar: 'MISTRAL_API_KEY' },
-            { id: 'openrouter', envVar: 'OPENROUTER_API_KEY' },
-            { id: 'copilot', envVar: 'COPILOT_API_KEY' },
-            { id: 'cohere', envVar: 'COHERE_API_KEY' },
-            { id: 'groq', envVar: 'GROQ_API_KEY' },
-            { id: 'together', envVar: 'TOGETHER_API_KEY' },
-            { id: 'fireworks', envVar: 'FIREWORKS_API_KEY' },
-            { id: 'google-oauth', envVar: 'GOOGLE_OAUTH_ACCESS_TOKEN' }, // Special case
-        ];
-
-        const target = providers.find(p => p.id === input.provider);
-        if (!target) {
-            throw new Error(`Unknown provider ID: ${input.provider}`);
-        }
-
-        const envKey = target.envVar;
+        const envKey = resolveProviderEnvVar(input.provider);
         const envValue = input.key.trim(); // Trim spaces
 
         // Update in memory immediately
@@ -148,16 +179,7 @@ export const settingsRouter = t.router({
             if (fs.existsSync(envPath)) {
                 envContent = fs.readFileSync(envPath, 'utf8');
             }
-
-            // Check if key already exists, then substitute or append
-            const regex = new RegExp(`^${envKey}=.*\\n?`, 'm');
-            if (regex.test(envContent)) {
-                envContent = envContent.replace(regex, `${envKey}="${envValue}"\n`);
-            } else {
-                // Determine if we need a leading newline
-                const leadingNewline = envContent.length > 0 && !envContent.endsWith('\n') ? '\n' : '';
-                envContent += `${leadingNewline}${envKey}="${envValue}"\n`;
-            }
+            envContent = upsertEnvValue(envContent, envKey, envValue);
 
             fs.writeFileSync(envPath, envContent, 'utf8');
             console.log(`[settingsRouter] Persisted ${envKey} to .env`);
@@ -166,12 +188,7 @@ export const settingsRouter = t.router({
             const coreEnvPath = path.join(rootDir, 'packages', 'core', '.env');
             if (fs.existsSync(coreEnvPath)) {
                 let coreEnvContent = fs.readFileSync(coreEnvPath, 'utf8');
-                if (regex.test(coreEnvContent)) {
-                    coreEnvContent = coreEnvContent.replace(regex, `${envKey}="${envValue}"\n`);
-                } else {
-                    const lNL = coreEnvContent.length > 0 && !coreEnvContent.endsWith('\n') ? '\n' : '';
-                    coreEnvContent += `${lNL}${envKey}="${envValue}"\n`;
-                }
+                coreEnvContent = upsertEnvValue(coreEnvContent, envKey, envValue);
                 fs.writeFileSync(coreEnvPath, coreEnvContent, 'utf8');
                 console.log(`[settingsRouter] Persisted ${envKey} to packages/core/.env`);
             }
@@ -180,6 +197,41 @@ export const settingsRouter = t.router({
         } catch (e: unknown) {
             console.error('[settingsRouter] Failed to persist environment variable', e);
             throw new Error(`Failed to persist key: ${getErrorMessage(e)}`);
+        }
+    }),
+
+    removeProviderKey: publicProcedure.input(z.object({
+        provider: z.string(),
+    })).mutation(async ({ input }) => {
+        const envKey = resolveProviderEnvVar(input.provider);
+        delete process.env[envKey];
+
+        const rootDir = process.cwd();
+        const envPath = path.join(rootDir, '.env');
+        let removedAny = false;
+
+        try {
+            if (fs.existsSync(envPath)) {
+                const envContent = fs.readFileSync(envPath, 'utf8');
+                const updated = removeEnvValue(envContent, envKey);
+                removedAny = removedAny || updated.removed;
+                fs.writeFileSync(envPath, updated.content, 'utf8');
+                console.log(`[settingsRouter] Removed ${envKey} from .env`);
+            }
+
+            const coreEnvPath = path.join(rootDir, 'packages', 'core', '.env');
+            if (fs.existsSync(coreEnvPath)) {
+                const coreEnvContent = fs.readFileSync(coreEnvPath, 'utf8');
+                const updated = removeEnvValue(coreEnvContent, envKey);
+                removedAny = removedAny || updated.removed;
+                fs.writeFileSync(coreEnvPath, updated.content, 'utf8');
+                console.log(`[settingsRouter] Removed ${envKey} from packages/core/.env`);
+            }
+
+            return { success: true, removedKey: envKey, removedAny };
+        } catch (e: unknown) {
+            console.error('[settingsRouter] Failed to remove environment variable', e);
+            throw new Error(`Failed to remove key: ${getErrorMessage(e)}`);
         }
     }),
 });
