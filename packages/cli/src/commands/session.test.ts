@@ -502,4 +502,81 @@ describe('registerSessionCommand', () => {
       },
     }, null, 2));
   });
+
+  it('broadcasts to cloud sessions through the live control plane', async () => {
+    queryTrpcMock.mockResolvedValue({
+      delivered: 2,
+      skipped: 1,
+      results: [
+        { sessionId: 'cds_1', messageId: 'msg_1', status: 'active' },
+        { sessionId: 'cds_2', messageId: 'msg_2', status: 'pending' },
+      ],
+      skippedByReason: {
+        terminal_requires_force: 1,
+      },
+      skippedSessionIds: ['cds_3'],
+      skippedSessions: [
+        {
+          id: 'cds_3',
+          provider: 'codex',
+          projectName: 'completed-project',
+          status: 'completed',
+          reason: 'terminal_requires_force',
+        },
+      ],
+      skippedSessionsSampled: false,
+    });
+
+    const program = createProgram();
+    await program.parseAsync(['session', 'broadcast', 'ship it', '--cloud', '--force', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).toHaveBeenCalledWith('cloudDev.broadcastMessage', {
+      content: 'ship it',
+      force: true,
+    });
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      delivered: 2,
+      skipped: 1,
+      results: [
+        { sessionId: 'cds_1', messageId: 'msg_1', status: 'active' },
+        { sessionId: 'cds_2', messageId: 'msg_2', status: 'pending' },
+      ],
+      skippedByReason: {
+        terminal_requires_force: 1,
+      },
+      skippedSessionIds: ['cds_3'],
+      skippedSessions: [
+        {
+          id: 'cds_3',
+          provider: 'codex',
+          projectName: 'completed-project',
+          status: 'completed',
+          reason: 'terminal_requires_force',
+        },
+      ],
+      skippedSessionsSampled: false,
+    }, null, 2));
+  });
+
+  it('fails local session broadcast explicitly instead of returning fake success', async () => {
+    const program = createProgram();
+    await program.parseAsync(['session', 'broadcast', 'ship it', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      error: 'Live local session broadcast is unavailable: only cloud session broadcast is currently wired. Re-run with --cloud to use the live cloudDev.broadcastMessage route.',
+    }, null, 2));
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('fails cloud transfer explicitly instead of printing not implemented copy', async () => {
+    const program = createProgram();
+    await program.parseAsync(['session', 'cloud', '--transfer', 'sess_live_1', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      error: "Live cloud transfer is unavailable for 'sess_live_1': the control plane does not expose a real local-to-cloud transfer route yet.",
+    }, null, 2));
+    expect(process.exitCode).toBe(1);
+  });
 });

@@ -107,6 +107,26 @@ type SessionImportResult = {
   }>;
 };
 
+type CloudBroadcastResult = {
+  delivered: number;
+  skipped: number;
+  results: Array<{
+    sessionId: string;
+    messageId: string;
+    status: string;
+  }>;
+  skippedByReason: Record<string, number>;
+  skippedSessionIds: string[];
+  skippedSessions: Array<{
+    id: string;
+    provider: string;
+    projectName: string;
+    status: string;
+    reason: string;
+  }>;
+  skippedSessionsSampled: boolean;
+};
+
 function normalizeText(value: string | null | undefined): string {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : '—';
 }
@@ -549,9 +569,32 @@ Harnesses:
     .command('broadcast <message>')
     .description('Send a message to all active sessions')
     .option('--cloud', 'Include cloud dev sessions')
-    .action(async (message) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.green(`  ✓ Broadcast sent to all sessions: "${message.substring(0, 50)}..."`));
+    .option('--force', 'Include terminal cloud sessions')
+    .option('--json', 'Output as JSON')
+    .action(async (message, opts) => {
+      await withSessionErrorHandling(async () => {
+        if (!opts.cloud) {
+          throw new Error('Live local session broadcast is unavailable: only cloud session broadcast is currently wired. Re-run with --cloud to use the live cloudDev.broadcastMessage route.');
+        }
+
+        const result = await queryTrpc<CloudBroadcastResult>('cloudDev.broadcastMessage', {
+          content: message,
+          force: Boolean(opts.force),
+        });
+
+        if (opts.json) {
+          console.log(JSON.stringify(result, null, 2));
+          return;
+        }
+
+        const chalk = (await import('chalk')).default;
+        console.log(chalk.green(`  ✓ Broadcast delivered to ${result.delivered} cloud session${result.delivered === 1 ? '' : 's'}`));
+        console.log(chalk.dim(`    Skipped: ${result.skipped}`));
+
+        if (result.skipped > 0 && Object.keys(result.skippedByReason).length > 0) {
+          console.log(chalk.dim(`    Reasons: ${Object.entries(result.skippedByReason).map(([reason, count]) => `${reason}=${count}`).join(', ')}`));
+        }
+      }, opts);
     });
 
   session
@@ -563,9 +606,7 @@ Harnesses:
     .action(async (opts) => {
       await withSessionErrorHandling(async () => {
         if (opts.transfer) {
-          const chalk = (await import('chalk')).default;
-          console.log(chalk.yellow(`  Cloud transfer for session '${opts.transfer}' is not implemented yet.`));
-          return;
+          throw new Error(`Live cloud transfer is unavailable for '${opts.transfer}': the control plane does not expose a real local-to-cloud transfer route yet.`);
         }
 
         const [providers, sessions, stats] = await Promise.all([

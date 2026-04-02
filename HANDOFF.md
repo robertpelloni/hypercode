@@ -838,6 +838,23 @@ Validation:
 - `pnpm -C packages\cli exec tsc --noEmit`
 - `pnpm -C packages\cli exec vitest run src\commands\mcp.test.ts src\commands\session.test.ts src\commands\tools.test.ts src\control-plane.test.ts`
 
+### 37. `wire-cli-session-cloud-broadcast`
+
+Status: **completed**
+
+What changed:
+
+- `packages/cli/src/commands/session.ts` no longer prints a fabricated success line for `hypercode session broadcast <message>` when the request is targeting cloud sessions
+- `hypercode session broadcast --cloud` now calls the live `cloudDev.broadcastMessage` control-plane mutation, forwards `--force`, and supports structured `--json` output with the real per-session delivery report
+- local-session broadcast is still not backed by a real control-plane route, so `hypercode session broadcast` without `--cloud` now fails explicitly instead of pretending the message was sent everywhere
+- `hypercode session cloud --transfer <id>` also now fails explicitly because there is still no real local-to-cloud session transfer route behind that flag
+- focused CLI coverage in `packages/cli/src/commands/session.test.ts` now locks in live cloud broadcast plus explicit unsupported local-broadcast and cloud-transfer failures
+
+Validation:
+
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\session.test.ts src\commands\mcp.test.ts src\commands\tools.test.ts src\control-plane.test.ts`
+
 ### 9. `workflow-canvas-save-truthfulness`
 
 Status: **completed**
