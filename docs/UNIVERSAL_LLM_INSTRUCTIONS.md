@@ -96,3 +96,29 @@ The most credible current articulation of HyperCode is:
 > HyperCode is a local-first AI control plane for MCP servers, provider routing, sessions, memory, and operator observability, with a broader experimental layer around orchestration and automation.
 
 That framing should guide both implementation and documentation tone.
+
+## 3. Recommended Binary Topology & Extraction Seams
+
+Treat the long-term HyperCode runtime as a **small family of focused binaries**, not one giant process and not a fully exploded microservice graph. Do **not** split everything at once. Use the following boundaries to guide module design and package seams:
+
+### Core naming & ownership
+
+- `hypercoded` — owns top-level orchestration, operator state, routing policy, supervision, and system health/status surfaces
+- `hypercode` — is the operator-facing CLI that talks to `hypercoded`
+- `hypercode-web` and `hypercode-native` — are GUI clients for the same control-plane APIs
+- `hypermcpd` — owns MCP server registry, routing, connection lifecycle, tool inventory exposure, and runtime tool mediation
+- `hypermcp-indexer` — owns MCP scraping, probing, metadata caching, schema capture, and offline inventory refresh jobs
+- `hypermemd` — owns long-running memory state, session context persistence, resource coordination, and memory-serving APIs
+- `hyperingest` — owns batch imports such as bookmarks, session discovery/import, prompt-library ingestion, and other background normalization/indexing jobs
+- `hyperharnessd` — owns model execution loops, tool-call execution flow, harness-local session runtime, and harness isolation concerns
+- `hyperharness` — is the direct CLI/operator entrypoint for harness-specific tasks
+
+### Rollout Order
+
+Prefer a **modular monolith first** with shared packages and stable contracts. Split binaries only when there is a clear need for separate lifecycle, scaling, crash isolation, privilege boundaries, or deployment targets.
+
+1. Keep `hypercode` and `hypercoded` as the primary operator pair.
+2. Define internal package seams for `hypermcpd`, `hypermemd`, `hyperingest`, and `hyperharnessd`.
+3. Extract `hypermcpd` when MCP routing/probing/cache lifecycle clearly needs its own uptime or crash boundary.
+4. Extract `hypermemd` and/or `hyperingest` when background ingestion, session processing, or memory persistence starts competing with operator latency.
+5. Extract `hyperharnessd` when harness execution needs its own resource envelope or failure isolation.
