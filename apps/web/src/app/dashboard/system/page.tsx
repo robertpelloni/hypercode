@@ -1,12 +1,80 @@
 "use client";
 
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@borg/ui";
-import { Badge } from "@borg/ui";
-import { Button } from "@borg/ui";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@hypercode/ui";
+import { Badge } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
 import { Activity, FileText, Shield, Server, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { PageStatusBanner } from '@/components/PageStatusBanner';
+
+function isStartupStatusPayload(value: unknown): value is {
+    ready?: boolean;
+    uptime?: number;
+    runtime?: { version?: string };
+    checks?: {
+        mcpAggregator?: { liveReady?: boolean };
+        configSync?: { ready?: boolean };
+        memory?: { ready?: boolean };
+        browser?: { ready?: boolean };
+        sessionSupervisor?: { ready?: boolean };
+        extensionBridge?: { ready?: boolean };
+        executionEnvironment?: { ready?: boolean };
+    };
+    blockingReasons?: Array<{ code: string; detail?: string }>;
+} {
+    const candidate = value as {
+        ready?: unknown;
+        uptime?: unknown;
+        runtime?: unknown;
+        checks?: unknown;
+        blockingReasons?: unknown;
+    };
+
+    const runtime = candidate?.runtime as { version?: unknown } | undefined;
+    const checks = candidate?.checks as {
+        mcpAggregator?: { liveReady?: unknown };
+        configSync?: { ready?: unknown };
+        memory?: { ready?: unknown };
+        browser?: { ready?: unknown };
+        sessionSupervisor?: { ready?: unknown };
+        extensionBridge?: { ready?: unknown };
+        executionEnvironment?: { ready?: unknown };
+    } | undefined;
+
+    return typeof value === 'object'
+        && value !== null
+        && (candidate.ready === undefined || typeof candidate.ready === 'boolean')
+        && (candidate.uptime === undefined || typeof candidate.uptime === 'number')
+        && (candidate.runtime === undefined || (
+            typeof candidate.runtime === 'object'
+            && candidate.runtime !== null
+            && (runtime?.version === undefined || typeof runtime.version === 'string')
+        ))
+        && (candidate.checks === undefined || (
+            typeof candidate.checks === 'object'
+            && candidate.checks !== null
+            && (checks?.mcpAggregator?.liveReady === undefined || typeof checks.mcpAggregator.liveReady === 'boolean')
+            && (checks?.configSync?.ready === undefined || typeof checks.configSync.ready === 'boolean')
+            && (checks?.memory?.ready === undefined || typeof checks.memory.ready === 'boolean')
+            && (checks?.browser?.ready === undefined || typeof checks.browser.ready === 'boolean')
+            && (checks?.sessionSupervisor?.ready === undefined || typeof checks.sessionSupervisor.ready === 'boolean')
+            && (checks?.extensionBridge?.ready === undefined || typeof checks.extensionBridge.ready === 'boolean')
+            && (checks?.executionEnvironment?.ready === undefined || typeof checks.executionEnvironment.ready === 'boolean')
+        ))
+        && (candidate.blockingReasons === undefined || (
+            Array.isArray(candidate.blockingReasons)
+            && candidate.blockingReasons.every((reason) =>
+                typeof reason === 'object'
+                && reason !== null
+                && typeof (reason as { code?: unknown }).code === 'string'
+                && (
+                    (reason as { detail?: unknown }).detail === undefined
+                    || typeof (reason as { detail?: unknown }).detail === 'string'
+                )
+            )
+        ));
+}
 
 function formatUptime(seconds: number): string {
     if (seconds < 60) return `${Math.floor(seconds)}s`;
@@ -18,8 +86,10 @@ function formatUptime(seconds: number): string {
 
 export default function SystemOverview() {
     const { data: startupStatus, isLoading } = trpc.startupStatus.useQuery(undefined, { refetchInterval: 10000 });
+    const startupStatusUnavailable = startupStatus !== undefined && !isStartupStatusPayload(startupStatus);
+    const statusData = !startupStatusUnavailable && isStartupStatusPayload(startupStatus) ? startupStatus : undefined;
 
-    const checks = startupStatus?.checks;
+    const checks = statusData?.checks;
     const subsystems: { label: string; ready: boolean | undefined }[] = [
         { label: 'MCP Aggregator', ready: checks?.mcpAggregator?.liveReady },
         { label: 'Config Sync', ready: checks?.configSync?.ready },
@@ -31,7 +101,7 @@ export default function SystemOverview() {
     ];
 
     const readyCount = subsystems.filter((s) => s.ready === true).length;
-    const overallReady = startupStatus?.ready === true;
+    const overallReady = statusData?.ready === true;
 
     return (
         <div className="p-8 space-y-8 h-full overflow-y-auto w-full max-w-[1200px] mx-auto">
@@ -44,14 +114,14 @@ export default function SystemOverview() {
                         System Overview
                     </h1>
                     <p className="text-zinc-500 mt-1">
-                        Borg operator console — subsystem health, uptime, and quick navigation.
+                        HyperCode operator console — subsystem health, uptime, and quick navigation.
                     </p>
                 </div>
-                {startupStatus && (
+                {statusData ? (
                     <Badge className={overallReady ? 'bg-green-900 text-green-300' : 'bg-amber-900 text-amber-300'}>
                         {overallReady ? 'Ready' : 'Pending'}
                     </Badge>
-                )}
+                ) : null}
             </div>
 
             {/* Stats row */}
@@ -62,7 +132,7 @@ export default function SystemOverview() {
                         <div>
                             <p className="text-xs text-zinc-500 uppercase tracking-wider">Uptime</p>
                             <p className="text-2xl font-bold text-white">
-                                {isLoading ? '—' : formatUptime(startupStatus?.uptime ?? 0)}
+                                {isLoading || startupStatusUnavailable ? '—' : formatUptime(statusData?.uptime ?? 0)}
                             </p>
                         </div>
                     </CardContent>
@@ -73,7 +143,7 @@ export default function SystemOverview() {
                         <div>
                             <p className="text-xs text-zinc-500 uppercase tracking-wider">Subsystems</p>
                             <p className="text-2xl font-bold text-white">
-                                {isLoading ? '—' : `${readyCount}/${subsystems.length}`}
+                                {isLoading || startupStatusUnavailable ? '—' : `${readyCount}/${subsystems.length}`}
                             </p>
                         </div>
                     </CardContent>
@@ -84,12 +154,18 @@ export default function SystemOverview() {
                         <div>
                             <p className="text-xs text-zinc-500 uppercase tracking-wider">Version</p>
                             <p className="text-2xl font-bold text-white">
-                                {isLoading ? '—' : (startupStatus?.runtime?.version ?? '—')}
+                                {isLoading || startupStatusUnavailable ? '—' : (statusData?.runtime?.version ?? '—')}
                             </p>
                         </div>
                     </CardContent>
                 </Card>
             </div>
+
+            {startupStatusUnavailable ? (
+                <div className="rounded-lg border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-300">
+                    System startup status is unavailable due to malformed data.
+                </div>
+            ) : null}
 
             {/* Subsystem checks */}
             <Card className="bg-zinc-900 border-zinc-800">
@@ -103,6 +179,8 @@ export default function SystemOverview() {
                             <Loader2 className="h-4 w-4 animate-spin" />
                             <span>Loading...</span>
                         </div>
+                    ) : startupStatusUnavailable ? (
+                        <div className="text-sm text-red-300">Subsystem readiness is unavailable due to malformed data.</div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {subsystems.map((sub) => (
@@ -124,7 +202,7 @@ export default function SystemOverview() {
             </Card>
 
             {/* Blocking reasons */}
-            {!overallReady && startupStatus?.blockingReasons && startupStatus.blockingReasons.length > 0 && (
+            {!startupStatusUnavailable && !overallReady && statusData?.blockingReasons && statusData.blockingReasons.length > 0 && (
                 <Card className="bg-amber-950/20 border-amber-800/40">
                     <CardHeader>
                         <CardTitle className="text-amber-300 text-base flex items-center gap-2">
@@ -133,7 +211,7 @@ export default function SystemOverview() {
                     </CardHeader>
                     <CardContent>
                         <ul className="space-y-1">
-                            {startupStatus.blockingReasons.map((reason) => (
+                            {statusData.blockingReasons.map((reason) => (
                                 <li key={reason.code} className="text-sm text-amber-200/80">
                                     <span className="font-mono text-amber-400 mr-2">[{reason.code}]</span>
                                     {reason.detail}
