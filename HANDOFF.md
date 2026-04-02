@@ -821,6 +821,23 @@ Validation:
 - `pnpm -C packages\core exec vitest run src\services\published-catalog-ingestor.test.ts`
 - `pnpm -C packages\core exec tsc --noEmit`
 
+### 36. `harden-cli-remaining-stubs`
+
+Status: **completed**
+
+What changed:
+
+- `packages/cli/src/commands/session.ts` no longer prints fabricated success for `hypercode session pause <id>`; it now fails explicitly through the shared session error path because the control plane does not expose a real pause route yet
+- `packages/cli/src/commands/tools.ts` no longer prints fabricated success for `hypercode tools rename <oldName> <newName>`; it now fails explicitly through the shared tools error path because there is no real tool-rename route yet
+- `packages/cli/src/commands/mcp.ts` no longer prints fabricated success for `hypercode mcp start`, `mcp stop`, `mcp restart`, or `mcp install`; these commands now fail explicitly through the shared MCP error path because the control plane does not expose real server lifecycle or directory-install routes for them yet
+- those hardened commands now accept `--json` so structured live-unavailable errors are surfaced consistently instead of Commander rejecting JSON mode before the handlers run
+- focused CLI coverage in `packages/cli/src/commands/session.test.ts`, `tools.test.ts`, and `mcp.test.ts` now locks in these explicit live-unavailable failures so the CLI cannot drift back to fake success output on the remaining stub surfaces
+
+Validation:
+
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\mcp.test.ts src\commands\session.test.ts src\commands\tools.test.ts src\control-plane.test.ts`
+
 ### 9. `workflow-canvas-save-truthfulness`
 
 Status: **completed**

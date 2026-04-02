@@ -303,4 +303,15 @@ describe('registerToolsCommand', () => {
       },
     }, null, 2));
   });
+
+  it('fails tool rename explicitly instead of returning fake success', async () => {
+    const program = createProgram();
+    await program.parseAsync(['tools', 'rename', 'search_tools', 'search_tools_v2', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      error: "Live tool rename is unavailable for 'search_tools': the control plane does not expose a real tool-rename route yet.",
+    }, null, 2));
+    expect(process.exitCode).toBe(1);
+  });
 });

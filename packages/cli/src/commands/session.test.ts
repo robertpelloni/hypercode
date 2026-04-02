@@ -266,6 +266,17 @@ describe('registerSessionCommand', () => {
     }, null, 2));
   });
 
+  it('fails session pause explicitly instead of returning fake success', async () => {
+    const program = createProgram();
+    await program.parseAsync(['session', 'pause', 'sess_live_1', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      error: "Live session pause is unavailable for 'sess_live_1': the control plane does not expose a real pause route yet.",
+    }, null, 2));
+    expect(process.exitCode).toBe(1);
+  });
+
   it('exports a session as JSON from the live control plane', async () => {
     queryTrpcMock.mockResolvedValue({
       id: 'export_1',

@@ -174,6 +174,10 @@ async function withSessionErrorHandling(
   }
 }
 
+function unsupportedSessionCommand(message: string): Promise<void> {
+  return Promise.reject(new Error(message));
+}
+
 export function registerSessionCommand(program: Command): void {
   const session = program
     .command('session')
@@ -470,9 +474,12 @@ Harnesses:
   session
     .command('pause <id>')
     .description('Pause a running session (preserves state)')
-    .action(async (id) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.green(`  ✓ Session '${id}' paused`));
+    .option('--json', 'Output as JSON')
+    .action(async (id, opts) => {
+      await withSessionErrorHandling(
+        () => unsupportedSessionCommand(`Live session pause is unavailable for '${id}': the control plane does not expose a real pause route yet.`),
+        opts,
+      );
     });
 
   session

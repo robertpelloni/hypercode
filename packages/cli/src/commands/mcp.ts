@@ -145,6 +145,10 @@ function parseSyncClient(value: string): SupportedSyncClient {
   throw new Error(`Unsupported MCP client '${value}'. Supported clients: ${SUPPORTED_SYNC_CLIENTS.join(', ')}.`);
 }
 
+function unsupportedMcpCommand(message: string): Promise<void> {
+  return Promise.reject(new Error(message));
+}
+
 async function withMcpErrorHandling(
   action: () => Promise<void>,
   opts: { json?: boolean } = {},
@@ -375,28 +379,34 @@ export function registerMcpCommand(program: Command): void {
   mcp
     .command('start <name>')
     .description('Start an MCP server by name')
-    .action(async (name) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.yellow(`  Starting MCP server: ${name}...`));
-      console.log(chalk.green(`  ✓ Server '${name}' started`));
+    .option('--json', 'Output as JSON')
+    .action(async (name, opts) => {
+      await withMcpErrorHandling(
+        () => unsupportedMcpCommand(`Live MCP start is unavailable for '${name}': the control plane does not expose a real server-start route yet.`),
+        opts,
+      );
     });
 
   mcp
     .command('stop <name>')
     .description('Stop a running MCP server')
-    .action(async (name) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.yellow(`  Stopping MCP server: ${name}...`));
-      console.log(chalk.green(`  ✓ Server '${name}' stopped`));
+    .option('--json', 'Output as JSON')
+    .action(async (name, opts) => {
+      await withMcpErrorHandling(
+        () => unsupportedMcpCommand(`Live MCP stop is unavailable for '${name}': the control plane does not expose a real server-stop route yet.`),
+        opts,
+      );
     });
 
   mcp
     .command('restart <name>')
     .description('Restart an MCP server (stop + start)')
-    .action(async (name) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.yellow(`  Restarting MCP server: ${name}...`));
-      console.log(chalk.green(`  ✓ Server '${name}' restarted`));
+    .option('--json', 'Output as JSON')
+    .action(async (name, opts) => {
+      await withMcpErrorHandling(
+        () => unsupportedMcpCommand(`Live MCP restart is unavailable for '${name}': the control plane does not expose a real server-restart route yet.`),
+        opts,
+      );
     });
 
   mcp
@@ -696,16 +706,18 @@ Examples:
     .option('--npm', 'Install from npm')
     .option('--pip', 'Install from pip')
     .option('--github <repo>', 'Install from GitHub repo')
+    .option('--json', 'Output as JSON')
     .addHelpText('after', `
 Examples:
   $ hypercode mcp install @modelcontextprotocol/server-filesystem
   $ hypercode mcp install --pip mcp-server-sqlite
   $ hypercode mcp install --github anthropics/mcp-servers
     `)
-    .action(async (pkg) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.yellow(`  Installing MCP server: ${pkg}...`));
-      console.log(chalk.green(`  ✓ Installed '${pkg}'`));
+    .action(async (pkg, opts) => {
+      await withMcpErrorHandling(
+        () => unsupportedMcpCommand(`Live MCP install is unavailable for '${pkg}': the control plane does not expose a real install route for directory entries yet.`),
+        opts,
+      );
     });
 
   mcp

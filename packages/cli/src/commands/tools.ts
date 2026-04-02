@@ -161,6 +161,10 @@ async function withToolsErrorHandling(
   }
 }
 
+function unsupportedToolsCommand(message: string): Promise<void> {
+  return Promise.reject(new Error(message));
+}
+
 export function registerToolsCommand(program: Command): void {
   const tools = program
     .command('tools')
@@ -464,8 +468,11 @@ Examples:
   tools
     .command('rename <oldName> <newName>')
     .description('Rename a tool (for context optimization)')
-    .action(async (oldName, newName) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.green(`  ✓ Tool '${oldName}' renamed to '${newName}'`));
+    .option('--json', 'Output as JSON')
+    .action(async (oldName, newName, opts) => {
+      await withToolsErrorHandling(
+        () => unsupportedToolsCommand(`Live tool rename is unavailable for '${oldName}': the control plane does not expose a real tool-rename route yet.`),
+        opts,
+      );
     });
 }

@@ -302,6 +302,39 @@ describe('registerMcpCommand', () => {
     }, null, 2));
   });
 
+  it('fails MCP start explicitly instead of returning fake success', async () => {
+    const program = createProgram();
+    await program.parseAsync(['mcp', 'start', 'filesystem', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      error: "Live MCP start is unavailable for 'filesystem': the control plane does not expose a real server-start route yet.",
+    }, null, 2));
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('fails MCP stop explicitly instead of returning fake success', async () => {
+    const program = createProgram();
+    await program.parseAsync(['mcp', 'stop', 'filesystem', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      error: "Live MCP stop is unavailable for 'filesystem': the control plane does not expose a real server-stop route yet.",
+    }, null, 2));
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('fails MCP restart explicitly instead of returning fake success', async () => {
+    const program = createProgram();
+    await program.parseAsync(['mcp', 'restart', 'filesystem', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      error: "Live MCP restart is unavailable for 'filesystem': the control plane does not expose a real server-restart route yet.",
+    }, null, 2));
+    expect(process.exitCode).toBe(1);
+  });
+
   it('removes an MCP server as JSON via the live control plane', async () => {
     queryTrpcMock
       .mockResolvedValueOnce([
@@ -455,6 +488,17 @@ describe('registerMcpCommand', () => {
         },
       ],
     }, null, 2));
+  });
+
+  it('fails MCP install explicitly instead of returning fake success', async () => {
+    const program = createProgram();
+    await program.parseAsync(['mcp', 'install', '@modelcontextprotocol/server-filesystem', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      error: "Live MCP install is unavailable for '@modelcontextprotocol/server-filesystem': the control plane does not expose a real install route for directory entries yet.",
+    }, null, 2));
+    expect(process.exitCode).toBe(1);
   });
 
   it('rejects unsupported MCP sync clients explicitly', async () => {
