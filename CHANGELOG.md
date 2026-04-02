@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CLI Memory Read Surfaces**: `hypercode memory search`, `hypercode memory list`, and `hypercode memory stats` now query live control-plane memory routes instead of fabricated empty or zero state, with structured `--json` output and actionable control-plane error reporting.
 - **CLI Cloud Session Surface**: `hypercode session cloud` now queries live cloud provider, session, and aggregate stats routes instead of always printing an empty-state placeholder, with structured `--json` output and actionable control-plane error reporting.
 - **CLI Session Inventory Surface**: `hypercode session list` now queries live local supervisor sessions and live cloud-dev sessions instead of always printing an empty-state placeholder, with merged JSON output, active-only filtering, cloud-only filtering, and actionable control-plane error reporting.
 - **CLI Status Operator Surface**: `hypercode status` now queries live control-plane startup, MCP, session, and provider routes instead of inventing a fake summary, with JSON output and actionable control-plane error reporting.

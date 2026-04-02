@@ -383,7 +383,24 @@ Validation:
 - `pnpm -C packages\cli exec tsc --noEmit`
 - `pnpm -C packages\cli exec vitest run src\commands\session.test.ts src\commands\status.test.ts src\commands\provider.test.ts src\commands\config.test.ts src\commands\mcp.test.ts src\commands\tools.test.ts src\control-plane.test.ts`
 
-### 11. `harden-published-catalog-ingestion`
+### 11. `wire-cli-memory-read-commands`
+
+Status: **completed**
+
+What changed:
+
+- `packages/cli/src/commands/memory.ts` no longer fabricates empty or zero state for `hypercode memory search`, `hypercode memory list`, or `hypercode memory stats`
+- `memory search` now queries `memory.query`, `memory list` now queries `memory.listContexts`, and `memory stats` now combines `memory.getAgentStats` with `memory.getSectionedMemoryStatus`
+- `--json` now emits structured live memory search results, stored context inventory, and sectioned-store/runtime stats instead of placeholder output
+- command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
+- focused CLI coverage was added in `packages/cli/src/commands/memory.test.ts`
+
+Validation:
+
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\memory.test.ts src\commands\session.test.ts src\commands\status.test.ts src\commands\provider.test.ts src\commands\config.test.ts src\commands\mcp.test.ts src\commands\tools.test.ts src\control-plane.test.ts`
+
+### 12. `harden-published-catalog-ingestion`
 
 Status: **completed**
 

@@ -1,16 +1,86 @@
-/**
- * `borg memory` - Universal memory management
- *
- * Manage HyperCode's multi-backend memory system: add, search, browse,
- * import/export, prune, and configure memory backends.
- *
- * @example
- *   borg memory add "Project uses TypeScript ESM"
- *   borg memory search "authentication flow"
- *   borg memory export --format json
- */
-
 import type { Command } from 'commander';
+
+import { queryTrpc, resolveControlPlaneLocation } from '../control-plane.js';
+
+type MemorySearchRecord = {
+  id?: string;
+  content: string;
+  metadata?: Record<string, unknown>;
+  score?: number;
+};
+
+type MemoryContextRecord = {
+  id: string;
+  title?: string;
+  source?: string;
+  createdAt?: number;
+  chunks?: number;
+  metadata?: Record<string, unknown>;
+};
+
+type MemoryStatsRecord = {
+  sessionCount: number;
+  workingCount: number;
+  longTermCount: number;
+  observationCount: number;
+  sessionSummaryCount: number;
+  promptCount: number;
+};
+
+type SectionedMemoryStatus = {
+  totalEntries: number;
+  sectionCount: number;
+  populatedSectionCount: number;
+  missingSections: string[];
+  lastUpdatedAt: string | null;
+  runtimePipeline: {
+    configuredMode: string;
+    providerCount: number;
+    providerNames: string[];
+    sectionedStoreEnabled: boolean;
+  };
+};
+
+function normalizeText(value: string | null | undefined): string {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : '—';
+}
+
+function previewContent(value: string, limit = 120): string {
+  return value.length > limit ? `${value.slice(0, limit - 3)}...` : value;
+}
+
+function formatNumber(value: number | null | undefined): string {
+  return typeof value === 'number' ? String(value) : '—';
+}
+
+function parsePositiveInt(value: string, label: string): number {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed) || parsed < 1) {
+    throw new Error(`${label} must be a positive integer`);
+  }
+  return parsed;
+}
+
+async function withMemoryErrorHandling(
+  action: () => Promise<void>,
+  opts: { json?: boolean } = {},
+): Promise<void> {
+  try {
+    await action();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (opts.json) {
+      console.log(JSON.stringify({ error: message }, null, 2));
+    } else {
+      const chalk = (await import('chalk')).default;
+      const location = resolveControlPlaneLocation();
+      console.error(chalk.red(`  ✗ ${message}`));
+      console.error(chalk.dim(`  Control plane: ${location.baseUrl} (${location.source})`));
+      console.error(chalk.dim('  Start HyperCode with `hypercode start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
+    }
+    process.exitCode = 1;
+  }
+}
 
 export function registerMemoryCommand(program: Command): void {
   const mem = program
@@ -26,9 +96,9 @@ export function registerMemoryCommand(program: Command): void {
     .option('-s, --source <source>', 'Source of the memory', 'cli')
     .addHelpText('after', `
 Examples:
-  $ borg memory add "User prefers dark mode"
-  $ borg memory add "API uses OAuth 2.0" -t semantic --tags auth api
-  $ borg memory add "Deploy with: pnpm build && pnpm start" -t procedural
+  $ hypercode memory add "User prefers dark mode"
+  $ hypercode memory add "API uses OAuth 2.0" -t semantic --tags auth api
+  $ hypercode memory add "Deploy with: pnpm build && pnpm start" -t procedural
     `)
     .action(async (content, opts) => {
       const chalk = (await import('chalk')).default;
@@ -47,9 +117,43 @@ Examples:
     .option('--json', 'Output as JSON')
     .option('--backend <backend>', 'Search specific backend')
     .action(async (query, opts) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.bold.cyan(`\n  Memory Search: "${query}"\n`));
-      console.log(chalk.dim('  No memories found. Add some with `borg memory add`.\n'));
+      await withMemoryErrorHandling(async () => {
+        const limit = parsePositiveInt(opts.topK, 'top-k');
+        const results = await queryTrpc<MemorySearchRecord[]>('memory.query', { query, limit });
+
+        if (opts.json) {
+          console.log(JSON.stringify({ query, results }, null, 2));
+          return;
+        }
+
+        const chalk = (await import('chalk')).default;
+        const Table = (await import('cli-table3')).default;
+
+        console.log(chalk.bold.cyan(`\n  Memory Search: "${query}"\n`));
+        if (results.length === 0) {
+          console.log(chalk.dim('  No matching memories found.\n'));
+          return;
+        }
+
+        const table = new Table({
+          head: ['ID', 'Preview', 'Score', 'Source'],
+          style: { head: ['cyan'] },
+          wordWrap: true,
+          colWidths: [24, 64, 10, 18],
+        });
+
+        for (const entry of results) {
+          table.push([
+            normalizeText(entry.id),
+            previewContent(entry.content),
+            typeof entry.score === 'number' ? entry.score.toFixed(3) : '—',
+            normalizeText(typeof entry.metadata?.source === 'string' ? entry.metadata.source : undefined),
+          ]);
+        }
+
+        console.log(table.toString());
+        console.log('');
+      }, opts);
     });
 
   mem
@@ -59,9 +163,52 @@ Examples:
     .option('-t, --type <type>', 'Filter by type')
     .option('--json', 'Output as JSON')
     .action(async (opts) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.bold.cyan('\n  Recent Memories\n'));
-      console.log(chalk.dim('  No memories stored yet.\n'));
+      await withMemoryErrorHandling(async () => {
+        const limit = parsePositiveInt(opts.limit, 'limit');
+        const contexts = await queryTrpc<MemoryContextRecord[]>('memory.listContexts');
+        const filtered = contexts
+          .filter((entry) => {
+            if (!opts.type) {
+              return true;
+            }
+            return entry.metadata?.type === opts.type;
+          })
+          .slice(0, limit);
+
+        if (opts.json) {
+          console.log(JSON.stringify({ contexts: filtered }, null, 2));
+          return;
+        }
+
+        const chalk = (await import('chalk')).default;
+        const Table = (await import('cli-table3')).default;
+
+        console.log(chalk.bold.cyan('\n  Recent Memories\n'));
+        if (filtered.length === 0) {
+          console.log(chalk.dim('  No stored memory contexts found.\n'));
+          return;
+        }
+
+        const table = new Table({
+          head: ['ID', 'Title', 'Source', 'Chunks', 'Created'],
+          style: { head: ['cyan'] },
+          wordWrap: true,
+          colWidths: [24, 30, 16, 10, 28],
+        });
+
+        for (const entry of filtered) {
+          table.push([
+            entry.id,
+            normalizeText(entry.title),
+            normalizeText(entry.source),
+            formatNumber(entry.chunks),
+            typeof entry.createdAt === 'number' ? new Date(entry.createdAt).toISOString() : '—',
+          ]);
+        }
+
+        console.log(table.toString());
+        console.log('');
+      }, opts);
     });
 
   mem
@@ -73,7 +220,7 @@ Examples:
     .option('--backend <backend>', 'Export from specific backend')
     .action(async (opts) => {
       const chalk = (await import('chalk')).default;
-      const file = opts.output || `borg-memories-export.${opts.format}`;
+      const file = opts.output || `hypercode-memories-export.${opts.format}`;
       console.log(chalk.green(`  ✓ Exported memories to ${file}`));
     });
 
@@ -105,7 +252,7 @@ Examples:
     .command('backends')
     .description('List configured memory backends and their status')
     .option('--json', 'Output as JSON')
-    .action(async (opts) => {
+    .action(async () => {
       const chalk = (await import('chalk')).default;
       const Table = (await import('cli-table3')).default;
       const table = new Table({
@@ -123,13 +270,38 @@ Examples:
     .description('Show memory system statistics')
     .option('--json', 'Output as JSON')
     .action(async (opts) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.bold.cyan('\n  Memory Statistics\n'));
-      console.log(chalk.dim('  Total entries:   ') + '0');
-      console.log(chalk.dim('  Active backends: ') + '1');
-      console.log(chalk.dim('  Storage used:    ') + '0 KB');
-      console.log(chalk.dim('  Last harvest:    ') + 'never');
-      console.log(chalk.dim('  Last prune:      ') + 'never');
-      console.log('');
+      await withMemoryErrorHandling(async () => {
+        const [stats, sectionedStatus] = await Promise.all([
+          queryTrpc<MemoryStatsRecord | null>('memory.getAgentStats'),
+          queryTrpc<SectionedMemoryStatus>('memory.getSectionedMemoryStatus'),
+        ]);
+
+        const payload = {
+          stats,
+          sectionedStore: sectionedStatus,
+        };
+
+        if (opts.json) {
+          console.log(JSON.stringify(payload, null, 2));
+          return;
+        }
+
+        const chalk = (await import('chalk')).default;
+        console.log(chalk.bold.cyan('\n  Memory Statistics\n'));
+        console.log(chalk.dim('  Session memories:    ') + formatNumber(stats?.sessionCount));
+        console.log(chalk.dim('  Working memories:    ') + formatNumber(stats?.workingCount));
+        console.log(chalk.dim('  Long-term memories:  ') + formatNumber(stats?.longTermCount));
+        console.log(chalk.dim('  Observations:        ') + formatNumber(stats?.observationCount));
+        console.log(chalk.dim('  Session summaries:   ') + formatNumber(stats?.sessionSummaryCount));
+        console.log(chalk.dim('  Prompt captures:     ') + formatNumber(stats?.promptCount));
+        console.log(chalk.dim('  Sectioned entries:   ') + formatNumber(sectionedStatus.totalEntries));
+        console.log(chalk.dim('  Sections:            ') + `${sectionedStatus.populatedSectionCount}/${sectionedStatus.sectionCount}`);
+        console.log(chalk.dim('  Providers:           ') + `${sectionedStatus.runtimePipeline.providerCount} (${sectionedStatus.runtimePipeline.providerNames.join(', ') || 'none'})`);
+        console.log(chalk.dim('  Last updated:        ') + normalizeText(sectionedStatus.lastUpdatedAt));
+        if (sectionedStatus.missingSections.length > 0) {
+          console.log(chalk.dim('  Missing sections:    ') + sectionedStatus.missingSections.join(', '));
+        }
+        console.log('');
+      }, opts);
     });
 }
