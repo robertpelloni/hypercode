@@ -134,6 +134,14 @@ function filterTools(
   });
 }
 
+function findServerByName(servers: McpServerRecord[], name: string): McpServerRecord | undefined {
+  const normalized = name.trim().toLowerCase();
+  return servers.find((server) => (
+    server.name.toLowerCase() === normalized
+    || server.displayName?.toLowerCase() === normalized
+  ));
+}
+
 function filterRegistryEntries(
   entries: McpRegistryEntry[],
   query: string,
@@ -340,15 +348,63 @@ Examples:
   mcp
     .command('inspect <name>')
     .description('Show detailed info about an MCP server (tools, traffic stats, latency histogram)')
-    .action(async (name) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.bold.cyan(`\n  MCP Server: ${name}\n`));
-      console.log(chalk.dim('  Status:    ') + 'stopped');
-      console.log(chalk.dim('  Transport: ') + 'stdio');
-      console.log(chalk.dim('  Tools:     ') + '0');
-      console.log(chalk.dim('  Calls:     ') + '0');
-      console.log(chalk.dim('  Avg Latency: ') + '0ms');
-      console.log('');
+    .option('--json', 'Output as JSON')
+    .action(async (name, opts) => {
+      await withMcpErrorHandling(async () => {
+        const [servers, tools] = await Promise.all([
+          queryTrpc<McpServerRecord[]>('mcp.listServers'),
+          queryTrpc<McpToolRecord[]>('mcp.listTools'),
+        ]);
+        const server = findServerByName(servers, name);
+
+        if (!server) {
+          throw new Error(`MCP server '${name}' was not found`);
+        }
+
+        const serverTools = tools.filter((tool) => tool.server?.toLowerCase() === server.name.toLowerCase());
+        const payload = {
+          server,
+          tools: serverTools,
+        };
+
+        if (opts.json) {
+          console.log(JSON.stringify(payload, null, 2));
+          return;
+        }
+
+        const chalk = (await import('chalk')).default;
+        const effectiveToolCount = serverTools.length > 0
+          ? serverTools.length
+          : (server.toolCount ?? server.advertisedToolCount ?? 0);
+        console.log(chalk.bold.cyan(`\n  MCP Server: ${server.displayName ?? server.name}\n`));
+        console.log(chalk.dim('  Name:          ') + server.name);
+        console.log(chalk.dim('  Status:        ') + normalizeText(server.status ?? server.runtimeState));
+        console.log(chalk.dim('  Warmup:        ') + normalizeText(server.warmupState));
+        console.log(chalk.dim('  Tools:         ') + String(effectiveToolCount));
+        console.log(chalk.dim('  Always On:     ') + (server.alwaysOn ? 'yes' : 'no'));
+        console.log(chalk.dim('  Last Connected: ') + normalizeText(server.lastConnectedAt));
+        console.log(chalk.dim('  Last Error:    ') + normalizeText(server.lastError));
+        console.log(chalk.dim('  Tags:          ') + normalizeArray(server.tags));
+
+        if (server.config) {
+          console.log(chalk.dim('  Command:       ') + normalizeText(server.config.command));
+          console.log(chalk.dim('  Args:          ') + normalizeArray(server.config.args));
+          console.log(chalk.dim('  Env:           ') + normalizeArray(server.config.env));
+        }
+
+        if (serverTools.length > 0) {
+          console.log('');
+          console.log(chalk.dim('  Tool Names:'));
+          for (const tool of serverTools.slice(0, 12)) {
+            console.log(chalk.dim('    - ') + tool.name + (tool.description ? chalk.dim(` — ${tool.description}`) : ''));
+          }
+          if (serverTools.length > 12) {
+            console.log(chalk.dim(`    … ${serverTools.length - 12} more tools`));
+          }
+        }
+
+        console.log('');
+      }, opts);
     });
 
   mcp

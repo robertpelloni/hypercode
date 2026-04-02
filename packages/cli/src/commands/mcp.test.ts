@@ -147,6 +147,62 @@ describe('registerMcpCommand', () => {
     }, null, 2));
   });
 
+  it('inspects an MCP server from live server and tool inventory', async () => {
+    queryTrpcMock
+      .mockResolvedValueOnce([
+        {
+          name: 'filesystem',
+          displayName: 'Filesystem',
+          status: 'connected',
+          warmupState: 'ready',
+          toolCount: 2,
+          alwaysOn: true,
+          tags: ['local', 'files'],
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          name: 'read_file',
+          description: 'Read a file',
+          server: 'filesystem',
+        },
+        {
+          name: 'write_file',
+          description: 'Write a file',
+          server: 'filesystem',
+        },
+      ]);
+
+    const program = createProgram();
+    await program.parseAsync(['mcp', 'inspect', 'filesystem', '--json'], { from: 'user' });
+
+    expect(queryTrpcMock).toHaveBeenNthCalledWith(1, 'mcp.listServers');
+    expect(queryTrpcMock).toHaveBeenNthCalledWith(2, 'mcp.listTools');
+    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+      server: {
+        name: 'filesystem',
+        displayName: 'Filesystem',
+        status: 'connected',
+        warmupState: 'ready',
+        toolCount: 2,
+        alwaysOn: true,
+        tags: ['local', 'files'],
+      },
+      tools: [
+        {
+          name: 'read_file',
+          description: 'Read a file',
+          server: 'filesystem',
+        },
+        {
+          name: 'write_file',
+          description: 'Write a file',
+          server: 'filesystem',
+        },
+      ],
+    }, null, 2));
+  });
+
   it('reports control-plane failures without throwing out of the command', async () => {
     queryTrpcMock.mockRejectedValue(new Error('control plane unavailable'));
 

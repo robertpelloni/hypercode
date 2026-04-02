@@ -485,7 +485,24 @@ Validation:
 - `pnpm -C packages\cli exec tsc --noEmit`
 - `pnpm -C packages\cli exec vitest run src\commands\mcp.test.ts src\commands\agent.test.ts src\commands\provider.test.ts src\commands\config.test.ts src\commands\tools.test.ts src\commands\memory.test.ts src\commands\session.test.ts src\commands\status.test.ts src\control-plane.test.ts`
 
-### 17. `harden-published-catalog-ingestion`
+### 17. `wire-cli-mcp-inspect`
+
+Status: **completed**
+
+What changed:
+
+- `packages/cli/src/commands/mcp.ts` no longer prints a fabricated stopped/zero-tools snapshot for `hypercode mcp inspect <name>`
+- `mcp inspect` now reads the live `mcp.listServers` and `mcp.listTools` inventories, resolves the requested server, and renders truthful server status, warmup state, tool count, error state, tags, and tool names
+- `--json` now emits the structured live server-plus-tools snapshot for automation and troubleshooting
+- command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
+- focused CLI coverage in `packages/cli/src/commands/mcp.test.ts` now includes the MCP inspect JSON flow
+
+Validation:
+
+- `pnpm -C packages\cli exec tsc --noEmit`
+- `pnpm -C packages\cli exec vitest run src\commands\mcp.test.ts src\commands\agent.test.ts src\commands\provider.test.ts src\commands\config.test.ts src\commands\tools.test.ts src\commands\memory.test.ts src\commands\session.test.ts src\commands\status.test.ts src\control-plane.test.ts`
+
+### 18. `harden-published-catalog-ingestion`
 
 Status: **completed**
 
