@@ -244,7 +244,7 @@ What remains:
 - focused Maestro stats integration coverage passed after the doc/test/runtime-message updates
 - `node scripts/ensure-native-runtime.mjs` still exits 0 in non-strict mode after warning that stats-backed features may remain unavailable
 - `MAESTRO_STRICT_NATIVE_RUNTIME=1 node scripts/ensure-native-runtime.mjs` still fails on this machine, confirming that the remaining gap is a real native rebuild/toolchain outage rather than a missing wrapper or stale test assumption
-- next ABI follow-up should therefore target concrete rebuild diagnostics or native-toolchain repair guidance, not another broad consumer audit
+- `scripts/ensure-native-runtime.mjs` now captures and forwards rebuild stdout/stderr when available, but this machine's failing rebuild still returns no useful child-process text through `spawnSync`, so the next ABI follow-up should target concrete rebuild observability or native-toolchain repair guidance, not another broad consumer audit
 
 ### 3. `harden-published-catalog-ingestion`
 
