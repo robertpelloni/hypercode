@@ -1,10 +1,51 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@hypercode/ui";
 import { Database, Upload, FileText, Check, Loader2, Search, Brain, Activity } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
+
+type RecentIngestion = {
+    id: string;
+    content: string;
+    createdAt: string | number | Date;
+    metadata?: {
+        title?: string;
+    } | null;
+};
+
+type NormalizedRecentIngestions = {
+    data: RecentIngestion[];
+    invalid: boolean;
+};
+
+function normalizeRecentIngestions(value: unknown): NormalizedRecentIngestions {
+    if (value == null) return { data: [], invalid: false };
+    if (!Array.isArray(value)) return { data: [], invalid: true };
+
+    let invalid = false;
+    const data = value.filter((item): item is RecentIngestion => {
+        if (!item || typeof item !== 'object') {
+            invalid = true;
+            return false;
+        }
+
+        const recent = item as Partial<RecentIngestion>;
+        const metadata = recent.metadata;
+        const metadataValid = metadata == null || (typeof metadata === 'object' && (metadata.title === undefined || typeof metadata.title === 'string'));
+        const createdAtValid = recent.createdAt instanceof Date || typeof recent.createdAt === 'string' || typeof recent.createdAt === 'number';
+        const rowValid = typeof recent.id === 'string' && typeof recent.content === 'string' && createdAtValid && metadataValid;
+
+        if (!rowValid) {
+            invalid = true;
+        }
+
+        return rowValid;
+    });
+
+    return { data, invalid };
+}
 
 export default function IntakePage() {
     const utils = trpc.useContext();
@@ -26,7 +67,10 @@ export default function IntakePage() {
         }
     });
 
-    const { data: recent, isLoading: isLoadingRecent } = trpc.agentMemory.getRecent.useQuery({ limit: 5, type: 'long_term' });
+    const { data: recent, isLoading: isLoadingRecent, error: recentError } = trpc.agentMemory.getRecent.useQuery({ limit: 5, type: 'long_term' });
+    const normalizedRecent = normalizeRecentIngestions(recent);
+    const recentIngestions = normalizedRecent.data;
+    const recentUnavailable = Boolean(recentError) || normalizedRecent.invalid;
 
     const handleIngest = () => {
         if (!content.trim()) return;
@@ -50,7 +94,7 @@ export default function IntakePage() {
                     Cognitive Intake
                 </h1>
                 <p className="text-zinc-500 mt-2">
-                    Manually feed documentation, notes, or raw logs into Borg's long-term memory graph.
+                    Manually feed documentation, notes, or raw logs into HyperCode's long-term memory graph.
                 </p>
             </div>
 
@@ -115,7 +159,7 @@ export default function IntakePage() {
                             </div>
                             <div className="pt-4 border-t border-zinc-900">
                                 <p className="text-[10px] text-zinc-600 italic leading-relaxed">
-                                    Borg uses semantic chunking to digest large inputs. Once ingested, this knowledge is available to all agents via <code>search_memory</code> or <code>auto_call_tool</code>.
+                                    HyperCode uses semantic chunking to digest large inputs. Once ingested, this knowledge is available to all agents via <code>search_memory</code> or <code>auto_call_tool</code>.
                                 </p>
                             </div>
                         </CardContent>
@@ -125,11 +169,15 @@ export default function IntakePage() {
                         <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 px-1">Recent Ingestions</h3>
                         {isLoadingRecent ? (
                             <div className="flex justify-center p-4"><Loader2 className="h-4 w-4 animate-spin text-zinc-700" /></div>
-                        ) : recent?.length === 0 ? (
+                        ) : recentError ? (
+                            <p className="text-[10px] text-red-300 px-1 italic">Recent ingestions unavailable: {recentError.message}</p>
+                        ) : recentUnavailable ? (
+                            <p className="text-[10px] text-red-300 px-1 italic">Recent ingestions unavailable due to malformed data.</p>
+                        ) : recentIngestions.length === 0 ? (
                             <p className="text-[10px] text-zinc-700 px-1 italic">No recent manual ingestions.</p>
                         ) : (
                             <div className="space-y-2">
-                                {recent?.map((mem: any) => (
+                                {recentIngestions.map((mem) => (
                                     <div key={mem.id} className="p-3 bg-zinc-900/50 border border-zinc-800 rounded-lg group hover:border-zinc-700 transition-colors">
                                         <div className="flex items-center justify-between mb-1">
                                             <span className="text-[10px] font-bold text-zinc-400 truncate max-w-[120px]">
