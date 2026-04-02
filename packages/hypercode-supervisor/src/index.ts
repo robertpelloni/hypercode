@@ -401,7 +401,8 @@ class SupervisorServer {
                     const labels = (request.params.arguments?.labels as string[] | undefined) ?? undefined;
                     const windowTitle = request.params.arguments?.windowTitle as string | undefined;
                     const processName = request.params.arguments?.processName as string | undefined;
-                    const result = await this.uiAutomationManager.clickActionButtons(labels, windowTitle, processName);
+                    const surfaceOverride = request.params.arguments?.surfaceOverride as string | undefined;
+                    const result = await this.uiAutomationManager.clickActionButtons(labels, windowTitle, processName, { surfaceOverride });
                     logger.info("Action Buttons Clicked", { labels, windowTitle, processName, clicked: result.clicked.map((item) => item.name) });
                     return {
                         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
@@ -413,7 +414,8 @@ class SupervisorServer {
                     const clearExisting = request.params.arguments?.clearExisting as boolean | undefined;
                     const windowTitle = request.params.arguments?.windowTitle as string | undefined;
                     const processName = request.params.arguments?.processName as string | undefined;
-                    const result = await this.uiAutomationManager.setChatInput(text, { clearExisting, windowTitle, processName });
+                    const surfaceOverride = request.params.arguments?.surfaceOverride as string | undefined;
+                    const result = await this.uiAutomationManager.setChatInput(text, { clearExisting, windowTitle, processName, surfaceOverride });
                     logger.info("Chat Input Set", { textLength: text.length, clearExisting, windowTitle, processName, method: result.method });
                     return {
                         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
@@ -424,7 +426,8 @@ class SupervisorServer {
                     const keyChord = request.params.arguments?.keyChord as string | undefined;
                     const windowTitle = request.params.arguments?.windowTitle as string | undefined;
                     const processName = request.params.arguments?.processName as string | undefined;
-                    const result = await this.uiAutomationManager.submitChatInput(keyChord, windowTitle, processName);
+                    const surfaceOverride = request.params.arguments?.surfaceOverride as string | undefined;
+                    const result = await this.uiAutomationManager.submitChatInput(keyChord, windowTitle, processName, { surfaceOverride });
                     logger.info("Chat Input Submitted", { keyChord, windowTitle, processName });
                     return {
                         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]

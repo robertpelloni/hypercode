@@ -682,19 +682,29 @@ export class UiAutomationManager {
         };
     }
 
-    async clickActionButtons(labels?: string[], windowTitle?: string, processName?: string): Promise<ClickActionResult> {
+    async clickActionButtons(
+        labels?: string[],
+        windowTitle?: string,
+        processName?: string,
+        options?: SurfaceDetectionOptions
+    ): Promise<ClickActionResult> {
         const [settings, surface] = await Promise.all([
             this.getSettings(),
-            this.detectChatSurface()
+            this.detectChatSurface(options)
         ]);
         const resolvedLabels = labels ?? surface.surfaceProfile.actionLabels ?? settings.actionLabels ?? [...DEFAULT_ACTION_LABELS];
         return runPowerShellJson<ClickActionResult>(buildClickScript(resolvedLabels, settings, windowTitle, processName));
     }
 
-    async setChatInput(text: string, options?: { clearExisting?: boolean; windowTitle?: string; processName?: string }): Promise<SetInputResult> {
+    async setChatInput(text: string, options?: {
+        clearExisting?: boolean;
+        windowTitle?: string;
+        processName?: string;
+        surfaceOverride?: string;
+    }): Promise<SetInputResult> {
         const [settings, surface] = await Promise.all([
             this.getSettings(),
-            this.detectChatSurface()
+            this.detectChatSurface({ surfaceOverride: options?.surfaceOverride })
         ]);
         const inputControlTypes = surface.surfaceProfile.inputControlTypes.length > 0
             ? surface.surfaceProfile.inputControlTypes
@@ -711,10 +721,15 @@ export class UiAutomationManager {
         );
     }
 
-    async submitChatInput(keyChord = 'alt+enter', windowTitle?: string, processName?: string): Promise<SubmitInputResult> {
+    async submitChatInput(
+        keyChord = 'alt+enter',
+        windowTitle?: string,
+        processName?: string,
+        options?: SurfaceDetectionOptions
+    ): Promise<SubmitInputResult> {
         const [settings, surface] = await Promise.all([
             this.getSettings(),
-            this.detectChatSurface()
+            this.detectChatSurface(options)
         ]);
         const inputControlTypes = surface.surfaceProfile.inputControlTypes.length > 0
             ? surface.surfaceProfile.inputControlTypes
@@ -745,7 +760,7 @@ export class UiAutomationManager {
         const state = await this.detectChatState(windowTitle, processName, actionLabels, { surfaceOverride: options?.surfaceOverride });
 
         if (state.state === 'awaiting_action') {
-            const clickResult = await this.clickActionButtons(actionLabels, windowTitle, processName);
+            const clickResult = await this.clickActionButtons(actionLabels, windowTitle, processName, { surfaceOverride: options?.surfaceOverride });
             return {
                 state,
                 clicked: clickResult.clicked,
@@ -761,11 +776,12 @@ export class UiAutomationManager {
             await this.setChatInput(bumpText, {
                 clearExisting: true,
                 windowTitle,
-                processName
+                processName,
+                surfaceOverride: options?.surfaceOverride
             });
 
             if (submitAfterTyping) {
-                await this.submitChatInput(submitKeyChord, windowTitle, processName);
+                await this.submitChatInput(submitKeyChord, windowTitle, processName, { surfaceOverride: options?.surfaceOverride });
                 return {
                     state,
                     clicked: [],
