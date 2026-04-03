@@ -1,4 +1,4 @@
-# QUICKSTART.md — Using Borg
+# QUICKSTART.md — Using Hypercode
 
 > **Version**: 2.6.2 | [Full Vision](VISION.md) | [Roadmap](ROADMAP.md)
 
@@ -15,8 +15,8 @@
 ## 1. Installation
 
 ```bash
-git clone https://github.com/robertpelloni/borg.git
-cd borg
+git clone https://github.com/robertpelloni/hypercode.git
+cd hypercode
 pnpm install
 ```
 
@@ -31,7 +31,7 @@ pnpm start
 ```
 
 This boots:
-- **Borg Core** (MCPServer) — Stdio + WebSocket on `ws://localhost:3001`
+- **Hypercode Core** (MCPServer) — Stdio + WebSocket on `ws://localhost:3001`
 - **Web Dashboard** — Next.js on `http://localhost:3000`
 
 ### Option B: Individual Services
@@ -49,9 +49,9 @@ cd packages/cli && npm run build && node dist/index.js
 
 ---
 
-## 3. Using Borg as an MCP Server
+## 3. Using Hypercode as an MCP Server
 
-Borg is a standard MCP server. It exposes all its tools (file operations, code search, memory, agents, research, etc.) via the Model Context Protocol.
+Hypercode is a standard MCP server. It exposes all its tools (file operations, code search, memory, agents, research, etc.) via the Model Context Protocol.
 
 ### Claude Desktop / Cursor / Windsurf
 
@@ -60,10 +60,10 @@ Add to your MCP settings (e.g., `claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
-    "borg": {
+    "hypercode": {
       "command": "node",
-      "args": ["C:/Users/hyper/workspace/borg/packages/core/dist/MCPServer.js"],
-      "cwd": "C:/Users/hyper/workspace/borg"
+      "args": ["C:/Users/hyper/workspace/hypercode/packages/core/dist/MCPServer.js"],
+      "cwd": "C:/Users/hyper/workspace/hypercode"
     }
   }
 }
@@ -71,7 +71,7 @@ Add to your MCP settings (e.g., `claude_desktop_config.json`):
 
 ### Antigravity (VS Code)
 
-Borg integrates natively with the Antigravity VS Code extension. The extension connects to Borg Core via WebSocket on port 3001. This is already configured in the workspace — when you open the Borg project in Antigravity, the extension activates automatically.
+Hypercode integrates natively with the Antigravity VS Code extension. The extension connects to Hypercode Core via WebSocket on port 3001. This is already configured in the workspace — when you open the Hypercode project in Antigravity, the extension activates automatically.
 
 **Connection flow:**
 1. Antigravity extension starts → activates `google.antigravity`
@@ -119,7 +119,7 @@ cd apps/web && npm run dev
 
 ## 5. Browser Extension
 
-The Chrome/Firefox extension bridges browser capabilities to Borg Core.
+The Chrome/Firefox extension bridges browser capabilities to Hypercode Core.
 
 ### Installation (Development)
 
@@ -134,7 +134,7 @@ The Chrome/Firefox extension bridges browser capabilities to Borg Core.
 
 ### How It Works
 
-The extension connects to Borg Core via WebSocket (`ws://localhost:3001`) and provides:
+The extension connects to Hypercode Core via WebSocket (`ws://localhost:3001`) and provides:
 - **Page reading** — extract content from any webpage
 - **Screenshot capture** — visual context for the AI
 - **Tab management** — programmatic browser control
@@ -144,7 +144,7 @@ The extension connects to Borg Core via WebSocket (`ws://localhost:3001`) and pr
 
 ## 6. CLI (Command Line)
 
-The `borg` CLI provides terminal access to all subsystems:
+The `hypercode` CLI provides terminal access to all subsystems:
 
 ```bash
 # Install globally (optional)
@@ -154,16 +154,16 @@ pnpm -w run build && npm link packages/cli
 node packages/cli/dist/index.js
 
 # Available commands:
-borg start          # Start Borg Core
-borg status         # System status
-borg mcp            # MCP server management
-borg memory         # Memory operations (save/recall/search)
-borg agent          # Agent management
-borg session        # Session management
-borg provider       # AI provider configuration
-borg tools          # Tool registry
-borg config         # Configuration
-borg dashboard      # Dashboard management
+hypercode start          # Start Hypercode Core
+hypercode status         # System status
+hypercode mcp            # MCP server management
+hypercode memory         # Memory operations (save/recall/search)
+hypercode agent          # Agent management
+hypercode session        # Session management
+hypercode provider       # AI provider configuration
+hypercode tools          # Tool registry
+hypercode config         # Configuration
+hypercode dashboard      # Dashboard management
 ```
 
 ---
@@ -172,7 +172,7 @@ borg dashboard      # Dashboard management
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    BORG CORE (MCPServer)                 │
+│                    HYPERCODE CORE (MCPServer)                 │
 │                                                         │
 │  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐  │
 │  │ Director │  │ Council  │  │  Memory  │  │ Healer  │  │
@@ -218,7 +218,7 @@ cd ../../apps/web && npm run build
 ```
 
 ### WebSocket not connecting
-- Ensure Borg Core is running (`pnpm start` or `node packages/core/dist/MCPServer.js`)
+- Ensure Hypercode Core is running (`pnpm start` or `node packages/core/dist/MCPServer.js`)
 - Check `ws://localhost:3001/health` returns `{"status":"online"}`
 
 ### Multiple lockfiles warning

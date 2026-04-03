@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "borg Bridge (Firefox)",
+    "name": "hypercode Bridge (Firefox)",
     "version": "0.1.0",
-    "description": "Connects web-based AI agents to your local borg Core.",
+    "description": "Connects web-based AI agents to your local hypercode Core.",
     "permissions": [
         "activeTab",
         "scripting",
@@ -67,7 +67,7 @@
     },
     "browser_specific_settings": {
         "gecko": {
-            "id": "borg-bridge@borg.io",
+            "id": "hypercode-bridge@hypercode.io",
             "strict_min_version": "109.0"
         }
     },

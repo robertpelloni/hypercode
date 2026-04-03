@@ -136,7 +136,7 @@ function getVersion(submodulePath, sha) {
 
 function defaultDescriptionFor(submodulePath) {
     if (submodulePath === 'external/MetaMCP') {
-        return 'MetaMCP bridge/reference used for Borg MCP compatibility work.';
+        return 'MetaMCP bridge/reference used for Hypercode MCP compatibility work.';
     }
 
     if (submodulePath === 'packages/MCP-SuperAssistant') {
@@ -164,7 +164,7 @@ function buildContent(entries) {
 
     let output = '# Submodule Inventory Snapshot\n\n';
     output += `_Generated from \`.gitmodules\` on ${now}._\n\n`;
-    output += `This document lists the submodules that are currently registered in Borg's live submodule registry.\n\n`;
+    output += `This document lists the submodules that are currently registered in Hypercode's live submodule registry.\n\n`;
     output += `| Submodule | Path | Version | Description |\n`;
     output += `| :--- | :--- | :--- | :--- |\n`;
 

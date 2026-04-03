@@ -79,8 +79,8 @@ export class McpServerPool {
 
     private constructor(defaultIdleCount: number = 1) {
         this.defaultIdleCount = defaultIdleCount;
-        this.lazySessionMode = process.env.BORG_MCP_LAZY_SESSIONS !== 'false';
-        this.singleActiveServerMode = process.env.BORG_MCP_SINGLE_ACTIVE_SERVER !== 'false';
+        this.lazySessionMode = process.env.HYPERCODE_MCP_LAZY_SESSIONS !== 'false';
+        this.singleActiveServerMode = process.env.HYPERCODE_MCP_SINGLE_ACTIVE_SERVER !== 'false';
         this.recordLifecycleEvent({
             type: 'mode-updated',
             reasonCode: 'mode-initialized',

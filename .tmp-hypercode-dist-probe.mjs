@@ -3,10 +3,10 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
 const transport = new StdioClientTransport({
   command: 'node',
-  args: ['C:/Users/hyper/workspace/borg/packages/core/dist/MCPServer.js']
+  args: ['C:/Users/hyper/workspace/hypercode/packages/core/dist/MCPServer.js']
 });
 
-const client = new Client({ name: 'borg-dist-probe-verify', version: '1.0.0' }, { capabilities: {} });
+const client = new Client({ name: 'hypercode-dist-probe-verify', version: '1.0.0' }, { capabilities: {} });
 
 try {
   await client.connect(transport);

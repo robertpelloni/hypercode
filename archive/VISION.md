@@ -1,11 +1,11 @@
-# Borg Vision
+# Hypercode Vision
 
 > **Current release track:** `2.7.324`
-> **Near-term mission:** ship a trustworthy Borg 1.0
+> **Near-term mission:** ship a trustworthy Hypercode 1.0
 
-## What Borg is trying to become
+## What Hypercode is trying to become
 
-Borg is a local AI operations control plane.
+Hypercode is a local AI operations control plane.
 
 It should let one operator reliably:
 
@@ -18,7 +18,7 @@ It should let one operator reliably:
 ## Product philosophy
 
 ### Orchestrate, do not clone
-Borg should coordinate external tools via capability contracts and adapters, not reimplement every ecosystem.
+Hypercode should coordinate external tools via capability contracts and adapters, not reimplement every ecosystem.
 
 ### Reliability before breadth
 If a capability is not runnable, observable, and recoverable, it is not done.
@@ -28,17 +28,17 @@ Dashboard language and status must reflect real runtime behavior.
 
 ## Milestone horizon
 
-### Borg 1.0
+### Hypercode 1.0
 - MCP router maturity
 - provider fallback trustworthiness
 - session supervisor reliability
 - truthful operator dashboard
 
-### Borg 1.5
-- coherent Borg-native memory workflows
+### Hypercode 1.5
+- coherent Hypercode-native memory workflows
 - durable browser/IDE capture and context flows
 
-### Borg 2.0
+### Hypercode 2.0
 - safe multi-agent orchestration
 - richer automation and ecosystem integrations
 
@@ -50,7 +50,7 @@ Dashboard language and status must reflect real runtime behavior.
 
 ## Decision standard
 
-Prefer work that makes Borg more:
+Prefer work that makes Hypercode more:
 
 - runnable,
 - observable,

@@ -1,6 +1,6 @@
 package com.HyperCode.plugin.actions
 
-import com.HyperCode.plugin.BorgService
+import com.HyperCode.plugin.HypercodeService
 <<<<<<< HEAD
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -15,7 +15,7 @@ import com.intellij.openapi.ui.Messages
 class ConnectAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val service = project.getService(BorgService::class.java)
+        val service = project.getService(HypercodeService::class.java)
         
         val url = Messages.showInputDialog(
             project,
@@ -45,7 +45,7 @@ class ConnectAction : AnAction() {
 class DisconnectAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val service = project.getService(BorgService::class.java)
+        val service = project.getService(HypercodeService::class.java)
         service.disconnect()
         
         NotificationGroupManager.getInstance()
@@ -60,7 +60,7 @@ class StartDebateAction : AnAction() {
         val project = e.project ?: return
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
-        val service = project.getService(BorgService::class.java)
+        val service = project.getService(HypercodeService::class.java)
         
         if (!service.isConnected()) {
             Messages.showErrorDialog(project, "Not connected to HyperCode Hub", "HyperCode")
@@ -100,7 +100,7 @@ class StartDebateAction : AnAction() {
         
         val topic = Messages.showInputDialog(project, "Enter debate topic:", "Council Debate", null)
         if (topic != null) {
-            val service = project.getService(BorgService::class.java)
+            val service = project.getService(HypercodeService::class.java)
             service.startDebate(topic, selectedText) { result ->
                 Messages.showInfoMessage(project, result, "Debate Result")
             }
@@ -113,7 +113,7 @@ class ArchitectModeAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
 <<<<<<< HEAD
-        val service = project.getService(BorgService::class.java)
+        val service = project.getService(HypercodeService::class.java)
         
         if (!service.isConnected()) {
             Messages.showErrorDialog(project, "Not connected to HyperCode Hub", "HyperCode")
@@ -153,7 +153,7 @@ class ArchitectModeAction : AnAction() {
 class ViewAnalyticsAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val service = project.getService(BorgService::class.java)
+        val service = project.getService(HypercodeService::class.java)
         
         if (!service.isConnected()) {
             Messages.showErrorDialog(project, "Not connected to HyperCode Hub", "HyperCode")
@@ -197,7 +197,7 @@ class SearchMemoryAction : AnAction() {
 =======
         val task = Messages.showInputDialog(project, "Enter task for Architect:", "Architect Mode", null)
         if (task != null) {
-            val service = project.getService(BorgService::class.java)
+            val service = project.getService(HypercodeService::class.java)
             service.startArchitectSession(task) { result ->
                 Messages.showInfoMessage(project, result, "Architect Session Started")
             }

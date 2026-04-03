@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/borghq/hypercode-go/internal/controlplane"
+	"github.com/hypercodehq/hypercode-go/internal/controlplane"
 )
 
 type Definition struct {

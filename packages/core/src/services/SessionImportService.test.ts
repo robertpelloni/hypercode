@@ -636,9 +636,9 @@ describe('SessionImportService', () => {
 
     it('skips a discovered session file that disappears before import', async () => {
         const root = await createTempRoot();
-        const borgSessionDir = path.join(root, '.hypercode', 'sessions');
-        const sessionPath = path.join(borgSessionDir, 'session_123.json');
-        await fs.mkdir(borgSessionDir, { recursive: true });
+        const hypercodeSessionDir = path.join(root, '.hypercode', 'sessions');
+        const sessionPath = path.join(hypercodeSessionDir, 'session_123.json');
+        await fs.mkdir(hypercodeSessionDir, { recursive: true });
         await fs.writeFile(sessionPath, JSON.stringify({ summary: 'Transient session file' }), 'utf-8');
 
         const realReadFile = fs.readFile.bind(fs);

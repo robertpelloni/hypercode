@@ -38,7 +38,7 @@ describe('session supervisor spawn', () => {
             workingDirectory: rootDir,
             command: 'aider',
             args: ['--model', 'gpt-4.1'],
-            env: { BORG_TEST_ENV: 'present' },
+            env: { HYPERCODE_TEST_ENV: 'present' },
         });
 
         const running = await supervisor.startSession(session.id);
@@ -55,7 +55,7 @@ describe('session supervisor spawn', () => {
             args: ['--model', 'gpt-4.1'],
             cwd: rootDir,
         });
-        expect(invocations[0].env.BORG_TEST_ENV).toBe('present');
+        expect(invocations[0].env.HYPERCODE_TEST_ENV).toBe('present');
         expect(attachInfo).toEqual(expect.objectContaining({
             id: session.id,
             pid: 4242,

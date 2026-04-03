@@ -1,4 +1,4 @@
-# 🔬 Borg Codebase Audit — Full Status Report
+# 🔬 Hypercode Codebase Audit — Full Status Report
 
 **Date**: 2026-02-07 | **Auditor**: Opus 4.6 | **For**: Gemini 3 Pro High  
 **Scope**: All packages, apps, services, tools, UI pages, CLI, and routers
@@ -30,16 +30,16 @@ graph TD
 | `agents` | ✅ Active | Director, Council, Supervisor |
 | `tools` | ✅ Active | 15 tool modules exported |
 | `adk` | ✅ Active | IMCPServer interfaces |
-| [search](file:///c:/Users/hyper/workspace/borg/packages/adk/src/AgentInterfaces.ts#62-63) | ✅ Active | SearchService (ripgrep-based) |
-| [ai](file:///c:/Users/hyper/workspace/borg/scripts/verify_tool_activation.ts#6-38) | ⚠️ Unclear | LLMService / ModelSelector |
+| [search](file:///c:/Users/hyper/workspace/hypercode/packages/adk/src/AgentInterfaces.ts#62-63) | ✅ Active | SearchService (ripgrep-based) |
+| [ai](file:///c:/Users/hyper/workspace/hypercode/scripts/verify_tool_activation.ts#6-38) | ⚠️ Unclear | LLMService / ModelSelector |
 | `memory` | ⚠️ Unclear | LanceDB-based vector store |
-| [cli](file:///c:/Users/hyper/workspace/borg/packages/core/src/services/BrowserService.ts#52-57) | ✅ Active | Ink TUI (App.tsx + components) |
+| [cli](file:///c:/Users/hyper/workspace/hypercode/packages/core/src/services/BrowserService.ts#52-57) | ✅ Active | Ink TUI (App.tsx + components) |
 | `tui` | ❌ Empty | `src/` doesn't exist |
-| [ui](file:///c:/Users/hyper/workspace/borg/packages/core/src/services/SubmoduleService.ts#121-137) | ⚠️ Shared | Design system + widgets |
+| [ui](file:///c:/Users/hyper/workspace/hypercode/packages/core/src/services/SubmoduleService.ts#121-137) | ⚠️ Shared | Design system + widgets |
 | `types` | ✅ Active | Shared TypeScript types |
 | `browser` | ⚠️ Unclear | Puppeteer wrapper? |
 | `browser-extension` | ⚠️ Unclear | Separate from `apps/extension` |
-| `borg-supervisor` | ⚠️ Unclear | Autonomous agent logic |
+| `hypercode-supervisor` | ⚠️ Unclear | Autonomous agent logic |
 | `supervisor-plugin` | ⚠️ Unclear | Plugin for supervisor |
 | `mcp-client` | ⚠️ Stub | Only 3 files |
 | `mcp-router-cli` | ⚠️ Stub | Only 1 file |
@@ -197,7 +197,7 @@ graph TD
 
 ## 9. Tools Inventory (`packages/tools/`)
 
-15 tool modules exported from `@borg/tools`:
+15 tool modules exported from `@hypercode/tools`:
 
 | Module | Tools Count | Status |
 |--------|------------|--------|
@@ -217,7 +217,7 @@ graph TD
 | `WorktreeTools` | 2+ | ✅ Active |
 | `ProcessRegistry` | 1+ | ✅ Active |
 
-### MCPServer-Only Tools (Not in `@borg/tools`)
+### MCPServer-Only Tools (Not in `@hypercode/tools`)
 
 These are registered in `MCPServer.setupHandlers` and `executeTool` but NOT exported as reusable modules:
 

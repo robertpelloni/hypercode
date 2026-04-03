@@ -3,7 +3,7 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
-We have addressed a major split-brain issue between the MCP database cache and the lightweight stdio loader that was causing models to see only 1 tool (`borg_core_loader_status`) and losing the `always_on` setting across restarts.
+We have addressed a major split-brain issue between the MCP database cache and the lightweight stdio loader that was causing models to see only 1 tool (`hypercode_core_loader_status`) and losing the `always_on` setting across restarts.
 
 ## Key technical discoveries & fixes
 
@@ -17,7 +17,7 @@ We have addressed a major split-brain issue between the MCP database cache and t
 
 3. **Workspace Config Resolution**
    - **Bug**: The system hardcoded `os.homedir() + '/.hypercode'` for the configuration directory, causing confusion when a local `mcp.jsonc` existed at the project root.
-   - **Fix**: Updated `getBorgConfigDir()` in `mcpJsonConfig.ts` to respect `process.env.BORG_CONFIG_DIR`, then check for `process.cwd()/mcp.jsonc`, and finally fall back to the home directory.
+   - **Fix**: Updated `getHypercodeConfigDir()` in `mcpJsonConfig.ts` to respect `process.env.HYPERCODE_CONFIG_DIR`, then check for `process.cwd()/mcp.jsonc`, and finally fall back to the home directory.
 
 4. **Tool Inventory Merging**
    - **Bug**: `getCachedToolInventory()` returned either the SQLite snapshot OR the JSON snapshot, but never both.

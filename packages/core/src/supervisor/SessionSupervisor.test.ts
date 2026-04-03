@@ -212,10 +212,10 @@ describe('SessionSupervisor', () => {
             shellLabel: 'Cygwin Bash',
         }));
         expect(session.env).toEqual(expect.objectContaining({
-            BORG_EXECUTION_PROFILE_REQUESTED: 'posix',
-            BORG_EXECUTION_SHELL_ID: 'cygwin-bash',
-            BORG_SUPPORTS_POWERSHELL: '1',
-            BORG_SUPPORTS_POSIX_SHELL: '1',
+            HYPERCODE_EXECUTION_PROFILE_REQUESTED: 'posix',
+            HYPERCODE_EXECUTION_SHELL_ID: 'cygwin-bash',
+            HYPERCODE_SUPPORTS_POWERSHELL: '1',
+            HYPERCODE_SUPPORTS_POSIX_SHELL: '1',
         }));
     });
 

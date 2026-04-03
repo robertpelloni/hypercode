@@ -66,7 +66,7 @@ async function main() {
 
     // Generate MD
     let newContent = `# Submodule Dashboard\n\n`;
-    newContent += `This document tracks the status, location, and purpose of all submodules in the borg ecosystem.\n\n`;
+    newContent += `This document tracks the status, location, and purpose of all submodules in the hypercode ecosystem.\n\n`;
     newContent += `| Submodule | Path | Version | Description |\n`;
     newContent += `| :--- | :--- | :--- | :--- |\n`;
 
@@ -78,7 +78,7 @@ async function main() {
 
     newContent += `\n## Directory Structure\n\n`;
     newContent += `\`\`\`\n`;
-    newContent += `borg/\n`;
+    newContent += `hypercode/\n`;
     newContent += `├── packages/           # Monorepo packages\n`;
     newContent += `│   ├── core/           # The "Hub" (Node.js backend)\n`;
     newContent += `│   ├── ui/             # The Dashboard (Next.js frontend)\n`;

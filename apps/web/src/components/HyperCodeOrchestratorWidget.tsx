@@ -448,7 +448,7 @@ export function HyperCodeOrchestratorWidget() {
                             <p>This surface already uses the bundled proxy route at <code className="bg-amber-950/40 px-1 rounded">{serverUrl}</code>.</p>
                             <p>Set one of these env vars only if you need to target a different orchestrator base:</p>
                             <ul className="list-disc pl-4 space-y-1">
-                                <li><code className="bg-amber-950/40 px-1 rounded">NEXT_PUBLIC_BORG_ORCHESTRATOR_URL</code></li>
+                                <li><code className="bg-amber-950/40 px-1 rounded">NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL</code></li>
                                 <li><code className="bg-amber-950/40 px-1 rounded">NEXT_PUBLIC_AUTOPILOT_URL</code> <span className="text-amber-300/70">(legacy alias)</span></li>
                             </ul>
                         </div>

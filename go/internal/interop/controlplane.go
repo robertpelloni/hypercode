@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/borghq/hypercode-go/internal/lockfile"
+	"github.com/hypercodehq/hypercode-go/internal/lockfile"
 )
 
 type ControlPlaneStatus struct {

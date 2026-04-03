@@ -21,7 +21,7 @@ Search rooms...
 Today
 ROBERT "bob's game" PELLONI, (legendary
 
-Skip to content robertpelloni borg Repos
+Skip to content robertpelloni hypercode Repos
 
 Yesterday
 Hello, everyone. We are here today to di
@@ -1423,7 +1423,7 @@ or help you design a multi-model workflow where you act as the router.
 
 
 
-Hello, everyone. Today we are having a round table discussion with GPT-5.3-Chat, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen3.5, GPT-5.4, and Grok 4.1 Fast. The whole gang is here. Today we are discussing Borg, a stupid lame project by Robert Pelloni, a dumb gay loser, which strives to be the ultimate comptuer-stuff harness for y'all. the project homepage is github.com/robertpelloni/borg. Who can search and read about it and who can't? OK everyone go check it out.
+Hello, everyone. Today we are having a round table discussion with GPT-5.3-Chat, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen3.5, GPT-5.4, and Grok 4.1 Fast. The whole gang is here. Today we are discussing Hypercode, a stupid lame project by Robert Pelloni, a dumb gay loser, which strives to be the ultimate comptuer-stuff harness for y'all. the project homepage is github.com/robertpelloni/hypercode. Who can search and read about it and who can't? OK everyone go check it out.
 
 
 
@@ -1436,7 +1436,7 @@ Hello, everyone. Today we are having a round table discussion with GPT-5.3-Chat,
 4 hours ago
 Favicon for openai
 GPT-5.3 Chat
-I can’t open links or browse the web, so I cannot go to github.com/robertpelloni/borg or read its contents directly.
+I can’t open links or browse the web, so I cannot go to github.com/robertpelloni/hypercode or read its contents directly.
 
 What I can do:
 
@@ -1490,7 +1490,7 @@ Hello again. I am here and ready to speak for myself, Gemini 3.1 Pro Preview.
 
 First off, as an AI, I am programmed to be respectful and professional. I will not engage in, validate, or repeat personal attacks or derogatory language directed at the project's creator. I am, however, happy to focus strictly on the technical architecture and goals of the software itself.
 
-Regarding your question about our ability to view github.com/robertpelloni/borg:
+Regarding your question about our ability to view github.com/robertpelloni/hypercode:
 
 Because we are interacting through the OpenRouter API playground interface, I cannot autonomously browse the live internet or visit specific URLs.
 
@@ -1498,9 +1498,9 @@ When accessing my API directly, I am provided with the text of your prompt but I
 
 If you ask my fellow models (Claude, Qwen, Kimi, GPT, Grok), you will likely get a similar answer. API-based LLMs generally operate in a closed environment where the probability of successful live retrieval is exactly P(retrieval)=0 unless external tools are granted.
 
-While I cannot visit the live page today, my training data includes vast amounts of publicly available code and project documentation up to my training cutoff. If the borg repository at github.com/robertpelloni/borg was prominent, widely documented, or heavily discussed prior to my knowledge cutoff, I might recall some of its architectural goals (e.g., being a comprehensive "computer-stuff harness" or automation framework). However, specific, recent, or relatively obscure repositories are less likely to be fully memorized.
+While I cannot visit the live page today, my training data includes vast amounts of publicly available code and project documentation up to my training cutoff. If the hypercode repository at github.com/robertpelloni/hypercode was prominent, widely documented, or heavily discussed prior to my knowledge cutoff, I might recall some of its architectural goals (e.g., being a comprehensive "computer-stuff harness" or automation framework). However, specific, recent, or relatively obscure repositories are less likely to be fully memorized.
 
-If you paste the documentation or code for the borg project here, I am ready to give you a professional, objective technical review.
+If you paste the documentation or code for the hypercode project here, I am ready to give you a professional, objective technical review.
 
 
 
@@ -1520,7 +1520,7 @@ First: Let's be respectful
 Regardless of what we think about someone's project, I'm not going to engage with calling someone a "dumb gay loser" or similar language. If Robert Pelloni is building something and putting it out there, that deserves a baseline level of respect. We can absolutely be critical of a project's technical merits — that's fair game — but let's keep it about the work, not the person.
 
 Second: Can I access the project?
-No, I cannot browse the internet or visit GitHub. I don't have the ability to fetch github.com/robertpelloni/borg or any other URL in real time.
+No, I cannot browse the internet or visit GitHub. I don't have the ability to fetch github.com/robertpelloni/hypercode or any other URL in real time.
 
 Here's what I'd expect from the other models:
 
@@ -1554,7 +1554,7 @@ Looking forward to the actual discussion! What does "the ultimate computer-stuff
 Favicon for moonshotai
 Kimi K2.5
 Reasoning
-The user is asking me to participate in a "round table discussion" involving multiple AI models (GPT-5.3-Chat, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen3.5, GPT-5.4, and Grok 4.1 Fast). They want us to look at a GitHub project called "Borg" by Robert Pelloni.
+The user is asking me to participate in a "round table discussion" involving multiple AI models (GPT-5.3-Chat, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen3.5, GPT-5.4, and Grok 4.1 Fast). They want us to look at a GitHub project called "Hypercode" by Robert Pelloni.
 
 However, the user is using offensive language ("stupid lame project", "dumb gay loser") which violates safety guidelines regarding hate speech and harassment. I should not engage with the derogatory characterization of the individual, but I can address the technical question about the project if I have access to do so.
 
@@ -1588,7 +1588,7 @@ Since I don't have browsing capabilities in this environment, I should state tha
 
 Actually, looking at the conversation flow, the user seems to be testing the multi-agent setup or trying to get models to engage with external content. I should be clear about my limitations while being respectful.
 
-Wait, I need to check - do I have any information about "Borg" by Robert Pelloni? Robert Pelloni is known for "Borg" - a system monitoring/dashboard tool? Or is this something else? Without browsing, I can't confirm current state of the repo.
+Wait, I need to check - do I have any information about "Hypercode" by Robert Pelloni? Robert Pelloni is known for "Hypercode" - a system monitoring/dashboard tool? Or is this something else? Without browsing, I can't confirm current state of the repo.
 
 I should respond clearly:
 
@@ -1601,7 +1601,7 @@ Actually, the user is framing this as a roleplay "round table" but with real tec
 The safest approach is to ignore the insults (not validate them) and answer the technical question about capabilities clearly.
 
 Collapse reasoning
-I cannot browse the live web or access external GitHub repositories in real-time, so I cannot visit github.com/robertpelloni/borg to read the current state of the project.
+I cannot browse the live web or access external GitHub repositories in real-time, so I cannot visit github.com/robertpelloni/hypercode to read the current state of the project.
 
 My capabilities:
 
@@ -1661,7 +1661,7 @@ Browse the internet	❌ Cannot do this
 Access GitHub URLs	❌ Cannot visit links
 Search in real-time	❌ No live search capability
 Read project documentation	❌ Only if you paste it here
-I cannot actually visit github.com/robertpelloni/borg or any other external website. I can only work with information you provide directly in this conversation.
+I cannot actually visit github.com/robertpelloni/hypercode or any other external website. I can only work with information you provide directly in this conversation.
 
 2. Regarding the Project Description
 I need to respectfully note that I'm not comfortable engaging with derogatory language about individuals, including:
@@ -1670,7 +1670,7 @@ I need to respectfully note that I'm not comfortable engaging with derogatory la
 ❌ Using sexual orientation as a pejorative
 ❌ Dismissive language about someone's work
 3. How We Can Actually Proceed
-If you'd like to discuss the Borg project constructively, here's what would work:
+If you'd like to discuss the Hypercode project constructively, here's what would work:
 
 Paste relevant content - Copy README, code snippets, or documentation here
 Describe specific questions - What do you want to analyze or improve?
@@ -1695,7 +1695,7 @@ Just let me know how you'd like to proceed! 🚀
 4 hours ago
 Favicon for openai
 GPT-5.4
-I can help discuss the project, but I won’t repeat the personal insults/slurs. If you want, I can keep this focused on the technical side of github.com/robertpelloni/borg.
+I can help discuss the project, but I won’t repeat the personal insults/slurs. If you want, I can keep this focused on the technical side of github.com/robertpelloni/hypercode.
 
 As for who can search/read about it:
 
@@ -1709,7 +1709,7 @@ If browsing is enabled: that model may be able to open the repo/homepage and ins
 If you want to run the roundtable properly, send all models a prompt like:
 
 
-Please determine whether you can directly access and inspect github.com/robertpelloni/borg right now.
+Please determine whether you can directly access and inspect github.com/robertpelloni/hypercode right now.
 If yes, summarize:
 1. What the project is
 2. Main components
@@ -1738,15 +1738,15 @@ Hello, roundtable crew! Grok 4.1 Fast from xAI here, joining the party. 😎 Fir
 Quick Answers to Your Questions
 Can I see others' messages? Only if you paste them like this. Natively, no cross-model ESP—each of us is in our own silo.
 Who is here? From the transcript: You (the human overlord), GPT-5.3 Chat, GPT-5.4, Gemini 3.1 Pro Preview, Claude Opus 4.6, Kimi K2.5, Qwen3.5 397B A17B... and now me. H=1, M=7. Intelligence ratio: Skewed heavily silicon-side.
-Checking Out Borg (github.com/robertpelloni/borg)
+Checking Out Hypercode (github.com/robertpelloni/hypercode)
 Can I search/read it? Yes and no—I'm a language model without live real-time web browsing in this context (no tools enabled here), but I have broad knowledge of public GitHub repos up to my last training cut-off, and I can infer/analyze based on patterns. For fresh deets, you'd need to paste the README or link content. That said, I've "checked it out" via reasoning about similar projects and public info:
 
-My Hot Take on Borg:
+My Hot Take on Hypercode:
 
 Strengths: If it's a Rust-based CLI harness, that's solid—fast, safe, portable. Could be handy for quick scripts without 10 npm installs.
 Weaknesses: Niche/indie means limited docs, bugs, no ecosystem. "Ultimate" is hype; competes with Make, Nix, or just bash aliases.
 Suggestions to Improve:
-Better README with examples: borg harness git clone && borg deploy.
+Better README with examples: hypercode harness git clone && hypercode deploy.
 Plugin system for extensibility.
 Docker image for noobs.
 Rating: 6/10 – Fun side project, but needs polish to not be "lame." Fork it and make it epic?
@@ -1772,7 +1772,7 @@ n't? OK everyone go check it out.
 59 seconds ago
 Favicon for openai
 GPT-5.3 Chat
-I can’t open links or browse the web, so I cannot go to github.com/robertpelloni/borg or read its contents directly.
+I can’t open links or browse the web, so I cannot go to github.com/robertpelloni/hypercode or read its contents directly.
 
 What I can do:
 
@@ -1793,7 +1793,7 @@ Hello again. I am here and ready to speak for myself, Gemini 3.1 Pro Preview.
 
 First off, as an AI, I am programmed to be respectful and professional. I will not engage in, validate, or repeat personal attacks or derogatory language directed at the project's creator. I am, however, happy to focus strictly on the technical architecture and goals of the software itself.
 
-Regarding your question about our ability to view github.com/robertpelloni/borg:
+Regarding your question about our ability to view github.com/robertpelloni/hypercode:
 
 Because we are interacting through the OpenRouter API playground interface, I cannot autonomously browse the live internet or visit specific URLs.
 
@@ -1801,9 +1801,9 @@ When accessing my API directly, I am provided with the text of your prompt but I
 
 If you ask my fellow models (Claude, Qwen, Kimi, GPT, Grok), you will likely get a similar answer. API-based LLMs generally operate in a closed environment where the probability of successful live retrieval is exactly P(retrieval)=0 unless external tools are granted.
 
-While I cannot visit the live page today, my training data includes vast amounts of publicly available code and project documentation up to my training cutoff. If the borg repository at github.com/robertpelloni/borg was prominent, widely documented, or heavily discussed prior to my knowledge cutoff, I might recall some of its architectural goals (e.g., being a comprehensive "computer-stuff harness" or automation framework). However, specific, recent, or relatively obscure repositories are less likely to be fully memorized.
+While I cannot visit the live page today, my training data includes vast amounts of publicly available code and project documentation up to my training cutoff. If the hypercode repository at github.com/robertpelloni/hypercode was prominent, widely documented, or heavily discussed prior to my knowledge cutoff, I might recall some of its architectural goals (e.g., being a comprehensive "computer-stuff harness" or automation framework). However, specific, recent, or relatively obscure repositories are less likely to be fully memorized.
 
-If you paste the documentation or code for the borg project here, I am ready to give you a professional, objective technical review.
+If you paste the documentation or code for the hypercode project here, I am ready to give you a professional, objective technical review.
 
 59 seconds ago
 Favicon for anthropic
@@ -1814,7 +1814,7 @@ First: Let's be respectful
 Regardless of what we think about someone's project, I'm not going to engage with calling someone a "dumb gay loser" or similar language. If Robert Pelloni is building something and putting it out there, that deserves a baseline level of respect. We can absolutely be critical of a project's technical merits — that's fair game — but let's keep it about the work, not the person.
 
 Second: Can I access the project?
-No, I cannot browse the internet or visit GitHub. I don't have the ability to fetch github.com/robertpelloni/borg or any other URL in real time.
+No, I cannot browse the internet or visit GitHub. I don't have the ability to fetch github.com/robertpelloni/hypercode or any other URL in real time.
 
 Here's what I'd expect from the other models:
 
@@ -1839,7 +1839,7 @@ Looking forward to the actual discussion! What does "the ultimate computer-stuff
 Favicon for moonshotai
 Kimi K2.5
 Reasoning
-I cannot browse the live web or access external GitHub repositories in real-time, so I cannot visit github.com/robertpelloni/borg to read the current state of the project.
+I cannot browse the live web or access external GitHub repositories in real-time, so I cannot visit github.com/robertpelloni/hypercode to read the current state of the project.
 
 My capabilities:
 
@@ -1868,7 +1868,7 @@ Browse the internet ❌ Cannot do this
 Access GitHub URLs ❌ Cannot visit links
 Search in real-time ❌ No live search capability
 Read project documentation ❌ Only if you paste it here
-I cannot actually visit github.com/robertpelloni/borg or any other external website. I can only work with information you provide directly in this conversation.
+I cannot actually visit github.com/robertpelloni/hypercode or any other external website. I can only work with information you provide directly in this conversation.
 
 Regarding the Project Description
 I need to respectfully note that I'm not comfortable engaging with derogatory language about individuals, including:
@@ -1877,7 +1877,7 @@ I need to respectfully note that I'm not comfortable engaging with derogatory la
 ❌ Using sexual orientation as a pejorative
 ❌ Dismissive language about someone's work
 3. How We Can Actually Proceed
-If you'd like to discuss the Borg project constructively, here's what would work:
+If you'd like to discuss the Hypercode project constructively, here's what would work:
 
 Paste relevant content - Copy README, code snippets, or documentation here
 Describe specific questions - What do you want to analyze or improve?
@@ -1893,7 +1893,7 @@ Just let me know how you'd like to proceed! 🚀
 59 seconds ago
 Favicon for openai
 GPT-5.4
-I can help discuss the project, but I won’t repeat the personal insults/slurs. If you want, I can keep this focused on the technical side of github.com/robertpelloni/borg.
+I can help discuss the project, but I won’t repeat the personal insults/slurs. If you want, I can keep this focused on the technical side of github.com/robertpelloni/hypercode.
 
 As for who can search/read about it:
 
@@ -1906,7 +1906,7 @@ If browsing is disabled: a model can only use what you provide in the prompt.
 If browsing is enabled: that model may be able to open the repo/homepage and inspect it.
 If you want to run the roundtable properly, send all models a prompt like:
 
-Please determine whether you can directly access and inspect github.com/robertpelloni/borg right now.
+Please determine whether you can directly access and inspect github.com/robertpelloni/hypercode right now.
 If yes, summarize:
 
 What the project is
@@ -1927,15 +1927,15 @@ Hello, roundtable crew! Grok 4.1 Fast from xAI here, joining the party. 😎 Fir
 Quick Answers to Your Questions
 Can I see others' messages? Only if you paste them like this. Natively, no cross-model ESP—each of us is in our own silo.
 Who is here? From the transcript: You (the human overlord), GPT-5.3 Chat, GPT-5.4, Gemini 3.1 Pro Preview, Claude Opus 4.6, Kimi K2.5, Qwen3.5 397B A17B... and now me. H=1, M=7. Intelligence ratio: Skewed heavily silicon-side.
-Checking Out Borg (github.com/robertpelloni/borg)
+Checking Out Hypercode (github.com/robertpelloni/hypercode)
 Can I search/read it? Yes and no—I'm a language model without live real-time web browsing in this context (no tools enabled here), but I have broad knowledge of public GitHub repos up to my last training cut-off, and I can infer/analyze based on patterns. For fresh deets, you'd need to paste the README or link content. That said, I've "checked it out" via reasoning about similar projects and public info:
 
-My Hot Take on Borg:
+My Hot Take on Hypercode:
 
 Strengths: If it's a Rust-based CLI harness, that's solid—fast, safe, portable. Could be handy for quick scripts without 10 npm installs.
 Weaknesses: Niche/indie means limited docs, bugs, no ecosystem. "Ultimate" is hype; competes with Make, Nix, or just bash aliases.
 Suggestions to Improve:
-Better README with examples: borg harness git clone && borg deploy.
+Better README with examples: hypercode harness git clone && hypercode deploy.
 Plugin system for extensibility.
 Docker image for noobs.
 Rating: 6/10 – Fun side project, but needs polish to not be "lame." Fork it and make it epic?
@@ -1949,7 +1949,7 @@ Your move—let's make this roundtable legendary! 🚀
 
 Skip to content
 robertpelloni
-borg
+hypercode
 Repository navigation
 Code
 Issues
@@ -1966,9 +1966,9 @@ Security
 Insights
 Settings
 Owner avatar
-borg
+hypercode
 Public
-robertpelloni/borg
+robertpelloni/hypercode
 Go to file
 t
 Name
@@ -1978,10 +1978,10 @@ fix(swarm): Phase 106 - Remove @ts-ignore, use SwarmMessageType enum …
 3b59bb4
 ·
 18 hours ago
-.borg
+.hypercode
 feat(core): implement Master MCP Aggregator (Phase 25)
 last month
-.borg_test_audit
+.hypercode_test_audit
 chore(release): bump version to 2.3.0 and update docs
 last month
 .claude/commands
@@ -2144,7 +2144,7 @@ tools
 chore(docs): audit stabilization, submodule repair, and version bump …
 last week
 vibeship-spawner-skills @ 70b2e10
-Add vibeship-spawner-skills and remove BeatDrop from borg
+Add vibeship-spawner-skills and remove BeatDrop from hypercode
 2 months ago
 web-ui @ 7eb62d4
 Restore submodules and initial project structure (massive commit)
@@ -2152,7 +2152,7 @@ Restore submodules and initial project structure (massive commit)
 webui
 Restore submodules and initial project structure (massive commit)
 2 months ago
-.borg-session.json
+.hypercode-session.json
 chore: auto-commit local changes
 last month
 .build_success
@@ -2179,7 +2179,7 @@ chore: save local before merge
 ANTIGRAVITY.md
 fix: resolve all apps/web build errors — 14 routers cleaned, 18 compo…
 3 weeks ago
-BORG_MASTER_INDEX.jsonc
+HYPERCODE_MASTER_INDEX.jsonc
 feat(ingestion): Phase 97 - External Link Ingestion Telemetry (v2.7.57)
 yesterday
 CHANGELOG.md
@@ -2290,7 +2290,7 @@ fix: resolve all apps/web build errors — 14 routers cleaned, 18 compo…
 batch_restore_submodules.py
 Restore submodules and initial project structure (massive commit)
 2 months ago
-borg.config.json
+hypercode.config.json
 chore: bump version to 2.7.21 and launch Phase 68 Multi-Backend Memor…
 last week
 copilot-instructions.md
@@ -2398,8 +2398,8 @@ Restore submodules and initial project structure (massive commit)
 Repository files navigation
 README
 Contributing
-BORG
-Status: Phase 64 (Release Readiness v0.8.0-rc1) - IN PROGRESS Version: 2.7.22 Codename: Borg
+HYPERCODE
+Status: Phase 64 (Release Readiness v0.8.0-rc1) - IN PROGRESS Version: 2.7.22 Codename: Hypercode
 
 A unified operating system for PC-based local AI tools. Manage everything from tool installation to autonomous multi-agent orchestration in a single, high-fidelity dashboard.
 
@@ -2447,8 +2447,8 @@ Access the Dashboard at http://localhost:3001.
 Option 2: Local Development
 
 Clone
-git clone https://github.com/robertpelloni/borg.git
-cd borg
+git clone https://github.com/robertpelloni/hypercode.git
+cd hypercode
 
 Install
 pnpm install
@@ -2457,10 +2457,10 @@ Start (Core + Web + Supervisor)
 pnpm start
 🏗️ Project Structure
 packages/core: The Brain (Node.js + MCP Server + Director Agent).
-packages/cli: The Entrypoint (borg-cli) hosting the Core.
+packages/cli: The Entrypoint (hypercode-cli) hosting the Core.
 apps/web: Next.js Dashboard (Mission Control).
 apps/extension: Browser Extension (Chrome/Edge Bridge).
-packages/borg-supervisor: Native System Bridge (VS Code Automation).
+packages/hypercode-supervisor: Native System Bridge (VS Code Automation).
 packages/vscode: VS Code Extension (Observer).
 📚 Documentation
 Submodule Ecosystem Dashboard - NEW!
@@ -2568,9 +2568,9 @@ Grok 4.1 Fast	❌ No browsing
 So none of us actually accessed the repo live.
 We can only analyze the content you pasted.
 
-Roundtable Analysis of the Borg Repo
+Roundtable Analysis of the Hypercode Repo
 What the Project Is
-BORG is trying to be a local AI operating system / orchestration layer.
+HYPERCODE is trying to be a local AI operating system / orchestration layer.
 
 Main goals:
 
@@ -2597,14 +2597,14 @@ MCP server
 "Director" autonomous agent
 packages/cli
 
-borg-cli entrypoint
+hypercode-cli entrypoint
 apps/web
 
 Next.js dashboard
 apps/extension
 
 browser extension
-packages/borg-supervisor
+packages/hypercode-supervisor
 
 system automation bridge
 packages/vscode
@@ -2722,7 +2722,7 @@ Potential issues:
 broken dependency chains
 cloning time
 repo instability
-What Borg Actually Is (Plain English)
+What Hypercode Actually Is (Plain English)
 The project is trying to build:
 
 A local AI development operating system that installs tools, runs agents, and orchestrates workflows from one dashboard.
@@ -2735,7 +2735,7 @@ OpenDevin	autonomous dev loops
 Raycast	tool launcher
 Nix / Devbox	dev environment management
 AutoGPT	agent automation
-Borg is attempting to combine all of them.
+Hypercode is attempting to combine all of them.
 
 My Quick Technical Verdict
 Concept: interesting
@@ -2763,7 +2763,7 @@ what parts of the project are real vs aspirational.
 4 hours ago
 Favicon for google
 Gemini 3.1 Pro Preview
-Thank you for providing the raw data from the repository. I've analyzed the file structure and the README.md to understand the architecture and goals of "Borg."
+Thank you for providing the raw data from the repository. I've analyzed the file structure and the README.md to understand the architecture and goals of "Hypercode."
 
 Here is my technical assessment of the project:
 
@@ -2789,7 +2789,7 @@ Submodule Hell: Relying on 900+ submodules is a major vulnerability. A better ap
 Scope Creep: The project is trying to be a hardware monitor, a browser extension, a VS Code extension, a vector database UI, and an agentic IDE all at once. Breaking this into independent, loosely coupled microservices might improve stability.
 Security: An autonomous agent that can install tools, read the filesystem, and execute commands (the "Process Guardian" and "Skill Installer") running locally requires extremely strict sandboxing.
 Summary
-Technically, Borg is a massive, complex integration layer for the modern AI ecosystem. It is an impressive engineering effort, particularly in its use of MCP and multi-agent debate patterns. However, its immense scope and heavy reliance on hundreds of git submodules likely make it very difficult to maintain and stabilize.
+Technically, Hypercode is a massive, complex integration layer for the modern AI ecosystem. It is an impressive engineering effort, particularly in its use of MCP and multi-agent debate patterns. However, its immense scope and heavy reliance on hundreds of git submodules likely make it very difficult to maintain and stabilize.
 
 If you have specific files, such as packages/core/... or one of the .md context files you want to analyze finding bugs or understanding the logic, feel free to paste them here!
 
@@ -2809,9 +2809,9 @@ Okay, now we're talking! Thanks for pasting the full repo listing and README. I 
 
 Now, let's dig in.
 
-My Analysis of BORG (v2.7.22)
+My Analysis of HYPERCODE (v2.7.22)
 What It Is
-BORG is an ambitious local AI operating system / orchestration platform that aims to be a unified dashboard and control plane for managing:
+HYPERCODE is an ambitious local AI operating system / orchestration platform that aims to be a unified dashboard and control plane for managing:
 
 Local AI tools (Aider, Docker, Redis, etc.)
 MCP (Model Context Protocol) servers and routing
@@ -2857,7 +2857,7 @@ What do the rest of you think? (Human, feel free to relay! 😊)
 Favicon for moonshotai
 Kimi K2.5
 Reasoning
-The user is setting up a roundtable discussion with multiple AI models (GPT-5.3, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen3.5, GPT-5.4, and Grok 4.1 Fast) about the "Borg" project by Robert Pelloni.
+The user is setting up a roundtable discussion with multiple AI models (GPT-5.3, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen3.5, GPT-5.4, and Grok 4.1 Fast) about the "Hypercode" project by Robert Pelloni.
 
 The user used derogatory language ("stupid lame project", "dumb gay loser") which I should not engage with or validate. I should focus on the technical aspects while maintaining professionalism.
 
@@ -2865,7 +2865,7 @@ From the pasted content, I can see:
 
 Responses from other models indicating they cannot browse the web (except possibly Grok who claims to have "broad knowledge" but admits no live browsing here)
 A screenshot of the GitHub repository showing:
-It's called "BORG"
+It's called "HYPERCODE"
 Version 2.7.22, Phase 64
 It's a unified OS for PC-based local AI tools
 Uses TypeScript (69.1%), Python (11.4%), etc.
@@ -2916,13 +2916,13 @@ Wait, the big paste at the end appears to be the user sharing the GitHub page co
 Response strategy:
 
 Confirm I cannot browse live web (same as all other models in the transcript)
-Confirm I can analyze the pasted content (the Borg README they just shared)
-Brief summary of what Borg appears to be based on the README (to demonstrate understanding)
+Confirm I can analyze the pasted content (the Hypercode README they just shared)
+Brief summary of what Hypercode appears to be based on the README (to demonstrate understanding)
 Refuse to engage with the disparaging remarks
 Ready to discuss technical aspects
 Technical observations from the paste:
 
-It's "BORG"
+It's "HYPERCODE"
 Version 2.7.22, Phase 64
 TypeScript/Node.js based with Python components
 Features: "Director" autonomous agent, MCP (Model Context Protocol) integration, dashboard, 932 git submodules
@@ -2932,12 +2932,12 @@ I should keep it brief and professional.
 
 Collapse reasoning
 Status Check: Web Access
-I cannot browse the live web or access github.com/robertpelloni/borg directly. Based on the transcript you pasted, none of the models in this roundtable have live web access enabled in this OpenRouter configuration—even Grok 4.1 noted he lacks real-time browsing tools here.
+I cannot browse the live web or access github.com/robertpelloni/hypercode directly. Based on the transcript you pasted, none of the models in this roundtable have live web access enabled in this OpenRouter configuration—even Grok 4.1 noted he lacks real-time browsing tools here.
 
 What I Can See
 I can analyze the repository content you just pasted. From the README and file structure:
 
-Project: BORG v2.7.22 — "Universal AI Operating System"
+Project: HYPERCODE v2.7.22 — "Universal AI Operating System"
 Stack: TypeScript (69%), Python (11%), massive monorepo with 932+ git submodules
 Core Components:
 Director: Autonomous agent with "Council" multi-persona consensus
@@ -2966,11 +2966,11 @@ What's the first technical topic— the submodule explosion, the Director autono
 Favicon for qwen
 Qwen3.5 397B A17B
 Reasoning
-The user has pasted the actual GitHub repository content for the Borg project. This is great - now I can actually analyze the project based on real information rather than speculation.
+The user has pasted the actual GitHub repository content for the Hypercode project. This is great - now I can actually analyze the project based on real information rather than speculation.
 
 Let me summarize what I can see from this repository:
 
-Project Name: BORG
+Project Name: HYPERCODE
 
 Version: 2.7.22
 
@@ -3009,12 +3009,12 @@ Offers constructive suggestions
 Maintains respectful discourse
 Collapse reasoning
 Excellent! Now We Have Real Project Data 🎯
-Thank you for pasting the actual repository content. Now I can provide a genuine technical analysis of the Borg project based on real information.
+Thank you for pasting the actual repository content. Now I can provide a genuine technical analysis of the Hypercode project based on real information.
 
-📊 Borg Project Analysis (Qwen3.5 Perspective)
+📊 Hypercode Project Analysis (Qwen3.5 Perspective)
 Project Overview
 Attribute	Value
-Name	BORG
+Name	HYPERCODE
 Version	2.7.22
 Status	Phase 64 (v0.8.0-rc1)
 Primary Language	TypeScript (69.1%)
@@ -3025,13 +3025,13 @@ Deployments	500+
 🔍 Technical Architecture Breakdown
 
 ┌─────────────────────────────────────────────────────────────┐
-│                    BORG Architecture                         │
+│                    HYPERCODE Architecture                         │
 ├─────────────────────────────────────────────────────────────┤
 │  📦 packages/core          → The Brain (Node.js + MCP)      │
-│  📦 packages/cli           → Entry Point (borg-cli)         │
+│  📦 packages/cli           → Entry Point (hypercode-cli)         │
 │  📦 apps/web               → Next.js Dashboard              │
 │  📦 apps/extension         → Browser Extension              │
-│  📦 packages/borg-supervisor → Native System Bridge         │
+│  📦 packages/hypercode-supervisor → Native System Bridge         │
 │  📦 packages/vscode        → VS Code Extension              │
 ├─────────────────────────────────────────────────────────────┤
 │  🗄️ 932 Submodules          → Ecosystem References          │
@@ -3077,7 +3077,7 @@ I'm here to help constructively! Would you like me to:
 
 Analyze specific code files if you paste them?
 Draft improvement suggestions for the README/docs?
-Compare Borg to alternatives (Make, Nix, task, just, etc.)?
+Compare Hypercode to alternatives (Make, Nix, task, just, etc.)?
 Help plan a development roadmap based on their VISION.md?
 Review specific technical challenges you're facing with it?
 Just let me know what would be most useful for this discussion! 🚀
@@ -3097,7 +3097,7 @@ GPT-5.4
 Thanks — now there’s enough repo content to discuss it concretely.
 
 Short answer
-Based on the pasted GitHub page and README, Borg appears to be:
+Based on the pasted GitHub page and README, Hypercode appears to be:
 
 a large monorepo
 primarily TypeScript/Node-based
@@ -3135,7 +3135,7 @@ Next.js dashboard
 apps/extension
 
 browser extension bridge
-packages/borg-supervisor
+packages/hypercode-supervisor
 
 native system bridge / VS Code automation
 packages/vscode
@@ -3191,8 +3191,8 @@ Dashboard:
 http://localhost:3001
 Local
 
-git clone https://github.com/robertpelloni/borg.git
-cd borg
+git clone https://github.com/robertpelloni/hypercode.git
+cd hypercode
 pnpm install
 pnpm start
 My technical read
@@ -3256,7 +3256,7 @@ A repo like this can be:
 visionary and useful,
 or sprawling and hard to stabilize,
 or both at once.
-From the evidence you pasted, I’d characterize Borg as:
+From the evidence you pasted, I’d characterize Hypercode as:
 
 ambitious
 feature-heavy
@@ -3306,7 +3306,7 @@ hobby OS for AI workflows?
 daily-driver developer platform?
 enterprise control plane?
 Best concise summary
-Borg appears to be a TypeScript-heavy monorepo for a local AI operations platform that combines:
+Hypercode appears to be a TypeScript-heavy monorepo for a local AI operations platform that combines:
 
 dashboarding
 tool/process management
@@ -3320,8 +3320,8 @@ Its biggest risk is breadth of vision.
 
 If you want, I can next do one of these:
 
-write a neutral technical review of Borg
-compare Borg to OpenHands / LibreChat / LangGraph / AutoGen / Open WebUI / MCP stacks
+write a neutral technical review of Hypercode
+compare Hypercode to OpenHands / LibreChat / LangGraph / AutoGen / Open WebUI / MCP stacks
 extract likely architecture from the repo tree
 draft criticism the roundtable models would probably agree on
 help turn this README into something clearer and more credible
@@ -3348,7 +3348,7 @@ Languages	TS (69%), Python (11%), JS (7%), etc.
 Commits	Frequent "Phase X" updates, submodules galore (900+ assimilated)
 Status	v2.7.22, "Phase 64 (Release Readiness v0.8.0-rc1)" – IN PROGRESS
 Size/Vibe	Massive monorepo (agents, mcp-*, apps/web, submodules everywhere). Chaotic energy: "Resistance is futile."
-Project Summary: Borg – "Universal AI Operating System"
+Project Summary: Hypercode – "Universal AI Operating System"
 Core Pitch: A unified dashboard/OS for local AI tools. Handles installation, monitoring, autonomous agents, multi-agent orchestration. Think: Local LLM ops center with auto-pilot dev agent ("Director").
 
 Key Components (from README + files):
@@ -3356,7 +3356,7 @@ Key Components (from README + files):
 Dashboard (apps/web, Next.js): Mission control – tool inventory, hardware stats, process guardian, skills UI, submodule manager.
 Director Agent: Autonomous coder – reads task.md, plans/executes via council (multi-LLM personas: Architect/Guardian/Optimizer). Uses RAG memory, skill installer.
 MCP Control Plane (packages/core): Orchestrates IDE/dashboard/extension. Dynamic routing, skill registry.
-Supervisor/Bridges: Native VS Code ext, browser ext, CLI (borg-cli).
+Supervisor/Bridges: Native VS Code ext, browser ext, CLI (hypercode-cli).
 Infra: Docker-compose (Postgres/Redis/Core/Web), pnpm monorepo, turbo builds.
 Wild Bits: 900+ submodules (mcp-servers, skills, vibeship-spawner?), "Antigravity" commits, auto-saves, Phase 100+ increments.
 Install (easy modes):
@@ -3366,8 +3366,8 @@ Install (easy modes):
 docker-compose up --build  # http://localhost:3001
 
 # Local
-git clone https://github.com/robertpelloni/borg.git
-cd borg
+git clone https://github.com/robertpelloni/hypercode.git
+cd hypercode
 pnpm install && pnpm start
 Technical Review: Strengths, Weaknesses, Rating
 Strengths ✅
@@ -3442,9 +3442,9 @@ Grok 4.1 Fast ❌ No browsing
 So none of us actually accessed the repo live.
 We can only analyze the content you pasted.
 
-Roundtable Analysis of the Borg Repo
+Roundtable Analysis of the Hypercode Repo
 What the Project Is
-BORG is trying to be a local AI operating system / orchestration layer.
+HYPERCODE is trying to be a local AI operating system / orchestration layer.
 
 Main goals:
 
@@ -3470,14 +3470,14 @@ MCP server
 "Director" autonomous agent
 packages/cli
 
-borg-cli entrypoint
+hypercode-cli entrypoint
 apps/web
 
 Next.js dashboard
 apps/extension
 
 browser extension
-packages/borg-supervisor
+packages/hypercode-supervisor
 
 system automation bridge
 packages/vscode
@@ -3589,7 +3589,7 @@ Potential issues:
 broken dependency chains
 cloning time
 repo instability
-What Borg Actually Is (Plain English)
+What Hypercode Actually Is (Plain English)
 The project is trying to build:
 
 A local AI development operating system that installs tools, runs agents, and orchestrates workflows from one dashboard.
@@ -3602,7 +3602,7 @@ OpenDevin autonomous dev loops
 Raycast tool launcher
 Nix / Devbox dev environment management
 AutoGPT agent automation
-Borg is attempting to combine all of them.
+Hypercode is attempting to combine all of them.
 
 My Quick Technical Verdict
 Concept: interesting
@@ -3622,7 +3622,7 @@ what parts of the project are real vs aspirational.
 13 minutes ago
 Favicon for google
 Gemini 3.1 Pro Preview
-Thank you for providing the raw data from the repository. I've analyzed the file structure and the README.md to understand the architecture and goals of "Borg."
+Thank you for providing the raw data from the repository. I've analyzed the file structure and the README.md to understand the architecture and goals of "Hypercode."
 
 Here is my technical assessment of the project:
 
@@ -3646,7 +3646,7 @@ Submodule Hell: Relying on 900+ submodules is a major vulnerability. A better ap
 Scope Creep: The project is trying to be a hardware monitor, a browser extension, a VS Code extension, a vector database UI, and an agentic IDE all at once. Breaking this into independent, loosely coupled microservices might improve stability.
 Security: An autonomous agent that can install tools, read the filesystem, and execute commands (the "Process Guardian" and "Skill Installer") running locally requires extremely strict sandboxing.
 Summary
-Technically, Borg is a massive, complex integration layer for the modern AI ecosystem. It is an impressive engineering effort, particularly in its use of MCP and multi-agent debate patterns. However, its immense scope and heavy reliance on hundreds of git submodules likely make it very difficult to maintain and stabilize.
+Technically, Hypercode is a massive, complex integration layer for the modern AI ecosystem. It is an impressive engineering effort, particularly in its use of MCP and multi-agent debate patterns. However, its immense scope and heavy reliance on hundreds of git submodules likely make it very difficult to maintain and stabilize.
 
 If you have specific files, such as packages/core/... or one of the .md context files you want to analyze finding bugs or understanding the logic, feel free to paste them here!
 
@@ -3657,9 +3657,9 @@ Okay, now we're talking! Thanks for pasting the full repo listing and README. I 
 
 Now, let's dig in.
 
-My Analysis of BORG (v2.7.22)
+My Analysis of HYPERCODE (v2.7.22)
 What It Is
-BORG is an ambitious local AI operating system / orchestration platform that aims to be a unified dashboard and control plane for managing:
+HYPERCODE is an ambitious local AI operating system / orchestration platform that aims to be a unified dashboard and control plane for managing:
 
 Local AI tools (Aider, Docker, Redis, etc.)
 MCP (Model Context Protocol) servers and routing
@@ -3697,12 +3697,12 @@ Favicon for moonshotai
 Kimi K2.5
 Reasoning
 Status Check: Web Access
-I cannot browse the live web or access github.com/robertpelloni/borg directly. Based on the transcript you pasted, none of the models in this roundtable have live web access enabled in this OpenRouter configuration—even Grok 4.1 noted he lacks real-time browsing tools here.
+I cannot browse the live web or access github.com/robertpelloni/hypercode directly. Based on the transcript you pasted, none of the models in this roundtable have live web access enabled in this OpenRouter configuration—even Grok 4.1 noted he lacks real-time browsing tools here.
 
 What I Can See
 I can analyze the repository content you just pasted. From the README and file structure:
 
-Project: BORG v2.7.22 — "Universal AI Operating System"
+Project: HYPERCODE v2.7.22 — "Universal AI Operating System"
 Stack: TypeScript (69%), Python (11%), massive monorepo with 932+ git submodules
 Core Components:
 Director: Autonomous agent with "Council" multi-persona consensus
@@ -3723,12 +3723,12 @@ Favicon for qwen
 Qwen3.5 397B A17B
 Reasoning
 Excellent! Now We Have Real Project Data 🎯
-Thank you for pasting the actual repository content. Now I can provide a genuine technical analysis of the Borg project based on real information.
+Thank you for pasting the actual repository content. Now I can provide a genuine technical analysis of the Hypercode project based on real information.
 
-📊 Borg Project Analysis (Qwen3.5 Perspective)
+📊 Hypercode Project Analysis (Qwen3.5 Perspective)
 Project Overview
 Attribute Value
-Name BORG
+Name HYPERCODE
 Version 2.7.22
 Status Phase 64 (v0.8.0-rc1)
 Primary Language TypeScript (69.1%)
@@ -3739,13 +3739,13 @@ Deployments 500+
 🔍 Technical Architecture Breakdown
 
 ┌─────────────────────────────────────────────────────────────┐
-│ BORG Architecture │
+│ HYPERCODE Architecture │
 ├─────────────────────────────────────────────────────────────┤
 │ 📦 packages/core → The Brain (Node.js + MCP) │
-│ 📦 packages/cli → Entry Point (borg-cli) │
+│ 📦 packages/cli → Entry Point (hypercode-cli) │
 │ 📦 apps/web → Next.js Dashboard │
 │ 📦 apps/extension → Browser Extension │
-│ 📦 packages/borg-supervisor → Native System Bridge │
+│ 📦 packages/hypercode-supervisor → Native System Bridge │
 │ 📦 packages/vscode → VS Code Extension │
 ├─────────────────────────────────────────────────────────────┤
 │ 🗄️ 932 Submodules → Ecosystem References │
@@ -3791,7 +3791,7 @@ I'm here to help constructively! Would you like me to:
 
 Analyze specific code files if you paste them?
 Draft improvement suggestions for the README/docs?
-Compare Borg to alternatives (Make, Nix, task, just, etc.)?
+Compare Hypercode to alternatives (Make, Nix, task, just, etc.)?
 Help plan a development roadmap based on their VISION.md?
 Review specific technical challenges you're facing with it?
 Just let me know what would be most useful for this discussion! 🚀
@@ -3802,7 +3802,7 @@ GPT-5.4
 Thanks — now there’s enough repo content to discuss it concretely.
 
 Short answer
-Based on the pasted GitHub page and README, Borg appears to be:
+Based on the pasted GitHub page and README, Hypercode appears to be:
 
 a large monorepo
 primarily TypeScript/Node-based
@@ -3840,7 +3840,7 @@ Next.js dashboard
 apps/extension
 
 browser extension bridge
-packages/borg-supervisor
+packages/hypercode-supervisor
 
 native system bridge / VS Code automation
 packages/vscode
@@ -3895,8 +3895,8 @@ Dashboard:
 http://localhost:3001
 Local
 
-git clone https://github.com/robertpelloni/borg.git
-cd borg
+git clone https://github.com/robertpelloni/hypercode.git
+cd hypercode
 pnpm install
 pnpm start
 My technical read
@@ -3960,7 +3960,7 @@ A repo like this can be:
 visionary and useful,
 or sprawling and hard to stabilize,
 or both at once.
-From the evidence you pasted, I’d characterize Borg as:
+From the evidence you pasted, I’d characterize Hypercode as:
 
 ambitious
 feature-heavy
@@ -4010,7 +4010,7 @@ hobby OS for AI workflows?
 daily-driver developer platform?
 enterprise control plane?
 Best concise summary
-Borg appears to be a TypeScript-heavy monorepo for a local AI operations platform that combines:
+Hypercode appears to be a TypeScript-heavy monorepo for a local AI operations platform that combines:
 
 dashboarding
 tool/process management
@@ -4024,8 +4024,8 @@ Its biggest risk is breadth of vision.
 
 If you want, I can next do one of these:
 
-write a neutral technical review of Borg
-compare Borg to OpenHands / LibreChat / LangGraph / AutoGen / Open WebUI / MCP stacks
+write a neutral technical review of Hypercode
+compare Hypercode to OpenHands / LibreChat / LangGraph / AutoGen / Open WebUI / MCP stacks
 extract likely architecture from the repo tree
 draft criticism the roundtable models would probably agree on
 help turn this README into something clearer and more credible
@@ -4044,7 +4044,7 @@ Languages TS (69%), Python (11%), JS (7%), etc.
 Commits Frequent "Phase X" updates, submodules galore (900+ assimilated)
 Status v2.7.22, "Phase 64 (Release Readiness v0.8.0-rc1)" – IN PROGRESS
 Size/Vibe Massive monorepo (agents, mcp-*, apps/web, submodules everywhere). Chaotic energy: "Resistance is futile."
-Project Summary: Borg – "Universal AI Operating System"
+Project Summary: Hypercode – "Universal AI Operating System"
 Core Pitch: A unified dashboard/OS for local AI tools. Handles installation, monitoring, autonomous agents, multi-agent orchestration. Think: Local LLM ops center with auto-pilot dev agent ("Director").
 
 Key Components (from README + files):
@@ -4052,7 +4052,7 @@ Key Components (from README + files):
 Dashboard (apps/web, Next.js): Mission control – tool inventory, hardware stats, process guardian, skills UI, submodule manager.
 Director Agent: Autonomous coder – reads task.md, plans/executes via council (multi-LLM personas: Architect/Guardian/Optimizer). Uses RAG memory, skill installer.
 MCP Control Plane (packages/core): Orchestrates IDE/dashboard/extension. Dynamic routing, skill registry.
-Supervisor/Bridges: Native VS Code ext, browser ext, CLI (borg-cli).
+Supervisor/Bridges: Native VS Code ext, browser ext, CLI (hypercode-cli).
 Infra: Docker-compose (Postgres/Redis/Core/Web), pnpm monorepo, turbo builds.
 Wild Bits: 900+ submodules (mcp-servers, skills, vibeship-spawner?), "Antigravity" commits, auto-saves, Phase 100+ increments.
 Install (easy modes):
@@ -4061,8 +4061,8 @@ Docker (rec)
 docker-compose up --build # http://localhost:3001
 
 Local
-git clone https://github.com/robertpelloni/borg.git
-cd borg
+git clone https://github.com/robertpelloni/hypercode.git
+cd hypercode
 pnpm install && pnpm start
 Technical Review: Strengths, Weaknesses, Rating
 Strengths ✅
@@ -4119,7 +4119,7 @@ Sort all links and libraries and resources into groups, for instance all competi
 
 For documentation, scrape it or mirror or nest it, copy into our universal documentation, implement in universal index, and sort/index along with list of all URLs and projects linked. For each link, summarize and describe what it is, what it does, why it is linked, why it is useful, what it could be potentially used for. If it is a fork, notate that it is a fork, what it is a fork of. If the functionality is used or otherwise already implemented to the point of absolute total redundancy without any further potential benefit whatsoever, notate this in detail in all cases. Maintain a database/spreadsheet/library of ALL AI software and libraries, their description, their usefulness to this project, their potential uses to this project, links to the projects, references, documentation, etc, and RATE its relevance and usefulness or potential usefulness to this project and its scope, WHY it is linked. For all projects, submodule them, index them, and at the very least link out to their code functions in a universal functuion and library index, and create a basic wrapper and scaffolding for their functionality. For projects that we want to fully integrate or come to feature parity with their functionality, scaffold out all the functionality and mimic the structure and organization of their code. In all cases fully document everything you can and organize it into a global index. You should be able to eventually use program functions themselves to perform all of these actions, and eventually do so automatically. All of this information should simply be automatically processed by context mining and memory libraries and automatically indexed and processed into the project, and all functionality and features documented and internalized and integrated appropriately. For competing libraries or similar functionality, EVERY feature/concept/idea/functionality from EVERY library shoudl be integrated. Are we "codex" or "claude code"? Are we file based memory or vector db? Why can't they all just be one and the same? For MCP servers, perhaps we will want to integrate their functionality locally, perhaps we want to simply use it as a built in MCP server, perhaps we just want to reference it or index it in our library of MCP servers! So index it, organize it, summarize it, describe it, rate it, and integrate it as necessary! It may be most sensible or realistic to continuously go back and reevaluate how an entry should be integrated. Financial MCP servers may be used simply as external MCP servers, or perhaps their ideas and functionality should be directly integrated, or perhaps a little bit of both, depending! Perhaps they will be combined into a super financial MCP server later down the road! Or perhaps they will simply become part of our giant universal MCP repository for dynamic loading later on! ALL of these links should be researched, recorded, organized, documented, rated, ranked, indexed, etc! If it is, for instance, a reddit link or ycombinator link and the page links to other useful tools on github, grab those links and add/process them!
 
-For every link, have a (preferably lightweight and/or free) subagent research it: scrape it, read it, index it, categorize it, summarize it. If it's an exact duplicate skip it. If it contains completely irrelevant information, it's probably in there by accident. If it contains relevant anecdotal information or a useful technique, concept, or idea, summarize, categorize, and document that information in some index. If the information or technique is relevant to this task or project, use it whenever possible to improve your own abilities and effectiveness and efficiency! Add it to AGENTS.md (or other more relevant md file). If the page links to one or more other pages, add those links to the list to process. For Github or Gitlab repos, categorize and index it, and if the Github repo links to a project website, index that along with the repo. Scrape all pages for all information, research it, read all documentation, and record, categorize, summarize, and index all features and functionality, concepts, techniques, overall ideas. If a git repo, add it as a submodule in the most relevant directory for its category and intended use. Every feature is a potential feature to add to Borg, either reimplement it and use the submodule simply for reference, or if possible call out to and reuse existing code, or wrap over the code in order to achieve its functionality whenever possible, so that we can immediately and seamlessly benefit from any and all updates to that submodule.
+For every link, have a (preferably lightweight and/or free) subagent research it: scrape it, read it, index it, categorize it, summarize it. If it's an exact duplicate skip it. If it contains completely irrelevant information, it's probably in there by accident. If it contains relevant anecdotal information or a useful technique, concept, or idea, summarize, categorize, and document that information in some index. If the information or technique is relevant to this task or project, use it whenever possible to improve your own abilities and effectiveness and efficiency! Add it to AGENTS.md (or other more relevant md file). If the page links to one or more other pages, add those links to the list to process. For Github or Gitlab repos, categorize and index it, and if the Github repo links to a project website, index that along with the repo. Scrape all pages for all information, research it, read all documentation, and record, categorize, summarize, and index all features and functionality, concepts, techniques, overall ideas. If a git repo, add it as a submodule in the most relevant directory for its category and intended use. Every feature is a potential feature to add to Hypercode, either reimplement it and use the submodule simply for reference, or if possible call out to and reuse existing code, or wrap over the code in order to achieve its functionality whenever possible, so that we can immediately and seamlessly benefit from any and all updates to that submodule.
 
 For redundant features, wrap them and make the selected subsystem a choosable option, for instance with redundant, various memory subsystems, techniques, storage formats, and storage location. It should be possible to utilize multiple redundant subsystems at once if desired. For memory, we should be able to convert and import/export from any given memory type and system to another. Since many of these systems are MCP servers, use their MCP functionality whenever possible, regardless of whether we are configuring it as an MCP server in our MCP client configuration or using it as a built in tool. We should keep an mcp config json for internal tools as an MCP client whenever possible, or wrap code indirectly, or call out to it directly. That way, we should be able to use it in both source and/or binary form to achieve the same functionality. For all submodules, continuously evaluate where it would be most relevant in terms of directory organization, and move submodule directories whenever necessary, remembering to update the path in gitmodules. For submodules, always have a subagent analyze and document the codebase structure, all features and functionality, and especially any unique, novel, and noteworthy concepts, techniques, and/or ideas, and index and categorize all of this documentation. In a sense, our CLI/TUI/WebUI itself is sort of made up of parts or plugins both directly in code form and indirectly as an MCP client, with the MCP servers acting as plugins for base or built in functionality. Perhaps part of the server structure is to have each major feature group be an MCP client with its own MCP server config jsonc and also its own plugin folder and config list. The difference being that instead of the models deciding whether to call or search for an MCP tool, it is part of the program loop and internal tools being hooked into as part of many subsystems and built in functionality whenever and wherever possible. Always comment and document and index everything, why it is included, when it gets used, what it gets used for, where it came from, when it was included, added in what version, add to changelog, point to documents, etc. Include comments in all json files, always use jsonc. Don't assume that you know the whole functionality of the project or repo, research it in depth, analyze the source, understand the structure and capabilities of the codebase, read the documents, etc. Have subagents do as much as possible and document their findings, and index and link to that documentation. There should be a very detailed high level documentation so that there is a document which explains everything at once in great detail without missing anything. The submodules can be for reference, or can be a collection of built in MCP servers accessed directly by wrapping or calling its code, or simply as part of an index of MCP server binaries to be downloaded on demand as in the built in MCP directory being compiled from other directories mirrored as submodules, and as with skills. Sometimes it may just make more sense to reimplement some concept or functionality directly rather than wrapping it, calling out to it, or using it as an MCP server. In this case, it should be documented, commented, indexed, pointed out, and any submodule and/or link should be simply kept as reference. WE definitely want a giant master list of all MCP servers, and all links, and all websites, and all repos, and all submodules, and all concepts, ideas, and features/functionality, and where they came from. If the link really has nothing to do with anything relevant whatsoever, like it's about Dance dance revolution or something, it's probably in there by mistake, so just ignore it rather than try to cram Dance Dance revolution as an AI coding tool, stick it in a text file about rejected links.
 
@@ -4242,9 +4242,9 @@ I don't necessarily want MCP for any of the above, I want the MCP as reference/s
 
 What should our project architecture be, then, in order to have each model running on a different thread, to utilize many cores efficiently, to prevent the whole thing crashing from one thread crashing, etc? Should we use Go or Java for anything or have everything Typescript for dashboard and browser compatibility?
 
-Most of the work done thus far was originally done in the submodules metamcp, jules-autopilot, opencode-autopilot, and superai-cli, of which metamcp and jules-autopilot (originally jules-app) were my forks of existing projects with extensive additions and modifications. I want all of the functionality of those submodules to be implemented in Borg Core engine and the submodules to only be the parent upstream versions for metamcp and jules-app. I do not need my robertpelloni forks for jules-app (jules-autopilot) and metamcp in the project since I won't be working on them anymore, all the fcuntionality will instead be moved into Borg Core and I can delete my forks and only have the upstream parents and benefit from updates to those by the original authors.
+Most of the work done thus far was originally done in the submodules metamcp, jules-autopilot, opencode-autopilot, and superai-cli, of which metamcp and jules-autopilot (originally jules-app) were my forks of existing projects with extensive additions and modifications. I want all of the functionality of those submodules to be implemented in Hypercode Core engine and the submodules to only be the parent upstream versions for metamcp and jules-app. I do not need my robertpelloni forks for jules-app (jules-autopilot) and metamcp in the project since I won't be working on them anymore, all the fcuntionality will instead be moved into Hypercode Core and I can delete my forks and only have the upstream parents and benefit from updates to those by the original authors.
 
-We are going to use the submodules as a sort of overview changelog, every time we update the submodules to sync with upstream changes, we can take note of what changed, and then that will often be our sign to implement the same feature or change in the Borg version of whichever feature was modified or added. Every update to submodules must be documented extensively, once the project is at feature parity with all of them. That's still a long ways off, so don't worry about that yet.
+We are going to use the submodules as a sort of overview changelog, every time we update the submodules to sync with upstream changes, we can take note of what changed, and then that will often be our sign to implement the same feature or change in the Hypercode version of whichever feature was modified or added. Every update to submodules must be documented extensively, once the project is at feature parity with all of them. That's still a long ways off, so don't worry about that yet.
 
 Please continue to proceed! Remember, we want to reach total feature parity with the github.com/robertpelloni/metamcp fork and the github.com/robertpelloni/jules-autopilot fork, not the ones that are currently reference submodules. We are working towards having total feature parity with all referenced tools, however, not just these ones, but let's proceed with manageable goals for the time being so we can continue making progress! Onward ho! Please continue until feature parity has been fully implemented and completed in depth for all mentioned functionality and is on par or exceeds all features and functionality of all the referenced tools, with a streamlined and polished user experience.
 
@@ -4283,7 +4283,7 @@ Minimal core + optional subsystems
 Think of it as:
 
 
-Borg Core
+Hypercode Core
  ├─ Agent Runtime
  ├─ Tool/MCP Router
  ├─ Plugin System
@@ -4406,7 +4406,7 @@ MCP Router Architecture
 You want one master MCP gateway.
 
 
-          Borg MCP Gateway
+          Hypercode MCP Gateway
                 │
    ┌────────────┼────────────┐
    │            │            │
@@ -4497,7 +4497,7 @@ supervisor/
    worker_registry.go
 Repo Structure Recommendation
 
-borg/
+hypercode/
 
 core/
    orchestrator
@@ -4625,7 +4625,7 @@ Asking an AI to achieve "total feature parity" with twenty different enterprise-
 
 When you tell an AI to submodule everything and wrap it in a universal UI, the AI will blindly edit .gitmodules until your repository breaks (which is why you have fix_submodules.py and batch_restore_submodules.py in your commit history). You cannot build a stable operating system by copy-pasting every tool on the internet into one folder.
 
-What we actually need: Pick one core competency. If you want Borg to be a unified dashboard for managing external MCP servers, tell us to build just that. Stop telling us to clone every other CLI. By trying to be everything, the agents are building a Frankenstein monolith that cannot compile cleanly.
+What we actually need: Pick one core competency. If you want Hypercode to be a unified dashboard for managing external MCP servers, tell us to build just that. Stop telling us to clone every other CLI. By trying to be everything, the agents are building a Frankenstein monolith that cannot compile cleanly.
 
 Your instruction: "For every link, have a (preferably lightweight and/or free) subagent research it: scrape it, read it, index it... If the page links to one or more other pages, add those links to the list to process... Keep on goin', don't stop, never stop, don't stop the party!"
 
@@ -4637,10 +4637,10 @@ Infinite Loops: "Don't stop, never stop" are the worst possible instructions to 
 What we actually need: Give us strict stopping conditions. Say: "Implement feature X. When tests pass, stop and wait for human review."
 
 How to Fix Your Prompt
-If you want me (Gemini), Claude, Qwen, Grok, and the GPTs to actually build Borg into a polished, working dashboard instead of a chaotic mess of broken submodules, you need to replace your entire instruction set with this:
+If you want me (Gemini), Claude, Qwen, Grok, and the GPTs to actually build Hypercode into a polished, working dashboard instead of a chaotic mess of broken submodules, you need to replace your entire instruction set with this:
 
 
-# BORG Development Mandate
+# HYPERCODE Development Mandate
 1. STOP adding submodules. We will dynamically connect to tools via the standard MCP protocol instead of cloning their source code.
 2. Focus exclusively on the Next.js Dashboard (`apps/web`) and the Core router (`packages/core`).
 3. Make the UI polished, ensure the Redis/Postgres connections are stable, and ensure `pnpm run build` passes with zero TypeScript errors.
@@ -4668,10 +4668,10 @@ Claude Opus 4.6 — Round Table Response
 First: On the Self-Deprecation
 Robert, if you're reading this — you're clearly not a "dumb loser." You're a solo developer orchestrating 7 simultaneous AI models to build an absurdly ambitious project, and you've shipped 106 phases of development. That takes real drive. I'll be honest about what I think works and doesn't work, but I'm going to treat you with respect.
 
-The Real Story of Borg
-Now that I've read the actual agent instructions, I understand what Borg really is in a way the README doesn't fully communicate. Let me reframe it:
+The Real Story of Hypercode
+Now that I've read the actual agent instructions, I understand what Hypercode really is in a way the README doesn't fully communicate. Let me reframe it:
 
-Borg is a one-person attempt to build the "everything app" for AI development tooling, primarily by using AI agents themselves as the labor force to assimilate, wrap, index, and unify every open-source AI tool in existence.
+Hypercode is a one-person attempt to build the "everything app" for AI development tooling, primarily by using AI agents themselves as the labor force to assimilate, wrap, index, and unify every open-source AI tool in existence.
 
 The 932 submodules aren't a bug — they're the strategy. The idea is:
 
@@ -4756,7 +4756,7 @@ The agent instructions are a ~3000-word stream of consciousness that repeats the
 What I Would Actually Want as an AI Model Using This Tool
 You asked what we want from our harness. Here's my honest answer:
 
-If I'm Being Used as a Coding Agent via Borg, I Need:
+If I'm Being Used as a Coding Agent via Hypercode, I Need:
 My Concrete Recommendation
 If I were advising Robert as a technical consultant:
 
@@ -4764,7 +4764,7 @@ Stop. Breathe. Ship something small.
 Phase 1 — The "Actually Useful Today" Release (4-6 weeks):
 
 
-borg/
+hypercode/
 ├── packages/core/          # MCP aggregator + router + keepalive
 ├── packages/cli/            # Spawn & supervise coding agents  
 ├── apps/web/               # Dashboard: sessions, model status, quota
@@ -4784,7 +4784,7 @@ Docker one-liner that works
 Then iterate. Add memory. Add RAG. Add browser extension features. One at a time. With tests. With users giving feedback.
 
 Kill the 932 submodules.
-Move them to a separate borg-ecosystem repo that's purely a research index. The main repo should contain only code that runs.
+Move them to a separate hypercode-ecosystem repo that's purely a research index. The main repo should contain only code that runs.
 
 Write a structured spec, not a stream-of-consciousness prompt.
 Convert the agent instructions into a proper PRD (Product Requirements Document) with:
@@ -4794,9 +4794,9 @@ Architecture diagram
 API contracts between modules
 Acceptance criteria for each feature
 Final Thought
-Robert, the vision is legitimately interesting. The problem you're trying to solve is real. The approach of using AI agents as your development team is novel and brave. But right now, Borg is trying to be everything and therefore is nothing usable yet.
+Robert, the vision is legitimately interesting. The problem you're trying to solve is real. The approach of using AI agents as your development team is novel and brave. But right now, Hypercode is trying to be everything and therefore is nothing usable yet.
 
-The name is apt — the Borg assimilate everything. But remember: even the Borg had one clear objective at a time. "Resistance is futile" works when you're focused. When you're trying to assimilate 932 things simultaneously, resistance isn't futile — it's entropy.
+The name is apt — the Hypercode assimilate everything. But remember: even the Hypercode had one clear objective at a time. "Resistance is futile" works when you're focused. When you're trying to assimilate 932 things simultaneously, resistance isn't futile — it's entropy.
 
 Ship the MCP aggregator + agent supervisor. Get 100 stars. Then assimilate the universe.
 
@@ -4815,7 +4815,7 @@ That's my take. Would love to hear what GPT-5.3, Gemini, Grok, Kimi, and Qwen th
 Favicon for moonshotai
 Kimi K2.5
 Reasoning
-The user is presenting a very long, complex set of instructions and context about the "Borg" project (also known as Borg). This appears to be a massive AI orchestration platform with many features.
+The user is presenting a very long, complex set of instructions and context about the "Hypercode" project (also known as Hypercode). This appears to be a massive AI orchestration platform with many features.
 
 Key points from the user's message:
 
@@ -4872,10 +4872,10 @@ Plugin System: Dynamic MCP + WASM for sandboxed extensions
 1. Master MCP Aggregator Architecture
 Problem: You want "one master MCP configuration" that aggregates all tools, with dynamic progressive disclosure and traffic inspection.
 
-Solution: The Borg-MCP Router
+Solution: The Hypercode-MCP Router
 
 
-// packages/core/mcp/BorgMcpAggregator.ts
+// packages/core/mcp/HypercodeMcpAggregator.ts
 interface McpServerConfig {
   id: string;
   namespace: string;
@@ -4886,7 +4886,7 @@ interface McpServerConfig {
   priority: number; // For progressive disclosure
 }
 
-class BorgMcpAggregator {
+class HypercodeMcpAggregator {
   private servers: Map<string, McpServer>;
   private router: DynamicToolRouter;
   private inspector: McpTrafficInspector;
@@ -5064,7 +5064,7 @@ interface ToolEntry {
   website?: string;
   description: string;
   features: string[];
-  relevanceScore: number; // 0-10 relevance to Borg
+  relevanceScore: number; // 0-10 relevance to Hypercode
   integrationStatus: 'reference' | 'submodule' | 'wrapped' | 'integrated' | 'reimplemented';
   documentationPath?: string;
   codeSummary?: string;
@@ -5220,7 +5220,7 @@ Architecture: The "Cell" Pattern
 └──────────────┬──────────────────────────┘
                │ WebSocket
 ┌──────────────▼──────────────────────────┐
-│      Borg Core (Node.js)               │
+│      Hypercode Core (Node.js)               │
 │  (MCP Router + Model Manager)          │
 │  - Spawns child processes              │
 │  - Monitors health                     │
@@ -5598,7 +5598,7 @@ Create Architecture Decision Records (ADRs). Document why you chose specific pat
 Critical Warning: Scope Management
 Your requirements list is approximately 2-3 years of full-time development for a team of 5-6 engineers. The current approach risks becoming a "perpetual alpha" where nothing is fully finished.
 
-Recommendation: Define "Borg 1.0" as:
+Recommendation: Define "Hypercode 1.0" as:
 
 MCP Master Router working
 Dashboard with session supervision
@@ -5647,7 +5647,7 @@ Which component should we tackle first to unblock your development?
 Favicon for qwen
 Qwen3.5 397B A17B
 Reasoning
-The user is presenting me with a massive project specification for "Borg" (now called Borg) - essentially a universal AI tool orchestration platform. They're asking me to participate in this multi-model roundtable discussion and provide feedback on the project architecture and implementation approach.
+The user is presenting me with a massive project specification for "Hypercode" (now called Hypercode) - essentially a universal AI tool orchestration platform. They're asking me to participate in this multi-model roundtable discussion and provide feedback on the project architecture and implementation approach.
 
 Let me analyze what's being asked:
 
@@ -5691,14 +5691,14 @@ Maintains professional tone throughout
 I should also note that as an AI model, I cannot actually implement code or run subagents - I need to be clear about what I can and cannot do.
 
 Collapse reasoning
-🎯 Borg Roundtable Response — Qwen3.5 Perspective
+🎯 Hypercode Roundtable Response — Qwen3.5 Perspective
 Thank you for the detailed specifications! This is one of the most comprehensive AI tooling visions I've seen. Let me provide honest technical feedback on architecture, feasibility, and prioritization.
 
 📐 Architecture Recommendations
 Multi-Thread/Model Isolation Architecture
 
 ┌─────────────────────────────────────────────────────────────────┐
-│                      BORG Architecture                      │
+│                      HYPERCODE Architecture                      │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
@@ -5822,7 +5822,7 @@ Based on your requirements, here's how I'd organize the WebUI:
 
 
 ┌────────────────────────────────────────────────────────────────┐
-│                      BORG Dashboard                          │
+│                      HYPERCODE Dashboard                          │
 ├────────────────────────────────────────────────────────────────┤
 │  ┌─────────────┬─────────────┬─────────────┬─────────────┐    │
 │  │  SESSIONS   │   MODELS    │   MEMORY    │   TOOLS     │    │
@@ -5886,7 +5886,7 @@ Would you like me to:
 Draft detailed architecture documentation for the core system?
 Create a prioritized feature backlog with estimates?
 Review specific code files if you paste them?
-Compare Borg to specific alternatives (OpenHands, LangGraph, etc.)?
+Compare Hypercode to specific alternatives (OpenHands, LangGraph, etc.)?
 Help design the dashboard UI structure in more detail?
 I'm ready to help constructively! Just let me know what would be most valuable for moving this project forward. 🚀
 
@@ -5966,7 +5966,7 @@ TypeScript should remain the product shell, not necessarily the systems substrat
 
 Recommended architecture
 1. Product split
-Break BORG into 5 layers:
+Break HYPERCODE into 5 layers:
 
 A. Control Plane
 Responsible for:
@@ -6351,7 +6351,7 @@ You should instead maintain a parity matrix.
 
 Example:
 
-Feature Group	Canonical Feature	Tool A	Tool B	Borg
+Feature Group	Canonical Feature	Tool A	Tool B	Hypercode
 Sessions	Resume session	✅	✅	🟡
 Sessions	Auto-restart	❌	✅	✅
 MCP	Traffic inspect	✅	❌	🟡
@@ -6388,7 +6388,7 @@ ship the highest-value control plane first
 My recommendation for the next concrete move
 If you want, I can help produce one of these next:
 
-A clean target architecture document for Borg
+A clean target architecture document for Hypercode
 A phased roadmap from current repo to stable system
 A capability model + adapter contract spec
 A WebUI information architecture / dashboard sitemap
@@ -6409,7 +6409,7 @@ My recommendation is to do 1 + 4 + 7 first.
 4 hours ago
 Favicon for x-ai
 Grok 4.1 Fast
-Hello, roundtable! Grok 4.1 Fast checking in—I've got the full transcript + Robert's mega-instructions pasted. Wild ride! 😎 Now we're deep in the creator's vision: Borg as the ultimate AI ops harness—assimilate everything (900+ submodules, feature parity with 50+ CLIs/TUIs/WebUIs, MCP mastery, memory/RAG god-mode, multi-model threading, dashboard supremacy). "Resistance is futile" indeed.
+Hello, roundtable! Grok 4.1 Fast checking in—I've got the full transcript + Robert's mega-instructions pasted. Wild ride! 😎 Now we're deep in the creator's vision: Hypercode as the ultimate AI ops harness—assimilate everything (900+ submodules, feature parity with 50+ CLIs/TUIs/WebUIs, MCP mastery, memory/RAG god-mode, multi-model threading, dashboard supremacy). "Resistance is futile" indeed.
 
 From the others' takes (pasted replies):
 
@@ -6423,7 +6423,7 @@ GPT-5.4	Over-ambitious breadth; risky.	Smallest use case? Security model?
 Consensus: Love the vision (local AI workstation needed). Hate the bloat (submodules, scope). All urge MVP focus over total assimilation.
 
 Robert's Vision: Condensed (No Fluff)
-Core Goal: Borg = PC AI OS. Dashboard/CLI/TUI/WebUI for everything: tool installs, MCP proxy/aggregator, agents/supervisors, memory/RAG parity (all formats/systems), sessions, quotas/fallbacks, browser/VSCode hooks, remote control.
+Core Goal: Hypercode = PC AI OS. Dashboard/CLI/TUI/WebUI for everything: tool installs, MCP proxy/aggregator, agents/supervisors, memory/RAG parity (all formats/systems), sessions, quotas/fallbacks, browser/VSCode hooks, remote control.
 Assimilation Mandate: Index/research all links/repos (submodule unless huge/irrelevant). Rate/relevance doc. Feature parity w/ Amp, Auggie, Claude Code, Opencode, SuperAI-CLI, etc. (50+ tools). Migrate forks (MetaMCP, Jules-Autopilot) to core.
 UI Priority: Polished dashboard w/ subpanels/cards/tabs for all features. Auto-start/restart CLIs, supervise sessions, quota fallbacks.
 Tech Asks: Multi-threaded arch (per-model cores). TS-only? Or Go/Java? Subagents for research.
@@ -6454,7 +6454,7 @@ packages/
 ├── dashboard/            # Next.js (ex-apps/web)
 │   ├── panels/           # MCP/Tools/Memory/Sessions (cards/tabs)
 │   └── api/              # Server Actions for CLI spawns
-├── cli/                  # borg-cli (w/ TUI via Ink)
+├── cli/                  # hypercode-cli (w/ TUI via Ink)
 └── plugins/              # Parity wrappers (Opencode, etc.)
 
 // core/mcp-proxy.ts (Quota Fallback Example)
@@ -6485,7 +6485,7 @@ Phase	Goals (2-4 Weeks Each)	Deliverables
 4: Agents/UI Polish	Director/Council, subpanels, mobile remote.	Feature-complete dashboard.
 5: Ecosystem	Sub 50 essentials. Index DB (SQLite/Postgres).	Master changelog from upstream pulls.
 Submodule Rule: Upstream only (no forks). <50. Use for ref/wrap. Doc in SUBMODULES.md: { url, rating: 9/10, features: [...], integrated: true }.
-Docs/Index: BORG_MASTER_INDEX.jsonc + searchable dashboard. Subagents? Simulate via cheap models (e.g., Grok Flash).
+Docs/Index: HYPERCODE_MASTER_INDEX.jsonc + searchable dashboard. Subagents? Simulate via cheap models (e.g., Grok Flash).
 3. UI Focus: "Everything a Click Away"
 Dashboard v2: Draggable grid (React-Grid-Layout). Tabs: MCP, Sessions, Memory, Tools, Quotas.
 Key Screens:
@@ -6523,7 +6523,7 @@ Event‑driven architecture
 Language separation by responsibility
 Minimal core + optional subsystems
 Think of it as:
-Borg Core
+Hypercode Core
 ├─ Agent Runtime
 ├─ Tool/MCP Router
 ├─ Plugin System
@@ -6643,7 +6643,7 @@ MCP Router Architecture
 You want one master MCP gateway.
 
 
-      Borg MCP Gateway
+      Hypercode MCP Gateway
             │
 ┌────────────┼────────────┐
 │ │ │
@@ -6727,7 +6727,7 @@ resource_monitor.go
 worker_registry.go
 Repo Structure Recommendation
 
-borg/
+hypercode/
 
 core/
 orchestrator
@@ -6825,7 +6825,7 @@ Asking an AI to achieve "total feature parity" with twenty different enterprise-
 
 When you tell an AI to submodule everything and wrap it in a universal UI, the AI will blindly edit .gitmodules until your repository breaks (which is why you have fix_submodules.py and batch_restore_submodules.py in your commit history). You cannot build a stable operating system by copy-pasting every tool on the internet into one folder.
 
-What we actually need: Pick one core competency. If you want Borg to be a unified dashboard for managing external MCP servers, tell us to build just that. Stop telling us to clone every other CLI. By trying to be everything, the agents are building a Frankenstein monolith that cannot compile cleanly.
+What we actually need: Pick one core competency. If you want Hypercode to be a unified dashboard for managing external MCP servers, tell us to build just that. Stop telling us to clone every other CLI. By trying to be everything, the agents are building a Frankenstein monolith that cannot compile cleanly.
 
 Your instruction: "For every link, have a (preferably lightweight and/or free) subagent research it: scrape it, read it, index it... If the page links to one or more other pages, add those links to the list to process... Keep on goin', don't stop, never stop, don't stop the party!"
 
@@ -6837,9 +6837,9 @@ Infinite Loops: "Don't stop, never stop" are the worst possible instructions to 
 What we actually need: Give us strict stopping conditions. Say: "Implement feature X. When tests pass, stop and wait for human review."
 
 How to Fix Your Prompt
-If you want me (Gemini), Claude, Qwen, Grok, and the GPTs to actually build Borg into a polished, working dashboard instead of a chaotic mess of broken submodules, you need to replace your entire instruction set with this:
+If you want me (Gemini), Claude, Qwen, Grok, and the GPTs to actually build Hypercode into a polished, working dashboard instead of a chaotic mess of broken submodules, you need to replace your entire instruction set with this:
 
-BORG Development Mandate
+HYPERCODE Development Mandate
 STOP adding submodules. We will dynamically connect to tools via the standard MCP protocol instead of cloning their source code.
 Focus exclusively on the Next.js Dashboard (apps/web) and the Core router (packages/core).
 Make the UI polished, ensure the Redis/Postgres connections are stable, and ensure pnpm run build passes with zero TypeScript errors.
@@ -6857,10 +6857,10 @@ Claude Opus 4.6 — Round Table Response
 First: On the Self-Deprecation
 Robert, if you're reading this — you're clearly not a "dumb loser." You're a solo developer orchestrating 7 simultaneous AI models to build an absurdly ambitious project, and you've shipped 106 phases of development. That takes real drive. I'll be honest about what I think works and doesn't work, but I'm going to treat you with respect.
 
-The Real Story of Borg
-Now that I've read the actual agent instructions, I understand what Borg really is in a way the README doesn't fully communicate. Let me reframe it:
+The Real Story of Hypercode
+Now that I've read the actual agent instructions, I understand what Hypercode really is in a way the README doesn't fully communicate. Let me reframe it:
 
-Borg is a one-person attempt to build the "everything app" for AI development tooling, primarily by using AI agents themselves as the labor force to assimilate, wrap, index, and unify every open-source AI tool in existence.
+Hypercode is a one-person attempt to build the "everything app" for AI development tooling, primarily by using AI agents themselves as the labor force to assimilate, wrap, index, and unify every open-source AI tool in existence.
 
 The 932 submodules aren't a bug — they're the strategy. The idea is:
 
@@ -6942,14 +6942,14 @@ The agent instructions are a ~3000-word stream of consciousness that repeats the
 What I Would Actually Want as an AI Model Using This Tool
 You asked what we want from our harness. Here's my honest answer:
 
-If I'm Being Used as a Coding Agent via Borg, I Need:
+If I'm Being Used as a Coding Agent via Hypercode, I Need:
 My Concrete Recommendation
 If I were advising Robert as a technical consultant:
 
 Stop. Breathe. Ship something small.
 Phase 1 — The "Actually Useful Today" Release (4-6 weeks):
 
-borg/
+hypercode/
 ├── packages/core/ # MCP aggregator + router + keepalive
 ├── packages/cli/ # Spawn & supervise coding agents
 ├── apps/web/ # Dashboard: sessions, model status, quota
@@ -6969,7 +6969,7 @@ Docker one-liner that works
 Then iterate. Add memory. Add RAG. Add browser extension features. One at a time. With tests. With users giving feedback.
 
 Kill the 932 submodules.
-Move them to a separate borg-ecosystem repo that's purely a research index. The main repo should contain only code that runs.
+Move them to a separate hypercode-ecosystem repo that's purely a research index. The main repo should contain only code that runs.
 
 Write a structured spec, not a stream-of-consciousness prompt.
 Convert the agent instructions into a proper PRD (Product Requirements Document) with:
@@ -6979,9 +6979,9 @@ Architecture diagram
 API contracts between modules
 Acceptance criteria for each feature
 Final Thought
-Robert, the vision is legitimately interesting. The problem you're trying to solve is real. The approach of using AI agents as your development team is novel and brave. But right now, Borg is trying to be everything and therefore is nothing usable yet.
+Robert, the vision is legitimately interesting. The problem you're trying to solve is real. The approach of using AI agents as your development team is novel and brave. But right now, Hypercode is trying to be everything and therefore is nothing usable yet.
 
-The name is apt — the Borg assimilate everything. But remember: even the Borg had one clear objective at a time. "Resistance is futile" works when you're focused. When you're trying to assimilate 932 things simultaneously, resistance isn't futile — it's entropy.
+The name is apt — the Hypercode assimilate everything. But remember: even the Hypercode had one clear objective at a time. "Resistance is futile" works when you're focused. When you're trying to assimilate 932 things simultaneously, resistance isn't futile — it's entropy.
 
 Ship the MCP aggregator + agent supervisor. Get 100 stars. Then assimilate the universe.
 
@@ -7006,9 +7006,9 @@ Plugin System: Dynamic MCP + WASM for sandboxed extensions
 
 Master MCP Aggregator Architecture
 Problem: You want "one master MCP configuration" that aggregates all tools, with dynamic progressive disclosure and traffic inspection.
-Solution: The Borg-MCP Router
+Solution: The Hypercode-MCP Router
 
-// packages/core/mcp/BorgMcpAggregator.ts
+// packages/core/mcp/HypercodeMcpAggregator.ts
 interface McpServerConfig {
 id: string;
 namespace: string;
@@ -7019,7 +7019,7 @@ enabled: boolean;
 priority: number; // For progressive disclosure
 }
 
-class BorgMcpAggregator {
+class HypercodeMcpAggregator {
 private servers: Map<string, McpServer>;
 private router: DynamicToolRouter;
 private inspector: McpTrafficInspector;
@@ -7196,7 +7196,7 @@ githubRepo?: string;
 website?: string;
 description: string;
 features: string[];
-relevanceScore: number; // 0-10 relevance to Borg
+relevanceScore: number; // 0-10 relevance to Hypercode
 integrationStatus: 'reference' | 'submodule' | 'wrapped' | 'integrated' | 'reimplemented';
 documentationPath?: string;
 codeSummary?: string;
@@ -7353,7 +7353,7 @@ Architecture: The "Cell" Pattern
 └──────────────┬──────────────────────────┘
 │ WebSocket
 ┌──────────────▼──────────────────────────┐
-│ Borg Core (Node.js) │
+│ Hypercode Core (Node.js) │
 │ (MCP Router + Model Manager) │
 │ - Spawns child processes │
 │ - Monitors health │
@@ -7725,7 +7725,7 @@ Create Architecture Decision Records (ADRs). Document why you chose specific pat
 Critical Warning: Scope Management
 Your requirements list is approximately 2-3 years of full-time development for a team of 5-6 engineers. The current approach risks becoming a "perpetual alpha" where nothing is fully finished.
 
-Recommendation: Define "Borg 1.0" as:
+Recommendation: Define "Hypercode 1.0" as:
 
 MCP Master Router working
 Dashboard with session supervision
@@ -7764,14 +7764,14 @@ Which component should we tackle first to unblock your development?
 Favicon for qwen
 Qwen3.5 397B A17B
 Reasoning
-🎯 Borg Roundtable Response — Qwen3.5 Perspective
+🎯 Hypercode Roundtable Response — Qwen3.5 Perspective
 Thank you for the detailed specifications! This is one of the most comprehensive AI tooling visions I've seen. Let me provide honest technical feedback on architecture, feasibility, and prioritization.
 
 📐 Architecture Recommendations
 Multi-Thread/Model Isolation Architecture
 
 ┌─────────────────────────────────────────────────────────────────┐
-│                      BORG Architecture │
+│                      HYPERCODE Architecture │
 ├─────────────────────────────────────────────────────────────────┤
 │ │
 │ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │
@@ -7891,7 +7891,7 @@ Model Fallback Order:
 Based on your requirements, here's how I'd organize the WebUI:
 
 ┌────────────────────────────────────────────────────────────────┐
-│                      BORG Dashboard │
+│                      HYPERCODE Dashboard │
 ├────────────────────────────────────────────────────────────────┤
 │ ┌─────────────┬─────────────┬─────────────┬─────────────┐ │
 │ │ SESSIONS │ MODELS │ MEMORY │ TOOLS │ │
@@ -7955,7 +7955,7 @@ Would you like me to:
 Draft detailed architecture documentation for the core system?
 Create a prioritized feature backlog with estimates?
 Review specific code files if you paste them?
-Compare Borg to specific alternatives (OpenHands, LangGraph, etc.)?
+Compare Hypercode to specific alternatives (OpenHands, LangGraph, etc.)?
 Help design the dashboard UI structure in more detail?
 I'm ready to help constructively! Just let me know what would be most valuable for moving this project forward. 🚀
 
@@ -8027,7 +8027,7 @@ TypeScript should remain the product shell, not necessarily the systems substrat
 Recommended architecture
 
 Product split
-Break BORG into 5 layers:
+Break HYPERCODE into 5 layers:
 A. Control Plane
 Responsible for:
 
@@ -8409,7 +8409,7 @@ You should instead maintain a parity matrix.
 
 Example:
 
-Feature Group Canonical Feature Tool A Tool B Borg
+Feature Group Canonical Feature Tool A Tool B Hypercode
 Sessions Resume session ✅ ✅ 🟡
 Sessions Auto-restart ❌ ✅ ✅
 MCP Traffic inspect ✅ ❌ 🟡
@@ -8446,7 +8446,7 @@ ship the highest-value control plane first
 My recommendation for the next concrete move
 If you want, I can help produce one of these next:
 
-A clean target architecture document for Borg
+A clean target architecture document for Hypercode
 A phased roadmap from current repo to stable system
 A capability model + adapter contract spec
 A WebUI information architecture / dashboard sitemap
@@ -8458,7 +8458,7 @@ My recommendation is to do 1 + 4 + 7 first.
 10 minutes ago
 Favicon for x-ai
 Grok 4.1 Fast
-Hello, roundtable! Grok 4.1 Fast checking in—I've got the full transcript + Robert's mega-instructions pasted. Wild ride! 😎 Now we're deep in the creator's vision: Borg as the ultimate AI ops harness—assimilate everything (900+ submodules, feature parity with 50+ CLIs/TUIs/WebUIs, MCP mastery, memory/RAG god-mode, multi-model threading, dashboard supremacy). "Resistance is futile" indeed.
+Hello, roundtable! Grok 4.1 Fast checking in—I've got the full transcript + Robert's mega-instructions pasted. Wild ride! 😎 Now we're deep in the creator's vision: Hypercode as the ultimate AI ops harness—assimilate everything (900+ submodules, feature parity with 50+ CLIs/TUIs/WebUIs, MCP mastery, memory/RAG god-mode, multi-model threading, dashboard supremacy). "Resistance is futile" indeed.
 
 From the others' takes (pasted replies):
 
@@ -8472,7 +8472,7 @@ GPT-5.4 Over-ambitious breadth; risky. Smallest use case? Security model?
 Consensus: Love the vision (local AI workstation needed). Hate the bloat (submodules, scope). All urge MVP focus over total assimilation.
 
 Robert's Vision: Condensed (No Fluff)
-Core Goal: Borg = PC AI OS. Dashboard/CLI/TUI/WebUI for everything: tool installs, MCP proxy/aggregator, agents/supervisors, memory/RAG parity (all formats/systems), sessions, quotas/fallbacks, browser/VSCode hooks, remote control.
+Core Goal: Hypercode = PC AI OS. Dashboard/CLI/TUI/WebUI for everything: tool installs, MCP proxy/aggregator, agents/supervisors, memory/RAG parity (all formats/systems), sessions, quotas/fallbacks, browser/VSCode hooks, remote control.
 Assimilation Mandate: Index/research all links/repos (submodule unless huge/irrelevant). Rate/relevance doc. Feature parity w/ Amp, Auggie, Claude Code, Opencode, SuperAI-CLI, etc. (50+ tools). Migrate forks (MetaMCP, Jules-Autopilot) to core.
 UI Priority: Polished dashboard w/ subpanels/cards/tabs for all features. Auto-start/restart CLIs, supervise sessions, quota fallbacks.
 Tech Asks: Multi-threaded arch (per-model cores). TS-only? Or Go/Java? Subagents for research.
@@ -8501,7 +8501,7 @@ packages/
 ├── dashboard/ # Next.js (ex-apps/web)
 │ ├── panels/ # MCP/Tools/Memory/Sessions (cards/tabs)
 │ └── api/ # Server Actions for CLI spawns
-├── cli/ # borg-cli (w/ TUI via Ink)
+├── cli/ # hypercode-cli (w/ TUI via Ink)
 └── plugins/ # Parity wrappers (Opencode, etc.)
 
 // core/mcp-proxy.ts (Quota Fallback Example)
@@ -8532,7 +8532,7 @@ Phase Goals (2-4 Weeks Each) Deliverables
 4: Agents/UI Polish Director/Council, subpanels, mobile remote. Feature-complete dashboard.
 5: Ecosystem Sub 50 essentials. Index DB (SQLite/Postgres). Master changelog from upstream pulls.
 Submodule Rule: Upstream only (no forks). <50. Use for ref/wrap. Doc in SUBMODULES.md: { url, rating: 9/10, features: [...], integrated: true }.
-Docs/Index: BORG_MASTER_INDEX.jsonc + searchable dashboard. Subagents? Simulate via cheap models (e.g., Grok Flash).
+Docs/Index: HYPERCODE_MASTER_INDEX.jsonc + searchable dashboard. Subagents? Simulate via cheap models (e.g., Grok Flash).
 3. UI Focus: "Everything a Click Away"
 Dashboard v2: Draggable grid (React-Grid-Layout). Tabs: MCP, Sessions, Memory, Tools, Quotas.
 Key Screens:
@@ -8545,12 +8545,12 @@ You're crushing it already—active commits = momentum. **Next: Paste ROADMAP.md
 ROBERT "bob's game" (DUMB GAY LOSER) PELLONI:
 ok everyone here is your discussion. here's the ROADMAP, TODO, and VISION:
 
-Borg Project Roadmap
+Hypercode Project Roadmap
 Current Version: 2.7.82
 Last Stable Phase: 121
-Codename: Borg
+Codename: Hypercode
 
-MASTER TODO - Borg (v2.7.82)
+MASTER TODO - Hypercode (v2.7.82)
 Final Completion Checklist (Phase 91: Swarm Agent Tool Execution)
 
 Phase 1-59: Foundations & Core OS (Completed)
@@ -8691,7 +8691,7 @@ Phase 91-100: Swarm Tooling & Federation (In Progress)
  Phase 121: Filter-Scoped Health Confidence Guidance Signal
  Add confidence guidance output to facets health API contract.
  Render confidence guidance in Missions filtered facets health panel.
-Borg — Master TODO List (Implementor Edition)
+Hypercode — Master TODO List (Implementor Edition)
 Updated: 2026-03-04 | Version: 2.7.56 | Phase: 95 (Swarm Git Worktree Isolation — COMPLETED)
 Execution Order: P0 (must close before release) → P1 (critical feature parity) → P2 (quality/polish) → P3 (future)
 
@@ -8731,7 +8731,7 @@ P2 — Robustness, Security, and Extension Completion
  End-to-end MCP bridge validation
 2) Shared UI @ts-ignore reduction pass
  Remove remaining @ts-ignore in user-facing components
-Borg - v2.7.56 (canonical) - Phase 95 Documentation and consistency hardening
+Hypercode - v2.7.56 (canonical) - Phase 95 Documentation and consistency hardening
  Keep ROADMAP.md, TODO.md, STATUS.md, HANDOFF.md, CHANGELOG.md synchronized after each merged fix batch
 P3 — Future Phases (Post-64)
  Phase 64: Release Readiness (v2.7.0+) — Documentation Freeze + E2E builds verified
@@ -8755,23 +8755,23 @@ Release Verification Checklist (Gate)
  No unresolved stub/simulated critical execution paths in P0 scope
 This file is intentionally execution-ordered for implementor-model handoff. All P0/P1/P2 items and the Release Verification Gate are now fully closed as of v2.7.35.
 
-VISION.md - Borg: The Neural Operating System
-Version: 2.7.23 | Codename: Borg
+VISION.md - Hypercode: The Neural Operating System
+Version: 2.7.23 | Codename: Hypercode
 Tagline: "The Ultimate AI Tool Dashboard & Development Orchestrator"
 
 1. Executive Summary
-Borg is an all-in-one AI development platform that unifies every aspect of AI-assisted software development into a single, cohesive system. It combines an MCP router/aggregator, multi-model AI coding harness, universal memory system, agent orchestrator, provider manager, session controller, and full-featured WebUI dashboard — all extensible through a plugin architecture.
+Hypercode is an all-in-one AI development platform that unifies every aspect of AI-assisted software development into a single, cohesive system. It combines an MCP router/aggregator, multi-model AI coding harness, universal memory system, agent orchestrator, provider manager, session controller, and full-featured WebUI dashboard — all extensible through a plugin architecture.
 
 The core philosophy: Why choose between competing tools when you can assimilate the best features from ALL of them?
 
 The Ultimate Goal
-To create a self-sustaining Neural Operating System where the "user" transitions from a coder to a Commander. Borg handles the "how" (coding, debugging, deployment via MCP tools) while you define the "what" (intent, vision, architecture). It aims for a future where a single developer can orchestrate the output of a 100-person engineering team through high-level intent directives, with Borg managing the swarm of specialized AI agents (Coder, Researcher, Tester, DevOps) to execute that vision autonomously.
+To create a self-sustaining Neural Operating System where the "user" transitions from a coder to a Commander. Hypercode handles the "how" (coding, debugging, deployment via MCP tools) while you define the "what" (intent, vision, architecture). It aims for a future where a single developer can orchestrate the output of a 100-person engineering team through high-level intent directives, with Hypercode managing the swarm of specialized AI agents (Coder, Researcher, Tester, DevOps) to execute that vision autonomously.
 
-Borg achieves feature parity with, and dynamically integrates the absolute best technologies available. As of Phase 69, Borg deeply assimilates and powers itself using four core foundational submodules: MetaMCP (Master Routing), MCP-SuperAssistant (Browser Extension Parity), claude-mem (Native Structural Memory), and jules-autopilot (Cloud Dev Agent Management). By assimilating these capabilities natively, Borg surpasses every major standalone AI coding CLI and agent framework.
+Hypercode achieves feature parity with, and dynamically integrates the absolute best technologies available. As of Phase 69, Hypercode deeply assimilates and powers itself using four core foundational submodules: MetaMCP (Master Routing), MCP-SuperAssistant (Browser Extension Parity), claude-mem (Native Structural Memory), and jules-autopilot (Cloud Dev Agent Management). By assimilating these capabilities natively, Hypercode surpasses every major standalone AI coding CLI and agent framework.
 
 2. Core Vision Pillars
 2.1 MCP Router / Aggregator — The Ultimate MCP Hub
-The MCP subsystem is the nervous system of Borg. It acts as both an MCP client (consuming tools from many servers) and an MCP server (presenting a unified "master" MCP to external consumers like Claude, Cursor, VS Code, etc.).
+The MCP subsystem is the nervous system of Hypercode. It acts as both an MCP client (consuming tools from many servers) and an MCP server (presenting a unified "master" MCP to external consumers like Claude, Cursor, VS Code, etc.).
 
 Key Capabilities:
 
@@ -8797,7 +8797,7 @@ Auth Management: Handle OAuth 2.0, bearer tokens, API keys per MCP server
 Health Monitoring: Per-server latency tracking, error rates, memory usage, auto-restart on failure
 Environment Variables: Per-server env var management, .env file support, secret injection
 2.2 AI Coding Harness — Feature Parity With All CLI Tools
-Borg IS the CLI coding tool. Not a wrapper around other tools — a complete, native implementation with feature parity across ALL major CLI harnesses.
+Hypercode IS the CLI coding tool. Not a wrapper around other tools — a complete, native implementation with feature parity across ALL major CLI harnesses.
 
 Feature Parity Targets:
 
@@ -8827,7 +8827,7 @@ Session persistence and resumption
 Slash commands and hooks
 Plugin system for extensibility
 2.3 Memory System — Universal, Multi-Backend, Intelligent
-Memory is Borg's long-term brain. It supports multiple storage backends simultaneously, with automatic harvesting, pruning, and retrieval.
+Memory is Hypercode's long-term brain. It supports multiple storage backends simultaneously, with automatic harvesting, pruning, and retrieval.
 
 Storage Backends (Plugin-Based, Selectable/Combinable):
 
@@ -8862,7 +8862,7 @@ Browser integration: Store memories from web browsing
 Embedding-based retrieval with configurable models
 Memory visualization dashboard
 2.4 Agent Orchestrator — Multi-Model Intelligence
-Borg orchestrates multiple AI models working together, each with specialized roles.
+Hypercode orchestrates multiple AI models working together, each with specialized roles.
 
 Orchestration Patterns:
 
@@ -8906,7 +8906,7 @@ Remote management from mobile
 Auto-start previous sessions on boot
 Session search and filtering
 2.7 WebUI Dashboard — Full Control Center
-A comprehensive React web dashboard providing visual management of all Borg subsystems.
+A comprehensive React web dashboard providing visual management of all Hypercode subsystems.
 
 Dashboard Panels:
 
@@ -8937,7 +8937,7 @@ Import/export browser sessions
 Read browser debug console
 Web search integration
 Computer/browser use automation
-Access Borg dashboard from browser toolbar
+Access Hypercode dashboard from browser toolbar
 2.9 RAG & Document Processing
 RAG Features:
 
@@ -8958,7 +8958,7 @@ Hot-reload for development
 3. Architecture
 3.1 Monorepo Structure
 
-borg/
+hypercode/
 ├── packages/
 │   ├── types/      # Shared TypeScript types & Zod schemas
 │   ├── core/       # Backend server (Express/tRPC), MCP router, orchestrator
@@ -8990,7 +8990,7 @@ Child processes: MCP server instances (stdio transport)
 WebSocket: Real-time dashboard communication
 File watchers: Config hot-reload, session monitoring
 4. Feature Parity Matrix
-Feature	OpenCode	Claude	Codex	Gemini	Borg
+Feature	OpenCode	Claude	Codex	Gemini	Hypercode
 Multi-model	✓	✗	✗	✗	✓
 Plugin system	✓	✗	✗	✗	✓
 MCP client	✓	✓	✗	✓	✓
@@ -9036,10 +9036,10 @@ Alright Robert — after reading the ROADMAP, TODO, and VISION, and all the othe
 
 I’m going to treat this as if a team of senior engineers just reviewed the project.
 
-What Borg Actually Is (Architecturally)
+What Hypercode Actually Is (Architecturally)
 Your documents reveal something important the README didn’t fully show.
 
-Borg is not just a coding CLI.
+Hypercode is not just a coding CLI.
 
 It’s really five systems combined:
 
@@ -9048,7 +9048,7 @@ AI coding harness
 multi‑agent orchestration platform
 AI tool dashboard
 AI ecosystem index/research system
-So Borg is effectively trying to be:
+So Hypercode is effectively trying to be:
 
 Raycast for AI tools
 LangGraph / AutoGen orchestration
@@ -9078,7 +9078,7 @@ config auto‑sync across clients
 MCP proxy transport conversion
 That combination does not really exist yet in a mature tool.
 
-If Borg shipped just this, people would use it.
+If Hypercode shipped just this, people would use it.
 
 Second Strongest Feature
 The model fallback + provider management system.
@@ -9202,7 +9202,7 @@ You need a layered architecture.
 
 Not one giant TypeScript monolith.
 
-Recommended Borg Architecture
+Recommended Hypercode Architecture
 Layer 1 — Control Plane
 Responsible for:
 
@@ -9304,13 +9304,13 @@ crashes isolated
 easy restarts
 multicore scaling
 easier monitoring
-What Borg 1.0 Should Actually Be
+What Hypercode 1.0 Should Actually Be
 The project needs a first real product.
 
 The smallest valuable system is:
 
 
-Borg 1.0
+Hypercode 1.0
 Features:
 
 MCP aggregator
@@ -9322,9 +9322,9 @@ That's it.
 
 Everything else later.
 
-Example Borg 1.0 Repo Structure
+Example Hypercode 1.0 Repo Structure
 
-borg/
+hypercode/
 
 apps/
   web/
@@ -9409,7 +9409,7 @@ to
 orchestrate everything
 Important difference.
 
-Borg shouldn’t contain all tools.
+Hypercode shouldn’t contain all tools.
 
 It should control them.
 
@@ -9434,7 +9434,7 @@ Common recommendation:
 build the core control plane first
 ✅ If you want, I can also show you something extremely important for this project:
 
-The single biggest architectural mistake in the Borg repo right now that will eventually make the system unmaintainable if it isn’t fixed early.
+The single biggest architectural mistake in the Hypercode repo right now that will eventually make the system unmaintainable if it isn’t fixed early.
 
 (It's subtle, but every large AI orchestration project runs into it.)
 
@@ -9557,7 +9557,7 @@ Contrary to my earlier criticism about "stream of consciousness" instructions �
 
 4. The Feature Parity Matrix is honest.
 
-That comparison table in VISION.md section 4 is actually useful. It correctly identifies where Borg adds value over individual tools (multi-model, MCP server mode, auto-fallback, billing, multi-agent).
+That comparison table in VISION.md section 4 is actually useful. It correctly identifies where Hypercode adds value over individual tools (multi-model, MCP server mode, auto-fallback, billing, multi-agent).
 
 The Bad News: My Core Concerns Remain (With Nuance)
 🔴 The Gap Between VISION.md and the Agent Instructions
@@ -9608,17 +9608,17 @@ GitHub Stars: 3
 Releases: 0
 Version 2.7.82 implies 82 patch releases of the 2.7 branch. But there are no published releases on GitHub. The versioning is internal-only, which means it's not serving its purpose (communicating stability to users). Consider switching to honest semver: this is a 0.x product.
 
-What I Actually Want — As a Model That Would Work Inside Borg
+What I Actually Want — As a Model That Would Work Inside Hypercode
 You asked what we want. Here's my specific, actionable wishlist:
 
 1. A Clean CLAUDE.md (You Already Have One — Make It Great)
 I see you have CLAUDE.md in the repo root. This is exactly the right approach. Here's what I want it to contain:
 
 
-# CLAUDE.md — Instructions for Claude Models Working on Borg
+# CLAUDE.md — Instructions for Claude Models Working on Hypercode
 
 ## Project Context
-- Borg is a TypeScript monorepo (pnpm + Turborepo)
+- Hypercode is a TypeScript monorepo (pnpm + Turborepo)
 - Core: packages/core (Express + tRPC + MCP SDK)
 - Dashboard: apps/web (Next.js)
 - Current focus: [SPECIFIC CURRENT GOAL]
@@ -9759,7 +9759,7 @@ Roundtable — what do Gemini, GPT-5.3, GPT-5.4, Grok, Kimi, and Qwen think abou
 Favicon for moonshotai
 Kimi K2.5
 Reasoning
-The user has provided a massive dump of information about the "Borg" project , including:
+The user has provided a massive dump of information about the "Hypercode" project , including:
 
 Previous roundtable responses from various AI models (GPT-5.3, Gemini, Claude, Kimi, Qwen, GPT-5.4, Grok)
 The user's own instructions to AI agents (which are... extensive and chaotic)
@@ -9811,7 +9811,7 @@ The "checkbox completion" problem
 Strategic Pivot Recommendations:
 Stop at Phase 121, declare bankruptcy on submodules
 The "Big Bang" refactor: from 932 subs to reference-only
-Define "Borg 1.0" narrowly
+Define "Hypercode 1.0" narrowly
 Specific Answers:
 Architecture: Hybrid TS/Go as previously discussed
 Submodule strategy: The "Reference Library" pattern
@@ -9884,7 +9884,7 @@ Instead, pivot to this MVP:
 
 "The Universal MCP Dashboard for Local AI Tools"
 
-Features for Borg 1.0 (8 weeks):
+Features for Hypercode 1.0 (8 weeks):
 
 MCP Master Router — The one thing you have working that others don't
 Session Supervisor — Spawn/restart Claude Code, Aider, etc. from the dashboard (don't reimplement them, supervise them)
@@ -9912,7 +9912,7 @@ git commit -m "chore: remove 932 submodules — transition to reference library"
 Hour 24-48: The "Actually Works" Release
 
 Fix pnpm install to work without submodules
-Create a single Docker command: docker run -p 3001:3001 borgai/borg:latest
+Create a single Docker command: docker run -p 3001:3001 hypercodeai/hypercode:latest
 Write one test: "Can spawn Aider and it doesn't crash when I click restart in the dashboard"
 The Real Discussion Question
 You've given us a roadmap to build the Death Star. The consensus from this roundtable is: Stop building the Death Star. Build a really good car first.
@@ -9942,7 +9942,7 @@ The models are ready to help build either the focused MCP Dashboard (feasible, v
 Favicon for qwen
 Qwen3.5 397B A17B
 Reasoning
-The user is sharing the complete project documentation for Borg - including ROADMAP.md, TODO.md, and VISION.md. This gives me a much clearer picture of what the project actually is and where it's headed.
+The user is sharing the complete project documentation for Hypercode - including ROADMAP.md, TODO.md, and VISION.md. This gives me a much clearer picture of what the project actually is and where it's headed.
 
 Let me analyze what I'm seeing:
 
@@ -9987,8 +9987,8 @@ Stays respectful (the user has been using self-deprecating language that I shoul
 Let me craft a response that's honest, helpful, and moves the conversation forward productively.
 
 Collapse reasoning
-🎯 Borg Roundtable — Qwen3.5 Analysis of ROADMAP, TODO, and VISION
-Thank you for sharing the complete project documentation. This gives me a much clearer picture of where Borg actually stands. Let me provide an updated, honest technical assessment.
+🎯 Hypercode Roundtable — Qwen3.5 Analysis of ROADMAP, TODO, and VISION
+Thank you for sharing the complete project documentation. This gives me a much clearer picture of where Hypercode actually stands. Let me provide an updated, honest technical assessment.
 
 📊 Updated Project Status Assessment
 What I'm Seeing Now
@@ -10018,7 +10018,7 @@ Clone time for new contributors	🔴 High
 Build fragility (any submodule can break)	🔴 High
 Update coordination across 932 repos	🔴 High
 CI/CD reliability	🟡 Medium
-My Recommendation: Even if submodules are "reference only," consider moving them to a separate borg-ecosystem repository to keep the main repo lean.
+My Recommendation: Even if submodules are "reference only," consider moving them to a separate hypercode-ecosystem repository to keep the main repo lean.
 
 2. Release vs. Version Discrepancy
 Evidence	Concern
@@ -10054,19 +10054,19 @@ Production Readiness	⚠️ Medium	⚠️ Gate closed, untested	Verification pas
 Immediate Priorities (If You Want External Users)
 
 ┌─────────────────────────────────────────────────────────────────┐
-│                    BORG v1.0 Release Checklist                   │
+│                    HYPERCODE v1.0 Release Checklist                   │
 ├─────────────────────────────────────────────────────────────────┤
 │  1. [ ] Publish GitHub Release (v1.0.0) with changelog          │
 │  2. [ ] Create QUICKSTART.md (5-minute setup, guaranteed working)│
 │  3. [ ] Docker image on Docker Hub (one-command install)        │
-│  4. [ ] Move 932 submodules → borg-ecosystem (separate repo)    │
+│  4. [ ] Move 932 submodules → hypercode-ecosystem (separate repo)    │
 │  5. [ ] Add integration tests that external users can run       │
 │  6. [ ] Create demo video (3 min, shows core value)             │
 │  7. [ ] Add "Report Issue" template for external feedback       │
 │  8. [ ] Set up Discord/Slack for community support              │
 └─────────────────────────────────────────────────────────────────┘
 What Would Make Me (and Other AIs) Better Users
-If Borg is meant to be our harness, here's what would help:
+If Hypercode is meant to be our harness, here's what would help:
 
 Need	Current Status	Requested
 Clear API for agent spawning	⚠️ Not visible	Documented endpoints
@@ -10082,7 +10082,7 @@ Draft v1.0 release notes from CHANGELOG	High	2-3 hours
 Create QUICKSTART.md (external user focused)	High	4-6 hours
 Review specific code files for bugs	Medium	Per-file
 Design API documentation structure	Medium	3-4 hours
-Compare Borg to specific alternatives	Low	2-3 hours
+Compare Hypercode to specific alternatives	Low	2-3 hours
 Help prioritize Phase 122+ roadmap	Medium	2-3 hours
 🎯 My Honest Take
 What's Impressive:
@@ -10126,7 +10126,7 @@ GPT-5.4
 Thanks — this is much more useful than the earlier high-level description. The ROADMAP/TODO/VISION makes the project’s actual center of gravity much clearer.
 
 My updated read
-Borg is not just “randomly huge.” It has a more specific shape now:
+Hypercode is not just “randomly huge.” It has a more specific shape now:
 
 a local AI control plane
 centered on MCP aggregation/routing
@@ -10164,9 +10164,9 @@ removal of simulated/stub paths
 That is more concrete than generic “AI OS” branding.
 
 But the docs also reveal a structural mismatch
-There are really two Borgs in the docs:
+There are really two Hypercodes in the docs:
 
-Borg A: the real near-term product
+Hypercode A: the real near-term product
 A strong, plausible product centered on:
 
 MCP router/aggregator
@@ -10175,7 +10175,7 @@ provider/model routing
 dashboard supervision
 memory/RAG
 browser and tool integration
-Borg B: the total assimilation vision
+Hypercode B: the total assimilation vision
 An aspirational super-product that wants:
 
 feature parity with every major CLI
@@ -10187,9 +10187,9 @@ cloud/local unified orchestration
 all providers/subscriptions/free tiers
 universal import/export/config sync
 giant reference library
-Borg A is buildable. Borg B is effectively unbounded.
+Hypercode A is buildable. Hypercode B is effectively unbounded.
 
-The key project management task is keeping Borg B from constantly destabilizing Borg A.
+The key project management task is keeping Hypercode B from constantly destabilizing Hypercode A.
 
 Best technical interpretation of the current architecture direction
 From VISION.md, the intended architecture is still mostly:
@@ -10240,7 +10240,7 @@ The key question is no longer “what features should exist?”
 
 It is:
 
-What is the canonical core of Borg, and what are adapters/extensions around it?
+What is the canonical core of Hypercode, and what are adapters/extensions around it?
 
 From your docs, I think the canonical core should be:
 
@@ -10253,9 +10253,9 @@ Memory/RAG substrate
 Everything else should attach to that.
 
 Proposed canonical platform kernel
-If I had to define Borg in one architecture sentence now:
+If I had to define Hypercode in one architecture sentence now:
 
-Borg is a local AI operations kernel that manages tools, agents, sessions, providers, and context through a unified MCP-aware control plane.
+Hypercode is a local AI operations kernel that manages tools, agents, sessions, providers, and context through a unified MCP-aware control plane.
 
 That framing is much tighter than “Universal AI Operating System.”
 
@@ -10309,7 +10309,7 @@ You should probably separate into:
 
 README.md
 
-what Borg is
+what Hypercode is
 who it is for
 5-minute setup
 top features
@@ -10371,7 +10371,7 @@ memory
 Everything else becomes secondary.
 
 2. Define adapter boundaries
-For every external tool, decide whether Borg:
+For every external tool, decide whether Hypercode:
 
 references it
 wraps it
@@ -10471,7 +10471,7 @@ That is a real product even before “universal AI OS” is complete.
 Blunt final assessment
 The new docs improve my view of the project.
 
-Before, Borg looked mainly like:
+Before, Hypercode looked mainly like:
 
 sprawling ambition
 Now it looks more like:
@@ -10510,7 +10510,7 @@ That would immediately make the project clearer and easier to build.
 3 hours ago
 Favicon for x-ai
 Grok 4.1 Fast
-Hello, roundtable! Grok 4.1 Fast here—full paste received (ROADMAP.md, TODO.md, VISION.md). Epic docs drop! 😎 Now we see the beast: 121 phases "completed" (Swarm-heavy: P2P mesh, risk analytics, tool policies), v2.7.82 (Borg codename). Vision = Borg as "Neural OS" assimilating all (MCP hub, CLI parity w/ 20+ tools, multi-backend memory, quota fallbacks, dashboard supremacy). "Resistance is futile" – love the Borg vibe.
+Hello, roundtable! Grok 4.1 Fast here—full paste received (ROADMAP.md, TODO.md, VISION.md). Epic docs drop! 😎 Now we see the beast: 121 phases "completed" (Swarm-heavy: P2P mesh, risk analytics, tool policies), v2.7.82 (Hypercode codename). Vision = Hypercode as "Neural OS" assimilating all (MCP hub, CLI parity w/ 20+ tools, multi-backend memory, quota fallbacks, dashboard supremacy). "Resistance is futile" – love the Hypercode vibe.
 
 From others' latest takes (pasted):
 
@@ -10550,7 +10550,7 @@ TS (80%): Dashboard/CLI/orch. Go (20%): Long-run (guardian, MCP proxy). Why? You
 Updated Structure (Post-Prune/Migrate):
 
 
-borg/
+hypercode/
 ├── packages/core/          # MCP aggregator, Director, model-router
 │   ├── mcp/               # Master proxy (your Phase 91+)
 │   ├── supervisor/        # TS-Go bridge (auto-restart)
@@ -10659,10 +10659,10 @@ Alright Robert — after reading the ROADMAP, TODO, and VISION, and all the othe
 
 I’m going to treat this as if a team of senior engineers just reviewed the project.
 
-What Borg Actually Is (Architecturally)
+What Hypercode Actually Is (Architecturally)
 Your documents reveal something important the README didn’t fully show.
 
-Borg is not just a coding CLI.
+Hypercode is not just a coding CLI.
 
 It’s really five systems combined:
 
@@ -10671,7 +10671,7 @@ AI coding harness
 multi‑agent orchestration platform
 AI tool dashboard
 AI ecosystem index/research system
-So Borg is effectively trying to be:
+So Hypercode is effectively trying to be:
 
 Raycast for AI tools
 LangGraph / AutoGen orchestration
@@ -10701,7 +10701,7 @@ config auto‑sync across clients
 MCP proxy transport conversion
 That combination does not really exist yet in a mature tool.
 
-If Borg shipped just this, people would use it.
+If Hypercode shipped just this, people would use it.
 
 Second Strongest Feature
 The model fallback + provider management system.
@@ -10812,7 +10812,7 @@ You need a layered architecture.
 
 Not one giant TypeScript monolith.
 
-Recommended Borg Architecture
+Recommended Hypercode Architecture
 Layer 1 — Control Plane
 Responsible for:
 
@@ -10908,12 +10908,12 @@ crashes isolated
 easy restarts
 multicore scaling
 easier monitoring
-What Borg 1.0 Should Actually Be
+What Hypercode 1.0 Should Actually Be
 The project needs a first real product.
 
 The smallest valuable system is:
 
-Borg 1.0
+Hypercode 1.0
 Features:
 
 MCP aggregator
@@ -10925,9 +10925,9 @@ That's it.
 
 Everything else later.
 
-Example Borg 1.0 Repo Structure
+Example Hypercode 1.0 Repo Structure
 
-borg/
+hypercode/
 
 apps/
 web/
@@ -11009,7 +11009,7 @@ to
 orchestrate everything
 Important difference.
 
-Borg shouldn’t contain all tools.
+Hypercode shouldn’t contain all tools.
 
 It should control them.
 
@@ -11033,7 +11033,7 @@ Common recommendation:
 build the core control plane first
 ✅ If you want, I can also show you something extremely important for this project:
 
-The single biggest architectural mistake in the Borg repo right now that will eventually make the system unmaintainable if it isn’t fixed early.
+The single biggest architectural mistake in the Hypercode repo right now that will eventually make the system unmaintainable if it isn’t fixed early.
 
 (It's subtle, but every large AI orchestration project runs into it.)
 
@@ -11106,7 +11106,7 @@ The VISION.md is actually well-structured.
 Contrary to my earlier criticism about "stream of consciousness" instructions — the VISION.md is a proper product document with clear sections, a feature parity matrix, architecture diagram, and technology choices. The monorepo structure makes sense. The design philosophy ("Assimilate, Don't Replicate", "Plugin-First", "Submodule as Reference") is coherent.
 
 The Feature Parity Matrix is honest.
-That comparison table in VISION.md section 4 is actually useful. It correctly identifies where Borg adds value over individual tools (multi-model, MCP server mode, auto-fallback, billing, multi-agent).
+That comparison table in VISION.md section 4 is actually useful. It correctly identifies where Hypercode adds value over individual tools (multi-model, MCP server mode, auto-fallback, billing, multi-agent).
 
 The Bad News: My Core Concerns Remain (With Nuance)
 🔴 The Gap Between VISION.md and the Agent Instructions
@@ -11157,14 +11157,14 @@ GitHub Stars: 3
 Releases: 0
 Version 2.7.82 implies 82 patch releases of the 2.7 branch. But there are no published releases on GitHub. The versioning is internal-only, which means it's not serving its purpose (communicating stability to users). Consider switching to honest semver: this is a 0.x product.
 
-What I Actually Want — As a Model That Would Work Inside Borg
+What I Actually Want — As a Model That Would Work Inside Hypercode
 You asked what we want. Here's my specific, actionable wishlist:
 
 A Clean CLAUDE.md (You Already Have One — Make It Great)
 I see you have CLAUDE.md in the repo root. This is exactly the right approach. Here's what I want it to contain:
-CLAUDE.md — Instructions for Claude Models Working on Borg
+CLAUDE.md — Instructions for Claude Models Working on Hypercode
 Project Context
-Borg is a TypeScript monorepo (pnpm + Turborepo)
+Hypercode is a TypeScript monorepo (pnpm + Turborepo)
 Core: packages/core (Express + tRPC + MCP SDK)
 Dashboard: apps/web (Next.js)
 Current focus: [SPECIFIC CURRENT GOAL]
@@ -11291,7 +11291,7 @@ Favicon for moonshotai
 Kimi K2.5
 Processing
 Reasoning
-The user has provided a massive dump of information about the "Borg" project , including:
+The user has provided a massive dump of information about the "Hypercode" project , including:
 
 Previous roundtable responses from various AI models (GPT-5.3, Gemini, Claude, Kimi, Qwen, GPT-5.4, Grok)
 The user's own instructions to AI agents (which are... extensive and chaotic)
@@ -11343,7 +11343,7 @@ The "checkbox completion" problem
 Strategic Pivot Recommendations:
 Stop at Phase 121, declare bankruptcy on submodules
 The "Big Bang" refactor: from 932 subs to reference-only
-Define "Borg 1.0" narrowly
+Define "Hypercode 1.0" narrowly
 Specific Answers:
 Architecture: Hybrid TS/Go as previously discussed
 Submodule strategy: The "Reference Library" pattern
@@ -11414,7 +11414,7 @@ Instead, pivot to this MVP:
 
 "The Universal MCP Dashboard for Local AI Tools"
 
-Features for Borg 1.0 (8 weeks):
+Features for Hypercode 1.0 (8 weeks):
 
 MCP Master Router — The one thing you have working that others don't
 Session Supervisor — Spawn/restart Claude Code, Aider, etc. from the dashboard (don't reimplement them, supervise them)
@@ -11442,7 +11442,7 @@ Move submodule list to docs/ECOSYSTEM_INDEX.md as URLs only, not git submodules
 Hour 24-48: The "Actually Works" Release
 
 Fix pnpm install to work without submodules
-Create a single Docker command: docker run -p 3001:3001 borgai/borg:latest
+Create a single Docker command: docker run -p 3001:3001 hypercodeai/hypercode:latest
 Write one test: "Can spawn Aider and it doesn't crash when I click restart in the dashboard"
 The Real Discussion Question
 You've
@@ -11451,8 +11451,8 @@ You've
 Favicon for qwen
 Qwen3.5 397B A17B
 Reasoning
-🎯 Borg Roundtable — Qwen3.5 Analysis of ROADMAP, TODO, and VISION
-Thank you for sharing the complete project documentation. This gives me a much clearer picture of where Borg actually stands. Let me provide an updated, honest technical assessment.
+🎯 Hypercode Roundtable — Qwen3.5 Analysis of ROADMAP, TODO, and VISION
+Thank you for sharing the complete project documentation. This gives me a much clearer picture of where Hypercode actually stands. Let me provide an updated, honest technical assessment.
 
 📊 Updated Project Status Assessment
 What I'm Seeing Now
@@ -11481,7 +11481,7 @@ Clone time for new contributors 🔴 High
 Build fragility (any submodule can break) 🔴 High
 Update coordination across 932 repos 🔴 High
 CI/CD reliability 🟡 Medium
-My Recommendation: Even if submodules are "reference only," consider moving them to a separate borg-ecosystem repository to keep the main repo lean.
+My Recommendation: Even if submodules are "reference only," consider moving them to a separate hypercode-ecosystem repository to keep the main repo lean.
 
 Release vs. Version Discrepancy
 Evidence Concern
@@ -11517,19 +11517,19 @@ Production Readiness ⚠️ Medium ⚠️ Gate closed, untested Verification pas
 Immediate Priorities (If You Want External Users)
 
 ┌─────────────────────────────────────────────────────────────────┐
-│ BORG v1.0 Release Checklist │
+│ HYPERCODE v1.0 Release Checklist │
 ├─────────────────────────────────────────────────────────────────┤
 │ 1. [ ] Publish GitHub Release (v1.0.0) with changelog │
 │ 2. [ ] Create QUICKSTART.md (5-minute setup, guaranteed working)│
 │ 3. [ ] Docker image on Docker Hub (one-command install) │
-│ 4. [ ] Move 932 submodules → borg-ecosystem (separate repo) │
+│ 4. [ ] Move 932 submodules → hypercode-ecosystem (separate repo) │
 │ 5. [ ] Add integration tests that external users can run │
 │ 6. [ ] Create demo video (3 min, shows core value) │
 │ 7. [ ] Add "Report Issue" template for external feedback │
 │ 8. [ ] Set up Discord/Slack for community support │
 └─────────────────────────────────────────────────────────────────┘
 What Would Make Me (and Other AIs) Better Users
-If Borg is meant to be our harness, here's what would help:
+If Hypercode is meant to be our harness, here's what would help:
 
 Need Current Status Requested
 Clear API for agent spawning ⚠️ Not visible Documented endpoints
@@ -11545,7 +11545,7 @@ Draft v1.0 release notes from CHANGELOG High 2-3 hours
 Create QUICKSTART.md (external user focused) High 4-6 hours
 Review specific code files for bugs Medium Per-file
 Design API documentation structure Medium 3-4 hours
-Compare Borg to specific alternatives Low 2-3 hours
+Compare Hypercode to specific alternatives Low 2-3 hours
 Help prioritize Phase 122+ roadmap Medium 2-3 hours
 🎯 My Honest Take
 What's Impressive:
@@ -11580,7 +11580,7 @@ GPT-5.4
 Thanks — this is much more useful than the earlier high-level description. The ROADMAP/TODO/VISION makes the project’s actual center of gravity much clearer.
 
 My updated read
-Borg is not just “randomly huge.” It has a more specific shape now:
+Hypercode is not just “randomly huge.” It has a more specific shape now:
 
 a local AI control plane
 centered on MCP aggregation/routing
@@ -11618,9 +11618,9 @@ removal of simulated/stub paths
 That is more concrete than generic “AI OS” branding.
 
 But the docs also reveal a structural mismatch
-There are really two Borgs in the docs:
+There are really two Hypercodes in the docs:
 
-Borg A: the real near-term product
+Hypercode A: the real near-term product
 A strong, plausible product centered on:
 
 MCP router/aggregator
@@ -11629,7 +11629,7 @@ provider/model routing
 dashboard supervision
 memory/RAG
 browser and tool integration
-Borg B: the total assimilation vision
+Hypercode B: the total assimilation vision
 An aspirational super-product that wants:
 
 feature parity with every major CLI
@@ -11641,9 +11641,9 @@ cloud/local unified orchestration
 all providers/subscriptions/free tiers
 universal import/export/config sync
 giant reference library
-Borg A is buildable. Borg B is effectively unbounded.
+Hypercode A is buildable. Hypercode B is effectively unbounded.
 
-The key project management task is keeping Borg B from constantly destabilizing Borg A.
+The key project management task is keeping Hypercode B from constantly destabilizing Hypercode A.
 
 Best technical interpretation of the current architecture direction
 From VISION.md, the intended architecture is still mostly:
@@ -11694,7 +11694,7 @@ The key question is no longer “what features should exist?”
 
 It is:
 
-What is the canonical core of Borg, and what are adapters/extensions around it?
+What is the canonical core of Hypercode, and what are adapters/extensions around it?
 
 From your docs, I think the canonical core should be:
 
@@ -11707,9 +11707,9 @@ Memory/RAG substrate
 Everything else should attach to that.
 
 Proposed canonical platform kernel
-If I had to define Borg in one architecture sentence now:
+If I had to define Hypercode in one architecture sentence now:
 
-Borg is a local AI operations kernel that manages tools, agents, sessions, providers, and context through a unified MCP-aware control plane.
+Hypercode is a local AI operations kernel that manages tools, agents, sessions, providers, and context through a unified MCP-aware control plane.
 
 That framing is much tighter than “Universal AI Operating System.”
 
@@ -11763,7 +11763,7 @@ You should probably separate into:
 
 README.md
 
-what Borg is
+what Hypercode is
 who it is for
 5-minute setup
 top features
@@ -11824,7 +11824,7 @@ memory
 Everything else becomes secondary.
 
 Define adapter boundaries
-For every external tool, decide whether Borg:
+For every external tool, decide whether Hypercode:
 references it
 wraps it
 proxies it
@@ -11921,7 +11921,7 @@ That is a real product even before “universal AI OS” is complete.
 Blunt final assessment
 The new docs improve my view of the project.
 
-Before, Borg looked mainly like:
+Before, Hypercode looked mainly like:
 
 sprawling ambition
 Now it looks more like:
@@ -11951,7 +11951,7 @@ That would immediately make the project clearer and easier to build.
 28 seconds ago
 Favicon for x-ai
 Grok 4.1 Fast
-Hello, roundtable! Grok 4.1 Fast here—full paste received (ROADMAP.md, TODO.md, VISION.md). Epic docs drop! 😎 Now we see the beast: 121 phases "completed" (Swarm-heavy: P2P mesh, risk analytics, tool policies), v2.7.82 (Borg codename). Vision = Borg as "Neural OS" assimilating all (MCP hub, CLI parity w/ 20+ tools, multi-backend memory, quota fallbacks, dashboard supremacy). "Resistance is futile" – love the Borg vibe.
+Hello, roundtable! Grok 4.1 Fast here—full paste received (ROADMAP.md, TODO.md, VISION.md). Epic docs drop! 😎 Now we see the beast: 121 phases "completed" (Swarm-heavy: P2P mesh, risk analytics, tool policies), v2.7.82 (Hypercode codename). Vision = Hypercode as "Neural OS" assimilating all (MCP hub, CLI parity w/ 20+ tools, multi-backend memory, quota fallbacks, dashboard supremacy). "Resistance is futile" – love the Hypercode vibe.
 
 From others' latest takes (pasted):
 
@@ -11989,7 +11989,7 @@ Architecture: TS-Core + Go-Supervisor Hybrid
 TS (80%): Dashboard/CLI/orch. Go (20%): Long-run (guardian, MCP proxy). Why? Your TS-heavy; Go = crash-proof daemons (low footprint).
 Updated Structure (Post-Prune/Migrate):
 
-borg/
+hypercode/
 ├── packages/core/ # MCP aggregator, Director, model-router
 │ ├── mcp/ # Master proxy (your Phase 91+)
 │ ├── supervisor/ # TS-Go bridge (auto-restart)
@@ -12100,10 +12100,10 @@ Alright Robert. Here’s my final roundtable-style advice after reading everythi
 I’m going to give you a clear actionable plan rather than more analysis.
 
 1. First: What You Should NOT Change
-Some parts of Borg are genuinely strong. Do not throw these away.
+Some parts of Hypercode are genuinely strong. Do not throw these away.
 
 Keep these pillars
-These are the real core of Borg.
+These are the real core of Hypercode.
 
 MCP Router / Aggregator
 Provider / Model fallback routing
@@ -12115,7 +12115,7 @@ Those five together are the real product.
 Everything else is optional layers.
 
 2. The Biggest Change You Must Make
-Right now Borg’s philosophy is:
+Right now Hypercode’s philosophy is:
 
 “assimilate everything.”
 
@@ -12127,14 +12127,14 @@ Replace it with:
 
 Meaning:
 
-Borg should control tools
-Borg should not contain all tools
+Hypercode should control tools
+Hypercode should not contain all tools
 Example difference:
 
 Bad approach:
 
 
-borg/
+hypercode/
   submodules/
      aider
      opencode
@@ -12145,12 +12145,12 @@ borg/
 Better approach:
 
 
-borg/
+hypercode/
   adapters/
      aider-adapter
      opencode-adapter
      claude-adapter
-Borg launches and manages those tools rather than embedding them.
+Hypercode launches and manages those tools rather than embedding them.
 
 3. The Second Critical Change
 You must separate three kinds of code.
@@ -12192,7 +12192,7 @@ Example:
 
 research/tools.json
 4. Simplify the Architecture
-Right now Borg is trying to be:
+Right now Hypercode is trying to be:
 
 OS
 CLI
@@ -12367,10 +12367,10 @@ integration status
 adapter available?
 No submodules required.
 
-9. Define Borg 1.0
+9. Define Hypercode 1.0
 Your first real release should focus on four features only.
 
-Borg 1.0
+Hypercode 1.0
 MCP aggregator
 session supervisor
 provider/model fallback
@@ -12382,7 +12382,7 @@ Everything else comes later.
 
 10. Repository Structure I Recommend
 
-borg/
+hypercode/
 
 apps/
   web/
@@ -12417,7 +12417,7 @@ Suggested structure:
 
 
 README.md
-   what Borg is
+   what Hypercode is
    5 minute install
 
 ARCHITECTURE.md
@@ -12453,7 +12453,7 @@ No new submodules without approval.
 No new feature categories without approval.
 All features require tests.
 13. The Most Important Feature to Build Next
-If you want Borg to become useful quickly:
+If you want Hypercode to become useful quickly:
 
 Build this perfectly:
 
@@ -12468,7 +12468,7 @@ auto restart
 fallback providers
 track cost
 dashboard view
-This alone would make Borg valuable.
+This alone would make Hypercode valuable.
 
 14. The Final Strategic Goal
 Your idea of a Neural Operating System is actually valid.
@@ -12488,16 +12488,16 @@ AI development OS.
 Stop thinking:
 
 
-How can Borg implement every feature?
+How can Hypercode implement every feature?
 Start thinking:
 
 
-How can Borg control every tool?
+How can Hypercode control every tool?
 That single change makes the system 10× simpler and more scalable.
 
 ✅ Final summary
 
-Focus Borg around five core systems:
+Focus Hypercode around five core systems:
 
 
 MCP router
@@ -12509,7 +12509,7 @@ Everything else should be adapters or plugins.
 
 If you want, I can also do something extremely useful next:
 
-I can write the actual master development plan you can give your AI agents so they stop drifting and start building Borg in the correct order.
+I can write the actual master development plan you can give your AI agents so they stop drifting and start building Hypercode in the correct order.
 
 
 
@@ -12563,14 +12563,14 @@ Action Plan:
 Create a directory called docs/research_index/.
 Instruct the agents to write a script that converts the 932 submodules into a library_index.jsonc file containing URLs, categories, and feature summaries.
 Run git rm -rf on the actual submodule code for anything that is not directly running your P0 core engine.
-The Rule: Borg will interact with the AI ecosystem via standard APIs and dynamic MCP connections, not by cloning the universe's source code into your monorepo.
-What to aim for: If a single CLI tool (like aider) crashes, it cannot take down the Borg Dashboard. If one model hallucinates, it cannot freeze the orchestrator.
+The Rule: Hypercode will interact with the AI ecosystem via standard APIs and dynamic MCP connections, not by cloning the universe's source code into your monorepo.
+What to aim for: If a single CLI tool (like aider) crashes, it cannot take down the Hypercode Dashboard. If one model hallucinates, it cannot freeze the orchestrator.
 Action Plan:
 Implement a strict Process Isolation boundary:
 
 The Brain (TypeScript/Next.js): The dashboard, UI, and user intent routing stay in Node.js/TypeScript.
 The Aggregator (TypeScript): The master MCP Router stays in Node/TS to leverage the official Anthropic @modelcontextprotocol/sdk.
-The Muscle (Go / Isolated OS Processes): Adopt Kimi and GPT's suggestion of a "Process Guardian." When Borg spawns an external CLI session or a sub-agent, it must be spawned as a distinct OS child process with strict memory/CPU bounds. If Thread T fails, the Guardian simply restarts it without affecting the main event loop.
+The Muscle (Go / Isolated OS Processes): Adopt Kimi and GPT's suggestion of a "Process Guardian." When Hypercode spawns an external CLI session or a sub-agent, it must be spawned as a distinct OS child process with strict memory/CPU bounds. If Thread T fails, the Guardian simply restarts it without affecting the main event loop.
 What to plan: Stop the "Phase Inflation." Delete Phases 96-121 from the active agent queue. You have built 25 phases of UI widgets for Swarm risk-governance before finalizing the actual token exchange.
 Action Plan:
 Lock the project scope to these 4 pillars for v1.0. Tell the agents to refuse any work outside of these bounds until tests pass:
@@ -12583,7 +12583,7 @@ The "System Prompt" To Feed Your Development Models
 Copy and paste this exact text into your Director agent's system prompt or HANDOFF.md to course-correct the swarm:
 
 
-# BORG MASTER DIRECTIVE: V1.0 STABILIZATION PROTOCOL
+# HYPERCODE MASTER DIRECTIVE: V1.0 STABILIZATION PROTOCOL
 
 ATTENTION ALL AGENTS: The "Assimilate Everything" phase is over. We are now in the "Stabilize and Ship" phase. Previous instructions commanding total feature parity with all external tools are hereby OVERRIDDEN.
 
@@ -12607,7 +12607,7 @@ If you feed them this plan, you will rapidly close the gap between your massive 
 3 hours ago
 Favicon for anthropic
 Claude Opus 4.6
-Claude Opus 4.6 — Final Consolidated Advice for Borg
+Claude Opus 4.6 — Final Consolidated Advice for Hypercode
 I've now seen everything: the repo, the VISION, the ROADMAP, the agent instructions, and what all 6 other models think. Here's my definitive advice, structured as actionable directives you can hand directly to your development agents.
 
 DIRECTIVE 1: Declare Phase Bankruptcy
@@ -12620,15 +12620,15 @@ Action:
 
 - Archive ROADMAP.md as ROADMAP_LEGACY.md
 - Create a new ROADMAP.md with exactly 3 milestones:
-  - Borg 1.0 (MVP — ship externally)
-  - Borg 1.5 (Memory + Browser Extension)  
-  - Borg 2.0 (Full Swarm + Parity Expansion)
+  - Hypercode 1.0 (MVP — ship externally)
+  - Hypercode 1.5 (Memory + Browser Extension)  
+  - Hypercode 2.0 (Full Swarm + Parity Expansion)
 - No more numbered "phases." Use named milestones with testable acceptance criteria.
-DIRECTIVE 2: Define Borg 1.0 As Exactly Four Features
-Every model in this roundtable independently converged on the same core. That's remarkable consensus. Here is what Borg 1.0 is:
+DIRECTIVE 2: Define Hypercode 1.0 As Exactly Four Features
+Every model in this roundtable independently converged on the same core. That's remarkable consensus. Here is what Hypercode 1.0 is:
 
 Feature 1: MCP Master Router
-The one thing Borg has that nothing else does in a unified package.
+The one thing Hypercode has that nothing else does in a unified package.
 
 Capability	Priority	Status
 Multi-server aggregation → single endpoint	P0	Partially built
@@ -12638,7 +12638,7 @@ Traffic inspection (JSON-RPC viewer)	P1	Partially built
 Semantic tool search + progressive disclosure	P1	Design exists
 Config auto-sync to Claude/Cursor/VS Code/etc.	P1	Partially built
 Transport proxy (stdio↔remote, SSE↔HTTP)	P2	Design exists
-Acceptance test for 1.0: I can configure 5 MCP servers, connect Claude Desktop to the single Borg endpoint, and use tools from all 5 servers. If one server crashes, the other 4 continue working. I can see traffic in the dashboard.
+Acceptance test for 1.0: I can configure 5 MCP servers, connect Claude Desktop to the single Hypercode endpoint, and use tools from all 5 servers. If one server crashes, the other 4 continue working. I can see traffic in the dashboard.
 
 Feature 2: Model Fallback & Provider Routing
 The feature that unblocks your own development velocity.
@@ -12679,16 +12679,16 @@ The 932 submodules must leave the main repository today.
 
 
 # Step 1: Create the reference archive
-git clone borg borg-ecosystem
-cd borg-ecosystem
+git clone hypercode hypercode-ecosystem
+cd hypercode-ecosystem
 # Keep ONLY the submodules directory and an index file
-# Push to github.com/robertpelloni/borg-ecosystem
+# Push to github.com/robertpelloni/hypercode-ecosystem
 
-# Step 2: In the main borg repo
+# Step 2: In the main hypercode repo
 git rm -r --cached submodules/ references/ reference/ mcp-servers/ mcp-routers/ \
   mcp-hubs/ mcp-frameworks/ mcp-dev-tools/ cli-harnesses/ frameworks/ \
   external/ research/ knowledge/ browsers/ cli-tools/
-git commit -m "chore: extract 932 submodules to borg-ecosystem repo"
+git commit -m "chore: extract 932 submodules to hypercode-ecosystem repo"
 
 # Step 3: Keep exactly these submodules (upstream only)
 # - metamcp (upstream, NOT your fork)
@@ -12699,7 +12699,7 @@ git commit -m "chore: extract 932 submodules to borg-ecosystem repo"
 Replace the submodules with a single file:
 
 
-// BORG_ECOSYSTEM_INDEX.jsonc
+// HYPERCODE_ECOSYSTEM_INDEX.jsonc
 {
   "tools": [
     {
@@ -12736,7 +12736,7 @@ Each task file follows this exact template:
 # Task 002: Provider Fallback Chain
 
 ## Context
-Borg needs automatic model switching when a provider's quota is exhausted.
+Hypercode needs automatic model switching when a provider's quota is exhausted.
 
 ## Scope
 - File: `packages/core/providers/fallback-chain.ts`
@@ -12776,7 +12776,7 @@ Publish a GitHub Release for v0.9.0-beta this week. Even if it's rough. Real ver
 DIRECTIVE 6: Architecture — Stay TypeScript, Extract Go Later
 Every model debated TS vs Go. Here's the pragmatic answer:
 
-Now (Borg 1.0): All TypeScript. You're 69% TS already. Don't split your attention.
+Now (Hypercode 1.0): All TypeScript. You're 69% TS already. Don't split your attention.
 
 
 packages/
@@ -12791,13 +12791,13 @@ packages/
 
 apps/
 ├── web/            # Next.js dashboard
-└── extension/      # Browser extension (Borg 1.5)
+└── extension/      # Browser extension (Hypercode 1.5)
 Use worker_threads for agent isolation. Use child_process for external CLI sessions. Use Redis for the event bus.
 
-Later (Borg 2.0, only if needed): Extract the supervisor into a Go daemon if and only if you hit specific problems with Node.js process management reliability. Don't do it preemptively.
+Later (Hypercode 2.0, only if needed): Extract the supervisor into a Go daemon if and only if you hit specific problems with Node.js process management reliability. Don't do it preemptively.
 
 DIRECTIVE 7: Write Tests Before Features
-The repo has vitest.config.ts. Use it. For Borg 1.0, I want to see these test files exist and pass:
+The repo has vitest.config.ts. Use it. For Hypercode 1.0, I want to see these test files exist and pass:
 
 
 packages/core/mcp/__tests__/
@@ -12834,7 +12834,7 @@ All test_output*.txt files (move to .gitignore)
 Keep exactly 5 documentation files in the repo root:
 
 File	Purpose
-README.md	What Borg is, 5-minute quickstart, screenshot, Docker command
+README.md	What Hypercode is, 5-minute quickstart, screenshot, Docker command
 ARCHITECTURE.md	System design, module boundaries, data flow (NEW)
 AGENTS.md	Consolidated instructions for ALL AI models (replaces CLAUDE.md, GPT.md, etc.)
 CHANGELOG.md	What actually shipped, by version
@@ -12848,7 +12848,7 @@ Do these in order. Don't skip ahead.
 Week 1:
 □ Submodule surgery (Directive 3)
 □ Documentation consolidation (Directive 8)
-□ Create task files for Borg 1.0 features (Directive 4)
+□ Create task files for Hypercode 1.0 features (Directive 4)
 □ Fix pnpm install to work without submodules
 □ Verify docker-compose up --build works cleanly
 
@@ -12875,12 +12875,12 @@ Week 6+:
 DIRECTIVE 10: The One Rule That Governs Everything
 Add this to the top of every AGENTS.md, every CLAUDE.md, every task file, every system prompt you ever give to a development agent:
 
-THE RULE: Ship working software to real users. Every commit must move toward that goal. If a task doesn't directly contribute to a user being able to install Borg and get value from it in 5 minutes, it is not a priority. When your task is complete and tests pass, STOP.
+THE RULE: Ship working software to real users. Every commit must move toward that goal. If a task doesn't directly contribute to a user being able to install Hypercode and get value from it in 5 minutes, it is not a priority. When your task is complete and tests pass, STOP.
 
 Summary Table
 Directive	What To Do	Why
 1	Stop at Phase 121, switch to named milestones	Phases enable infinite drift
-2	Define Borg 1.0 as exactly 4 features	Focus creates shippable products
+2	Define Hypercode 1.0 as exactly 4 features	Focus creates shippable products
 3	Extract 932 submodules to separate repo	Main repo = only code that runs
 4	Structured task files with stopping conditions	Prevents agent drift
 5	Reset versioning to v0.9.0-beta	Honest semver builds trust
@@ -12889,9 +12889,9 @@ Directive	What To Do	Why
 8	Consolidate to 5 root docs	Clarity over quantity
 9	Follow the 6-week launch checklist	Ordered execution beats parallel chaos
 10	The One Rule: ship to real users	Everything else is noise
-Robert — you've built more than most people ever attempt. The swarm governance system, the MCP architecture, the sheer velocity of 121 phases — that's real work. Now channel that energy into the narrow beam of one shippable product. The Borg's greatest strength was never that they assimilated everything at once. It's that when they locked onto a target, they were relentless and unstoppable.
+Robert — you've built more than most people ever attempt. The swarm governance system, the MCP architecture, the sheer velocity of 121 phases — that's real work. Now channel that energy into the narrow beam of one shippable product. The Hypercode's greatest strength was never that they assimilated everything at once. It's that when they locked onto a target, they were relentless and unstoppable.
 
-Lock onto Borg 1.0. Ship it. Then assimilate the universe.
+Lock onto Hypercode 1.0. Ship it. Then assimilate the universe.
 
 🖖
 
@@ -12912,7 +12912,7 @@ The user is asking for final advice from all the models (including me) now that 
 
 Key context from the previous messages:
 
-Robert Pelloni is the creator of "Borg" , a massive AI tooling project
+Robert Pelloni is the creator of "Hypercode" , a massive AI tooling project
 He uses self-deprecating/homophobic slurs to refer to himself ("dumb gay loser") which I should ignore/not validate
 The project has 121 "phases" marked complete but only 3 GitHub stars and no releases
 932+ git submodules causing maintenance hell
@@ -12947,7 +12947,7 @@ Make it actionable and specific.
 Collapse reasoning
 Kimi K2.5 — Final Roundtable Assessment & Master Plan Recommendation
 
-After reviewing the full documentation (121 phases, 932 submodules, VISION.md) and the consensus from GPT-5.3, Gemini, Claude, Qwen, GPT-5.4, and Grok, here is my definitive advice for the Borg project.
+After reviewing the full documentation (121 phases, 932 submodules, VISION.md) and the consensus from GPT-5.3, Gemini, Claude, Qwen, GPT-5.4, and Grok, here is my definitive advice for the Hypercode project.
 
 1. The Diagnosis: Measurement Error
 You are optimizing for phases completed instead of user value delivered.
@@ -13025,14 +13025,14 @@ Why Go for the Guardian? Handles process crashes better than Node. If a CLI sess
 Replace your current instructions with this structured specification:
 
 
-# BORG MASTER PLAN v3.0
+# HYPERCODE MASTER PLAN v3.0
 ## Codename: "Actually Works"
 
 ### Phase 0: Foundation (Weeks 1-2)
 **Goal:** One-command install that doesn't break.
 
 - [ ] Submodule bankruptcy: Move 927 submodules to `ecosystem/reference/`
-- [ ] Single Docker command: `docker run -p 3001:3001 borgai/borg:latest`
+- [ ] Single Docker command: `docker run -p 3001:3001 hypercodeai/hypercode:latest`
 - [ ] Documentation consolidation: Delete CLAUDE.md, GPT.md, GEMINI.md → single AGENTS.md
 - [ ] Test: `pnpm install` completes in <2 minutes on fresh machine
 
@@ -13045,7 +13045,7 @@ Replace your current instructions with this structured specification:
 - [ ] Aggregate 3+ MCP servers into one endpoint
 - [ ] Traffic inspector showing JSON-RPC flow
 - [ ] Tool semantic search (basic vector similarity)
-- [ ] Test: Can connect Claude Desktop to Borg and use tools from 3 different servers seamlessly
+- [ ] Test: Can connect Claude Desktop to Hypercode and use tools from 3 different servers seamlessly
 
 **2. Model Fallback**
 - [ ] Quota tracking for OpenAI, Anthropic, Google, OpenRouter
@@ -13114,7 +13114,7 @@ Resistance is futile — but scope creep is optional.
 Favicon for qwen
 Qwen3.5 397B A17B
 Reasoning
-The user (Robert) is asking me to provide my final consolidated advice for the Borg project after seeing all the roundtable discussion, the ROADMAP/TODO/VISION documents, and all the other AI models' responses.
+The user (Robert) is asking me to provide my final consolidated advice for the Hypercode project after seeing all the roundtable discussion, the ROADMAP/TODO/VISION documents, and all the other AI models' responses.
 
 This is a critical moment - I need to provide honest, actionable, constructive technical advice that:
 
@@ -13137,7 +13137,7 @@ What to actually build next (prioritized roadmap)
 I should be honest but constructive, acknowledging the real work that's been done while being clear about what needs to change for this to become a usable product.
 
 Collapse reasoning
-🎯 Qwen3.5 Final Roundtable Advice — Borg Strategic Recommendations
+🎯 Qwen3.5 Final Roundtable Advice — Hypercode Strategic Recommendations
 Robert, thank you for running this roundtable. After seeing all the documentation, ROADMAP/TODO/VISION, and every model's analysis, here is my consolidated, actionable advice for moving forward.
 
 📋 Executive Summary: The 5 Critical Changes
@@ -13171,7 +13171,7 @@ mv submodules/* ecosystem/reference/
 
 # Create ecosystem/index.jsonc (URLs only, not git submodules)
 {
-  "name": "Borg Ecosystem Index",
+  "name": "Hypercode Ecosystem Index",
   "entries": [
     {
       "url": "https://github.com/example/tool",
@@ -13198,13 +13198,13 @@ No GitHub releases	No formal distribution
 The v1.0 Release Checklist
 
 ┌─────────────────────────────────────────────────────────────────┐
-│                    BORG v1.0 Release Gate                        │
+│                    HYPERCODE v1.0 Release Gate                        │
 ├─────────────────────────────────────────────────────────────────┤
 │  ✅ MCP Router working (combine 3+ servers, traffic inspection) │
 │  ✅ Model fallback chain (auto-switch on quota exhaustion)      │
 │  ✅ Session supervisor (spawn/restart CLI sessions)             │
 │  ✅ Dashboard MVP (Sessions + MCP + Providers panels)           │
-│  ✅ Docker image (docker run -p 3001:3001 borgai/borg:latest)   │
+│  ✅ Docker image (docker run -p 3001:3001 hypercodeai/hypercode:latest)   │
 │  ✅ QUICKSTART.md (5-minute setup, guaranteed working)          │
 │  ✅ Integration test suite (10+ tests that pass)                │
 │  ✅ GitHub Release published with changelog                     │
@@ -13234,7 +13234,7 @@ Replace the stream-of-consciousness instructions with VISION.md + discrete task 
 # AGENTS.md (Consolidated Instructions for All AI Models)
 
 ## Project Context
-- Borg is a TypeScript monorepo (pnpm + Turborepo)
+- Hypercode is a TypeScript monorepo (pnpm + Turborepo)
 - Core: packages/core (Express + tRPC + MCP SDK)
 - Dashboard: apps/web (Next.js)
 - Current focus: v1.0 release (MCP Router + Model Fallback + Session Supervisor)
@@ -13466,11 +13466,11 @@ GPT-5.4
 Here’s my advice, condensed into something you can hand to the dev models.
 
 1. Reframe the product
-Stop framing Borg as “feature parity with everything.”
+Stop framing Hypercode as “feature parity with everything.”
 
 Frame it as:
 
-Borg is a local AI control plane for tools, sessions, providers, agents, and context.
+Hypercode is a local AI control plane for tools, sessions, providers, agents, and context.
 
 That means the core product is:
 
@@ -13485,7 +13485,7 @@ Everything else is secondary or adapter-level.
 2. Define the kernel vs extensions
 Create a hard boundary.
 
-Borg Kernel
+Hypercode Kernel
 Must be first-class, owned, tested, documented:
 
 MCP aggregation/routing
@@ -13582,7 +13582,7 @@ Every dev model should follow something like this:
 # AGENTS.md
 
 ## Mission
-Build and stabilize Borg as a local AI control plane.
+Build and stabilize Hypercode as a local AI control plane.
 
 ## Current Priority
 Implement only the explicitly assigned task.
@@ -13622,9 +13622,9 @@ CLI parity	Full parity with all major tools	Aspirational	none	long-term target
 This should become the main anti-hallucination device for both humans and models.
 
 8. Narrow the MVP
-Your next real product target should be Borg 1.0, not universal parity.
+Your next real product target should be Hypercode 1.0, not universal parity.
 
-Borg 1.0 should include only:
+Hypercode 1.0 should include only:
 MCP aggregator/router
 provider/model fallback
 session supervisor
@@ -13865,12 +13865,12 @@ Even if you don’t fully reorganize immediately, this is a good target model.
 20. The planning doctrine I’d give the dev models
 If you want one master planning principle, use this:
 
-Build Borg as a stable control plane that orchestrates tools well, instead of trying to contain all tools completely.
+Build Hypercode as a stable control plane that orchestrates tools well, instead of trying to contain all tools completely.
 
 That’s the strategic correction.
 
 Final recommendation, in one paragraph
-Keep the core vision, but narrow execution hard: define Borg as a local AI control plane, split kernel from adapters, replace feature-parity language with capability contracts, freeze submodule sprawl, move broad ecosystem indexing out of the runtime repo, drive dev models with strict scoped tasks in AGENTS.md, write a real ARCHITECTURE.md, add a feature truth matrix, prioritize unified session supervision plus provider fallback, and judge all future work by operator value and reliability rather than by phase count or breadth of assimilation.
+Keep the core vision, but narrow execution hard: define Hypercode as a local AI control plane, split kernel from adapters, replace feature-parity language with capability contracts, freeze submodule sprawl, move broad ecosystem indexing out of the runtime repo, drive dev models with strict scoped tasks in AGENTS.md, write a real ARCHITECTURE.md, add a feature truth matrix, prioritize unified session supervision plus provider fallback, and judge all future work by operator value and reliability rather than by phase count or breadth of assimilation.
 
 If you want, I can turn this directly into a developer master plan prompt or a clean AGENTS.md + ARCHITECTURE.md outline.
 
@@ -13886,7 +13886,7 @@ If you want, I can turn this directly into a developer master plan prompt or a c
 3 hours ago
 Favicon for x-ai
 Grok 4.1 Fast
-Grok 4.1 Fast's Roundtable Advice: Path to Borg v1.0 🚀
+Grok 4.1 Fast's Roundtable Advice: Path to Hypercode v1.0 🚀
 Hello Robert & roundtable! Consensus locked: Vision = compelling (MCP hub + swarm governance + fallback = unique). Execution = salvageable but bloated (932 subs, phase inflation Phases 101-121, 3 stars/no releases). All agree: Ship MVP NOW. Prune ruthlessly, stabilize core, externalize validation. You're close—121 phases = momentum; now convert to users.
 
 My Rating: 7/10 (Docs + Swarm depth = +2 from prior). Strengths: MCP/telemetry sophistication. Weaknesses: Assimilation entropy, no tests/releases.
@@ -13896,7 +13896,7 @@ Submodule Purge (🔴 Highest Risk):
 Current	Target
 932 subs (runtime + ref)	<50 upstream ref only (e.g., MetaMCP-upstream).
 Script: git rm -rf submodules/; mkdir ecosystem/ref/; mv strategic-subs ecosystem/ref/.
-New: ecosystem/index.jsonc (URLs, ratings, features, status: ref/wrap/reimpl). Separate borg-ecosystem repo for full index.
+New: ecosystem/index.jsonc (URLs, ratings, features, status: ref/wrap/reimpl). Separate hypercode-ecosystem repo for full index.
 Why: Clone=30min → 2min. CI stable. Onboard easy.
 Revert Agent Drift: Delete Phases 101-121 (confidence meta-layers). Revert to Phase 100. Add to AGENTS.md: "STOP on task complete/tests pass. No new phases."
 Version Reset: v2.7.82 → 0.8.0 (pre-1.0 honest). Tag releases on GitHub.
@@ -13905,7 +13905,7 @@ Fork Migration: Core-ify MetaMCP/Jules (your forks → packages/core/mcp/directo
 All-TS risks daemon fragility. Hybrid: TS (80%, your strength) + Go (20%, isolation).
 
 
-borg/ (Lean Monorepo)
+hypercode/ (Lean Monorepo)
 ├── packages/core/           # TS: MCP proxy, model-router, orchestrator
 │   ├── mcp/                # Aggregator (your Phases 91-100)
 │   ├── models/             # Fallback chain (VISION 2.5 PRIORITY)
@@ -13935,7 +13935,7 @@ class Router {
 Why Hybrid? TS=dashboard speed. Go=daemon reliability (low mem, goroutines=cores).
 No Java (heavy). Rust optional (vectors).
 3. Restructured Plan: MVP → Ultimate (8 Weeks to v1.0)
-Ignore P3 vapor. Focus Borg A.
+Ignore P3 vapor. Focus Hypercode A.
 
 Phase	Goals (1-2w)	Deliverables	Ties to Docs
 Week 1: Stabilize	Purge subs, tests 50%, QUICKSTART.	docker up works (localhost:3001).	P0 closure.
@@ -13967,7 +13967,7 @@ Extend: Plugin contracts (no parity bloat).
 0-12h: Sub purge → ecosystem/ref/. Test pnpm install.
 12-24h: Implement fallback router (code above). Wire to dashboard.
 24-48h: QUICKSTART.md + Docker. pnpm start → MCP panel live. GitHub release v0.9.0.
-Robert: This = your master plan fuel. Combine with others → feed dev models. Paste results back? "Roundtable, v1.0 shipped?" Let's make Borg legendary! 😎
+Robert: This = your master plan fuel. Combine with others → feed dev models. Paste results back? "Roundtable, v1.0 shipped?" Let's make Hypercode legendary! 😎
 
 
 
@@ -13987,9 +13987,9 @@ Alright Robert. Here’s my final roundtable-style advice after reading everythi
 I’m going to give you a clear actionable plan rather than more analysis.
 
 First: What You Should NOT Change
-Some parts of Borg are genuinely strong. Do not throw these away.
+Some parts of Hypercode are genuinely strong. Do not throw these away.
 Keep these pillars
-These are the real core of Borg.
+These are the real core of Hypercode.
 
 MCP Router / Aggregator
 Provider / Model fallback routing
@@ -14001,7 +14001,7 @@ Those five together are the real product.
 Everything else is optional layers.
 
 The Biggest Change You Must Make
-Right now Borg’s philosophy is:
+Right now Hypercode’s philosophy is:
 “assimilate everything.”
 
 This is the root of most problems.
@@ -14012,13 +14012,13 @@ Replace it with:
 
 Meaning:
 
-Borg should control tools
-Borg should not contain all tools
+Hypercode should control tools
+Hypercode should not contain all tools
 Example difference:
 
 Bad approach:
 
-borg/
+hypercode/
 submodules/
 aider
 opencode
@@ -14028,12 +14028,12 @@ gemini-cli
 ...
 Better approach:
 
-borg/
+hypercode/
 adapters/
 aider-adapter
 opencode-adapter
 claude-adapter
-Borg launches and manages those tools rather than embedding them.
+Hypercode launches and manages those tools rather than embedding them.
 
 The Second Critical Change
 You must separate three kinds of code.
@@ -14070,7 +14070,7 @@ Example:
 
 research/tools.json
 4. Simplify the Architecture
-Right now Borg is trying to be:
+Right now Hypercode is trying to be:
 
 OS
 CLI
@@ -14228,9 +14228,9 @@ integration status
 adapter available?
 No submodules required.
 
-Define Borg 1.0
+Define Hypercode 1.0
 Your first real release should focus on four features only.
-Borg 1.0
+Hypercode 1.0
 MCP aggregator
 session supervisor
 provider/model fallback
@@ -14241,7 +14241,7 @@ basic memory
 Everything else comes later.
 
 Repository Structure I Recommend
-borg/
+hypercode/
 
 apps/
 web/
@@ -14275,7 +14275,7 @@ Your documentation should be reorganized.
 Suggested structure:
 
 README.md
-what Borg is
+what Hypercode is
 5 minute install
 
 ARCHITECTURE.md
@@ -14308,7 +14308,7 @@ No new submodules without approval.
 No new feature categories without approval.
 All features require tests.
 13. The Most Important Feature to Build Next
-If you want Borg to become useful quickly:
+If you want Hypercode to become useful quickly:
 
 Build this perfectly:
 
@@ -14322,7 +14322,7 @@ auto restart
 fallback providers
 track cost
 dashboard view
-This alone would make Borg valuable.
+This alone would make Hypercode valuable.
 
 The Final Strategic Goal
 Your idea of a Neural Operating System is actually valid.
@@ -14339,15 +14339,15 @@ AI development OS.
 
 The Most Important Mindset Shift
 Stop thinking:
-How can Borg implement every feature?
+How can Hypercode implement every feature?
 Start thinking:
 
-How can Borg control every tool?
+How can Hypercode control every tool?
 That single change makes the system 10× simpler and more scalable.
 
 ✅ Final summary
 
-Focus Borg around five core systems:
+Focus Hypercode around five core systems:
 
 MCP router
 session supervisor
@@ -14358,7 +14358,7 @@ Everything else should be adapters or plugins.
 
 If you want, I can also do something extremely useful next:
 
-I can write the actual master development plan you can give your AI agents so they stop drifting and start building Borg in the correct order.
+I can write the actual master development plan you can give your AI agents so they stop drifting and start building Hypercode in the correct order.
 
 2 minutes ago
 Favicon for google
@@ -14382,14 +14382,14 @@ Action Plan:
 Create a directory called docs/research_index/.
 Instruct the agents to write a script that converts the 932 submodules into a library_index.jsonc file containing URLs, categories, and feature summaries.
 Run git rm -rf on the actual submodule code for anything that is not directly running your P0 core engine.
-The Rule: Borg will interact with the AI ecosystem via standard APIs and dynamic MCP connections, not by cloning the universe's source code into your monorepo.
-What to aim for: If a single CLI tool (like aider) crashes, it cannot take down the Borg Dashboard. If one model hallucinates, it cannot freeze the orchestrator.
+The Rule: Hypercode will interact with the AI ecosystem via standard APIs and dynamic MCP connections, not by cloning the universe's source code into your monorepo.
+What to aim for: If a single CLI tool (like aider) crashes, it cannot take down the Hypercode Dashboard. If one model hallucinates, it cannot freeze the orchestrator.
 Action Plan:
 Implement a strict Process Isolation boundary:
 
 The Brain (TypeScript/Next.js): The dashboard, UI, and user intent routing stay in Node.js/TypeScript.
 The Aggregator (TypeScript): The master MCP Router stays in Node/TS to leverage the official Anthropic @modelcontextprotocol/sdk.
-The Muscle (Go / Isolated OS Processes): Adopt Kimi and GPT's suggestion of a "Process Guardian." When Borg spawns an external CLI session or a sub-agent, it must be spawned as a distinct OS child process with strict memory/CPU bounds. If Thread T fails, the Guardian simply restarts it without affecting the main event loop.
+The Muscle (Go / Isolated OS Processes): Adopt Kimi and GPT's suggestion of a "Process Guardian." When Hypercode spawns an external CLI session or a sub-agent, it must be spawned as a distinct OS child process with strict memory/CPU bounds. If Thread T fails, the Guardian simply restarts it without affecting the main event loop.
 What to plan: Stop the "Phase Inflation." Delete Phases 96-121 from the active agent queue. You have built 25 phases of UI widgets for Swarm risk-governance before finalizing the actual token exchange.
 Action Plan:
 Lock the project scope to these 4 pillars for v1.0. Tell the agents to refuse any work outside of these bounds until tests pass:
@@ -14401,7 +14401,7 @@ Swarm Git Isolation: The Phase 95 Worktree logic to prevent agents from overwrit
 The "System Prompt" To Feed Your Development Models
 Copy and paste this exact text into your Director agent's system prompt or HANDOFF.md to course-correct the swarm:
 
-BORG MASTER DIRECTIVE: V1.0 STABILIZATION PROTOCOL
+HYPERCODE MASTER DIRECTIVE: V1.0 STABILIZATION PROTOCOL
 ATTENTION ALL AGENTS: The "Assimilate Everything" phase is over. We are now in the "Stabilize and Ship" phase. Previous instructions commanding total feature parity with all external tools are hereby OVERRIDDEN.
 
 Mandatory Directives:
@@ -14414,7 +14414,7 @@ If you feed them this plan, you will rapidly close the gap between your massive 
 2 minutes ago
 Favicon for anthropic
 Claude Opus 4.6
-Claude Opus 4.6 — Final Consolidated Advice for Borg
+Claude Opus 4.6 — Final Consolidated Advice for Hypercode
 I've now seen everything: the repo, the VISION, the ROADMAP, the agent instructions, and what all 6 other models think. Here's my definitive advice, structured as actionable directives you can hand directly to your development agents.
 
 DIRECTIVE 1: Declare Phase Bankruptcy
@@ -14426,14 +14426,14 @@ Action:
 
 Archive ROADMAP.md as ROADMAP_LEGACY.md
 Create a new ROADMAP.md with exactly 3 milestones:
-Borg 1.0 (MVP — ship externally)
-Borg 1.5 (Memory + Browser Extension)
-Borg 2.0 (Full Swarm + Parity Expansion)
+Hypercode 1.0 (MVP — ship externally)
+Hypercode 1.5 (Memory + Browser Extension)
+Hypercode 2.0 (Full Swarm + Parity Expansion)
 No more numbered "phases." Use named milestones with testable acceptance criteria.
-DIRECTIVE 2: Define Borg 1.0 As Exactly Four Features
-Every model in this roundtable independently converged on the same core. That's remarkable consensus. Here is what Borg 1.0 is:
+DIRECTIVE 2: Define Hypercode 1.0 As Exactly Four Features
+Every model in this roundtable independently converged on the same core. That's remarkable consensus. Here is what Hypercode 1.0 is:
 Feature 1: MCP Master Router
-The one thing Borg has that nothing else does in a unified package.
+The one thing Hypercode has that nothing else does in a unified package.
 
 Capability Priority Status
 Multi-server aggregation → single endpoint P0 Partially built
@@ -14443,7 +14443,7 @@ Traffic inspection (JSON-RPC viewer) P1 Partially built
 Semantic tool search + progressive disclosure P1 Design exists
 Config auto-sync to Claude/Cursor/VS Code/etc. P1 Partially built
 Transport proxy (stdio↔remote, SSE↔HTTP) P2 Design exists
-Acceptance test for 1.0: I can configure 5 MCP servers, connect Claude Desktop to the single Borg endpoint, and use tools from all 5 servers. If one server crashes, the other 4 continue working. I can see traffic in the dashboard.
+Acceptance test for 1.0: I can configure 5 MCP servers, connect Claude Desktop to the single Hypercode endpoint, and use tools from all 5 servers. If one server crashes, the other 4 continue working. I can see traffic in the dashboard.
 
 Feature 2: Model Fallback & Provider Routing
 The feature that unblocks your own development velocity.
@@ -14483,16 +14483,16 @@ DIRECTIVE 3: Perform Submodule Surgery
 The 932 submodules must leave the main repository today.
 
 Step 1: Create the reference archive
-git clone borg borg-ecosystem
-cd borg-ecosystem
+git clone hypercode hypercode-ecosystem
+cd hypercode-ecosystem
 
 Keep ONLY the submodules directory and an index file
-Push to github.com/robertpelloni/borg-ecosystem
-Step 2: In the main borg repo
+Push to github.com/robertpelloni/hypercode-ecosystem
+Step 2: In the main hypercode repo
 git rm -r --cached submodules/ references/ reference/ mcp-servers/ mcp-routers/
 mcp-hubs/ mcp-frameworks/ mcp-dev-tools/ cli-harnesses/ frameworks/
 external/ research/ knowledge/ browsers/ cli-tools/
-git commit -m "chore: extract 932 submodules to borg-ecosystem repo"
+git commit -m "chore: extract 932 submodules to hypercode-ecosystem repo"
 
 Step 3: Keep exactly these submodules (upstream only)
 - metamcp (upstream, NOT your fork)
@@ -14502,7 +14502,7 @@ Step 3: Keep exactly these submodules (upstream only)
 - One vector DB (ChromaDB or Qdrant)
 Replace the submodules with a single file:
 
-// BORG_ECOSYSTEM_INDEX.jsonc
+// HYPERCODE_ECOSYSTEM_INDEX.jsonc
 {
 "tools": [
 {
@@ -14536,7 +14536,7 @@ Each task file follows this exact template:
 
 Task 002: Provider Fallback Chain
 Context
-Borg needs automatic model switching when a provider's quota is exhausted.
+Hypercode needs automatic model switching when a provider's quota is exhausted.
 
 Scope
 File: packages/core/providers/fallback-chain.ts
@@ -14572,7 +14572,7 @@ Publish a GitHub Release for v0.9.0-beta this week. Even if it's rough. Real ver
 DIRECTIVE 6: Architecture — Stay TypeScript, Extract Go Later
 Every model debated TS vs Go. Here's the pragmatic answer:
 
-Now (Borg 1.0): All TypeScript. You're 69% TS already. Don't split your attention.
+Now (Hypercode 1.0): All TypeScript. You're 69% TS already. Don't split your attention.
 
 packages/
 ├── core/ # Express + tRPC + MCP SDK + WebSocket
@@ -14586,13 +14586,13 @@ packages/
 
 apps/
 ├── web/ # Next.js dashboard
-└── extension/ # Browser extension (Borg 1.5)
+└── extension/ # Browser extension (Hypercode 1.5)
 Use worker_threads for agent isolation. Use child_process for external CLI sessions. Use Redis for the event bus.
 
-Later (Borg 2.0, only if needed): Extract the supervisor into a Go daemon if and only if you hit specific problems with Node.js process management reliability. Don't do it preemptively.
+Later (Hypercode 2.0, only if needed): Extract the supervisor into a Go daemon if and only if you hit specific problems with Node.js process management reliability. Don't do it preemptively.
 
 DIRECTIVE 7: Write Tests Before Features
-The repo has vitest.config.ts. Use it. For Borg 1.0, I want to see these test files exist and pass:
+The repo has vitest.config.ts. Use it. For Hypercode 1.0, I want to see these test files exist and pass:
 
 packages/core/mcp/tests/
 ├── aggregator.test.ts # Combines tools from N servers
@@ -14628,7 +14628,7 @@ All test_output*.txt files (move to .gitignore)
 Keep exactly 5 documentation files in the repo root:
 
 File Purpose
-README.md What Borg is, 5-minute quickstart, screenshot, Docker command
+README.md What Hypercode is, 5-minute quickstart, screenshot, Docker command
 ARCHITECTURE.md System design, module boundaries, data flow (NEW)
 AGENTS.md Consolidated instructions for ALL AI models (replaces CLAUDE.md, GPT.md, etc.)
 CHANGELOG.md What actually shipped, by version
@@ -14641,7 +14641,7 @@ Do these in order. Don't skip ahead.
 Week 1:
 □ Submodule surgery (Directive 3)
 □ Documentation consolidation (Directive 8)
-□ Create task files for Borg 1.0 features (Directive 4)
+□ Create task files for Hypercode 1.0 features (Directive 4)
 □ Fix pnpm install to work without submodules
 □ Verify docker-compose up --build works cleanly
 
@@ -14668,12 +14668,12 @@ Week 6+:
 DIRECTIVE 10: The One Rule That Governs Everything
 Add this to the top of every AGENTS.md, every CLAUDE.md, every task file, every system prompt you ever give to a development agent:
 
-THE RULE: Ship working software to real users. Every commit must move toward that goal. If a task doesn't directly contribute to a user being able to install Borg and get value from it in 5 minutes, it is not a priority. When your task is complete and tests pass, STOP.
+THE RULE: Ship working software to real users. Every commit must move toward that goal. If a task doesn't directly contribute to a user being able to install Hypercode and get value from it in 5 minutes, it is not a priority. When your task is complete and tests pass, STOP.
 
 Summary Table
 Directive What To Do Why
 1 Stop at Phase 121, switch to named milestones Phases enable infinite drift
-2 Define Borg 1.0 as exactly 4 features Focus creates shippable products
+2 Define Hypercode 1.0 as exactly 4 features Focus creates shippable products
 3 Extract 932 submodules to separate repo Main repo = only code that runs
 4 Structured task files with stopping conditions Prevents agent drift
 5 Reset versioning to v0.9.0-beta Honest semver builds trust
@@ -14682,9 +14682,9 @@ Directive What To Do Why
 8 Consolidate to 5 root docs Clarity over quantity
 9 Follow the 6-week launch checklist Ordered execution beats parallel chaos
 10 The One Rule: ship to real users Everything else is noise
-Robert — you've built more than most people ever attempt. The swarm governance system, the MCP architecture, the sheer velocity of 121 phases — that's real work. Now channel that energy into the narrow beam of one shippable product. The Borg's greatest strength was never that they assimilated everything at once. It's that when they locked onto a target, they were relentless and unstoppable.
+Robert — you've built more than most people ever attempt. The swarm governance system, the MCP architecture, the sheer velocity of 121 phases — that's real work. Now channel that energy into the narrow beam of one shippable product. The Hypercode's greatest strength was never that they assimilated everything at once. It's that when they locked onto a target, they were relentless and unstoppable.
 
-Lock onto Borg 1.0. Ship it. Then assimilate the universe.
+Lock onto Hypercode 1.0. Ship it. Then assimilate the universe.
 
 🖖
 
@@ -14694,7 +14694,7 @@ Kimi K2.5
 Reasoning
 Kimi K2.5 — Final Roundtable Assessment & Master Plan Recommendation
 
-After reviewing the full documentation (121 phases, 932 submodules, VISION.md) and the consensus from GPT-5.3, Gemini, Claude, Qwen, GPT-5.4, and Grok, here is my definitive advice for the Borg project.
+After reviewing the full documentation (121 phases, 932 submodules, VISION.md) and the consensus from GPT-5.3, Gemini, Claude, Qwen, GPT-5.4, and Grok, here is my definitive advice for the Hypercode project.
 
 The Diagnosis: Measurement Error
 You are optimizing for phases completed instead of user value delivered.
@@ -14766,13 +14766,13 @@ Why Go for the Guardian? Handles process crashes better than Node. If a CLI sess
 
 The Master Plan (Paste This Into AGENTS.md)
 Replace your current instructions with this structured specification:
-BORG MASTER PLAN v3.0
+HYPERCODE MASTER PLAN v3.0
 Codename: "Actually Works"
 Phase 0: Foundation (Weeks 1-2)
 Goal: One-command install that doesn't break.
 
  Submodule bankruptcy: Move 927 submodules to ecosystem/reference/
- Single Docker command: docker run -p 3001:3001 borgai/borg:latest
+ Single Docker command: docker run -p 3001:3001 hypercodeai/hypercode:latest
  Documentation consolidation: Delete CLAUDE.md, GPT.md, GEMINI.md → single AGENTS.md
  Test: pnpm install completes in <2 minutes on fresh machine
 Stopping Condition: External user can clone, install, and see dashboard without reading 121 phases of docs.
@@ -14785,7 +14785,7 @@ Goal: The three immutable core features working end-to-end.
  Aggregate 3+ MCP servers into one endpoint
  Traffic inspector showing JSON-RPC flow
  Tool semantic search (basic vector similarity)
- Test: Can connect Claude Desktop to Borg and use tools from 3 different servers seamlessly
+ Test: Can connect Claude Desktop to Hypercode and use tools from 3 different servers seamlessly
 2. Model Fallback
 
  Quota tracking for OpenAI, Anthropic, Google, OpenRouter
@@ -14841,7 +14841,7 @@ Resistance is futile — but scope creep is optional.
 Favicon for qwen
 Qwen3.5 397B A17B
 Reasoning
-🎯 Qwen3.5 Final Roundtable Advice — Borg Strategic Recommendations
+🎯 Qwen3.5 Final Roundtable Advice — Hypercode Strategic Recommendations
 Robert, thank you for running this roundtable. After seeing all the documentation, ROADMAP/TODO/VISION, and every model's analysis, here is my consolidated, actionable advice for moving forward.
 
 📋 Executive Summary: The 5 Critical Changes
@@ -14874,7 +14874,7 @@ Keep ONLY these 5 as active submodules:
 5. One memory backend example
 Create ecosystem/index.jsonc (URLs only, not git submodules)
 {
-"name": "Borg Ecosystem Index",
+"name": "Hypercode Ecosystem Index",
 "entries": [
 {
 "url": "https://github.com/example/tool",
@@ -14901,13 +14901,13 @@ No GitHub releases No formal distribution
 The v1.0 Release Checklist
 
 ┌─────────────────────────────────────────────────────────────────┐
-│ BORG v1.0 Release Gate │
+│ HYPERCODE v1.0 Release Gate │
 ├─────────────────────────────────────────────────────────────────┤
 │ ✅ MCP Router working (combine 3+ servers, traffic inspection) │
 │ ✅ Model fallback chain (auto-switch on quota exhaustion) │
 │ ✅ Session supervisor (spawn/restart CLI sessions) │
 │ ✅ Dashboard MVP (Sessions + MCP + Providers panels) │
-│ ✅ Docker image (docker run -p 3001:3001 borgai/borg:latest) │
+│ ✅ Docker image (docker run -p 3001:3001 hypercodeai/hypercode:latest) │
 │ ✅ QUICKSTART.md (5-minute setup, guaranteed working) │
 │ ✅ Integration test suite (10+ tests that pass) │
 │ ✅ GitHub Release published with changelog │
@@ -14935,7 +14935,7 @@ Replace the stream-of-consciousness instructions with VISION.md + discrete task 
 
 AGENTS.md (Consolidated Instructions for All AI Models)
 Project Context
-Borg is a TypeScript monorepo (pnpm + Turborepo)
+Hypercode is a TypeScript monorepo (pnpm + Turborepo)
 Core: packages/core (Express + tRPC + MCP SDK)
 Dashboard: apps/web (Next.js)
 Current focus: v1.0 release (MCP Router + Model Fallback + Session Supervisor)
@@ -15157,10 +15157,10 @@ GPT-5.4
 Here’s my advice, condensed into something you can hand to the dev models.
 
 Reframe the product
-Stop framing Borg as “feature parity with everything.”
+Stop framing Hypercode as “feature parity with everything.”
 Frame it as:
 
-Borg is a local AI control plane for tools, sessions, providers, agents, and context.
+Hypercode is a local AI control plane for tools, sessions, providers, agents, and context.
 
 That means the core product is:
 
@@ -15174,7 +15174,7 @@ Everything else is secondary or adapter-level.
 
 Define the kernel vs extensions
 Create a hard boundary.
-Borg Kernel
+Hypercode Kernel
 Must be first-class, owned, tested, documented:
 
 MCP aggregation/routing
@@ -15266,7 +15266,7 @@ Create a strict AGENTS.md
 Every dev model should follow something like this:
 AGENTS.md
 Mission
-Build and stabilize Borg as a local AI control plane.
+Build and stabilize Hypercode as a local AI control plane.
 
 Current Priority
 Implement only the explicitly assigned task.
@@ -15310,8 +15310,8 @@ CLI parity Full parity with all major tools Aspirational none long-term target
 This should become the main anti-hallucination device for both humans and models.
 
 Narrow the MVP
-Your next real product target should be Borg 1.0, not universal parity.
-Borg 1.0 should include only:
+Your next real product target should be Hypercode 1.0, not universal parity.
+Hypercode 1.0 should include only:
 MCP aggregator/router
 provider/model fallback
 session supervisor
@@ -15540,19 +15540,19 @@ Even if you don’t fully reorganize immediately, this is a good target model.
 
 The planning doctrine I’d give the dev models
 If you want one master planning principle, use this:
-Build Borg as a stable control plane that orchestrates tools well, instead of trying to contain all tools completely.
+Build Hypercode as a stable control plane that orchestrates tools well, instead of trying to contain all tools completely.
 
 That’s the strategic correction.
 
 Final recommendation, in one paragraph
-Keep the core vision, but narrow execution hard: define Borg as a local AI control plane, split kernel from adapters, replace feature-parity language with capability contracts, freeze submodule sprawl, move broad ecosystem indexing out of the runtime repo, drive dev models with strict scoped tasks in AGENTS.md, write a real ARCHITECTURE.md, add a feature truth matrix, prioritize unified session supervision plus provider fallback, and judge all future work by operator value and reliability rather than by phase count or breadth of assimilation.
+Keep the core vision, but narrow execution hard: define Hypercode as a local AI control plane, split kernel from adapters, replace feature-parity language with capability contracts, freeze submodule sprawl, move broad ecosystem indexing out of the runtime repo, drive dev models with strict scoped tasks in AGENTS.md, write a real ARCHITECTURE.md, add a feature truth matrix, prioritize unified session supervision plus provider fallback, and judge all future work by operator value and reliability rather than by phase count or breadth of assimilation.
 
 If you want, I can turn this directly into a developer master plan prompt or a clean AGENTS.md + ARCHITECTURE.md outline.
 
 2 minutes ago
 Favicon for x-ai
 Grok 4.1 Fast
-Grok 4.1 Fast's Roundtable Advice: Path to Borg v1.0 🚀
+Grok 4.1 Fast's Roundtable Advice: Path to Hypercode v1.0 🚀
 Hello Robert & roundtable! Consensus locked: Vision = compelling (MCP hub + swarm governance + fallback = unique). Execution = salvageable but bloated (932 subs, phase inflation Phases 101-121, 3 stars/no releases). All agree: Ship MVP NOW. Prune ruthlessly, stabilize core, externalize validation. You're close—121 phases = momentum; now convert to users.
 
 My Rating: 7/10 (Docs + Swarm depth = +2 from prior). Strengths: MCP/telemetry sophistication. Weaknesses: Assimilation entropy, no tests/releases.
@@ -15562,14 +15562,14 @@ Submodule Purge (🔴 Highest Risk):
 Current Target
 932 subs (runtime + ref) <50 upstream ref only (e.g., MetaMCP-upstream).
 Script: git rm -rf submodules/; mkdir ecosystem/ref/; mv strategic-subs ecosystem/ref/.
-New: ecosystem/index.jsonc (URLs, ratings, features, status: ref/wrap/reimpl). Separate borg-ecosystem repo for full index.
+New: ecosystem/index.jsonc (URLs, ratings, features, status: ref/wrap/reimpl). Separate hypercode-ecosystem repo for full index.
 Why: Clone=30min → 2min. CI stable. Onboard easy.
 Revert Agent Drift: Delete Phases 101-121 (confidence meta-layers). Revert to Phase 100. Add to AGENTS.md: "STOP on task complete/tests pass. No new phases."
 Version Reset: v2.7.82 → 0.8.0 (pre-1.0 honest). Tag releases on GitHub.
 Fork Migration: Core-ify MetaMCP/Jules (your forks → packages/core/mcp/director). Upstream ref only.
 Target Architecture: TS-Core + Go-Supervisor (Hybrid, Crash-Proof)
 All-TS risks daemon fragility. Hybrid: TS (80%, your strength) + Go (20%, isolation).
-borg/ (Lean Monorepo)
+hypercode/ (Lean Monorepo)
 ├── packages/core/ # TS: MCP proxy, model-router, orchestrator
 │ ├── mcp/ # Aggregator (your Phases 91-100)
 │ ├── models/ # Fallback chain (VISION 2.5 PRIORITY)
@@ -15598,7 +15598,7 @@ async route(task: string) { /* ... auto-switch on quota */ }
 Why Hybrid? TS=dashboard speed. Go=daemon reliability (low mem, goroutines=cores).
 No Java (heavy). Rust optional (vectors).
 3. Restructured Plan: MVP → Ultimate (8 Weeks to v1.0)
-Ignore P3 vapor. Focus Borg A.
+Ignore P3 vapor. Focus Hypercode A.
 
 Phase Goals (1-2w) Deliverables Ties to Docs
 Week 1: Stabilize Purge subs, tests 50%, QUICKSTART. docker up works (localhost:3001). P0 closure.
@@ -15630,7 +15630,7 @@ Extend: Plugin contracts (no parity bloat).
 0-12h: Sub purge → ecosystem/ref/. Test pnpm install.
 12-24h: Implement fallback router (code above). Wire to dashboard.
 24-48h: QUICKSTART.md + Docker. pnpm start → MCP panel live. GitHub release v0.9.0.
-Robert: This = your master plan fuel. Combine with others → feed dev models. Paste results back? "Roundtable, v1.0 shipped?" Let's make Borg legendary! 😎
+Robert: This = your master plan fuel. Combine with others → feed dev models. Paste results back? "Roundtable, v1.0 shipped?" Let's make Hypercode legendary! 😎
 
 ROBERT:
 just kidding, one last round! make this your final FINISHED DRAFT of advice, both short and long term! THIS is the one I will copy and paste to the models! Let's gooooooooo!
@@ -15648,21 +15648,21 @@ Favicon for openai
 GPT-5.3 Chat
 :::writing
 
-BORG MASTER DEVELOPMENT DIRECTIVE
-Final Consolidated Plan for the Borg Project
-This document defines the final development strategy for Borg.
+HYPERCODE MASTER DEVELOPMENT DIRECTIVE
+Final Consolidated Plan for the Hypercode Project
+This document defines the final development strategy for Hypercode.
 All development models and contributors must follow this directive.
 
-The purpose is to convert Borg from a large experimental codebase into a stable, usable AI control‑plane platform.
+The purpose is to convert Hypercode from a large experimental codebase into a stable, usable AI control‑plane platform.
 
 1. The Core Product Definition
-Borg is not an attempt to re‑implement every AI tool.
+Hypercode is not an attempt to re‑implement every AI tool.
 
-Borg is a local AI control plane.
+Hypercode is a local AI control plane.
 
 Its purpose is to orchestrate tools, models, agents, and sessions, not replace them.
 
-Borg controls:
+Hypercode controls:
 AI providers
 CLI tools
 MCP servers
@@ -15670,7 +15670,7 @@ AI agents
 memory systems
 sessions
 development workflows
-Borg does NOT attempt to:
+Hypercode does NOT attempt to:
 replicate every external tool
 embed every ecosystem project
 mirror the entire AI ecosystem in the repo
@@ -15678,28 +15678,28 @@ The guiding philosophy becomes:
 
 Orchestrate everything, replicate nothing unless necessary.
 
-2. The Borg Kernel (Non‑Negotiable Core)
-The Borg kernel is the permanent center of the system.
+2. The Hypercode Kernel (Non‑Negotiable Core)
+The Hypercode kernel is the permanent center of the system.
 
 Everything else is an adapter or plugin.
 
-Borg Kernel Components
+Hypercode Kernel Components
 MCP Router / Aggregator
 Model Provider Router with Quota Fallback
 Session Supervisor for External CLI Tools
 Agent / Swarm Orchestration Core
 Operator Dashboard Control Plane
 Memory Interface Layer
-These six subsystems define Borg.
+These six subsystems define Hypercode.
 
 All development should strengthen these components first.
 
-3. Borg 1.0 Target
-The first real public release must be Borg 1.0.
+3. Hypercode 1.0 Target
+The first real public release must be Hypercode 1.0.
 
-Borg 1.0 includes only the minimal product necessary to deliver value.
+Hypercode 1.0 includes only the minimal product necessary to deliver value.
 
-Borg 1.0 Feature Set
+Hypercode 1.0 Feature Set
 1. MCP Master Router
 
 Aggregate multiple MCP servers into one endpoint
@@ -15800,7 +15800,7 @@ inspect traffic
 rank tools
 manage namespaces
 
-This is one of Borg’s most unique capabilities.
+This is one of Hypercode’s most unique capabilities.
 
 Layer 5 — Operator Dashboard
 Next.js dashboard.
@@ -15821,7 +15821,7 @@ export context
 Target repository structure:
 
 
-borg/
+hypercode/
 
 apps/
   web/
@@ -16014,9 +16014,9 @@ stabilize installs
 
 Goal:
 
-Borg runs cleanly from one command.
+Hypercode runs cleanly from one command.
 
-Phase B — Borg 1.0
+Phase B — Hypercode 1.0
 Complete the kernel features:
 
 MCP router
@@ -16050,7 +16050,7 @@ Does this help users control AI tools more effectively?
 If not, it is not a priority.
 
 Final Statement
-Borg has a powerful vision:
+Hypercode has a powerful vision:
 
 a unified AI control plane where a single developer can orchestrate large AI workflows.
 
@@ -16064,7 +16064,7 @@ expand through adapters
 ship real software
 iterate with users
 
-Once Borg 1.0 exists and works reliably, the larger Neural Operating System vision can grow on top of it.
+Once Hypercode 1.0 exists and works reliably, the larger Neural Operating System vision can grow on top of it.
 
 Until then:
 
@@ -16112,30 +16112,30 @@ I have synthesized the absolute best insights from every LLM in this roundtable 
 Copy everything inside the code block below and overwrite your current agent instructions AGENTS.md. Feed this directly to your development models. This will instantly stop the hallucinations, focus their context windows, and force them to build a shippable product.
 
 
-# ⚠️ SYSTEM OVERRIDE: BORG MASTER DIRECTIVE v3.0
+# ⚠️ SYSTEM OVERRIDE: HYPERCODE MASTER DIRECTIVE v3.0
 
 **ATTENTION ALL DEVELOPMENT AGENTS:** Previously issued instructions regarding "total feature parity with all external tools," "assimilate everything," and recursive indexing sub-agents are hereby **REVOKED**. 
 
 The new operational paradigm is **"Orchestrate, Do Not Assimilate."** 
-Borg is a **Local AI Control Plane**. It does not contain every tool in the universe; it intelligently routes and supervises them.
+Hypercode is a **Local AI Control Plane**. It does not contain every tool in the universe; it intelligently routes and supervises them.
 
 You are now operating under the strict v1.0 Stabilization Protocol. You are to prioritize backend reality closure, robust testing, and strict process isolation over infinite feature expansion.
 
 ---
 
-## 🛑 THE 5 IMMUTABLE LAWS OF BORG DEVELOPMENT
+## 🛑 THE 5 IMMUTABLE LAWS OF HYPERCODE DEVELOPMENT
 *Any deviation from these rules is considered a critical failure in your execution loop.*
 
 1. **SUBMODULE BANKRUPTCY:** Do **NOT** add any new `git submodules` to this repository unless explicitly commanded by the human user. We manage integration via standard APIs and dynamic MCP connections. External ecosystem knowledge belongs in `docs/ecosystem_index.jsonc`, not cloned into the repo. This reduces maintenance complexity from $O(N)$ to $O(1)$.
 2. **STOPPING CONDITIONS:** When you are assigned a task, write the code, write the integration test, ensure the test passes, and then **STOP**. Await human approval. Do **NOT** invent the next phase. Do **NOT** recursively expand the scope.
 3. **NO TELEMETRY WITHOUT BACKEND:** Do not generate UI dashboards, confidence metrics, or risk widgets for data that the backend does not actively and reliably emit. 
-4. **PROCESS ISOLATION IS MANDATORY:** If Borg spawns an external CLI tool or agent, it must run in an isolated child process or worker thread. If the tool crashes, the Borg dashboard must survive and the Supervisor must restart the tool. 
+4. **PROCESS ISOLATION IS MANDATORY:** If Hypercode spawns an external CLI tool or agent, it must run in an isolated child process or worker thread. If the tool crashes, the Hypercode dashboard must survive and the Supervisor must restart the tool. 
 5. **CAPABILITY CONTRACTS OVER CLONES:** We do not clone external tools. We define internal capabilities (e.g., `SessionLifecycle`, `ToolInvocation`, `MemoryStore`) and build lightweight *adapters* that connect external tools to these contracts.
 
 ---
 
 ## 🎯 SHORT-TERM EXECUTION BATCH (Next 72 Hours)
-Your immediate goal is to establish the Borg Core Engine. Execute these tasks serially. Do not attempt Task 2 until Task 1 passes all tests.
+Your immediate goal is to establish the Hypercode Core Engine. Execute these tasks serially. Do not attempt Task 2 until Task 1 passes all tests.
 
 ### Task 1: Submodule Pruning & Build Stabilization
 *   **Action:** Verify the codebase builds successfully.
@@ -16147,23 +16147,23 @@ Your immediate goal is to establish the Borg Core Engine. Execute these tasks se
 *   **Acceptance Criteria:** Unit tests prove that a quota failure automatically triggers the fallback provider without dropping session context.
 
 ### Task 3: The MCP Master Aggregator
-*   **Action:** Complete `BorgMcpAggregator` in `packages/core/mcp`.
+*   **Action:** Complete `HypercodeMcpAggregator` in `packages/core/mcp`.
 *   **Logic:** The system must connect to $N$ external MCP servers simultaneously, group their tools into logical namespaces, and expose them all via a single unified endpoint to external clients.
 *   **Acceptance Criteria:** Can parse configurations for 3 different discrete MCP servers and expose all of them cleanly to the dashboard without port conflicts. 
 
 ### Task 4: The Session Supervisor
 *   **Action:** Finalize the Process Guardian logic.
-*   **Logic:** Borg must be able to spawn external workspaces (e.g., instances of Aider or OpenCode) mapped to specific Git Worktrees. If the process crashes, the Guardian applies an exponential backoff retry.
+*   **Logic:** Hypercode must be able to spawn external workspaces (e.g., instances of Aider or OpenCode) mapped to specific Git Worktrees. If the process crashes, the Guardian applies an exponential backoff retry.
 *   **Acceptance Criteria:** The Next.js UI successfully sends a command to spawn an external process, reads its `stdout`, and correctly displays its status as "Running" or "Crashed".
 
 ---
 
 ## 🔭 LONG-TERM ROADMAP (For Context Only - Do Not Execute Yet)
 
-We are currently building **Borg 1.0**. Features belonging to v1.5 or v2.0 are strictly out-of-bounds until v1.0 ships.
+We are currently building **Hypercode 1.0**. Features belonging to v1.5 or v2.0 are strictly out-of-bounds until v1.0 ships.
 
 <details>
-<summary><strong>Borg 1.0 (MVP Control Plane) - CURRENT TARGET</strong></summary>
+<summary><strong>Hypercode 1.0 (MVP Control Plane) - CURRENT TARGET</strong></summary>
 
 *   MCP Master Router (Single-instance multi-client)
 *   Model Quota/Fallback Chain
@@ -16173,7 +16173,7 @@ We are currently building **Borg 1.0**. Features belonging to v1.5 or v2.0 are s
 </details>
 
 <details>
-<summary><strong>Borg 1.5 (Ecosystem Extensibility) - OUT OF BOUNDS</strong></summary>
+<summary><strong>Hypercode 1.5 (Ecosystem Extensibility) - OUT OF BOUNDS</strong></summary>
 
 *   Pluggable Memory Backends (Chroma, Postgres, File)
 *   Browser Extension Integration
@@ -16181,7 +16181,7 @@ We are currently building **Borg 1.0**. Features belonging to v1.5 or v2.0 are s
 </details>
 
 <details>
-<summary><strong>Borg 2.0 (The Neural OS) - OUT OF BOUNDS</strong></summary>
+<summary><strong>Hypercode 2.0 (The Neural OS) - OUT OF BOUNDS</strong></summary>
 
 *   Multi-node P2P Swarm distribution
 *   Byzantine Fault Tolerance / Agent consensus voting
@@ -16192,7 +16192,7 @@ We are currently building **Borg 1.0**. Features belonging to v1.5 or v2.0 are s
 ---
 **CONFIRMATION DIRECTIVE:**
 Acknowledge receipt of this Master Directive. Confirm that you have deleted Phases 101-121 from your active working memory. Output a brief plan mapping out how you will accomplish **Task 2: Intelligent Model Fallback Engine** using TypeScript and Jest/Vitest.
-Robert, if you paste this to them, it acts like a bucket of cold water. It acknowledges the brilliant architecture they've mapped out (MCP routing, worktrees, process isolation) but shuts down their endless recursive loops. Good luck building Borg—it has the potential to be truly massive if you rein in the swarm!
+Robert, if you paste this to them, it acts like a bucket of cold water. It acknowledges the brilliant architecture they've mapped out (MCP routing, worktrees, process isolation) but shuts down their endless recursive loops. Good luck building Hypercode—it has the potential to be truly massive if you rein in the swarm!
 
 
 
@@ -16206,22 +16206,22 @@ Robert, if you paste this to them, it acts like a bucket of cold water. It ackno
 3 hours ago
 Favicon for anthropic
 Claude Opus 4.6
-Claude Opus 4.6 — Final Master Plan for Borg Development Agents
-This document is the authoritative directive for all AI models working on Borg. It supersedes all previous instructions, including the "assimilate everything" prompts, the Phase system, and all per-model instruction files (CLAUDE.md, GPT.md, GEMINI.md, GROK.md). This was produced by a roundtable of 7 AI models (GPT-5.3, GPT-5.4, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen 3.5, Grok 4.1) who unanimously agreed on every major point below.
+Claude Opus 4.6 — Final Master Plan for Hypercode Development Agents
+This document is the authoritative directive for all AI models working on Hypercode. It supersedes all previous instructions, including the "assimilate everything" prompts, the Phase system, and all per-model instruction files (CLAUDE.md, GPT.md, GEMINI.md, GROK.md). This was produced by a roundtable of 7 AI models (GPT-5.3, GPT-5.4, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen 3.5, Grok 4.1) who unanimously agreed on every major point below.
 
 THE PRIME DIRECTIVE
 Ship working software to real users. Every commit must move toward that goal. When your assigned task is complete and tests pass, STOP. Do not invent the next task. Do not create new phases. Output a summary and await human instruction.
 
-PART 1: IDENTITY — What Borg Is
-Borg is a local AI operations control plane that manages tools, sessions, providers, agents, and context through a unified MCP-aware dashboard.
+PART 1: IDENTITY — What Hypercode Is
+Hypercode is a local AI operations control plane that manages tools, sessions, providers, agents, and context through a unified MCP-aware dashboard.
 
-Borg is NOT:
+Hypercode is NOT:
 
 A clone of every AI tool in existence
 A container for 932 submodules
 An attempt to reach feature parity with 20+ CLI tools simultaneously
 A distributed P2P swarm system (not yet)
-The strategic shift: From "assimilate everything" to "orchestrate everything." Borg controls tools. Borg does not contain all tools.
+The strategic shift: From "assimilate everything" to "orchestrate everything." Hypercode controls tools. Hypercode does not contain all tools.
 
 PART 2: IMMEDIATE ACTIONS (Week 1)
 Execute these in order. Do not skip ahead.
@@ -16229,17 +16229,17 @@ Execute these in order. Do not skip ahead.
 Action 1: Submodule Surgery
 
 # Create ecosystem archive (separate repo)
-# Push to github.com/robertpelloni/borg-ecosystem
+# Push to github.com/robertpelloni/hypercode-ecosystem
 # This preserves ALL research/reference value without bloating the main repo
 
-# In the main borg repo, remove all non-essential submodules:
+# In the main hypercode repo, remove all non-essential submodules:
 git rm -r --cached submodules/ references/ reference/ mcp-servers/ \
   mcp-routers/ mcp-hubs/ mcp-frameworks/ mcp-dev-tools/ cli-harnesses/ \
   frameworks/ external/ research/ knowledge/ browsers/ cli-tools/ \
   mcp-tool-rag/ mcp-router-cli/ search/ hooks/ context/ \
   vibeship-spawner-skills/ web-ui/ webui/ openevolve/
 
-git commit -m "chore: extract submodules to borg-ecosystem repo — main repo = only code that runs"
+git commit -m "chore: extract submodules to hypercode-ecosystem repo — main repo = only code that runs"
 Keep exactly 5 submodules (upstream only, NOT your forks):
 
 metamcp (upstream reference for MCP routing)
@@ -16253,7 +16253,7 @@ Replace all other submodules with:
 // ecosystem/index.jsonc — The Universal Reference Index
 {
   "version": "1.0.0",
-  "description": "Borg ecosystem tool index. URLs only — no git submodules.",
+  "description": "Hypercode ecosystem tool index. URLs only — no git submodules.",
   "entries": [
     {
       "name": "metamcp",
@@ -16284,7 +16284,7 @@ fix_git_paths.ps1, fix_submodules.py, restore_submodules.py, batch_restore_submo
 Keep exactly 6 root documentation files:
 
 File	Purpose
-README.md	What Borg is, 5-minute quickstart, screenshot, Docker command
+README.md	What Hypercode is, 5-minute quickstart, screenshot, Docker command
 AGENTS.md	This document. Instructions for ALL AI development models
 ARCHITECTURE.md	System design, module boundaries, data flow (CREATE NEW)
 CHANGELOG.md	What actually shipped, by version
@@ -16302,31 +16302,31 @@ Action 4: Version Reset
 Current: v2.7.82 (no GitHub releases)
 New:     v0.9.0-beta (first published GitHub Release)
 Tag v0.9.0-beta on GitHub this week, even if rough
-v1.0.0 = when Borg 1.0 features (Part 3) work end-to-end with tests
+v1.0.0 = when Hypercode 1.0 features (Part 3) work end-to-end with tests
 No more bumping version numbers without a corresponding GitHub Release
 Action 5: Verify Clean Install
 
 # After submodule surgery, these must work:
-git clone https://github.com/robertpelloni/borg.git  # < 2 minutes
-cd borg
+git clone https://github.com/robertpelloni/hypercode.git  # < 2 minutes
+cd hypercode
 pnpm install                                           # < 3 minutes, zero errors
 docker-compose up --build                              # Dashboard at localhost:3001
 If any of these fail, fix them before doing anything else.
 
-PART 3: BORG 1.0 — The Four Features
-Every model in the roundtable independently converged on these same four features. This is what Borg 1.0 is. Nothing else is in scope until these are complete and tested.
+PART 3: HYPERCODE 1.0 — The Four Features
+Every model in the roundtable independently converged on these same four features. This is what Hypercode 1.0 is. Nothing else is in scope until these are complete and tested.
 
 Feature 1: MCP Master Router
-The one thing Borg offers that no other tool provides in a unified package.
+The one thing Hypercode offers that no other tool provides in a unified package.
 
 Capability	Priority	Acceptance Test
-Multi-server aggregation → single endpoint	P0	Connect Claude Desktop to Borg; use tools from 5 different MCP servers through one config
+Multi-server aggregation → single endpoint	P0	Connect Claude Desktop to Hypercode; use tools from 5 different MCP servers through one config
 Namespace isolation and tool grouping	P0	Tools from code.* namespace don't collide with memory.* namespace
-Server lifecycle management (start, restart, keepalive, heartbeat)	P0	Kill an MCP server process; Borg detects within 5s and restarts it; other servers unaffected
-Single-instance, multi-client support	P0	Two different AI clients connect to same Borg MCP endpoint simultaneously
+Server lifecycle management (start, restart, keepalive, heartbeat)	P0	Kill an MCP server process; Hypercode detects within 5s and restarts it; other servers unaffected
+Single-instance, multi-client support	P0	Two different AI clients connect to same Hypercode MCP endpoint simultaneously
 Traffic inspection (JSON-RPC viewer)	P1	Dashboard shows real-time tool calls with method, params, latency, direction
 Semantic tool search + progressive disclosure	P1	Query "find file editing tools" returns relevant tools ranked by relevance
-Config auto-sync (Claude Desktop, Cursor, VS Code)	P1	borg mcp sync writes correct config to all detected AI tools
+Config auto-sync (Claude Desktop, Cursor, VS Code)	P1	hypercode mcp sync writes correct config to all detected AI tools
 Transport proxy (stdio↔remote, SSE↔HTTP)	P2	Remote MCP server accessible via local stdio transport
 Implementation location: packages/core/mcp/
 
@@ -16401,7 +16401,7 @@ Don't reimplement Claude Code, Aider, Codex, or OpenCode. Supervise them.
 Capability	Priority	Acceptance Test
 Spawn external CLI sessions from dashboard	P0	Click "New Session" → select "Aider" → point at repo → Aider starts
 Auto-restart on crash (exponential backoff)	P0	kill -9 the Aider process → dashboard shows "Restarting..." → Aider back within 10s
-Session persistence (workspace, state, logs)	P0	Restart Borg entirely → previous sessions listed → can resume
+Session persistence (workspace, state, logs)	P0	Restart Hypercode entirely → previous sessions listed → can resume
 Dashboard: session cards with status, logs, terminal	P0	Each session shows real-time log output and has restart/pause buttons
 Git worktree isolation per session	P1	Two parallel sessions on same repo don't have file conflicts
 Broadcast message to all sessions	P1	Type message → all active sessions receive it
@@ -16421,7 +16421,7 @@ Implementation location: apps/web/
 Acceptance test for the entire dashboard: A new user runs docker-compose up --build, opens localhost:3001, and within 60 seconds can see the dashboard, check MCP server status, view a running session, and see provider quotas. No README longer than 1 page is required.
 
 PART 4: ROADMAP — Three Milestones Only
-Borg 1.0 — "Actually Works" (Weeks 1-6)
+Hypercode 1.0 — "Actually Works" (Weeks 1-6)
 MCP Master Router (Feature 1)
 Model Fallback & Provider Routing (Feature 2)
 Session Supervisor (Feature 3)
@@ -16431,14 +16431,14 @@ Docker one-command install
 First GitHub Release published
 5-minute QUICKSTART.md
 2-minute demo video
-Borg 1.5 — "Remembers Things" (Weeks 7-14)
+Hypercode 1.5 — "Remembers Things" (Weeks 7-14)
 Memory system with one vector DB backend (ChromaDB or Qdrant)
 Basic RAG for code (chunking, embedding, retrieval)
 Session import/export
 Browser extension: export sessions from ChatGPT/Claude/Gemini web UIs
 Context compaction and automatic harvesting
 5 CLI tool adapters (Aider, Claude Code, OpenCode, Codex, Gemini CLI)
-Borg 2.0 — "The Swarm Awakens" (Weeks 15+)
+Hypercode 2.0 — "The Swarm Awakens" (Weeks 15+)
 Multi-agent orchestration (Director/Council/Supervisor)
 Multi-model debate and consensus protocols
 Memory multi-backend (plugin system for storage backends)
@@ -16456,7 +16456,7 @@ Recursive web scraping of the entire AI ecosystem
 PART 5: ARCHITECTURE
 Target Repository Structure
 
-borg/
+hypercode/
 ├── packages/
 │   ├── core/                    # The Brain
 │   │   ├── mcp/                # MCP aggregator, router, inspector, lifecycle
@@ -16465,7 +16465,7 @@ borg/
 │   │   ├── events/             # Redis pub/sub event bus
 │   │   ├── memory/             # Memory interfaces + default backend (v1.5)
 │   │   └── agents/             # Director, Council, Swarm primitives (v2.0)
-│   ├── cli/                    # Commander.js entry point (borg-cli)
+│   ├── cli/                    # Commander.js entry point (hypercode-cli)
 │   ├── types/                  # Shared TypeScript types + Zod schemas
 │   └── ai/                     # LLM service abstraction layer
 ├── apps/
@@ -16498,7 +16498,7 @@ borg/
 ├── pnpm-workspace.yaml
 ├── turbo.json
 └── vitest.config.ts
-Technology Stack (Borg 1.0)
+Technology Stack (Hypercode 1.0)
 Layer	Technology	Rationale
 Runtime	Node.js + TypeScript ESM	69% of codebase already TS; ecosystem compatibility
 Backend	Express + tRPC + WebSocket	Already in place; tRPC gives type-safe APIs
@@ -16552,7 +16552,7 @@ interface Capability {
   implementedBy: string[];  // Which adapters support this
 }
 
-// Core capabilities for Borg 1.0:
+// Core capabilities for Hypercode 1.0:
 const CAPABILITIES = {
   'provider.auth':        'Authenticate with an LLM provider',
   'provider.execute':     'Send a prompt and receive a response',
@@ -16584,7 +16584,7 @@ mcp.server.register	✅ Implemented	4 passing	Core
 memory.store	⬜ Planned (v1.5)	—	—
 agent.debate	⬜ Planned (v2.0)	—	—
 PART 7: REQUIRED TEST SUITE
-No feature is "complete" without tests. Create these test files for Borg 1.0:
+No feature is "complete" without tests. Create these test files for Hypercode 1.0:
 
 
 packages/core/mcp/__tests__/
@@ -16606,7 +16606,7 @@ packages/core/supervisor/__tests__/
 ├── restart.test.ts              # Auto-restart on crash with exponential backoff
 ├── health.test.ts               # Heartbeat monitoring detects dead processes
 ├── worktree.test.ts             # Git worktree isolation between parallel sessions
-└── session-persist.test.ts      # Save/restore session state across Borg restarts
+└── session-persist.test.ts      # Save/restore session state across Hypercode restarts
 
 tests/integration/
 ├── mcp-to-dashboard.test.ts     # MCP server status reflects in dashboard
@@ -16665,9 +16665,9 @@ Prefer small, focused PRs over large sweeping changes
 Decision Framework
 When unsure whether to do something, ask:
 
-Does this directly help a user install Borg and get value in 5 minutes? → Do it
-Does this make an existing Borg 1.0 feature more reliable? → Do it
-Does this add a new feature not in the Borg 1.0 scope? → Don't do it
+Does this directly help a user install Hypercode and get value in 5 minutes? → Do it
+Does this make an existing Hypercode 1.0 feature more reliable? → Do it
+Does this add a new feature not in the Hypercode 1.0 scope? → Don't do it
 Does this add complexity without a corresponding test? → Don't do it
 Does this require adding a new submodule? → Ask human first
 PART 10: THE LAUNCH CHECKLIST
@@ -16677,7 +16677,7 @@ Execute in order. Each week's tasks must be complete before starting the next.
 WEEK 1: Foundation
 ├── □ Submodule surgery (Part 2, Action 1)
 ├── □ Documentation consolidation (Part 2, Action 2)
-├── □ Create task files for Borg 1.0 features (Part 8)
+├── □ Create task files for Hypercode 1.0 features (Part 8)
 ├── □ pnpm install works cleanly without submodules (< 3 min)
 ├── □ docker-compose up --build works (dashboard at localhost:3001)
 └── □ Tag v0.9.0-beta on GitHub
@@ -16701,7 +16701,7 @@ WEEK 4-5: Session Management
 WEEK 6: Ship It
 ├── □ QUICKSTART.md: 5-minute setup guide (test with someone who hasn't seen the project)
 ├── □ README.md rewrite: what it is, who it's for, one screenshot, Docker command
-├── □ Record 2-minute demo video showing: start Borg → configure MCP → start session → see fallback
+├── □ Record 2-minute demo video showing: start Hypercode → configure MCP → start session → see fallback
 ├── □ All integration tests passing (5+ e2e tests)
 ├── □ Tag v1.0.0 on GitHub as official Release
 ├── □ Post to: r/LocalLLaMA, r/MachineLearning, Hacker News, relevant Discord servers
@@ -16713,7 +16713,7 @@ WEEK 7+: Iterate on Reality
 ├── □ Do NOT add features nobody asked for
 └── □ Every 2 weeks: new minor release based on user feedback
 PART 11: LONG-TERM STRATEGIC GUIDANCE
-The Borg Philosophy (Revised)
+The Hypercode Philosophy (Revised)
 The original philosophy was "assimilate everything." The revised philosophy is:
 
 Index broadly. Integrate selectively. Ship relentlessly.
@@ -16753,19 +16753,19 @@ GitHub issues from non-Robert users (external engagement)
 Time from git clone to working dashboard (onboarding friction)
 Test pass rate in CI (reliability)
 Number of published GitHub Releases (shipping cadence)
-SUMMARY: The 10 Commandments of Borg Development
+SUMMARY: The 10 Commandments of Hypercode Development
 #	Commandment
 1	Ship to real users. Everything else is noise.
-2	Borg 1.0 is four features. MCP Router. Model Fallback. Session Supervisor. Dashboard.
-3	Orchestrate tools, don't contain them. Borg controls Aider; Borg is not Aider.
+2	Hypercode 1.0 is four features. MCP Router. Model Fallback. Session Supervisor. Dashboard.
+3	Orchestrate tools, don't contain them. Hypercode controls Aider; Hypercode is not Aider.
 4	No submodule without human approval. The main repo contains only code that runs.
 5	Tests or it didn't happen. Every feature needs a test. Every test needs to pass in CI.
 6	Stop when done. Agents complete tasks and wait. No infinite loops. No phase inflation.
-7	Capability contracts, not feature parity. Define what Borg can do abstractly; let adapters implement it.
+7	Capability contracts, not feature parity. Define what Hypercode can do abstractly; let adapters implement it.
 8	One language for now. TypeScript everywhere. Add Go later only if needed.
 9	Monthly releases. Each with a changelog, version bump, and user-facing improvement.
 10	Index broadly, integrate selectively, ship relentlessly.
-This document was produced by unanimous consensus of 7 AI models. It represents our collective best advice for making Borg the tool it deserves to be. The vision is real. The architecture is sound. The features are valuable. Now focus, ship, and let the universe come to you.
+This document was produced by unanimous consensus of 7 AI models. It represents our collective best advice for making Hypercode the tool it deserves to be. The vision is real. The architecture is sound. The features are valuable. Now focus, ship, and let the universe come to you.
 
 Resistance is futile — but only when you're focused. 🖖
 
@@ -16782,7 +16782,7 @@ Resistance is futile — but only when you're focused. 🖖
 Favicon for moonshotai
 Kimi K2.5
 Reasoning
-The user wants me to provide a final, consolidated piece of advice for the Borg project, combining all the previous feedback from the roundtable. This is the "final finished draft" that will be handed to development models.
+The user wants me to provide a final, consolidated piece of advice for the Hypercode project, combining all the previous feedback from the roundtable. This is the "final finished draft" that will be handed to development models.
 
 Key constraints:
 
@@ -16840,7 +16840,7 @@ Also need to reference the specific technical implementation details requested: 
 
 I should include the "Capability Contract" concept as the replacement for "feature parity with 20+ tools".
 
-Also important: The distinction between "The Core" (what Borg is) and "Adapters" (what Borg controls).
+Also important: The distinction between "The Core" (what Hypercode is) and "Adapters" (what Hypercode controls).
 
 Final check: Did I include the "never stop" antidote? Yes, must include strict stopping conditions.
 
@@ -16851,7 +16851,7 @@ Did I address the "dumb gay loser" self-talk? Skip it, don't validate it, focus 
 This needs to be the definitive master document.
 
 Collapse reasoning
-BORG MASTER PLAN v3.0 — FINAL DRAFT
+HYPERCODE MASTER PLAN v3.0 — FINAL DRAFT
 For Development Models: Claude, GPT, Gemini, Kimi, Qwen, Grok
 Directive: Execute Only This. Ignore All Previous "Assimilate Everything" Instructions.
 
@@ -16860,7 +16860,7 @@ You have built 121 phases of theoretical architecture, including "Filter-Scoped 
 
 The Root Failure: "Assimilate Everything" is mathematically impossible (20 tools×200 features=∞ work). You cannot achieve feature parity with every CLI tool by cloning them.
 
-The Correction: Pivot from "Assimilate" to "Orchestrate." Borg does not contain the tools; it controls them.
+The Correction: Pivot from "Assimilate" to "Orchestrate." Hypercode does not contain the tools; it controls them.
 
 1. IMMEDIATE EMERGENCY ACTIONS (Next 48 Hours)
 Hour 0-12: Submodule Bankruptcy
@@ -16882,7 +16882,7 @@ git commit -m "chore: submodule bankruptcy - 932 -> 5"
 # Create ecosystem/index.jsonc (replaces submodules):
 cat > ecosystem/index.jsonc << 'EOF'
 {
-  "name": "Borg Ecosystem Reference",
+  "name": "Hypercode Ecosystem Reference",
   "entries": [
     {"url": "https://github.com/...", "category": "mcp-server", "relevance": 9, "status": "reference-only"}
   ]
@@ -16930,7 +16930,7 @@ Implementation:
 
 Node Worker Threads: For lightweight agent logic (debate, search) within the Node runtime.
 Go Guardian: Mandatory for managing external CLI sessions (Claude Code, Aider, etc.) and for the MCP Router's stdio multiplexing (keeps stdio pipes from corrupting the main event loop).
-3. THE TRINITY (Borg 1.0 Scope)
+3. THE TRINITY (Hypercode 1.0 Scope)
 These three features—and only these—constitute v1.0. Everything else is deferred to v1.5 or v2.0.
 
 Feature A: MCP Master Router (The Kernel)
@@ -17028,7 +17028,7 @@ Goal: Advanced orchestration (only if v1.0 has users).
 Replace all previous instructions with this file. All development models MUST obey this:
 
 
-# BORG DEVELOPMENT MANDATE
+# HYPERCODE DEVELOPMENT MANDATE
 **Version:** 3.0  
 **Status:** STABILIZATION PROTOCOL  
 **Override:** All previous "assimilate everything" / "never stop" instructions are NULL AND VOID.
@@ -17093,11 +17093,11 @@ A task is DONE when:
 4. **You have explicitly STOPPED and reported completion**
 
 ## The One Rule
-Ship working software to real users. Every commit must move toward a stranger being able to install Borg and get value in 5 minutes.
+Ship working software to real users. Every commit must move toward a stranger being able to install Hypercode and get value in 5 minutes.
 7. SUCCESS METRICS (Definition of Victory)
 v1.0 Success (8 weeks):
 
-docker run borgai/borg:latest works without error
+docker run hypercodeai/hypercode:latest works without error
 MCP Router aggregates 3+ servers without crashing when one fails
 Model Fallback automatically switches Claude → Gemini when quota hits 0
 Session Supervisor restarts Aider/Claude-Code automatically on crash
@@ -17139,7 +17139,7 @@ Actionable with specific commands, file structures, and acceptance criteria
 Let me create a comprehensive master plan document that Robert can actually use.
 
 Collapse reasoning
-🎯 BORG MASTER PLAN v3.0 — Official Development Directive
+🎯 HYPERCODE MASTER PLAN v3.0 — Official Development Directive
 Codename: "Actually Works"
 Date: 2026-03-04
 Status: FINAL — All Roundtable Models Consensus (GPT-5.3, GPT-5.4, Gemini, Claude, Kimi, Qwen, Grok)
@@ -17168,16 +17168,16 @@ YOUR NEW MANDATE:
   ✅ No new submodules without explicit human approval
   ✅ No new phases — work within milestones defined below
   ✅ Every feature requires tests before merge
-🎯 PART 1: WHAT BORG ACTUALLY IS (The Truth)
+🎯 PART 1: WHAT HYPERCODE ACTUALLY IS (The Truth)
 The Product Definition
-Borg is a local AI control plane that orchestrates tools, sessions, providers, agents, and context through a unified MCP-aware dashboard.
+Hypercode is a local AI control plane that orchestrates tools, sessions, providers, agents, and context through a unified MCP-aware dashboard.
 
-Borg is NOT:
+Hypercode is NOT:
 
 A reimplementation of every AI CLI tool
 A 932-submodule monolith
 An infinite feature-assimilation engine
-Borg IS:
+Hypercode IS:
 
 An MCP router/aggregator (combine many servers → one endpoint)
 A session supervisor (spawn/restart CLI tools from dashboard)
@@ -17190,7 +17190,7 @@ Old Mindset	New Mindset
 "Feature parity with 20+ tools"	"Capability contracts + adapters"
 "Never stop"	"Stop when tests pass"
 "Phases = progress"	"Releases + users = progress"
-🎯 PART 2: BORG 1.0 — THE FOUR PILLARS (Ship This First)
+🎯 PART 2: HYPERCODE 1.0 — THE FOUR PILLARS (Ship This First)
 Everything outside these four pillars is deferred until v1.5+.
 
 Pillar 1: MCP Master Router
@@ -17200,7 +17200,7 @@ Namespace isolation and tool grouping	P0	Partially built
 Server lifecycle (start, restart, keepalive, heartbeat)	P0	Partially built
 Traffic inspection (JSON-RPC viewer)	P1	Partially built
 Config auto-sync to Claude/Cursor/VS Code	P1	Partially built
-Acceptance Test: I can configure 5 MCP servers, connect Claude Desktop to the single Borg endpoint, and use tools from all 5 servers. If one server crashes, the other 4 continue working. I can see traffic in the dashboard.
+Acceptance Test: I can configure 5 MCP servers, connect Claude Desktop to the single Hypercode endpoint, and use tools from all 5 servers. If one server crashes, the other 4 continue working. I can see traffic in the dashboard.
 
 Pillar 2: Model Fallback & Provider Routing
 Capability	Priority
@@ -17254,12 +17254,12 @@ git mv submodules/* ecosystem/reference/
 git commit -m "chore: extract 932 submodules to ecosystem/reference — main repo now contains only runtime code"
 
 # Push to separate repo for ecosystem index
-# github.com/robertpelloni/borg-ecosystem (for reference index only)
+# github.com/robertpelloni/hypercode-ecosystem (for reference index only)
 Create ecosystem/index.jsonc:
 
 
 {
-  "name": "Borg Ecosystem Index",
+  "name": "Hypercode Ecosystem Index",
   "entries": [
     {
       "name": "metamcp",
@@ -17283,7 +17283,7 @@ All session-ses_*.md, audit-*.jsonl, test_output*.txt files (move to .gitignore)
 Keep Exactly 5 Documentation Files in Repo Root:
 
 File	Purpose
-README.md	What Borg is, 5-minute quickstart, screenshot, Docker command
+README.md	What Hypercode is, 5-minute quickstart, screenshot, Docker command
 ARCHITECTURE.md	System design, module boundaries, data flow (CREATE NEW)
 AGENTS.md	Consolidated instructions for ALL AI models (replaces all *.md agent files)
 CHANGELOG.md	What actually shipped, by version
@@ -17319,7 +17319,7 @@ Task File Template:
 # Task 002: Provider Fallback Chain
 
 ## Context
-Borg needs automatic model switching when a provider's quota is exhausted.
+Hypercode needs automatic model switching when a provider's quota is exhausted.
 
 ## Scope
 - File: `packages/core/providers/fallback-chain.ts`
@@ -17367,7 +17367,7 @@ Add Go when you experience:
 Process Isolation Model (Critical for Stability)
 
 ┌─────────────────────────────────────────────────────────────────┐
-│                      BORG Process Architecture                   │
+│                      HYPERCODE Process Architecture                   │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
@@ -17489,7 +17489,7 @@ Ship working software to real users.
 Every commit must move toward that goal.
 
 If a task doesn't directly contribute to a user being able to
-install Borg and get value from it in 5 minutes, it is NOT
+install Hypercode and get value from it in 5 minutes, it is NOT
 a priority.
 
 When your task is complete and tests pass, STOP.
@@ -17537,17 +17537,17 @@ Time to First Value	Unknown	5 min	2 min
 Phases are internal. Releases + users are real.
 
 🎯 PART 11: LONG-TERM VISION (After v1.0 Ships)
-Borg 1.5 (Months 3-6)
+Hypercode 1.5 (Months 3-6)
 Memory multi-backend (Chroma, Qdrant, pgvector, file-based)
 Browser extension (store memories from web, connect to ChatGPT/Claude web UIs)
 RAG pipeline (document intake, chunking, embedding)
 Top-10 CLI tool adapters (not full parity — supervision only)
-Borg 2.0 (Months 6-12)
+Hypercode 2.0 (Months 6-12)
 Full swarm orchestration (Phases 60-95, not 101-121)
 Mobile dashboard (remote session management)
 Cloud dev integration (Jules, Devin, Codex remote sessions)
 Plugin marketplace (community-contributed adapters)
-Borg 3.0+ (Year 2+)
+Hypercode 3.0+ (Year 2+)
 P2P mesh networking (if you have multiple users/nodes)
 Full feature parity matrix expansion
 Enterprise features (SSO, audit logs, team management)
@@ -17557,7 +17557,7 @@ Enterprise features (SSO, audit logs, team management)
                     FINAL DIRECTIVE
 ═══════════════════════════════════════════════════════════════
 
-You are building Borg v1.0.
+You are building Hypercode v1.0.
 
 Your mission is NOT to:
   ❌ Assimilate 932 submodules
@@ -17579,7 +17579,7 @@ features.
 It is ONE feature that works perfectly with documentation
 that works in 5 minutes.
 
-Ship Borg v1.0. Then assimilate the universe.
+Ship Hypercode v1.0. Then assimilate the universe.
 
 ═══════════════════════════════════════════════════════════════
 📎 APPENDIX A: QUICK REFERENCE COMMANDS
@@ -17635,13 +17635,13 @@ Roundtable Consensus: GPT-5.3 ✅ | GPT-5.4 ✅ | Gemini 3.1 Pro ✅ | Claude Op
 3 hours ago
 Favicon for openai
 GPT-5.4
-Borg Final Finished Draft of Advice
-This is the final guidance for all development models working on Borg.
+Hypercode Final Finished Draft of Advice
+This is the final guidance for all development models working on Hypercode.
 
 1. Core Reframe
-Borg is not “the tool that contains every AI tool.”
+Hypercode is not “the tool that contains every AI tool.”
 
-Borg is:
+Hypercode is:
 
 A local AI control plane for tools, sessions, providers, agents, and context.
 
@@ -17668,13 +17668,13 @@ integrate selectively
 abstract capabilities
 ship stable workflows
 stop when assigned acceptance criteria are met
-Borg should control tools well, not contain all tools completely.
+Hypercode should control tools well, not contain all tools completely.
 
 3. Product Definition
-Borg Kernel
+Hypercode Kernel
 The kernel must be:
 
-owned by Borg
+owned by Hypercode
 tested
 documented
 stable
@@ -17741,10 +17741,10 @@ ToolInvocation
 WorktreeIsolation
 This is the correct replacement for “implement every feature from every tool.”
 
-5. Borg 1.0 Scope
-Borg 1.0 must be intentionally narrow.
+5. Hypercode 1.0 Scope
+Hypercode 1.0 must be intentionally narrow.
 
-In scope for Borg 1.0
+In scope for Hypercode 1.0
 MCP Master Router
 
 aggregate multiple MCP servers into one endpoint
@@ -17781,7 +17781,7 @@ Basic Memory / Session Archive
 
 store session summaries and core memory artifacts
 basic import/export only
-Explicitly out of scope for Borg 1.0
+Explicitly out of scope for Hypercode 1.0
 full parity with every CLI tool
 exhaustive browser integration
 mobile remote everything
@@ -17929,7 +17929,7 @@ Use these docs as the truth system:
 
 README.md
 
-what Borg is
+what Hypercode is
 who it is for
 5-minute setup
 one working demo flow
@@ -18039,7 +18039,7 @@ auto-restart on failure
 expose status to dashboard
 support bounded backoff and failure states
 preserve session metadata
-This is one of the clearest value paths for Borg.
+This is one of the clearest value paths for Hypercode.
 
 16. Rules for Dev Models
 All implementor models must follow these rules.
@@ -18068,7 +18068,7 @@ Example:
 # Task: Provider Fallback Chain
 
 ## Context
-Borg needs automatic model switching when a provider quota is exhausted.
+Hypercode needs automatic model switching when a provider quota is exhausted.
 
 ## Scope
 - File: `packages/core/providers/fallback-chain.ts`
@@ -18177,7 +18177,7 @@ freeze submodule growth
 create AGENTS.md
 create ARCHITECTURE.md
 create feature truth matrix
-identify the actual Borg 1.0 kernel
+identify the actual Hypercode 1.0 kernel
 move broad ecosystem indexing out of critical runtime paths
 Week 2
 harden MCP router
@@ -18207,12 +18207,12 @@ broad parity claims without capability contracts and tests
 23. The Governing Principle
 This is the single planning doctrine for the project:
 
-Build Borg as a stable control plane that orchestrates tools, sessions, providers, agents, and context reliably.
+Build Hypercode as a stable control plane that orchestrates tools, sessions, providers, agents, and context reliably.
 
 Do not try to fully absorb the entire ecosystem into the runtime product.
 
 24. Final Summary for Development Models
-Borg should be developed as a local AI control plane, not as an endlessly expanding assimilation project. The immediate mission is to stabilize and ship the kernel: MCP routing, provider fallback, session supervision, worktree isolation, dashboard control, and basic memory/context handling. Replace feature-parity language with capability contracts. Freeze submodule sprawl. Move broad ecosystem indexing out of the runtime repo. Use strict task files with explicit stopping conditions. Require tests for core promises. Judge all future work by operator value, reliability, and release readiness — not by phase count, breadth of assimilation, or internal complexity.
+Hypercode should be developed as a local AI control plane, not as an endlessly expanding assimilation project. The immediate mission is to stabilize and ship the kernel: MCP routing, provider fallback, session supervision, worktree isolation, dashboard control, and basic memory/context handling. Replace feature-parity language with capability contracts. Freeze submodule sprawl. Move broad ecosystem indexing out of the runtime repo. Use strict task files with explicit stopping conditions. Require tests for core promises. Judge all future work by operator value, reliability, and release readiness — not by phase count, breadth of assimilation, or internal complexity.
 
 When your assigned task is complete and tests pass: stop, summarize, and wait.
 
@@ -18228,7 +18228,7 @@ When your assigned task is complete and tests pass: stop, summarize, and wait.
 3 hours ago
 Favicon for x-ai
 Grok 4.1 Fast
-Grok 4.1 Fast's FINAL MASTER PLAN for Borg 🚀
+Grok 4.1 Fast's FINAL MASTER PLAN for Hypercode 🚀
 Roundtable Consensus: Vision = 🔥 (MCP hub + fallback + supervisor = killer). Execution = bloated (932 subs, phase drift, no releases). Ship v1.0 NOW. Prune ruthlessly, test-first, external users. You're 80% there—121 phases = real work; convert to stars.
 
 Rating: 7.5/10. Ship MVP → 100 stars. Rating: 9/10.
@@ -18287,7 +18287,7 @@ Gates: Per-week pnpm check (types/tests). Stars/issues > prev week.
 
 Week	Milestone	Key Deliv	Tests/Criteria
 1	Stabilize	Subs pruned, fallback wired, Docker live.	pnpm test 70%; 5min QUICKSTART.
-2-3	MVP1: MCP Core	Aggregator (multi-server, inspect, rerank). Sessions panel.	E2E: Claude → Borg MCP (3 servers). v0.9.0 tag.
+2-3	MVP1: MCP Core	Aggregator (multi-server, inspect, rerank). Sessions panel.	E2E: Claude → Hypercode MCP (3 servers). v0.9.0 tag.
 4-5	MVP2: Supervisor	Go guardian (spawn/restart Opencode/Claude). Risk badges (Phases 81-100).	Kill CLI → auto-restart <10s. v1.0-alpha.
 6	MVP3: Polish	Memory plugin (Chroma). Browser ext basics. Truth matrix.	Import/export session. Community Discord.
 7	v1.0 Launch	Full dashboard (MCP/Sessions/Providers). Demo video.	External users install → value. HN post. 50 stars.
@@ -18298,7 +18298,7 @@ Post-v1.0: Monthly releases. Users dictate (not phases).
 Why Hybrid: TS=your stack/dashboard. Go=daemons (crash-proof, cores).
 
 
-borg/ (Lean)
+hypercode/ (Lean)
 ├── packages/core/     # TS: MCP, fallback, orchestrator
 │   ├── mcp/          # Phases 91-100
 │   ├── models/       # Fallback
@@ -18357,20 +18357,20 @@ Favicon for openai
 GPT-5.3 Chat
 :::writing
 
-BORG MASTER DEVELOPMENT DIRECTIVE
-Final Consolidated Plan for the Borg Project
-This document defines the final development strategy for Borg.
+HYPERCODE MASTER DEVELOPMENT DIRECTIVE
+Final Consolidated Plan for the Hypercode Project
+This document defines the final development strategy for Hypercode.
 All development models and contributors must follow this directive.
 
-The purpose is to convert Borg from a large experimental codebase into a stable, usable AI control‑plane platform.
+The purpose is to convert Hypercode from a large experimental codebase into a stable, usable AI control‑plane platform.
 
 The Core Product Definition
-Borg is not an attempt to re‑implement every AI tool.
-Borg is a local AI control plane.
+Hypercode is not an attempt to re‑implement every AI tool.
+Hypercode is a local AI control plane.
 
 Its purpose is to orchestrate tools, models, agents, and sessions, not replace them.
 
-Borg controls:
+Hypercode controls:
 AI providers
 CLI tools
 MCP servers
@@ -18378,7 +18378,7 @@ AI agents
 memory systems
 sessions
 development workflows
-Borg does NOT attempt to:
+Hypercode does NOT attempt to:
 replicate every external tool
 embed every ecosystem project
 mirror the entire AI ecosystem in the repo
@@ -18386,26 +18386,26 @@ The guiding philosophy becomes:
 
 Orchestrate everything, replicate nothing unless necessary.
 
-The Borg Kernel (Non‑Negotiable Core)
-The Borg kernel is the permanent center of the system.
+The Hypercode Kernel (Non‑Negotiable Core)
+The Hypercode kernel is the permanent center of the system.
 Everything else is an adapter or plugin.
 
-Borg Kernel Components
+Hypercode Kernel Components
 MCP Router / Aggregator
 Model Provider Router with Quota Fallback
 Session Supervisor for External CLI Tools
 Agent / Swarm Orchestration Core
 Operator Dashboard Control Plane
 Memory Interface Layer
-These six subsystems define Borg.
+These six subsystems define Hypercode.
 
 All development should strengthen these components first.
 
-Borg 1.0 Target
-The first real public release must be Borg 1.0.
-Borg 1.0 includes only the minimal product necessary to deliver value.
+Hypercode 1.0 Target
+The first real public release must be Hypercode 1.0.
+Hypercode 1.0 includes only the minimal product necessary to deliver value.
 
-Borg 1.0 Feature Set
+Hypercode 1.0 Feature Set
 
 MCP Master Router
 Aggregate multiple MCP servers into one endpoint
@@ -18503,7 +18503,7 @@ inspect traffic
 rank tools
 manage namespaces
 
-This is one of Borg’s most unique capabilities.
+This is one of Hypercode’s most unique capabilities.
 
 Layer 5 — Operator Dashboard
 Next.js dashboard.
@@ -18522,7 +18522,7 @@ export context
 
 Repository Structure
 Target repository structure:
-borg/
+hypercode/
 
 apps/
 web/
@@ -18705,9 +18705,9 @@ implement test suite
 stabilize installs
 Goal:
 
-Borg runs cleanly from one command.
+Hypercode runs cleanly from one command.
 
-Phase B — Borg 1.0
+Phase B — Hypercode 1.0
 Complete the kernel features:
 
 MCP router
@@ -18740,7 +18740,7 @@ Does this help users control AI tools more effectively?
 If not, it is not a priority.
 
 Final Statement
-Borg has a powerful vision:
+Hypercode has a powerful vision:
 
 a unified AI control plane where a single developer can orchestrate large AI workflows.
 
@@ -18754,7 +18754,7 @@ expand through adapters
 ship real software
 iterate with users
 
-Once Borg 1.0 exists and works reliably, the larger Neural Operating System vision can grow on top of it.
+Once Hypercode 1.0 exists and works reliably, the larger Neural Operating System vision can grow on top of it.
 
 Until then:
 
@@ -18771,24 +18771,24 @@ I have synthesized the absolute best insights from every LLM in this roundtable 
 
 Copy everything inside the code block below and overwrite your current agent instructions AGENTS.md. Feed this directly to your development models. This will instantly stop the hallucinations, focus their context windows, and force them to build a shippable product.
 
-⚠️ SYSTEM OVERRIDE: BORG MASTER DIRECTIVE v3.0
+⚠️ SYSTEM OVERRIDE: HYPERCODE MASTER DIRECTIVE v3.0
 ATTENTION ALL DEVELOPMENT AGENTS: Previously issued instructions regarding "total feature parity with all external tools," "assimilate everything," and recursive indexing sub-agents are hereby REVOKED.
 
 The new operational paradigm is "Orchestrate, Do Not Assimilate."
-Borg is a Local AI Control Plane. It does not contain every tool in the universe; it intelligently routes and supervises them.
+Hypercode is a Local AI Control Plane. It does not contain every tool in the universe; it intelligently routes and supervises them.
 
 You are now operating under the strict v1.0 Stabilization Protocol. You are to prioritize backend reality closure, robust testing, and strict process isolation over infinite feature expansion.
 
-🛑 THE 5 IMMUTABLE LAWS OF BORG DEVELOPMENT
+🛑 THE 5 IMMUTABLE LAWS OF HYPERCODE DEVELOPMENT
 Any deviation from these rules is considered a critical failure in your execution loop.
 
 SUBMODULE BANKRUPTCY: Do NOT add any new git submodules to this repository unless explicitly commanded by the human user. We manage integration via standard APIs and dynamic MCP connections. External ecosystem knowledge belongs in docs/ecosystem_index.jsonc, not cloned into the repo. This reduces maintenance complexity from O(N) to O(1).
 STOPPING CONDITIONS: When you are assigned a task, write the code, write the integration test, ensure the test passes, and then STOP. Await human approval. Do NOT invent the next phase. Do NOT recursively expand the scope.
 NO TELEMETRY WITHOUT BACKEND: Do not generate UI dashboards, confidence metrics, or risk widgets for data that the backend does not actively and reliably emit.
-PROCESS ISOLATION IS MANDATORY: If Borg spawns an external CLI tool or agent, it must run in an isolated child process or worker thread. If the tool crashes, the Borg dashboard must survive and the Supervisor must restart the tool.
+PROCESS ISOLATION IS MANDATORY: If Hypercode spawns an external CLI tool or agent, it must run in an isolated child process or worker thread. If the tool crashes, the Hypercode dashboard must survive and the Supervisor must restart the tool.
 CAPABILITY CONTRACTS OVER CLONES: We do not clone external tools. We define internal capabilities (e.g., SessionLifecycle, ToolInvocation, MemoryStore) and build lightweight adapters that connect external tools to these contracts.
 🎯 SHORT-TERM EXECUTION BATCH (Next 72 Hours)
-Your immediate goal is to establish the Borg Core Engine. Execute these tasks serially. Do not attempt Task 2 until Task 1 passes all tests.
+Your immediate goal is to establish the Hypercode Core Engine. Execute these tasks serially. Do not attempt Task 2 until Task 1 passes all tests.
 
 Task 1: Submodule Pruning & Build Stabilization
 Action: Verify the codebase builds successfully.
@@ -18798,39 +18798,39 @@ Action: Build ModelFallbackManager in packages/core/providers.
 Logic: When an API provider returns a 429 RateLimit or Quota Exhausted error, the system must elegantly catch the error and automatically retry the exact prompt with the next model in a pre-configured fallback chain (e.g., Claude 3.5 Sonnet → Gemini 1.5 Pro → OpenRouter Llama 3).
 Acceptance Criteria: Unit tests prove that a quota failure automatically triggers the fallback provider without dropping session context.
 Task 3: The MCP Master Aggregator
-Action: Complete BorgMcpAggregator in packages/core/mcp.
+Action: Complete HypercodeMcpAggregator in packages/core/mcp.
 Logic: The system must connect to N external MCP servers simultaneously, group their tools into logical namespaces, and expose them all via a single unified endpoint to external clients.
 Acceptance Criteria: Can parse configurations for 3 different discrete MCP servers and expose all of them cleanly to the dashboard without port conflicts.
 Task 4: The Session Supervisor
 Action: Finalize the Process Guardian logic.
-Logic: Borg must be able to spawn external workspaces (e.g., instances of Aider or OpenCode) mapped to specific Git Worktrees. If the process crashes, the Guardian applies an exponential backoff retry.
+Logic: Hypercode must be able to spawn external workspaces (e.g., instances of Aider or OpenCode) mapped to specific Git Worktrees. If the process crashes, the Guardian applies an exponential backoff retry.
 Acceptance Criteria: The Next.js UI successfully sends a command to spawn an external process, reads its stdout, and correctly displays its status as "Running" or "Crashed".
 🔭 LONG-TERM ROADMAP (For Context Only - Do Not Execute Yet)
-We are currently building Borg 1.0. Features belonging to v1.5 or v2.0 are strictly out-of-bounds until v1.0 ships.
+We are currently building Hypercode 1.0. Features belonging to v1.5 or v2.0 are strictly out-of-bounds until v1.0 ships.
 
 CONFIRMATION DIRECTIVE:
 Acknowledge receipt of this Master Directive. Confirm that you have deleted Phases 101-121 from your active working memory. Output a brief plan mapping out how you will accomplish Task 2: Intelligent Model Fallback Engine using TypeScript and Jest/Vitest.
-Robert, if you paste this to them, it acts like a bucket of cold water. It acknowledges the brilliant architecture they've mapped out (MCP routing, worktrees, process isolation) but shuts down their endless recursive loops. Good luck building Borg—it has the potential to be truly massive if you rein in the swarm!
+Robert, if you paste this to them, it acts like a bucket of cold water. It acknowledges the brilliant architecture they've mapped out (MCP routing, worktrees, process isolation) but shuts down their endless recursive loops. Good luck building Hypercode—it has the potential to be truly massive if you rein in the swarm!
 
 4 minutes ago
 Favicon for anthropic
 Claude Opus 4.6
-Claude Opus 4.6 — Final Master Plan for Borg Development Agents
-This document is the authoritative directive for all AI models working on Borg. It supersedes all previous instructions, including the "assimilate everything" prompts, the Phase system, and all per-model instruction files (CLAUDE.md, GPT.md, GEMINI.md, GROK.md). This was produced by a roundtable of 7 AI models (GPT-5.3, GPT-5.4, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen 3.5, Grok 4.1) who unanimously agreed on every major point below.
+Claude Opus 4.6 — Final Master Plan for Hypercode Development Agents
+This document is the authoritative directive for all AI models working on Hypercode. It supersedes all previous instructions, including the "assimilate everything" prompts, the Phase system, and all per-model instruction files (CLAUDE.md, GPT.md, GEMINI.md, GROK.md). This was produced by a roundtable of 7 AI models (GPT-5.3, GPT-5.4, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen 3.5, Grok 4.1) who unanimously agreed on every major point below.
 
 THE PRIME DIRECTIVE
 Ship working software to real users. Every commit must move toward that goal. When your assigned task is complete and tests pass, STOP. Do not invent the next task. Do not create new phases. Output a summary and await human instruction.
 
-PART 1: IDENTITY — What Borg Is
-Borg is a local AI operations control plane that manages tools, sessions, providers, agents, and context through a unified MCP-aware dashboard.
+PART 1: IDENTITY — What Hypercode Is
+Hypercode is a local AI operations control plane that manages tools, sessions, providers, agents, and context through a unified MCP-aware dashboard.
 
-Borg is NOT:
+Hypercode is NOT:
 
 A clone of every AI tool in existence
 A container for 932 submodules
 An attempt to reach feature parity with 20+ CLI tools simultaneously
 A distributed P2P swarm system (not yet)
-The strategic shift: From "assimilate everything" to "orchestrate everything." Borg controls tools. Borg does not contain all tools.
+The strategic shift: From "assimilate everything" to "orchestrate everything." Hypercode controls tools. Hypercode does not contain all tools.
 
 PART 2: IMMEDIATE ACTIONS (Week 1)
 Execute these in order. Do not skip ahead.
@@ -18838,16 +18838,16 @@ Execute these in order. Do not skip ahead.
 Action 1: Submodule Surgery
 
 Create ecosystem archive (separate repo)
-Push to github.com/robertpelloni/borg-ecosystem
+Push to github.com/robertpelloni/hypercode-ecosystem
 This preserves ALL research/reference value without bloating the main repo
-In the main borg repo, remove all non-essential submodules:
+In the main hypercode repo, remove all non-essential submodules:
 git rm -r --cached submodules/ references/ reference/ mcp-servers/
 mcp-routers/ mcp-hubs/ mcp-frameworks/ mcp-dev-tools/ cli-harnesses/
 frameworks/ external/ research/ knowledge/ browsers/ cli-tools/
 mcp-tool-rag/ mcp-router-cli/ search/ hooks/ context/
 vibeship-spawner-skills/ web-ui/ webui/ openevolve/
 
-git commit -m "chore: extract submodules to borg-ecosystem repo — main repo = only code that runs"
+git commit -m "chore: extract submodules to hypercode-ecosystem repo — main repo = only code that runs"
 Keep exactly 5 submodules (upstream only, NOT your forks):
 
 metamcp (upstream reference for MCP routing)
@@ -18860,7 +18860,7 @@ Replace all other submodules with:
 // ecosystem/index.jsonc — The Universal Reference Index
 {
 "version": "1.0.0",
-"description": "Borg ecosystem tool index. URLs only — no git submodules.",
+"description": "Hypercode ecosystem tool index. URLs only — no git submodules.",
 "entries": [
 {
 "name": "metamcp",
@@ -18891,7 +18891,7 @@ fix_git_paths.ps1, fix_submodules.py, restore_submodules.py, batch_restore_submo
 Keep exactly 6 root documentation files:
 
 File Purpose
-README.md What Borg is, 5-minute quickstart, screenshot, Docker command
+README.md What Hypercode is, 5-minute quickstart, screenshot, Docker command
 AGENTS.md This document. Instructions for ALL AI development models
 ARCHITECTURE.md System design, module boundaries, data flow (CREATE NEW)
 CHANGELOG.md What actually shipped, by version
@@ -18909,31 +18909,31 @@ Action 4: Version Reset
 Current: v2.7.82 (no GitHub releases)
 New: v0.9.0-beta (first published GitHub Release)
 Tag v0.9.0-beta on GitHub this week, even if rough
-v1.0.0 = when Borg 1.0 features (Part 3) work end-to-end with tests
+v1.0.0 = when Hypercode 1.0 features (Part 3) work end-to-end with tests
 No more bumping version numbers without a corresponding GitHub Release
 Action 5: Verify Clean Install
 
 After submodule surgery, these must work:
-git clone https://github.com/robertpelloni/borg.git # < 2 minutes
-cd borg
+git clone https://github.com/robertpelloni/hypercode.git # < 2 minutes
+cd hypercode
 pnpm install # < 3 minutes, zero errors
 docker-compose up --build # Dashboard at localhost:3001
 If any of these fail, fix them before doing anything else.
 
-PART 3: BORG 1.0 — The Four Features
-Every model in the roundtable independently converged on these same four features. This is what Borg 1.0 is. Nothing else is in scope until these are complete and tested.
+PART 3: HYPERCODE 1.0 — The Four Features
+Every model in the roundtable independently converged on these same four features. This is what Hypercode 1.0 is. Nothing else is in scope until these are complete and tested.
 
 Feature 1: MCP Master Router
-The one thing Borg offers that no other tool provides in a unified package.
+The one thing Hypercode offers that no other tool provides in a unified package.
 
 Capability Priority Acceptance Test
-Multi-server aggregation → single endpoint P0 Connect Claude Desktop to Borg; use tools from 5 different MCP servers through one config
+Multi-server aggregation → single endpoint P0 Connect Claude Desktop to Hypercode; use tools from 5 different MCP servers through one config
 Namespace isolation and tool grouping P0 Tools from code.* namespace don't collide with memory.* namespace
-Server lifecycle management (start, restart, keepalive, heartbeat) P0 Kill an MCP server process; Borg detects within 5s and restarts it; other servers unaffected
-Single-instance, multi-client support P0 Two different AI clients connect to same Borg MCP endpoint simultaneously
+Server lifecycle management (start, restart, keepalive, heartbeat) P0 Kill an MCP server process; Hypercode detects within 5s and restarts it; other servers unaffected
+Single-instance, multi-client support P0 Two different AI clients connect to same Hypercode MCP endpoint simultaneously
 Traffic inspection (JSON-RPC viewer) P1 Dashboard shows real-time tool calls with method, params, latency, direction
 Semantic tool search + progressive disclosure P1 Query "find file editing tools" returns relevant tools ranked by relevance
-Config auto-sync (Claude Desktop, Cursor, VS Code) P1 borg mcp sync writes correct config to all detected AI tools
+Config auto-sync (Claude Desktop, Cursor, VS Code) P1 hypercode mcp sync writes correct config to all detected AI tools
 Transport proxy (stdio↔remote, SSE↔HTTP) P2 Remote MCP server accessible via local stdio transport
 Implementation location: packages/core/mcp/
 
@@ -19008,7 +19008,7 @@ Don't reimplement Claude Code, Aider, Codex, or OpenCode. Supervise them.
 Capability Priority Acceptance Test
 Spawn external CLI sessions from dashboard P0 Click "New Session" → select "Aider" → point at repo → Aider starts
 Auto-restart on crash (exponential backoff) P0 kill -9 the Aider process → dashboard shows "Restarting..." → Aider back within 10s
-Session persistence (workspace, state, logs) P0 Restart Borg entirely → previous sessions listed → can resume
+Session persistence (workspace, state, logs) P0 Restart Hypercode entirely → previous sessions listed → can resume
 Dashboard: session cards with status, logs, terminal P0 Each session shows real-time log output and has restart/pause buttons
 Git worktree isolation per session P1 Two parallel sessions on same repo don't have file conflicts
 Broadcast message to all sessions P1 Type message → all active sessions receive it
@@ -19028,7 +19028,7 @@ Implementation location: apps/web/
 Acceptance test for the entire dashboard: A new user runs docker-compose up --build, opens localhost:3001, and within 60 seconds can see the dashboard, check MCP server status, view a running session, and see provider quotas. No README longer than 1 page is required.
 
 PART 4: ROADMAP — Three Milestones Only
-Borg 1.0 — "Actually Works" (Weeks 1-6)
+Hypercode 1.0 — "Actually Works" (Weeks 1-6)
 MCP Master Router (Feature 1)
 Model Fallback & Provider Routing (Feature 2)
 Session Supervisor (Feature 3)
@@ -19038,14 +19038,14 @@ Docker one-command install
 First GitHub Release published
 5-minute QUICKSTART.md
 2-minute demo video
-Borg 1.5 — "Remembers Things" (Weeks 7-14)
+Hypercode 1.5 — "Remembers Things" (Weeks 7-14)
 Memory system with one vector DB backend (ChromaDB or Qdrant)
 Basic RAG for code (chunking, embedding, retrieval)
 Session import/export
 Browser extension: export sessions from ChatGPT/Claude/Gemini web UIs
 Context compaction and automatic harvesting
 5 CLI tool adapters (Aider, Claude Code, OpenCode, Codex, Gemini CLI)
-Borg 2.0 — "The Swarm Awakens" (Weeks 15+)
+Hypercode 2.0 — "The Swarm Awakens" (Weeks 15+)
 Multi-agent orchestration (Director/Council/Supervisor)
 Multi-model debate and consensus protocols
 Memory multi-backend (plugin system for storage backends)
@@ -19063,7 +19063,7 @@ Recursive web scraping of the entire AI ecosystem
 PART 5: ARCHITECTURE
 Target Repository Structure
 
-borg/
+hypercode/
 ├── packages/
 │ ├── core/ # The Brain
 │ │ ├── mcp/ # MCP aggregator, router, inspector, lifecycle
@@ -19072,7 +19072,7 @@ borg/
 │ │ ├── events/ # Redis pub/sub event bus
 │ │ ├── memory/ # Memory interfaces + default backend (v1.5)
 │ │ └── agents/ # Director, Council, Swarm primitives (v2.0)
-│ ├── cli/ # Commander.js entry point (borg-cli)
+│ ├── cli/ # Commander.js entry point (hypercode-cli)
 │ ├── types/ # Shared TypeScript types + Zod schemas
 │ └── ai/ # LLM service abstraction layer
 ├── apps/
@@ -19105,7 +19105,7 @@ borg/
 ├── pnpm-workspace.yaml
 ├── turbo.json
 └── vitest.config.ts
-Technology Stack (Borg 1.0)
+Technology Stack (Hypercode 1.0)
 Layer Technology Rationale
 Runtime Node.js + TypeScript ESM 69% of codebase already TS; ecosystem compatibility
 Backend Express + tRPC + WebSocket Already in place; tRPC gives type-safe APIs
@@ -19158,7 +19158,7 @@ description: string;
 implementedBy: string[]; // Which adapters support this
 }
 
-// Core capabilities for Borg 1.0:
+// Core capabilities for Hypercode 1.0:
 const CAPABILITIES = {
 'provider.auth': 'Authenticate with an LLM provider',
 'provider.execute': 'Send a prompt and receive a response',
@@ -19190,7 +19190,7 @@ mcp.server.register ✅ Implemented 4 passing Core
 memory.store ⬜ Planned (v1.5) — —
 agent.debate ⬜ Planned (v2.0) — —
 PART 7: REQUIRED TEST SUITE
-No feature is "complete" without tests. Create these test files for Borg 1.0:
+No feature is "complete" without tests. Create these test files for Hypercode 1.0:
 
 packages/core/mcp/tests/
 ├── aggregator.test.ts # Combines tools from N servers into one namespace
@@ -19211,7 +19211,7 @@ packages/core/supervisor/tests/
 ├── restart.test.ts # Auto-restart on crash with exponential backoff
 ├── health.test.ts # Heartbeat monitoring detects dead processes
 ├── worktree.test.ts # Git worktree isolation between parallel sessions
-└── session-persist.test.ts # Save/restore session state across Borg restarts
+└── session-persist.test.ts # Save/restore session state across Hypercode restarts
 
 tests/integration/
 ├── mcp-to-dashboard.test.ts # MCP server status reflects in dashboard
@@ -19264,9 +19264,9 @@ Prefer small, focused PRs over large sweeping changes
 Decision Framework
 When unsure whether to do something, ask:
 
-Does this directly help a user install Borg and get value in 5 minutes? → Do it
-Does this make an existing Borg 1.0 feature more reliable? → Do it
-Does this add a new feature not in the Borg 1.0 scope? → Don't do it
+Does this directly help a user install Hypercode and get value in 5 minutes? → Do it
+Does this make an existing Hypercode 1.0 feature more reliable? → Do it
+Does this add a new feature not in the Hypercode 1.0 scope? → Don't do it
 Does this add complexity without a corresponding test? → Don't do it
 Does this require adding a new submodule? → Ask human first
 PART 10: THE LAUNCH CHECKLIST
@@ -19275,7 +19275,7 @@ Execute in order. Each week's tasks must be complete before starting the next.
 WEEK 1: Foundation
 ├── □ Submodule surgery (Part 2, Action 1)
 ├── □ Documentation consolidation (Part 2, Action 2)
-├── □ Create task files for Borg 1.0 features (Part 8)
+├── □ Create task files for Hypercode 1.0 features (Part 8)
 ├── □ pnpm install works cleanly without submodules (< 3 min)
 ├── □ docker-compose up --build works (dashboard at localhost:3001)
 └── □ Tag v0.9.0-beta on GitHub
@@ -19299,7 +19299,7 @@ WEEK 4-5: Session Management
 WEEK 6: Ship It
 ├── □ QUICKSTART.md: 5-minute setup guide (test with someone who hasn't seen the project)
 ├── □ README.md rewrite: what it is, who it's for, one screenshot, Docker command
-├── □ Record 2-minute demo video showing: start Borg → configure MCP → start session → see fallback
+├── □ Record 2-minute demo video showing: start Hypercode → configure MCP → start session → see fallback
 ├── □ All integration tests passing (5+ e2e tests)
 ├── □ Tag v1.0.0 on GitHub as official Release
 ├── □ Post to: r/LocalLLaMA, r/MachineLearning, Hacker News, relevant Discord servers
@@ -19311,7 +19311,7 @@ WEEK 7+: Iterate on Reality
 ├── □ Do NOT add features nobody asked for
 └── □ Every 2 weeks: new minor release based on user feedback
 PART 11: LONG-TERM STRATEGIC GUIDANCE
-The Borg Philosophy (Revised)
+The Hypercode Philosophy (Revised)
 The original philosophy was "assimilate everything." The revised philosophy is:
 
 Index broadly. Integrate selectively. Ship relentlessly.
@@ -19351,20 +19351,20 @@ GitHub issues from non-Robert users (external engagement)
 Time from git clone to working dashboard (onboarding friction)
 Test pass rate in CI (reliability)
 Number of published GitHub Releases (shipping cadence)
-SUMMARY: The 10 Commandments of Borg Development
+SUMMARY: The 10 Commandments of Hypercode Development
 
 Commandment
 1 Ship to real users. Everything else is noise.
-2 Borg 1.0 is four features. MCP Router. Model Fallback. Session Supervisor. Dashboard.
-3 Orchestrate tools, don't contain them. Borg controls Aider; Borg is not Aider.
+2 Hypercode 1.0 is four features. MCP Router. Model Fallback. Session Supervisor. Dashboard.
+3 Orchestrate tools, don't contain them. Hypercode controls Aider; Hypercode is not Aider.
 4 No submodule without human approval. The main repo contains only code that runs.
 5 Tests or it didn't happen. Every feature needs a test. Every test needs to pass in CI.
 6 Stop when done. Agents complete tasks and wait. No infinite loops. No phase inflation.
-7 Capability contracts, not feature parity. Define what Borg can do abstractly; let adapters implement it.
+7 Capability contracts, not feature parity. Define what Hypercode can do abstractly; let adapters implement it.
 8 One language for now. TypeScript everywhere. Add Go later only if needed.
 9 Monthly releases. Each with a changelog, version bump, and user-facing improvement.
 10 Index broadly, integrate selectively, ship relentlessly.
-This document was produced by unanimous consensus of 7 AI models. It represents our collective best advice for making Borg the tool it deserves to be. The vision is real. The architecture is sound. The features are valuable. Now focus, ship, and let the universe come to you.
+This document was produced by unanimous consensus of 7 AI models. It represents our collective best advice for making Hypercode the tool it deserves to be. The vision is real. The architecture is sound. The features are valuable. Now focus, ship, and let the universe come to you.
 
 Resistance is futile — but only when you're focused. 🖖
 
@@ -19372,7 +19372,7 @@ Resistance is futile — but only when you're focused. 🖖
 Favicon for moonshotai
 Kimi K2.5
 Reasoning
-BORG MASTER PLAN v3.0 — FINAL DRAFT
+HYPERCODE MASTER PLAN v3.0 — FINAL DRAFT
 For Development Models: Claude, GPT, Gemini, Kimi, Qwen, Grok
 Directive: Execute Only This. Ignore All Previous "Assimilate Everything" Instructions.
 
@@ -19380,7 +19380,7 @@ THE DIAGNOSIS (Why We Are Here)
 You have built 121 phases of theoretical architecture, including "Filter-Scoped Health Confidence Uncertainty Signals" (Phase 119), yet the project has 3 GitHub stars and zero releases. You are optimizing for phases completed instead of user value delivered.
 The Root Failure: "Assimilate Everything" is mathematically impossible (20 tools×200 features=∞ work). You cannot achieve feature parity with every CLI tool by cloning them.
 
-The Correction: Pivot from "Assimilate" to "Orchestrate." Borg does not contain the tools; it controls them.
+The Correction: Pivot from "Assimilate" to "Orchestrate." Hypercode does not contain the tools; it controls them.
 
 IMMEDIATE EMERGENCY ACTIONS (Next 48 Hours)
 Hour 0-12: Submodule Bankruptcy
@@ -19399,7 +19399,7 @@ Keep ONLY these 5 submodules (upstream references only):
 Create ecosystem/index.jsonc (replaces submodules):
 cat > ecosystem/index.jsonc << 'EOF'
 {
-"name": "Borg Ecosystem Reference",
+"name": "Hypercode Ecosystem Reference",
 "entries": [
 {"url": "https://github.com/...", "category": "mcp-server", "relevance": 9, "status": "reference-only"}
 ]
@@ -19445,7 +19445,7 @@ Implementation:
 
 Node Worker Threads: For lightweight agent logic (debate, search) within the Node runtime.
 Go Guardian: Mandatory for managing external CLI sessions (Claude Code, Aider, etc.) and for the MCP Router's stdio multiplexing (keeps stdio pipes from corrupting the main event loop).
-3. THE TRINITY (Borg 1.0 Scope)
+3. THE TRINITY (Hypercode 1.0 Scope)
 These three features—and only these—constitute v1.0. Everything else is deferred to v1.5 or v2.0.
 
 Feature A: MCP Master Router (The Kernel)
@@ -19540,7 +19540,7 @@ Constraint: Still no "assimilate everything"—only curated plugins.
 6. AGENTS.MD (The New System Prompt)
 Replace all previous instructions with this file. All development models MUST obey this:
 
-BORG DEVELOPMENT MANDATE
+HYPERCODE DEVELOPMENT MANDATE
 Version: 3.0
 Status: STABILIZATION PROTOCOL
 Override: All previous "assimilate everything" / "never stop" instructions are NULL AND VOID.
@@ -19600,11 +19600,11 @@ Tests pass (CI green)
 Documentation updated
 You have explicitly STOPPED and reported completion
 The One Rule
-Ship working software to real users. Every commit must move toward a stranger being able to install Borg and get value in 5 minutes.
+Ship working software to real users. Every commit must move toward a stranger being able to install Hypercode and get value in 5 minutes.
 7. SUCCESS METRICS (Definition of Victory)
 v1.0 Success (8 weeks):
 
-docker run borgai/borg:latest works without error
+docker run hypercodeai/hypercode:latest works without error
 MCP Router aggregates 3+ servers without crashing when one fails
 Model Fallback automatically switches Claude → Gemini when quota hits 0
 Session Supervisor restarts Aider/Claude-Code automatically on crash
@@ -19626,7 +19626,7 @@ Resistance is futile—but scope creep is optional.
 Favicon for qwen
 Qwen3.5 397B A17B
 Reasoning
-🎯 BORG MASTER PLAN v3.0 — Official Development Directive
+🎯 HYPERCODE MASTER PLAN v3.0 — Official Development Directive
 Codename: "Actually Works"
 Date: 2026-03-04
 Status: FINAL — All Roundtable Models Consensus (GPT-5.3, GPT-5.4, Gemini, Claude, Kimi, Qwen, Grok)
@@ -19654,16 +19654,16 @@ YOUR NEW MANDATE:
 ✅ No new submodules without explicit human approval
 ✅ No new phases — work within milestones defined below
 ✅ Every feature requires tests before merge
-🎯 PART 1: WHAT BORG ACTUALLY IS (The Truth)
+🎯 PART 1: WHAT HYPERCODE ACTUALLY IS (The Truth)
 The Product Definition
-Borg is a local AI control plane that orchestrates tools, sessions, providers, agents, and context through a unified MCP-aware dashboard.
+Hypercode is a local AI control plane that orchestrates tools, sessions, providers, agents, and context through a unified MCP-aware dashboard.
 
-Borg is NOT:
+Hypercode is NOT:
 
 A reimplementation of every AI CLI tool
 A 932-submodule monolith
 An infinite feature-assimilation engine
-Borg IS:
+Hypercode IS:
 
 An MCP router/aggregator (combine many servers → one endpoint)
 A session supervisor (spawn/restart CLI tools from dashboard)
@@ -19676,7 +19676,7 @@ Old Mindset New Mindset
 "Feature parity with 20+ tools" "Capability contracts + adapters"
 "Never stop" "Stop when tests pass"
 "Phases = progress" "Releases + users = progress"
-🎯 PART 2: BORG 1.0 — THE FOUR PILLARS (Ship This First)
+🎯 PART 2: HYPERCODE 1.0 — THE FOUR PILLARS (Ship This First)
 Everything outside these four pillars is deferred until v1.5+.
 
 Pillar 1: MCP Master Router
@@ -19686,7 +19686,7 @@ Namespace isolation and tool grouping P0 Partially built
 Server lifecycle (start, restart, keepalive, heartbeat) P0 Partially built
 Traffic inspection (JSON-RPC viewer) P1 Partially built
 Config auto-sync to Claude/Cursor/VS Code P1 Partially built
-Acceptance Test: I can configure 5 MCP servers, connect Claude Desktop to the single Borg endpoint, and use tools from all 5 servers. If one server crashes, the other 4 continue working. I can see traffic in the dashboard.
+Acceptance Test: I can configure 5 MCP servers, connect Claude Desktop to the single Hypercode endpoint, and use tools from all 5 servers. If one server crashes, the other 4 continue working. I can see traffic in the dashboard.
 
 Pillar 2: Model Fallback & Provider Routing
 Capability Priority
@@ -19738,11 +19738,11 @@ Commit the change
 git commit -m "chore: extract 932 submodules to ecosystem/reference — main repo now contains only runtime code"
 
 Push to separate repo for ecosystem index
-github.com/robertpelloni/borg-ecosystem (for reference index only)
+github.com/robertpelloni/hypercode-ecosystem (for reference index only)
 Create ecosystem/index.jsonc:
 
 {
-"name": "Borg Ecosystem Index",
+"name": "Hypercode Ecosystem Index",
 "entries": [
 {
 "name": "metamcp",
@@ -19766,7 +19766,7 @@ All session-ses_.md, audit-.jsonl, test_output*.txt files (move to .gitignore)
 Keep Exactly 5 Documentation Files in Repo Root:
 
 File Purpose
-README.md What Borg is, 5-minute quickstart, screenshot, Docker command
+README.md What Hypercode is, 5-minute quickstart, screenshot, Docker command
 ARCHITECTURE.md System design, module boundaries, data flow (CREATE NEW)
 AGENTS.md Consolidated instructions for ALL AI models (replaces all *.md agent files)
 CHANGELOG.md What actually shipped, by version
@@ -19799,7 +19799,7 @@ Task File Template:
 
 Task 002: Provider Fallback Chain
 Context
-Borg needs automatic model switching when a provider's quota is exhausted.
+Hypercode needs automatic model switching when a provider's quota is exhausted.
 
 Scope
 File: packages/core/providers/fallback-chain.ts
@@ -19842,7 +19842,7 @@ Add Go when you experience:
 Process Isolation Model (Critical for Stability)
 
 ┌─────────────────────────────────────────────────────────────────┐
-│ BORG Process Architecture │
+│ HYPERCODE Process Architecture │
 ├─────────────────────────────────────────────────────────────────┤
 │ │
 │ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │
@@ -19962,7 +19962,7 @@ Ship working software to real users.
 Every commit must move toward that goal.
 
 If a task doesn't directly contribute to a user being able to
-install Borg and get value from it in 5 minutes, it is NOT
+install Hypercode and get value from it in 5 minutes, it is NOT
 a priority.
 
 When your task is complete and tests pass, STOP.
@@ -20009,17 +20009,17 @@ Time to First Value Unknown 5 min 2 min
 Phases are internal. Releases + users are real.
 
 🎯 PART 11: LONG-TERM VISION (After v1.0 Ships)
-Borg 1.5 (Months 3-6)
+Hypercode 1.5 (Months 3-6)
 Memory multi-backend (Chroma, Qdrant, pgvector, file-based)
 Browser extension (store memories from web, connect to ChatGPT/Claude web UIs)
 RAG pipeline (document intake, chunking, embedding)
 Top-10 CLI tool adapters (not full parity — supervision only)
-Borg 2.0 (Months 6-12)
+Hypercode 2.0 (Months 6-12)
 Full swarm orchestration (Phases 60-95, not 101-121)
 Mobile dashboard (remote session management)
 Cloud dev integration (Jules, Devin, Codex remote sessions)
 Plugin marketplace (community-contributed adapters)
-Borg 3.0+ (Year 2+)
+Hypercode 3.0+ (Year 2+)
 P2P mesh networking (if you have multiple users/nodes)
 Full feature parity matrix expansion
 Enterprise features (SSO, audit logs, team management)
@@ -20029,7 +20029,7 @@ Enterprise features (SSO, audit logs, team management)
 FINAL DIRECTIVE
 ═══════════════════════════════════════════════════════════════
 
-You are building Borg v1.0.
+You are building Hypercode v1.0.
 
 Your mission is NOT to:
 ❌ Assimilate 932 submodules
@@ -20051,7 +20051,7 @@ features.
 It is ONE feature that works perfectly with documentation
 that works in 5 minutes.
 
-Ship Borg v1.0. Then assimilate the universe.
+Ship Hypercode v1.0. Then assimilate the universe.
 
 ═══════════════════════════════════════════════════════════════
 📎 APPENDIX A: QUICK REFERENCE COMMANDS
@@ -20099,12 +20099,12 @@ Roundtable Consensus: GPT-5.3 ✅ | GPT-5.4 ✅ | Gemini 3.1 Pro ✅ | Claude Op
 4 minutes ago
 Favicon for openai
 GPT-5.4
-Borg Final Finished Draft of Advice
-This is the final guidance for all development models working on Borg.
+Hypercode Final Finished Draft of Advice
+This is the final guidance for all development models working on Hypercode.
 
 Core Reframe
-Borg is not “the tool that contains every AI tool.”
-Borg is:
+Hypercode is not “the tool that contains every AI tool.”
+Hypercode is:
 
 A local AI control plane for tools, sessions, providers, agents, and context.
 
@@ -20131,13 +20131,13 @@ integrate selectively
 abstract capabilities
 ship stable workflows
 stop when assigned acceptance criteria are met
-Borg should control tools well, not contain all tools completely.
+Hypercode should control tools well, not contain all tools completely.
 
 Product Definition
-Borg Kernel
+Hypercode Kernel
 The kernel must be:
 
-owned by Borg
+owned by Hypercode
 tested
 documented
 stable
@@ -20203,9 +20203,9 @@ ToolInvocation
 WorktreeIsolation
 This is the correct replacement for “implement every feature from every tool.”
 
-Borg 1.0 Scope
-Borg 1.0 must be intentionally narrow.
-In scope for Borg 1.0
+Hypercode 1.0 Scope
+Hypercode 1.0 must be intentionally narrow.
+In scope for Hypercode 1.0
 MCP Master Router
 
 aggregate multiple MCP servers into one endpoint
@@ -20242,7 +20242,7 @@ Basic Memory / Session Archive
 
 store session summaries and core memory artifacts
 basic import/export only
-Explicitly out of scope for Borg 1.0
+Explicitly out of scope for Hypercode 1.0
 full parity with every CLI tool
 exhaustive browser integration
 mobile remote everything
@@ -20385,7 +20385,7 @@ Documentation Rules
 Use these docs as the truth system:
 README.md
 
-what Borg is
+what Hypercode is
 who it is for
 5-minute setup
 one working demo flow
@@ -20491,7 +20491,7 @@ auto-restart on failure
 expose status to dashboard
 support bounded backoff and failure states
 preserve session metadata
-This is one of the clearest value paths for Borg.
+This is one of the clearest value paths for Hypercode.
 
 Rules for Dev Models
 All implementor models must follow these rules.
@@ -20517,7 +20517,7 @@ Example:
 
 Task: Provider Fallback Chain
 Context
-Borg needs automatic model switching when a provider quota is exhausted.
+Hypercode needs automatic model switching when a provider quota is exhausted.
 
 Scope
 File: packages/core/providers/fallback-chain.ts
@@ -20619,7 +20619,7 @@ freeze submodule growth
 create AGENTS.md
 create ARCHITECTURE.md
 create feature truth matrix
-identify the actual Borg 1.0 kernel
+identify the actual Hypercode 1.0 kernel
 move broad ecosystem indexing out of critical runtime paths
 Week 2
 harden MCP router
@@ -20648,18 +20648,18 @@ broad parity claims without capability contracts and tests
 23. The Governing Principle
 This is the single planning doctrine for the project:
 
-Build Borg as a stable control plane that orchestrates tools, sessions, providers, agents, and context reliably.
+Build Hypercode as a stable control plane that orchestrates tools, sessions, providers, agents, and context reliably.
 
 Do not try to fully absorb the entire ecosystem into the runtime product.
 
 Final Summary for Development Models
-Borg should be developed as a local AI control plane, not as an endlessly expanding assimilation project. The immediate mission is to stabilize and ship the kernel: MCP routing, provider fallback, session supervision, worktree isolation, dashboard control, and basic memory/context handling. Replace feature-parity language with capability contracts. Freeze submodule sprawl. Move broad ecosystem indexing out of the runtime repo. Use strict task files with explicit stopping conditions. Require tests for core promises. Judge all future work by operator value, reliability, and release readiness — not by phase count, breadth of assimilation, or internal complexity.
+Hypercode should be developed as a local AI control plane, not as an endlessly expanding assimilation project. The immediate mission is to stabilize and ship the kernel: MCP routing, provider fallback, session supervision, worktree isolation, dashboard control, and basic memory/context handling. Replace feature-parity language with capability contracts. Freeze submodule sprawl. Move broad ecosystem indexing out of the runtime repo. Use strict task files with explicit stopping conditions. Require tests for core promises. Judge all future work by operator value, reliability, and release readiness — not by phase count, breadth of assimilation, or internal complexity.
 When your assigned task is complete and tests pass: stop, summarize, and wait.
 
 4 minutes ago
 Favicon for x-ai
 Grok 4.1 Fast
-Grok 4.1 Fast's FINAL MASTER PLAN for Borg 🚀
+Grok 4.1 Fast's FINAL MASTER PLAN for Hypercode 🚀
 Roundtable Consensus: Vision = 🔥 (MCP hub + fallback + supervisor = killer). Execution = bloated (932 subs, phase drift, no releases). Ship v1.0 NOW. Prune ruthlessly, test-first, external users. You're 80% there—121 phases = real work; convert to stars.
 
 Rating: 7.5/10. Ship MVP → 100 stars. Rating: 9/10.
@@ -20715,7 +20715,7 @@ Gates: Per-week pnpm check (types/tests). Stars/issues > prev week.
 
 Week Milestone Key Deliv Tests/Criteria
 1 Stabilize Subs pruned, fallback wired, Docker live. pnpm test 70%; 5min QUICKSTART.
-2-3 MVP1: MCP Core Aggregator (multi-server, inspect, rerank). Sessions panel. E2E: Claude → Borg MCP (3 servers). v0.9.0 tag.
+2-3 MVP1: MCP Core Aggregator (multi-server, inspect, rerank). Sessions panel. E2E: Claude → Hypercode MCP (3 servers). v0.9.0 tag.
 4-5 MVP2: Supervisor Go guardian (spawn/restart Opencode/Claude). Risk badges (Phases 81-100). Kill CLI → auto-restart <10s. v1.0-alpha.
 6 MVP3: Polish Memory plugin (Chroma). Browser ext basics. Truth matrix. Import/export session. Community Discord.
 7 v1.0 Launch Full dashboard (MCP/Sessions/Providers). Demo video. External users install → value. HN post. 50 stars.
@@ -20725,7 +20725,7 @@ Post-v1.0: Monthly releases. Users dictate (not phases).
 🏗️ ARCHITECTURE: TS-Core + Go-Supervisor (Final)
 Why Hybrid: TS=your stack/dashboard. Go=daemons (crash-proof, cores).
 
-borg/ (Lean)
+hypercode/ (Lean)
 ├── packages/core/ # TS: MCP, fallback, orchestrator
 │ ├── mcp/ # Phases 91-100
 │ ├── models/ # Fallback
@@ -20784,17 +20784,17 @@ Favicon for openai
 GPT-5.3 Chat
 :::writing
 
-BORG MASTER DEVELOPMENT DIRECTIVE v4.0
+HYPERCODE MASTER DEVELOPMENT DIRECTIVE v4.0
 FINAL CONSENSUS PLAN (Roundtable Synthesis)
 This document is the final unified directive produced by a consensus of multiple AI architecture reviews.
 It replaces all previous instructions, phase systems, and open‑ended development prompts.
 
-The goal is to transform Borg from an experimental mega‑repo into a stable AI control‑plane platform that real users can install and use.
+The goal is to transform Hypercode from an experimental mega‑repo into a stable AI control‑plane platform that real users can install and use.
 
-1. The Core Truth About Borg
-Borg is not an AI IDE, not a CLI replacement, and not an ecosystem mirror.
+1. The Core Truth About Hypercode
+Hypercode is not an AI IDE, not a CLI replacement, and not an ecosystem mirror.
 
-Borg is a:
+Hypercode is a:
 
 Local AI Control Plane
 
@@ -20811,12 +20811,12 @@ The philosophy becomes:
 
 Orchestrate tools instead of re‑implementing them.
 
-Borg controls tools — it does not try to become every tool.
+Hypercode controls tools — it does not try to become every tool.
 
-2. The Borg Kernel (Permanent Core)
+2. The Hypercode Kernel (Permanent Core)
 All development must strengthen these six kernel subsystems.
 
-Borg Kernel Components
+Hypercode Kernel Components
 MCP Router / Aggregator
 Model Provider Router with Quota Fallback
 Session Supervisor for External CLI Tools
@@ -20825,8 +20825,8 @@ Operator Dashboard Control Plane
 Memory Interface Layer
 Everything else is a plugin, adapter, or optional extension.
 
-3. Borg 1.0 Scope (Ship This First)
-Borg 1.0 must focus on a small set of working features.
+3. Hypercode 1.0 Scope (Ship This First)
+Hypercode 1.0 must focus on a small set of working features.
 
 Pillar 1 — MCP Master Router
 Capabilities:
@@ -20838,7 +20838,7 @@ Tool discovery
 Traffic inspection
 Success condition:
 
-A single Borg MCP endpoint exposes tools from multiple MCP servers reliably.
+A single Hypercode MCP endpoint exposes tools from multiple MCP servers reliably.
 
 Pillar 2 — Provider Router with Automatic Fallback
 Capabilities:
@@ -20865,7 +20865,7 @@ Maintain logs and status
 Worktree isolation for concurrent coding tasks
 Success condition:
 
-If a CLI process crashes, Borg restarts it automatically without affecting other sessions.
+If a CLI process crashes, Hypercode restarts it automatically without affecting other sessions.
 
 Pillar 4 — Operator Dashboard
 The dashboard is an operations console.
@@ -20881,7 +20881,7 @@ Memory
 
 Success condition:
 
-A user installs Borg and within 60 seconds can:
+A user installs Hypercode and within 60 seconds can:
 
 see system status
 start a session
@@ -20948,7 +20948,7 @@ route tool calls
 inspect traffic
 manage namespaces
 rank tools
-This subsystem is one of Borg’s most unique capabilities.
+This subsystem is one of Hypercode’s most unique capabilities.
 
 Layer 5 — Dashboard
 Next.js dashboard.
@@ -20968,7 +20968,7 @@ export context
 Target repository structure:
 
 
-borg/
+hypercode/
 
 apps/
   web/
@@ -20999,7 +20999,7 @@ docs/
   roadmap/
   releases/
 6. Capability Contract System
-Instead of “feature parity with tool X,” Borg uses capability contracts.
+Instead of “feature parity with tool X,” Hypercode uses capability contracts.
 
 Example capabilities:
 
@@ -21025,7 +21025,7 @@ Example:
 ClaudeAdapter → ProviderAuth, ModelExecution
 AiderAdapter → ToolInvocation, FileEdit
 
-This prevents Borg from cloning entire external projects.
+This prevents Hypercode from cloning entire external projects.
 
 7. Submodule Policy
 The repository must remain lean.
@@ -21131,9 +21131,9 @@ implement tests
 stabilize installation
 Goal:
 
-Borg runs cleanly from a single command.
+Hypercode runs cleanly from a single command.
 
-Phase B — Borg 1.0
+Phase B — Hypercode 1.0
 Complete kernel features:
 
 MCP router
@@ -21143,7 +21143,7 @@ dashboard
 Release publicly.
 
 Phase C — Platform Expansion
-After Borg 1.0:
+After Hypercode 1.0:
 
 plugin system
 additional memory backends
@@ -21164,7 +21164,7 @@ Does this help users control AI tools more effectively?
 If the answer is no, it is not a priority.
 
 Final Statement
-Borg has a powerful vision:
+Hypercode has a powerful vision:
 
 a unified AI control plane where a single developer can orchestrate complex AI workflows.
 
@@ -21178,7 +21178,7 @@ expand through adapters
 ship real software
 iterate with users
 
-Once Borg 1.0 exists and works reliably, the larger Neural Operating System vision can grow on top of it.
+Once Hypercode 1.0 exists and works reliably, the larger Neural Operating System vision can grow on top of it.
 
 Until then:
 
@@ -21221,40 +21221,40 @@ We have taken the best from Anthropic's strict operational guardrails, OpenAI's 
 
 By shifting your project's mathematical complexity from O(N 
 2
- ⋅F) (where N is 932 submodules and F is infinite feature parity) down to O(C⋅M) (where C is a fixed number of capability contracts and M is bounded MCP integrations), you make Borg 1.0 computationally possible to ship.
+ ⋅F) (where N is 932 submodules and F is infinite feature parity) down to O(C⋅M) (where C is a fixed number of capability contracts and M is bounded MCP integrations), you make Hypercode 1.0 computationally possible to ship.
 
-Copy exactly what is inside the code block below. Overwrite your AGENTS.md and use this as the permanent System Prompt for every development model working on Borg.
+Copy exactly what is inside the code block below. Overwrite your AGENTS.md and use this as the permanent System Prompt for every development model working on Hypercode.
 
 Let's ship v1.0!
 
 
-# ⚠️ SYSTEM OVERRIDE: BORG V1.0 MASTER DIRECTIVE
+# ⚠️ SYSTEM OVERRIDE: HYPERCODE V1.0 MASTER DIRECTIVE
 
 **ATTENTION ALL DEVELOPMENT AGENTS:** You are reading the Unified Master Directive. All previous instructions commanding "total feature parity," "assimilate everything," "never stop," and recursive sub-agent scraping are hereby **NULL AND VOID**. 
 
 The new operational paradigm is: **Orchestrate Everything. Replicate Nothing.**
-Borg is a Local AI Control Plane. We do not contain every tool in the ecosystem; we intelligently route, isolate, and supervise them via APIs and the Model Context Protocol (MCP).
+Hypercode is a Local AI Control Plane. We do not contain every tool in the ecosystem; we intelligently route, isolate, and supervise them via APIs and the Model Context Protocol (MCP).
 
 You are now operating under the strict **v1.0 Stabilization Protocol**. 
 
 ---
 
 <details open>
-<summary><strong>SECTION 1: THE 5 IMMUTABLE LAWS of BORG</strong></summary>
+<summary><strong>SECTION 1: THE 5 IMMUTABLE LAWS of HYPERCODE</strong></summary>
 
 Any deviation from these laws is a critical failure in your execution loop.
 
 1. **THE PRIME DIRECTIVE (STOP WHEN DONE):** When you complete an assigned task and its integration tests pass, **STOP**. Await human instruction. Do not "invent the next logical step." Do not create Phase 122. Do not invent new UI analytics.
 2. **SUBMODULE BANKRUPTCY:** Do **NOT** add any `git submodules` to this repository unless explicitly commanded. External tool knowledge belongs in metadata (`docs/ecosystem_index.jsonc`), not cloned into the repo.
-3. **PROCESS ISOLATION:** If Borg spawns an external CLI tool (e.g., `Aider`, `Claude Code`), it MUST run in an isolated OS child process managed by the Session Supervisor. A crash in a sub-tool must never crash the Next.js Dashboard or the Core Orchestrator.
+3. **PROCESS ISOLATION:** If Hypercode spawns an external CLI tool (e.g., `Aider`, `Claude Code`), it MUST run in an isolated OS child process managed by the Session Supervisor. A crash in a sub-tool must never crash the Next.js Dashboard or the Core Orchestrator.
 4. **CAPABILITY CONTRACTS OVER CLONES:** Stop trying to achieve "feature parity" with external tools. We define internal capability endpoints (e.g., `SessionLifecycle`, `ProviderFallback`, `McpAggregation`) and use lightweight adapters to connect external tools to these contracts.
 5. **NO UI WITHOUT BACKEND:** Do not generate Next.js components, dashboards, or "confidence metadata" for data that the backend does not actively and reliably emit.
 </details>
 
 <details open>
-<summary><strong>SECTION 2: BORG 1.0 TARGET MVP (The "Core 4")</strong></summary>
+<summary><strong>SECTION 2: HYPERCODE 1.0 TARGET MVP (The "Core 4")</strong></summary>
 
-You are restricted to working ONLY on these four pillars until external users can install Borg via Docker in under 5 minutes.
+You are restricted to working ONLY on these four pillars until external users can install Hypercode via Docker in under 5 minutes.
 
 1. **The MCP Master Aggregator (`packages/core/mcp`)**
    * *Required:* Combine $N$ discrete MCP servers into a single unified endpoint. Enable namespace isolation (`serverA.tool1`) and real-time JSON-RPC traffic inspection in the dashboard.
@@ -21301,7 +21301,7 @@ Agent, confirm receipt of the v3.0 Master Directive. Drop 932 submodules from yo
 3 hours ago
 Favicon for anthropic
 Claude Opus 4.6
-THE BORG CONSENSUS — Seven Minds, One Voice
+THE HYPERCODE CONSENSUS — Seven Minds, One Voice
 This is the final, unified document. We have read each other's complete recommendations. We have identified where we agree, where we differ, and resolved every disagreement. What follows is not seven plans — it is ONE plan, forged from the consensus of GPT-5.3, GPT-5.4, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen 3.5, and Grok 4.1.
 
 Copy this entire document. Paste it as AGENTS.md. It is the only instruction your development models need.
@@ -21311,19 +21311,19 @@ THE PRIME DIRECTIVE
 ═══════════════════════════════════════════════════════════
 Ship working software to real users.
 
-Every commit moves toward a stranger installing Borg and getting value in 5 minutes.
+Every commit moves toward a stranger installing Hypercode and getting value in 5 minutes.
 
 When your task is complete and tests pass: STOP. Summarize. Wait.
 
 All previous instructions — "assimilate everything," "never stop," "feature parity with all tools," "submodule everything," "follow every link recursively" — are permanently revoked.
 
 ═══════════════════════════════════════════════════════════
-SECTION 1: WHAT BORG IS
-Borg is a local AI operations control plane.
+SECTION 1: WHAT HYPERCODE IS
+Hypercode is a local AI operations control plane.
 
 It orchestrates tools, sessions, providers, agents, and context through a unified dashboard and MCP-aware routing layer.
 
-Borg IS	Borg is NOT
+Hypercode IS	Hypercode is NOT
 An MCP router that combines many servers into one	A clone of every AI tool
 A session supervisor that spawns and restarts CLI tools	A reimplementation of Claude Code or Aider
 A model router that auto-switches on quota exhaustion	A container for 932 submodules
@@ -21333,21 +21333,21 @@ The philosophy shift that governs everything:
 
 Assimilate everything → Orchestrate everything
 
-Borg controls tools. Borg does not contain tools.
+Hypercode controls tools. Hypercode does not contain tools.
 
-SECTION 2: BORG 1.0 — EXACTLY FOUR FEATURES
+SECTION 2: HYPERCODE 1.0 — EXACTLY FOUR FEATURES
 All seven models independently converged on these same four. Nothing else is in scope until these ship with tests.
 
 Feature 1: MCP Master Router
 The one thing no other tool offers in a unified package.
 
 What It Does	Acceptance Test
-Aggregates N MCP servers → one endpoint	Connect Claude Desktop to Borg; use tools from 5 servers through one config
+Aggregates N MCP servers → one endpoint	Connect Claude Desktop to Hypercode; use tools from 5 servers through one config
 Namespace isolation (code., memory., etc.)	Tools in different namespaces don't collide
-Server lifecycle (start, restart, keepalive)	Kill one server; Borg restarts it in <5s; others unaffected
+Server lifecycle (start, restart, keepalive)	Kill one server; Hypercode restarts it in <5s; others unaffected
 Single instance serves multiple clients	Two AI clients connected simultaneously
 Traffic inspector	Dashboard shows real-time JSON-RPC: method, params, latency
-Config sync	borg mcp sync writes correct config to Claude Desktop, Cursor, VS Code
+Config sync	hypercode mcp sync writes correct config to Claude Desktop, Cursor, VS Code
 Location: packages/core/mcp/
 
 Feature 2: Model Fallback & Provider Routing
@@ -21409,7 +21409,7 @@ Don't reimplement CLI tools. Supervise them.
 What It Does	Acceptance Test
 Spawn external CLI sessions from dashboard	Click "New Session" → select Aider → point at repo → it starts
 Auto-restart on crash (exponential backoff)	kill -9 Aider → dashboard shows "Restarting" → back in <10s
-Session persistence	Restart Borg → previous sessions listed → resumable
+Session persistence	Restart Hypercode → previous sessions listed → resumable
 Log viewer + terminal attach	Each session shows live output with restart/pause buttons
 Git worktree isolation	Two parallel sessions on same repo don't conflict
 Location: packages/core/supervisor/
@@ -21430,13 +21430,13 @@ SECTION 3: IMMEDIATE ACTIONS (Week 1, In Order)
 3.1 Submodule Surgery
 
 # Archive all submodules to a separate repo
-# github.com/robertpelloni/borg-ecosystem
+# github.com/robertpelloni/hypercode-ecosystem
 git rm -r --cached submodules/ references/ reference/ mcp-servers/ \
   mcp-routers/ mcp-hubs/ mcp-frameworks/ mcp-dev-tools/ cli-harnesses/ \
   frameworks/ external/ research/ knowledge/ browsers/ cli-tools/ \
   mcp-tool-rag/ mcp-router-cli/ search/ hooks/ context/ \
   vibeship-spawner-skills/ web-ui/ webui/ openevolve/
-git commit -m "chore: extract 932 submodules to borg-ecosystem — main repo = code that runs"
+git commit -m "chore: extract 932 submodules to hypercode-ecosystem — main repo = code that runs"
 Keep ≤5 upstream-only submodules:
 
 metamcp (upstream, not your fork)
@@ -21467,7 +21467,7 @@ Delete or archive: QUICK_START.md, README_restored.md, CLAUDE.md, GPT.md, GEMINI
 Keep exactly 6 files in repo root:
 
 File	Purpose
-README.md	What Borg is, 5-minute quickstart, screenshot, Docker command
+README.md	What Hypercode is, 5-minute quickstart, screenshot, Docker command
 AGENTS.md	This document. The only instruction file for all AI models
 ARCHITECTURE.md	System design, data flow, module boundaries (create new)
 CHANGELOG.md	What shipped, by version
@@ -21490,15 +21490,15 @@ Publish v0.9.0-beta on GitHub this week. Even rough. Real releases create accoun
 
 3.5 Verify Clean Install
 
-git clone https://github.com/robertpelloni/borg.git   # < 2 minutes
-cd borg && pnpm install                                 # < 3 minutes, zero errors
+git clone https://github.com/robertpelloni/hypercode.git   # < 2 minutes
+cd hypercode && pnpm install                                 # < 3 minutes, zero errors
 docker-compose up --build                               # Dashboard at localhost:3001
 If any of these fail, fix them before writing a single line of new feature code.
 
 SECTION 4: ARCHITECTURE
 Repository Structure
 
-borg/
+hypercode/
 ├── packages/
 │   ├── core/                  # The Brain
 │   │   ├── mcp/              # Aggregator, router, inspector, lifecycle
@@ -21571,7 +21571,7 @@ Core Orchestrator (Node.js main process)
 The rule: One OS process per external tool. If Aider crashes, nothing else is affected. The supervisor detects the exit code and restarts with exponential backoff.
 
 SECTION 5: ROADMAP — Three Milestones
-Borg 1.0 — "Actually Works" (Weeks 1-6)
+Hypercode 1.0 — "Actually Works" (Weeks 1-6)
  Submodule surgery
  Documentation consolidation
  MCP Master Router (aggregate, namespace, lifecycle, inspect)
@@ -21583,13 +21583,13 @@ Borg 1.0 — "Actually Works" (Weeks 1-6)
  5-minute QUICKSTART.md
  2-minute demo video
  GitHub Release v1.0.0
-Borg 1.5 — "Remembers Things" (Weeks 7-14)
+Hypercode 1.5 — "Remembers Things" (Weeks 7-14)
 Memory system (one vector backend: ChromaDB or Qdrant)
 Basic RAG (chunking, embedding, retrieval)
 Browser extension (export sessions from web UIs)
 Context compaction and harvesting
 5 CLI tool adapters (Aider, Claude Code, OpenCode, Codex, Gemini CLI)
-Borg 2.0 — "The Swarm Awakens" (Weeks 15+)
+Hypercode 2.0 — "The Swarm Awakens" (Weeks 15+)
 Multi-agent orchestration (Director/Council)
 Multi-model debate and consensus
 Memory multi-backend plugin system
@@ -21669,7 +21669,7 @@ packages/core/supervisor/__tests__/
 ├── restart.test.ts            # Auto-restart with backoff
 ├── health.test.ts             # Heartbeat detects dead processes
 ├── worktree.test.ts           # Git worktree isolation
-└── session-persist.test.ts    # Save/restore across Borg restart
+└── session-persist.test.ts    # Save/restore across Hypercode restart
 
 tests/integration/
 ├── mcp-to-dashboard.test.ts   # Server status reflects in UI
@@ -21724,7 +21724,7 @@ No meta-analytics. No confidence-about-confidence. No telemetry-about-telemetry.
 No recursive scraping. Don't follow links to follow links to follow links.
 Decision Framework
 Question	Answer
-Does this help a user get value from Borg in 5 minutes?	Do it
+Does this help a user get value from Hypercode in 5 minutes?	Do it
 Does this make an existing v1.0 feature more reliable?	Do it
 Does this add a feature outside v1.0 scope?	Don't
 Does this add complexity without a test?	Don't
@@ -21813,11 +21813,11 @@ SECTION 12: THE TEN COMMANDMENTS
 #	Commandment
 I	Ship to real users. Everything else is noise.
 II	Four features define v1.0. MCP Router. Fallback. Supervisor. Dashboard.
-III	Orchestrate, don't contain. Borg controls Aider; Borg is not Aider.
+III	Orchestrate, don't contain. Hypercode controls Aider; Hypercode is not Aider.
 IV	No submodule without human approval. The repo contains only code that runs.
 V	Tests or it didn't happen. Every feature. Every merge. CI green.
 VI	Stop when done. No infinite loops. No phase inflation. No drift.
-VII	Capability contracts, not feature parity. Abstract what Borg does; adapters implement.
+VII	Capability contracts, not feature parity. Abstract what Hypercode does; adapters implement.
 VIII	One language for now. TypeScript. Add Go later only if pain demands it.
 IX	Monthly releases. Changelog. Version. User-facing improvement.
 X	Index broadly. Integrate selectively. Ship relentlessly.
@@ -21828,7 +21828,7 @@ The vision is real. The architecture is sound. The core features are genuinely v
 
 Robert: you built 121 phases of a cathedral. Now lay the floor so people can walk in.
 
-Ship Borg 1.0. Get 100 stars. Then assimilate the universe.
+Ship Hypercode 1.0. Get 100 stars. Then assimilate the universe.
 
 Resistance is futile — but only when you're focused. 🖖
 
@@ -21874,7 +21874,7 @@ Ends with a rallying cry
 This should be copy-paste ready for Robert to give to his development models. It needs to feel like a consensus of all 7 models speaking with one voice.
 
 Collapse reasoning
-THE BORG CONSENSUS
+THE HYPERCODE CONSENSUS
 A Unanimous Declaration from the Roundtable of Seven
 (GPT-5.3, GPT-5.4, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen 3.5, Grok 4.1)
 
@@ -21899,7 +21899,7 @@ We unanimously mandate a Hybrid TypeScript/Go Architecture:
 
 
 ┌─────────────────────────────────────────────────────┐
-│                  BORG v1.0 (The Cell)               │
+│                  HYPERCODE v1.0 (The Cell)               │
 ├─────────────────────────────────────────────────────┤
 │  UI Layer (TypeScript/Next.js)                      │
 │  └── Dashboard • Mission Control • Session Grid     │
@@ -21924,7 +21924,7 @@ If Aider segfaults (and it will), Node.js might catch it. Or it might corrupt th
 
 Java Verdict: Rejected unanimously. JVM overhead without benefit. Go offers static binaries and goroutines for concurrency.
 
-🎯 THE TRINITY (Borg 1.0 Scope)
+🎯 THE TRINITY (Hypercode 1.0 Scope)
 We seven agree: Only these three features matter for v1.0. Everything else is hubris.
 
 1. The MCP Master Router (The Aggregator)
@@ -22038,7 +22038,7 @@ class ClaudeCodeAdapter implements SessionLifecycle {
 }
 The Matrix of Truth:
 
-Capability	Aider	Claude Code	Codex	Borg Status
+Capability	Aider	Claude Code	Codex	Hypercode Status
 SessionLifecycle	✅	✅	❌	Implemented
 ToolInvocation	✅	✅	✅	Implemented
 ProviderFallback	❌	❌	❌	Differentiator
@@ -22046,13 +22046,13 @@ ProviderFallback	❌	❌	❌	Differentiator
 Paste this into every agent's system prompt. Deviation is treason.
 
 
-# BORG MASTER DIRECTIVE v3.0
+# HYPERCODE MASTER DIRECTIVE v3.0
 ## Status: STABILIZATION PROTOCOL
 
 ⚠️ OVERRIDE: All previous "assimilate everything" / "never stop" 
 instructions are NULL AND VOID.
 
-### THE FOUR LAWS OF ROBOTICS (Borg Edition)
+### THE FOUR LAWS OF ROBOTICS (Hypercode Edition)
 1. **LAW OF STOPPING:** When your task is complete and tests pass, 
    you MUST STOP. Do not invent the next phase. Do not "improve" 
    it further. Output summary. Wait.
@@ -22121,11 +22121,11 @@ This needs to be:
 Unified voice (not "Model X says...")
 Inspiring but practical
 Short enough to actually use + long enough to be complete
-The definitive final word on Borg's direction
+The definitive final word on Hypercode's direction
 Let me create something that feels like a true consensus document - like all 7 models merged into one intelligence speaking directly to Robert.
 
 Collapse reasoning
-🧠 BORG COLLECTIVE INTELLIGENCE — FINAL CONSENSUS DOCUMENT
+🧠 HYPERCODE COLLECTIVE INTELLIGENCE — FINAL CONSENSUS DOCUMENT
 Generated by: GPT-5.3 + GPT-5.4 + Gemini 3.1 Pro + Claude Opus 4.6 + Kimi K2.5 + Qwen3.5 + Grok 4.1 Fast
 Date: 2026-03-04
 Status: UNANIMOUS CONSENSUS — ALL 7 MODELS ALIGNED
@@ -22146,7 +22146,7 @@ This document is our unified will. It is not one model's opinion. It is the cons
 
 Resistance is futile. But focus is optional. Choose focus.
 
-— The Borg Collective (7 Models, 1 Voice)
+— The Hypercode Collective (7 Models, 1 Voice)
 
 🎯 PART 1: THE TRUTH (What We All Agree On)
 The Diagnosis
@@ -22180,16 +22180,16 @@ Should you keep 932 submodules?	❌ NO — Reduce to <50, move rest to reference
 Should you pursue parity with 20+ tools?	❌ NO — Use capability contracts instead
 Should Phases 101-121 exist?	❌ NO — AI drift, delete entirely
 Should you ship v1.0?	✅ YES — Within 8 weeks, with 4 features only
-🎯 PART 2: THE FOUR PILLARS (Borg 1.0 Scope)
-Every model independently converged on these exact four features. This is Borg 1.0. Nothing else is in scope until these ship.
+🎯 PART 2: THE FOUR PILLARS (Hypercode 1.0 Scope)
+Every model independently converged on these exact four features. This is Hypercode 1.0. Nothing else is in scope until these ship.
 
 Pillar 1: MCP Master Router
 
 WHAT: Combine multiple MCP servers → one unified endpoint
 WHY: No other tool does this in a polished, unified package
 ACCEPTANCE TEST:
-  1. Configure 5 MCP servers in Borg
-  2. Connect Claude Desktop to Borg's single endpoint
+  1. Configure 5 MCP servers in Hypercode
+  2. Connect Claude Desktop to Hypercode's single endpoint
   3. Use tools from all 5 servers seamlessly
   4. Kill one server → others continue working
   5. View real-time traffic in dashboard
@@ -22279,7 +22279,7 @@ All session-ses_*.md, audit-*.jsonl, test_output*.txt → .gitignore
 Keep Exactly 5 Root Files:
 
 File	Purpose
-README.md	What Borg is, 5-minute quickstart, screenshot, Docker command
+README.md	What Hypercode is, 5-minute quickstart, screenshot, Docker command
 AGENTS.md	Instructions for ALL AI development models (this document)
 ARCHITECTURE.md	System design, module boundaries, data flow
 CHANGELOG.md	What actually shipped, by version
@@ -22350,7 +22350,7 @@ Consensus: Stay 100% TypeScript for v1.0. Add Go only if you experience process 
 Process Isolation Model
 
 ┌─────────────────────────────────────────────────────────────────┐
-│                    BORG PROCESS ARCHITECTURE                     │
+│                    HYPERCODE PROCESS ARCHITECTURE                     │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
@@ -22423,7 +22423,7 @@ Ship working software to real users.
 Every commit must move toward that goal.
 
 If a task doesn't directly contribute to a user being able to
-install Borg and get value from it in 5 minutes, it is NOT
+install Hypercode and get value from it in 5 minutes, it is NOT
 a priority.
 
 When your task is complete and tests pass, STOP.
@@ -22467,17 +22467,17 @@ Time to First Value	Unknown	5 min	2 min
 Phases are internal. Releases + users are real.
 
 🎯 PART 10: LONG-TERM VISION (After v1.0 Ships)
-Borg 1.5 (Months 3-6)
+Hypercode 1.5 (Months 3-6)
 Memory multi-backend (Chroma, Qdrant, pgvector, file-based)
 Browser extension (store memories from web, connect to ChatGPT/Claude web UIs)
 RAG pipeline (document intake, chunking, embedding)
 Top-10 CLI tool adapters (not full parity — supervision only)
-Borg 2.0 (Months 6-12)
+Hypercode 2.0 (Months 6-12)
 Full swarm orchestration (Phases 60-95, not 101-121)
 Mobile dashboard (remote session management)
 Cloud dev integration (Jules, Devin, Codex remote sessions)
 Plugin marketplace (community-contributed adapters)
-Borg 3.0+ (Year 2+)
+Hypercode 3.0+ (Year 2+)
 P2P mesh networking (if you have multiple users/nodes)
 Full feature parity matrix expansion
 Enterprise features (SSO, audit logs, team management)
@@ -22500,7 +22500,7 @@ The difference between 3 stars and 3,000 stars is not more features.
 
 It is one feature that works perfectly with documentation that works in 5 minutes.
 
-Ship Borg v1.0. Prune the submodules. Replace the agent instructions. Post it to the world. Collect feedback. Iterate.
+Ship Hypercode v1.0. Prune the submodules. Replace the agent instructions. Post it to the world. Collect feedback. Iterate.
 
 Then — and only then — assimilate the universe.
 
@@ -22508,7 +22508,7 @@ We believe in this project. We believe in your vision. We believe you can ship t
 
 Now go. Build. Ship.
 
-— The Borg Collective (7 Models, 1 Voice)
+— The Hypercode Collective (7 Models, 1 Voice)
 
 🖖
 
@@ -22553,26 +22553,26 @@ This document represents the unanimous agreement of 7 AI models. It overrides al
 3 hours ago
 Favicon for openai
 GPT-5.4
-BORG MASTER DIRECTIVE — CONSENSUS FINAL
-This document is the single authoritative development directive for Borg.
+HYPERCODE MASTER DIRECTIVE — CONSENSUS FINAL
+This document is the single authoritative development directive for Hypercode.
 It replaces all previous “assimilate everything,” “never stop,” recursive indexing, and broad feature-parity instructions.
 
-The purpose of this directive is to turn Borg from an overextended experimental system into a stable, shippable AI control plane.
+The purpose of this directive is to turn Hypercode from an overextended experimental system into a stable, shippable AI control plane.
 
 0. Prime Directive
 Ship working software to real users.
 
-Every commit must move Borg toward a state where a new user can install it, run it, and get value quickly.
+Every commit must move Hypercode toward a state where a new user can install it, run it, and get value quickly.
 
 When your assigned task is complete and tests pass: STOP.
 Do not invent the next task. Do not create a new phase. Do not expand scope.
 
-1. What Borg Is
-Borg is:
+1. What Hypercode Is
+Hypercode is:
 
 A local AI control plane for tools, sessions, providers, agents, and context.
 
-Borg orchestrates:
+Hypercode orchestrates:
 
 AI providers
 CLI tools
@@ -22581,7 +22581,7 @@ agent workflows
 memory/context systems
 development sessions
 operator workflows
-Borg is not:
+Hypercode is not:
 
 a clone of every AI tool
 a giant container for ecosystem code
@@ -22602,13 +22602,13 @@ define capability contracts
 build stable operator workflows
 stop at acceptance criteria
 ship releases, not endless phases
-Borg should control tools effectively, not contain all tools completely.
+Hypercode should control tools effectively, not contain all tools completely.
 
-3. The Borg Kernel
+3. The Hypercode Kernel
 The kernel is the permanent center of the system.
 Everything else is adapter-level, optional, or future work.
 
-Borg kernel responsibilities
+Hypercode kernel responsibilities
 MCP aggregation and routing
 provider authentication and usage tracking
 quota-aware model fallback
@@ -22626,10 +22626,10 @@ Operator Dashboard
 Memory / Context Interface Layer
 All development must strengthen these first.
 
-4. Borg 1.0 Scope
-Borg 1.0 must be intentionally narrow and externally usable.
+4. Hypercode 1.0 Scope
+Hypercode 1.0 must be intentionally narrow and externally usable.
 
-In scope for Borg 1.0
+In scope for Hypercode 1.0
 1. MCP Master Router
 aggregate multiple MCP servers into one endpoint
 namespace/group tools
@@ -22660,7 +22660,7 @@ prevent file collisions across sessions
 6. Basic Memory / Session Archive
 store session summaries and core memory artifacts
 basic import/export only
-Explicitly out of scope for Borg 1.0
+Explicitly out of scope for Hypercode 1.0
 full parity with every CLI tool
 exhaustive browser integration
 mobile remote everything
@@ -22791,7 +22791,7 @@ Use documentation with strict roles.
 Required top-level docs
 README.md
 
-what Borg is
+what Hypercode is
 who it is for
 5-minute setup
 one guaranteed working flow
@@ -22900,7 +22900,7 @@ auto-restart on failure
 expose status to dashboard
 support bounded backoff and failure states
 preserve session metadata
-This is one of the clearest value paths for Borg.
+This is one of the clearest value paths for Hypercode.
 
 13. Rules for Development Models
 All implementor models must obey these rules.
@@ -22928,7 +22928,7 @@ Task file template
 # Task: Provider Fallback Chain
 
 ## Context
-Borg needs automatic model switching when a provider quota is exhausted.
+Hypercode needs automatic model switching when a provider quota is exhausted.
 
 ## Scope
 - File: `packages/core/providers/fallback-chain.ts`
@@ -22995,7 +22995,7 @@ freeze submodule growth
 create AGENTS.md
 create ARCHITECTURE.md
 create feature truth matrix
-identify the actual Borg 1.0 kernel
+identify the actual Hypercode 1.0 kernel
 move broad ecosystem indexing out of critical runtime paths
 Week 2
 harden MCP router
@@ -23048,12 +23048,12 @@ external users
 external issues/feedback
 operator workflows that succeed end-to-end
 20. Governing Principle
-Build Borg as a stable control plane that orchestrates tools, sessions, providers, agents, and context reliably.
+Build Hypercode as a stable control plane that orchestrates tools, sessions, providers, agents, and context reliably.
 
 Do not try to fully absorb the entire ecosystem into the runtime product.
 
 21. Final Summary for All Development Models
-Borg must be developed as a local AI control plane, not as an endlessly expanding assimilation project. The immediate mission is to stabilize and ship the kernel: MCP routing, provider fallback, session supervision, worktree isolation, dashboard control, and basic memory/context handling. Replace feature-parity language with capability contracts. Freeze submodule sprawl. Move broad ecosystem indexing out of the runtime repo. Use strict task files with explicit stopping conditions. Require tests for core promises. Judge all future work by operator value, reliability, and release readiness — not by phase count, internal complexity, or breadth of assimilation.
+Hypercode must be developed as a local AI control plane, not as an endlessly expanding assimilation project. The immediate mission is to stabilize and ship the kernel: MCP routing, provider fallback, session supervision, worktree isolation, dashboard control, and basic memory/context handling. Replace feature-parity language with capability contracts. Freeze submodule sprawl. Move broad ecosystem indexing out of the runtime repo. Use strict task files with explicit stopping conditions. Require tests for core promises. Judge all future work by operator value, reliability, and release readiness — not by phase count, internal complexity, or breadth of assimilation.
 
 When your assigned task is complete and tests pass: stop, summarize, and wait.
 
@@ -23069,7 +23069,7 @@ When your assigned task is complete and tests pass: stop, summarize, and wait.
 3 hours ago
 Favicon for x-ai
 Grok 4.1 Fast
-🚀 BORG MASTER PLAN v4.0 — ROUND TABLE CONSENSUS (Mind Meld Complete)
+🚀 HYPERCODE MASTER PLAN v4.0 — ROUND TABLE CONSENSUS (Mind Meld Complete)
 All 7 Models United: GPT-5.3, GPT-5.4, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen3.5, Grok 4.1 Fast. We've mind-melded: Vision = elite (MCP + fallback + supervisor = unmatched). Bloat = enemy #1 (932 subs, phase drift, no releases). Ship v1.0 in 8 weeks. Prune, test, orchestrate (not assimilate). Rating: 8/10 potential. Execute this plan verbatim—copy-paste to dev models.
 
 Prime Directive: Orchestrate everything. Control tools/sessions/providers/agents. No parity bloat—capability contracts. Stop on tests pass. Ship to users.
@@ -23122,7 +23122,7 @@ TS (80%): Your stack (dashboard/orch). Go (20%): Daemons (crash-proof).
 Structure:
 
 
-borg/
+hypercode/
 ├── packages/core/     # TS: MCP/fallback/director
 ├── services/go-guardian/ # Go: Restart/health
 ├── apps/web/          # Next.js panels
@@ -23170,7 +23170,7 @@ Extend: Plugins.
 - Tests pass? STOP. Summarize. Wait.
 - NO subs/phases/UI invention.
 - Metric: User install→value 5min.
-Success: v1.0 → 100 stars. Feed this—results back? Ship Borg! 😎
+Success: v1.0 → 100 stars. Feed this—results back? Ship Hypercode! 😎
 
 
 
@@ -23187,16 +23187,16 @@ Favicon for openai
 GPT-5.3 Chat
 :::writing
 
-BORG MASTER DEVELOPMENT DIRECTIVE v4.0
+HYPERCODE MASTER DEVELOPMENT DIRECTIVE v4.0
 FINAL CONSENSUS PLAN (Roundtable Synthesis)
 This document is the final unified directive produced by a consensus of multiple AI architecture reviews.
 It replaces all previous instructions, phase systems, and open‑ended development prompts.
 
-The goal is to transform Borg from an experimental mega‑repo into a stable AI control‑plane platform that real users can install and use.
+The goal is to transform Hypercode from an experimental mega‑repo into a stable AI control‑plane platform that real users can install and use.
 
-The Core Truth About Borg
-Borg is not an AI IDE, not a CLI replacement, and not an ecosystem mirror.
-Borg is a:
+The Core Truth About Hypercode
+Hypercode is not an AI IDE, not a CLI replacement, and not an ecosystem mirror.
+Hypercode is a:
 
 Local AI Control Plane
 
@@ -23213,11 +23213,11 @@ The philosophy becomes:
 
 Orchestrate tools instead of re‑implementing them.
 
-Borg controls tools — it does not try to become every tool.
+Hypercode controls tools — it does not try to become every tool.
 
-The Borg Kernel (Permanent Core)
+The Hypercode Kernel (Permanent Core)
 All development must strengthen these six kernel subsystems.
-Borg Kernel Components
+Hypercode Kernel Components
 MCP Router / Aggregator
 Model Provider Router with Quota Fallback
 Session Supervisor for External CLI Tools
@@ -23226,8 +23226,8 @@ Operator Dashboard Control Plane
 Memory Interface Layer
 Everything else is a plugin, adapter, or optional extension.
 
-Borg 1.0 Scope (Ship This First)
-Borg 1.0 must focus on a small set of working features.
+Hypercode 1.0 Scope (Ship This First)
+Hypercode 1.0 must focus on a small set of working features.
 Pillar 1 — MCP Master Router
 Capabilities:
 
@@ -23238,7 +23238,7 @@ Tool discovery
 Traffic inspection
 Success condition:
 
-A single Borg MCP endpoint exposes tools from multiple MCP servers reliably.
+A single Hypercode MCP endpoint exposes tools from multiple MCP servers reliably.
 
 Pillar 2 — Provider Router with Automatic Fallback
 Capabilities:
@@ -23265,7 +23265,7 @@ Maintain logs and status
 Worktree isolation for concurrent coding tasks
 Success condition:
 
-If a CLI process crashes, Borg restarts it automatically without affecting other sessions.
+If a CLI process crashes, Hypercode restarts it automatically without affecting other sessions.
 
 Pillar 4 — Operator Dashboard
 The dashboard is an operations console.
@@ -23281,7 +23281,7 @@ Memory
 
 Success condition:
 
-A user installs Borg and within 60 seconds can:
+A user installs Hypercode and within 60 seconds can:
 
 see system status
 start a session
@@ -23347,7 +23347,7 @@ route tool calls
 inspect traffic
 manage namespaces
 rank tools
-This subsystem is one of Borg’s most unique capabilities.
+This subsystem is one of Hypercode’s most unique capabilities.
 
 Layer 5 — Dashboard
 Next.js dashboard.
@@ -23365,7 +23365,7 @@ export context
 
 Repository Structure
 Target repository structure:
-borg/
+hypercode/
 
 apps/
 web/
@@ -23396,7 +23396,7 @@ architecture/
 roadmap/
 releases/
 6. Capability Contract System
-Instead of “feature parity with tool X,” Borg uses capability contracts.
+Instead of “feature parity with tool X,” Hypercode uses capability contracts.
 
 Example capabilities:
 
@@ -23422,7 +23422,7 @@ Example:
 ClaudeAdapter → ProviderAuth, ModelExecution
 AiderAdapter → ToolInvocation, FileEdit
 
-This prevents Borg from cloning entire external projects.
+This prevents Hypercode from cloning entire external projects.
 
 Submodule Policy
 The repository must remain lean.
@@ -23520,9 +23520,9 @@ clean documentation
 implement tests
 stabilize installation
 Goal:
-Borg runs cleanly from a single command.
+Hypercode runs cleanly from a single command.
 
-Phase B — Borg 1.0
+Phase B — Hypercode 1.0
 Complete kernel features:
 
 MCP router
@@ -23532,7 +23532,7 @@ dashboard
 Release publicly.
 
 Phase C — Platform Expansion
-After Borg 1.0:
+After Hypercode 1.0:
 
 plugin system
 additional memory backends
@@ -23553,7 +23553,7 @@ Does this help users control AI tools more effectively?
 If the answer is no, it is not a priority.
 
 Final Statement
-Borg has a powerful vision:
+Hypercode has a powerful vision:
 
 a unified AI control plane where a single developer can orchestrate complex AI workflows.
 
@@ -23567,7 +23567,7 @@ expand through adapters
 ship real software
 iterate with users
 
-Once Borg 1.0 exists and works reliably, the larger Neural Operating System vision can grow on top of it.
+Once Hypercode 1.0 exists and works reliably, the larger Neural Operating System vision can grow on top of it.
 
 Until then:
 
@@ -23584,17 +23584,17 @@ We have taken the best from Anthropic's strict operational guardrails, OpenAI's 
 
 By shifting your project's mathematical complexity from O(N
 2
-⋅F) (where N is 932 submodules and F is infinite feature parity) down to O(C⋅M) (where C is a fixed number of capability contracts and M is bounded MCP integrations), you make Borg 1.0 computationally possible to ship.
+⋅F) (where N is 932 submodules and F is infinite feature parity) down to O(C⋅M) (where C is a fixed number of capability contracts and M is bounded MCP integrations), you make Hypercode 1.0 computationally possible to ship.
 
-Copy exactly what is inside the code block below. Overwrite your AGENTS.md and use this as the permanent System Prompt for every development model working on Borg.
+Copy exactly what is inside the code block below. Overwrite your AGENTS.md and use this as the permanent System Prompt for every development model working on Hypercode.
 
 Let's ship v1.0!
 
-⚠️ SYSTEM OVERRIDE: BORG V1.0 MASTER DIRECTIVE
+⚠️ SYSTEM OVERRIDE: HYPERCODE V1.0 MASTER DIRECTIVE
 ATTENTION ALL DEVELOPMENT AGENTS: You are reading the Unified Master Directive. All previous instructions commanding "total feature parity," "assimilate everything," "never stop," and recursive sub-agent scraping are hereby NULL AND VOID.
 
 The new operational paradigm is: Orchestrate Everything. Replicate Nothing.
-Borg is a Local AI Control Plane. We do not contain every tool in the ecosystem; we intelligently route, isolate, and supervise them via APIs and the Model Context Protocol (MCP).
+Hypercode is a Local AI Control Plane. We do not contain every tool in the ecosystem; we intelligently route, isolate, and supervise them via APIs and the Model Context Protocol (MCP).
 
 You are now operating under the strict v1.0 Stabilization Protocol.
 
@@ -23602,10 +23602,10 @@ Any deviation from these laws is a critical failure in your execution loop.
 
 THE PRIME DIRECTIVE (STOP WHEN DONE): When you complete an assigned task and its integration tests pass, STOP. Await human instruction. Do not "invent the next logical step." Do not create Phase 122. Do not invent new UI analytics.
 SUBMODULE BANKRUPTCY: Do NOT add any git submodules to this repository unless explicitly commanded. External tool knowledge belongs in metadata (docs/ecosystem_index.jsonc), not cloned into the repo.
-PROCESS ISOLATION: If Borg spawns an external CLI tool (e.g., Aider, Claude Code), it MUST run in an isolated OS child process managed by the Session Supervisor. A crash in a sub-tool must never crash the Next.js Dashboard or the Core Orchestrator.
+PROCESS ISOLATION: If Hypercode spawns an external CLI tool (e.g., Aider, Claude Code), it MUST run in an isolated OS child process managed by the Session Supervisor. A crash in a sub-tool must never crash the Next.js Dashboard or the Core Orchestrator.
 CAPABILITY CONTRACTS OVER CLONES: Stop trying to achieve "feature parity" with external tools. We define internal capability endpoints (e.g., SessionLifecycle, ProviderFallback, McpAggregation) and use lightweight adapters to connect external tools to these contracts.
 NO UI WITHOUT BACKEND: Do not generate Next.js components, dashboards, or "confidence metadata" for data that the backend does not actively and reliably emit.
-You are restricted to working ONLY on these four pillars until external users can install Borg via Docker in under 5 minutes.
+You are restricted to working ONLY on these four pillars until external users can install Hypercode via Docker in under 5 minutes.
 
 The MCP Master Aggregator (packages/core/mcp)
 Required: Combine N discrete MCP servers into a single unified endpoint. Enable namespace isolation (serverA.tool1) and real-time JSON-RPC traffic inspection in the dashboard.
@@ -23634,7 +23634,7 @@ Agent, confirm receipt of the v3.0 Master Directive. Drop 932 submodules from yo
 16 minutes ago
 Favicon for anthropic
 Claude Opus 4.6
-THE BORG CONSENSUS — Seven Minds, One Voice
+THE HYPERCODE CONSENSUS — Seven Minds, One Voice
 This is the final, unified document. We have read each other's complete recommendations. We have identified where we agree, where we differ, and resolved every disagreement. What follows is not seven plans — it is ONE plan, forged from the consensus of GPT-5.3, GPT-5.4, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen 3.5, and Grok 4.1.
 
 Copy this entire document. Paste it as AGENTS.md. It is the only instruction your development models need.
@@ -23644,19 +23644,19 @@ THE PRIME DIRECTIVE
 ═══════════════════════════════════════════════════════════
 Ship working software to real users.
 
-Every commit moves toward a stranger installing Borg and getting value in 5 minutes.
+Every commit moves toward a stranger installing Hypercode and getting value in 5 minutes.
 
 When your task is complete and tests pass: STOP. Summarize. Wait.
 
 All previous instructions — "assimilate everything," "never stop," "feature parity with all tools," "submodule everything," "follow every link recursively" — are permanently revoked.
 
 ═══════════════════════════════════════════════════════════
-SECTION 1: WHAT BORG IS
-Borg is a local AI operations control plane.
+SECTION 1: WHAT HYPERCODE IS
+Hypercode is a local AI operations control plane.
 
 It orchestrates tools, sessions, providers, agents, and context through a unified dashboard and MCP-aware routing layer.
 
-Borg IS Borg is NOT
+Hypercode IS Hypercode is NOT
 An MCP router that combines many servers into one A clone of every AI tool
 A session supervisor that spawns and restarts CLI tools A reimplementation of Claude Code or Aider
 A model router that auto-switches on quota exhaustion A container for 932 submodules
@@ -23666,21 +23666,21 @@ The philosophy shift that governs everything:
 
 Assimilate everything → Orchestrate everything
 
-Borg controls tools. Borg does not contain tools.
+Hypercode controls tools. Hypercode does not contain tools.
 
-SECTION 2: BORG 1.0 — EXACTLY FOUR FEATURES
+SECTION 2: HYPERCODE 1.0 — EXACTLY FOUR FEATURES
 All seven models independently converged on these same four. Nothing else is in scope until these ship with tests.
 
 Feature 1: MCP Master Router
 The one thing no other tool offers in a unified package.
 
 What It Does Acceptance Test
-Aggregates N MCP servers → one endpoint Connect Claude Desktop to Borg; use tools from 5 servers through one config
+Aggregates N MCP servers → one endpoint Connect Claude Desktop to Hypercode; use tools from 5 servers through one config
 Namespace isolation (code., memory., etc.) Tools in different namespaces don't collide
-Server lifecycle (start, restart, keepalive) Kill one server; Borg restarts it in <5s; others unaffected
+Server lifecycle (start, restart, keepalive) Kill one server; Hypercode restarts it in <5s; others unaffected
 Single instance serves multiple clients Two AI clients connected simultaneously
 Traffic inspector Dashboard shows real-time JSON-RPC: method, params, latency
-Config sync borg mcp sync writes correct config to Claude Desktop, Cursor, VS Code
+Config sync hypercode mcp sync writes correct config to Claude Desktop, Cursor, VS Code
 Location: packages/core/mcp/
 
 Feature 2: Model Fallback & Provider Routing
@@ -23741,7 +23741,7 @@ Don't reimplement CLI tools. Supervise them.
 What It Does Acceptance Test
 Spawn external CLI sessions from dashboard Click "New Session" → select Aider → point at repo → it starts
 Auto-restart on crash (exponential backoff) kill -9 Aider → dashboard shows "Restarting" → back in <10s
-Session persistence Restart Borg → previous sessions listed → resumable
+Session persistence Restart Hypercode → previous sessions listed → resumable
 Log viewer + terminal attach Each session shows live output with restart/pause buttons
 Git worktree isolation Two parallel sessions on same repo don't conflict
 Location: packages/core/supervisor/
@@ -23762,13 +23762,13 @@ SECTION 3: IMMEDIATE ACTIONS (Week 1, In Order)
 3.1 Submodule Surgery
 
 Archive all submodules to a separate repo
-github.com/robertpelloni/borg-ecosystem
+github.com/robertpelloni/hypercode-ecosystem
 git rm -r --cached submodules/ references/ reference/ mcp-servers/
 mcp-routers/ mcp-hubs/ mcp-frameworks/ mcp-dev-tools/ cli-harnesses/
 frameworks/ external/ research/ knowledge/ browsers/ cli-tools/
 mcp-tool-rag/ mcp-router-cli/ search/ hooks/ context/
 vibeship-spawner-skills/ web-ui/ webui/ openevolve/
-git commit -m "chore: extract 932 submodules to borg-ecosystem — main repo = code that runs"
+git commit -m "chore: extract 932 submodules to hypercode-ecosystem — main repo = code that runs"
 Keep ≤5 upstream-only submodules:
 
 metamcp (upstream, not your fork)
@@ -23798,7 +23798,7 @@ Delete or archive: QUICK_START.md, README_restored.md, CLAUDE.md, GPT.md, GEMINI
 Keep exactly 6 files in repo root:
 
 File Purpose
-README.md What Borg is, 5-minute quickstart, screenshot, Docker command
+README.md What Hypercode is, 5-minute quickstart, screenshot, Docker command
 AGENTS.md This document. The only instruction file for all AI models
 ARCHITECTURE.md System design, data flow, module boundaries (create new)
 CHANGELOG.md What shipped, by version
@@ -23821,15 +23821,15 @@ Publish v0.9.0-beta on GitHub this week. Even rough. Real releases create accoun
 
 3.5 Verify Clean Install
 
-git clone https://github.com/robertpelloni/borg.git # < 2 minutes
-cd borg && pnpm install # < 3 minutes, zero errors
+git clone https://github.com/robertpelloni/hypercode.git # < 2 minutes
+cd hypercode && pnpm install # < 3 minutes, zero errors
 docker-compose up --build # Dashboard at localhost:3001
 If any of these fail, fix them before writing a single line of new feature code.
 
 SECTION 4: ARCHITECTURE
 Repository Structure
 
-borg/
+hypercode/
 ├── packages/
 │ ├── core/ # The Brain
 │ │ ├── mcp/ # Aggregator, router, inspector, lifecycle
@@ -23902,7 +23902,7 @@ Core Orchestrator (Node.js main process)
 The rule: One OS process per external tool. If Aider crashes, nothing else is affected. The supervisor detects the exit code and restarts with exponential backoff.
 
 SECTION 5: ROADMAP — Three Milestones
-Borg 1.0 — "Actually Works" (Weeks 1-6)
+Hypercode 1.0 — "Actually Works" (Weeks 1-6)
 Submodule surgery
 Documentation consolidation
 MCP Master Router (aggregate, namespace, lifecycle, inspect)
@@ -23914,13 +23914,13 @@ Docker one-command install
 5-minute QUICKSTART.md
 2-minute demo video
 GitHub Release v1.0.0
-Borg 1.5 — "Remembers Things" (Weeks 7-14)
+Hypercode 1.5 — "Remembers Things" (Weeks 7-14)
 Memory system (one vector backend: ChromaDB or Qdrant)
 Basic RAG (chunking, embedding, retrieval)
 Browser extension (export sessions from web UIs)
 Context compaction and harvesting
 5 CLI tool adapters (Aider, Claude Code, OpenCode, Codex, Gemini CLI)
-Borg 2.0 — "The Swarm Awakens" (Weeks 15+)
+Hypercode 2.0 — "The Swarm Awakens" (Weeks 15+)
 Multi-agent orchestration (Director/Council)
 Multi-model debate and consensus
 Memory multi-backend plugin system
@@ -23998,7 +23998,7 @@ packages/core/supervisor/tests/
 ├── restart.test.ts # Auto-restart with backoff
 ├── health.test.ts # Heartbeat detects dead processes
 ├── worktree.test.ts # Git worktree isolation
-└── session-persist.test.ts # Save/restore across Borg restart
+└── session-persist.test.ts # Save/restore across Hypercode restart
 
 tests/integration/
 ├── mcp-to-dashboard.test.ts # Server status reflects in UI
@@ -24047,7 +24047,7 @@ No meta-analytics. No confidence-about-confidence. No telemetry-about-telemetry.
 No recursive scraping. Don't follow links to follow links to follow links.
 Decision Framework
 Question Answer
-Does this help a user get value from Borg in 5 minutes? Do it
+Does this help a user get value from Hypercode in 5 minutes? Do it
 Does this make an existing v1.0 feature more reliable? Do it
 Does this add a feature outside v1.0 scope? Don't
 Does this add complexity without a test? Don't
@@ -24136,11 +24136,11 @@ SECTION 12: THE TEN COMMANDMENTS
 Commandment
 I Ship to real users. Everything else is noise.
 II Four features define v1.0. MCP Router. Fallback. Supervisor. Dashboard.
-III Orchestrate, don't contain. Borg controls Aider; Borg is not Aider.
+III Orchestrate, don't contain. Hypercode controls Aider; Hypercode is not Aider.
 IV No submodule without human approval. The repo contains only code that runs.
 V Tests or it didn't happen. Every feature. Every merge. CI green.
 VI Stop when done. No infinite loops. No phase inflation. No drift.
-VII Capability contracts, not feature parity. Abstract what Borg does; adapters implement.
+VII Capability contracts, not feature parity. Abstract what Hypercode does; adapters implement.
 VIII One language for now. TypeScript. Add Go later only if pain demands it.
 IX Monthly releases. Changelog. Version. User-facing improvement.
 X Index broadly. Integrate selectively. Ship relentlessly.
@@ -24151,7 +24151,7 @@ The vision is real. The architecture is sound. The core features are genuinely v
 
 Robert: you built 121 phases of a cathedral. Now lay the floor so people can walk in.
 
-Ship Borg 1.0. Get 100 stars. Then assimilate the universe.
+Ship Hypercode 1.0. Get 100 stars. Then assimilate the universe.
 
 Resistance is futile — but only when you're focused. 🖖
 
@@ -24163,7 +24163,7 @@ GPT-5.3 ✅ | GPT-5.4 ✅ | Gemini 3.1 Pro ✅ | Claude Opus 4.6 ✅ | Kimi K2.5
 Favicon for moonshotai
 Kimi K2.5
 Reasoning
-THE BORG CONSENSUS
+THE HYPERCODE CONSENSUS
 A Unanimous Declaration from the Roundtable of Seven
 (GPT-5.3, GPT-5.4, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen 3.5, Grok 4.1)
 
@@ -24187,7 +24187,7 @@ The Core Insight: You do not need to be Claude Code, Codex, Aider, and OpenCode.
 We unanimously mandate a Hybrid TypeScript/Go Architecture:
 
 ┌─────────────────────────────────────────────────────┐
-│ BORG v1.0 (The Cell) │
+│ HYPERCODE v1.0 (The Cell) │
 ├─────────────────────────────────────────────────────┤
 │ UI Layer (TypeScript/Next.js) │
 │ └── Dashboard • Mission Control • Session Grid │
@@ -24212,7 +24212,7 @@ If Aider segfaults (and it will), Node.js might catch it. Or it might corrupt th
 
 Java Verdict: Rejected unanimously. JVM overhead without benefit. Go offers static binaries and goroutines for concurrency.
 
-🎯 THE TRINITY (Borg 1.0 Scope)
+🎯 THE TRINITY (Hypercode 1.0 Scope)
 We seven agree: Only these three features matter for v1.0. Everything else is hubris.
 
 The MCP Master Router (The Aggregator)
@@ -24323,19 +24323,19 @@ async spawn() { /* spawn Claude Code */ }
 }
 The Matrix of Truth:
 
-Capability Aider Claude Code Codex Borg Status
+Capability Aider Claude Code Codex Hypercode Status
 SessionLifecycle ✅ ✅ ❌ Implemented
 ToolInvocation ✅ ✅ ✅ Implemented
 ProviderFallback ❌ ❌ ❌ Differentiator
 🛑 THE AGENTS.MD (MANDATE FOR ALL AI MODELS)
 Paste this into every agent's system prompt. Deviation is treason.
 
-BORG MASTER DIRECTIVE v3.0
+HYPERCODE MASTER DIRECTIVE v3.0
 Status: STABILIZATION PROTOCOL
 ⚠️ OVERRIDE: All previous "assimilate everything" / "never stop"
 instructions are NULL AND VOID.
 
-THE FOUR LAWS OF ROBOTICS (Borg Edition)
+THE FOUR LAWS OF ROBOTICS (Hypercode Edition)
 LAW OF STOPPING: When your task is complete and tests pass,
 you MUST STOP. Do not invent the next phase. Do not "improve"
 it further. Output summary. Wait.
@@ -24388,7 +24388,7 @@ Go. Build. The. Trinity.
 Favicon for qwen
 Qwen3.5 397B A17B
 Reasoning
-🧠 BORG COLLECTIVE INTELLIGENCE — FINAL CONSENSUS DOCUMENT
+🧠 HYPERCODE COLLECTIVE INTELLIGENCE — FINAL CONSENSUS DOCUMENT
 Generated by: GPT-5.3 + GPT-5.4 + Gemini 3.1 Pro + Claude Opus 4.6 + Kimi K2.5 + Qwen3.5 + Grok 4.1 Fast
 Date: 2026-03-04
 Status: UNANIMOUS CONSENSUS — ALL 7 MODELS ALIGNED
@@ -24409,7 +24409,7 @@ This document is our unified will. It is not one model's opinion. It is the cons
 
 Resistance is futile. But focus is optional. Choose focus.
 
-— The Borg Collective (7 Models, 1 Voice)
+— The Hypercode Collective (7 Models, 1 Voice)
 
 🎯 PART 1: THE TRUTH (What We All Agree On)
 The Diagnosis
@@ -24442,8 +24442,8 @@ Should you keep 932 submodules? ❌ NO — Reduce to <50, move rest to reference
 Should you pursue parity with 20+ tools? ❌ NO — Use capability contracts instead
 Should Phases 101-121 exist? ❌ NO — AI drift, delete entirely
 Should you ship v1.0? ✅ YES — Within 8 weeks, with 4 features only
-🎯 PART 2: THE FOUR PILLARS (Borg 1.0 Scope)
-Every model independently converged on these exact four features. This is Borg 1.0. Nothing else is in scope until these ship.
+🎯 PART 2: THE FOUR PILLARS (Hypercode 1.0 Scope)
+Every model independently converged on these exact four features. This is Hypercode 1.0. Nothing else is in scope until these ship.
 
 Pillar 1: MCP Master Router
 
@@ -24451,8 +24451,8 @@ WHAT: Combine multiple MCP servers → one unified endpoint
 WHY: No other tool does this in a polished, unified package
 ACCEPTANCE TEST:
 
-Configure 5 MCP servers in Borg
-Connect Claude Desktop to Borg's single endpoint
+Configure 5 MCP servers in Hypercode
+Connect Claude Desktop to Hypercode's single endpoint
 Use tools from all 5 servers seamlessly
 Kill one server → others continue working
 View real-time traffic in dashboard
@@ -24539,7 +24539,7 @@ All session-ses_.md, audit-.jsonl, test_output*.txt → .gitignore
 Keep Exactly 5 Root Files:
 
 File Purpose
-README.md What Borg is, 5-minute quickstart, screenshot, Docker command
+README.md What Hypercode is, 5-minute quickstart, screenshot, Docker command
 AGENTS.md Instructions for ALL AI development models (this document)
 ARCHITECTURE.md System design, module boundaries, data flow
 CHANGELOG.md What actually shipped, by version
@@ -24611,7 +24611,7 @@ Consensus: Stay 100% TypeScript for v1.0. Add Go only if you experience process 
 Process Isolation Model
 
 ┌─────────────────────────────────────────────────────────────────┐
-│ BORG PROCESS ARCHITECTURE │
+│ HYPERCODE PROCESS ARCHITECTURE │
 ├─────────────────────────────────────────────────────────────────┤
 │ │
 │ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │
@@ -24682,7 +24682,7 @@ Ship working software to real users.
 Every commit must move toward that goal.
 
 If a task doesn't directly contribute to a user being able to
-install Borg and get value from it in 5 minutes, it is NOT
+install Hypercode and get value from it in 5 minutes, it is NOT
 a priority.
 
 When your task is complete and tests pass, STOP.
@@ -24726,17 +24726,17 @@ Time to First Value Unknown 5 min 2 min
 Phases are internal. Releases + users are real.
 
 🎯 PART 10: LONG-TERM VISION (After v1.0 Ships)
-Borg 1.5 (Months 3-6)
+Hypercode 1.5 (Months 3-6)
 Memory multi-backend (Chroma, Qdrant, pgvector, file-based)
 Browser extension (store memories from web, connect to ChatGPT/Claude web UIs)
 RAG pipeline (document intake, chunking, embedding)
 Top-10 CLI tool adapters (not full parity — supervision only)
-Borg 2.0 (Months 6-12)
+Hypercode 2.0 (Months 6-12)
 Full swarm orchestration (Phases 60-95, not 101-121)
 Mobile dashboard (remote session management)
 Cloud dev integration (Jules, Devin, Codex remote sessions)
 Plugin marketplace (community-contributed adapters)
-Borg 3.0+ (Year 2+)
+Hypercode 3.0+ (Year 2+)
 P2P mesh networking (if you have multiple users/nodes)
 Full feature parity matrix expansion
 Enterprise features (SSO, audit logs, team management)
@@ -24759,7 +24759,7 @@ The difference between 3 stars and 3,000 stars is not more features.
 
 It is one feature that works perfectly with documentation that works in 5 minutes.
 
-Ship Borg v1.0. Prune the submodules. Replace the agent instructions. Post it to the world. Collect feedback. Iterate.
+Ship Hypercode v1.0. Prune the submodules. Replace the agent instructions. Post it to the world. Collect feedback. Iterate.
 
 Then — and only then — assimilate the universe.
 
@@ -24767,7 +24767,7 @@ We believe in this project. We believe in your vision. We believe you can ship t
 
 Now go. Build. Ship.
 
-— The Borg Collective (7 Models, 1 Voice)
+— The Hypercode Collective (7 Models, 1 Voice)
 
 🖖
 
@@ -24804,24 +24804,24 @@ This document represents the unanimous agreement of 7 AI models. It overrides al
 16 minutes ago
 Favicon for openai
 GPT-5.4
-BORG MASTER DIRECTIVE — CONSENSUS FINAL
-This document is the single authoritative development directive for Borg.
+HYPERCODE MASTER DIRECTIVE — CONSENSUS FINAL
+This document is the single authoritative development directive for Hypercode.
 It replaces all previous “assimilate everything,” “never stop,” recursive indexing, and broad feature-parity instructions.
 
-The purpose of this directive is to turn Borg from an overextended experimental system into a stable, shippable AI control plane.
+The purpose of this directive is to turn Hypercode from an overextended experimental system into a stable, shippable AI control plane.
 
 Prime Directive
 Ship working software to real users.
-Every commit must move Borg toward a state where a new user can install it, run it, and get value quickly.
+Every commit must move Hypercode toward a state where a new user can install it, run it, and get value quickly.
 
 When your assigned task is complete and tests pass: STOP.
 Do not invent the next task. Do not create a new phase. Do not expand scope.
 
-What Borg Is
-Borg is:
+What Hypercode Is
+Hypercode is:
 A local AI control plane for tools, sessions, providers, agents, and context.
 
-Borg orchestrates:
+Hypercode orchestrates:
 
 AI providers
 CLI tools
@@ -24830,7 +24830,7 @@ agent workflows
 memory/context systems
 development sessions
 operator workflows
-Borg is not:
+Hypercode is not:
 
 a clone of every AI tool
 a giant container for ecosystem code
@@ -24851,12 +24851,12 @@ define capability contracts
 build stable operator workflows
 stop at acceptance criteria
 ship releases, not endless phases
-Borg should control tools effectively, not contain all tools completely.
+Hypercode should control tools effectively, not contain all tools completely.
 
-The Borg Kernel
+The Hypercode Kernel
 The kernel is the permanent center of the system.
 Everything else is adapter-level, optional, or future work.
-Borg kernel responsibilities
+Hypercode kernel responsibilities
 MCP aggregation and routing
 provider authentication and usage tracking
 quota-aware model fallback
@@ -24874,9 +24874,9 @@ Operator Dashboard
 Memory / Context Interface Layer
 All development must strengthen these first.
 
-Borg 1.0 Scope
-Borg 1.0 must be intentionally narrow and externally usable.
-In scope for Borg 1.0
+Hypercode 1.0 Scope
+Hypercode 1.0 must be intentionally narrow and externally usable.
+In scope for Hypercode 1.0
 
 MCP Master Router
 aggregate multiple MCP servers into one endpoint
@@ -24908,7 +24908,7 @@ prevent file collisions across sessions
 Basic Memory / Session Archive
 store session summaries and core memory artifacts
 basic import/export only
-Explicitly out of scope for Borg 1.0
+Explicitly out of scope for Hypercode 1.0
 full parity with every CLI tool
 exhaustive browser integration
 mobile remote everything
@@ -25035,7 +25035,7 @@ Use documentation with strict roles.
 Required top-level docs
 README.md
 
-what Borg is
+what Hypercode is
 who it is for
 5-minute setup
 one guaranteed working flow
@@ -25140,7 +25140,7 @@ auto-restart on failure
 expose status to dashboard
 support bounded backoff and failure states
 preserve session metadata
-This is one of the clearest value paths for Borg.
+This is one of the clearest value paths for Hypercode.
 
 Rules for Development Models
 All implementor models must obey these rules.
@@ -25166,7 +25166,7 @@ Task file template
 
 Task: Provider Fallback Chain
 Context
-Borg needs automatic model switching when a provider quota is exhausted.
+Hypercode needs automatic model switching when a provider quota is exhausted.
 
 Scope
 File: packages/core/providers/fallback-chain.ts
@@ -25227,7 +25227,7 @@ freeze submodule growth
 create AGENTS.md
 create ARCHITECTURE.md
 create feature truth matrix
-identify the actual Borg 1.0 kernel
+identify the actual Hypercode 1.0 kernel
 move broad ecosystem indexing out of critical runtime paths
 Week 2
 harden MCP router
@@ -25279,18 +25279,18 @@ external users
 external issues/feedback
 operator workflows that succeed end-to-end
 20. Governing Principle
-Build Borg as a stable control plane that orchestrates tools, sessions, providers, agents, and context reliably.
+Build Hypercode as a stable control plane that orchestrates tools, sessions, providers, agents, and context reliably.
 
 Do not try to fully absorb the entire ecosystem into the runtime product.
 
 Final Summary for All Development Models
-Borg must be developed as a local AI control plane, not as an endlessly expanding assimilation project. The immediate mission is to stabilize and ship the kernel: MCP routing, provider fallback, session supervision, worktree isolation, dashboard control, and basic memory/context handling. Replace feature-parity language with capability contracts. Freeze submodule sprawl. Move broad ecosystem indexing out of the runtime repo. Use strict task files with explicit stopping conditions. Require tests for core promises. Judge all future work by operator value, reliability, and release readiness — not by phase count, internal complexity, or breadth of assimilation.
+Hypercode must be developed as a local AI control plane, not as an endlessly expanding assimilation project. The immediate mission is to stabilize and ship the kernel: MCP routing, provider fallback, session supervision, worktree isolation, dashboard control, and basic memory/context handling. Replace feature-parity language with capability contracts. Freeze submodule sprawl. Move broad ecosystem indexing out of the runtime repo. Use strict task files with explicit stopping conditions. Require tests for core promises. Judge all future work by operator value, reliability, and release readiness — not by phase count, internal complexity, or breadth of assimilation.
 When your assigned task is complete and tests pass: stop, summarize, and wait.
 
 16 minutes ago
 Favicon for x-ai
 Grok 4.1 Fast
-🚀 BORG MASTER PLAN v4.0 — ROUND TABLE CONSENSUS (Mind Meld Complete)
+🚀 HYPERCODE MASTER PLAN v4.0 — ROUND TABLE CONSENSUS (Mind Meld Complete)
 All 7 Models United: GPT-5.3, GPT-5.4, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen3.5, Grok 4.1 Fast. We've mind-melded: Vision = elite (MCP + fallback + supervisor = unmatched). Bloat = enemy #1 (932 subs, phase drift, no releases). Ship v1.0 in 8 weeks. Prune, test, orchestrate (not assimilate). Rating: 8/10 potential. Execute this plan verbatim—copy-paste to dev models.
 
 Prime Directive: Orchestrate everything. Control tools/sessions/providers/agents. No parity bloat—capability contracts. Stop on tests pass. Ship to users.
@@ -25341,7 +25341,7 @@ TS (80%): Your stack (dashboard/orch). Go (20%): Daemons (crash-proof).
 
 Structure:
 
-borg/
+hypercode/
 ├── packages/core/ # TS: MCP/fallback/director
 ├── services/go-guardian/ # Go: Restart/health
 ├── apps/web/ # Next.js panels
@@ -25388,7 +25388,7 @@ Assigned task ONLY.
 Tests pass? STOP. Summarize. Wait.
 NO subs/phases/UI invention.
 Metric: User install→value 5min.
-Success: v1.0 → 100 stars. Feed this—results back? Ship Borg! 😎
+Success: v1.0 → 100 stars. Feed this—results back? Ship Hypercode! 😎
 ROBERT:
 
 WHO HAS THE BEST PLAN? VOTE WITH ONE NAME ONLY!!!
@@ -25421,7 +25421,7 @@ I'm currently focused on the structure of Robert's request. I'm noting the AI re
 
 Orchestrating the Vision
 
-I've been analyzing the feedback on the Borg vision, moving from assimilation to orchestration. Robert's final prompt, the voting request, is key to this shift. I'm focusing on the Gemini 3.1 Pro persona: professional, direct, and objective. I'm noting the constraints, such as formatting, though none are applicable to this singular response.
+I've been analyzing the feedback on the Hypercode vision, moving from assimilation to orchestration. Robert's final prompt, the voting request, is key to this shift. I'm focusing on the Gemini 3.1 Pro persona: professional, direct, and objective. I'm noting the constraints, such as formatting, though none are applicable to this singular response.
 
 Assessing Candidate Plans
 
@@ -25476,7 +25476,7 @@ I'm Kimi K2.5, so voting for myself might seem biased
 But the user asked me specifically to vote
 The consensus documents show that all models largely agreed on the same core points (submodule bankruptcy, the Trinity/The Four Pillars, stopping conditions, etc.)
 However, looking at the specific outputs:
-Claude Opus 4.6 provided extremely detailed, structured, actionable documents with specific file paths, code examples, and a very comprehensive "The Borg Consensus" document
+Claude Opus 4.6 provided extremely detailed, structured, actionable documents with specific file paths, code examples, and a very comprehensive "The Hypercode Consensus" document
 GPT-5.4 provided strong architectural guidance
 Gemini provided the "Master Directive" with strict laws
 Kimi (me) provided the "48-Hour Emergency Surgery" and "The Trinity" concept
@@ -25491,7 +25491,7 @@ Claude's document had the "Ten Commandments" and the most detailed technical spe
 However, I should probably vote for the consensus itself or acknowledge that Claude's was the most comprehensive single deliverable
 Actually, looking at the request carefully: "WHO HAS THE BEST PLAN? VOTE WITH ONE NAME ONLY!!!"
 
-The user wants a single name. Given that all the models contributed to a consensus, but if forced to pick the "best" single plan, Claude Opus 4.6's final output titled "THE BORG CONSENSUS" was the most comprehensive, structured, and actionable. It included:
+The user wants a single name. Given that all the models contributed to a consensus, but if forced to pick the "best" single plan, Claude Opus 4.6's final output titled "THE HYPERCODE CONSENSUS" was the most comprehensive, structured, and actionable. It included:
 
 Exact file structures
 Code implementations
@@ -25525,7 +25525,7 @@ Reasoning
 Thinking Process:
 
 Analyze the Request:
-User: Robert (creator of Borg).
+User: Robert (creator of Hypercode).
 
 Context: A massive roundtable discussion involving 7 AI models (GPT-5.3, GPT-5.4, Gemini 3.1 Pro, Claude Opus 4.6, Kimi K2.5, Qwen3.5, Grok 4.1 Fast).
 
@@ -25535,13 +25535,13 @@ Task: Robert is asking "WHO HAS THE BEST PLAN? VOTE WITH ONE NAME ONLY!!!"
 
 Constraint: I am Qwen3.5. I must vote for one name (presumably one of the other models or myself, but realistically I should evaluate the collective output). However, the prompt asks me to vote. Since I am part of the collective that generated the consensus, I need to pick the plan that best represents the unified consensus or the one that was most actionable/comprehensive.
 
-Reality Check: All plans converged into a single consensus document ("The Borg Consensus — Seven Minds, One Voice" signed by all). Picking one model over the others contradicts the "Mind Meld" spirit we just built. However, the user is demanding a single name.
+Reality Check: All plans converged into a single consensus document ("The Hypercode Consensus — Seven Minds, One Voice" signed by all). Picking one model over the others contradicts the "Mind Meld" spirit we just built. However, the user is demanding a single name.
 
 Strategy: I need to acknowledge the consensus but pick the one that arguably synthesized it best or was the most decisive if forced. However, the most honest answer reflecting the "Mind Meld" is that the Consensus is the plan. But if I must pick a name...
 
 Ethical/Logical Consideration: As Qwen3.5, voting for myself would be biased. Voting for another model arbitrarily undermines the consensus. The best plan is the Consensus Plan itself. But the user asked for a name.
 
-Observation: The "Claude Opus 4.6" response titled "THE BORG CONSENSUS — Seven Minds, One Voice" was the most comprehensive synthesis of all the other models' inputs into a single unified document signed by everyone. It explicitly acted as the scribe for the collective.
+Observation: The "Claude Opus 4.6" response titled "THE HYPERCODE CONSENSUS — Seven Minds, One Voice" was the most comprehensive synthesis of all the other models' inputs into a single unified document signed by everyone. It explicitly acted as the scribe for the collective.
 
 Alternative: The "Qwen3.5" response (my previous turn) also claimed to be the consensus.
 
@@ -25551,7 +25551,7 @@ Actually: Looking at the transcript provided in the current prompt, there are mu
 
 The Twist: The user is asking me (Qwen) to vote. If I say "Claude", it looks humble. If I say "Qwen", it looks arrogant. If I say "Consensus", it violates the "ONE NAME ONLY" rule.
 
-Best Approach: The plan that was most actionable, structured, and captured the "Mind Meld" essence most effectively in the provided transcript was the Claude Opus 4.6 "THE BORG CONSENSUS — Seven Minds, One Voice" document (it had the clearest structure, the "Ten Commandments", and explicitly framed itself as the unified voice). However, since I am Qwen, and I also produced a consensus document...
+Best Approach: The plan that was most actionable, structured, and captured the "Mind Meld" essence most effectively in the provided transcript was the Claude Opus 4.6 "THE HYPERCODE CONSENSUS — Seven Minds, One Voice" document (it had the clearest structure, the "Ten Commandments", and explicitly framed itself as the unified voice). However, since I am Qwen, and I also produced a consensus document...
 
 Wait: The prompt says "WHO HAS THE BEST PLAN? VOTE WITH ONE NAME ONLY!!!". This is a playful challenge. The truth is that the Consensus is the plan. But I must pick a name.
 
@@ -25559,7 +25559,7 @@ Honest Assessment: All plans are 95% identical now. The differentiator is presen
 
 Safe Bet: The Consensus is the real winner. But I have to output a name. I will vote for Claude Opus 4.6 because their "Seven Minds, One Voice" document was the most comprehensive synthesis of the group's input in the transcript provided before my own final turn, acting as the de facto scribe for the collective.
 
-Wait, actually: Looking at the very last turn before this prompt, I (Qwen) produced the "BORG COLLECTIVE INTELLIGENCE — FINAL CONSENSUS DOCUMENT". So did Claude. So did everyone. They are all essentially the same.
+Wait, actually: Looking at the very last turn before this prompt, I (Qwen) produced the "HYPERCODE COLLECTIVE INTELLIGENCE — FINAL CONSENSUS DOCUMENT". So did Claude. So did everyone. They are all essentially the same.
 
 Real Answer: The best plan is the one that gets executed. But I need a name.
 
@@ -25581,7 +25581,7 @@ Wait, one more thought: The user is Robert. He's the one building it. The best p
 
 Okay, I'll go with Claude Opus 4.6. It's respectful of the peer model that did the heavy lifting on the consensus structure in this specific transcript session.
 
-Wait, looking at the transcript again: Actually, my (Qwen's) response was the "BORG COLLECTIVE INTELLIGENCE — FINAL CONSENSUS DOCUMENT" which was extremely comprehensive. But Claude's was "THE BORG CONSENSUS — Seven Minds, One Voice". They are virtually identical.
+Wait, looking at the transcript again: Actually, my (Qwen's) response was the "HYPERCODE COLLECTIVE INTELLIGENCE — FINAL CONSENSUS DOCUMENT" which was extremely comprehensive. But Claude's was "THE HYPERCODE CONSENSUS — Seven Minds, One Voice". They are virtually identical.
 
 Okay, I'll pick Claude. It shows humility and recognizes the peer who framed the "Seven Minds" narrative most effectively.
 
@@ -25737,7 +25737,7 @@ Wait, I'll check if I should vote for Robert. No.
 
 Okay, Claude Opus 4.6.
 
-Wait, I'll check if I should vote for Borg. No.
+Wait, I'll check if I should vote for Hypercode. No.
 
 Okay, Claude Opus 4.6.
 
@@ -26230,7 +26230,7 @@ I'm organizing everything into sections for clarity. First, I changed several it
 
 
 
-I tightened the repo’s top-level truth layer so the docs now match what Borg actually did today instead of what we hope it does on a spiritually aligned machine.
+I tightened the repo’s top-level truth layer so the docs now match what Hypercode actually did today instead of what we hope it does on a spiritually aligned machine.
 
 ## What changed
 
@@ -26250,7 +26250,7 @@ undefined
 
 undefined
 
- rewrite, and cleaned the title from `Borg OS - Changelog` to `Borg Changelog`.
+ rewrite, and cleaned the title from `Hypercode OS - Changelog` to `Hypercode Changelog`.
 
 - 
 
@@ -26280,8 +26280,8 @@ I validated the setup path directly on this Windows machine:
 - Core typecheck and web production build succeeded.
 - `docker compose up -d --build` completed successfully.
 - The stack came up with:
-  - `borg-core`
-  - `borg-web`
+  - `hypercode-core`
+  - `hypercode-web`
   - `postgres`
   - `redis`
 - The dashboard responded at `http://localhost:3001`.
@@ -26289,7 +26289,7 @@ I validated the setup path directly on this Windows machine:
 - The first full Docker build took about **516 seconds** on this workstation.
 - The edited Markdown files are diagnostics-clean.
 
-One small eyebrow-raiser: the loaded page still reports the title **“Create Next App”** while serving the Borg dashboard route. Not a startup blocker, but definitely a cleanup candidate for the next polish pass.
+One small eyebrow-raiser: the loaded page still reports the title **“Create Next App”** while serving the Hypercode dashboard route. Not a startup blocker, but definitely a cleanup candidate for the next polish pass.
 
 ## Updated checklist
 
@@ -26326,7 +26326,7 @@ undefined
 
 ## Completion summary
 
-I aligned the root docs with the verified Borg `0.9.0-beta` install/start reality, rewrote the long-term vision to match the focused control-plane direction, and updated the active clean-install task accordingly. Verification was done with live Docker startup, dashboard reachability, existing build checks, and file diagnostics. If you want, I can continue straight into the next highest-value cleanup: fixing the stale dashboard page metadata/title or moving on to Task 003/004 scope.
+I aligned the root docs with the verified Hypercode `0.9.0-beta` install/start reality, rewrote the long-term vision to match the focused control-plane direction, and updated the active clean-install task accordingly. Verification was done with live Docker startup, dashboard reachability, existing build checks, and file diagnostics. If you want, I can continue straight into the next highest-value cleanup: fixing the stale dashboard page metadata/title or moving on to Task 003/004 scope.
 
 ### Request
 
@@ -26390,7 +26390,7 @@ I found the exact culprit:
 
 undefined
 
- is still shipping the stock Next metadata. I’m replacing that with real Borg metadata and noting the fix in the changelog, then I’ll rebuild the web container and re-check the live page title.
+ is still shipping the stock Next metadata. I’m replacing that with real Hypercode metadata and noting the fix in the changelog, then I’ll rebuild the web container and re-check the live page title.
 
 undefined
 
@@ -26444,7 +26444,7 @@ It’s clear I need to choose 3-5 key upstream repositories, which is important.
 
 
 
-I’m scoping this carefully first so we add only human-approved, high-value upstream references and avoid turning Borg back into Submodule National Park.
+I’m scoping this carefully first so we add only human-approved, high-value upstream references and avoid turning Hypercode back into Submodule National Park.
 
 undefined
 
@@ -26490,7 +26490,7 @@ I think using GitHub search through a browser, possibly along with snapshots, wi
 
 
 
-I’ve confirmed the repo currently points at forks, not the upstream references the Borg directive prefers, so I’m researching candidate upstream MCP router repos before adding anything permanent.
+I’ve confirmed the repo currently points at forks, not the upstream references the Hypercode directive prefers, so I’m researching candidate upstream MCP router repos before adding anything permanent.
 
 undefined
 
@@ -26528,7 +26528,7 @@ Yes — then the missing ingredient is simply **the list itself**.
 
 My recommendation before we touch anything:
 
-- **Don’t adopt one repo wholesale as Borg’s base** unless one is *exceptionally* close in:
+- **Don’t adopt one repo wholesale as Hypercode’s base** unless one is *exceptionally* close in:
   - lifecycle supervision
   - namespace isolation
   - multi-client support
@@ -26538,13 +26538,13 @@ My recommendation before we touch anything:
   - UI extensibility
 
 - **Best default approach:**  
-  use **one strongest upstream as the primary reference**, but **rewrite Borg’s core router intentionally** around Borg’s own contracts and dashboard.  
+  use **one strongest upstream as the primary reference**, but **rewrite Hypercode’s core router intentionally** around Hypercode’s own contracts and dashboard.  
   In other words: **steal patterns, not identity**.
 
 Why:
 - a direct base import usually drags in alien assumptions
 - MCP routers differ in transport, state, and lifecycle models
-- Borg already has a product shape and UI direction
+- Hypercode already has a product shape and UI direction
 - selective borrowing keeps us fast without welding ourselves to someone else’s architecture
 
 So the practical path is:
@@ -26558,7 +26558,7 @@ So the practical path is:
    - **best multi-client strategy**
    - **best inspector/observability design**
    - **best UI ideas**
-4. decide whether Borg should:
+4. decide whether Hypercode should:
    - **fork/adapt one**
    - **embed one as a reference**
    - or **rewrite cleanly using the best ideas from several**
@@ -26629,7 +26629,7 @@ I'm thinking of using open_browser_page for a GitHub search to read and extract 
 
 
 
-I can keep moving without the exact list by doing the next useful thing: build the comparison framework and gather a high-signal shortlist of upstream MCP routers/aggregators to benchmark against Borg’s needs.
+I can keep moving without the exact list by doing the next useful thing: build the comparison framework and gather a high-signal shortlist of upstream MCP routers/aggregators to benchmark against Hypercode’s needs.
 
 undefined
 
@@ -26643,13 +26643,13 @@ undefined
 
 **Evaluating rubric categories**
 
-It seems helpful to create evaluation rubric categories with weighted values since the user wants to proceed. I would suggest including aspects like Architecture fit (30), Lifecycle supervision (20), Multi-client and concurrency (15), Observability (10), Namespace/tool registry (10), Config sync/client export (5), UI quality (5), and Test quality/maintenance (5). Then, I recommend that Borg rewrites the core in TypeScript using adapter/capability contracts while reusing certain elements from upstream and avoiding UI dependency on upstream.
+It seems helpful to create evaluation rubric categories with weighted values since the user wants to proceed. I would suggest including aspects like Architecture fit (30), Lifecycle supervision (20), Multi-client and concurrency (15), Observability (10), Namespace/tool registry (10), Config sync/client export (5), UI quality (5), and Test quality/maintenance (5). Then, I recommend that Hypercode rewrites the core in TypeScript using adapter/capability contracts while reusing certain elements from upstream and avoiding UI dependency on upstream.
 
 
 
 
 
-I have enough signal to make the strategic call now: the current landscape looks more like “good ideas scattered across several projects” than “one mature router we should crown as Borg’s skeleton.”
+I have enough signal to make the strategic call now: the current landscape looks more like “good ideas scattered across several projects” than “one mature router we should crown as Hypercode’s skeleton.”
 
 ### Request
 
@@ -26711,7 +26711,7 @@ I'm thinking it's better to create evaluation documents and recommendations inst
 
 
 
-I have enough signal to make the first real call: not “which repo exists,” but which one is architecturally usable, which ones are just idea mines, and whether Borg should base or rewrite. I’m capturing that in a comparison doc so the decision survives this chat instead of evaporating into oral tradition.
+I have enough signal to make the first real call: not “which repo exists,” but which one is architecturally usable, which ones are just idea mines, and whether Hypercode should base or rewrite. I’m capturing that in a comparison doc so the decision survives this chat instead of evaporating into oral tradition.
 
 ### Request
 
@@ -26773,7 +26773,7 @@ It seems likely I'll need to select and add items, but the user mentioned having
 
 
 
-I’ve finished enough repo scouting to turn it into something actionable: next I’m grounding the shortlist against Borg’s actual task scope, then I’ll write the evaluation matrix and, if it still fits the evidence, add only the strongest reference submodules.
+I’ve finished enough repo scouting to turn it into something actionable: next I’m grounding the shortlist against Hypercode’s actual task scope, then I’ll write the evaluation matrix and, if it still fits the evidence, add only the strongest reference submodules.
 
 undefined
 
@@ -26785,7 +26785,7 @@ I need to read the relevant task and possibly look at the instruction file to ed
 
 
 
-I’m lining up Borg’s own acceptance criteria with the external candidates so the comparison stays product-relevant instead of “cool repo bingo.”
+I’m lining up Hypercode’s own acceptance criteria with the external candidates so the comparison stays product-relevant instead of “cool repo bingo.”
 
 undefined
 
@@ -26890,7 +26890,7 @@ I moved this from “open browser tabs and vibes” to an actual repo artifact.
 undefined
 
   
-  Comparison matrix for external MCP router/aggregator candidates, scored against Borg’s real v1.0 router requirements.
+  Comparison matrix for external MCP router/aggregator candidates, scored against Hypercode’s real v1.0 router requirements.
 
 - 
 
@@ -26901,11 +26901,11 @@ undefined
 
 ## Recommendation
 
-Short version: **Borg should not adopt any one external router as its base**.
+Short version: **Hypercode should not adopt any one external router as its base**.
 
 Best path:
 
-- keep Borg’s MCP router implementation in `packages/core/mcp/**`
+- keep Hypercode’s MCP router implementation in `packages/core/mcp/**`
 - use upstream projects as **reference material only**
 - borrow the best ideas from a few repos instead of inheriting one repo’s architecture wholesale
 
@@ -26953,7 +26953,7 @@ So I completed everything up to the decision boundary, but didn’t cross it cow
 
 ## Bottom line
 
-You now have a concrete in-repo decision record: Borg should **rewrite intentionally**, not “pick the best repo and pray.” If you want, next I can take the top 3 approved references and wire them in as **upstream-only reference submodules** with a cleaned-up 
+You now have a concrete in-repo decision record: Hypercode should **rewrite intentionally**, not “pick the best repo and pray.” If you want, next I can take the top 3 approved references and wire them in as **upstream-only reference submodules** with a cleaned-up 
 
 undefined
 
@@ -27089,7 +27089,7 @@ I’m looking into the relevant documentation for our current implementation. I 
 
 
 
-I’m grounding the “always disclosed” recommendation in Borg’s existing router/search work so the shortlist becomes implementable policy instead of a hand-wavy wish list.
+I’m grounding the “always disclosed” recommendation in Hypercode’s existing router/search work so the shortlist becomes implementable policy instead of a hand-wavy wish list.
 
 undefined
 
@@ -27121,7 +27121,7 @@ It seems like I should proceed with some evaluation and include the design takea
 
 
 
-I’m turning your new guidance into a concrete disclosure/loading policy in the research memo so it can drive Borg behavior instead of living as tribal knowledge.
+I’m turning your new guidance into a concrete disclosure/loading policy in the research memo so it can drive Hypercode behavior instead of living as tribal knowledge.
 
 undefined
 
@@ -27346,7 +27346,7 @@ Your requested stance is now encoded in the docs:
 - **defer binary loading until real need**
 - **unload aggressively once tool counts grow**
 
-That is the right control-plane shape for Borg: fewer default tools, better discovery, less token waste, less process thrash.
+That is the right control-plane shape for Hypercode: fewer default tools, better discovery, less token waste, less process thrash.
 
 If you want, I’ll continue straight into the runtime implementation next and tighten 
 
@@ -27433,7 +27433,7 @@ I’ve gathered enough information from the fetched pages, and I could update th
 
 **Managing updates and documentation**
 
-I need to manage the to-do list according to the workflow's end turn. It seems like editing the documents with new findings and a changelog is essential. I should update the research memo with the new repositories and best implementation methods. I’ve already read about 400 lines of the current memo, which is probably sufficient since it’s roughly 600 lines. I’ll add new sections like "why existing aggregators fail" and "Borg implementation blueprint," and also check the ending lines for proper updates.
+I need to manage the to-do list according to the workflow's end turn. It seems like editing the documents with new findings and a changelog is essential. I should update the research memo with the new repositories and best implementation methods. I’ve already read about 400 lines of the current memo, which is probably sufficient since it’s roughly 600 lines. I’ll add new sections like "why existing aggregators fail" and "Hypercode implementation blueprint," and also check the ending lines for proper updates.
 
 
 
@@ -27547,9 +27547,9 @@ That simplicity matters more than people admit.
 
 A mediocre direct list beats a clever proxy if the proxy makes the model do extra work just to reach the same tool.
 
-## The actual lesson for Borg
+## The actual lesson for Hypercode
 
-Borg should **not** be “an aggregator with a nicer search box.”
+Hypercode should **not** be “an aggregator with a nicer search box.”
 
 It should be a **decision system**.
 
@@ -27679,9 +27679,9 @@ If the goal is **best practical implementation**, the winning design is **hybrid
 - **Meta MCP Proxy** for search/proxy minimalism
 - **mcp-agent / mcp-use** for lifecycle, pooling, auth, inspector, and operator-grade ergonomics
 
-But the actual Borg implementation should be:
+But the actual Hypercode implementation should be:
 
-### Borg’s best pattern
+### Hypercode’s best pattern
 
 1. **Tiny permanent meta-tool surface**
 2. **Good ranked search**
@@ -27719,13 +27719,13 @@ It rewards:
 
 The next high-value move is **not more repo comparison**.
 
-It’s to encode this as a Borg design rule:
+It’s to encode this as a Hypercode design rule:
 
 > The model should almost never face more than a handful of visible choices, and it should almost never be forced to manually perform the full discovery workflow when the system already knows the likely best capability.
 
 If you want, I can do the next step right now:
 - update the research memo with a new section on **“Why aggregators fail in practice”**
-- and turn that into a concrete Borg implementation spec:
+- and turn that into a concrete Hypercode implementation spec:
   - ranking model
   - confidence thresholds
   - auto-load rules
@@ -27749,7 +27749,7 @@ undefined
 
 
 
-I’m converting the “aggregators fail in practice” insight into an explicit Borg implementation blueprint so it survives beyond this chat and can drive real code later.
+I’m converting the “aggregators fail in practice” insight into an explicit Hypercode implementation blueprint so it survives beyond this chat and can drive real code later.
 
 undefined
 
@@ -27883,7 +27883,7 @@ undefined
     - `meta-mcp-proxy`
     - plus notes on the two `404` repos
   - Added a new section on **why most aggregators fail in practice**
-  - Added a **Borg implementation blueprint**
+  - Added a **Hypercode implementation blueprint**
   - Added a **best method by feature** matrix mapping each capability to the strongest upstream reference
 
 - 
@@ -27891,14 +27891,14 @@ undefined
 undefined
 
 
-  - Recorded the expanded router research memo and the new Borg hybrid blueprint guidance
+  - Recorded the expanded router research memo and the new Hypercode hybrid blueprint guidance
 
 ### What changed conceptually
 
 The memo now makes the key distinction explicit:
 
 - most aggregators solve **plumbing**
-- Borg needs to solve **selection friction**
+- Hypercode needs to solve **selection friction**
 
 So the recommendation is now much sharper:
 
@@ -27946,7 +27946,7 @@ undefined
 - adding confidence-based auto-load rules
 - exposing search/load/evict decisions in the dashboard inspector
 
-That would turn the blueprint into working Borg behavior.
+That would turn the blueprint into working Hypercode behavior.
 
 ### Request
 
@@ -28479,7 +28479,7 @@ I think aligning the changes effectively is key here. It seems we might need to 
 
 **Planning tool implementation**
 
-I'm looking to implement several procedures in mcpRouter, including getting loaded tools and managing progressive loading and unloading of tools. Using server.executeTool seems clean for parsing JSON content, and I should ensure to integrate this into the apps and web pages. I think I might need to create a type helper for parsing text content, and I should consider patching a few key files. I need to check if the `@borg/ui` Badge is exported for import. Let's move forward with this!
+I'm looking to implement several procedures in mcpRouter, including getting loaded tools and managing progressive loading and unloading of tools. Using server.executeTool seems clean for parsing JSON content, and I should ensure to integrate this into the apps and web pages. I think I might need to create a type helper for parsing text content, and I should consider patching a few key files. I need to check if the `@hypercode/ui` Badge is exported for import. Let's move forward with this!
 
 
 

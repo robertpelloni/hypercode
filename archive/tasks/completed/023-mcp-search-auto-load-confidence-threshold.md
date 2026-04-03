@@ -1,12 +1,12 @@
 # Task: MCP Search Auto-Load Confidence Threshold
 
-**Track:** B — Borg-native MCP router maturity  
+**Track:** B — Hypercode-native MCP router maturity  
 **Priority:** P1 implementation slice  
 **Status:** Completed (2026-03-14)
 
 ## Context
 
-Auto-load decisions in cached ranking already exposed confidence telemetry, but operators could not control the minimum confidence required before Borg auto-loaded the top candidate. This made tuning difficult for different workflows and risk tolerance levels.
+Auto-load decisions in cached ranking already exposed confidence telemetry, but operators could not control the minimum confidence required before Hypercode auto-loaded the top candidate. This made tuning difficult for different workflows and risk tolerance levels.
 
 ## Changes Implemented
 
@@ -40,4 +40,4 @@ Auto-load decisions in cached ranking already exposed confidence telemetry, but 
 
 ## Outcome
 
-Borg’s MCP search auto-load behavior is now tunable by operators. Teams can keep aggressive auto-loading for high-speed workflows or raise the confidence bar to reduce accidental tool loads in ambiguous searches, while retaining existing telemetry explainability.
+Hypercode’s MCP search auto-load behavior is now tunable by operators. Teams can keep aggressive auto-loading for high-speed workflows or raise the confidence bar to reduce accidental tool loads in ambiguous searches, while retaining existing telemetry explainability.

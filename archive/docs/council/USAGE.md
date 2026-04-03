@@ -99,9 +99,9 @@ jobs:
       
       - name: Council Review
         run: |
-          RESPONSE=$(curl -s -X POST ${{ secrets.BORG_URL }}/api/council/debate \
+          RESPONSE=$(curl -s -X POST ${{ secrets.HYPERCODE_URL }}/api/council/debate \
             -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.BORG_TOKEN }}" \
+            -H "Authorization: Bearer ${{ secrets.HYPERCODE_TOKEN }}" \
             -d '{
               "task": {
                 "id": "pr-${{ github.event.pull_request.number }}",

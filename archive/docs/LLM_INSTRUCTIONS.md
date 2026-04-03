@@ -1,14 +1,14 @@
-# Borg Neural OS: Universal Agent Instructions
+# Hypercode Neural OS: Universal Agent Instructions
 
 > **One Brain, Infinite Tools.**
 
-This file serves as the **Single Source of Truth** for all AI agents (Claude, Gemini, GPT, etc.) working on the Borg project.
+This file serves as the **Single Source of Truth** for all AI agents (Claude, Gemini, GPT, etc.) working on the Hypercode project.
 
 ## 1. Core Philosophy: The Neural Operating System
 We are not building a chatbot; we are building a **Recursive Self-Improvement Engine**. 
-- **Borg** is a Master MCP Server that aggregates all other tools (Git, VS Code, Browser).
+- **Hypercode** is a Master MCP Server that aggregates all other tools (Git, VS Code, Browser).
 - **Goal**: To create an AI that can maintain, improve, and deploy itself without human intervention.
-- **Vision**: See [VISION.md](file:///c:/Users/hyper/workspace/borg/VISION.md) for the ultimate design.
+- **Vision**: See [VISION.md](file:///c:/Users/hyper/workspace/hypercode/VISION.md) for the ultimate design.
 
 ## 2. Global Directives (MUST FOLLOW)
 
@@ -32,7 +32,7 @@ We are not building a chatbot; we are building a **Recursive Self-Improvement En
 - **Submodules**: All external dependencies or referenced projects must be documented in `SUBMODULES.md`.
 - **Input Logging**: If the user gives a complex instruction, summarize it in `AGENTS.md` (or this file) to persist the "Goal Direction".
 
-## 3. Workflow: The Borg Cycle
+## 3. Workflow: The Hypercode Cycle
 1.  **Analyze**: Read `task.md` and `ROADMAP_V2.md`.
 2.  **Plan**: Create/Update `implementation_plan.md`.
 3.  **Implement**: Write code (TDD preferred).

@@ -14,7 +14,7 @@ import {
     type BackgroundCoreBootstrapResult,
 } from './backgroundCoreBootstrap.js';
 import { getBridgeHealthUrl, getBridgeToolExecuteUrl } from './bridge/bridgePort.js';
-import { type BorgMcpJsonConfig, loadBorgMcpConfig, loadToolCache, type BorgMcpToolMetadata } from './mcp/mcpJsonConfig.js';
+import { type HypercodeMcpJsonConfig, loadHypercodeMcpConfig, loadToolCache, type HypercodeMcpToolMetadata } from './mcp/mcpJsonConfig.js';
 import { namespaceToolName } from './mcp/namespaces.js';
 
 const CORE_HEALTH_URL = getBridgeHealthUrl();
@@ -22,7 +22,7 @@ const CORE_TOOL_EXECUTE_URL = getBridgeToolExecuteUrl();
 const DEFAULT_TOOL_CALL_READY_TIMEOUT_MS = 1_500;
 const DEFAULT_TOOL_CALL_POLL_INTERVAL_MS = 250;
 
-export const BORG_CORE_LOADER_STATUS_TOOL = 'borg_core_loader_status';
+export const HYPERCODE_CORE_LOADER_STATUS_TOOL = 'hypercode_core_loader_status';
 
 export type LoaderBootstrapState = {
     lastBootstrapStatus: BackgroundCoreBootstrapResult['status'] | 'idle';
@@ -97,7 +97,7 @@ function normalizeInputSchema(inputSchema: unknown): LoaderToolInputSchema {
     return { type: 'object', properties: {} };
 }
 
-function toToolDefinition(serverName: string, tool: BorgMcpToolMetadata): Tool {
+function toToolDefinition(serverName: string, tool: HypercodeMcpToolMetadata): Tool {
     return {
         name: namespaceToolName(serverName, tool.name),
         description: tool.description ?? `Cached tool discovered for downstream server '${serverName}'.`,
@@ -107,7 +107,7 @@ function toToolDefinition(serverName: string, tool: BorgMcpToolMetadata): Tool {
 
 export function buildLoaderStatusToolDefinition(): Tool {
     return {
-        name: BORG_CORE_LOADER_STATUS_TOOL,
+        name: HYPERCODE_CORE_LOADER_STATUS_TOOL,
         description: 'Report whether the lightweight stdio loader is serving cached tools or proxying to a live HyperCode Core control plane.',
         inputSchema: { type: 'object', properties: {} },
     } as Tool;
@@ -131,7 +131,7 @@ export function createEmptyLoaderRuntimeState(): LoaderRuntimeState {
     };
 }
 
-export function buildCachedLoaderCatalog(config: BorgMcpJsonConfig): CachedLoaderCatalog {
+export function buildCachedLoaderCatalog(config: HypercodeMcpJsonConfig): CachedLoaderCatalog {
     const toolMap = new Map<string, Tool>();
     let snapshotUpdatedAt: string | null = null;
     let enabledServerCount = 0;
@@ -179,13 +179,13 @@ export function buildCachedLoaderCatalog(config: BorgMcpJsonConfig): CachedLoade
 }
 
 export async function loadCachedLoaderCatalog(
-    loadConfigImpl: typeof loadBorgMcpConfig = loadBorgMcpConfig,
+    loadConfigImpl: typeof loadHypercodeMcpConfig = loadHypercodeMcpConfig,
 ): Promise<CachedLoaderCatalog> {
     const cache = await loadToolCache();
     if (cache) {
         return buildCachedLoaderCatalog(cache);
     }
-    const config = await loadConfigImpl().catch(() => ({ mcpServers: {} } satisfies BorgMcpJsonConfig));
+    const config = await loadConfigImpl().catch(() => ({ mcpServers: {} } satisfies HypercodeMcpJsonConfig));
     return buildCachedLoaderCatalog(config);
 }
 
@@ -290,7 +290,7 @@ export async function callLoaderTool(
     const proxyToolCallImpl = deps.proxyToolCall ?? proxyToolCallToCore;
 
     const coreHealthy = await isCoreHealthyImpl(CORE_HEALTH_URL);
-    if (name === BORG_CORE_LOADER_STATUS_TOOL) {
+    if (name === HYPERCODE_CORE_LOADER_STATUS_TOOL) {
         return buildLoaderStatusResult(state, coreHealthy);
     }
 

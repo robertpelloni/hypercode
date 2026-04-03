@@ -62,8 +62,8 @@
       Adding zerotrie v0.2.3
       Adding zerovec v0.11.5
       Adding zerovec-derive v0.11.2
-   1.737124900s  INFO prepare_target{force=false package_id=HyperCode-zed-extension v0.1.0 (C:\Users\hyper\workspace\HyperCode\packages\zed-extension) target="Borg_zed_extension"}: cargo::core::compiler::fingerprint: fingerprint error for HyperCode-zed-extension v0.1.0 (C:\Users\hyper\workspace\HyperCode\packages\zed-extension)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("Borg_zed_extension", ["cdylib"], "C:\\Users\\hyper\\workspace\\HyperCode\\packages\\zed-extension\\src\\lib.rs", Edition2021) }
-   1.737264700s  INFO prepare_target{force=false package_id=HyperCode-zed-extension v0.1.0 (C:\Users\hyper\workspace\HyperCode\packages\zed-extension) target="Borg_zed_extension"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\hyper\workspace\HyperCode\packages\zed-extension\target\debug\.fingerprint\HyperCode-zed-extension-02e1725051b4a33b\lib-Borg_zed_extension`
+   1.737124900s  INFO prepare_target{force=false package_id=HyperCode-zed-extension v0.1.0 (C:\Users\hyper\workspace\HyperCode\packages\zed-extension) target="Hypercode_zed_extension"}: cargo::core::compiler::fingerprint: fingerprint error for HyperCode-zed-extension v0.1.0 (C:\Users\hyper\workspace\HyperCode\packages\zed-extension)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("Hypercode_zed_extension", ["cdylib"], "C:\\Users\\hyper\\workspace\\HyperCode\\packages\\zed-extension\\src\\lib.rs", Edition2021) }
+   1.737264700s  INFO prepare_target{force=false package_id=HyperCode-zed-extension v0.1.0 (C:\Users\hyper\workspace\HyperCode\packages\zed-extension) target="Hypercode_zed_extension"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\hyper\workspace\HyperCode\packages\zed-extension\target\debug\.fingerprint\HyperCode-zed-extension-02e1725051b4a33b\lib-Hypercode_zed_extension`
 
 Caused by:
     The system cannot find the file specified. (os error 2)
@@ -1582,8 +1582,8 @@ Stack backtrace:
   20: git_midx_writer_dump
   21: BaseThreadInitThunk
   22: RtlUserThreadStart
-   2.017381500s  INFO prepare_target{force=false package_id=HyperCode-zed-extension v0.1.0 (C:\Users\hyper\workspace\HyperCode\packages\zed-extension) target="Borg_zed_extension"}: cargo::core::compiler::fingerprint: fingerprint error for HyperCode-zed-extension v0.1.0 (C:\Users\hyper\workspace\HyperCode\packages\zed-extension)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("Borg_zed_extension", ["cdylib"], "C:\\Users\\hyper\\workspace\\HyperCode\\packages\\zed-extension\\src\\lib.rs", Edition2021) }
-   2.017461800s  INFO prepare_target{force=false package_id=HyperCode-zed-extension v0.1.0 (C:\Users\hyper\workspace\HyperCode\packages\zed-extension) target="Borg_zed_extension"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\hyper\workspace\HyperCode\packages\zed-extension\target\debug\.fingerprint\HyperCode-zed-extension-9429d91348222cbf\test-lib-Borg_zed_extension`
+   2.017381500s  INFO prepare_target{force=false package_id=HyperCode-zed-extension v0.1.0 (C:\Users\hyper\workspace\HyperCode\packages\zed-extension) target="Hypercode_zed_extension"}: cargo::core::compiler::fingerprint: fingerprint error for HyperCode-zed-extension v0.1.0 (C:\Users\hyper\workspace\HyperCode\packages\zed-extension)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("Hypercode_zed_extension", ["cdylib"], "C:\\Users\\hyper\\workspace\\HyperCode\\packages\\zed-extension\\src\\lib.rs", Edition2021) }
+   2.017461800s  INFO prepare_target{force=false package_id=HyperCode-zed-extension v0.1.0 (C:\Users\hyper\workspace\HyperCode\packages\zed-extension) target="Hypercode_zed_extension"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\hyper\workspace\HyperCode\packages\zed-extension\target\debug\.fingerprint\HyperCode-zed-extension-9429d91348222cbf\test-lib-Hypercode_zed_extension`
 
 Caused by:
     The system cannot find the file specified. (os error 2)

@@ -1,11 +1,11 @@
 # Implementation Priority Matrix
 
-> **Purpose**: Map researched features to Borg implementation status and prioritize development
+> **Purpose**: Map researched features to Hypercode implementation status and prioritize development
 > **Based on**: 25+ tools researched in Phase 50
 > **Created**: 2026-02-02
 
 ## Legend
-- ✅ **Implemented** - Feature exists in Borg
+- ✅ **Implemented** - Feature exists in Hypercode
 - 🔄 **Partial** - Basic implementation, needs enhancement
 - ❌ **Missing** - Feature does not exist
 - 🎯 **Priority** - P1 (Critical), P2 (High), P3 (Medium), P4 (Low)

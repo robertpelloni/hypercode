@@ -1,6 +1,6 @@
 
 // Background Service Worker
-// Proxies requests from Content Script (Web Page) to Local Borg Core
+// Proxies requests from Content Script (Web Page) to Local Hypercode Core
 
 // Default URLs — overridable via extension options/storage
 let CORE_URL = 'http://localhost:3001';
@@ -24,13 +24,13 @@ const BROWSER_BRIDGE_HOOK_PHASES = [
     'chat.submit',
 ];
 
-function applyStoredUrls(result: { borgCoreUrl?: string; borgWsUrl?: string }) {
-    if (result.borgCoreUrl) CORE_URL = result.borgCoreUrl;
-    if (result.borgWsUrl) WS_URL = result.borgWsUrl;
+function applyStoredUrls(result: { hypercodeCoreUrl?: string; hypercodeWsUrl?: string }) {
+    if (result.hypercodeCoreUrl) CORE_URL = result.hypercodeCoreUrl;
+    if (result.hypercodeWsUrl) WS_URL = result.hypercodeWsUrl;
 }
 
 // Load configured URLs from chrome.storage (set via options page or popup)
-chrome.storage.sync.get(['borgCoreUrl', 'borgWsUrl'], (result) => {
+chrome.storage.sync.get(['hypercodeCoreUrl', 'hypercodeWsUrl'], (result) => {
     applyStoredUrls(result);
     // Reconnect WebSocket with potentially new URL
     if (ws) { ws.close(); } else { connectWebSocket(); }
@@ -40,17 +40,17 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'sync') return;
 
     let changed = false;
-    if (changes.borgCoreUrl?.newValue) {
-        CORE_URL = changes.borgCoreUrl.newValue;
+    if (changes.hypercodeCoreUrl?.newValue) {
+        CORE_URL = changes.hypercodeCoreUrl.newValue;
         changed = true;
     }
-    if (changes.borgWsUrl?.newValue) {
-        WS_URL = changes.borgWsUrl.newValue;
+    if (changes.hypercodeWsUrl?.newValue) {
+        WS_URL = changes.hypercodeWsUrl.newValue;
         changed = true;
     }
 
     if (changed) {
-        console.log('[Borg Ext] Updated endpoint configuration from storage');
+        console.log('[Hypercode Ext] Updated endpoint configuration from storage');
         if (ws) {
             ws.close();
         } else {
@@ -227,11 +227,11 @@ function connectWebSocket() {
     ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
-        console.log('[Borg Ext] WS Connected');
+        console.log('[Hypercode Ext] WS Connected');
         ws?.send(JSON.stringify({
-            type: 'BORG_CLIENT_HELLO',
+            type: 'HYPERCODE_CLIENT_HELLO',
             clientType: 'browser-extension',
-            clientName: 'Borg Browser Bridge',
+            clientName: 'Hypercode Browser Bridge',
             version: chrome.runtime.getManifest().version,
             platform: 'browser-extension',
             capabilities: BROWSER_BRIDGE_CAPABILITIES,
@@ -242,8 +242,8 @@ function connectWebSocket() {
     ws.onmessage = (event) => {
         try {
             const data = JSON.parse(event.data);
-            if (data.type === 'BORG_CORE_MANIFEST') {
-                console.log('[Borg Ext] Core manifest received:', data.manifest);
+            if (data.type === 'HYPERCODE_CORE_MANIFEST') {
+                console.log('[Hypercode Ext] Core manifest received:', data.manifest);
             }
             else if (data.type === 'PASTE_INTO_CHAT') {
                 // Determine active tab
@@ -341,7 +341,7 @@ function connectWebSocket() {
                 }
 
                 if (data.active) {
-                    console.log('[Borg Ext] Enabling Tab Mirroring');
+                    console.log('[Hypercode Ext] Enabling Tab Mirroring');
                     mirrorIntervalId = setInterval(() => {
                         chrome.tabs.captureVisibleTab(null as any, { format: 'jpeg', quality: 50 }, (dataUrl) => {
                             if (ws && ws.readyState === WebSocket.OPEN && dataUrl) {
@@ -353,7 +353,7 @@ function connectWebSocket() {
                         });
                     }, data.interval || 5000);
                 } else {
-                    console.log('[Borg Ext] Disabling Tab Mirroring');
+                    console.log('[Hypercode Ext] Disabling Tab Mirroring');
                 }
             }
             // Active Debugger Proxy (Phase 16)
@@ -417,7 +417,7 @@ function connectWebSocket() {
     };
 
     ws.onclose = () => {
-        console.log('[Borg Ext] WS Closed. Reconnecting in 5s...');
+        console.log('[Hypercode Ext] WS Closed. Reconnecting in 5s...');
         if (mirrorIntervalId) {
             clearInterval(mirrorIntervalId);
             mirrorIntervalId = null;
@@ -427,7 +427,7 @@ function connectWebSocket() {
     };
 
     ws.onerror = (err) => {
-        console.error('[Borg Ext] WS Error:', err);
+        console.error('[Hypercode Ext] WS Error:', err);
         ws?.close();
     };
 }

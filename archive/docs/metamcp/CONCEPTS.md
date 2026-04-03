@@ -1,6 +1,6 @@
 # MetaMCP Core Concepts
 
-This document explains the fundamental concepts of MetaMCP as integrated into Borg.
+This document explains the fundamental concepts of MetaMCP as integrated into Hypercode.
 
 ## Table of Contents
 
@@ -16,7 +16,7 @@ This document explains the fundamental concepts of MetaMCP as integrated into Bo
 
 ## MCP Servers
 
-MCP (Model Context Protocol) Servers are external processes that expose tools, resources, and prompts to LLM clients. Borg aggregates multiple MCP servers into a unified interface.
+MCP (Model Context Protocol) Servers are external processes that expose tools, resources, and prompts to LLM clients. Hypercode aggregates multiple MCP servers into a unified interface.
 
 ### Server Types
 
@@ -76,7 +76,7 @@ Every installation has a `default` namespace. Servers without an explicit namesp
 ### Creating Namespaces
 
 ```typescript
-import { DatabaseManager } from '@borg/core';
+import { DatabaseManager } from '@hypercode/core';
 
 const db = DatabaseManager.getInstance();
 
@@ -90,7 +90,7 @@ db.createNamespace({
 ### Namespace Hierarchy
 
 ```
-Borg Instance
+Hypercode Instance
 ├── Namespace: default
 │   ├── Server: filesystem
 │   ├── Server: git
@@ -142,7 +142,7 @@ Each endpoint exposes three URLs:
 ```json
 {
   "mcpServers": {
-    "borg": {
+    "hypercode": {
       "url": "http://localhost:3000/metamcp/default/sse",
       "headers": {
         "X-API-Key": "your-api-key"
@@ -197,7 +197,7 @@ interface ToolSet {
 
 ## Progressive Tool Disclosure
 
-Progressive Tool Disclosure is Borg's strategy for managing large tool inventories without overwhelming the LLM.
+Progressive Tool Disclosure is Hypercode's strategy for managing large tool inventories without overwhelming the LLM.
 
 ### The Problem
 

@@ -1,6 +1,6 @@
 # Submodule Dashboard
 
-This document tracks the status, location, and purpose of all submodules in the borg ecosystem.
+This document tracks the status, location, and purpose of all submodules in the hypercode ecosystem.
 
 | Submodule | Path | Version | Description |
 | :--- | :--- | :--- | :--- |
@@ -934,7 +934,7 @@ This document tracks the status, location, and purpose of all submodules in the 
 ## Directory Structure
 
 ```
-borg/
+hypercode/
 ├── packages/           # Monorepo packages
 ├── submodules/         # Core integrated submodules (Active)
 ├── references/         # Reference implementations (Passive)

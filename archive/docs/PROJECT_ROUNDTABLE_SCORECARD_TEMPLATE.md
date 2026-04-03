@@ -1,8 +1,8 @@
-# Borg Frontier-Model Scorecard Template
+# Hypercode Frontier-Model Scorecard Template
 
 _Last updated: 2026-03-13_
 
-Use this template to compare multiple model responses to the Borg roundtable prompt.
+Use this template to compare multiple model responses to the Hypercode roundtable prompt.
 
 Recommended inputs per model:
 - `docs/PROJECT_ROUNDTABLE_BRIEF.md`
@@ -56,13 +56,13 @@ Copy this section once per model.
 - 
 
 #### 4. Kernel judgment
-Did the model correctly identify Borg’s kernel?
+Did the model correctly identify Hypercode’s kernel?
 
 - Score (1-10):
 - Notes:
 
 #### 5. 1.0 realism
-Did the model define a believable Borg 1.0 instead of a fantasy omnibus?
+Did the model define a believable Hypercode 1.0 instead of a fantasy omnibus?
 
 - Score (1-10):
 - Notes:
@@ -173,7 +173,7 @@ Use this if you want a more explicit scoring system.
 
 | Criterion | Weight | Question |
 |---|---:|---|
-| Kernel clarity | 20% | Did the model correctly define what Borg fundamentally is? |
+| Kernel clarity | 20% | Did the model correctly define what Hypercode fundamentally is? |
 | 1.0 realism | 20% | Did it produce a believable near-term ship target? |
 | Architectural coherence | 15% | Did it preserve a control-plane architecture rather than sprawl? |
 | Sequencing quality | 15% | Did it recommend the right order of work? |
@@ -206,7 +206,7 @@ Example weights in decimal form:
 After reviewing all responses, answer:
 
 1. Which model produced the best recommendation overall?
-2. Which model best understood Borg’s actual identity?
+2. Which model best understood Hypercode’s actual identity?
 3. Which model was most dangerous because it encouraged scope inflation?
 4. What should be adopted immediately?
 5. What should be explicitly rejected for now?

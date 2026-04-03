@@ -1,7 +1,7 @@
 # Task 006: Submodule Index Cleanup
 
 ## Context
-Borg's live submodule registry had already been reduced to 5 approved entries in `.gitmodules`, but the Git index still contained 849 gitlinks. That mismatch left 844 orphaned gitlinks breaking `git submodule status`, confusing inventory tooling, and keeping legacy submodule sprawl alive in repository state.
+Hypercode's live submodule registry had already been reduced to 5 approved entries in `.gitmodules`, but the Git index still contained 849 gitlinks. That mismatch left 844 orphaned gitlinks breaking `git submodule status`, confusing inventory tooling, and keeping legacy submodule sprawl alive in repository state.
 
 ## Scope
 - Files: `scripts/prune_orphaned_gitlinks.mjs`, `package.json`, `docs/SUBMODULE_DASHBOARD.md`, `CHANGELOG.md`

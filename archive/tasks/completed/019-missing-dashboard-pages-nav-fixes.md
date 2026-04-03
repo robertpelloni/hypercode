@@ -6,11 +6,11 @@
 
 ## Context
 
-Several nav items in the Borg sidebar pointed to routes that returned 404 because no page files existed:
+Several nav items in the Hypercode sidebar pointed to routes that returned 404 because no page files existed:
 - `/dashboard/command` – backed by `commands` tRPC namespace
 - `/dashboard/chronicle` – backed by `git` tRPC namespace
 - `/dashboard/library` – Resource hub with no backend router needed
-- `/dashboard/context` – backed by `borgContext` tRPC namespace (new nav item added)
+- `/dashboard/context` – backed by `hypercodeContext` tRPC namespace (new nav item added)
 
 Additionally, `/dashboard/session` was not linked from `CORE_DASHBOARD_NAV` even though it is a P0 operator surface.
 
@@ -30,8 +30,8 @@ Additionally, `/dashboard/session` was not linked from `CORE_DASHBOARD_NAV` even
 ## Acceptance Criteria
 
 - [x] No 404s for nav items pointing to `command`, `chronicle`, `library`
-- [x] Context Manager page provides real add/remove/clear/prompt operations via `borgContext` tRPC
+- [x] Context Manager page provides real add/remove/clear/prompt operations via `hypercodeContext` tRPC
 - [x] Chronicle shows real git log and working-tree status via `git` tRPC
 - [x] Command REPL shows available slash commands and executes them via `commands` tRPC
-- [x] Sessions is reachable from the `Borg 1.0 Core` sidebar section
+- [x] Sessions is reachable from the `Hypercode 1.0 Core` sidebar section
 - [x] TypeScript clean

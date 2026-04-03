@@ -1,4 +1,4 @@
-# Borg Deployment Guide
+# Hypercode Deployment Guide
 
 > **Current release track:** `2.7.324`
 > **Scope:** local development and self-hosted deployment
@@ -36,17 +36,17 @@ After startup, expected dashboard endpoint is typically `http://localhost:3001` 
 
 1. `pnpm install`
 2. `pnpm run build`
-3. Start Borg through the CLI/runtime entrypoint used by your environment.
+3. Start Hypercode through the CLI/runtime entrypoint used by your environment.
 
 ## MCP client integration (example)
 
-Borg can be configured as an MCP server in clients like Claude Desktop or Cursor using the CLI MCP entrypoint (`packages/cli`).
+Hypercode can be configured as an MCP server in clients like Claude Desktop or Cursor using the CLI MCP entrypoint (`packages/cli`).
 
 ## Troubleshooting highlights
 
 - If Docker on Windows reports named pipe errors, start Docker Desktop fully before compose.
 - If dashboard is not on `3000` during local dev, use `verify_dev_readiness.mjs` to discover the active URL.
-- If core port `3001` is occupied, stop stale Borg processes before restarting.
+- If core port `3001` is occupied, stop stale Hypercode processes before restarting.
 
 ## Documentation discipline
 

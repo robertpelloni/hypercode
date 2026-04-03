@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "borg Bridge",
+    "name": "hypercode Bridge",
     "version": "0.1.0",
-    "description": "Connects web-based AI agents to your local borg Core.",
+    "description": "Connects web-based AI agents to your local hypercode Core.",
     "permissions": [
         "activeTab",
         "scripting",

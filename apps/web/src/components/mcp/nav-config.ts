@@ -207,7 +207,7 @@ export const MCP_TESTING_NAV: NavItem[] = [
     },
 ];
 
-export const BORG_MCP_NAV: NavItem[] = [
+export const HYPERCODE_MCP_NAV: NavItem[] = [
     ...MCP_CONTROL_PLANE_NAV,
     ...MCP_TESTING_NAV,
 ];

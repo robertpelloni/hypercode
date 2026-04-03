@@ -13,8 +13,8 @@
 **Implication**: This is intended behavior to keep LLM context clean. Models are expected to use `search_tools` and `load_tool` to dynamically fetch what they need.
 
 ### 3. Config Directory Resolution
-**Observation**: `getBorgConfigDir()` historically hardcoded `os.homedir() + '/.hypercode'`. 
-**Resolution**: It now dynamically respects `process.env.BORG_CONFIG_DIR`, and falls back to checking `process.cwd()/mcp.jsonc` before defaulting to the user's home directory. This allows local repository configurations to be authoritative during development.
+**Observation**: `getHypercodeConfigDir()` historically hardcoded `os.homedir() + '/.hypercode'`. 
+**Resolution**: It now dynamically respects `process.env.HYPERCODE_CONFIG_DIR`, and falls back to checking `process.cwd()/mcp.jsonc` before defaulting to the user's home directory. This allows local repository configurations to be authoritative during development.
 
 ### 4. Binary Extraction Strategy
 **Observation**: The project has aggressive plans to split into distinct daemons (`hypercoded`, `hypermcpd`, etc.).

@@ -6,7 +6,7 @@ describe('extractToolCallCandidates', () => {
         const text = `
 <function_calls>
   <invoke name="browser.search">
-    <parameter name="query">borg</parameter>
+    <parameter name="query">hypercode</parameter>
   </invoke>
 </function_calls>`;
 
@@ -95,7 +95,7 @@ describe('extractToolCallCandidates', () => {
             'Assistant stream:',
             '```tool_call',
             'tool_name: browser.search',
-            'query: borg streaming',
+            'query: hypercode streaming',
             '',
             'Still streaming...',
             '```result',
@@ -109,7 +109,7 @@ describe('extractToolCallCandidates', () => {
             expect.objectContaining({
                 name: 'browser.search',
                 source: 'markdown',
-                parameters: [expect.objectContaining({ name: 'query', value: 'borg streaming' })],
+                parameters: [expect.objectContaining({ name: 'query', value: 'hypercode streaming' })],
             }),
         ]));
 
@@ -126,7 +126,7 @@ describe('extractToolCallCandidates', () => {
     it('detects unfenced plain-text tool calls and results', () => {
         const text = [
             'tool_name: browser.search',
-            'query: borg bridge',
+            'query: hypercode bridge',
             '',
             'tool_name: browser.search',
             'status: success',
@@ -138,7 +138,7 @@ describe('extractToolCallCandidates', () => {
             expect.objectContaining({
                 name: 'browser.search',
                 source: 'text',
-                parameters: [expect.objectContaining({ name: 'query', value: 'borg bridge' })],
+                parameters: [expect.objectContaining({ name: 'query', value: 'hypercode bridge' })],
             }),
         ]));
 
@@ -162,13 +162,13 @@ describe('buildChatSurfaceSnapshot', () => {
             url: 'https://chatgpt.com',
             title: 'ChatGPT',
             messages: [
-                { text: 'User: please search for borg status', role: 'user' },
-                { text: '<invoke name="browser.search"><parameter name="query">borg</parameter></invoke>', role: 'assistant', isStreaming: true },
+                { text: 'User: please search for hypercode status', role: 'user' },
+                { text: '<invoke name="browser.search"><parameter name="query">hypercode</parameter></invoke>', role: 'assistant', isStreaming: true },
                 { text: 'Assistant: here are the results', role: 'assistant' },
             ],
             messageTexts: [
-                'User: please search for borg status',
-                '<invoke name="browser.search"><parameter name="query">borg</parameter></invoke>',
+                'User: please search for hypercode status',
+                '<invoke name="browser.search"><parameter name="query">hypercode</parameter></invoke>',
                 'Assistant: here are the results',
             ],
         });
@@ -261,7 +261,7 @@ describe('buildChatSurfaceSnapshot', () => {
             url: 'https://chatgpt.com',
             title: 'ChatGPT',
             messageTexts: [
-                'Assistant: ```tool_call\ntool_name: browser.search\nquery: borg router\n```',
+                'Assistant: ```tool_call\ntool_name: browser.search\nquery: hypercode router\n```',
                 'Assistant: ```result\ntool_name: browser.search\nstatus: success\nmessage: 3 matching docs\ncount: 3\n```',
             ],
         });
@@ -275,7 +275,7 @@ describe('buildChatSurfaceSnapshot', () => {
                 resultSource: 'markdown',
                 status: 'success',
                 summary: '3 matching docs',
-                parameters: [expect.objectContaining({ name: 'query', value: 'borg router' })],
+                parameters: [expect.objectContaining({ name: 'query', value: 'hypercode router' })],
                 fields: expect.arrayContaining([expect.objectContaining({ name: 'count', value: '3' })]),
             }),
         ]);
@@ -319,7 +319,7 @@ describe('buildChatSurfaceSnapshot', () => {
             url: 'https://gemini.google.com',
             title: 'Gemini',
             messageTexts: [
-                'tool_name: browser.search\nquery: borg dashboard',
+                'tool_name: browser.search\nquery: hypercode dashboard',
                 'tool_name: browser.search\nstatus: success\nmessage: 2 relevant routes\ncount: 2',
             ],
         });
@@ -333,7 +333,7 @@ describe('buildChatSurfaceSnapshot', () => {
                 resultSource: 'text',
                 status: 'success',
                 summary: '2 relevant routes',
-                parameters: [expect.objectContaining({ name: 'query', value: 'borg dashboard' })],
+                parameters: [expect.objectContaining({ name: 'query', value: 'hypercode dashboard' })],
                 fields: expect.arrayContaining([expect.objectContaining({ name: 'count', value: '2' })]),
             }),
         ]);
@@ -346,7 +346,7 @@ describe('buildChatSurfaceSnapshot', () => {
             url: 'https://chatgpt.com',
             title: 'ChatGPT',
             messageTexts: [
-                '```tool_call\ntool_name: browser.search\nquery: borg observer',
+                '```tool_call\ntool_name: browser.search\nquery: hypercode observer',
                 '```result\ntool_name: browser.search\nstatus: success\nmessage: stream chunk visible\ncount: 1',
             ],
         });
@@ -360,7 +360,7 @@ describe('buildChatSurfaceSnapshot', () => {
                 resultSource: 'markdown',
                 status: 'success',
                 summary: 'stream chunk visible',
-                parameters: [expect.objectContaining({ name: 'query', value: 'borg observer' })],
+                parameters: [expect.objectContaining({ name: 'query', value: 'hypercode observer' })],
             }),
         ]);
     });
@@ -372,7 +372,7 @@ describe('buildChatSurfaceSnapshot', () => {
             url: 'https://chatgpt.com',
             title: 'ChatGPT',
             messages: [
-                { text: '```tool_call\ntool_name: browser.search\nquery: borg live stream\n```', role: 'assistant', isStreaming: true },
+                { text: '```tool_call\ntool_name: browser.search\nquery: hypercode live stream\n```', role: 'assistant', isStreaming: true },
                 { text: '```result\ntool_name: browser.search\nstatus: success\nmessage: still rendering\ncount: 1', role: 'assistant', isStreaming: true },
             ],
             messageTexts: [],

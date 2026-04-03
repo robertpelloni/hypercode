@@ -1,7 +1,7 @@
 # Session Handoff - December 27, 2025
 
 ## 1. Executive Summary
-This session focused on enhancing the Core Infrastructure of borg by implementing **Context Visualization** features and integrating key submodules (`quotio`, `CLIProxyAPI`). We successfully ported shell management logic from Swift to TypeScript, enabling the system to safely modify user shell profiles for CLI installation. We also implemented a `ContextAnalyzer` to provide granular attribution and breakdown of LLM context usage.
+This session focused on enhancing the Core Infrastructure of hypercode by implementing **Context Visualization** features and integrating key submodules (`quotio`, `CLIProxyAPI`). We successfully ported shell management logic from Swift to TypeScript, enabling the system to safely modify user shell profiles for CLI installation. We also implemented a `ContextAnalyzer` to provide granular attribution and breakdown of LLM context usage.
 
 ## 2. Key Achievements
 
@@ -51,9 +51,9 @@ The analyzer uses heuristics to segment the context:
 ### Shell Manager Logic
 The manager uses a marker-based approach to ensure idempotency:
 ```bash
-# borg_START
+# hypercode_START
 export PATH=...
-# borg_END
+# hypercode_END
 ```
 This allows the system to find and update/remove its own configurations without touching the user's other settings.
 

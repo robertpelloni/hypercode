@@ -8,4 +8,4 @@
 
 ## Why this file is archived
 
-This file references an early-era `0.2.3-alpha` "Super AI" context and no longer represents the current Borg architecture/version state.
+This file references an early-era `0.2.3-alpha` "Super AI" context and no longer represents the current Hypercode architecture/version state.

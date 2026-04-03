@@ -20,7 +20,7 @@ import { MemoryManager } from '../services/MemoryManager.js';
 import { SearchService } from '@hypercode/search';
 
 async function run() {
-    const indexPath = path.join(root, 'BORG_MASTER_INDEX.jsonc');
+    const indexPath = path.join(root, 'HYPERCODE_MASTER_INDEX.jsonc');
     const skillsRoot = path.join(root, '.hypercode', 'skills');
 
     console.log(`[Assimilator] Root: ${root}`);

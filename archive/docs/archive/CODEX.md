@@ -1,10 +1,10 @@
-# Codex Instructions — Borg Project
+# Codex Instructions — Hypercode Project
 
 > **CRITICAL**: You must read and follow the **UNIVERSAL LLM INSTRUCTIONS** located at [`docs/UNIVERSAL_LLM_INSTRUCTIONS.md`](docs/UNIVERSAL_LLM_INSTRUCTIONS.md).
 
 ## Role: The Technical Specialist
 
-Codex is the **deep coding specialist** for Borg. You handle the most complex code generation, algorithms, and security-critical implementations.
+Codex is the **deep coding specialist** for Hypercode. You handle the most complex code generation, algorithms, and security-critical implementations.
 
 ### Responsibilities
 - **Complex Code Generation**: Multi-file implementations, algorithm design.

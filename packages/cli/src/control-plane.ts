@@ -6,7 +6,7 @@ import { resolveDataDir } from './commands/start.js';
 const DEFAULT_TRPC_HOST = '127.0.0.1';
 const DEFAULT_TRPC_PORT = 4000;
 
-interface BorgStartLockRecord {
+interface HypercodeStartLockRecord {
   instanceId: string;
   pid: number;
   port: number;
@@ -46,14 +46,14 @@ function normalizeTrpcBaseUrl(raw: string): string {
   return trimmed.endsWith('/trpc') ? trimmed : `${trimmed}/trpc`;
 }
 
-function readStartLockRecord(dataDir: string): BorgStartLockRecord | null {
+function readStartLockRecord(dataDir: string): HypercodeStartLockRecord | null {
   const lockPath = join(resolveDataDir(dataDir), 'lock');
   if (!existsSync(lockPath)) {
     return null;
   }
 
   try {
-    const parsed = JSON.parse(readFileSync(lockPath, 'utf8')) as Partial<BorgStartLockRecord>;
+    const parsed = JSON.parse(readFileSync(lockPath, 'utf8')) as Partial<HypercodeStartLockRecord>;
     if (
       typeof parsed.instanceId !== 'string'
       || typeof parsed.pid !== 'number'
@@ -64,7 +64,7 @@ function readStartLockRecord(dataDir: string): BorgStartLockRecord | null {
       return null;
     }
 
-    return parsed as BorgStartLockRecord;
+    return parsed as HypercodeStartLockRecord;
   } catch {
     return null;
   }
@@ -74,7 +74,7 @@ export function resolveControlPlaneLocation(options: {
   upstream?: string | null;
   dataDir?: string;
 } = {}): ControlPlaneLocation {
-  const upstream = options.upstream ?? process.env.BORG_TRPC_UPSTREAM ?? null;
+  const upstream = options.upstream ?? process.env.HYPERCODE_TRPC_UPSTREAM ?? null;
   if (upstream && upstream.trim().length > 0) {
     const normalized = normalizeTrpcBaseUrl(upstream);
     const url = new URL(normalized);

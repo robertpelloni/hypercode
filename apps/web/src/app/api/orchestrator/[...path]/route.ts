@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 
-import { resolveLockedBorgBase } from '../../../../lib/hypercode-runtime';
+import { resolveLockedHypercodeBase } from '../../../../lib/hypercode-runtime';
 import { resolveConfiguredOrchestratorBase } from '../../../../lib/orchestrator-config';
 
 export const runtime = 'nodejs';
 
 function resolveOrchestratorBase(): string | null {
-  return resolveLockedBorgBase() ?? resolveConfiguredOrchestratorBase(process.env);
+  return resolveLockedHypercodeBase() ?? resolveConfiguredOrchestratorBase(process.env);
 }
 
 function buildProxyUrl(req: Request, orchestratorBase: string, pathSegments: string[]): URL {

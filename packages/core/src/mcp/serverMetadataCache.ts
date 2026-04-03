@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 
 import type { DatabaseMcpServer } from '../types/mcp-admin/index.js';
 import { deriveSemanticCatalogForServer } from './catalogMetadata.js';
-import type { BorgMcpServerDiscoveryMetadata, BorgMcpToolMetadata } from './mcpJsonConfig.js';
+import type { HypercodeMcpServerDiscoveryMetadata, HypercodeMcpToolMetadata } from './mcpJsonConfig.js';
 
 export type MetadataReloadStrategy = 'auto' | 'binary' | 'cache' | 'skip';
 
@@ -76,7 +76,7 @@ export function buildServerConfigFingerprint(server: Pick<DatabaseMcpServer, 'na
         .digest('hex');
 }
 
-export function normalizeDiscoveredToolMetadata(rawTool: unknown): BorgMcpToolMetadata | null {
+export function normalizeDiscoveredToolMetadata(rawTool: unknown): HypercodeMcpToolMetadata | null {
     const rawRecord = toRecord(rawTool);
     const name = typeof rawRecord?.name === 'string' ? rawRecord.name.trim() : '';
     if (!name) {
@@ -94,7 +94,7 @@ export function normalizeDiscoveredToolMetadata(rawTool: unknown): BorgMcpToolMe
     };
 }
 
-export function buildBaseServerMetadata(server: Pick<DatabaseMcpServer, 'name' | 'type' | 'command' | 'args' | 'env' | 'url' | 'headers' | 'bearerToken'>): Omit<BorgMcpServerDiscoveryMetadata, 'status' | 'toolCount' | 'tools'> {
+export function buildBaseServerMetadata(server: Pick<DatabaseMcpServer, 'name' | 'type' | 'command' | 'args' | 'env' | 'url' | 'headers' | 'bearerToken'>): Omit<HypercodeMcpServerDiscoveryMetadata, 'status' | 'toolCount' | 'tools'> {
     return {
         metadataVersion: 2,
         configFingerprint: buildServerConfigFingerprint(server),
@@ -111,8 +111,8 @@ export function buildBaseServerMetadata(server: Pick<DatabaseMcpServer, 'name' |
 
 function enrichServerMetadata(
     server: Pick<DatabaseMcpServer, 'name' | 'description' | 'always_on'>,
-    metadata: BorgMcpServerDiscoveryMetadata,
-): BorgMcpServerDiscoveryMetadata {
+    metadata: HypercodeMcpServerDiscoveryMetadata,
+): HypercodeMcpServerDiscoveryMetadata {
     const derived = deriveSemanticCatalogForServer({
         serverName: server.name,
         description: server.description ?? null,
@@ -159,10 +159,10 @@ export function buildBinaryDiscoveryMetadata(
     server: Pick<DatabaseMcpServer, 'name' | 'description' | 'always_on' | 'type' | 'command' | 'args' | 'env' | 'url' | 'headers' | 'bearerToken'>,
     rawTools: unknown[],
     discoveredAt: string,
-): BorgMcpServerDiscoveryMetadata {
+): HypercodeMcpServerDiscoveryMetadata {
     const tools = rawTools
         .map((rawTool) => normalizeDiscoveredToolMetadata(rawTool))
-        .filter((tool): tool is BorgMcpToolMetadata => Boolean(tool));
+        .filter((tool): tool is HypercodeMcpToolMetadata => Boolean(tool));
 
     return enrichServerMetadata(server, {
         ...buildBaseServerMetadata(server),
@@ -179,10 +179,10 @@ export function buildBinaryDiscoveryMetadata(
 
 export function buildFailureDiscoveryMetadata(
     server: Pick<DatabaseMcpServer, 'name' | 'description' | 'always_on' | 'type' | 'command' | 'args' | 'env' | 'url' | 'headers' | 'bearerToken'>,
-    status: BorgMcpServerDiscoveryMetadata['status'],
+    status: HypercodeMcpServerDiscoveryMetadata['status'],
     discoveredAt: string,
     error: string,
-): BorgMcpServerDiscoveryMetadata {
+): HypercodeMcpServerDiscoveryMetadata {
     return enrichServerMetadata(server, {
         ...buildBaseServerMetadata(server),
         status,
@@ -197,7 +197,7 @@ export function buildFailureDiscoveryMetadata(
 }
 
 export function hasReusableMetadataCache(
-    metadata: BorgMcpServerDiscoveryMetadata | null | undefined,
+    metadata: HypercodeMcpServerDiscoveryMetadata | null | undefined,
     server: Pick<DatabaseMcpServer, 'name' | 'type' | 'command' | 'args' | 'env' | 'url' | 'headers' | 'bearerToken'>,
 ): boolean {
     if (!metadata || metadata.status !== 'ready') {
@@ -221,10 +221,10 @@ export function hasReusableMetadataCache(
 }
 
 export function hydrateMetadataFromCache(
-    metadata: BorgMcpServerDiscoveryMetadata,
+    metadata: HypercodeMcpServerDiscoveryMetadata,
     server: Pick<DatabaseMcpServer, 'name' | 'description' | 'always_on' | 'type' | 'command' | 'args' | 'env' | 'url' | 'headers' | 'bearerToken'>,
     hydratedAt: string,
-): BorgMcpServerDiscoveryMetadata {
+): HypercodeMcpServerDiscoveryMetadata {
     return enrichServerMetadata(server, {
         ...metadata,
         ...buildBaseServerMetadata(server),

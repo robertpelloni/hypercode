@@ -19,7 +19,7 @@
 Based on the latest generated inventory snapshot:
 
 - **Total tracked modules**: 5
-- **Coverage includes**: Borg-owned package references, one external MetaMCP bridge, and two approved study-only upstream references under `submodules/`.
+- **Coverage includes**: Hypercode-owned package references, one external MetaMCP bridge, and two approved study-only upstream references under `submodules/`.
 - **Primary tracked zones**:
 	- `packages/`
 	- `external/`
@@ -29,7 +29,7 @@ Based on the latest generated inventory snapshot:
 
 | Submodule | Path | Integration | Status |
 |-----------|------|-------------|--------|
-| MetaMCP | `external/MetaMCP` | Active bridge/reference for Borg MCP compatibility behavior | ✅ Active |
+| MetaMCP | `external/MetaMCP` | Active bridge/reference for Hypercode MCP compatibility behavior | ✅ Active |
 | MCP-SuperAssistant | `packages/MCP-SuperAssistant` | Browser-extension-adjacent package tracked in-repo | ✅ Active |
 | opencode-autopilot | `packages/opencode-autopilot` | Autopilot/session package tracked in-repo | ✅ Active |
 
@@ -44,7 +44,7 @@ Based on the latest generated inventory snapshot:
 
 | Tier | Definition | Expected Action |
 |---|---|---|
-| **Tier A — Runtime-Critical** | Directly used by Borg runtime, dashboard paths, or production workflows | Keep pinned, health-checked, and documented in release notes |
+| **Tier A — Runtime-Critical** | Directly used by Hypercode runtime, dashboard paths, or production workflows | Keep pinned, health-checked, and documented in release notes |
 | **Tier B — Strategic Reference** | Frequently consulted implementation references with active parity goals | Keep categorized, periodically re-sync metadata |
 | **Tier C — Archive/Exploration** | Long-tail experiments and ecosystem mirrors | Track only; defer active maintenance unless promoted |
 

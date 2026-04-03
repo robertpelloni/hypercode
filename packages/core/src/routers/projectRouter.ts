@@ -29,10 +29,10 @@ export const projectRouter = t.router({
         .input(z.object({ content: z.string() }))
         .mutation(async ({ input }) => {
             const contextPath = path.join(process.cwd(), '.hypercode', 'project_context.md');
-            const borgDir = path.dirname(contextPath);
+            const hypercodeDir = path.dirname(contextPath);
             
             try {
-                await fs.mkdir(borgDir, { recursive: true });
+                await fs.mkdir(hypercodeDir, { recursive: true });
                 await fs.writeFile(contextPath, input.content, 'utf-8');
                 return { success: true };
             } catch (e: any) {

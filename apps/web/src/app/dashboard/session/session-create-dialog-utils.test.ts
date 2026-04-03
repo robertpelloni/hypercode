@@ -8,9 +8,9 @@ describe('session create dialog utils', () => {
     });
 
     it('parses env input and ignores malformed lines', () => {
-        expect(parseEnvInput('OPENAI_API_KEY=test-key\nINVALID_LINE\nBORG_MODE = autopilot\n=missing')).toEqual({
+        expect(parseEnvInput('OPENAI_API_KEY=test-key\nINVALID_LINE\nHYPERCODE_MODE = autopilot\n=missing')).toEqual({
             OPENAI_API_KEY: 'test-key',
-            BORG_MODE: 'autopilot',
+            HYPERCODE_MODE: 'autopilot',
         });
     });
 });

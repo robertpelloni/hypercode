@@ -1,6 +1,6 @@
 # Progressive Disclosure Strategy
 
-Borg implements a **progressive disclosure** strategy to manage context window limits effectively. Instead of exposing hundreds of tools to the model immediately, Borg starts each MCP session with a tiny router-oriented tool surface and expands the visible tool set only as needed.
+Hypercode implements a **progressive disclosure** strategy to manage context window limits effectively. Instead of exposing hundreds of tools to the model immediately, Hypercode starts each MCP session with a tiny router-oriented tool surface and expands the visible tool set only as needed.
 
 ## Architecture
 
@@ -45,7 +45,7 @@ When the task changes, the session can trim its working set with `unload_tool` i
 
 ## Working-Set Behavior
 
-Borg treats tool disclosure as a **session working set**, not a one-way reveal.
+Hypercode treats tool disclosure as a **session working set**, not a one-way reveal.
 
 Current defaults:
 

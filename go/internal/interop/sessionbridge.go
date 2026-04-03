@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/borghq/hypercode-go/internal/lockfile"
+	"github.com/hypercodehq/hypercode-go/internal/lockfile"
 )
 
 var defaultTRPCBases = []string{
@@ -27,7 +27,7 @@ type UpstreamCallResult struct {
 }
 
 func ResolveTRPCBases(mainLockPath string) []string {
-	configured := strings.TrimSpace(os.Getenv("BORG_TRPC_UPSTREAM"))
+	configured := strings.TrimSpace(os.Getenv("HYPERCODE_TRPC_UPSTREAM"))
 	bases := make([]string, 0, len(defaultTRPCBases)+2)
 	if lockedBase := resolveLockedTRPCBase(mainLockPath); lockedBase != "" {
 		bases = append(bases, lockedBase)

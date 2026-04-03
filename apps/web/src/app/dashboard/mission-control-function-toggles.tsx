@@ -9,7 +9,7 @@ export interface MissionControlFunctionEntry extends NavItem {
     sectionTitle: string;
 }
 
-export const MISSION_CONTROL_FUNCTION_TOGGLE_STORAGE_KEY = 'borg_mission_control_function_toggles_v1';
+export const MISSION_CONTROL_FUNCTION_TOGGLE_STORAGE_KEY = 'hypercode_mission_control_function_toggles_v1';
 const QUICK_LAUNCH_PREVIEW_LIMIT = 12;
 const CORE_SECTION_TITLE_SUFFIX = 'Core';
 

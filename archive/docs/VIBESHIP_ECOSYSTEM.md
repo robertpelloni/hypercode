@@ -1,6 +1,6 @@
 # Vibeship Ecosystem
 
-> Complete documentation of the 6 Vibeship repositories integrated into Borg.
+> Complete documentation of the 6 Vibeship repositories integrated into Hypercode.
 
 ## Overview
 
@@ -15,7 +15,7 @@ Vibeship is a production-grade AI development ecosystem created by [vibeforge111
 
 ## Repository Summary
 
-| Repo | Stars | Purpose | Borg Location |
+| Repo | Stars | Purpose | Hypercode Location |
 |------|:-----:|---------|---------------|
 | **vibeship-spawner-skills** | 520 | 462 production-grade skills (4-file system) | `external/skills_repos/vibeship/` |
 | **vibeship-spawner** | 14 | Orchestration with specialist skills | `agents/orchestration/` |
@@ -401,7 +401,7 @@ Evaluates startup ideas across 8 dimensions using Claude Haiku.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           Borg Meta-Orchestrator                         │
+│                           Hypercode Meta-Orchestrator                         │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │  ┌──────────────────────────────────────────────────────────────────┐   │

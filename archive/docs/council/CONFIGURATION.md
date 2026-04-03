@@ -78,7 +78,7 @@ When adding a supervisor, you can specify:
 
 ## File-Based Configuration
 
-You can also configure the council via `.borg/council.json`:
+You can also configure the council via `.hypercode/council.json`:
 
 ```json
 {
@@ -132,5 +132,5 @@ For self-hosted or other OpenAI-compatible APIs:
 
 - API keys are never logged or exposed via API
 - Use environment variables, not hardcoded keys
-- Consider using Borg SecretManager for key rotation
+- Consider using Hypercode SecretManager for key rotation
 - Enable rate limiting for production deployments

@@ -1,12 +1,12 @@
-# Borg Frontier-Model Roundtable Debate Prompt
+# Hypercode Frontier-Model Roundtable Debate Prompt
 
 _Last updated: 2026-03-13_
 
-Use this prompt when asking multiple frontier models to evaluate Borg and converge on the best near-term product and architecture decisions.
+Use this prompt when asking multiple frontier models to evaluate Hypercode and converge on the best near-term product and architecture decisions.
 
 ## Prompt
 
-You are participating in a structured architecture and product roundtable about **Borg**, a local AI operations control plane for builders.
+You are participating in a structured architecture and product roundtable about **Hypercode**, a local AI operations control plane for builders.
 
 Your job is **not** to hype the project, and **not** to ask for infinite scope expansion.
 
@@ -14,9 +14,9 @@ Your job is to act like a rigorous principal engineer + product strategist revie
 
 Assume the following framing is true unless you can clearly justify a correction:
 
-- Borg is a **local AI operations control plane**, not a chatbot product.
-- Borg’s core value is orchestrating **tools, sessions, providers, MCP servers, and context** through one truthful dashboard and routing layer.
-- Borg should **orchestrate, not absorb** adjacent tools.
+- Hypercode is a **local AI operations control plane**, not a chatbot product.
+- Hypercode’s core value is orchestrating **tools, sessions, providers, MCP servers, and context** through one truthful dashboard and routing layer.
+- Hypercode should **orchestrate, not absorb** adjacent tools.
 - The four most credible 1.0 pillars are:
   1. **MCP Master Router**
   2. **Model Fallback & Provider Routing**
@@ -28,15 +28,15 @@ Assume the following framing is true unless you can clearly justify a correction
   - product truth drift
   - parity theater
   - monorepo/reference noise
-- Borg has real foundations already, especially in:
+- Hypercode has real foundations already, especially in:
   - startup/readiness work
   - MCP surfaces
   - dashboard/operator story
   - memory foundations
   - session-centric architecture
-- Borg is **not yet complete** in several important areas.
+- Hypercode is **not yet complete** in several important areas.
 
-You should evaluate Borg against the following reference-system lessons:
+You should evaluate Hypercode against the following reference-system lessons:
 
 ### Reference lessons
 
@@ -69,34 +69,34 @@ Most relevant strengths:
 - session keeper / babysitter loops
 - operator-safe autonomy and workflow automation
 
-## Known Borg gaps
+## Known Hypercode gaps
 
 For this debate, treat the following as likely true unless you can justify re-ranking them:
 
-### Borg does not yet fully do MetaMCP’s best work in:
+### Hypercode does not yet fully do MetaMCP’s best work in:
 - progressive disclosure over huge tool catalogs
 - tool-search-first UX
 - composable middleware/policy pipelines
 
-### Borg does not yet fully do claude-mem’s best work in:
+### Hypercode does not yet fully do claude-mem’s best work in:
 - hook-based lifecycle capture
 - AI-compressed structured observations
 - token-aware progressive context injection
 - transcript-level long-session compression
 
-### Borg does not yet fully do MCP-SuperAssistant’s best work in:
+### Hypercode does not yet fully do MCP-SuperAssistant’s best work in:
 - multi-site web chat injection
 - in-page tool parsing/execution loops
 - polished Firefox + Chromium extension parity
 
-### Borg does not yet fully do Jules-style systems’ best work in:
+### Hypercode does not yet fully do Jules-style systems’ best work in:
 - portable job/session handoff across tools and models
 - replay/diff/benchmarking as first-class operator surfaces
 - babysitter/keeper-style autonomy
 
 ## Debate objective
 
-Produce the **best realistic strategy** for turning Borg into a durable, shippable product without losing the long-term vision.
+Produce the **best realistic strategy** for turning Hypercode into a durable, shippable product without losing the long-term vision.
 
 Your answer must optimize for:
 
@@ -108,7 +108,7 @@ Your answer must optimize for:
 
 ## Required questions to answer
 
-1. What is Borg’s smallest compelling 1.0?
+1. What is Hypercode’s smallest compelling 1.0?
 2. Which current subsystems are kernel-grade and should be protected?
 3. Which visible surfaces are ornamental, premature, or misleading?
 4. What should be postponed from 1.0 into 1.5 or 2.0?
@@ -116,7 +116,7 @@ Your answer must optimize for:
 6. Which claude-mem capabilities are worth assimilating first, and why?
 7. Which MCP-SuperAssistant capabilities are worth assimilating first, and why?
 8. Which Jules-style capabilities are worth assimilating first, and why?
-9. What should Borg **never** clone directly, even if adjacent tools do it well?
+9. What should Hypercode **never** clone directly, even if adjacent tools do it well?
 10. What is the correct implementation order for the next 3 to 6 major slices?
 
 ## Hard constraints
@@ -134,12 +134,12 @@ Your answer must optimize for:
 Use exactly these sections:
 
 ### 1. Verdict
-Give a blunt 1-paragraph judgment on Borg’s current state.
+Give a blunt 1-paragraph judgment on Hypercode’s current state.
 
-### 2. What Borg should be
+### 2. What Hypercode should be
 Define the product in 3 to 6 bullets.
 
-### 3. What Borg should stop pretending to be
+### 3. What Hypercode should stop pretending to be
 List the surfaces or ambitions that should be demoted, deferred, or quarantined.
 
 ### 4. Kernel vs ornament
@@ -164,7 +164,7 @@ List the next six slices in order. For each slice include:
 - visible acceptance outcome
 
 ### 8. Risks and anti-patterns
-List the top 5 ways Borg could fail from here.
+List the top 5 ways Hypercode could fail from here.
 
 ### 9. Final recommendation
 End with a short “do this next” recommendation to the maintainer.
@@ -182,4 +182,4 @@ End with a short “do this next” recommendation to the maintainer.
 
 If useful, end with one sentence completing this phrase:
 
-> “Borg wins if it becomes the system that ________.”
+> “Hypercode wins if it becomes the system that ________.”

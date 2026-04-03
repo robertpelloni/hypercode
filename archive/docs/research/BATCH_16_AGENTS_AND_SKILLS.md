@@ -5,7 +5,7 @@
 **Focus:** Agent Frameworks and Advanced Skill Definitions
 
 ## Executive Summary
-This batch focused on the "Second Wave" of agent frameworks—those prioritizing control, code-centricity, and orchestration—and the emerging standard of "Skills" as portable agent capabilities. `Maestro` and `OpenAgents` offer significant workflow improvements (Git Worktrees, Pattern Control) that Borg should adopt.
+This batch focused on the "Second Wave" of agent frameworks—those prioritizing control, code-centricity, and orchestration—and the emerging standard of "Skills" as portable agent capabilities. `Maestro` and `OpenAgents` offer significant workflow improvements (Git Worktrees, Pattern Control) that Hypercode should adopt.
 
 ## 1. Agent Frameworks
 
@@ -40,10 +40,10 @@ This batch focused on the "Second Wave" of agent frameworks—those prioritizing
 ### B. `codex-skills` & `awesome-claude-skills`
 *   **Standardization:** Confirms the `SKILL.md` directory structure is the industry standard.
 *   **Content:** Thousands of ready-made skills (e.g., "Deep Research", "Brand Guidelines", "AWS Development").
-*   **Integration:** We can "mount" these skills into Borg by simple directory copying.
+*   **Integration:** We can "mount" these skills into Hypercode by simple directory copying.
 
 ## Recommendations
 
 1.  **Adopt Git Worktrees:** Implement a `task_branch` tool for the Swarm that automatically creates a git worktree for a specific task, allowing parallel execution without file lock contention.
 2.  **Pattern Contexts:** Refine our `knowledge/` to be more like `OpenAgents` "MVI Contexts"—small, specific pattern files loaded on demand, rather than giant documents.
-3.  **Skill Mounting:** Create a `skills/` directory in Borg root and "mount" selected high-value skills (e.g., `deep-research`, `postgres`) from the researched repositories.
+3.  **Skill Mounting:** Create a `skills/` directory in Hypercode root and "mount" selected high-value skills (e.g., `deep-research`, `postgres`) from the researched repositories.

@@ -36,8 +36,8 @@ const LEGACY_MCP_JSONC_PATH = path.join(LEGACY_REPO_ROOT, 'mcp.jsonc');
 const LEGACY_MCP_JSON_PATH = path.join(LEGACY_REPO_ROOT, 'mcp.json');
 const JSONC_HEADER = `// HyperCode MCP configuration\n// This file is HyperCode-owned and may include cached server metadata under mcpServers.<name>._meta.\n`;
 
-function resolveBorgConfigDir(): string {
-  const configuredDir = process.env.BORG_CONFIG_DIR?.trim();
+function resolveHypercodeConfigDir(): string {
+  const configuredDir = process.env.HYPERCODE_CONFIG_DIR?.trim();
   if (configuredDir) {
     return configuredDir;
   }
@@ -46,7 +46,7 @@ function resolveBorgConfigDir(): string {
 }
 
 function resolvePrimaryMcpPaths(): { jsoncPath: string; jsonPath: string } {
-  const configDir = resolveBorgConfigDir();
+  const configDir = resolveHypercodeConfigDir();
   return {
     jsoncPath: path.join(configDir, 'mcp.jsonc'),
     jsonPath: path.join(configDir, 'mcp.json'),

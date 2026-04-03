@@ -70,7 +70,7 @@ ${focusLogic}
 WScript.Sleep 50
 WshShell.SendKeys "${command}"
 `;
-        const tempFile = path.join(os.tmpdir(), `borg_input_${Date.now()}.vbs`);
+        const tempFile = path.join(os.tmpdir(), `hypercode_input_${Date.now()}.vbs`);
         fs.writeFileSync(tempFile, vbsContent);
         return new Promise((resolve, reject) => {
             // Use wscript (GUI) + windowsHide: true to prevent focus stealing console

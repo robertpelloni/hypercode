@@ -13,7 +13,7 @@ The backend implements a 4-step pipeline to improve answer quality through multi
 3.  **Peer Evaluation**: Providers rank and evaluate each other's Step 2 responses.
 4.  **Synthesis**: The best-ranked provider synthesizes the final answer.
 
-## Relevance to Borg
+## Relevance to Hypercode
 -   **Council Logic**: This architecture is perfect for the "Council" or "Director" to make high-stakes decisions by querying multiple models.
 -   **Not Web Research**: Unlike "Deep Research" (which implies web crawling), Kea focuses on *reasoning* and *consensus* among models.
 -   **Integration**: We can adapt `PipelineOrchestrator` to running within `packages/core` using a similar multi-model strategy, potentially utilizing our `ModelSelector`.

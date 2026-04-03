@@ -80,7 +80,7 @@ End If
 On Error GoTo 0
 `;
 
-        const tempFile = path.join(os.tmpdir(), `borg_input_${Date.now()}.vbs`);
+        const tempFile = path.join(os.tmpdir(), `hypercode_input_${Date.now()}.vbs`);
         fs.writeFileSync(tempFile, vbsContent);
 
         return new Promise((resolve, reject) => {

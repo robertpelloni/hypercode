@@ -19,12 +19,12 @@ except ImportError:
 async def handle_command(cmd, payload):
     if cmd == "add":
         # payload: { text: string, dataset: string }
-        await add(payload["text"], payload.get("dataset", "borg_memory"))
+        await add(payload["text"], payload.get("dataset", "hypercode_memory"))
         return {"status": "added"}
     
     elif cmd == "cognify":
         # payload: { dataset: string }
-        await cognify(payload.get("dataset", "borg_memory"))
+        await cognify(payload.get("dataset", "hypercode_memory"))
         return {"status": "cognified"}
     
     elif cmd == "search":

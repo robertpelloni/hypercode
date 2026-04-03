@@ -1,7 +1,7 @@
-# Borg Memory System
+# Hypercode Memory System
 
 ## Overview
-The Borg Memory System is a sophisticated tiered architecture designed to provide AI agents with infinite, persistent, and structured context. It combines vector-based semantic search with graph-based structured relationships to enable "Cognitive Object Permanence."
+The Hypercode Memory System is a sophisticated tiered architecture designed to provide AI agents with infinite, persistent, and structured context. It combines vector-based semantic search with graph-based structured relationships to enable "Cognitive Object Permanence."
 
 ## Architecture
 
@@ -23,8 +23,8 @@ The system mimics human memory consolidation through three distinct tiers:
     *   AST-sensitive chunking via `CodeSplitter.ts`.
 
 #### Knowledge Graph (Structured Memory)
-*   **Implementation**: Persistent Adjacency List graph in `@borg/memory`.
-*   **Storage**: Serialized to `.borg/memory/knowledge_graph.json`.
+*   **Implementation**: Persistent Adjacency List graph in `@hypercode/memory`.
+*   **Storage**: Serialized to `.hypercode/memory/knowledge_graph.json`.
 *   **Nodes**: Represent Concepts, Files, Functions, Agents, and Tasks.
 *   **Edges**: Typed relationships (e.g., `imports`, `calls`, `defines`, `implements`).
 *   **Traversal**: `KnowledgeService.ts` provides BFS traversal for "Deep Context" retrieval, allowing agents to understand dependencies (e.g., requesting File A automatically pulls in imported File B).

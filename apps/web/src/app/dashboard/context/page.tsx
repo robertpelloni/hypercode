@@ -32,51 +32,51 @@ export default function ContextDashboard() {
     const [copied, setCopied] = useState(false);
 
     const utils = trpc.useUtils();
-    const filesQuery = trpc.borgContext.list.useQuery();
-    const promptQuery = trpc.borgContext.getPrompt.useQuery();
-    const harvestQuery = trpc.borgContext.getHarvestedContext.useQuery(undefined, { refetchInterval: 5000 });
-    const statsQuery = trpc.borgContext.getHarvestStats.useQuery(undefined, { refetchInterval: 5000 });
+    const filesQuery = trpc.hypercodeContext.list.useQuery();
+    const promptQuery = trpc.hypercodeContext.getPrompt.useQuery();
+    const harvestQuery = trpc.hypercodeContext.getHarvestedContext.useQuery(undefined, { refetchInterval: 5000 });
+    const statsQuery = trpc.hypercodeContext.getHarvestStats.useQuery(undefined, { refetchInterval: 5000 });
 
-    const pruneMutation = trpc.borgContext.prune.useMutation({
+    const pruneMutation = trpc.hypercodeContext.prune.useMutation({
         onSuccess: async () => {
             toast.success('Pruned inactive context chunks');
-            await utils.borgContext.getHarvestedContext.invalidate();
-            await utils.borgContext.getHarvestStats.invalidate();
+            await utils.hypercodeContext.getHarvestedContext.invalidate();
+            await utils.hypercodeContext.getHarvestStats.invalidate();
         }
     });
 
-    const compactMutation = trpc.borgContext.compact.useMutation({
+    const compactMutation = trpc.hypercodeContext.compact.useMutation({
         onSuccess: async () => {
             toast.success('Compacted older context chunks');
-            await utils.borgContext.getHarvestedContext.invalidate();
-            await utils.borgContext.getHarvestStats.invalidate();
+            await utils.hypercodeContext.getHarvestedContext.invalidate();
+            await utils.hypercodeContext.getHarvestStats.invalidate();
         }
     });
 
-    const addMutation = trpc.borgContext.add.useMutation({
+    const addMutation = trpc.hypercodeContext.add.useMutation({
         onSuccess: async () => {
             toast.success('File added to context');
             setNewFile('');
-            await utils.borgContext.list.invalidate();
-            await utils.borgContext.getPrompt.invalidate();
+            await utils.hypercodeContext.list.invalidate();
+            await utils.hypercodeContext.getPrompt.invalidate();
         },
         onError: err => toast.error(`Failed to add: ${err.message}`),
     });
 
-    const removeMutation = trpc.borgContext.remove.useMutation({
+    const removeMutation = trpc.hypercodeContext.remove.useMutation({
         onSuccess: async () => {
             toast.success('File removed from context');
-            await utils.borgContext.list.invalidate();
-            await utils.borgContext.getPrompt.invalidate();
+            await utils.hypercodeContext.list.invalidate();
+            await utils.hypercodeContext.getPrompt.invalidate();
         },
         onError: err => toast.error(`Failed to remove: ${err.message}`),
     });
 
-    const clearMutation = trpc.borgContext.clear.useMutation({
+    const clearMutation = trpc.hypercodeContext.clear.useMutation({
         onSuccess: async () => {
             toast.success('Context cleared');
-            await utils.borgContext.list.invalidate();
-            await utils.borgContext.getPrompt.invalidate();
+            await utils.hypercodeContext.list.invalidate();
+            await utils.hypercodeContext.getPrompt.invalidate();
         },
         onError: err => toast.error(`Failed to clear: ${err.message}`),
     });

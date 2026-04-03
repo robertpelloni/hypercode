@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 /// HyperCode Extension for Zed Editor
 /// Provides AI Council integration via slash commands and context providers
-struct BorgExtension {
+struct HypercodeExtension {
     hub_url: String,
 }
 
@@ -125,10 +125,10 @@ struct HealthResponse {
 // Extension Implementation
 // ============================================================================
 
-impl BorgExtension {
+impl HypercodeExtension {
     fn new() -> Self {
         Self {
-            hub_url: std::env::var("Borg_HUB_URL")
+            hub_url: std::env::var("Hypercode_HUB_URL")
                 .unwrap_or_else(|_| "http://localhost:3000".to_string()),
         }
     }
@@ -378,7 +378,7 @@ impl BorgExtension {
 // Zed Extension Trait Implementation
 // ============================================================================
 
-impl zed::Extension for BorgExtension {
+impl zed::Extension for HypercodeExtension {
     fn new() -> Self {
         Self::new()
     }
@@ -394,7 +394,7 @@ impl zed::Extension for BorgExtension {
 }
 
 // Register the extension
-zed::register_extension!(BorgExtension);
+zed::register_extension!(HypercodeExtension);
 
 // ============================================================================
 // Utility Functions
@@ -419,7 +419,7 @@ pub mod commands {
 
     /// /HyperCode-debate <description>
     /// Start a council debate on the given topic
-    pub fn debate(ext: &BorgExtension, args: &str, context: &str) -> Result<String> {
+    pub fn debate(ext: &HypercodeExtension, args: &str, context: &str) -> Result<String> {
         if args.is_empty() {
             return Err("Usage: /HyperCode-debate <description>".into());
         }
@@ -428,7 +428,7 @@ pub mod commands {
 
     /// /HyperCode-architect <task>
     /// Start an architect session for complex implementations
-    pub fn architect(ext: &BorgExtension, args: &str) -> Result<String> {
+    pub fn architect(ext: &HypercodeExtension, args: &str) -> Result<String> {
         if args.is_empty() {
             return Err("Usage: /HyperCode-architect <task description>".into());
         }
@@ -437,7 +437,7 @@ pub mod commands {
 
     /// /HyperCode-approve <session_id>
     /// Approve an architect plan
-    pub fn approve(ext: &BorgExtension, args: &str) -> Result<String> {
+    pub fn approve(ext: &HypercodeExtension, args: &str) -> Result<String> {
         if args.is_empty() {
             return Err("Usage: /HyperCode-approve <session_id>".into());
         }
@@ -446,25 +446,25 @@ pub mod commands {
 
     /// /HyperCode-analytics
     /// Show supervisor analytics summary
-    pub fn analytics(ext: &BorgExtension) -> Result<String> {
+    pub fn analytics(ext: &HypercodeExtension) -> Result<String> {
         ext.get_analytics()
     }
 
     /// /HyperCode-templates
     /// List available debate templates
-    pub fn templates(ext: &BorgExtension) -> Result<String> {
+    pub fn templates(ext: &HypercodeExtension) -> Result<String> {
         ext.get_templates()
     }
 
     /// /HyperCode-worktrees
     /// List git worktrees
-    pub fn worktrees(ext: &BorgExtension) -> Result<String> {
+    pub fn worktrees(ext: &HypercodeExtension) -> Result<String> {
         ext.list_worktrees()
     }
 
     /// /HyperCode-health
     /// Check HyperCode hub connection
-    pub fn health(ext: &BorgExtension) -> Result<String> {
+    pub fn health(ext: &HypercodeExtension) -> Result<String> {
         match ext.check_health() {
             Ok(h) => Ok(format!(
                 "## HyperCode Health\n\n\
@@ -499,7 +499,7 @@ mod tests {
 
     #[test]
     fn test_extension_creation() {
-        let ext = BorgExtension::new();
+        let ext = HypercodeExtension::new();
         assert!(!ext.hub_url.is_empty());
     }
 }

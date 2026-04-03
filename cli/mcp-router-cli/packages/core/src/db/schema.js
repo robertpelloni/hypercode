@@ -1,5 +1,5 @@
 /**
- * borg Database Schema
+ * hypercode Database Schema
  * Migrated from MetaMCP PostgreSQL/Drizzle to SQLite/better-sqlite3
  *
  * Tables:

@@ -3,7 +3,7 @@
 > **Updated**: 2026-03-06 (Phase 103)
 > **Version**: 2.7.62
 
-This document tracks capability parity across the three Borg client surfaces: **Web Dashboard**, **Browser Extension**, and **VS Code Extension**.
+This document tracks capability parity across the three Hypercode client surfaces: **Web Dashboard**, **Browser Extension**, and **VS Code Extension**.
 
 ---
 
@@ -53,7 +53,7 @@ This document tracks capability parity across the three Borg client surfaces: **
 
 ### Milestone 1: Extension Hardening (P2)
 - [x] Replace hardcoded `localhost:3001` in browser extension `background.ts` with configurable URL
-- [x] Add configurable WS URL to browser extension (matching VS Code's `borg.coreUrl` config)
+- [x] Add configurable WS URL to browser extension (matching VS Code's `hypercode.coreUrl` config)
 - [ ] Add error boundary / offline UI to browser extension popup
 
 ### Milestone 2: Cross-Surface Intelligence (P3)
@@ -73,8 +73,8 @@ This document tracks capability parity across the three Borg client surfaces: **
 
 | Surface | Transport | Entry Point |
 |---|---|---|
-| Dashboard | tRPC over HTTP (batch) | `apps/web` → `@borg/ui` TRPCProvider |
+| Dashboard | tRPC over HTTP (batch) | `apps/web` → `@hypercode/ui` TRPCProvider |
 | Browser Extension | WS + Chrome messaging | `apps/extension/src/background.ts` |
 | VS Code Extension | WS (node `ws` lib) | `packages/vscode/src/extension.ts` |
 
-All three surfaces connect to the same Borg Core instance. The browser and VS Code extensions use WebSocket for real-time bidirectional communication, while the dashboard uses tRPC HTTP batch for request/response patterns.
+All three surfaces connect to the same Hypercode Core instance. The browser and VS Code extensions use WebSocket for real-time bidirectional communication, while the dashboard uses tRPC HTTP batch for request/response patterns.

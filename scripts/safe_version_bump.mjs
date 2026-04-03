@@ -38,7 +38,7 @@ for (const dir of ['apps', 'packages', '.']) {
     } catch (e) {}
 }
 
-const customApps = ['borg-extension/package.json', 'borg-vscode-extension/package.json', 'maestro/package.json'];
+const customApps = ['hypercode-extension/package.json', 'hypercode-vscode-extension/package.json', 'maestro/package.json'];
 const allTargets = [...textFiles, ...codeFiles, ...pnpmWorkspaces, ...customApps];
 
 let updateLog = `# VERSION UNIFICATION REPORT (Target: ${NEW_VERSION})\n\n`;
@@ -54,7 +54,7 @@ for (const f of allTargets) {
 
         if (f.endsWith('package.json')) {
              content = content.replace(/"version"\s*:\s*"[^"]+"/g, `"version": "${NEW_VERSION}"`);
-             content = content.replace(/"(@borg\/[^"]+)"\s*:\s*"0\.90\.\d+"/g, `"$1": "workspace:*"`);
+             content = content.replace(/"(@hypercode\/[^"]+)"\s*:\s*"0\.90\.\d+"/g, `"$1": "workspace:*"`);
         } else {
              content = content.replace(/0\.90\.\d+/g, NEW_VERSION);
              content = content.replace(/0\.10\.\d+/g, NEW_VERSION);

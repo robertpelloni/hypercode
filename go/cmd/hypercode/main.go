@@ -9,11 +9,11 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/borghq/hypercode-go/internal/buildinfo"
-	"github.com/borghq/hypercode-go/internal/config"
-	"github.com/borghq/hypercode-go/internal/controlplane"
-	"github.com/borghq/hypercode-go/internal/httpapi"
-	"github.com/borghq/hypercode-go/internal/lockfile"
+	"github.com/hypercodehq/hypercode-go/internal/buildinfo"
+	"github.com/hypercodehq/hypercode-go/internal/config"
+	"github.com/hypercodehq/hypercode-go/internal/controlplane"
+	"github.com/hypercodehq/hypercode-go/internal/httpapi"
+	"github.com/hypercodehq/hypercode-go/internal/lockfile"
 )
 
 func main() {

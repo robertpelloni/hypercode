@@ -1,12 +1,12 @@
 # Task: MCP Decision Telemetry Observability
 
-**Track:** B — Borg-native MCP router maturity  
+**Track:** B — Hypercode-native MCP router maturity  
 **Priority:** P1 implementation slice  
 **Status:** Completed (2026-03-14)
 
 ## Context
 
-Borg search/load behavior already emitted telemetry, but did not expose enough decision detail to debug model/tool routing quality. Operators could see *what* happened, but not *how confident* the decision path was or the latency impact.
+Hypercode search/load behavior already emitted telemetry, but did not expose enough decision detail to debug model/tool routing quality. Operators could see *what* happened, but not *how confident* the decision path was or the latency impact.
 
 ## Changes Implemented
 

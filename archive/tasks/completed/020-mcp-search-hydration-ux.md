@@ -1,6 +1,6 @@
 # Task: MCP Search Hydration UX + Working-Set Grouping
 
-**Track:** B — Borg-native MCP router maturity  
+**Track:** B — Hypercode-native MCP router maturity  
 **Priority:** P1 implementation slice  
 **Status:** Completed (2026-03-14)
 

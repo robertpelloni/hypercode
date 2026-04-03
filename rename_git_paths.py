@@ -22,7 +22,7 @@ def rename_paths():
     # Rename directories
     for d in dirs:
         basename = os.path.basename(d)
-        new_basename = basename.replace('borg', 'hypercode').replace('Borg', 'HyperCode').replace('BORG', 'HYPERCODE')
+        new_basename = basename.replace('hypercode', 'hypercode').replace('Hypercode', 'HyperCode').replace('HYPERCODE', 'HYPERCODE')
         if new_basename != basename:
             new_dir = os.path.join(os.path.dirname(d), new_basename).replace('\\', '/')
             print(f"Renaming dir: {d} -> {new_dir}")
@@ -35,7 +35,7 @@ def rename_paths():
     # Rename files
     for f in files:
         basename = os.path.basename(f)
-        new_basename = basename.replace('borg', 'hypercode').replace('Borg', 'HyperCode').replace('BORG', 'HYPERCODE')
+        new_basename = basename.replace('hypercode', 'hypercode').replace('Hypercode', 'HyperCode').replace('HYPERCODE', 'HYPERCODE')
         if new_basename != basename:
             new_file = os.path.join(os.path.dirname(f), new_basename).replace('\\', '/')
             print(f"Renaming file: {f} -> {new_file}")

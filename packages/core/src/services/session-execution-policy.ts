@@ -168,15 +168,15 @@ export function buildExecutionPolicyEnv(policy: SessionExecutionPolicy | null): 
     }
 
     const env: Record<string, string> = {
-        BORG_EXECUTION_PROFILE_REQUESTED: policy.requestedProfile,
-        BORG_EXECUTION_PROFILE_EFFECTIVE: policy.effectiveProfile,
-        BORG_EXECUTION_SHELL_ID: policy.shellId ?? '',
-        BORG_EXECUTION_SHELL_LABEL: policy.shellLabel ?? '',
-        BORG_EXECUTION_SHELL_FAMILY: policy.shellFamily ?? '',
-        BORG_EXECUTION_SHELL_PATH: policy.shellPath ?? '',
-        BORG_EXECUTION_POLICY_REASON: policy.reason,
-        BORG_SUPPORTS_POWERSHELL: policy.supportsPowerShell ? '1' : '0',
-        BORG_SUPPORTS_POSIX_SHELL: policy.supportsPosixShell ? '1' : '0',
+        HYPERCODE_EXECUTION_PROFILE_REQUESTED: policy.requestedProfile,
+        HYPERCODE_EXECUTION_PROFILE_EFFECTIVE: policy.effectiveProfile,
+        HYPERCODE_EXECUTION_SHELL_ID: policy.shellId ?? '',
+        HYPERCODE_EXECUTION_SHELL_LABEL: policy.shellLabel ?? '',
+        HYPERCODE_EXECUTION_SHELL_FAMILY: policy.shellFamily ?? '',
+        HYPERCODE_EXECUTION_SHELL_PATH: policy.shellPath ?? '',
+        HYPERCODE_EXECUTION_POLICY_REASON: policy.reason,
+        HYPERCODE_SUPPORTS_POWERSHELL: policy.supportsPowerShell ? '1' : '0',
+        HYPERCODE_SUPPORTS_POSIX_SHELL: policy.supportsPosixShell ? '1' : '0',
     };
 
     if (policy.shellPath) {

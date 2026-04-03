@@ -1,6 +1,6 @@
 // Content Script
-// Injects the Borg bridge into supported web AI chat surfaces and mounts a
-// Borg-native sidebar scaffold inspired by MCP-SuperAssistant's in-page model.
+// Injects the Hypercode bridge into supported web AI chat surfaces and mounts a
+// Hypercode-native sidebar scaffold inspired by MCP-SuperAssistant's in-page model.
 import { Readability } from '@mozilla/readability';
 import TurndownService from 'turndown';
 import { buildChatSurfaceSnapshot, snapshotsEqual, type ChatSurfaceMessageRole, type ChatSurfaceSnapshot, type ChatSurfaceSourceMessage } from './chatObserver';
@@ -198,8 +198,8 @@ const LIVE_BRIDGE_FEATURES = [
     'User activity',
 ];
 
-const SIDEBAR_HOST_ID = 'borg-extension-sidebar-host';
-const SIDEBAR_TOGGLE_ID = 'borg-extension-sidebar-toggle';
+const SIDEBAR_HOST_ID = 'hypercode-extension-sidebar-host';
+const SIDEBAR_TOGGLE_ID = 'hypercode-extension-sidebar-toggle';
 const DASHBOARD_URL = 'http://localhost:3001/dashboard/super-assistant';
 
 function injectScript(filePath: string) {
@@ -211,7 +211,7 @@ function injectScript(filePath: string) {
 
 function postBridgeResponse(id: string, result: unknown) {
     window.postMessage({
-        type: 'BORG_RESPONSE',
+        type: 'HYPERCODE_RESPONSE',
         id,
         result,
     }, '*');
@@ -456,12 +456,12 @@ class ChatSurfaceObserver {
                 snapshot,
             });
         } catch (error) {
-            console.warn('[Borg Bridge] Failed to publish chat-surface snapshot:', error);
+            console.warn('[Hypercode Bridge] Failed to publish chat-surface snapshot:', error);
         }
     }
 }
 
-class BorgSidebarController {
+class HypercodeSidebarController {
     private host: HTMLDivElement | null = null;
     private shadow: ShadowRoot | null = null;
     private isOpen = true;
@@ -486,7 +486,7 @@ class BorgSidebarController {
         const toggle = document.createElement('button');
         toggle.id = SIDEBAR_TOGGLE_ID;
         toggle.type = 'button';
-        toggle.textContent = 'Borg';
+        toggle.textContent = 'Hypercode';
         toggle.style.position = 'fixed';
         toggle.style.right = '16px';
         toggle.style.bottom = '16px';
@@ -656,7 +656,7 @@ class BorgSidebarController {
             <div class="panel" id="panel">
                 <div class="header">
                     <div class="title-wrap">
-                        <div class="eyebrow">Borg Browser Bridge</div>
+                        <div class="eyebrow">Hypercode Browser Bridge</div>
                         <div class="title">Adapter Scaffold Live</div>
                     </div>
                     <div class="header-actions">
@@ -668,7 +668,7 @@ class BorgSidebarController {
                     <div class="card">
                         <div class="label">Current Surface</div>
                         <div class="value" id="surfaceName">Detecting…</div>
-                        <div class="subtle" id="surfaceDetail">Mapping current host to Borg's MCP-SA adapter registry.</div>
+                        <div class="subtle" id="surfaceDetail">Mapping current host to Hypercode's MCP-SA adapter registry.</div>
                         <div class="pill-row" id="surfacePills"></div>
                     </div>
                     <div class="card">
@@ -768,13 +768,13 @@ class BorgSidebarController {
     }
 
     private async insertBridgeNote() {
-        const result = insertTextWithAdapter('Borg bridge connected. Adapter scaffold live and ready to accept tool results.', false);
+        const result = insertTextWithAdapter('Hypercode bridge connected. Adapter scaffold live and ready to accept tool results.', false);
         if (!result.success) {
             this.setMessage(result.reason || 'Could not locate the active chat input.', 'error');
             return;
         }
 
-        this.setMessage('Inserted a Borg bridge note into the current input.', 'success');
+        this.setMessage('Inserted a Hypercode bridge note into the current input.', 'success');
         this.refresh();
     }
 
@@ -791,7 +791,7 @@ class BorgSidebarController {
     }
 
     private async absorbPage() {
-        this.setMessage('Reading page content and sending it to Borg memory…');
+        this.setMessage('Reading page content and sending it to Hypercode memory…');
 
         try {
             const page = extractReadablePage();
@@ -803,17 +803,17 @@ class BorgSidebarController {
             });
 
             if (!response?.success) {
-                throw new Error(response?.error || 'Borg Core did not accept the page payload.');
+                throw new Error(response?.error || 'Hypercode Core did not accept the page payload.');
             }
 
-            this.setMessage('Page absorbed into Borg memory.', 'success');
+            this.setMessage('Page absorbed into Hypercode memory.', 'success');
         } catch (error) {
             this.setMessage(error instanceof Error ? error.message : 'Failed to absorb the page.', 'error');
         }
     }
 
     private async ingestPageToRag() {
-        this.setMessage('Reading page content and sending it into Borg RAG…');
+        this.setMessage('Reading page content and sending it into Hypercode RAG…');
 
         try {
             const page = extractReadablePage();
@@ -824,11 +824,11 @@ class BorgSidebarController {
             });
 
             if (!response?.success) {
-                throw new Error(response?.error || 'Borg Core did not ingest the page.');
+                throw new Error(response?.error || 'Hypercode Core did not ingest the page.');
             }
 
             const chunkInfo = response.data?.chunksIngested ? ` (${response.data.chunksIngested} chunks)` : '';
-            this.setMessage(`Page ingested into Borg RAG${chunkInfo}.`, 'success');
+            this.setMessage(`Page ingested into Hypercode RAG${chunkInfo}.`, 'success');
         } catch (error) {
             this.setMessage(error instanceof Error ? error.message : 'Failed to ingest the page into RAG.', 'error');
         }
@@ -852,7 +852,7 @@ class BorgSidebarController {
 
         if (surfaceDetail) {
             surfaceDetail.textContent = adapter
-                ? `${adapter.name} is running with Borg's adapter scaffold. DOM injection, input detection, and bridge actions are available; full automation loops remain a later slice.`
+                ? `${adapter.name} is running with Hypercode's adapter scaffold. DOM injection, input detection, and bridge actions are available; full automation loops remain a later slice.`
                 : 'This host is outside the current supported browser-chat footprint.';
         }
 
@@ -877,12 +877,12 @@ class BorgSidebarController {
     }
 }
 
-console.log('[Borg Bridge] Content Script Loaded.');
+console.log('[Hypercode Bridge] Content Script Loaded.');
 
 window.addEventListener('message', (event) => {
     if (event.source !== window) return;
 
-    if (event.data.type === 'BORG_REQUEST') {
+    if (event.data.type === 'HYPERCODE_REQUEST') {
         chrome.runtime.sendMessage({
             type: 'EXECUTE_TOOL',
             tool: event.data.tool,
@@ -892,7 +892,7 @@ window.addEventListener('message', (event) => {
         });
     }
 
-    if (event.data.type === 'BORG_CONSOLE_LOG') {
+    if (event.data.type === 'HYPERCODE_CONSOLE_LOG') {
         chrome.runtime.sendMessage({
             type: 'CONSOLE_LOG',
             level: event.data.level,
@@ -904,7 +904,7 @@ window.addEventListener('message', (event) => {
 const injectAPI = () => {
     const script = document.createElement('script');
     script.textContent = `
-    console.log("[Borg Bridge] API Injected");
+    console.log("[Hypercode Bridge] API Injected");
     `;
     (document.head || document.documentElement).appendChild(script);
 };
@@ -924,7 +924,7 @@ const injectConsoleInterceptor = () => {
         const forwardLog = (level, args) => {
             try {
                 window.postMessage({
-                    type: 'BORG_CONSOLE_LOG',
+                    type: 'HYPERCODE_CONSOLE_LOG',
                     level,
                     message: Array.from(args).map((value) => {
                         try { return typeof value === 'object' ? JSON.stringify(value) : String(value); }
@@ -979,7 +979,7 @@ emitUserActivity('content_script_loaded');
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'PASTE_INTO_CHAT') {
-        console.log('[Borg Bridge] Received Paste Request:', message.text);
+        console.log('[Hypercode Bridge] Received Paste Request:', message.text);
 
         const adapterInsert = insertTextWithAdapter(message.text, Boolean(message.submit));
         if (adapterInsert.success) {
@@ -995,7 +995,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (window.injectDirectorMessage) {
                 window.injectDirectorMessage(${safeText}, ${autoSubmit});
             } else {
-                console.warn("[Borg Bridge] window.injectDirectorMessage not found! Is DirectorChat mounted?");
+                console.warn("[Hypercode Bridge] window.injectDirectorMessage not found! Is DirectorChat mounted?");
             }
         `;
         (document.head || document.documentElement).appendChild(script);
@@ -1005,19 +1005,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.type === 'ABSORB_PAGE') {
-        console.log('[Borg Bridge] Absorbing page...');
+        console.log('[Hypercode Bridge] Absorbing page...');
         try {
             const page = extractReadablePage();
             sendResponse({ success: true, content: page.content, title: page.title });
         } catch (error: unknown) {
-            console.error('[Borg Bridge] Absorb Error:', error);
+            console.error('[Hypercode Bridge] Absorb Error:', error);
             sendResponse({ success: false, error: error instanceof Error ? error.message : 'Unknown absorb error' });
         }
         return true;
     }
 
     if (message.type === 'SCRAPE_CHAT') {
-        console.log('[Borg Bridge] Scraping chat history...');
+        console.log('[Hypercode Bridge] Scraping chat history...');
         sendResponse({ success: true, history: scrapeChatHistory() });
         return true;
     }
@@ -1025,7 +1025,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
 });
 
-const sidebar = new BorgSidebarController();
+const sidebar = new HypercodeSidebarController();
 sidebar.mount();
 
 const chatSurfaceObserver = new ChatSurfaceObserver();

@@ -12,20 +12,20 @@ vi.mock('../../src/components/ContextHealthWidget', () => ({ ContextHealthWidget
 
 describe('dashboard MCP flow integration', () => {
   const originalFetch = global.fetch;
-  const originalUpstream = process.env.BORG_TRPC_UPSTREAM;
+  const originalUpstream = process.env.HYPERCODE_TRPC_UPSTREAM;
 
   afterEach(() => {
     global.fetch = originalFetch;
 
     if (originalUpstream === undefined) {
-      delete process.env.BORG_TRPC_UPSTREAM;
+      delete process.env.HYPERCODE_TRPC_UPSTREAM;
     } else {
-      process.env.BORG_TRPC_UPSTREAM = originalUpstream;
+      process.env.HYPERCODE_TRPC_UPSTREAM = originalUpstream;
     }
   });
 
   it('bridges modern MCP dashboard procedure batches when the upstream is unavailable', async () => {
-    process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
     global.fetch = vi.fn(async () => {
       throw new Error('connect ECONNREFUSED');
     }) as typeof fetch;

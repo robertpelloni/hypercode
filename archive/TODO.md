@@ -1,10 +1,10 @@
-# Borg TODO
+# Hypercode TODO
 
 _Last updated: 2026-03-18_
 
 Canonical execution queue for the current repository state.
 
-## P0 — Borg 1.0 release blockers
+## P0 — Hypercode 1.0 release blockers
 
 ### 1) Startup orchestration truthfulness
 - [ ] Keep `pnpm run dev`, dashboard startup panels, and `startupStatus` semantics fully aligned.
@@ -42,7 +42,7 @@ Canonical execution queue for the current repository state.
 - [ ] Clearly mark internal-only routers/services that are not product surfaces.
 
 ### 8) Memory story consolidation
-- [ ] Keep one coherent Borg-native memory model across facts, observations, prompts, summaries, and provenance.
+- [ ] Keep one coherent Hypercode-native memory model across facts, observations, prompts, summaries, and provenance.
 - [ ] Treat external memory ecosystems as adapters unless parity is actually delivered.
 
 ### 9) Bridge and extension reliability

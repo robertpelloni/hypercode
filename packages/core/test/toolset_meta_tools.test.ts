@@ -37,7 +37,7 @@ describe('toolset meta tools', () => {
     process.env.MCP_DISABLE_METAMCP = 'true';
 
     const dir = mkdtempSync(path.join(os.tmpdir(), 'hypercode-toolset-test-'));
-    process.env.BORG_DATA_DIR = dir;
+    process.env.HYPERCODE_DATA_DIR = dir;
 
     const policyService: PolicyServiceLike = { evaluate: () => ({ allowed: true }) };
     const savedScriptService: SavedScriptServiceLike = { getAllScripts: () => [] };

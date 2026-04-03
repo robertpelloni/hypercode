@@ -1,8 +1,8 @@
-# Borg Architecture
+# Hypercode Architecture
 
 ## Purpose
 
-Borg is a **local AI control plane** for orchestrating providers, MCP servers, external CLI sessions, agents, memory, and operator workflows.
+Hypercode is a **local AI control plane** for orchestrating providers, MCP servers, external CLI sessions, agents, memory, and operator workflows.
 
 The design goal is not to clone every external tool. The design goal is to coordinate them reliably through a small number of durable kernel subsystems.
 
@@ -13,7 +13,7 @@ The design goal is not to clone every external tool. The design goal is to coord
 **Primary path:** `packages/core/mcp/`
 
 Responsibilities:
-- aggregate multiple MCP servers into a single Borg endpoint
+- aggregate multiple MCP servers into a single Hypercode endpoint
 - namespace servers and tools
 - track health, latency, and lifecycle
 - expose traffic inspection data to operator surfaces
@@ -89,7 +89,7 @@ Rules:
 
 ### Persistence and messaging
 
-Depending on subsystem needs, Borg may use:
+Depending on subsystem needs, Hypercode may use:
 - **filesystem** for logs, artifacts, exports, and session snapshots
 - **Redis** for events, pub/sub, or transient coordination
 - **Postgres / SQLite** for durable operational state
@@ -101,7 +101,7 @@ The exact backend may vary by deployment, but the architecture should preserve c
 
 ## Capability contract model
 
-Borg should define internal capabilities instead of chasing whole-tool parity.
+Hypercode should define internal capabilities instead of chasing whole-tool parity.
 
 Representative capability families:
 - `provider.auth`
@@ -138,9 +138,9 @@ Primary operator workflows:
 
 If the backend does not emit it reliably, the dashboard should not pretend it does.
 
-## Borg 1.0 focus
+## Hypercode 1.0 focus
 
-Borg 1.0 should stay tightly focused on:
+Hypercode 1.0 should stay tightly focused on:
 1. MCP aggregation
 2. provider fallback
 3. session supervision

@@ -110,7 +110,7 @@ export class AutoConfig {
             ...(Object.keys(envVars).length > 0 ? { env: envVars } : {}),
         };
 
-        const sseUrl = options.sseUrl ?? process.env.BORG_MCP_SSE_URL ?? 'http://hypercode.default.svc.cluster.local:3000/sse';
+        const sseUrl = options.sseUrl ?? process.env.HYPERCODE_MCP_SSE_URL ?? 'http://hypercode.default.svc.cluster.local:3000/sse';
         const serverConfig = env === 'k8s'
             ? { url: sseUrl, transport: 'sse' as const }
             : localConfig;

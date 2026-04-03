@@ -159,7 +159,7 @@ class SessionManagerService {
 class MCPConfigurationService {
   // Manages MCP configs, secrets, environment variables
   // Key Features:
-  // - Auto-detection: Scan .mcp.json files, .borg.json
+  // - Auto-detection: Scan .mcp.json files, .hypercode.json
   // - Auto-configuration: Generate configs for new servers
   // - Multi-format support: Claude vs OpenAI vs Google format
   // - Environment Management: .env expansion, secrets management
@@ -202,7 +202,7 @@ class ServerRegistryService {
   // - Categorization: Assign categories (finance, memory, browser, etc.)
   
   // - Deduplication: Merge duplicate server entries
-  // - Rating: Assess relevance to Borg goals
+  // - Rating: Assess relevance to Hypercode goals
 
   methods:
   + getAllServers(): Promise<ServerDefinition[]>
@@ -275,7 +275,7 @@ interface ToolDefinition {
   examples: any[];
   uiHints?: any;
   customMetadata?: Record<string, any>;
-  rating: number; // 1-5 relevance to Borg
+  rating: number; // 1-5 relevance to Hypercode
 }
 ```
 
@@ -350,7 +350,7 @@ interface TrafficSummary {
 
 ## Integration Points
 
-### With Existing Borg Services
+### With Existing Hypercode Services
 
 1. **McpManager** (`packages/core/src/managers/McpProxyManager.ts`)
    - Already handles MCP connections, traffic events
@@ -382,7 +382,7 @@ interface TrafficSummary {
 ## Implementation Phases
 
 ### Phase 1: Discovery & Research (Current)
-1. **Study existing Borg MCP implementation** in depth
+1. **Study existing Hypercode MCP implementation** in depth
 2. **Analyze mcpproxy and meta-mcp-proxy** for patterns
 3. **Examine mcp-router** for routing logic
 4. **Study Claude Lazy Loading** for progressive disclosure
@@ -481,7 +481,7 @@ interface TrafficSummary {
 
 ## Files to Reference
 
-### Existing Borg Code (Analysis Required)
+### Existing Hypercode Code (Analysis Required)
 - `packages/core/src/managers/McpProxyManager.ts` - Study this deeply
 - `packages/core/src/services/ToolSearchService.ts` - Understand tool search
 - `packages/core/src/managers/SessionManager.ts` - Study session lifecycle

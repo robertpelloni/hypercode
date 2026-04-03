@@ -3,7 +3,7 @@
 > **Status**: Draft
 > **Phase**: 65 (Marketplace & Ecosystem)
 
-This document outlines the strategy for integrating standard Model Context Protocol (MCP) servers and libraries into the Borg ecosystem.
+This document outlines the strategy for integrating standard Model Context Protocol (MCP) servers and libraries into the Hypercode ecosystem.
 
 ## 1. Targeted MCP Servers
 
@@ -44,7 +44,7 @@ Integration of official `@modelcontextprotocol` packages:
 ## 4. Implementation Strategy
 
 1.  **Registry**: creating a `registry.json` or database table to track available MCP servers.
-2.  **Installer**: implementing a `borg mcp install <server>` command.
+2.  **Installer**: implementing a `hypercode mcp install <server>` command.
 3.  **Config**: updating `mcp.json` automatically upon installation.
 4.  **UI**: updating `/dashboard/marketplace` to list these integratable servers.
 

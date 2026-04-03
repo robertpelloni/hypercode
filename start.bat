@@ -8,10 +8,10 @@ if errorlevel 1 (
 )
 
 set SKIP_INSTALL=0
-if /I "%BORG_SKIP_INSTALL%"=="1" set SKIP_INSTALL=1
+if /I "%HYPERCODE_SKIP_INSTALL%"=="1" set SKIP_INSTALL=1
 
 if "%SKIP_INSTALL%"=="1" (
-    echo Skipping dependency install ^(BORG_SKIP_INSTALL=1^)...
+    echo Skipping dependency install ^(HYPERCODE_SKIP_INSTALL=1^)...
 ) else (
     echo Installing dependencies...
     call pnpm install
@@ -19,10 +19,10 @@ if "%SKIP_INSTALL%"=="1" (
 )
 
 set SKIP_NATIVE_PREFLIGHT=0
-if /I "%BORG_SKIP_NATIVE_PREFLIGHT%"=="1" set SKIP_NATIVE_PREFLIGHT=1
+if /I "%HYPERCODE_SKIP_NATIVE_PREFLIGHT%"=="1" set SKIP_NATIVE_PREFLIGHT=1
 
 if "%SKIP_NATIVE_PREFLIGHT%"=="1" (
-    echo Skipping native runtime preflight ^(BORG_SKIP_NATIVE_PREFLIGHT=1^)...
+    echo Skipping native runtime preflight ^(HYPERCODE_SKIP_NATIVE_PREFLIGHT=1^)...
 ) else (
     echo Checking native runtime prerequisites...
     call node scripts\ensure_native_runtime.mjs
@@ -30,12 +30,12 @@ if "%SKIP_NATIVE_PREFLIGHT%"=="1" (
 )
 
 set BUILD_TARGET=build:workspace
-if /I "%BORG_FULL_BUILD%"=="1" set BUILD_TARGET=build
+if /I "%HYPERCODE_FULL_BUILD%"=="1" set BUILD_TARGET=build
 set SKIP_BUILD=0
-if /I "%BORG_SKIP_BUILD%"=="1" set SKIP_BUILD=1
+if /I "%HYPERCODE_SKIP_BUILD%"=="1" set SKIP_BUILD=1
 
 if "%SKIP_BUILD%"=="1" (
-    echo Skipping build step ^(BORG_SKIP_BUILD=1^)...
+    echo Skipping build step ^(HYPERCODE_SKIP_BUILD=1^)...
 ) else (
     echo Building ^(%BUILD_TARGET%^)...
     call pnpm run %BUILD_TARGET%

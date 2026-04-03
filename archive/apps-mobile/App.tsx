@@ -2,16 +2,16 @@ import React from 'react';
 import { StyleSheet, View, StatusBar, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-// In development, you might point this to your local IP running Borg (e.g. http://192.168.1.100:3000)
-// For production, this should point to your live Borg deployment URL.
-const BORG_DASHBOARD_URL = 'http://localhost:3000';
+// In development, you might point this to your local IP running Hypercode (e.g. http://192.168.1.100:3000)
+// For production, this should point to your live Hypercode deployment URL.
+const HYPERCODE_DASHBOARD_URL = 'http://localhost:3000';
 
 export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <WebView
-        source={{ uri: BORG_DASHBOARD_URL }}
+        source={{ uri: HYPERCODE_DASHBOARD_URL }}
         style={styles.webview}
         // Enable iOS features for seamless PWA-like appearance
         allowsInlineMediaPlayback={true}

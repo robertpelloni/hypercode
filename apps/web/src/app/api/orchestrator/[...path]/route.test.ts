@@ -7,12 +7,12 @@ import { GET } from './route';
 
 describe('orchestrator proxy route', () => {
   const originalFetch = global.fetch;
-  const originalConfigDir = process.env.BORG_CONFIG_DIR;
+  const originalConfigDir = process.env.HYPERCODE_CONFIG_DIR;
   let tempConfigDir = '';
 
   beforeEach(async () => {
     tempConfigDir = await fs.mkdtemp(path.join(os.tmpdir(), 'cli-orchestrator-route-'));
-    process.env.BORG_CONFIG_DIR = tempConfigDir;
+    process.env.HYPERCODE_CONFIG_DIR = tempConfigDir;
     await fs.writeFile(
       path.join(tempConfigDir, 'lock'),
       JSON.stringify({ host: '0.0.0.0', port: 4000 }),
@@ -24,9 +24,9 @@ describe('orchestrator proxy route', () => {
     global.fetch = originalFetch;
 
     if (originalConfigDir === undefined) {
-      delete process.env.BORG_CONFIG_DIR;
+      delete process.env.HYPERCODE_CONFIG_DIR;
     } else {
-      process.env.BORG_CONFIG_DIR = originalConfigDir;
+      process.env.HYPERCODE_CONFIG_DIR = originalConfigDir;
     }
 
     if (tempConfigDir) {

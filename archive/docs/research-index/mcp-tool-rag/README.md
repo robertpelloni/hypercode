@@ -79,15 +79,15 @@ MCP Tool RAG and disclosure systems reduce context usage by only exposing releva
 2. **Study progressive disclosure algorithms**
 3. **Extract semantic search implementations**
 4. **Analyze tool chaining patterns**
-5. **Implement tool RAG system** in Borg
+5. **Implement tool RAG system** in Hypercode
 6. **Build universal MCP router/aggregator**
 7. **Add traffic inspection** and logging
 
 ---
 
-## Borg Tool Disclosure Architecture
+## Hypercode Tool Disclosure Architecture
 
-Borg should implement:
+Hypercode should implement:
 - **Semantic tool search**: Find relevant tools by query
 - **Progressive disclosure**: Only expose N tools at a time
 - **Tool RAG**: Vector embeddings of tool descriptions

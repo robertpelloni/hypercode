@@ -1,6 +1,6 @@
 # Submodule Inventory (Pending Assimilation)
 
-This document tracks external repositories identified for assimilation into the Borg ecosystem.
+This document tracks external repositories identified for assimilation into the Hypercode ecosystem.
 **Status**: Pending Review and Integration.
 
 ## MCP Servers

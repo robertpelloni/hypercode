@@ -1,6 +1,6 @@
 # Auto-Drive Mode 🚗💨
 
-**Auto-Drive** is the fully autonomous mode for the Borg Director. It allows the AI to "drive" the development loop by reading tasks, planning actions, and executing them without manual user intervention.
+**Auto-Drive** is the fully autonomous mode for the Hypercode Director. It allows the AI to "drive" the development loop by reading tasks, planning actions, and executing them without manual user intervention.
 
 ## How it Works
 
@@ -31,7 +31,7 @@ You can set the autonomy level via the **Dashboard** or using the MCP tool:
 
 ### 3. Stopping
 
-To stop Auto-Drive, simply kill the `npx` process or the `borg-cli` server.
+To stop Auto-Drive, simply kill the `npx` process or the `hypercode-cli` server.
 
 ## Tips
 

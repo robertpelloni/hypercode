@@ -1,4 +1,4 @@
-# borg Handoff - Session 2025-12-28
+# hypercode Handoff - Session 2025-12-28
 
 ## Status Update
 - **Core:** 

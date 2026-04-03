@@ -3,10 +3,10 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 async function main() {
-    console.log("Connecting to Borg Core Stdio...");
+    console.log("Connecting to Hypercode Core Stdio...");
     const transport = new StdioClientTransport({
         command: "node",
-        args: ["c:/Users/hyper/workspace/borg/packages/core/dist/server-stdio.js"]
+        args: ["c:/Users/hyper/workspace/hypercode/packages/core/dist/server-stdio.js"]
     });
 
     const client = new Client(

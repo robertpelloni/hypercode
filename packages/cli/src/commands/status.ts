@@ -71,7 +71,7 @@ async function withStatusErrorHandling(
       const location = resolveControlPlaneLocation();
       console.error(chalk.red(`  ✗ ${message}`));
       console.error(chalk.dim(`  Control plane: ${location.baseUrl} (${location.source})`));
-      console.error(chalk.dim('  Start HyperCode with `hypercode start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
+      console.error(chalk.dim('  Start HyperCode with `hypercode start` or point HYPERCODE_TRPC_UPSTREAM at a live /trpc endpoint.'));
     }
     process.exitCode = 1;
   }

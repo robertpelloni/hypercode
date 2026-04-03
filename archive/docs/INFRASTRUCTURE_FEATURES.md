@@ -143,7 +143,7 @@
 
 ---
 
-## Implementation Priority for Borg
+## Implementation Priority for Hypercode
 
 ### Phase 1: Code Indexing
 1. Integrate LSP for semantic understanding

@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/borghq/hypercode-go/internal/config"
-	"github.com/borghq/hypercode-go/internal/interop"
-	"github.com/borghq/hypercode-go/internal/memorystore"
+	"github.com/hypercodehq/hypercode-go/internal/config"
+	"github.com/hypercodehq/hypercode-go/internal/interop"
+	"github.com/hypercodehq/hypercode-go/internal/memorystore"
 )
 
 type StartupBlockingReason struct {
@@ -110,7 +110,7 @@ func (s *Server) buildStartupStatus(ctx context.Context) (StartupStatus, error) 
 				"workspaceRootAvailable": configStatus.WorkspaceRoot.Exists,
 				"goConfigDirAvailable":   configStatus.ConfigDir.Exists,
 				"mainConfigDirAvailable": configStatus.MainConfigDir.Exists,
-				"repoConfigAvailable":    configStatus.BorgConfigFile.Exists,
+				"repoConfigAvailable":    configStatus.HypercodeConfigFile.Exists,
 				"mcpConfigAvailable":     configStatus.MCPConfigFile.Exists,
 			},
 			"memory": map[string]any{

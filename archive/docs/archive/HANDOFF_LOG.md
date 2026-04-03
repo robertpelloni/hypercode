@@ -4,7 +4,7 @@
 
 ## 🚀 Mission Accomplished: Core Robustness & Advanced Features (v1.3.0)
 
-This session focused on hardening the Agentic Framework (`@borg/core`) and completing the backlog of critical infrastructure tasks.
+This session focused on hardening the Agentic Framework (`@hypercode/core`) and completing the backlog of critical infrastructure tasks.
 
 ### 🌟 Key Achievements
 1.  **Smart Auto-Drive (Robustness Phase 4):**
@@ -34,7 +34,7 @@ This session focused on hardening the Agentic Framework (`@borg/core`) and compl
 
 ### 📂 Project State
 - **Version:** `1.4.0` (Core Feature Set + Phase 12 Skills/Orchestration).
-- **Build Status:** Clean (`@borg/web` verified).
+- **Build Status:** Clean (`@hypercode/web` verified).
 - **Backlog:** Phase 12 (Skills/Orchestration) is COMPLETE.
 
 ### 🌟 New in Phase 12
@@ -94,7 +94,7 @@ This session focused on repairing the submodule architecture, auditing repositor
     -   Created **`docs/REPORTS/FEATURE_GAP_ANALYSIS_2026_02_24.md`**.
 
 4.  **Master Index Synchronization:**
-    -   Updated `BORG_MASTER_INDEX.jsonc` stats to reflect the transition from untriaged links to 932 assimilated submodules.
+    -   Updated `HYPERCODE_MASTER_INDEX.jsonc` stats to reflect the transition from untriaged links to 932 assimilated submodules.
 
 ### 📂 Project State
 - **Version:** `2.7.16` (Canonical Roadmap Alignment).

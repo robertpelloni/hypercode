@@ -1,4 +1,4 @@
-# Borg: The Comprehensive Vision Document
+# Hypercode: The Comprehensive Vision Document
 
 **Version:** 0.4.0  
 **Last Updated:** 2026-01-09  
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-**Borg (Super AI Plugin)** is a **Meta-Orchestrator** for the Model Context Protocol (MCP). It serves as the universal operating system for AI tools, acting as a "Motherboard" that connects, coordinates, and enhances any AI agent, tool, or service. The project embodies three core philosophies:
+**Hypercode (Super AI Plugin)** is a **Meta-Orchestrator** for the Model Context Protocol (MCP). It serves as the universal operating system for AI tools, acting as a "Motherboard" that connects, coordinates, and enhances any AI agent, tool, or service. The project embodies three core philosophies:
 
 1. **Universal Integration** - Aggregate, don't compete
 2. **Active Intelligence** - Autonomous agents with persistent memory
@@ -20,9 +20,9 @@
 
 ### 1.1 Core Metaphor
 
-Borg is to AI tools what an operating system is to hardware:
+Hypercode is to AI tools what an operating system is to hardware:
 
-| Computer | Borg |
+| Computer | Hypercode |
 |----------|------|
 | Motherboard | Core Service (Hub) |
 | CPU | ModelGateway (LLM abstraction) |
@@ -39,7 +39,7 @@ Borg is to AI tools what an operating system is to hardware:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         Borg HUB                                │
+│                         Hypercode HUB                                │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │  HubServer  │  │ McpProxy    │  │    ProgressiveDisclose  │  │
 │  │  (JSON-RPC) │  │ Manager     │  │    (search_tools,       │  │
@@ -69,7 +69,7 @@ Borg is to AI tools what an operating system is to hardware:
 ### 2.1 Monorepo Structure
 
 ```
-borg/
+hypercode/
 ├── packages/
 │   ├── core/           # The Brain - Fastify + Socket.io + Managers
 │   ├── ui/             # The Control Center - Next.js Dashboard
@@ -169,7 +169,7 @@ All subsystems are implemented as **Manager** classes extending `EventEmitter`:
 **Features:**
 - **Context Compactor:** Extract Facts, Decisions, Action Items from raw streams
 - **Ingestors:** AgentMessageBroker, Jules, Tool hooks
-- **Git Sync:** Export to `.borg/memory_export.json` for cloud agent access
+- **Git Sync:** Export to `.hypercode/memory_export.json` for cloud agent access
 - **Dashboard:** `/memory` page with semantic search
 
 ### 3.3 Agent System
@@ -258,7 +258,7 @@ interface AgentDefinition {
 **Feature Parity Goals:**
 - **Oracle:** Route complex queries to reasoning models (o1/r1)
 - **Librarian:** GitHub search and external repo queries
-- **Toolboxes:** Auto-register scripts from `.borg/toolbox/`
+- **Toolboxes:** Auto-register scripts from `.hypercode/toolbox/`
 - **Repo Map:** AST-based repository mapping
 
 ### 3.8 Client Integrations
@@ -278,7 +278,7 @@ interface AgentDefinition {
 
 ### 4.1 Philosophy: Extensible Platform
 
-Borg is designed to be an extensible platform that can integrate with various hardware and infrastructure components.
+Hypercode is designed to be an extensible platform that can integrate with various hardware and infrastructure components.
 
 ### 4.2 Technical Stack
 
@@ -287,7 +287,7 @@ Borg is designed to be an extensible platform that can integrate with various ha
   - Distributed Storage
   - Game/Application Servers
 
-### 4.3 Borg Role
+### 4.3 Hypercode Role
 
 The plugin is the **software layer** connecting hardware and services:
 
@@ -432,12 +432,12 @@ Based on conversation context, three paths forward:
 # Development
 pnpm install              # Install dependencies
 pnpm run start:all        # Build & Start everything
-pnpm --filter @borg/core dev   # Start Core only
-pnpm --filter @borg/ui dev     # Start UI only
+pnpm --filter @hypercode/core dev   # Start Core only
+pnpm --filter @hypercode/ui dev     # Start UI only
 pnpm test                 # Run tests
 
 # CLI
-super-ai start            # Start Borg
+super-ai start            # Start Hypercode
 super-ai status           # Check status
 super-ai run <agent>      # Run agent
 super-ai mine             # Submit activity (Bobcoin)
@@ -466,14 +466,14 @@ JULES_API_KEY=xxx         # Jules platform sync
 
 ## Conclusion
 
-Borg represents a unified vision for AI tool orchestration:
+Hypercode represents a unified vision for AI tool orchestration:
 
 1. **Universal Hub** - Connect any MCP server, CLI, or agent
 2. **Intelligent Core** - Memory, context, autonomous execution
 3. **Physical Bridge** - Bobcoin economy linking digital and physical worlds
 4. **Ecosystem** - 70+ submodules, 100+ skills, multi-platform clients
 
-The "Motherboard & OS" metaphor captures the essence: Borg doesn't replace tools, it connects and enhances them. It's the operating system for the AI age.
+The "Motherboard & OS" metaphor captures the essence: Hypercode doesn't replace tools, it connects and enhances them. It's the operating system for the AI age.
 
 ---
 

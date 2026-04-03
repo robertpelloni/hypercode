@@ -4,11 +4,11 @@ import path from 'node:path';
 import type { RegisteredBridgeClient } from '../bridge/bridge-manifest.js';
 import type { ExecutionEnvironmentSummary } from '../services/execution-environment.js';
 
-let borgVersionPromise: Promise<string> | null = null;
+let hypercodeVersionPromise: Promise<string> | null = null;
 
-async function getBorgVersion(): Promise<string> {
-    if (!borgVersionPromise) {
-        borgVersionPromise = (async () => {
+async function getHypercodeVersion(): Promise<string> {
+    if (!hypercodeVersionPromise) {
+        hypercodeVersionPromise = (async () => {
             try {
                 const version = await readFile(path.join(process.cwd(), 'VERSION'), 'utf-8');
                 const trimmed = version.trim();
@@ -32,7 +32,7 @@ async function getBorgVersion(): Promise<string> {
         })();
     }
 
-    return borgVersionPromise;
+    return hypercodeVersionPromise;
 }
 
 type StartupStatusInput = {
@@ -336,7 +336,7 @@ export async function buildStartupStatusSnapshot(input: StartupStatusInput) {
             : `Startup ready with degraded persistence: ${degradedDetails.join(' ')}`
         : `Startup pending: ${blockingReasons.map((reason) => reason.detail).join(' ')}${degradedDetails.length > 0 ? ` Degraded services: ${degradedDetails.join(' ')}` : ''}`;
 
-    const version = await getBorgVersion();
+    const version = await getHypercodeVersion();
 
     return {
         status: 'running',

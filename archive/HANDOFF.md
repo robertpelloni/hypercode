@@ -1,4 +1,4 @@
-# Borg Handoff
+# Hypercode Handoff
 
 _Last updated: 2026-03-18_
 
@@ -25,7 +25,7 @@ This handoff reflects a documentation-overhaul sync to current repository realit
 ## Operational truth (now)
 
 - Core release line: `2.7.329` (`VERSION`)
-- Borg 1.0 focus remains:
+- Hypercode 1.0 focus remains:
   1. MCP router
   2. provider fallback/routing
   3. session supervision
@@ -70,8 +70,8 @@ This handoff reflects a documentation-overhaul sync to current repository realit
   - MCP status route
   - memory status route
 - Verified extension artifact readiness remained green for:
-  - `apps/borg-extension/dist-chromium`
-  - `apps/borg-extension/dist-firefox`
+  - `apps/hypercode-extension/dist-chromium`
+  - `apps/hypercode-extension/dist-firefox`
 - Updated active task brief with checked smoke criterion and concrete validation log:
   - `tasks/active/024-startup-readiness-smoke-contract.md`
 - Synced version/changelog for this documentation-truthfulness validation slice:

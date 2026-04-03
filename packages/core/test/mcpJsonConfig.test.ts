@@ -5,7 +5,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { JsonConfigProvider } from '../src/services/config/JsonConfigProvider.ts';
-import { loadBorgMcpConfig, stripJsonComments, writeBorgMcpConfig } from '../src/mcp/mcpJsonConfig.ts';
+import { loadHypercodeMcpConfig, stripJsonComments, writeHypercodeMcpConfig } from '../src/mcp/mcpJsonConfig.ts';
 
 const tempDirs: string[] = [];
 
@@ -38,7 +38,7 @@ describe('mcp jsonc persistence', () => {
                 await fs.writeFile(path.join(workspaceRoot, 'mcp.jsonc'), rawJsonc, 'utf-8');
 
                 const stripped = stripJsonComments(rawJsonc);
-                const parsed = await loadBorgMcpConfig(workspaceRoot);
+                const parsed = await loadHypercodeMcpConfig(workspaceRoot);
 
                 expect(stripped).toContain('"url": "http://localhost:47334/mcp/sse"');
                 expect(stripped).not.toContain('top-level comment');
@@ -50,7 +50,7 @@ describe('mcp jsonc persistence', () => {
     it('writes metadata to mcp.jsonc while keeping mcp.json compatibility clean', async () => {
         const workspaceRoot = await makeTempDir();
 
-        await writeBorgMcpConfig({
+        await writeHypercodeMcpConfig({
             mcpServers: {
                 demo: {
                     command: 'npx',
@@ -81,7 +81,7 @@ describe('mcp jsonc persistence', () => {
         const jsoncRaw = await fs.readFile(path.join(workspaceRoot, 'mcp.jsonc'), 'utf-8');
         const jsonRaw = await fs.readFile(path.join(workspaceRoot, 'mcp.json'), 'utf-8');
         const compatibilityConfig = JSON.parse(jsonRaw) as { mcpServers: Record<string, Record<string, unknown>> };
-        const loadedConfig = await loadBorgMcpConfig(workspaceRoot);
+        const loadedConfig = await loadHypercodeMcpConfig(workspaceRoot);
 
         expect(jsoncRaw).toContain('_meta');
         expect(jsonRaw).not.toContain('_meta');
@@ -94,7 +94,7 @@ describe('mcp jsonc persistence', () => {
     it('preserves cached metadata when JsonConfigProvider saves server config updates', async () => {
         const workspaceRoot = await makeTempDir();
 
-        await writeBorgMcpConfig({
+        await writeHypercodeMcpConfig({
             mcpServers: {
                 demo: {
                     command: 'npx',
@@ -119,7 +119,7 @@ describe('mcp jsonc persistence', () => {
             },
         ]);
 
-        const loadedConfig = await loadBorgMcpConfig(workspaceRoot);
+        const loadedConfig = await loadHypercodeMcpConfig(workspaceRoot);
         const loadedServers = await provider.loadMcpServers();
 
         expect(loadedConfig.mcpServers.demo.command).toBe('pnpm');

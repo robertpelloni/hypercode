@@ -17,9 +17,9 @@ function setStatus(message: string, isError = false) {
 }
 
 function loadSettings() {
-    chrome.storage.sync.get(['borgCoreUrl', 'borgWsUrl'], (result: { borgCoreUrl?: string; borgWsUrl?: string }) => {
-        coreUrlInput.value = result.borgCoreUrl || DEFAULT_CORE_URL;
-        wsUrlInput.value = result.borgWsUrl || DEFAULT_WS_URL;
+    chrome.storage.sync.get(['hypercodeCoreUrl', 'hypercodeWsUrl'], (result: { hypercodeCoreUrl?: string; hypercodeWsUrl?: string }) => {
+        coreUrlInput.value = result.hypercodeCoreUrl || DEFAULT_CORE_URL;
+        wsUrlInput.value = result.hypercodeWsUrl || DEFAULT_WS_URL;
         setStatus('Settings loaded.');
     });
 }
@@ -28,7 +28,7 @@ saveSettingsBtn.addEventListener('click', () => {
     const coreUrl = coreUrlInput.value.trim() || DEFAULT_CORE_URL;
     const wsUrl = wsUrlInput.value.trim() || DEFAULT_WS_URL;
 
-    chrome.storage.sync.set({ borgCoreUrl: coreUrl, borgWsUrl: wsUrl }, () => {
+    chrome.storage.sync.set({ hypercodeCoreUrl: coreUrl, hypercodeWsUrl: wsUrl }, () => {
         if (chrome.runtime.lastError) {
             setStatus(`Failed to save settings: ${chrome.runtime.lastError.message}`, true);
             return;
@@ -40,7 +40,7 @@ saveSettingsBtn.addEventListener('click', () => {
 resetSettingsBtn.addEventListener('click', () => {
     coreUrlInput.value = DEFAULT_CORE_URL;
     wsUrlInput.value = DEFAULT_WS_URL;
-    chrome.storage.sync.set({ borgCoreUrl: DEFAULT_CORE_URL, borgWsUrl: DEFAULT_WS_URL }, () => {
+    chrome.storage.sync.set({ hypercodeCoreUrl: DEFAULT_CORE_URL, hypercodeWsUrl: DEFAULT_WS_URL }, () => {
         if (chrome.runtime.lastError) {
             setStatus(`Failed to reset settings: ${chrome.runtime.lastError.message}`, true);
             return;

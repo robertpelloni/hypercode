@@ -1,11 +1,11 @@
-// Borg MCP configuration
-// This file is Borg-owned and may include cached server metadata under mcpServers.<name>._meta.
+// Hypercode MCP configuration
+// This file is Hypercode-owned and may include cached server metadata under mcpServers.<name>._meta.
 {
   "mcpServers": {
-    "borg-supervisor": {
+    "hypercode-supervisor": {
       "command": "node",
       "args": [
-        "C:\\Users\\hyper\\workspace\\borg\\packages\\borg-supervisor\\dist\\index.js"
+        "C:\\Users\\hyper\\workspace\\hypercode\\packages\\hypercode-supervisor\\dist\\index.js"
       ],
       "env": {
         "NODE_ENV": "production"

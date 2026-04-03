@@ -90,7 +90,7 @@
 ## Research Tasks
 
 - [ ] Categorize each uncategorized resource
-- [ ] Determine relevance to Borg goals
+- [ ] Determine relevance to Hypercode goals
 - [ ] Move to appropriate category if needed
 - [ ] Document findings
 - [ ] Integrate valuable features

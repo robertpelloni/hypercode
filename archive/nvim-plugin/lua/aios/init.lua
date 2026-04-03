@@ -16,32 +16,32 @@ local curl = require("plenary.curl")
 function M.setup(opts)
     M.config = vim.tbl_deep_extend("force", M.config, opts or {})
     
-    vim.api.nvim_create_user_command("BorgDebate", function(args)
+    vim.api.nvim_create_user_command("HypercodeDebate", function(args)
         M.start_debate(args.args)
     end, { nargs = "?" })
     
-    vim.api.nvim_create_user_command("BorgArchitect", function(args)
+    vim.api.nvim_create_user_command("HypercodeArchitect", function(args)
         M.start_architect(args.args)
     end, { nargs = "?" })
     
-    vim.api.nvim_create_user_command("BorgAnalytics", M.show_analytics, {})
-    vim.api.nvim_create_user_command("BorgTemplates", M.show_templates, {})
-    vim.api.nvim_create_user_command("BorgHealth", M.check_health, {})
+    vim.api.nvim_create_user_command("HypercodeAnalytics", M.show_analytics, {})
+    vim.api.nvim_create_user_command("HypercodeTemplates", M.show_templates, {})
+    vim.api.nvim_create_user_command("HypercodeHealth", M.check_health, {})
     
     if M.config.keymaps then
         local km = M.config.keymaps
         if km.debate then
-            vim.keymap.set("n", km.debate, M.start_debate, { desc = "Borg: Start Debate" })
-            vim.keymap.set("v", km.debate, M.start_debate_visual, { desc = "Borg: Debate Selection" })
+            vim.keymap.set("n", km.debate, M.start_debate, { desc = "Hypercode: Start Debate" })
+            vim.keymap.set("v", km.debate, M.start_debate_visual, { desc = "Hypercode: Debate Selection" })
         end
         if km.architect then
-            vim.keymap.set("n", km.architect, M.start_architect, { desc = "Borg: Architect Mode" })
+            vim.keymap.set("n", km.architect, M.start_architect, { desc = "Hypercode: Architect Mode" })
         end
         if km.analytics then
-            vim.keymap.set("n", km.analytics, M.show_analytics, { desc = "Borg: Show Analytics" })
+            vim.keymap.set("n", km.analytics, M.show_analytics, { desc = "Hypercode: Show Analytics" })
         end
         if km.templates then
-            vim.keymap.set("n", km.templates, M.show_templates, { desc = "Borg: Show Templates" })
+            vim.keymap.set("n", km.templates, M.show_templates, { desc = "Hypercode: Show Templates" })
         end
     end
 end
@@ -288,9 +288,9 @@ function M.check_health()
         callback = function(response)
             vim.schedule(function()
                 if response.status == 200 then
-                    vim.notify("Borg Hub is healthy", vim.log.levels.INFO)
+                    vim.notify("Hypercode Hub is healthy", vim.log.levels.INFO)
                 else
-                    vim.notify("Borg Hub is not responding", vim.log.levels.WARN)
+                    vim.notify("Hypercode Hub is not responding", vim.log.levels.WARN)
                 end
             end)
         end,

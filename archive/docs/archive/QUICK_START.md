@@ -1,4 +1,4 @@
-# 🚀 Borg Autonomous Development Quick Start
+# 🚀 Hypercode Autonomous Development Quick Start
 
 This guide enables you to use the **Intelligent Supervisor**, **Antigravity Extension**, and **MCP Server** together for autonomous development.
 
@@ -20,7 +20,7 @@ pnpm dev
 # Opens at http://localhost:3000
 ```
 
-## 3. Start the Borg Core (MCP Server)
+## 3. Start the Hypercode Core (MCP Server)
 The Core is the brain. It runs the Director agent and the WebSocket bridge.
 
 ```bash
@@ -30,7 +30,7 @@ pnpm start
 ```
 
 ## 4. Install the Antigravity Extension
-The Extension bridges your web browser (ChatGPT/Claude/Gemini) to your local Borg Core.
+The Extension bridges your web browser (ChatGPT/Claude/Gemini) to your local Hypercode Core.
 
 1.  **Build the Extension:**
     ```bash
@@ -61,7 +61,7 @@ Or, ask **Gemini/Claude** in your browser (with Extension active):
 
 The Extension will:
 1.  Intercept the request.
-2.  Send it to Borg Core via WebSocket.
+2.  Send it to Hypercode Core via WebSocket.
 3.  Core will wake `Director`.
 4.  Director will:
     -   Use `filesystem_list_directory`.

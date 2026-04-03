@@ -35,7 +35,7 @@ All these currently reference `0.99.3`:
 - `packages/vscode/package.json`
 
 ## 3. Web UI Fallbacks & Branding
-- `apps/web/src/components/Navigation.tsx`: Fallback for `NEXT_PUBLIC_BORG_VERSION`.
+- `apps/web/src/components/Navigation.tsx`: Fallback for `NEXT_PUBLIC_HYPERCODE_VERSION`.
 - `apps/web/src/components/mcp/nav-config.ts`: Hardcoded branding string "HyperCode 0.99.3 Core".
 
 ## 4. CLI & Core Runtime Fallbacks

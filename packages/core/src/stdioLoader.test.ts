@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-    BORG_CORE_LOADER_STATUS_TOOL,
+    HYPERCODE_CORE_LOADER_STATUS_TOOL,
     buildCachedLoaderCatalog,
     callLoaderTool,
     createEmptyLoaderRuntimeState,
@@ -47,7 +47,7 @@ describe('buildCachedLoaderCatalog', () => {
         expect(catalog.enabledServerCount).toBe(1);
         expect(catalog.cachedToolCount).toBe(1);
         expect(catalog.tools.map((tool) => tool.name)).toEqual([
-            BORG_CORE_LOADER_STATUS_TOOL,
+            HYPERCODE_CORE_LOADER_STATUS_TOOL,
             'alpha__search_docs',
         ]);
     });
@@ -58,7 +58,7 @@ describe('callLoaderTool', () => {
         const runtimeState = createEmptyLoaderRuntimeState();
         const proxyToolCall = vi.fn();
 
-        const result = await callLoaderTool(BORG_CORE_LOADER_STATUS_TOOL, {}, runtimeState, {
+        const result = await callLoaderTool(HYPERCODE_CORE_LOADER_STATUS_TOOL, {}, runtimeState, {
             isCoreBridgeHealthy: vi.fn().mockResolvedValue(false) as any,
             proxyToolCall,
         });

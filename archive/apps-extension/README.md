@@ -1,10 +1,10 @@
-# Borg Browser Extension
+# Hypercode Browser Extension
 
-This extension acts as a bridge between your browser (ChatGPT, Claude, etc.) and the Borg Core agent running on your machine.
+This extension acts as a bridge between your browser (ChatGPT, Claude, etc.) and the Hypercode Core agent running on your machine.
 
 ## Features
 - **Injects Context:** Allows web-based AI coding tools to see your local files.
-- **Auto-Clicking:** Allows Borg Director to click "Accept" or "Apply" buttons on web pages.
+- **Auto-Clicking:** Allows Hypercode Director to click "Accept" or "Apply" buttons on web pages.
 - **Deep Linking:** Invokes local tools via a command menu.
 
 ## How to Install (Developer Mode)
@@ -24,7 +24,7 @@ This extension acts as a bridge between your browser (ChatGPT, Claude, etc.) and
         *Note: If `manifest.json` is in the root of `apps/extension` and not `dist`, point to `apps/extension`. (Check `apps/extension/manifest.json` location).*
 
 3.  **Verify:**
-    You should see the "Borg Extension" active. It will try to connect to `ws://localhost:3001`.
+    You should see the "Hypercode Extension" active. It will try to connect to `ws://localhost:3001`.
 
 ## Firefox Installation
 1.  **Prepare Manifest:**

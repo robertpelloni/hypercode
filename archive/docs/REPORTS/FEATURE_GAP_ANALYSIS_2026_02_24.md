@@ -1,4 +1,4 @@
-# Borg OS: Frontend-Backend Feature Gap Analysis — 2026-02-24
+# Hypercode OS: Frontend-Backend Feature Gap Analysis — 2026-02-24
 
 ## ⚠️ Executive Summary
 A cross-referencing of `packages/core/src/routers/*.ts` against `apps/web/src/app/dashboard/` has identified several critical backend services that lack user interface representation. These "dark features" are functional but inaccessible to the end-user via the dashboard.

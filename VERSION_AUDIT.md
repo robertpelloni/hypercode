@@ -14,14 +14,14 @@
 - `packages/core/src/services/mcp-client.service.ts`
 - `packages/core/src/bridge/bridge-manifest.test.ts`
 - `package.json`
-- `apps/borg-extension/package.json`
+- `apps/hypercode-extension/package.json`
 - `apps/maestro/package.json`
 - `apps/vscode/package.json`
 - `apps/web/package.json`
 - `packages/adk/package.json`
 - `packages/agents/package.json`
 - `packages/ai/package.json`
-- `packages/borg-supervisor/package.json`
+- `packages/hypercode-supervisor/package.json`
 - `packages/browser/package.json`
 - `packages/browser-extension/package.json`
 - `packages/claude-mem/package.json`

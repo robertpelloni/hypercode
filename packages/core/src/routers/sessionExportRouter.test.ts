@@ -12,17 +12,17 @@ function createCaller() {
 describe('sessionExportRouter orchestrator base resolution', () => {
     const originalFetch = globalThis.fetch;
     const originalEnv = {
-        BORG_ORCHESTRATOR_URL: process.env.BORG_ORCHESTRATOR_URL,
-        BORG_TRPC_UPSTREAM: process.env.BORG_TRPC_UPSTREAM,
-        BORG_CONFIG_DIR: process.env.BORG_CONFIG_DIR,
-        NEXT_PUBLIC_BORG_ORCHESTRATOR_URL: process.env.NEXT_PUBLIC_BORG_ORCHESTRATOR_URL,
+        HYPERCODE_ORCHESTRATOR_URL: process.env.HYPERCODE_ORCHESTRATOR_URL,
+        HYPERCODE_TRPC_UPSTREAM: process.env.HYPERCODE_TRPC_UPSTREAM,
+        HYPERCODE_CONFIG_DIR: process.env.HYPERCODE_CONFIG_DIR,
+        NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL: process.env.NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL,
         NEXT_PUBLIC_AUTOPILOT_URL: process.env.NEXT_PUBLIC_AUTOPILOT_URL,
     };
 
     beforeEach(() => {
-        delete process.env.BORG_TRPC_UPSTREAM;
-        delete process.env.BORG_CONFIG_DIR;
-        delete process.env.NEXT_PUBLIC_BORG_ORCHESTRATOR_URL;
+        delete process.env.HYPERCODE_TRPC_UPSTREAM;
+        delete process.env.HYPERCODE_CONFIG_DIR;
+        delete process.env.NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL;
         delete process.env.NEXT_PUBLIC_AUTOPILOT_URL;
     });
 
@@ -39,7 +39,7 @@ describe('sessionExportRouter orchestrator base resolution', () => {
     });
 
     it('exports sessions from the configured orchestrator base', async () => {
-        process.env.BORG_ORCHESTRATOR_URL = 'http://127.0.0.1:5001';
+        process.env.HYPERCODE_ORCHESTRATOR_URL = 'http://127.0.0.1:5001';
         globalThis.fetch = vi.fn(async (input) => {
             expect(String(input)).toBe('http://127.0.0.1:5001/api/sessions');
             return {
@@ -70,7 +70,7 @@ describe('sessionExportRouter orchestrator base resolution', () => {
     });
 
     it('filters exported sessions when sessionIds are provided', async () => {
-        process.env.BORG_ORCHESTRATOR_URL = 'http://127.0.0.1:5001';
+        process.env.HYPERCODE_ORCHESTRATOR_URL = 'http://127.0.0.1:5001';
         globalThis.fetch = vi.fn(async (input) => {
             expect(String(input)).toBe('http://127.0.0.1:5001/api/sessions');
             return {
@@ -105,7 +105,7 @@ describe('sessionExportRouter orchestrator base resolution', () => {
     it('reports a clear error when importing without an orchestrator base', async () => {
         const configDir = mkdtempSync(`${os.tmpdir()}\\hypercode-export-empty-`);
         mkdirSync(configDir, { recursive: true });
-        process.env.BORG_CONFIG_DIR = configDir;
+        process.env.HYPERCODE_CONFIG_DIR = configDir;
 
         const fetchSpy = vi.fn();
         globalThis.fetch = fetchSpy as typeof fetch;

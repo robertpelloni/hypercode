@@ -15,7 +15,7 @@ vi.mock('../db/repositories/index.js', () => ({
 }));
 
 vi.mock('../mcp/mcpJsonConfig.js', () => ({
-    loadBorgMcpConfig: vi.fn(async () => ({ mcpServers: {} })),
+    loadHypercodeMcpConfig: vi.fn(async () => ({ mcpServers: {} })),
 }));
 
 vi.mock('../mcp/clientConfigSync.js', () => ({
@@ -94,7 +94,7 @@ describe('mcpServersRouter degraded SQLite handling', () => {
         const caller = createCaller();
 
         await expect(caller.registrySnapshot()).rejects.toMatchObject<Partial<TRPCError>>({
-            message: 'Registry snapshot is unavailable: BORG_MASTER_INDEX.jsonc contains invalid JSON.',
+            message: 'Registry snapshot is unavailable: HYPERCODE_MASTER_INDEX.jsonc contains invalid JSON.',
         });
     });
 });

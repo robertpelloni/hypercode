@@ -2,19 +2,19 @@
 
 ## Why this exists
 
-Borg 1.0 needs a strong MCP Master Router, but the repo directive is explicit:
+Hypercode 1.0 needs a strong MCP Master Router, but the repo directive is explicit:
 
-- Borg should **orchestrate**, not clone every tool.
+- Hypercode should **orchestrate**, not clone every tool.
 - New submodules require explicit human approval.
 - Upstream references should be kept narrow and intentional.
 
-This document compares current public MCP router / aggregator candidates against Borg's actual v1.0 requirements so we can decide whether to:
+This document compares current public MCP router / aggregator candidates against Hypercode's actual v1.0 requirements so we can decide whether to:
 
 1. adopt one codebase as the foundation,
 2. selectively vendor or submodule a few upstream references, or
-3. continue with Borg's own router implementation while borrowing proven patterns.
+3. continue with Hypercode's own router implementation while borrowing proven patterns.
 
-## Borg evaluation criteria
+## Hypercode evaluation criteria
 
 Scored against the active router task in `tasks/active/002-mcp-master-router.md`:
 
@@ -24,7 +24,7 @@ Scored against the active router task in `tasks/active/002-mcp-master-router.md`
 4. **Traffic inspection** — JSON-RPC visibility, latency, operational observability
 5. **Multi-client operability** — practical use with multiple IDE / desktop clients
 6. **Dashboard / operator UX** — admin surface, health visibility, discoverability
-7. **Code fit for Borg** — implementation style, maturity, language fit, architectural compatibility
+7. **Code fit for Hypercode** — implementation style, maturity, language fit, architectural compatibility
 
 Scoring legend:
 
@@ -44,19 +44,19 @@ Scoring legend:
 - Emphasizes multi-service aggregation, self-configuration, protocol support, reconnect behavior, and monitoring.
 
 **Strengths**
-- Best language fit with Borg's TypeScript-first v1.0 direction.
-- Clear conceptual overlap with Borg's aggregator requirement.
+- Best language fit with Hypercode's TypeScript-first v1.0 direction.
+- Clear conceptual overlap with Hypercode's aggregator requirement.
 - Good reference for config-driven aggregation and reconnect behavior.
 - Good candidate for studying how a practical “one endpoint, many servers” operator experience can stay lightweight.
 
 **Weaknesses**
 - Evidence of a rich operator dashboard is limited.
-- Observability appears lighter than Borg's target traffic inspector.
-- Less evidence of deep lifecycle supervision than Borg wants for restart isolation.
+- Observability appears lighter than Hypercode's target traffic inspector.
+- Less evidence of deep lifecycle supervision than Hypercode wants for restart isolation.
 
-**Best use for Borg**
+**Best use for Hypercode**
 - Reference for TypeScript aggregator structure, config model, and reconnect behavior.
-- Not strong enough to become Borg's direct foundation by itself.
+- Not strong enough to become Hypercode's direct foundation by itself.
 
 ### 2. `cortexd-labs/neurond`
 
@@ -65,16 +65,16 @@ Scoring legend:
 
 **Strengths**
 - Strongest reference for **namespace isolation**, explicit routing semantics, and security posture.
-- Deny-by-default policy model is a good design influence for Borg governance.
-- Audit logging and structured federation concepts are particularly relevant to Borg's traffic-inspector and operator goals.
+- Deny-by-default policy model is a good design influence for Hypercode governance.
+- Audit logging and structured federation concepts are particularly relevant to Hypercode's traffic-inspector and operator goals.
 - Clear internal module boundaries.
 
 **Weaknesses**
-- Rust implementation is not directly reusable in Borg's TypeScript core.
-- Little evidence of the kind of rich dashboard Borg wants.
+- Rust implementation is not directly reusable in Hypercode's TypeScript core.
+- Little evidence of the kind of rich dashboard Hypercode wants.
 - More useful as an architecture and policy reference than as an implementation base.
 
-**Best use for Borg**
+**Best use for Hypercode**
 - Reference for namespace contracts, policy boundaries, audit/event design, and federation semantics.
 - Excellent “how should this behave?” source; weak “drop this in as our base” candidate.
 
@@ -90,14 +90,14 @@ Scoring legend:
 - Shows how to package a “one client, many upstream MCP servers” experience for real users.
 
 **Weaknesses**
-- It is effectively a larger gateway platform, not a narrow Borg-style router kernel.
+- It is effectively a larger gateway platform, not a narrow Hypercode-style router kernel.
 - Heavy dependence on IBM Context Forge patterns and surrounding infrastructure.
-- Mixed-language stack and broader platform concerns make it poor as a clean Borg foundation.
+- Mixed-language stack and broader platform concerns make it poor as a clean Hypercode foundation.
 - More of an ecosystem gateway than a focused local control-plane kernel.
 
-**Best use for Borg**
+**Best use for Hypercode**
 - Reference for dashboard flows, gateway registration UX, virtual grouping, auth/admin ergonomics, and troubleshooting design.
-- Not recommended as Borg's core implementation base.
+- Not recommended as Hypercode's core implementation base.
 
 ### 4. `paularlott/llmrouter`
 
@@ -107,16 +107,16 @@ Scoring legend:
 **Strengths**
 - Strongest hybrid reference for **provider routing + MCP aggregation** in one system.
 - Good evidence of policy controls like native/discoverable visibility modes and allow/deny filtering.
-- Useful for thinking about Borg's eventual overlap between provider routing and tool routing dashboards.
+- Useful for thinking about Hypercode's eventual overlap between provider routing and tool routing dashboards.
 
 **Weaknesses**
 - Broader LLM gateway scope dilutes its value as a pure MCP router reference.
-- Go implementation is not a good direct fit for Borg v1.0.
-- Admin surface is interesting, but Borg already has its own dashboard direction.
+- Go implementation is not a good direct fit for Hypercode v1.0.
+- Admin surface is interesting, but Hypercode already has its own dashboard direction.
 
-**Best use for Borg**
+**Best use for Hypercode**
 - Reference for policy surfaces, tool visibility modes, and how provider + tool routing can coexist.
-- Not recommended as the Borg MCP base.
+- Not recommended as the Hypercode MCP base.
 
 ### 5. `david-martin/mcp-helper`
 
@@ -129,10 +129,10 @@ Scoring legend:
 
 **Weaknesses**
 - Explicitly a proof of concept.
-- Too narrow and infrastructural to serve as Borg's base.
+- Too narrow and infrastructural to serve as Hypercode's base.
 - Limited evidence of product-level lifecycle or operator UX maturity.
 
-**Best use for Borg**
+**Best use for Hypercode**
 - Reference for lower-level routing and mapping patterns only.
 
 ### 6. `2b3pro/watson-mcp-router`
@@ -150,7 +150,7 @@ Scoring legend:
 - No real operator dashboard.
 - No strong evidence of multi-client robustness or production-grade crash isolation.
 
-**Best use for Borg**
+**Best use for Hypercode**
 - Small reference implementation for router basics.
 - Not strong enough to justify submodule priority over stronger alternatives.
 
@@ -167,12 +167,12 @@ Scoring legend:
 - No maturity signals.
 - No dashboard, lifecycle, namespace, or ops evidence.
 
-**Best use for Borg**
+**Best use for Hypercode**
 - None beyond awareness.
 
 ## Evaluation matrix
 
-| Repository | Aggregation | Namespace Isolation | Lifecycle / Crash Handling | Traffic / Audit Visibility | Multi-Client / Operator Practicality | Dashboard / Admin UX | Code Fit for Borg | Overall Usefulness |
+| Repository | Aggregation | Namespace Isolation | Lifecycle / Crash Handling | Traffic / Audit Visibility | Multi-Client / Operator Practicality | Dashboard / Admin UX | Code Fit for Hypercode | Overall Usefulness |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | `vtxf/mcp-all-in-one` | 5 | 3 | 3 | 3 | 3 | 2 | 5 | 24 |
 | `cortexd-labs/neurond` | 4 | 5 | 4 | 5 | 3 | 1 | 2 | 24 |
@@ -182,36 +182,36 @@ Scoring legend:
 | `2b3pro/watson-mcp-router` | 4 | 4 | 3 | 2 | 2 | 1 | 4 | 20 |
 | `gladden4work/mcp-aggregator-worker` | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 2 |
 
-## What Borg should do
+## What Hypercode should do
 
 ## Recommendation
 
-**Do not adopt any single external repository as Borg's MCP router base.**
+**Do not adopt any single external repository as Hypercode's MCP router base.**
 
 Instead:
 
-1. **Keep Borg's router implementation in-house in TypeScript.**
+1. **Keep Hypercode's router implementation in-house in TypeScript.**
 2. **Use a small number of upstream references intentionally.**
 3. **Borrow specific patterns from different projects instead of inheriting their constraints wholesale.**
 
-This matches Borg's repo directive and is also the strongest technical choice.
+This matches Hypercode's repo directive and is also the strongest technical choice.
 
 ### Why not adopt a single base?
 
-No reviewed repo cleanly matches all of Borg's v1.0 requirements at once:
+No reviewed repo cleanly matches all of Hypercode's v1.0 requirements at once:
 
 - the strongest UI/admin examples are too platform-heavy,
 - the strongest federation/policy examples are in non-TypeScript stacks,
 - the strongest TypeScript aggregators are thinner on operator observability,
 - the minimal routers are too small to anchor a product.
 
-If Borg adopted one as its base, it would likely inherit the wrong abstractions and still need major rewrites for:
+If Hypercode adopted one as its base, it would likely inherit the wrong abstractions and still need major rewrites for:
 
 - dashboard integration,
 - traffic-inspector contracts,
 - client config sync,
 - supervisor-style restart behavior,
-- Borg's provider/session/dashboard architecture.
+- Hypercode's provider/session/dashboard architecture.
 
 That is the software version of buying a house because you liked the mailbox.
 
@@ -256,7 +256,7 @@ Optional fourth reference:
 
 ## Recommended disclosure and lazy-loading policy
 
-The highest-value Borg behavior here is **not** exposing more tools by default. It is exposing a *tiny* set of meta-tools that reliably unlock everything else.
+The highest-value Hypercode behavior here is **not** exposing more tools by default. It is exposing a *tiny* set of meta-tools that reliably unlock everything else.
 
 ### Always disclose these tools
 
@@ -279,7 +279,7 @@ That includes powerful tools. Powerful and always-visible are not the same thing
 
 ### Deferred binary loading policy
 
-For local stdio/binary-backed servers, Borg should prefer this lifecycle:
+For local stdio/binary-backed servers, Hypercode should prefer this lifecycle:
 
 1. **Index metadata at startup** (tool names, descriptions, namespaces, tags, cached schema hash).
 2. **Do not spawn the server binary during initial client connect** just to advertise tools.
@@ -308,13 +308,13 @@ Recommended defaults:
 
 Recommended behavior:
 
-- When loaded metadata exceeds **16**, Borg should suggest or automatically prefer unloading older idle tools.
-- At **24 loaded tools**, Borg should auto-evict by **least recently used idle tool**.
+- When loaded metadata exceeds **16**, Hypercode should suggest or automatically prefer unloading older idle tools.
+- At **24 loaded tools**, Hypercode should auto-evict by **least recently used idle tool**.
 - If precise recency is unavailable, fall back to **FIFO eviction**.
 - When hydrated schemas exceed **8**, dehydrate older tools back to summary metadata first before unloading them entirely.
 - When active binaries exceed **4**, stop the oldest idle binary whose tools are no longer recently used.
 
-### Best-value operating mode for Borg
+### Best-value operating mode for Hypercode
 
 The best default operating mode is:
 
@@ -367,10 +367,10 @@ Evidence gathered from the MCPM AI-agent guide:
 - doctor/usage/config/cache management
 - profile execution through a FastMCP proxy with proper namespacing
 
-Best Borg use:
+Best Hypercode use:
 
 - copy the **operator workflow design**, not the whole tool
-- use as the reference for `borg mcp sync`, install/import/export UX, and profile management
+- use as the reference for `hypercode mcp sync`, install/import/export UX, and profile management
 
 #### `George5562/Switchboard`
 
@@ -388,10 +388,10 @@ Evidence gathered from the architecture and protocol lessons docs:
 - explicit `inputSchema` return during introspection
 - strong implementation notes around timeouts, env passthrough, cleanup, and mock testing
 
-Best Borg use:
+Best Hypercode use:
 
 - use as the clearest reference for **deferred spawn + suite-level progressive disclosure**
-- borrow the **introspect/call** pattern, but keep Borg's richer search/ranking/operator model
+- borrow the **introspect/call** pattern, but keep Hypercode's richer search/ranking/operator model
 
 #### `machjesusmoto/claude-lazy-loading`
 
@@ -404,7 +404,7 @@ Evidence gathered earlier in the session:
 - explicitly targets token/context reduction
 - documents that it is a proof of concept rather than full native integration
 
-Best Borg use:
+Best Hypercode use:
 
 - reference for **high-confidence silent auto-load rules**
 - especially useful for deciding when `search_tools` can be skipped because the intent is obvious
@@ -424,7 +424,7 @@ What remains limited:
 - deeper docs fetches were rate-limited or unavailable during this session
 - raw docs path attempts returned 404
 
-Best Borg use:
+Best Hypercode use:
 
 - treat as supporting evidence for the **registry + purge + profiles** direction
 - do not rely on it as the sole architectural reference until fuller docs are available
@@ -441,7 +441,7 @@ Evidence gathered earlier in the session:
 - worker-based execution model
 - workflow/script management and UI/API support
 
-Best Borg use:
+Best Hypercode use:
 
 - strongest reference for turning discovered tools into a **code-execution environment**
 - validates the idea that `run_code` can replace many narrow tools once the right SDK/types are present
@@ -461,10 +461,10 @@ Evidence gathered from docs and CLI reference:
 - cloud CLI for init/deploy/install/configure/logger tail/doctor
 - durable execution patterns via Temporal-style workflows
 
-Best Borg use:
+Best Hypercode use:
 
 - use as a reference for **lifecycle, pooling, auth, and operational management**
-- especially relevant to Borg's provider/session supervisor style control-plane needs
+- especially relevant to Hypercode's provider/session supervisor style control-plane needs
 
 #### `mcp-use/mcp-use`
 
@@ -479,10 +479,10 @@ Evidence gathered from Manufact docs:
 - BYOK chat testing UI with local credential storage
 - browser-friendly and React-friendly client surface
 
-Best Borg use:
+Best Hypercode use:
 
 - strongest reference for **inspector workflow quality** and multi-surface debugging
-- especially relevant to Borg's traffic inspector and operator-facing dashboard refinement
+- especially relevant to Hypercode's traffic inspector and operator-facing dashboard refinement
 
 #### `nullplatform/meta-mcp-proxy`
 
@@ -495,16 +495,16 @@ Evidence gathered earlier in the session:
 - execute-style minimal action surface
 - focuses on reducing raw tool-list exposure
 
-Best Borg use:
+Best Hypercode use:
 
-- supports Borg's decision to keep the **permanent visible surface tiny**
+- supports Hypercode's decision to keep the **permanent visible surface tiny**
 - useful conceptual model for `search_tools` + `load_tool` + `run_code`
 
 #### `robertpelloni/pluggedin-app` and `robertpelloni/mcp-tool-chainer`
 
 Repository and raw README fetch attempts returned `404` during this session, so there is not enough public evidence to score them fairly.
 
-Best Borg use:
+Best Hypercode use:
 
 - none for now beyond noting that the ideas may still matter if corrected URLs or private docs are later provided
 
@@ -586,9 +586,9 @@ When the model does something dumb, the operator needs to know:
 
 Without that, debugging the routing layer becomes astrology with JSON.
 
-## Borg implementation blueprint
+## Hypercode implementation blueprint
 
-The strongest Borg pattern is a hybrid assembled from the reviewed repos, not a direct clone of any one of them.
+The strongest Hypercode pattern is a hybrid assembled from the reviewed repos, not a direct clone of any one of them.
 
 ### 1. Permanent surface: keep it tiny
 
@@ -630,13 +630,13 @@ Borrow from the lazy-loading references:
 - and the tool has a stable cached schema,
 - and there is no auth or policy blocker,
 
-then Borg should auto-load it without forcing the model through an extra ceremony step.
+then Hypercode should auto-load it without forcing the model through an extra ceremony step.
 
 The model should experience the system as helpful, not bureaucratic.
 
 ### 4. Binary startup must stay deferred
 
-Keep the documented Borg policy:
+Keep the documented Hypercode policy:
 
 - metadata indexed at startup
 - cached schemas preferred
@@ -664,16 +664,16 @@ This avoids the false binary of “everything loaded” vs “everything cold.�
 
 Borrow from Lootbox:
 
-- once the right tools are discovered, Borg should be able to generate a typed SDK/context for `run_code`
+- once the right tools are discovered, Hypercode should be able to generate a typed SDK/context for `run_code`
 - multi-step workflows can then happen in code mode instead of repeated ad hoc tool calls
 
-This is how Borg can replace twenty tiny tools with one high-leverage execution path *without* sacrificing correctness.
+This is how Hypercode can replace twenty tiny tools with one high-leverage execution path *without* sacrificing correctness.
 
 ### 7. The dashboard must show routing decisions, not just raw traffic
 
 Borrow from mcp-use inspector quality and mcp-agent operator ergonomics.
 
-Borg should expose:
+Hypercode should expose:
 
 - search queries and ranked candidates
 - load/unload events
@@ -686,7 +686,7 @@ That is more useful than a raw JSON-RPC firehose alone.
 
 ## Best method by feature
 
-| Feature | Best upstream reference | Borg takeaway |
+| Feature | Best upstream reference | Hypercode takeaway |
 |---|---|---|
 | Install / import / client config sync | `pathintegral-institute/mcpm.sh` | Copy the operator workflow and non-interactive automation posture |
 | Tiny permanent visible surface | `nullplatform/meta-mcp-proxy`, `George5562/Switchboard` | Keep discovery and execution meta-oriented, not tool-list oriented |
@@ -700,9 +700,9 @@ That is more useful than a raw JSON-RPC firehose alone.
 
 ## Final recommendation from the expanded review
 
-If Borg tries to become “yet another aggregator,” it will likely repeat the same failure pattern the user is frustrated by.
+If Hypercode tries to become “yet another aggregator,” it will likely repeat the same failure pattern the user is frustrated by.
 
-If Borg instead becomes:
+If Hypercode instead becomes:
 
 - a **decision layer**,
 - with **tiny default disclosure**,
@@ -721,21 +721,21 @@ then it can solve the practical problem that current aggregators keep missing.
 - `david-martin/mcp-helper` — useful notes, but too PoC-oriented for submodule priority
 - `2b3pro/watson-mcp-router` — worthwhile to read, but redundant once stronger references are present
 
-## Immediate next steps for Borg
+## Immediate next steps for Hypercode
 
 1. Keep `packages/core/mcp/**` as the canonical implementation path.
-2. Preserve Borg's own dashboard and traffic-inspector contracts as first-class design drivers.
+2. Preserve Hypercode's own dashboard and traffic-inspector contracts as first-class design drivers.
 3. If you approve reference submodules, add only the top 3 upstream repositories above.
-4. Convert their useful patterns into explicit Borg issues / task checklists instead of vague “feature parity.”
-5. Treat all imported repos as **references**, not as runtime dependencies for Borg 1.0.
+4. Convert their useful patterns into explicit Hypercode issues / task checklists instead of vague “feature parity.”
+5. Treat all imported repos as **references**, not as runtime dependencies for Hypercode 1.0.
 
 ## Decision summary
 
-**Best product decision:** rewrite Borg's MCP router intentionally in Borg's architecture.
+**Best product decision:** rewrite Hypercode's MCP router intentionally in Hypercode's architecture.
 
 **Best code-reference mix:**
 - `vtxf/mcp-all-in-one` for TypeScript aggregation patterns
 - `cortexd-labs/neurond` for namespace/policy/audit rigor
 - `Forge-Space/mcp-gateway` for operator/admin UX
 
-**Not recommended:** choosing one repo as “the base” and bending Borg around it.
+**Not recommended:** choosing one repo as “the base” and bending Hypercode around it.

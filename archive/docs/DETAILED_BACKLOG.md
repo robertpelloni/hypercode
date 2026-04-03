@@ -1,8 +1,8 @@
-# Detailed Backlog (Borg Primary Audit)
+# Detailed Backlog (Hypercode Primary Audit)
 
 **Last Updated:** 2026-02-13  
 **Version Context:** 2.6.3 (`VERSION.md` source of truth)  
-**Purpose:** Implementation-ready queue for unfinished/partial Borg features discovered in the primary audit.
+**Purpose:** Implementation-ready queue for unfinished/partial Hypercode features discovered in the primary audit.
 
 ---
 
@@ -116,12 +116,12 @@
     - `scripts/sync_master_index.mjs`
     - `scripts/resources-list.json`
     - `scripts/ingestion-status.json`
-    - `BORG_MASTER_INDEX.jsonc`
+    - `HYPERCODE_MASTER_INDEX.jsonc`
 - **Current issue:** Corpus growth outpaced manual index updates; queue state (processed/pending/failed) lacked canonical tracking.
 - **Deliverable:** Deterministic synchronization pipeline with per-entry ingestion status and queue metrics.
 - **Acceptance criteria:**
     - [x] Canonical index synchronization script exists and runs from repo root.
-    - [x] `BORG_MASTER_INDEX` includes queue telemetry fields and per-entry fetch status metadata.
+    - [x] `HYPERCODE_MASTER_INDEX` includes queue telemetry fields and per-entry fetch status metadata.
     - [x] Known fetch failures can be persisted independently of manual edits.
     - [x] Incremental fetch outcome writer appends live status updates automatically.
     - [x] Dashboard surface renders ingestion queue and retry actions.

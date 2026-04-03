@@ -1,7 +1,7 @@
-# AI Master Instructions (Borg Protocol v1.4)
+# AI Master Instructions (Hypercode Protocol v1.4)
 
 ## 1. Core Protocol
-This repository (`@borg/core`) is the central nervous system for a multi-agent framework.
+This repository (`@hypercode/core`) is the central nervous system for a multi-agent framework.
 All AI agents (Claude, Gemini, OpenCode) must adhere to these rules:
 
 1.  **Merge & Sync:** always merge feature branches and sync submodules before starting complex tasks.
@@ -12,7 +12,7 @@ All AI agents (Claude, Gemini, OpenCode) must adhere to these rules:
 ## 2. Agent Roles & Architecture
 The system is composed of several specialized agents/submodules:
 
--   **Borg (This Repo):** The Orchestrator and Core Framework. Manages `MCPServer`, `Director`, and `Memory`.
+-   **Hypercode (This Repo):** The Orchestrator and Core Framework. Manages `MCPServer`, `Director`, and `Memory`.
 -   **Jules (`external/jules-autopilot`):** Google's Agent Framework (delegated for specific tasks).
 -   **OpenCode (`external/opencode-autopilot`):** Code-gen Specialist (delegated for heavy refactoring).
 -   **Awesome MCP (`references/awesome-mcp`):** A read-only dataset of available MCP servers.
@@ -37,4 +37,4 @@ git submodule foreach git pull origin main
 
 ## 6. Testing & Validation
 -   Always run `pnpm build` in `apps/web` to verify UI changes.
--   Use `borg doctor` (or `packages/cli` debug scripts) to verify connectivity.
+-   Use `hypercode doctor` (or `packages/cli` debug scripts) to verify connectivity.

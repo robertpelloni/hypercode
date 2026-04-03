@@ -1,4 +1,4 @@
-# Borg Deployment Guide
+# Hypercode Deployment Guide
 
 ## Prerequisites
 
@@ -11,8 +11,8 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/robertpelloni/borg.git
-cd borg
+git clone https://github.com/robertpelloni/hypercode.git
+cd hypercode
 
 # Install dependencies
 pnpm install
@@ -99,7 +99,7 @@ CMD ["node", "packages/core/dist/index.js"]
 ```yaml
 version: '3.8'
 services:
-  borg-core:
+  hypercode-core:
     build: .
     ports:
       - "3002:3002"
@@ -111,16 +111,16 @@ services:
       - ./secrets:/app/secrets
     restart: unless-stopped
 
-  borg-ui:
+  hypercode-ui:
     build: .
     command: node packages/ui/server.js
     ports:
       - "5173:5173"
     environment:
       - NODE_ENV=production
-      - CORE_API_URL=http://borg-core:3002
+      - CORE_API_URL=http://hypercode-core:3002
     depends_on:
-      - borg-core
+      - hypercode-core
     restart: unless-stopped
 
   redis:
@@ -142,20 +142,20 @@ volumes:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: borg-core
+  name: hypercode-core
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: borg-core
+      app: hypercode-core
   template:
     metadata:
       labels:
-        app: borg-core
+        app: hypercode-core
     spec:
       containers:
-      - name: borg-core
-        image: borg:latest
+      - name: hypercode-core
+        image: hypercode:latest
         ports:
         - containerPort: 3002
         env:
@@ -164,7 +164,7 @@ spec:
         - name: SUPER_AI_TOKEN
           valueFrom:
             secretKeyRef:
-              name: borg-secrets
+              name: hypercode-secrets
               key: token
         resources:
           requests:
@@ -189,10 +189,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: borg-core
+  name: hypercode-core
 spec:
   selector:
-    app: borg-core
+    app: hypercode-core
   ports:
   - port: 3002
     targetPort: 3002
@@ -209,9 +209,9 @@ Add to Prometheus scrape config:
 
 ```yaml
 scrape_configs:
-  - job_name: 'borg'
+  - job_name: 'hypercode'
     static_configs:
-      - targets: ['borg-core:3002']
+      - targets: ['hypercode-core:3002']
     metrics_path: /metrics
 ```
 
@@ -291,5 +291,5 @@ NODE_OPTIONS="--max-old-space-size=4096" node ...
 ### Debug Mode
 
 ```bash
-DEBUG=borg:* node packages/core/dist/index.js
+DEBUG=hypercode:* node packages/core/dist/index.js
 ```

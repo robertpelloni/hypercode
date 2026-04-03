@@ -1,1 +1,1 @@
-return require("borg.telescope")
+return require("hypercode.telescope")

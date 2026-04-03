@@ -16,15 +16,15 @@ Browser extensions enable AI assistants to interact with web-based AI interfaces
 
 ---
 
-## Borg Browser Extension Goals
+## Hypercode Browser Extension Goals
 
-Borg should provide a browser extension that enables:
+Hypercode should provide a browser extension that enables:
 
 ### Memory & Context
 - **Store memories** from web chat sessions
 - **Universal memory** access from any web UI
-- **Export browser sessions** to Borg
-- **Import Borg context** to web UI
+- **Export browser sessions** to Hypercode
+- **Import Hypercode context** to web UI
 - **Auto-harvest** important information from chats
 
 ### Control & Automation

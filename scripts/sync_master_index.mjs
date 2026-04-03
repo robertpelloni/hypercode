@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const ROOT = process.cwd();
-const MASTER_INDEX_PATH = path.join(ROOT, 'BORG_MASTER_INDEX.jsonc');
+const MASTER_INDEX_PATH = path.join(ROOT, 'HYPERCODE_MASTER_INDEX.jsonc');
 const RESOURCES_LIST_PATH = path.join(ROOT, 'scripts', 'resources-list.json');
 const INGESTION_STATUS_PATH = path.join(ROOT, 'scripts', 'ingestion-status.json');
 
@@ -343,7 +343,7 @@ async function main() {
 
   const output = {
     version: '2.0.0',
-    schema: 'borg-master-index/v2',
+    schema: 'hypercode-master-index/v2',
     last_updated: new Date().toISOString().slice(0, 10),
     stats,
     ingestion: {

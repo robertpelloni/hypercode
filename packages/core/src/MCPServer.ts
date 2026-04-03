@@ -97,7 +97,7 @@ import { ProjectTracker } from "./services/ProjectTracker.js";
 import { MissionService } from "./services/MissionService.js";
 import { buildToolObservationInput } from './services/toolObservationMemory.js';
 import { detectLocalExecutionEnvironment } from './services/execution-environment.js';
-import { loadBorgMcpConfig } from './mcp/mcpJsonConfig.js';
+import { loadHypercodeMcpConfig } from './mcp/mcpJsonConfig.js';
 import {
     buildAutomaticToolContextFingerprint,
     buildAutomaticToolContextMemory,
@@ -481,7 +481,7 @@ export class MCPServer {
 
     private async syncNativeToolPreferences(): Promise<void> {
         try {
-            const config = await loadBorgMcpConfig();
+            const config = await loadHypercodeMcpConfig();
             const settings = config.settings as { toolSelection?: { importantTools?: unknown; alwaysLoadedTools?: unknown } } | undefined;
             const preferences = readToolPreferencesFromSettings(settings?.toolSelection);
             this.nativeSessionMetaTools.setAlwaysLoadedTools(preferences.alwaysLoadedTools);
@@ -2228,8 +2228,8 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
             }
             else if (name === "update_project_context") {
                 const contextPath = path.join(process.cwd(), '.hypercode', 'project_context.md');
-                const borgDir = path.join(process.cwd(), '.hypercode');
-                if (!fs.existsSync(borgDir)) fs.mkdirSync(borgDir, { recursive: true });
+                const hypercodeDir = path.join(process.cwd(), '.hypercode');
+                if (!fs.existsSync(hypercodeDir)) fs.mkdirSync(hypercodeDir, { recursive: true });
                 
                 await fs.promises.writeFile(contextPath, args.content as string);
                 result = { content: [{ type: "text", text: "Project context updated successfully." }] };
@@ -3884,14 +3884,14 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
                 ws.on('message', async (data: any) => {
                     try {
                         const msg = JSON.parse(data.toString());
-                        if (msg.type === 'BORG_CLIENT_HELLO') {
+                        if (msg.type === 'HYPERCODE_CLIENT_HELLO') {
                             const existing = this.bridgeClients.get(ws) ?? createDefaultBridgeClient(clientId);
                             const updated = applyBridgeClientHello(existing, msg, Date.now());
                             this.bridgeClients.set(ws, updated);
 
                             if (ws.readyState === 1) {
                                 ws.send(JSON.stringify({
-                                    type: 'BORG_CORE_MANIFEST',
+                                    type: 'HYPERCODE_CORE_MANIFEST',
                                     manifest: buildBridgeManifest(Array.from(this.bridgeClients.values())),
                                 }));
                             }

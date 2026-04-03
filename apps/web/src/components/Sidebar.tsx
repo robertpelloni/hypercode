@@ -14,10 +14,10 @@ import { buildExportedNavPreferences, buildNavItemsByNormalizedHref, buildRecent
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
-const SIDEBAR_COLLAPSE_STORAGE_KEY = 'borg_sidebar_collapsed_sections_v1';
-const SIDEBAR_FAVORITES_STORAGE_KEY = 'borg_sidebar_favorites_v1';
-const SIDEBAR_RECENT_STORAGE_KEY = 'borg_sidebar_recent_routes_v1';
-const SIDEBAR_RECENT_SEARCHES_STORAGE_KEY = 'borg_sidebar_recent_searches_v1';
+const SIDEBAR_COLLAPSE_STORAGE_KEY = 'hypercode_sidebar_collapsed_sections_v1';
+const SIDEBAR_FAVORITES_STORAGE_KEY = 'hypercode_sidebar_favorites_v1';
+const SIDEBAR_RECENT_STORAGE_KEY = 'hypercode_sidebar_recent_routes_v1';
+const SIDEBAR_RECENT_SEARCHES_STORAGE_KEY = 'hypercode_sidebar_recent_searches_v1';
 const MAX_RECENT_ROUTES = 8;
 const MAX_RECENT_SEARCHES = 6;
 

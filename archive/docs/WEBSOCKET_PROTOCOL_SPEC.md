@@ -1,4 +1,4 @@
-# Borg WebSocket Protocol Specification
+# Hypercode WebSocket Protocol Specification
 
 > **Status**: Current implementation reference
 > **Updated**: 2026-03-06
@@ -7,7 +7,7 @@
 Note: URL ingestion for extension surfaces currently uses the HTTP compatibility endpoint `POST /knowledge.ingest-url` rather than the WebSocket transport.
 > **Primary transport**: WebSocket (`ws://localhost:3001` by default)
 
-This document defines the currently implemented WebSocket contract used by Borg Core and the extension surfaces that connect to it.
+This document defines the currently implemented WebSocket contract used by Hypercode Core and the extension surfaces that connect to it.
 
 It is intended to be the **single protocol reference** for:
 - `packages/core/src/MCPServer.ts`
@@ -20,7 +20,7 @@ The goal is to document **what is actually implemented today**, including legacy
 
 ## Overview
 
-Borg uses WebSocket as a lightweight real-time bridge for:
+Hypercode uses WebSocket as a lightweight real-time bridge for:
 - editor/browser automation actions
 - request/response style extension queries
 - activity and telemetry streaming
@@ -32,7 +32,7 @@ Borg uses WebSocket as a lightweight real-time bridge for:
 
 | Participant | Role |
 |---|---|
-| **Borg Core** | WebSocket server and orchestration hub |
+| **Hypercode Core** | WebSocket server and orchestration hub |
 | **Browser Extension** | Browser automation bridge and telemetry source |
 | **VS Code Extension** | Editor automation bridge and telemetry source |
 | **Dashboard** | Primarily HTTP/tRPC today; receives WebSocket-rebroadcasted events indirectly through Core infrastructure |
@@ -48,13 +48,13 @@ Borg uses WebSocket as a lightweight real-time bridge for:
 ### Browser extension
 - configurable via `chrome.storage.sync`
 - keys:
-  - `borgCoreUrl`
-  - `borgWsUrl`
+  - `hypercodeCoreUrl`
+  - `hypercodeWsUrl`
 
 ### VS Code extension
 - configurable via VS Code settings:
-  - `borg.coreUrl`
-  - `borg.dashboardUrl`
+  - `hypercode.coreUrl`
+  - `hypercode.dashboardUrl`
 
 ---
 
@@ -96,7 +96,7 @@ This means the protocol currently supports two styles of replies:
 
 ## Core → Extension commands
 
-These are messages sent by Borg Core to an attached browser or VS Code client.
+These are messages sent by Hypercode Core to an attached browser or VS Code client.
 
 ### `PASTE_INTO_CHAT`
 
@@ -318,7 +318,7 @@ Browser returns a data URL screenshot through `STATUS_UPDATE`.
   "id": "req-123",
   "method": "browser_get_history",
   "params": {
-    "query": "borg",
+    "query": "hypercode",
     "maxResults": 20
   }
 }
@@ -636,7 +636,7 @@ Relays adapter-observed chat-surface snapshots from supported web AI interfaces.
         "parameters": [
           {
             "name": "query",
-            "value": "borg"
+            "value": "hypercode"
           }
         ],
         "fields": [

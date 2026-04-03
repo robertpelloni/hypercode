@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Starting Borg..."
+echo "Starting Hypercode..."
 
 # Check for pnpm
 if ! command -v pnpm &> /dev/null

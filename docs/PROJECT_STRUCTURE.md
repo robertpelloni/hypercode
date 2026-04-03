@@ -235,7 +235,7 @@ flowchart TD
 
 The `go/` workspace is a separate Go module:
 
-- module: `github.com/borghq/hypercode-go`
+- module: `github.com/hypercodehq/hypercode-go`
 - top-level layout:
   - `go/cmd/` — Go entrypoints
   - `go/internal/` — Go internal packages and HTTP API

@@ -76,9 +76,9 @@ export { McpSessionService, ... }
 
 **Issue**: LSP errors persist due to workspace import resolution
 
-**Error**: Cannot find modules at `@borg/core/services/...`
+**Error**: Cannot find modules at `@hypercode/core/services/...`
 
-**Root Cause**: TypeScript compiler can't resolve `@borg/core` workspace alias in CLI package's package.json
+**Root Cause**: TypeScript compiler can't resolve `@hypercode/core` workspace alias in CLI package's package.json
 
 **Impact**: CLI compiles successfully but has runtime type resolution errors
 
@@ -104,14 +104,14 @@ This demonstrates:
 
 ### 2. Independent CLI Usage
 
-The new `borg-mcp-router` CLI package provides immediate access:
+The new `hypercode-mcp-router` CLI package provides immediate access:
 
 ```bash
-npm install -g @borg/mcp-router-cli
-borg-mcp-router discover
-borg-mcp-router install filesystem-server
-borg-mcp-router init-sessions
-borg-mcp-router session-stats
+npm install -g @hypercode/mcp-router-cli
+hypercode-mcp-router discover
+hypercode-mcp-router install filesystem-server
+hypercode-mcp-router init-sessions
+hypercode-mcp-router session-stats
 ```
 
 ### 3. Architecture
@@ -122,7 +122,7 @@ Ultimate MCP Router
 ├── Installation (ServerRegistryService) ✅
 ├── Configuration (ConfigurationService) ✅
 ├── Session Management (McpSessionService) ✅
-├── CLI (borg-mcp-router-cli) ✅
+├── CLI (hypercode-mcp-router-cli) ✅
 └── Standalone Usage
 ```
 
@@ -156,7 +156,7 @@ Ultimate MCP Router
 
 **Issue**: Services exported from `packages/core/src/services/index.ts` but not used by CLI
 
-**Reason**: CLI package.json uses `@borg/core:workspace:*` which should resolve, but services might not be in build output
+**Reason**: CLI package.json uses `@hypercode/core:workspace:*` which should resolve, but services might not be in build output
 
 **Status**: Functional but needs verification
 
@@ -183,7 +183,7 @@ const stats = sessionService.getStats();
 
 ```bash
 npm link -g
-borg-mcp-router discover
+hypercode-mcp-router discover
 ```
 
 ### Phase 4: Update Documentation

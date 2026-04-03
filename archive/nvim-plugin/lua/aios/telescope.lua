@@ -6,13 +6,13 @@ local conf = require("telescope.config").values
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
 
-local borg = require("borg")
+local hypercode = require("hypercode")
 local curl = require("plenary.curl")
 
 function M.debate_templates(opts)
     opts = opts or {}
     
-    curl.get(borg.config.hub_url .. "/api/debate-templates", {
+    curl.get(hypercode.config.hub_url .. "/api/debate-templates", {
         callback = function(response)
             vim.schedule(function()
                 if response.status ~= 200 then
@@ -23,7 +23,7 @@ function M.debate_templates(opts)
                 local data = vim.fn.json_decode(response.body)
                 
                 pickers.new(opts, {
-                    prompt_title = "Borg Debate Templates",
+                    prompt_title = "Hypercode Debate Templates",
                     finder = finders.new_table({
                         results = data.templates,
                         entry_maker = function(entry)
@@ -68,14 +68,14 @@ function M._start_template_debate(template_id, description)
     
     vim.notify("Starting template debate...", vim.log.levels.INFO)
     
-    curl.post(borg.config.hub_url .. "/api/debate-templates/" .. template_id .. "/debate", {
+    curl.post(hypercode.config.hub_url .. "/api/debate-templates/" .. template_id .. "/debate", {
         body = body,
         headers = { ["Content-Type"] = "application/json" },
         callback = function(response)
             vim.schedule(function()
                 if response.status >= 200 and response.status < 300 then
                     local result = vim.fn.json_decode(response.body)
-                    borg._show_debate_result(result.result or result)
+                    hypercode._show_debate_result(result.result or result)
                 else
                     vim.notify("Template debate failed", vim.log.levels.ERROR)
                 end
@@ -87,7 +87,7 @@ end
 function M.supervisor_analytics(opts)
     opts = opts or {}
     
-    curl.get(borg.config.hub_url .. "/api/supervisor-analytics/rankings", {
+    curl.get(hypercode.config.hub_url .. "/api/supervisor-analytics/rankings", {
         callback = function(response)
             vim.schedule(function()
                 if response.status ~= 200 then
@@ -98,7 +98,7 @@ function M.supervisor_analytics(opts)
                 local data = vim.fn.json_decode(response.body)
                 
                 pickers.new(opts, {
-                    prompt_title = "Borg Supervisor Rankings",
+                    prompt_title = "Hypercode Supervisor Rankings",
                     finder = finders.new_table({
                         results = data.rankings,
                         entry_maker = function(entry)
@@ -134,7 +134,7 @@ end
 function M.architect_sessions(opts)
     opts = opts or {}
     
-    curl.get(borg.config.hub_url .. "/api/architect/sessions", {
+    curl.get(hypercode.config.hub_url .. "/api/architect/sessions", {
         callback = function(response)
             vim.schedule(function()
                 if response.status ~= 200 then

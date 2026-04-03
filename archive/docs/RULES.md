@@ -1,4 +1,4 @@
-# Borg Project Rules & Guidelines
+# Hypercode Project Rules & Guidelines
 
 ## Core Philosophy
 1.  **User First, Coding Second**: The user's experience (UX) is paramount. If a feature works but feels clunky (e.g., interrupts typing), it is a **bug**.

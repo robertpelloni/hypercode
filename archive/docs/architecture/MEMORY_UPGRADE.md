@@ -5,7 +5,7 @@
 **Target Component:** `packages/memory`
 
 ## 1. Overview
-The **Sherlock** persona requires deep investigative capabilities. Currently, Borg uses simple Vector Storage (`mem0`), which retrieves semantically similar text but fails to "connect the dots" between disparate facts (e.g., entity relationships, temporal mapping).
+The **Sherlock** persona requires deep investigative capabilities. Currently, Hypercode uses simple Vector Storage (`mem0`), which retrieves semantically similar text but fails to "connect the dots" between disparate facts (e.g., entity relationships, temporal mapping).
 
 We will upgrade the memory layer by integrating **Cognee**, which implements an **ECL (Extract, Cognify, Load)** pipeline to build a Knowledge Graph.
 

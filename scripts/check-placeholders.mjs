@@ -4,7 +4,7 @@
  * check-placeholders.mjs
  *
  * CI-oriented scanner that detects known placeholder, stub, and no-op patterns
- * across the Borg codebase. Designed to prevent silent regression when
+ * across the Hypercode codebase. Designed to prevent silent regression when
  * placeholder code re-enters production during rapid stabilization cycles.
  *
  * Usage:
@@ -106,7 +106,7 @@ async function scanFile(filePath) {
 
 async function main() {
     const strict = process.argv.includes('--strict');
-    console.log('🔍 Borg Placeholder Regression Scanner');
+    console.log('🔍 Hypercode Placeholder Regression Scanner');
     console.log(`   Mode: ${strict ? 'STRICT (CI gate)' : 'REPORT'}`);
     console.log(`   Scanning: ${SCAN_DIRS.map(d => relative(ROOT, d)).join(', ')}\n`);
 

@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import { mcpServersRepository } from '../db/repositories/mcp-servers.repo.js';
 import { toolsRepository } from '../db/repositories/tools.repo.js';
 import { formatOptionalSqliteFailure, isSqliteUnavailableError, sqliteErrorMessage } from '../db/sqliteAvailability.js';
-import { loadBorgMcpConfig } from '../mcp/mcpJsonConfig.js';
+import { loadHypercodeMcpConfig } from '../mcp/mcpJsonConfig.js';
 
 export class McpConfigService {
     private syncState: {
@@ -43,7 +43,7 @@ export class McpConfigService {
                 throw e;
             }
 
-            const config = await loadBorgMcpConfig();
+            const config = await loadHypercodeMcpConfig();
             const servers = config.mcpServers || {};
             this.syncState.lastServerCount = Object.keys(servers).length;
 

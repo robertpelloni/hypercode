@@ -12,7 +12,7 @@ We will adopt **`browser-use`**, a Python-based library designed specifically fo
 
 ### A. The `browser-use` Bridge
 Since `browser-use` is Python, we will expose it to our Node.js/TypeScript swarm via two methods:
-1.  **MCP Server:** Run `browser-use` as a local MCP server. Borg connects via `MCPServer.ts`.
+1.  **MCP Server:** Run `browser-use` as a local MCP server. Hypercode connects via `MCPServer.ts`.
 2.  **Direct Shell:** Wrap the python library in a `BrowserService` that spawns python processes.
 
 **Recommendation:** **MCP Server**. It decouples the heavy Python environment from the Node.js core.
@@ -32,7 +32,7 @@ We will replace the existing `browser_scrape` and `browser_click` tools with a u
 ```
 
 ### C. The "Cloud" Option
-`browser-use` supports a "Stealth Cloud" mode. We should implement a configuration toggle in `borg.config.json`:
+`browser-use` supports a "Stealth Cloud" mode. We should implement a configuration toggle in `hypercode.config.json`:
 *   `browser.mode`: `"local" | "cloud"`
 *   If `cloud`, we route requests to the `browser-use` cloud API (requires key) to evade bot detection.
 

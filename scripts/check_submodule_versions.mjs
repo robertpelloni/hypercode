@@ -4,7 +4,7 @@
  *
  * Enumerates all Git submodules, extracts their current commit, version tag,
  * commit date, and upstream status. Outputs a JSON report to
- * docs/SUBMODULE_VERSIONS.json suitable for consumption by the Borg dashboard.
+ * docs/SUBMODULE_VERSIONS.json suitable for consumption by the Hypercode dashboard.
  *
  * Usage:
  *   node scripts/check_submodule_versions.mjs [--update] [--json]

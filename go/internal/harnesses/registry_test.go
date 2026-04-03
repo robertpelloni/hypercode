@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/borghq/hypercode-go/internal/controlplane"
+	"github.com/hypercodehq/hypercode-go/internal/controlplane"
 )
 
 func TestListBuildsHarnessDefinitions(t *testing.T) {

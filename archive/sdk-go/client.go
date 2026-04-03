@@ -1,4 +1,4 @@
-package borg
+package hypercode
 
 import (
 	"bytes"

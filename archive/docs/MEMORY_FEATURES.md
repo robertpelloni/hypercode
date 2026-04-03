@@ -120,7 +120,7 @@
 
 ---
 
-## Implementation Priority for Borg
+## Implementation Priority for Hypercode
 
 ### Phase 1: Core Memory Layer
 1. Hybrid storage backend (vector + graph)
@@ -165,7 +165,7 @@
 
 ---
 
-## Implementation Priority for Borg
+## Implementation Priority for Hypercode
 1. **Cognee Integration**: Use for "Sherlock" Deep Memory (Reasoning Layer).
 2. **txtai Integration**: potential replacement for local lightweight memories.
 3. **Hybrid Backend**: Combine Postgres (relational) + Cognee (Graph) + Qdrant (Vector).

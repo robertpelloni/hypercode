@@ -1,12 +1,12 @@
-# Borg Project Roadmap
+# Hypercode Project Roadmap
 
 **Current Version**: 2.7.108
 **Last Stable Phase**: 146
-**Codename**: Borg Neural OS
+**Codename**: Hypercode Neural OS
 
 ---
 
-# MASTER TODO - Borg (v2.7.103)
+# MASTER TODO - Hypercode (v2.7.103)
 > Final Completion Checklist (Phase 91: Swarm Agent Tool Execution)
 
 - [x] **Phase 127: Extension Surface Cross-Intelligence**
@@ -170,25 +170,25 @@
     - [x] Modify the MCP proxy integration to defer loading complete tool JSON schemas until explicitly requested by sub-agents to reduce token overhead.
     - [x] Expose explicit schema hydration through `get_tool_schema` and surface deferred-schema status in the MCP catalog/dashboard contract.
 - [x] **Phase 127: Extension Surface Cross-Intelligence (Parity Milestone 2)**
-    - [x] Forward browser and VS Code context capture directly into the Borg Core knowledge/memory pipeline.
+    - [x] Forward browser and VS Code context capture directly into the Hypercode Core knowledge/memory pipeline.
     - [x] Map console log capture from Extension back into the Web Dashboard Traffic Inspector.
 - [x] **Phase 128: VS Code Terminal Content Reading**
     - [x] Capture rolling terminal output in the VS Code extension when the proposed terminal data event is available.
     - [x] Return recent terminal content through the existing `GET_TERMINAL` bridge contract.
 - [x] **Phase 129: Browser Extension RAG Ingestion**
     - [x] Add a browser-extension-compatible Core endpoint for direct text-based RAG ingestion.
-    - [x] Expose a dedicated popup action to ingest the current page into Borg RAG.
+    - [x] Expose a dedicated popup action to ingest the current page into Hypercode RAG.
 - [x] **Phase 130: VS Code Expert Dispatch Commands**
     - [x] Add Core compatibility endpoints for expert dispatch and expert status.
     - [x] Expose command-palette-driven research/code dispatch and status checks in the VS Code extension.
 - [x] **Phase 131: VS Code Sidebar Dispatch UI**
-    - [x] Add a real activity-bar webview surface for Borg dispatch inside VS Code.
+    - [x] Add a real activity-bar webview surface for Hypercode dispatch inside VS Code.
     - [x] Surface research, coder, status, and memory-capture actions directly in the sidebar.
 - [x] **Phase 133: VS Code Mini Dashboard Parity**
     - [x] Upgrade the VS Code sidebar from dispatch-only UI to a real mini-dashboard with status, recent tasks, and quick actions.
     - [x] Add dashboard deep links and direct tool invocation so manifest-declared commands map to real surfaces or live Core endpoints.
 - [x] **Phase 134: Unified Extension WebSocket Protocol Specification**
-    - [x] Publish a single reference doc for the currently implemented Borg Core, browser extension, and VS Code extension WebSocket message contract.
+    - [x] Publish a single reference doc for the currently implemented Hypercode Core, browser extension, and VS Code extension WebSocket message contract.
     - [x] Document compatibility quirks and a recommended normalization path for future transport cleanup.
 - [x] **Phase 135: VS Code RAG Ingestion Parity**
     - [x] Expose direct RAG ingestion from the active VS Code selection or file through the existing Core compatibility endpoint.

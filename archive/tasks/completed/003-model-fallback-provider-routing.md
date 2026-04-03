@@ -1,7 +1,7 @@
 # Task 003: Model Fallback & Provider Routing
 
 ## Context
-Provider fallback keeps Borg usable when quotas or rate limits bite. It also unlocks Borg's own internal development loops by making model switching automatic.
+Provider fallback keeps Hypercode usable when quotas or rate limits bite. It also unlocks Hypercode's own internal development loops by making model switching automatic.
 
 ## Scope
 - Files: `packages/core/providers/**`, provider wiring, shared provider schemas, and dashboard state needed for quota visibility

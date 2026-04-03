@@ -1,7 +1,7 @@
 # Task 001: Clean Install Verification
 
 ## Context
-Borg 1.0 is blocked if a stranger cannot clone, install, and boot the dashboard quickly. This task makes the quick-start path truthful before more feature work piles on.
+Hypercode 1.0 is blocked if a stranger cannot clone, install, and boot the dashboard quickly. This task makes the quick-start path truthful before more feature work piles on.
 
 ## Scope
 - Files: `package.json`, `pnpm-workspace.yaml`, `docker-compose.yml`, `README.md`, setup scripts, and any build config directly blocking install/start

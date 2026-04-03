@@ -1,4 +1,4 @@
-# Borg Research Initiative - Summary & Next Steps
+# Hypercode Research Initiative - Summary & Next Steps
 
 **Status**: Infrastructure established, research in progress
 **Last Updated**: 2026-01-17
@@ -34,7 +34,7 @@ Created `docs/research-index/MASTER_INDEX.md` with:
 Created detailed README files for each category with:
 - Repository lists with status tracking
 - Integration strategies
-- Borg architecture goals
+- Hypercode architecture goals
 - Research task lists
 
 ### 4. Background Research Tasks 🔄
@@ -68,7 +68,7 @@ Attempted to add missing submodules:
    - Routers/Providers (OpenRouter, LiteLLM)
 
 6. **Deduplicate links** across all sources
-7. **Rate relevance** of each resource to Borg goals
+7. **Rate relevance** of each resource to Hypercode goals
 
 ### Low Priority
 
@@ -81,7 +81,7 @@ Attempted to add missing submodules:
 ## Resource Deduplication Status
 
 ### Already Submodules ✅
-Many of the resources you listed are already submodules in Borg:
+Many of the resources you listed are already submodules in Hypercode:
 - All major MCP directories (punkpeye, appcypher, wong2)
 - Skills repos (anthropics/skills, openai/skills)
 - Multi-agent (metamcp, OpenHands, A2A, TaskSync)
@@ -101,7 +101,7 @@ Many of the resources you listed are already submodules in Borg:
 
 ## Implementation Strategy
 
-For each researched resource, Borg should:
+For each researched resource, Hypercode should:
 
 ### 1. Add as Submodule
 - For reference and ongoing updates
@@ -117,14 +117,14 @@ For each researched resource, Borg should:
 ### 3. Document Findings
 - Create JSON entry in resource database
 - Document unique features and patterns
-- Assess relevance to Borg goals
+- Assess relevance to Hypercode goals
 - Rate usefulness (🟢 Critical, 🟡 High, etc.)
 
 ### 4. Integration Decision
 Choose one of:
 - **Wrap**: Create thin wrapper calling code directly
 - **MCP Client**: Use via MCP protocol when beneficial
-- **Reimplement**: Port functionality into Borg core
+- **Reimplement**: Port functionality into Hypercode core
 - **Reference Only**: Keep for documentation without integration
 
 ### 5. Implement
@@ -135,9 +135,9 @@ Choose one of:
 
 ---
 
-## Borg Core Systems to Implement
+## Hypercode Core Systems to Implement
 
-Based on your vision, Borg needs these core systems:
+Based on your vision, Hypercode needs these core systems:
 
 ### 1. Ultimate MCP Router/Aggregator
 - Combines many MCP servers into one "master" MCP
@@ -235,7 +235,7 @@ For efficient progress, I recommend:
 - Master Index: `docs/research-index/MASTER_INDEX.md`
 - Category docs: `docs/research-index/[category]/README.md`
 - Todo list: Available via todoread
-- .gitmodules: `C:\Users\hyper\workspace\borg\.gitmodules`
+- .gitmodules: `C:\Users\hyper\workspace\hypercode\.gitmodules`
 
 ---
 

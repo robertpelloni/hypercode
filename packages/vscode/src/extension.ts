@@ -4,7 +4,7 @@ import WebSocket from 'ws';
 let socket: WebSocket | null = null;
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
-let sidebarProvider: BorgSidebarProvider | null = null;
+let sidebarProvider: HypercodeSidebarProvider | null = null;
 let reconnectTimer: NodeJS.Timeout | null = null;
 let lastActivityTime = Date.now();
 let debounceTimer: NodeJS.Timeout | null = null;
@@ -301,7 +301,7 @@ async function createSidebarSnapshot(): Promise<SidebarSnapshot> {
     };
 }
 
-class BorgSidebarProvider implements vscode.WebviewViewProvider {
+class HypercodeSidebarProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'hypercode.dispatchView';
     private view?: vscode.WebviewView;
 
@@ -573,7 +573,7 @@ class BorgSidebarProvider implements vscode.WebviewViewProvider {
 
     <div class="card">
         <h3>Coder Agent</h3>
-        <textarea id="codeTask" placeholder="Describe a coding task for Borgâ€¦"></textarea>
+        <textarea id="codeTask" placeholder="Describe a coding task for Hypercodeâ€¦"></textarea>
         <div class="row">
             <button id="codeBtn">Run Coder</button>
         </div>
@@ -673,8 +673,8 @@ class BorgSidebarProvider implements vscode.WebviewViewProvider {
 
 export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('HyperCode Bridge');
-    sidebarProvider = new BorgSidebarProvider();
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider(BorgSidebarProvider.viewType, sidebarProvider));
+    sidebarProvider = new HypercodeSidebarProvider();
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(HypercodeSidebarProvider.viewType, sidebarProvider));
 
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'hypercode.connect';
@@ -806,7 +806,7 @@ async function connectToCore() {
                 reconnectTimer = null;
             }
             socket?.send(JSON.stringify({
-                type: 'BORG_CLIENT_HELLO',
+                type: 'HYPERCODE_CLIENT_HELLO',
                 clientType: 'vscode-extension',
                 clientName: 'HyperCode VS Code Bridge',
                 platform: `${vscode.env.appName} ${vscode.version}`,
@@ -1191,7 +1191,7 @@ async function architectMode() {
 }
 
 async function handleMessage(msg: Record<string, unknown>) {
-    if (msg.type === 'BORG_CORE_MANIFEST') {
+    if (msg.type === 'HYPERCODE_CORE_MANIFEST') {
         const manifest = msg.manifest as { connectedClients?: Array<{ clientName?: string }>; supportedHookPhases?: string[] } | undefined;
         addActivity(
             'system',

@@ -4,7 +4,7 @@
 
 ## Overview
 
-Computer-use and browser automation systems enable AI agents to interact with GUIs, web pages, and desktop applications. This category tracks frameworks and MCP servers for Borg's computer-use capabilities.
+Computer-use and browser automation systems enable AI agents to interact with GUIs, web pages, and desktop applications. This category tracks frameworks and MCP servers for Hypercode's computer-use capabilities.
 
 ## Known Systems
 
@@ -64,9 +64,9 @@ Computer-use and browser automation systems enable AI agents to interact with GU
 
 ---
 
-## Borg Computer-Use Architecture
+## Hypercode Computer-Use Architecture
 
-Borg should provide:
+Hypercode should provide:
 - **Browser automation**: Control Chrome/Firefox via Playwright
 - **Desktop control**: Click, type, drag on screen elements
 - **Screen capture**: Real-time screenshots for visual context

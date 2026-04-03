@@ -2,7 +2,7 @@
 
 ## Context
 
-Borg needs one operator-facing page that surfaces router health, provider fallback posture, and supervised session activity quickly enough for first-time users to understand the system within a minute.
+Hypercode needs one operator-facing page that surfaces router health, provider fallback posture, and supervised session activity quickly enough for first-time users to understand the system within a minute.
 
 ## Scope
 
@@ -11,7 +11,7 @@ Borg needs one operator-facing page that surfaces router health, provider fallba
 
 ## Requirements Completed
 
-1. The dashboard home surface provides the four Borg 1.0 panels: Overview, MCP Router, Sessions, and Providers.
+1. The dashboard home surface provides the four Hypercode 1.0 panels: Overview, MCP Router, Sessions, and Providers.
 2. The dashboard reads live backend data through the existing tRPC contracts instead of placeholder-only widgets.
 3. The UI exposes quota posture, session state, server health, and recent traffic from the same dashboard home flow.
 4. The initial `/dashboard` path remains understandable for first-time operators.

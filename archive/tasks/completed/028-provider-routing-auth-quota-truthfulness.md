@@ -3,7 +3,7 @@
 **Status:** Completed (2026-03-19)
 
 ## Context
-Borg routes requests across multiple LLM providers with fallback logic, but operator trust depends on truthful reporting of provider auth state, quota windows, and fallback rationale. Current billing dashboard may overstate data confidence or hide gaps in provider API coverage.
+Hypercode routes requests across multiple LLM providers with fallback logic, but operator trust depends on truthful reporting of provider auth state, quota windows, and fallback rationale. Current billing dashboard may overstate data confidence or hide gaps in provider API coverage.
 
 ## Scope
 - `packages/core/src/routers/billingRouter.ts` quota/auth surfaces
@@ -35,6 +35,6 @@ Borg routes requests across multiple LLM providers with fallback logic, but oper
 - Large-scale cost analytics or trend prediction
 
 ## Notes
-- This is closely tied to operator trust in Borg's routing decision-making.
+- This is closely tied to operator trust in Hypercode's routing decision-making.
 - Truthfulness means not hiding gaps: if a provider API doesn't expose real-time quota, say so.
 - Session persistence and recovery should also account for provider state changes during a long-running supervised session.

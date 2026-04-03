@@ -32,13 +32,13 @@
     <extensions defaultExtensionNs="com.intellij">
 <<<<<<< HEAD
         <toolWindow id="HyperCode" secondary="true" icon="AllIcons.Toolwindows.ToolWindowMessages"
-                    anchor="right" factoryClass="com.HyperCode.plugin.BorgToolWindowFactory"/>
-        <projectService serviceImplementation="com.HyperCode.plugin.BorgService"/>
+                    anchor="right" factoryClass="com.HyperCode.plugin.HypercodeToolWindowFactory"/>
+        <projectService serviceImplementation="com.HyperCode.plugin.HypercodeService"/>
         <notificationGroup id="HyperCode Notifications" displayType="BALLOON"/>
     </extensions>
 
     <actions>
-        <group id="BorgActionGroup" text="HyperCode" description="HyperCode Actions" popup="true">
+        <group id="HypercodeActionGroup" text="HyperCode" description="HyperCode Actions" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             
             <action id="HyperCode.Connect" class="com.HyperCode.plugin.actions.ConnectAction"
@@ -66,7 +66,7 @@
         </action>
 =======
         <toolWindow id="HyperCode" secondary="true" icon="AllIcons.General.Information" anchor="right"
-                    factoryClass="com.HyperCode.plugin.BorgToolWindowFactory"/>
+                    factoryClass="com.HyperCode.plugin.HypercodeToolWindowFactory"/>
     </extensions>
 
     <actions>

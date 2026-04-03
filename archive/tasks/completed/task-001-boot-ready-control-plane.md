@@ -1,7 +1,7 @@
 # Task 001: Boot-Ready Control Plane
 
 ## Context
-When the user runs `pnpm run dev` inside Tabby, Borg should feel like a real local control plane instead of a loose collection of services warming up at different speeds. The next high-value milestone is to make startup deterministic, truthful, and operator-friendly so the MCP router, dashboard, memory, session supervisor, and extension bridge are ready or clearly reported as pending.
+When the user runs `pnpm run dev` inside Tabby, Hypercode should feel like a real local control plane instead of a loose collection of services warming up at different speeds. The next high-value milestone is to make startup deterministic, truthful, and operator-friendly so the MCP router, dashboard, memory, session supervisor, and extension bridge are ready or clearly reported as pending.
 
 ## Scope
 - Files:
@@ -20,7 +20,7 @@ When the user runs `pnpm run dev` inside Tabby, Borg should feel like a real loc
   - dashboard/system helper tests and any startup helper tests needed for the new contract
 
 ## Requirements
-1. `pnpm run dev` must establish a clear Borg startup contract with a single authoritative readiness payload.
+1. `pnpm run dev` must establish a clear Hypercode startup contract with a single authoritative readiness payload.
 2. The readiness payload must distinguish between:
    - core bridge ready
    - web dashboard reachable

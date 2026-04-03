@@ -14,7 +14,7 @@
  *  - Server health bar
  *
  * The orchestrator dashboard defaults to the in-app proxy route at
- * `/api/orchestrator`. NEXT_PUBLIC_BORG_ORCHESTRATOR_URL can override that
+ * `/api/orchestrator`. NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL can override that
  * proxy when operators need to target a different control-plane base. The
  * legacy NEXT_PUBLIC_AUTOPILOT_URL variable remains supported during migration.
  *
@@ -351,7 +351,7 @@ function SectionCard({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function BorgOrchestratorDashboardPage() {
+export default function HypercodeOrchestratorDashboardPage() {
     const isConfigured = Boolean(BASE);
     // ── state ──────────────────────────────────────────────────────────────
     const [online, setOnline] = useState<boolean | null>(null);
@@ -689,7 +689,7 @@ export default function BorgOrchestratorDashboardPage() {
                         <div className="text-amber-300/80 text-xs mt-1 space-y-1">
                             <p>Set one of these env vars to enable this compatibility route:</p>
                             <ul className="list-disc pl-4 space-y-1">
-                                <li><code className="bg-amber-950/50 px-1 rounded">NEXT_PUBLIC_BORG_ORCHESTRATOR_URL</code></li>
+                                <li><code className="bg-amber-950/50 px-1 rounded">NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL</code></li>
                                 <li><code className="bg-amber-950/50 px-1 rounded">NEXT_PUBLIC_AUTOPILOT_URL</code> <span className="text-amber-400/70">(legacy alias)</span></li>
                             </ul>
                         </div>
@@ -703,7 +703,7 @@ export default function BorgOrchestratorDashboardPage() {
                         <p className="text-red-300 font-medium">CLI Orchestrator is not reachable.</p>
                         <div className="text-red-400/70 text-xs mt-1 space-y-1">
                             <p>The built-in proxy route <code className="bg-red-950/50 px-1 rounded">{serverUrl}</code> is enabled, but the orchestrator did not answer.</p>
-                            <p>Set <code className="bg-red-950/50 px-1 rounded">NEXT_PUBLIC_BORG_ORCHESTRATOR_URL</code> only if you need to target a different orchestrator base.</p>
+                            <p>Set <code className="bg-red-950/50 px-1 rounded">NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL</code> only if you need to target a different orchestrator base.</p>
                             <p><code className="bg-red-950/50 px-1 rounded">NEXT_PUBLIC_AUTOPILOT_URL</code> still works as the legacy alias during migration.</p>
                         </div>
                     </div>

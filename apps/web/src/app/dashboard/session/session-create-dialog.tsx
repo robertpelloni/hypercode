@@ -235,7 +235,7 @@ export function SessionCreateDialog({ catalog, onCreated }: SessionCreateDialogP
                                 id="session-env"
                                 value={envInput}
                                 onChange={(event) => setEnvInput(event.target.value)}
-                                placeholder="OPENAI_API_KEY=...\nBORG_PROFILE=autopilot"
+                                placeholder="OPENAI_API_KEY=...\nHYPERCODE_PROFILE=autopilot"
                                 className="min-h-[120px] bg-zinc-900 border-white/10 text-white"
                             />
                             <p className="text-xs text-zinc-500">Use KEY=VALUE pairs. Invalid lines are ignored.</p>

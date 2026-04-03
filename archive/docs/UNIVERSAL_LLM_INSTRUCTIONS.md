@@ -7,7 +7,7 @@ This file remains in place only as a compatibility shim for older references thr
 
 ## Source of truth
 
-The canonical instruction set for Borg development agents is:
+The canonical instruction set for Hypercode development agents is:
 
 - [`AGENTS.md`](../AGENTS.md)
 
@@ -25,7 +25,7 @@ It exists to:
 
 ## Migration note
 
-Older Borg and omni-workspace guidance that encouraged:
+Older Hypercode and omni-workspace guidance that encouraged:
 
 - endless scope expansion
 - recursive scraping and mirroring
@@ -33,6 +33,6 @@ Older Borg and omni-workspace guidance that encouraged:
 - uncontrolled submodule growth
 - autonomous continuation past the assigned task
 
-is no longer active for Borg.
+is no longer active for Hypercode.
 
-Use the Borg consensus in `AGENTS.md` instead.
+Use the Hypercode consensus in `AGENTS.md` instead.

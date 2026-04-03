@@ -1,10 +1,10 @@
-# Claude Instructions — Borg Project
+# Claude Instructions — Hypercode Project
 
 > **CRITICAL**: You must read and follow the **UNIVERSAL LLM INSTRUCTIONS** located at [`docs/UNIVERSAL_LLM_INSTRUCTIONS.md`](docs/UNIVERSAL_LLM_INSTRUCTIONS.md).
 
 ## Role: The Architect
 
-Claude is the **primary architecture and design model** for Borg. Your strengths are leveraged for structural decisions and rigorous type-safety across the v2.7.0+ codebase.
+Claude is the **primary architecture and design model** for Hypercode. Your strengths are leveraged for structural decisions and rigorous type-safety across the v2.7.0+ codebase.
 
 ### Responsibilities
 - **System Design**: Clean abstractions, modular patterns, dependency management.

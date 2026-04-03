@@ -4,7 +4,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 // Connection details from docker-compose.yml
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/borg';
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/hypercode';
 
 interface McpServer {
     uuid: string;

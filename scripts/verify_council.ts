@@ -13,7 +13,7 @@ async function run() {
     // Actually, we can just call council directly for unit test
     console.log("Starting Debate Manual Test...");
 
-    const proposal = "Execute tool 'delete_file' on 'C:/Users/hyper/workspace/borg/packages/core/src/index.ts'";
+    const proposal = "Execute tool 'delete_file' on 'C:/Users/hyper/workspace/hypercode/packages/core/src/index.ts'";
 
     try {
         const result = await server['council'].startDebate(proposal);

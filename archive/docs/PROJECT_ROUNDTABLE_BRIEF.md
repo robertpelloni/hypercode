@@ -1,10 +1,10 @@
-# Borg Project Roundtable Brief
+# Hypercode Project Roundtable Brief
 
 _Last updated: 2026-03-13_
 
 ## Executive summary
 
-**Borg** is a local AI operations control plane for builders. Its core thesis is strong:
+**Hypercode** is a local AI operations control plane for builders. Its core thesis is strong:
 
 - one long-running local control plane
 - one truthful operator dashboard
@@ -17,19 +17,19 @@ The project is **not best understood as a chatbot app**. It is infrastructure fo
 
 The most important current truth is this:
 
-> Borg is already a real, partially working platform, but it is still uneven.
+> Hypercode is already a real, partially working platform, but it is still uneven.
 >
 > The strongest parts are the **control-plane skeleton, startup/readiness work, MCP surfaces, memory foundations, and dashboard operator story**.
 >
 > The biggest risks are **scope inflation, documentation drift, uneven product truthfulness, too many adjacent/parity surfaces, and a very noisy monorepo/submodule footprint**.
 
-If frontier models are debating how to evolve this repository into a durable agentic harness, the central question is **not** “What more can Borg absorb?”
+If frontier models are debating how to evolve this repository into a durable agentic harness, the central question is **not** “What more can Hypercode absorb?”
 
 It is:
 
-**How do we turn Borg into a dependable, focused, inspectable local control plane without collapsing under its own ambition?**
+**How do we turn Hypercode into a dependable, focused, inspectable local control plane without collapsing under its own ambition?**
 
-## What Borg is trying to be
+## What Hypercode is trying to be
 
 From the canonical docs (`AGENTS.md`, `README.md`, `ARCHITECTURE.md`, `VISION.md`):
 
@@ -42,9 +42,9 @@ From the canonical docs (`AGENTS.md`, `README.md`, `ARCHITECTURE.md`, `VISION.md
 - a dashboard that shows **truthful state**, not placebo telemetry
 - a platform that can later grow into memory capture, extensions, autonomy, and marketplace/plugin systems
 
-## What Borg is not supposed to be
+## What Hypercode is not supposed to be
 
-Per the newer operating philosophy, Borg is **not** supposed to:
+Per the newer operating philosophy, Hypercode is **not** supposed to:
 
 - clone every upstream tool feature-for-feature
 - absorb every repo in the ecosystem just because it exists
@@ -54,7 +54,7 @@ Per the newer operating philosophy, Borg is **not** supposed to:
 
 ## Product thesis in one paragraph
 
-Borg should become the **local operating kernel for AI-assisted development**: a dependable process that can start sessions, route models and tools, expose cached and live MCP inventory, survive failures, preserve context, and tell the operator exactly what is happening.
+Hypercode should become the **local operating kernel for AI-assisted development**: a dependable process that can start sessions, route models and tools, expose cached and live MCP inventory, survive failures, preserve context, and tell the operator exactly what is happening.
 
 That thesis is compelling. The implementation challenge is to preserve that clarity while resisting the repo’s historical tendency toward expansion-by-assimilation.
 
@@ -105,7 +105,7 @@ Recent slices materially improved `/dashboard/memory` and the backing services:
 - cross-session related-record links
 - intent-aware fuzzy cross-session correlation
 - clearer inspector pivots and chronology grouping
-- improved stats and clearer Borg-native memory framing
+- improved stats and clearer Hypercode-native memory framing
 - clarified claude-mem as an **adapter**, not the sovereign runtime story
 
 Key files:
@@ -152,7 +152,7 @@ Current active tasks:
 - `tasks/active/task-001-boot-ready-control-plane.md`
 - `tasks/active/013-memory-story-consolidation.md`
 
-These are the right kinds of tasks: bounded, architecture-aligned, and focused on making existing Borg capabilities more truthful and usable.
+These are the right kinds of tasks: bounded, architecture-aligned, and focused on making existing Hypercode capabilities more truthful and usable.
 
 ## What is completed in the task system
 
@@ -172,7 +172,7 @@ Completed milestone/task briefs include:
 - `012-session-supervisor-operator-loop.md`
 - `015-ecosystem-assimilation-consolidation.md`
 
-This suggests Borg has already gone through an important maturity shift:
+This suggests Hypercode has already gone through an important maturity shift:
 
 - away from vague “build everything” momentum
 - toward capability tracks and focused implementation slices
@@ -187,7 +187,7 @@ This is notable because documentation drift is not a side issue here; it is a st
 
 ## Roadmap summary
 
-## Borg 1.0 focus
+## Hypercode 1.0 focus
 
 The most credible 1.0 story is:
 
@@ -199,7 +199,7 @@ The most credible 1.0 story is:
 
 This matches the best recent work and the architectural center of gravity.
 
-## Borg 1.5 focus
+## Hypercode 1.5 focus
 
 The canonical post-1.0 expansion is:
 
@@ -208,7 +208,7 @@ The canonical post-1.0 expansion is:
 - richer memory model and context harvesting
 - stronger session portability
 
-## Borg 2.0 focus
+## Hypercode 2.0 focus
 
 The most plausible 2.0 scope is:
 
@@ -222,7 +222,7 @@ The most plausible 2.0 scope is:
 The current best planning artifact is `tasks/completed/015-ecosystem-assimilation-consolidation.md`, which defines:
 
 - **Track A** — boot-ready control plane
-- **Track B** — Borg-native MCP router maturity
+- **Track B** — Hypercode-native MCP router maturity
 - **Track C** — browser extension platform
 - **Track D** — IDE / CLI / hook-based memory capture
 - **Track E** — session fabric and model/tool portability
@@ -259,7 +259,7 @@ Recent fixes that matter disproportionately:
 
 ## What we are not doing
 
-Borg now has a healthier explicit non-goal posture than before.
+Hypercode now has a healthier explicit non-goal posture than before.
 
 At least in principle, it is **not** currently trying to do all of these in one step:
 
@@ -275,7 +275,7 @@ That is good. The repo needs more of this restraint, not less.
 
 ## What we did wrong
 
-This is the section frontier models should debate hardest, because these are the failure modes that will determine whether Borg becomes durable or collapses into “impressive repo, unreliable product.”
+This is the section frontier models should debate hardest, because these are the failure modes that will determine whether Hypercode becomes durable or collapses into “impressive repo, unreliable product.”
 
 ### 1. Scope inflation
 
@@ -344,7 +344,7 @@ This raises the cost of:
 - understanding what is actually shipped
 - keeping the task system and docs aligned with real product scope
 
-## What Borg is doing next
+## What Hypercode is doing next
 
 If current active work continues sanely, the next concrete milestones should be:
 
@@ -354,7 +354,7 @@ If current active work continues sanely, the next concrete milestones should be:
 4. tighten provider/session/operator loops around actual recovery and observability
 5. continue demoting or clarifying non-core experimental surfaces until they earn promotion
 
-## What Borg should want next
+## What Hypercode should want next
 
 From a product strategy perspective, the next desired state should be:
 
@@ -363,7 +363,7 @@ From a product strategy perspective, the next desired state should be:
 - a dashboard whose numbers are always explainable
 - a session runtime that survives failure and tells you what happened
 - an MCP layer that advertises cached inventory quickly and warms live connections non-blockingly
-- a memory model that is clearly Borg-native and useful across sessions
+- a memory model that is clearly Hypercode-native and useful across sessions
 
 In short:
 
@@ -373,7 +373,7 @@ In short:
 
 The long-term vision is still attractive if pursued in the right order:
 
-- Borg as the local AI control plane
+- Hypercode as the local AI control plane
 - one place to supervise models, tools, sessions, memory, and browser/IDE integrations
 - portable session context across runtimes
 - inspectable autonomy instead of magic autonomy
@@ -381,7 +381,7 @@ The long-term vision is still attractive if pursued in the right order:
 
 The key is to preserve the current architectural insight:
 
-> Borg wins by coordinating systems reliably, not by cloning every system badly.
+> Hypercode wins by coordinating systems reliably, not by cloning every system badly.
 
 ## Planned features worth keeping
 
@@ -391,7 +391,7 @@ These future features still make sense if sequenced carefully:
 - better provider routing/fallback policies and visibility
 - richer session restore/checkpoint/restart flows
 - browser/extension-backed memory and automation capture
-- IDE/CLI hook-based capture into a Borg-native memory model
+- IDE/CLI hook-based capture into a Hypercode-native memory model
 - portable session envelopes across models/tools
 - advanced autonomy/council features once supervision and inspection are trustworthy
 
@@ -449,7 +449,7 @@ This makes “current state of code” best described as:
 ### Applications
 
 - `apps/web/` — main operator dashboard (highest-leverage UX surface)
-- `apps/borg-extension/` — browser/extension-related app surface
+- `apps/hypercode-extension/` — browser/extension-related app surface
 - `apps/extension/` — extension-related workspace area
 - `apps/mobile/` — mobile-related surface
 - `apps/vscode/` — VS Code app/integration surface
@@ -464,7 +464,7 @@ This makes “current state of code” best described as:
 - `packages/search/` — search-related capability area
 - `packages/skills/` — skills-related package area
 - `packages/browser/` and `packages/browser-extension/` — browser-related foundations
-- `packages/agents/`, `packages/ai/`, `packages/borg-supervisor/` — orchestration/supervision-related package areas
+- `packages/agents/`, `packages/ai/`, `packages/hypercode-supervisor/` — orchestration/supervision-related package areas
 
 ### Docs and planning
 
@@ -545,7 +545,7 @@ Primary locations:
 
 Purpose:
 
-- Borg-native memory model
+- Hypercode-native memory model
 - search/pivot/timeline/cross-session relationships
 - prompts, observations, summaries, facts
 - claude-mem adapter/interchange framing
@@ -579,7 +579,7 @@ Purpose:
 
 ## Strategic diagnosis
 
-If a panel of frontier models is evaluating Borg as an agentic-harness design, the most useful diagnosis is:
+If a panel of frontier models is evaluating Hypercode as an agentic-harness design, the most useful diagnosis is:
 
 ### The good
 
@@ -598,13 +598,13 @@ If a panel of frontier models is evaluating Borg as an agentic-harness design, t
 
 ### The most important recommendation
 
-**Keep narrowing Borg into a dependable local control plane.**
+**Keep narrowing Hypercode into a dependable local control plane.**
 
 That means:
 
 - elevate startup truth
 - elevate session/operator/MCP reliability
-- finish the memory model around Borg-native semantics
+- finish the memory model around Hypercode-native semantics
 - demote or quarantine parity theater
 - let 1.5 and 2.0 be real later, not spiritually already shipped now
 
@@ -612,7 +612,7 @@ That means:
 
 A useful model debate should center on these questions:
 
-1. What is the smallest unforgettable 1.0 product Borg can actually ship?
+1. What is the smallest unforgettable 1.0 product Hypercode can actually ship?
 2. Which subsystems are truly kernel-grade vs currently ornamental?
 3. How aggressively should experimental/parity surfaces be quarantined from the 1.0 story?
 4. What architectural simplifications would most improve trustworthiness?
@@ -622,13 +622,13 @@ A useful model debate should center on these questions:
 
 ## External reference-system gap map
 
-The user’s long-running intent is not merely to ship Borg 1.0, but to eventually let Borg absorb the *useful* capability surface of several adjacent systems while remaining more coherent than any of them individually.
+The user’s long-running intent is not merely to ship Hypercode 1.0, but to eventually let Hypercode absorb the *useful* capability surface of several adjacent systems while remaining more coherent than any of them individually.
 
 For a useful debate, those systems should be treated as **reference inputs**, not as parity obligations.
 
 ### MetaMCP — what it contributes conceptually
 
-MetaMCP’s strongest ideas are not “being another MCP server.” Borg already is one.
+MetaMCP’s strongest ideas are not “being another MCP server.” Hypercode already is one.
 
 Its most relevant differentiators are:
 
@@ -637,11 +637,11 @@ Its most relevant differentiators are:
 - middleware/pipeline composition at the MCP layer
 - namespace/endpoint composition and policy surfaces
 - richer inspector/debug/operator infrastructure for downstream MCP traffic
-- enterprise-ish auth/endpoint controls that Borg may or may not need in full
+- enterprise-ish auth/endpoint controls that Hypercode may or may not need in full
 
-### Borg relative to MetaMCP
+### Hypercode relative to MetaMCP
 
-**Borg already has, at least in foundation form:**
+**Hypercode already has, at least in foundation form:**
 
 - MCP aggregation
 - cached inventory and always-on advertisement work
@@ -649,13 +649,13 @@ Its most relevant differentiators are:
 - dashboard/system/MCP operator surfaces
 - tool probing and server inspection
 
-**Borg still lacks or only partially has:**
+**Hypercode still lacks or only partially has:**
 
 - true progressive disclosure (`search -> load -> use -> unload`) as a primary operator/model flow
 - strong semantic tool search over large MCP inventories
 - a generalized middleware pipeline for request/response interception
 - policy/filter/override layers that are first-class and composable
-- richer per-namespace endpoint composition if Borg decides it needs that product surface
+- richer per-namespace endpoint composition if Hypercode decides it needs that product surface
 
 ### MetaMCP assimilation judgment
 
@@ -666,11 +666,11 @@ This should map primarily to:
 
 The correct lesson is:
 
-> Borg should absorb MetaMCP’s *selection, filtering, and middleware* strengths — not become a second sprawling gateway product with duplicated complexity.
+> Hypercode should absorb MetaMCP’s *selection, filtering, and middleware* strengths — not become a second sprawling gateway product with duplicated complexity.
 
-### Claude-mem / Borg-Extension — what it contributes conceptually
+### Claude-mem / Hypercode-Extension — what it contributes conceptually
 
-Claude-mem’s strongest differentiator is not generic memory storage. Borg already has memory storage primitives.
+Claude-mem’s strongest differentiator is not generic memory storage. Hypercode already has memory storage primitives.
 
 Its most important contributions are:
 
@@ -682,9 +682,9 @@ Its most important contributions are:
 - transcript compression / Endless Mode experimentation
 - plugin-style capture layer that continuously feeds memory without user micromanagement
 
-### Borg relative to claude-mem
+### Hypercode relative to claude-mem
 
-**Borg already has, at least in foundation form:**
+**Hypercode already has, at least in foundation form:**
 
 - native memory service primitives
 - structured observations/prompts/session summaries
@@ -692,7 +692,7 @@ Its most important contributions are:
 - dashboard memory search and operator visibility
 - vector/graph-adjacent memory infrastructure
 
-**Borg still lacks or only partially has:**
+**Hypercode still lacks or only partially has:**
 
 - first-class Claude Code hook registration / plugin lifecycle integration
 - a mature structured observation compression pipeline at claude-mem depth
@@ -710,9 +710,9 @@ This should map primarily to:
 
 The correct lesson is:
 
-> Borg should absorb claude-mem’s *capture and compression plumbing*, while keeping Borg’s own memory model sovereign.
+> Hypercode should absorb claude-mem’s *capture and compression plumbing*, while keeping Hypercode’s own memory model sovereign.
 
-That is already consistent with recent Borg work: claude-mem is being reframed as an **adapter/interchange layer**, not the canonical Borg runtime story.
+That is already consistent with recent Hypercode work: claude-mem is being reframed as an **adapter/interchange layer**, not the canonical Hypercode runtime story.
 
 ### MCP-SuperAssistant — what it contributes conceptually
 
@@ -727,16 +727,16 @@ Its most relevant contributions are:
 - sidebar/operator tooling for prompts, context, templates, and debug flows
 - cross-browser packaging and site-adapter maturity
 
-### Borg relative to MCP-SuperAssistant
+### Hypercode relative to MCP-SuperAssistant
 
-**Borg already has, at least in foundation form:**
+**Hypercode already has, at least in foundation form:**
 
 - a stronger core control plane
 - stronger memory/session/control-plane ambitions
 - server-side orchestration and aggregation depth
 - broader operator dashboard infrastructure
 
-**Borg still lacks or only partially has:**
+**Hypercode still lacks or only partially has:**
 
 - multi-platform web chat adapter maturity
 - real-time DOM/stream parsing across major chat sites
@@ -754,7 +754,7 @@ This should map primarily to:
 
 The correct lesson is:
 
-> Borg should absorb MCP-SuperAssistant’s browser-surface strengths only after the browser bridge, memory capture, and extension lifecycle are stable.
+> Hypercode should absorb MCP-SuperAssistant’s browser-surface strengths only after the browser bridge, memory capture, and extension lifecycle are stable.
 
 ### Jules-Autopilot / session-manager style systems — what they contribute conceptually
 
@@ -766,16 +766,16 @@ The most relevant Jules-style differentiators are:
 - swarm scaling and more explicit workflow automation
 - richer operator console depth around jobs, sessions, plugins, and automation
 
-### Borg relative to Jules-style systems
+### Hypercode relative to Jules-style systems
 
-**Borg already has, at least in foundation form:**
+**Hypercode already has, at least in foundation form:**
 
 - supervisor-oriented runtime thinking
 - council/swarm/autonomy concepts
 - sessions as a central primitive
 - routing and orchestration ambitions
 
-**Borg still lacks or only partially has:**
+**Hypercode still lacks or only partially has:**
 
 - session replay/diffing as a productized surface
 - benchmark tooling and model comparison workflows
@@ -793,15 +793,15 @@ This should map primarily to:
 
 The correct lesson is:
 
-> Borg should not chase “autonomy theater” before it has trustworthy supervised sessions and explainable operator control.
+> Hypercode should not chase “autonomy theater” before it has trustworthy supervised sessions and explainable operator control.
 
 ## Practical assimilation sequence
 
-If Borg wants to incorporate the strongest capabilities from these reference systems without losing coherence, the most rational order is:
+If Hypercode wants to incorporate the strongest capabilities from these reference systems without losing coherence, the most rational order is:
 
 ### Sequence 1 — finish the kernel first
 
-Before broader assimilation, Borg should finish:
+Before broader assimilation, Hypercode should finish:
 
 - startup/readiness truth
 - cached-vs-live MCP honesty
@@ -819,65 +819,65 @@ Once the kernel is trustworthy, the next high-leverage assimilation target is:
 - semantic tool search
 - middleware/policy/filter/override layers
 
-This is the cleanest near-term expansion because it directly improves Borg’s central MCP-control-plane identity.
+This is the cleanest near-term expansion because it directly improves Hypercode’s central MCP-control-plane identity.
 
 ### Sequence 3 — absorb claude-mem’s capture plumbing
 
-After that, Borg should deepen its memory model through:
+After that, Hypercode should deepen its memory model through:
 
 - hook-based capture
 - structured observation compression
 - progressive disclosure context injection
 - session-linked summaries and prompts
 
-This would turn Borg’s current memory foundations into a genuinely differentiated runtime story.
+This would turn Hypercode’s current memory foundations into a genuinely differentiated runtime story.
 
 ### Sequence 4 — absorb MCP-SuperAssistant’s browser strengths
 
-Only after the memory and bridge story is stable should Borg push hard on:
+Only after the memory and bridge story is stable should Hypercode push hard on:
 
 - browser adapters
 - in-page tool execution loops
 - cross-browser extension maturity
 - prompt/context/browser-side operator UX
 
-Otherwise Borg risks building glossy browser behavior on top of an unstable memory/control-plane substrate.
+Otherwise Hypercode risks building glossy browser behavior on top of an unstable memory/control-plane substrate.
 
 ### Sequence 5 — absorb Jules-style advanced orchestration
 
-Only after the session fabric is trustworthy should Borg tackle:
+Only after the session fabric is trustworthy should Hypercode tackle:
 
 - replay/diff/benchmarking
 - keeper/babysitter systems
 - consensus/debate systems
 - plugin marketplace and larger autonomy loops
 
-This is where many ambitious projects overheat. Borg should arrive here *late*, not pretend it is already here.
+This is where many ambitious projects overheat. Hypercode should arrive here *late*, not pretend it is already here.
 
-## What Borg still does not do yet — in plain language
+## What Hypercode still does not do yet — in plain language
 
 For the roundtable, the simplest accurate statement is:
 
-### Borg does not yet fully do MetaMCP’s best work when it comes to:
+### Hypercode does not yet fully do MetaMCP’s best work when it comes to:
 
 - progressive disclosure over huge tool catalogs
 - tool-search-first UX
 - composable middleware and policy pipelines
 
-### Borg does not yet fully do claude-mem’s best work when it comes to:
+### Hypercode does not yet fully do claude-mem’s best work when it comes to:
 
 - automatic hook-based memory capture in external runtimes
 - AI-compressed structured observations from raw tool outputs
 - token-aware progressive context injection
 - transcript-level long-session compression
 
-### Borg does not yet fully do MCP-SuperAssistant’s best work when it comes to:
+### Hypercode does not yet fully do MCP-SuperAssistant’s best work when it comes to:
 
 - web chat injection across many AI websites
 - in-page tool-call parsing and execution loops
 - mature browser extension UX across Firefox and Chromium
 
-### Borg does not yet fully do Jules-style systems’ best work when it comes to:
+### Hypercode does not yet fully do Jules-style systems’ best work when it comes to:
 
 - portable job handoff between models and tool sessions
 - replay/diff/benchmarking as first-class operator tools
@@ -885,17 +885,17 @@ For the roundtable, the simplest accurate statement is:
 
 ## What the roundtable should conclude from that
 
-The answer is not “Borg is missing too much.”
+The answer is not “Hypercode is missing too much.”
 
 The answer is:
 
-> Borg already has the right kernel. The missing work is selective assimilation of the best *operational* capabilities from adjacent systems, staged in the correct order.
+> Hypercode already has the right kernel. The missing work is selective assimilation of the best *operational* capabilities from adjacent systems, staged in the correct order.
 
 That order matters more than the feature count.
 
 ## Bottom line
 
-Borg is **not** just a chaotic idea repo anymore. It has become a real control-plane codebase with a believable core.
+Hypercode is **not** just a chaotic idea repo anymore. It has become a real control-plane codebase with a believable core.
 
 But it is still in the dangerous middle state where:
 
@@ -913,5 +913,5 @@ The path forward is:
 - fewer implied promises
 - stronger operator trust
 
-If Borg gets that right, the broader vision becomes plausible.
+If Hypercode gets that right, the broader vision becomes plausible.
 If it does not, the repo risks remaining a fascinating but unstable superstructure.

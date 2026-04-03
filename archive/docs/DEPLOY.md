@@ -10,7 +10,7 @@
 ```bash
 # Clone repository
 git clone <repo-url>
-cd borg-monorepo
+cd hypercode-monorepo
 
 # Install dependencies
 pnpm install

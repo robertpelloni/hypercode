@@ -6,11 +6,11 @@ let keepAliveInterval = null;
 
 // Connect to HyperCode Core
 function connect() {
-    console.log(`[BorgLink] Connecting to ${SOCKET_URL}...`);
+    console.log(`[HypercodeLink] Connecting to ${SOCKET_URL}...`);
     socket = new WebSocket(SOCKET_URL);
 
     socket.onopen = () => {
-        console.log("[BorgLink] Connected!");
+        console.log("[HypercodeLink] Connected!");
         chrome.action.setBadgeText({ text: "ON" });
         chrome.action.setBadgeBackgroundColor({ color: "#4CAF50" });
 
@@ -27,7 +27,7 @@ function connect() {
     socket.onmessage = async (event) => {
         try {
             const msg = JSON.parse(event.data);
-            console.log("[BorgLink] Received:", msg);
+            console.log("[HypercodeLink] Received:", msg);
             handleMessage(msg);
         } catch (e) {
             console.error("Failed to parse message", e);
@@ -35,7 +35,7 @@ function connect() {
     };
 
     socket.onclose = () => {
-        console.log("[BorgLink] Disconnected. Reconnecting in 5s...");
+        console.log("[HypercodeLink] Disconnected. Reconnecting in 5s...");
         chrome.action.setBadgeText({ text: "OFF" });
         chrome.action.setBadgeBackgroundColor({ color: "#F44336" });
         stopKeepAlive();
@@ -43,7 +43,7 @@ function connect() {
     };
 
     socket.onerror = (err) => {
-        console.error("[BorgLink] Socket Error:", err);
+        console.error("[HypercodeLink] Socket Error:", err);
         socket.close();
     };
 }

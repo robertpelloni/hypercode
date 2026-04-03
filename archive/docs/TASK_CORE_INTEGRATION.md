@@ -2,7 +2,7 @@
 
 ## Completed ✅
 - [x] Deep Research & Architecture Planning (Batches 1-17)
-- [x] Defined "Borg Swarm" Architecture (`docs/architecture/BORG_SWARM.md`)
+- [x] Defined "Hypercode Swarm" Architecture (`docs/architecture/HYPERCODE_SWARM.md`)
 - [x] Planned "Sherlock" Memory Upgrade (`docs/architecture/MEMORY_UPGRADE.md`)
 - [x] Planned Browser Capability Upgrade (`docs/architecture/BROWSER_UPGRADE.md`)
 

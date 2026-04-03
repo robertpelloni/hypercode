@@ -24,7 +24,7 @@ We analyzed four primary repositories:
 
 ### C. `gemini-claude-skills` (Relevance: High)
 *   **Role:** A bridge allowing Claude to utilize Gemini models as a "skill".
-*   **Relevance:** This is architecturally similar to our goal of using Gemini as a cognitive engine within the Borg system. It proves the pattern of "LLM-as-a-Tool" is viable and established.
+*   **Relevance:** This is architecturally similar to our goal of using Gemini as a cognitive engine within the Hypercode system. It proves the pattern of "LLM-as-a-Tool" is viable and established.
 
 ### D. `claude-code-tips` (Knowledge Base)
 *   **Role:** A massive collection of tips, tricks, and prompt snippets.
@@ -52,4 +52,4 @@ We explored the two largest directories for Model Context Protocol servers:
 
 1.  **Adopt `SKILL.md` Standard:** We should formalize our recurring agent tasks (e.g., "Deep Research", "Submodule Integration") into `SKILL.md` files in a dedicated `skills/` directory. This makes them portable and explicitly invokable.
 2.  **Gemini Integration:** We should study `gemini-claude-skills` closely to optimize how we route cognitive load to Gemini 2.0 Flash.
-3.  **MCP Tool Selection:** When adding new capabilities to Borg, consulting `awesome-mcp-servers` should be the standard lookup procedure before building custom tools.
+3.  **MCP Tool Selection:** When adding new capabilities to Hypercode, consulting `awesome-mcp-servers` should be the standard lookup procedure before building custom tools.

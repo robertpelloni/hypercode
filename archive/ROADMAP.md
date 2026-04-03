@@ -1,4 +1,4 @@
-# Borg Roadmap
+# Hypercode Roadmap
 
 Canonical roadmap for the current repository state as of **2026-03-18**.
 
@@ -19,13 +19,13 @@ Historical phase-era planning is archived under `docs/archive/`.
 | Provider routing | Real provider normalization, fallback chains, quota snapshots, and billing controls | **Partial** |
 | Session supervisor | Real spawn/restart/persistence/logging with dashboard controls | **Partial** |
 | Dashboard | Real `/dashboard` home plus MCP/session/billing/integrations/memory surfaces | **Partial** |
-| Memory | Real Borg-native memory CRUD/search/summaries/observations plus adapter surfaces | **Partial** |
+| Memory | Real Hypercode-native memory CRUD/search/summaries/observations plus adapter surfaces | **Partial** |
 | Bridge/extension | Real bridge registration and install-surface detection; mixed extension maturity | **Early** |
 | Documentation/task governance | Canonical root docs exist; task workflow requires strict upkeep | **Partial** |
 
-## Borg 1.0 — Actually Works
+## Hypercode 1.0 — Actually Works
 
-**Release intent:** a new operator can install Borg, start it, open the dashboard, run real workflows, and trust what UI state means.
+**Release intent:** a new operator can install Hypercode, start it, open the dashboard, run real workflows, and trust what UI state means.
 
 ### 1.0 release criteria
 
@@ -56,19 +56,19 @@ Historical phase-era planning is archived under `docs/archive/`.
 5. **Dashboard honesty**
    - wrapper/parity pages must be clearly marked and not confused for 1.0 core.
 
-## Borg 1.5 — Remembers Things
+## Hypercode 1.5 — Remembers Things
 
 Starts after 1.0 trust is established.
 
 ### 1.5 target outcomes
 
-- [ ] Unified Borg-native memory model UX across search/timeline/provenance
+- [ ] Unified Hypercode-native memory model UX across search/timeline/provenance
 - [ ] Durable ingestion pipeline visibility (status, provenance, replayability)
 - [ ] Practical browser + IDE capture flows tied to memory and sessions
 - [ ] Context compaction/injection that improves real operator workflows
 - [ ] Stronger adapter strategy for external memory ecosystems without over-claiming parity
 
-## Borg 2.0 — The Swarm Awakens
+## Hypercode 2.0 — The Swarm Awakens
 
 Explicitly post-1.x stabilization.
 
@@ -77,7 +77,7 @@ Explicitly post-1.x stabilization.
 - [ ] Coherent multi-agent orchestration with safe operator controls
 - [ ] Debate/council workflows that are operational, not demo-only
 - [ ] Mature plugin and capability-marketplace story
-- [ ] Cloud-dev integrations aligned with Borg control-plane principles
+- [ ] Cloud-dev integrations aligned with Hypercode control-plane principles
 
 ## Out of scope (until reprioritized)
 

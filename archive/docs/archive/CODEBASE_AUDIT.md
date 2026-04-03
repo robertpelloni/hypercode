@@ -1,4 +1,4 @@
-# 🔬 Borg Codebase Audit — Full Status Report
+# 🔬 Hypercode Codebase Audit — Full Status Report
 
 **Date**: 2026-02-07 | **Auditor**: Opus 4.6 | **For**: Gemini 3 Pro High  
 **Scope**: All packages, apps, services, tools, UI pages, CLI, and routers
@@ -39,7 +39,7 @@ graph TD
 | `types` | ✅ Active | Shared TypeScript types |
 | `browser` | ⚠️ Unclear | Puppeteer wrapper? |
 | `browser-extension` | ⚠️ Unclear | Separate from `apps/extension` |
-| `borg-supervisor` | ⚠️ Unclear | Autonomous agent logic |
+| `hypercode-supervisor` | ⚠️ Unclear | Autonomous agent logic |
 | `supervisor-plugin` | ⚠️ Unclear | Plugin for supervisor |
 | `mcp-client` | ⚠️ Stub | Only 3 files |
 | `mcp-router-cli` | ⚠️ Stub | Only 1 file |
@@ -197,7 +197,7 @@ graph TD
 
 ## 9. Tools Inventory (`packages/tools/`)
 
-15 tool modules exported from `@borg/tools`:
+15 tool modules exported from `@hypercode/tools`:
 
 | Module | Tools Count | Status |
 |--------|------------|--------|
@@ -217,7 +217,7 @@ graph TD
 | `WorktreeTools` | 2+ | ✅ Active |
 | `ProcessRegistry` | 1+ | ✅ Active |
 
-### MCPServer-Only Tools (Not in `@borg/tools`)
+### MCPServer-Only Tools (Not in `@hypercode/tools`)
 
 These are registered in `MCPServer.setupHandlers` and `executeTool` but NOT exported as reusable modules:
 

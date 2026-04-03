@@ -194,7 +194,7 @@ export default function DraggableDashboard() {
 
     // Load from LocalStorage
     useEffect(() => {
-        const saved = safeStorageGet('borg_dashboard_layout');
+        const saved = safeStorageGet('hypercode_dashboard_layout');
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
@@ -230,7 +230,7 @@ export default function DraggableDashboard() {
                 const newIndex = items.indexOf(over.id as string);
 
                 const newOrder = arrayMove(items, oldIndex, newIndex);
-                safeStorageSet('borg_dashboard_layout', JSON.stringify(newOrder));
+                safeStorageSet('hypercode_dashboard_layout', JSON.stringify(newOrder));
                 return newOrder;
             });
         }

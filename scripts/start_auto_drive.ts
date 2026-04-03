@@ -14,7 +14,7 @@ const CALLS = [
 ];
 
 ws.on('open', async () => {
-    console.log("Connected to Borg Core (ws://localhost:3001) - Requesting Auto-Drive...");
+    console.log("Connected to Hypercode Core (ws://localhost:3001) - Requesting Auto-Drive...");
 
     let id = 1;
     for (const call of CALLS) {
@@ -42,6 +42,6 @@ ws.on('message', (data) => {
 
 ws.on('error', (err) => {
     console.error("Connection Error:", err.message);
-    console.error("Ensure Borg Core is running (pnpm start)!");
+    console.error("Ensure Hypercode Core is running (pnpm start)!");
     process.exit(1);
 });

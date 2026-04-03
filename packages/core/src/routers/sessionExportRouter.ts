@@ -54,7 +54,7 @@ export interface ExportedSession {
 export interface ExportPackage {
     version: '1.0';
     exportedAt: number;
-    borgVersion: string;
+    hypercodeVersion: string;
     environment: string;
     sessionCount: number;
     sessions: ExportedSession[];
@@ -240,7 +240,7 @@ export const sessionExportRouter = t.router({
             const pkg: ExportPackage = {
                 version: '1.0',
                 exportedAt: Date.now(),
-                borgVersion: '0.90.5',
+                hypercodeVersion: '0.90.5',
                 environment: process.platform,
                 sessionCount: 0,
                 sessions: [],

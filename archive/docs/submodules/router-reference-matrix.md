@@ -16,13 +16,13 @@ _Last updated: 2026-03-08_
 
 | Repo | Area | Signals | Best ideas to borrow | Risks / mismatches | Recommendation |
 |---|---|---|---|---|---|
-| `mcp-router/mcp-router` | MCP server management UX | ~1.8k stars, recent activity, TS monorepo, releases | One-click client integration, per-server/per-tool toggles, projects/workspaces, local-first UX | More of a desktop MCP manager than a Borg-style backend router | **Reference only**; strong UX/product benchmark, weak fit as core router submodule |
-| `microsoft/mcp-gateway` | Enterprise MCP gateway | ~505 stars, active within days, clear architecture docs, REST control plane | Session affinity, adapter lifecycle APIs, dynamic tool registration, authz, observability | Heavy .NET + Kubernetes + Azure bias; too heavyweight for Borg 1.0 implementation style | **Reference only**; excellent architecture benchmark, not a good in-repo submodule right now |
+| `mcp-router/mcp-router` | MCP server management UX | ~1.8k stars, recent activity, TS monorepo, releases | One-click client integration, per-server/per-tool toggles, projects/workspaces, local-first UX | More of a desktop MCP manager than a Hypercode-style backend router | **Reference only**; strong UX/product benchmark, weak fit as core router submodule |
+| `microsoft/mcp-gateway` | Enterprise MCP gateway | ~505 stars, active within days, clear architecture docs, REST control plane | Session affinity, adapter lifecycle APIs, dynamic tool registration, authz, observability | Heavy .NET + Kubernetes + Azure bias; too heavyweight for Hypercode 1.0 implementation style | **Reference only**; excellent architecture benchmark, not a good in-repo submodule right now |
 | `Dumbris/mcpproxy` | MCP proxy + tool retrieval | ~37 stars, Python, low activity but focused design | `retrieve_tools`, progressive disclosure, BM25/vector indexing, proxy-vs-dynamic routing modes | Small project, limited maintenance, less evidence of production hardening | **Best lightweight router reference** if one extra proxy-oriented upstream must be studied |
-| `nullplatform/meta-mcp-proxy` | Meta proxy / local RAG | ~9 stars, JS, minimal surface | Simple discovery + execute split, config shape for aggregated MCPs | Small, old, minimal community activity | **Defer**; useful conceptually, weaker than Borg’s existing MetaMCP work |
-| `BerriAI/litellm` | Provider routing / fallback | ~38.3k stars, extremely active, broad adoption | Multi-provider normalization, fallback, quotas, model routing, cost controls, AI gateway patterns | Very broad scope; mostly provider gateway, not MCP routing | **Reference only, high priority** for Borg provider routing design |
+| `nullplatform/meta-mcp-proxy` | Meta proxy / local RAG | ~9 stars, JS, minimal surface | Simple discovery + execute split, config shape for aggregated MCPs | Small, old, minimal community activity | **Defer**; useful conceptually, weaker than Hypercode’s existing MetaMCP work |
+| `BerriAI/litellm` | Provider routing / fallback | ~38.3k stars, extremely active, broad adoption | Multi-provider normalization, fallback, quotas, model routing, cost controls, AI gateway patterns | Very broad scope; mostly provider gateway, not MCP routing | **Reference only, high priority** for Hypercode provider routing design |
 
-## Recommended ranking by Borg feature
+## Recommended ranking by Hypercode feature
 
 ### MCP router references
 
@@ -35,9 +35,9 @@ _Last updated: 2026-03-08_
 
 1. `BerriAI/litellm` — strongest provider/fallback/quota reference by far
 
-## Practical takeaways for Borg
+## Practical takeaways for Hypercode
 
-- Borg should **not** add multiple new router submodules by default.
+- Hypercode should **not** add multiple new router submodules by default.
 - The current policy in `AGENTS.md` says **no new submodules without human approval**.
 - The strongest move is to:
   1. keep `external/MetaMCP` as the active bridge reference,
@@ -63,6 +63,6 @@ With explicit human approval, the following new references were added:
 - `submodules/mcpproxy`
 - `submodules/litellm`
 
-These should remain **reference implementations**, not runtime dependencies for Borg 1.0.
+These should remain **reference implementations**, not runtime dependencies for Hypercode 1.0.
 
 If the goal is architecture study rather than code vendoring, prefer **no new submodule** and just keep this matrix plus links in the research index.

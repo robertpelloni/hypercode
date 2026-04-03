@@ -1,10 +1,10 @@
-# Borg Swarm Architecture: "Maestro" Pattern
+# Hypercode Swarm Architecture: "Maestro" Pattern
 
 **Status:** Draft
 **Last Updated:** 2026-02-03
 
 ## 1. Overview
-The **Borg Swarm** is the multi-agent orchestration layer. Historically, agents operated sequentially or required complex file locking to avoid overwriting each other's work.
+The **Hypercode Swarm** is the multi-agent orchestration layer. Historically, agents operated sequentially or required complex file locking to avoid overwriting each other's work.
 This new architecture adopts the **Maestro Pattern** (Git Worktrees) to enable true parallel execution and **Cognee** (Graph Memory) for shared semantic reasoning.
 
 ## 2. The "Maestro" Pattern (Git Worktrees)
@@ -18,7 +18,7 @@ When multiple agents edit the codebase simultaneously:
 ### Solution: Git Worktrees
 Each Agent Task gets a dedicated **Git Worktree**.
 *   **Isolation:** A worktree is a linked copy of the repository sharing the `.git` folder but having a separate working directory.
-*   **Parallelism:** Agent A works in `.borg/worktrees/task-123/`, Agent B works in `.borg/worktrees/task-124/`.
+*   **Parallelism:** Agent A works in `.hypercode/worktrees/task-123/`, Agent B works in `.hypercode/worktrees/task-124/`.
 *   **Efficiency:** Spawning a worktree is near-instant (<1s) compared to `git clone` (>30s).
 
 ### Architecture Components
@@ -44,8 +44,8 @@ Each Agent Task gets a dedicated **Git Worktree**.
     *   Task A: "Refactor Auth Backend"
     *   Task B: "Update UI Components"
 3.  **WorktreeManager** provisions environments:
-    *   Task A -> `.borg/worktrees/task-A` (Branch: `feature/auth-backend`)
-    *   Task B -> `.borg/worktrees/task-B` (Branch: `feature/ui-components`)
+    *   Task A -> `.hypercode/worktrees/task-A` (Branch: `feature/auth-backend`)
+    *   Task B -> `.hypercode/worktrees/task-B` (Branch: `feature/ui-components`)
 4.  **Agents** execute in parallel in their respective paths.
 5.  **Verification:** Each agent runs tests *within their worktree*.
 6.  **Merge:**
@@ -71,7 +71,7 @@ The **Hive Mind** (Graph Memory) persists across all agents.
 
 ## 6. Directory Structure
 ```
-.borg/
+.hypercode/
   worktrees/
     task-abc-123/  <-- Agent A working here
     task-xyz-789/  <-- Agent B working here

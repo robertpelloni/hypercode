@@ -1,5 +1,5 @@
 {
-    "name": "@borg/extension",
+    "name": "@hypercode/extension",
     "version": "2.7.333",
     "private": true,
     "scripts": {

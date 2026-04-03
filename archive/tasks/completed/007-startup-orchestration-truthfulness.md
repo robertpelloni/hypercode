@@ -1,7 +1,7 @@
 # Task 007: Startup Orchestration Truthfulness
 
 ## Context
-The product promise starts with `pnpm run dev` and `docker compose up --build`. Borg now exposes `startupStatus`, but the boot story must be deterministic and verifiable end-to-end.
+The product promise starts with `pnpm run dev` and `docker compose up --build`. Hypercode now exposes `startupStatus`, but the boot story must be deterministic and verifiable end-to-end.
 
 ## Scope
 - Files: `scripts/dev_tabby_ready.mjs`, `packages/core/src/routers/startupStatus.ts`, `packages/core/src/routers/systemProcedures.ts`, `packages/cli/src/commands/start.ts`

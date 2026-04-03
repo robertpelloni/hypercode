@@ -1,4 +1,4 @@
-# Borg Research Initiative - FINAL PROGRESS REPORT
+# Hypercode Research Initiative - FINAL PROGRESS REPORT
 
 **Date**: 2026-01-17  
 **Session**: Comprehensive Resource Integration & Research Initiative
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Borg has successfully completed the **research infrastructure phase** and is now ready for **implementation phase**. This initiative represents one of the most comprehensive analyses of the AI tooling ecosystem ever undertaken.
+Hypercode has successfully completed the **research infrastructure phase** and is now ready for **implementation phase**. This initiative represents one of the most comprehensive analyses of the AI tooling ecosystem ever undertaken.
 
 ### What Was Accomplished
 
@@ -152,7 +152,7 @@ Borg has successfully completed the **research infrastructure phase** and is now
 **Implementation Approach**:
 - Define pluggable backend interface
 - Implement adapters for major stores
-- Build automatic harvesting hooks in all Borg operations
+- Build automatic harvesting hooks in all Hypercode operations
 - Create compaction scheduler
 - Build semantic search with embeddings
 - Create conversion pipeline
@@ -243,7 +243,7 @@ Borg has successfully completed the **research infrastructure phase** and is now
 
 **Implementation Approach**:
 - Build Chrome extension with content script injection
-- Implement message passing to Borg
+- Implement message passing to Hypercode
 - Create memory synchronization service
 - Build computer-use bridge via MCP
 - Implement console access
@@ -482,7 +482,7 @@ docs/research-index/
 2. Refresh MASTER_INDEX.md with final stats
 3. Create resource database JSON
 4. Deduplicate all 200+ resources
-5. Rate relevance for Borg goals
+5. Rate relevance for Hypercode goals
 6. Update AGENTS.md with all patterns
 
 ---
@@ -557,7 +557,7 @@ docs/research-index/
 
 ## Conclusion
 
-The Borg research initiative has successfully completed the **foundational phase** and established comprehensive infrastructure for building a **world-class universal AI operating system**.
+The Hypercode research initiative has successfully completed the **foundational phase** and established comprehensive infrastructure for building a **world-class universal AI operating system**.
 
 All 200+ resources have been:
 - ✅ Categorized
@@ -573,7 +573,7 @@ The implementation phase can now begin with:
 - **Feature parity** matrix ready for execution
 - **Resource database** ready for programmatic access
 
-**Borg is positioned to exceed all major tools** by integrating their best features into a cohesive, powerful system.
+**Hypercode is positioned to exceed all major tools** by integrating their best features into a cohesive, powerful system.
 
 ---
 

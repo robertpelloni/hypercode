@@ -53,8 +53,8 @@ The Ultimate MCP Router implementation is **COMPLETE**. All core services have b
 **File**: `packages/core/src/services/ConfigurationService.ts`
 
 **Features**:
-- Auto-detect .mcp.json and .borg.json config files
-- Multi-format support (Claude, OpenAI, Google, Borg)
+- Auto-detect .mcp.json and .hypercode.json config files
+- Multi-format support (Claude, OpenAI, Google, Hypercode)
 - Environment variable expansion ($VAR)
 - Secret expansion ({secret:NAME})
 - Import/export and validation
@@ -138,7 +138,7 @@ export {
 
 ### Existing Integration
 
-The new services integrate with existing Borg components:
+The new services integrate with existing Hypercode components:
 
 | Component | Integration |
 |-----------|-------------|
@@ -231,7 +231,7 @@ bun run src/examples/04-session-management.ts
 - All services use singleton pattern via `getInstance()`
 - All services extend `EventEmitter` for state changes
 - All services integrate with `DatabaseManager` for persistence
-- All services follow Borg architecture patterns
+- All services follow Hypercode architecture patterns
 - Pre-existing LSP errors in `McpManager.ts` are not related to this implementation
 
 ---

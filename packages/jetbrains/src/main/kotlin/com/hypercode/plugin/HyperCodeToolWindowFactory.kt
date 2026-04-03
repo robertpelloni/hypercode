@@ -12,11 +12,11 @@ import com.intellij.ui.content.ContentFactory
 import java.awt.BorderLayout
 import javax.swing.*
 
-class BorgToolWindowFactory : ToolWindowFactory {
+class HypercodeToolWindowFactory : ToolWindowFactory {
 <<<<<<< HEAD
     
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val panel = BorgToolWindowPanel(project)
+        val panel = HypercodeToolWindowPanel(project)
 =======
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val panel = JPanel(BorderLayout())
@@ -41,9 +41,9 @@ class BorgToolWindowFactory : ToolWindowFactory {
 }
 <<<<<<< HEAD
 
-class BorgToolWindowPanel(private val project: Project) : JPanel(BorderLayout()) {
+class HypercodeToolWindowPanel(private val project: Project) : JPanel(BorderLayout()) {
     
-    private val service = project.getService(BorgService::class.java)
+    private val service = project.getService(HypercodeService::class.java)
     private val statusLabel = JBLabel("Disconnected")
     private val outputArea = JTextArea().apply {
         isEditable = false

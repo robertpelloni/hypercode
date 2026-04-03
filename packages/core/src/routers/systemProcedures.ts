@@ -21,7 +21,7 @@ import { summarizeCachedInventory } from './startupInventorySummary.js';
 import { mcpServerPool } from '../services/mcp-server-pool.service.js';
 import type { MemoryPipelineSummary } from '../services/memory/MemoryManager.js';
 
-const EXECUTION_ENV_CACHE_TTL_MS = Number(process.env.BORG_EXECUTION_ENV_CACHE_TTL_MS ?? 30_000);
+const EXECUTION_ENV_CACHE_TTL_MS = Number(process.env.HYPERCODE_EXECUTION_ENV_CACHE_TTL_MS ?? 30_000);
 
 let executionEnvironmentCache:
     | {

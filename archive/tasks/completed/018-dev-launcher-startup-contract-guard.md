@@ -1,7 +1,7 @@
 # Task: Dev Launcher Startup Contract Guard
 
 ## Context
-`pnpm run dev` can reuse an already-running Borg core bridge on port `3001`. That saves time, but it also means the launcher can accidentally attach to an older control-plane instance whose `startupStatus` payload predates the current readiness contract and then incorrectly report the stack as ready.
+`pnpm run dev` can reuse an already-running Hypercode core bridge on port `3001`. That saves time, but it also means the launcher can accidentally attach to an older control-plane instance whose `startupStatus` payload predates the current readiness contract and then incorrectly report the stack as ready.
 
 ## Requirements
 1. The dev launcher must not report ready unless the live `startupStatus` payload exposes the current readiness-contract fields.

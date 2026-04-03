@@ -75,12 +75,12 @@
 
 | File | Description | Categories |
 |------|-------------|------------|
-| [CLI_FEATURE_PARITY.md](file:///C:/Users/hyper/workspace/borg/docs/CLI_FEATURE_PARITY.md) | 230+ features from 7 CLI tools | CLI/TUI |
-| [MEMORY_FEATURES.md](file:///C:/Users/hyper/workspace/borg/docs/MEMORY_FEATURES.md) | Memory architecture from 4 systems | Memory |
-| [MCP_CONTEXT_FEATURES.md](file:///C:/Users/hyper/workspace/borg/docs/MCP_CONTEXT_FEATURES.md) | MCP routing & context formats | MCP, Context |
-| [AGENT_UI_FEATURES.md](file:///C:/Users/hyper/workspace/borg/docs/AGENT_UI_FEATURES.md) | Agent UI/React integration | UI |
-| [INFRASTRUCTURE_FEATURES.md](file:///C:/Users/hyper/workspace/borg/docs/INFRASTRUCTURE_FEATURES.md) | Code indexing, sandbox, browser | Infra |
-| [ORCHESTRATION_FEATURES.md](file:///C:/Users/hyper/workspace/borg/docs/ORCHESTRATION_FEATURES.md) | Multi-agent orchestration | Orchestration |
+| [CLI_FEATURE_PARITY.md](file:///C:/Users/hyper/workspace/hypercode/docs/CLI_FEATURE_PARITY.md) | 230+ features from 7 CLI tools | CLI/TUI |
+| [MEMORY_FEATURES.md](file:///C:/Users/hyper/workspace/hypercode/docs/MEMORY_FEATURES.md) | Memory architecture from 4 systems | Memory |
+| [MCP_CONTEXT_FEATURES.md](file:///C:/Users/hyper/workspace/hypercode/docs/MCP_CONTEXT_FEATURES.md) | MCP routing & context formats | MCP, Context |
+| [AGENT_UI_FEATURES.md](file:///C:/Users/hyper/workspace/hypercode/docs/AGENT_UI_FEATURES.md) | Agent UI/React integration | UI |
+| [INFRASTRUCTURE_FEATURES.md](file:///C:/Users/hyper/workspace/hypercode/docs/INFRASTRUCTURE_FEATURES.md) | Code indexing, sandbox, browser | Infra |
+| [ORCHESTRATION_FEATURES.md](file:///C:/Users/hyper/workspace/hypercode/docs/ORCHESTRATION_FEATURES.md) | Multi-agent orchestration | Orchestration |
 | RESEARCH_INDEX.md (this file) | Research progress tracker | Meta |
 
 ---
@@ -145,6 +145,6 @@
 ## Next Steps
 
 1. Continue processing remaining ~400 links from `LINKS_TO_PROCESS.md`
-2. Cross-reference features with existing Borg implementation
+2. Cross-reference features with existing Hypercode implementation
 3. Create implementation priority matrix
 4. Begin implementing missing features in priority order

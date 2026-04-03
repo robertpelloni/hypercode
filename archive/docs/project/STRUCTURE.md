@@ -6,7 +6,7 @@
 ├── apps/             # Monorepo applications
 │   └── web/          # Next.js Dashboard (Frontend)
 ├── packages/
-│   ├── core/         # Borg Background Service (Backend)
+│   ├── core/         # Hypercode Background Service (Backend)
 │   ├── ui/           # Shared React Component Library
 │   ├── cli/          # Universal Harness CLI
 │   └── types/        # Shared TypeScript definitions

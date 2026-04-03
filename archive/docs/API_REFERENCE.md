@@ -1,8 +1,8 @@
-# Borg API Reference
+# Hypercode API Reference
 
 ## Overview
 
-Borg provides a REST API (Fastify) and WebSocket API (Socket.io) for managing agents, MCP servers, memory, and system resources.
+Hypercode provides a REST API (Fastify) and WebSocket API (Socket.io) for managing agents, MCP servers, memory, and system resources.
 
 **Base URL:** `http://localhost:3002` (default)
 
@@ -294,9 +294,9 @@ Common error codes:
 
 ---
 
-## Borg MCP Router Bridge
+## Hypercode MCP Router Bridge
 
-Borg's MCP router uses an upstream MetaMCP-backed bridge for advanced server orchestration, multi-transport support, and sandboxed code execution. Borg remains the primary operator surface; the MetaMCP pieces documented below are the underlying bridge implementation details.
+Hypercode's MCP router uses an upstream MetaMCP-backed bridge for advanced server orchestration, multi-transport support, and sandboxed code execution. Hypercode remains the primary operator surface; the MetaMCP pieces documented below are the underlying bridge implementation details.
 
 ### Documentation
 

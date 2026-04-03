@@ -1,7 +1,7 @@
 # Handoff: Antigravity
 
 ## Current State
-- **Project**: Borg - Neural Operating System
+- **Project**: Hypercode - Neural Operating System
 - **Current Phase**: Phase 132: Browser Extension Hardening & Options UX (COMPLETED)
 - **Version**: 2.7.94
 
@@ -9,7 +9,7 @@
 - **Phase 94**: Sub-Agent Task Routing. `MeshCoderAgent` and `MeshResearcherAgent` bid on classified tasks.
 - **Phase 95**: Swarm Git Worktree Isolation. Coding tasks auto-receive isolated git worktrees via `GitWorktreeManager`, preventing file contention during parallel execution.
 - **Phase 96**: Agentic Execution Telemetry. Plumbed LLM execution traces (provider/model) from `CoderAgent` and `DeepResearchService` into the `SubAgents` orchestration surface. Replaced simulated stubs in `SystemWorkflows.ts` with real `use_agent` MCP tool invocations.
-- **Phase 97**: External Link Ingestion Telemetry. Developed `record-fetch-outcome.mjs` for incremental writer queues and built a dedicated UI in `dashboard/ingestion` matching the metrics from `BORG_MASTER_INDEX.jsonc`.
+- **Phase 97**: External Link Ingestion Telemetry. Developed `record-fetch-outcome.mjs` for incremental writer queues and built a dedicated UI in `dashboard/ingestion` matching the metrics from `HYPERCODE_MASTER_INDEX.jsonc`.
 - **Phase 95.1 (Docs/Ops Sync)**: Canonical docs and metadata synchronized at `v2.7.56` across roadmap/todo/status/changelog/version and governance dashboard references.
 - **Phase 96**: Swarm Tool Permission Boundaries. Mission-level allow/deny policy now flows through swarm routing and worker execution, with denied-tool rationale persisted in task history and emitted in telemetry.
 - **Phase 97**: Swarm Tool Policy Normalization & Contract Feedback. Policies are normalized with deterministic deny precedence, and mission start responses now include effective policy + warning metadata.
@@ -41,19 +41,19 @@
 - **Phase 123**: Filter-Scoped Health Confidence Alert Level Signal. Added confidence alert-level output (`none|warn|critical`) and rendered alert-level badge in Missions facets for rapid confidence-alert severity triage.
 - **Phase 124**: Filter-Scoped Health Confidence Alert Aggregation. Added `alertCount` and `hasCriticalAlert` outputs and rendered alert aggregation indicators in Missions facets for compact confidence-alert scanning.
 - **Phase 125**: Adversarial Debate Contract & UI Representation. Promoted Swarm debate execution to a typed `mode`/`topicType` contract, extended `DebateProtocol` with explicit persona/adversarial metadata, and updated the Debate dashboard to surface red-team controls, adversarial persona cards, and critique-specific transcript styling.
-- **Validation Note**: The only Phase 125 blocker was stale exported `@borg/core` declaration output in `packages/core/dist`. Rebuilding `@borg/core` regenerated the published `AppRouter` types and the web production build then passed cleanly.
+- **Validation Note**: The only Phase 125 blocker was stale exported `@hypercode/core` declaration output in `packages/core/dist`. Rebuilding `@hypercode/core` regenerated the published `AppRouter` types and the web production build then passed cleanly.
 - **Phase 126**: Deferred Tool Loading Pipeline. Activated deferred schema handling in the live MetaMCP proxy so progressive mode now advertises lightweight placeholder tools, caches full downstream schemas, and hydrates them on demand through the new `get_tool_schema` meta-tool. Extended the core tool registry / `toolsRouter` response contract with deferred metadata and updated the MCP catalog dashboard to clearly represent deferred schema state and true parameter counts.
-- **Validation Note**: Rebuilt `@borg/core` and reran the full webpack production build for `apps/web`; both completed successfully after the deferred-schema contract updates.
+- **Validation Note**: Rebuilt `@hypercode/core` and reran the full webpack production build for `apps/web`; both completed successfully after the deferred-schema contract updates.
 - **Phase 127**: Extension Surface Cross-Intelligence. Added a dedicated `/knowledge.capture` compatibility endpoint in `MCPServer`, rebroadcast browser-extension `BROWSER_LOG` and `KNOWLEDGE_CAPTURED` events over the shared Core WebSocket, updated the browser extension bridge to use the new capture path, and extended `apps/web/src/components/TrafficInspector.tsx` to render browser-log and knowledge-capture packets in real time.
-- **Phase 127 Completion Note**: Registered the pre-declared `borg.rememberSelection` VS Code command and wired it into the shared `KNOWLEDGE_CAPTURE` contract so editor selections/files can be saved directly into Borg memory from VS Code as well.
+- **Phase 127 Completion Note**: Registered the pre-declared `hypercode.rememberSelection` VS Code command and wired it into the shared `KNOWLEDGE_CAPTURE` contract so editor selections/files can be saved directly into Hypercode memory from VS Code as well.
 - **Validation Note**: `pnpm -C packages/core exec tsc --noEmit`, `pnpm -C apps/extension build`, `pnpm -C packages/vscode compile`, and `pnpm -C apps/web build --webpack` all passed after the final Phase 127 bridge updates.
 - **Phase 128**: VS Code Terminal Content Reading. Added a rolling terminal output buffer in `packages/vscode/src/extension.ts`, feature-detected the proposed terminal data write event, and upgraded `GET_TERMINAL` responses to return recent captured content plus terminal metadata instead of only the terminal name.
 - **Validation Note**: Re-ran `pnpm -C packages/vscode compile` and `pnpm -C apps/web build --webpack`; both passed after the terminal capture updates.
 - **Phase 129**: Browser Extension RAG Ingestion. Added `/rag.ingest-text` to `MCPServer` using `DocumentIntakeService` + local embeddings, extended the browser extension background bridge with `INGEST_RAG_TEXT`, and added a dedicated **Ingest Page to RAG** action in `apps/extension/popup.html` and `src/popup.ts`.
 - **Validation Note**: `pnpm -C packages/core exec tsc --noEmit`, `pnpm -C apps/extension build`, and `pnpm -C apps/web build --webpack` all passed after the browser-side RAG ingestion updates.
-- **Phase 130**: VS Code Expert Dispatch Commands. Added `/expert.dispatch` and `/expert.status` Core compatibility endpoints, wired `Borg: Run Agent` to dispatch research/coding tasks from the VS Code command palette, and wired `Borg: Show Hub Status` to surface agent availability + Core connection state in VS Code.
+- **Phase 130**: VS Code Expert Dispatch Commands. Added `/expert.dispatch` and `/expert.status` Core compatibility endpoints, wired `Hypercode: Run Agent` to dispatch research/coding tasks from the VS Code command palette, and wired `Hypercode: Show Hub Status` to surface agent availability + Core connection state in VS Code.
 - **Validation Note**: `pnpm -C packages/core exec tsc --noEmit`, `pnpm -C packages/vscode compile`, and `pnpm -C apps/web build --webpack` all passed after the VS Code expert-dispatch updates.
-- **Phase 131**: VS Code Sidebar Dispatch UI. Added a `Borg` activity-bar container and `Dispatch` webview view in `packages/vscode/package.json`, implemented a `WebviewViewProvider` in `packages/vscode/src/extension.ts`, and exposed in-sidebar status refresh, research dispatch, coder dispatch, and quick memory capture.
+- **Phase 131**: VS Code Sidebar Dispatch UI. Added a `Hypercode` activity-bar container and `Dispatch` webview view in `packages/vscode/package.json`, implemented a `WebviewViewProvider` in `packages/vscode/src/extension.ts`, and exposed in-sidebar status refresh, research dispatch, coder dispatch, and quick memory capture.
 - **Validation Note**: Re-ran `pnpm -C packages/vscode compile` and `pnpm -C apps/web build --webpack`; both passed after the sidebar/webview UI updates.
 - **Phase 132**: Browser Extension Hardening & Options UX. Added a real options/settings page for browser-extension Core HTTP/WS endpoint configuration, improved popup offline/error guidance with endpoint visibility and a settings shortcut, fixed the popup/background health-check contract to accept the live Core health payload, added live storage-change handling in the background worker, and updated extension manifests/build entries to ship the new options surface.
 - **Validation Note**: `pnpm -C apps/extension build` passed and extension TypeScript diagnostics are clean. `pnpm -C apps/web build --webpack` currently fails on an unrelated pre-existing `apps/web/src/app/dashboard/swarm/page.tsx` debate typing mismatch (`mode` missing from the typed contract).
@@ -69,7 +69,7 @@
 - **Result**: All 12 DETAILED_BACKLOG items (P0-P3) are now checked off.
 
 ## Next Steps
-- Continue roadmap implementation for Borg, prioritizing **Phase 133** and ongoing UI/documentation parity closure.
+- Continue roadmap implementation for Hypercode, prioritizing **Phase 133** and ongoing UI/documentation parity closure.
 - Continue remaining extension parity work, especially the unified WebSocket protocol specification and deeper mini-dashboard parity across VS Code/browser surfaces.
 - Address placeholder scanner findings (171 critical markers for tracked reduction).
 

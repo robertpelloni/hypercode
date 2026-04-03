@@ -1,7 +1,7 @@
 # Task 004: Session Supervisor
 
 ## Context
-Borg should supervise coding tools, not impersonate them. The session supervisor makes external CLI sessions reliable, resumable, and isolated.
+Hypercode should supervise coding tools, not impersonate them. The session supervisor makes external CLI sessions reliable, resumable, and isolated.
 
 ## Scope
 - Files: `packages/core/supervisor/**`, related persistence/state wiring, worktree helpers, and dashboard contracts required for session lifecycle visibility
@@ -10,14 +10,14 @@ Borg should supervise coding tools, not impersonate them. The session supervisor
 ## Requirements Completed
 1. Implemented a typed `SessionSupervisor` runtime for creating, starting, stopping, restarting, and restoring supervised CLI sessions.
 2. Implemented crash detection with exponential backoff restart scheduling, restart-attempt metadata, and session health tracking.
-3. Implemented session persistence to Borg-owned state so supervised sessions can be restored after restart.
+3. Implemented session persistence to Hypercode-owned state so supervised sessions can be restored after restart.
 4. Implemented attach/log contracts for operator visibility, including PID/cwd metadata and bounded stdout/stderr/system log history.
 5. Implemented worktree-aware isolation for parallel sessions targeting the same repository and exposed the supervisor through session router/runtime contracts.
 
 ## Acceptance Criteria
 - [x] Session start/stop/restart flows are implemented through the supervisor layer
 - [x] Crash recovery is automatic and test-covered
-- [x] Persisted sessions can be restored after Borg restart
+- [x] Persisted sessions can be restored after Hypercode restart
 - [x] Worktree isolation is enforced for parallel coding sessions
 - [x] All listed test files exist and pass
 - [x] No `@ts-ignore` added

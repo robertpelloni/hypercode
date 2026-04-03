@@ -26,17 +26,17 @@ consoleScript.textContent = `
     }
 
     console.log = function(...args) {
-        window.postMessage({ type: 'BORG_CONSOLE_LOG', level: 'info', content: formatArgs(args) }, '*');
+        window.postMessage({ type: 'HYPERCODE_CONSOLE_LOG', level: 'info', content: formatArgs(args) }, '*');
         originalLog.apply(console, args);
     };
 
     console.warn = function(...args) {
-        window.postMessage({ type: 'BORG_CONSOLE_LOG', level: 'warn', content: formatArgs(args) }, '*');
+        window.postMessage({ type: 'HYPERCODE_CONSOLE_LOG', level: 'warn', content: formatArgs(args) }, '*');
         originalWarn.apply(console, args);
     };
 
     console.error = function(...args) {
-        window.postMessage({ type: 'BORG_CONSOLE_LOG', level: 'error', content: formatArgs(args) }, '*');
+        window.postMessage({ type: 'HYPERCODE_CONSOLE_LOG', level: 'error', content: formatArgs(args) }, '*');
         originalError.apply(console, args);
     };
     
@@ -46,7 +46,7 @@ consoleScript.textContent = `
              return new Promise((resolve, reject) => {
                 const id = Math.random().toString(36).substring(7);
                 const handler = (event) => {
-                    if (event.source !== window || !event.data || event.data.type !== 'BORG_MCP_RESPONSE') return;
+                    if (event.source !== window || !event.data || event.data.type !== 'HYPERCODE_MCP_RESPONSE') return;
                     if (event.data.payload.id !== id) return;
                     window.removeEventListener('message', handler);
                     if (event.data.payload.error) reject(event.data.payload.error);
@@ -54,7 +54,7 @@ consoleScript.textContent = `
                 };
                 window.addEventListener('message', handler);
                 window.postMessage({
-                    type: 'BORG_MCP_CALL',
+                    type: 'HYPERCODE_MCP_CALL',
                     payload: { jsonrpc: '2.0', method: 'tools/call', params: { name, arguments: args }, id }
                 }, '*');
             });
@@ -72,14 +72,14 @@ consoleScript.remove();
 window.addEventListener('message', (event) => {
     if (event.source !== window || !event.data) return;
 
-    if (event.data.type === 'BORG_MCP_CALL') {
+    if (event.data.type === 'HYPERCODE_MCP_CALL') {
         const payload = event.data.payload;
         chrome.runtime.sendMessage({ type: "MCP_REQUEST", payload }, (response) => {
-            window.postMessage({ type: 'BORG_MCP_RESPONSE', payload: response }, '*');
+            window.postMessage({ type: 'HYPERCODE_MCP_RESPONSE', payload: response }, '*');
         });
     }
 
-    if (event.data.type === 'BORG_CONSOLE_LOG') {
+    if (event.data.type === 'HYPERCODE_CONSOLE_LOG') {
         // Forward to background (fire and forget)
         chrome.runtime.sendMessage({
             type: "CONSOLE_LOG",

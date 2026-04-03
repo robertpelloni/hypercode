@@ -2,7 +2,7 @@
 
 | Status | Name | Category | Rating (1-10) | Description | Integration Action |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| ✅ | Borg (Self) | Core | 10 | The project itself. | N/A |
+| ✅ | Hypercode (Self) | Core | 10 | The project itself. | N/A |
 | ✅ | PulseMCP | Directory | 8 | 7890+ MCP Server directory. High discovery value. | Monitor for new tools. |
 | ✅ | Playbooks.com | Directory | 6 | curated MCP servers for Claude Code. | Reference. |
 | ✅ | Enact.tools | Registry | 9 | "npm for AI tools" with crypto verification. | Research integration for secure tool loading. |

@@ -1,7 +1,7 @@
 # Ultimate MCP Router - Final Summary
 
 **Date**: 2026-01-17
-**Task**: Implement Ultimate MCP Router for Borg
+**Task**: Implement Ultimate MCP Router for Hypercode
 **Status**: ✅ COMPLETE
 
 ---
@@ -23,8 +23,8 @@
    - Update management and metadata enrichment
 
 3. **ConfigurationService** (`packages/core/src/services/ConfigurationService.ts`)
-   - Auto-detect .mcp.json, .borg.json config files
-   - Multi-format support (Claude, OpenAI, Google, Borg)
+   - Auto-detect .mcp.json, .hypercode.json config files
+   - Multi-format support (Claude, OpenAI, Google, Hypercode)
    - Environment variable expansion ($VAR)
    - Secret expansion ({secret:NAME})
    - Import/export and validation
@@ -160,7 +160,7 @@ const importResult = await configService.importConfigs(['./my-mcp.json']);
 console.log('Import result:', importResult);
 
 // Export configuration
-const borgFormat = await configService.exportConfigs('borg');
+const hypercodeFormat = await configService.exportConfigs('hypercode');
 const claudeFormat = await configService.exportConfigs('claude');
 const openaiFormat = await configService.exportConfigs('openai');
 const googleFormat = await configService.exportConfigs('google');
@@ -228,7 +228,7 @@ bun run src/examples/05-complete-workflow.ts
 
 1. **Resolve McpProxyManager Errors**: Fix TypeScript syntax errors in existing file
 2. **Proceed with Integration**: Once errors resolved, follow integration guide
-3. **Add CLI Commands**: Create `borg mcp install`, `borg mcp update`, etc.
+3. **Add CLI Commands**: Create `hypercode mcp install`, `hypercode mcp update`, etc.
 4. **Build UI**: Create server management dashboard
 
 ---
@@ -296,7 +296,7 @@ bun run src/examples/05-complete-workflow.ts
 ## File Structure
 
 ```
-borg/
+hypercode/
 ├── packages/core/src/services/
 │   ├── MCPRegistryService.ts         ✅ NEW
 │   ├── ServerRegistryService.ts      ✅ NEW
@@ -328,9 +328,9 @@ The implementation is COMPLETE. Optional enhancements:
    - Create API routes for registry/config/session management
 
 2. **CLI Integration**
-   - Add `borg mcp install <server>` command
-   - Add `borg mcp update <server>` command
-   - Add `borg mcp list` command
+   - Add `hypercode mcp install <server>` command
+   - Add `hypercode mcp update <server>` command
+   - Add `hypercode mcp list` command
 
 3. **UI/Dashboard**
    - Server management interface
@@ -359,7 +359,7 @@ The implementation is COMPLETE. Optional enhancements:
 - Metadata extraction
 
 ### Configuration
-- Multi-format support (Claude, OpenAI, Google, Borg)
+- Multi-format support (Claude, OpenAI, Google, Hypercode)
 - Environment variable expansion ($VAR)
 - Secret expansion ({secret:NAME})
 - Auto-detection on startup

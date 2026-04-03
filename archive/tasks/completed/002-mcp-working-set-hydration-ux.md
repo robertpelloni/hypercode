@@ -1,6 +1,6 @@
 # Task: MCP Router Progressive Disclosure — Complete Working Set Story
 
-**Track:** B — Borg-native MCP router maturity  
+**Track:** B — Hypercode-native MCP router maturity  
 **Priority:** P0 item #3 (ongoing)  
 **Status:** Ready for implementation slice
 

@@ -18,7 +18,7 @@ Option C provides the best of both worlds:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Borg ARCHITECTURE                          │
+│                      Hypercode ARCHITECTURE                          │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐   │
 │  │                   HONO BACKEND                           │   │
@@ -362,25 +362,25 @@ socket.on('health_updated', (health: HealthResponse) => {});
 
 ```bash
 # Start the CLI TUI
-borg                      # Launch interactive terminal UI
+hypercode                      # Launch interactive terminal UI
 
 # Direct commands (non-interactive)
-borg start                # Start backend server
-borg status               # Show system status
-borg run <agent> <task>   # Run agent with task
-borg chat                 # Interactive chat mode
-borg tools                # List available tools
-borg agents               # List agents
-borg skills               # List skills
-borg mine                 # Bobcoin activity submission
-borg connect              # Connect to running server
+hypercode start                # Start backend server
+hypercode status               # Show system status
+hypercode run <agent> <task>   # Run agent with task
+hypercode chat                 # Interactive chat mode
+hypercode tools                # List available tools
+hypercode agents               # List agents
+hypercode skills               # List skills
+hypercode mine                 # Bobcoin activity submission
+hypercode connect              # Connect to running server
 ```
 
 ### Interactive TUI Navigation
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Borg v0.4.0                              ● Connected           │
+│  Hypercode v0.4.0                              ● Connected           │
 ├─────────────────────────────────────────────────────────────────┤
 │  [1] Dashboard  [2] Chat  [3] Agents  [4] Tools  [5] Settings   │
 ├─────────────────────────────────────────────────────────────────┤

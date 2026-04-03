@@ -1,6 +1,6 @@
 # MetaMCP API Reference
 
-This document details the REST API endpoints for MetaMCP functionality in Borg.
+This document details the REST API endpoints for MetaMCP functionality in Hypercode.
 
 ## Base URL
 

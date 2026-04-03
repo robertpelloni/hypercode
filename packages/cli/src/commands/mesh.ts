@@ -46,7 +46,7 @@ async function withMeshErrorHandling(
     } else {
       const chalk = (await import('chalk')).default;
       console.error(chalk.red(`  ✗ ${message}`));
-      console.error(chalk.dim('  Start HyperCode with `hypercode start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
+      console.error(chalk.dim('  Start HyperCode with `hypercode start` or point HYPERCODE_TRPC_UPSTREAM at a live /trpc endpoint.'));
     }
     process.exitCode = 1;
   }

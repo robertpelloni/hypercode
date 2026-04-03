@@ -1,4 +1,4 @@
-# Borg Handoff (Synchronized)
+# Hypercode Handoff (Synchronized)
 
 ## Session Update — 2026-03-10 (Tabby-Ready Dev Startup Warmup)
 
@@ -6,7 +6,7 @@
 1. **Root dev readiness widened to real dashboard surfaces**
    - Updated `scripts/dev_tabby_ready.mjs` so readiness now checks the dashboard-facing browser and session routes in addition to the existing core bridge, MCP, memory, and extension bundle checks.
    - Added post-ready warmup calls for MCP search/list/status plus memory, browser, and session routes so `pnpm run dev` lands in a more hydrated state for Tabby-driven workflows.
-   - Added automatic dashboard opening to `/dashboard` once the stack is confirmed ready (disable with `BORG_DEV_READY_OPEN_BROWSER=0`).
+   - Added automatic dashboard opening to `/dashboard` once the stack is confirmed ready (disable with `HYPERCODE_DEV_READY_OPEN_BROWSER=0`).
 
 2. **Canonical core startup snapshot added**
    - Added `startupStatus` to `packages/core/src/routers/systemProcedures.ts` as a single boot-time readiness summary for MCP aggregator, memory, browser service, session supervisor, and extension bridge state.
@@ -15,7 +15,7 @@
 3. **Startup snapshot upgraded from presence checks to boot-state reporting**
    - Added lightweight status getters to `McpConfigService`, `SessionSupervisor`, and `MCPAggregator` so startup reporting can surface real initialization progress.
    - `startupStatus` now includes config-sync completion/error state, persisted MCP server/tool inventory counts, aggregator initialization state, and session restore summaries.
-   - This makes the readiness contract more honest for Tabby-style startup automation: Borg can now tell the difference between services merely existing and startup work actually having completed.
+   - This makes the readiness contract more honest for Tabby-style startup automation: Hypercode can now tell the difference between services merely existing and startup work actually having completed.
 
 4. **Validation**
    - `node --check scripts/dev_tabby_ready.mjs` → passing.
@@ -109,10 +109,10 @@
 
 ### Completed in this session
 1. **Isolated next lint hard blocker**
-   - Confirmed `lint:turbo` failure frontier was `@borg/web` (`apps/web`) with broad legacy lint-rule violations.
+   - Confirmed `lint:turbo` failure frontier was `@hypercode/web` (`apps/web`) with broad legacy lint-rule violations.
 
 2. **Scoped lint stabilization**
-   - Updated root `lint:turbo` script to temporarily exclude `@borg/web`.
+   - Updated root `lint:turbo` script to temporarily exclude `@hypercode/web`.
    - Preserved lint signal for the rest of the monorepo while isolating known web-specific lint debt.
 
 3. **Validation**
@@ -247,7 +247,7 @@
 
 3. **New cross-service readiness check feature**
    - Added `scripts/verify_dev_readiness.mjs` to verify local dev critical endpoints across:
-     - Borg Web
+     - Hypercode Web
      - MetaMCP Frontend
      - MetaMCP Backend
      - OpenCode Autopilot Server
@@ -264,7 +264,7 @@
 ### Verification snapshot
 - `pnpm -C packages/core exec tsc --noEmit` → passing in current session.
 - `pnpm -C packages/opencode-autopilot/packages/server run typecheck` → passing after Bun typings fix.
-- Root `pnpm run dev` observed stable startup with all major watch tasks launched and both Borg Web + MetaMCP frontend ready in earlier run output.
+- Root `pnpm run dev` observed stable startup with all major watch tasks launched and both Hypercode Web + MetaMCP frontend ready in earlier run output.
 
 ### Known remaining work
 - Readiness checker currently emits text output only (no JSON mode yet).
@@ -359,8 +359,8 @@
        - LLM-backed `run_agent` adapter (replacing stubbed agent service path),
        - removed dead run_python stub branch.
 
-8. **Jules access path wired into Borg Web:**
-    - Added `apps/web/src/app/dashboard/jules/page.tsx` so Jules Autopilot is reachable from Borg dashboard.
+8. **Jules access path wired into Hypercode Web:**
+    - Added `apps/web/src/app/dashboard/jules/page.tsx` so Jules Autopilot is reachable from Hypercode dashboard.
     - Added `apps/web/src/app/api/jules/route.ts` as in-app Jules API proxy (`GET`/`POST`/`DELETE`).
     - Added dashboard home navigation card entry for Jules (`/dashboard/jules`).
    - Enhanced `/dashboard/jules` with in-page API key controls and live connectivity testing against `/api/jules` to reduce setup friction.
@@ -539,11 +539,11 @@
        - Replaced loose `any` usage with explicit local types (`EndpointLike`, `NamespaceOption`, `EndpointMutationPayload`).
        - Removed `as any` mutation casts while preserving existing UX behavior.
     - Updated Next web config in `apps/web/next.config.ts` to reduce native-module bundling pressure:
-       - narrowed `transpilePackages` to `@borg/ui`,
+       - narrowed `transpilePackages` to `@hypercode/ui`,
        - documented additional server external package candidates for native stacks.
-    - Reworked `apps/web/src/app/api/trpc/[trpc]/route.ts` from direct in-process `@borg/core` router import to upstream TRPC proxy mode:
+    - Reworked `apps/web/src/app/api/trpc/[trpc]/route.ts` from direct in-process `@hypercode/core` router import to upstream TRPC proxy mode:
        - avoids bundling core/memory native dependencies in web API route,
-       - adds explicit upstream resolution (`BORG_TRPC_UPSTREAM`) with safe fallback and 502 error payload on upstream failure.
+       - adds explicit upstream resolution (`HYPERCODE_TRPC_UPSTREAM`) with safe fallback and 502 error payload on upstream failure.
     - Validation:
        - File diagnostics clean for modified web files.
        - `pnpm -C packages/core exec tsc --noEmit` passes (`CORE_TSC_OK`).
@@ -636,9 +636,9 @@ Before tagging any new release:
     -   **Frontend**: Verified `apps/web/src/app/dashboard/council/page.tsx` is free of `@ts-ignore`.
 
 3.  **Verification**:
-    -   `pnpm -F @borg/core build` (tsc) **PASSED** (Exit code 0).
+    -   `pnpm -F @hypercode/core build` (tsc) **PASSED** (Exit code 0).
     -   `pnpm run check:placeholders` **PASSED** (Exit code 0).
-    -   `pnpm -F @borg/web build` **IN PROGRESS** (reached optimization phase).
+    -   `pnpm -F @hypercode/web build` **IN PROGRESS** (reached optimization phase).
 
 ### Next Steps
 1.  Monitor completion of `apps/web` build.

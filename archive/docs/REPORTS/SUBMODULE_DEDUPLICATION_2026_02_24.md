@@ -1,7 +1,7 @@
 # Submodule Deduplication Audit — 2026-02-24
 
 ## ⚠️ Executive Summary
-The Borg repository currently contains **hundreds** of submodule mappings, many of which point to the same external repository URLs. This structural redundancy increases build times, disk usage, and the risk of context drift between different versions of the same dependency.
+The Hypercode repository currently contains **hundreds** of submodule mappings, many of which point to the same external repository URLs. This structural redundancy increases build times, disk usage, and the risk of context drift between different versions of the same dependency.
 
 ## 📊 Top Redundancy Candidates
 The following repositories are anchored in multiple locations. Consolidation is recommended.
@@ -20,7 +20,7 @@ The following repositories are anchored in multiple locations. Consolidation is 
 ## 🛠️ Recommendations
 1. **Consolidation**: Select one canonical path for each dependency (preferably under `external/` or `references/`) and remove the redundant mappings.
 2. **Path Standardisation**: Use a consistent directory structure for categories (e.g., all MCP servers under `mcp-servers/`).
-3. **Index Cleanup**: Update `BORG_MASTER_INDEX.jsonc` once paths are finalized.
+3. **Index Cleanup**: Update `HYPERCODE_MASTER_INDEX.jsonc` once paths are finalized.
 
 ## ✅ Completed Repairs
 The following orphaned mappings were found in the git index and restored to `.gitmodules` during this session:

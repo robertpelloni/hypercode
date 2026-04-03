@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **MCP Database Destructive Sync**: Fixed a critical bug in `McpConfigService.syncWithDatabase()` that was wiping out SQLite tool records (and resetting their `always_on` status) when `mcp.jsonc` was empty.
-- **Config Directory Resolution**: Changed `getBorgConfigDir()` to respect local workspace `mcp.jsonc` configs, improving the loader's ability to find active tool caches.
+- **Config Directory Resolution**: Changed `getHypercodeConfigDir()` to respect local workspace `mcp.jsonc` configs, improving the loader's ability to find active tool caches.
 - **Split-Brain MCP Loader**: Fixed the `stdioLoader` returning 0 tools by caching the database inventory to `.hypercode/mcp-cache.json` during synchronization via `exportToolCache()`, allowing the lightweight proxy to serve both manually configured servers and database-discovered directories without slowing down initialization.
 - **Tool Inventory Merging**: Fixed `getCachedToolInventory()` to correctly merge database snapshots with `mcp.jsonc` snapshots instead of treating them as mutually exclusive.
 
@@ -116,12 +116,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Supervisor Base Resolution & Go Bridge Surface**: Core supervisor routing now resolves the HyperCode orchestrator base from explicit env, live lock-file state, or configured public URLs instead of hardcoding `localhost:3847`, and the experimental Go workspace now exposes `/api/supervisor/decompose`, `/api/supervisor/supervise`, `/api/supervisor/status`, `/api/supervisor/tasks`, and `/api/supervisor/cancel` as truthful bridges to that TypeScript surface.
 - **Session Export Base Resolution**: Core session export/import now reuses the shared orchestrator base resolver instead of hardcoding `localhost:3847`, so the already-ported Go `/api/session-export/*` bridge follows live lock-file/env routing and reports missing orchestrator configuration explicitly during restore attempts.
 - **Swarm Council Base Resolution**: Core swarm orchestration helpers (`SwarmOrchestrator`, `DebateProtocol`, and `ConsensusEngine`) now reuse the shared orchestrator base resolver instead of hardcoding `localhost:3847`, so already-ported swarm/council Go surfaces follow live lock/env routing while preserving existing local fallbacks when no orchestrator base is available.
-- **Go Session Bridge Default Cleanup**: The Go sidecar's upstream tRPC session bridge no longer blind-probes `127.0.0.1:3847/trpc` as a default fallback; it now relies on the live main lock file, explicit `BORG_TRPC_UPSTREAM`, and the remaining active default ports instead of stale legacy probing.
+- **Go Session Bridge Default Cleanup**: The Go sidecar's upstream tRPC session bridge no longer blind-probes `127.0.0.1:3847/trpc` as a default fallback; it now relies on the live main lock file, explicit `HYPERCODE_TRPC_UPSTREAM`, and the remaining active default ports instead of stale legacy probing.
 - **Go Config Router Bridge Surface**: The experimental Go workspace now exposes the compact TypeScript `config` router under `/api/config/*`, including key/value CRUD, MCP timeout controls, session lifetime, signup/auth flags, auth providers, and always-visible tools, while keeping the native `/api/config/status` snapshot as the Go-owned path/config health surface.
 - **Orchestrator Terminology Alignment**: Updated live operator-facing labels and service names to prefer `electron-orchestrator`, `cloud-orchestrator`, and `cli-orchestrator`, while preserving legacy paths and upstream URLs where deeper migrations are not yet complete.
 - **HyperCode Harness Assimilation**: Added `submodules/hypercode` as a tracked upstream and introduced a shared HyperCode CLI harness registry so `hypercode` is now the primary `hypercode session` harness identity.
 - **HyperCode Tool Inventory Visibility**: HyperCode CLI and the Go sidecar harness registry now surface HyperCode's source-backed tool calls by reading `submodules/hypercode/tools/*.go`, while keeping other external harnesses labeled as install/runtime metadata only until deeper bridge contracts exist.
-- **CLI Mesh Operator Surface**: Added a real `hypercode mesh` command group with `status`, `peers`, `capabilities`, and `find` subcommands backed by the live tRPC control plane via `BORG_TRPC_UPSTREAM` or the HyperCode startup lock instead of placeholder output.
+- **CLI Mesh Operator Surface**: Added a real `hypercode mesh` command group with `status`, `peers`, `capabilities`, and `find` subcommands backed by the live tRPC control plane via `HYPERCODE_TRPC_UPSTREAM` or the HyperCode startup lock instead of placeholder output.
 - **Antigravity Harness Visibility**: HyperCode's CLI and Go harness inventories now include Antigravity as a docs-backed metadata-only editor harness, while explicitly withholding source-backed tool/session parity claims until a real shell contract exists.
 - **Experimental Go Port Workspace**: Added an isolated `go/` sidecar workspace for feasibility testing a Go-native HyperCode control-plane slice without disturbing the existing Node/Next fork. The initial port exposes health, sessions, and CLI-tools endpoints plus a separate `.hypercode-go` lock/config path.
 - **Go Sidecar Interop**: The experimental Go workspace now reports both the main Node HyperCode lock and the Go sidecar lock via `/api/runtime/locks`, so coexistence can be tested without rewiring the primary startup path.
@@ -257,7 +257,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Ambitious Roadmap Expansion**: Seeded `IDEAS.md` files across all major repositories (`ai`, `core`, `mcp-client`, `ui`, `web`, `maestro`, `hypercode-extension`) with high-intelligence proposals including a Rust micro-kernel, P2P Hive Mind, and Bobcoin integration.
 
 ### Fixed
-- **Port 3847 Harmonization**: Standardized the `BORG_ORCHESTRATOR_PORT` to `3847` across all packages (`packages/ui`, `apps/web`, `apps/maestro`), resolving persistent `ERR_CONNECTION_REFUSED` errors from legacy port 3001 references.
+- **Port 3847 Harmonization**: Standardized the `HYPERCODE_ORCHESTRATOR_PORT` to `3847` across all packages (`packages/ui`, `apps/web`, `apps/maestro`), resolving persistent `ERR_CONNECTION_REFUSED` errors from legacy port 3001 references.
 - **CI/CD Stabilization**: Restored GitHub frontpage "Green" status by resolving linting and type errors in `apps/maestro`:
     - Installed missing `@types/mdast` dependency.
     - Removed redundant `@ts-expect-error` directives.
@@ -373,7 +373,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dashboard & MCP Router
 
-- feat(web/dashboard): Promoted `hypercode-orchestrator` (opencode-autopilot) to a first-class feature by creating a standalone `BorgOrchestratorWidget` and refactoring the main dashboard grid to give it half the page real estate.
+- feat(web/dashboard): Promoted `hypercode-orchestrator` (opencode-autopilot) to a first-class feature by creating a standalone `HypercodeOrchestratorWidget` and refactoring the main dashboard grid to give it half the page real estate.
 - feat(dev): Integrated the Orchestrator server into the standard `pnpm dev` stack. The `dev_tabby_ready.mjs` script now automatically spawns the orchestrator process and validates its health before declaring the stack ready.
 - feat(core/mcp): Implemented Last-Known-Good (LKG) configuration persistence in `MCPConfigStore`. The system now maintains an `mcp_servers.lkg.json` backup that is automatically updated on successful reads/writes.
 - feat(core/mcp): Updated `MCPAggregator` to fallback to LKG configuration if the primary `mcp_servers.json` is missing or corrupted, ensuring immediate availability of known servers during flaky environment injections.
@@ -1225,7 +1225,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `PROJECT_ROUNDTABLE_EXECUTIVE_PROMPT.md`
   - `PROJECT_ROUNDTABLE_SCORECARD_TEMPLATE.md`
 - docs(roundtable): The new brief inventories the repo’s major apps/packages/submodules, distinguishes implemented vs partial vs planned feature families, captures the actual active task queue from `archive/tasks/active/`, and explicitly calls out current documentation drift (missing root canonical files, archive-vs-live path mismatch, and index references to non-existent docs).
-- docs(index): Added the new roundtable documentation set to `BORG_MASTER_INDEX.jsonc` so future sessions and reviewers can discover the current debate materials without relying on stale archived copies.
+- docs(index): Added the new roundtable documentation set to `HYPERCODE_MASTER_INDEX.jsonc` so future sessions and reviewers can discover the current debate materials without relying on stale archived copies.
 - chore(version): Synchronized active version references to `0.9.1` across `VERSION`, `VERSION.md`, active `package.json` manifests, visible UI/runtime literals, and the README heading.
 
 ## [2.7.334] — 2026-03-18
@@ -1379,7 +1379,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(cli/branding): Rebranded active MCP router CLI entrypoints to `hypercode-mcp-router` in TypeScript sources (`cli/mcp-router-cli/mcp-router-cli.ts`, `cli/mcp-router-cli/mcp-router-cli-mock.ts`).
 - chore(cli/compat): Maintained export-format compatibility by treating `hypercode` as the primary format while preserving legacy internal format handling in `mcp-router-cli`, avoiding abrupt behavior breaks.
 - chore(core/config): Updated active MCP router core config handling to prefer `.hypercode.json` / `hypercode` while keeping legacy `.legacy_config.json` / `legacy` aliases for backward compatibility (`cli/mcp-router-cli/packages/core/src/services/ConfigurationService.js`).
-- chore(core/db): Switched MCP router DB startup to prefer `hypercode.db` while auto-falling back to `legacy_borg.db`; new API keys now use `borg_` prefix (`cli/mcp-router-cli/packages/core/src/db/DatabaseManager.js`).
+- chore(core/db): Switched MCP router DB startup to prefer `hypercode.db` while auto-falling back to `legacy_hypercode.db`; new API keys now use `hypercode_` prefix (`cli/mcp-router-cli/packages/core/src/db/DatabaseManager.js`).
 - docs(version): Standardized stale alpha-track references in canonical docs (`VISION.md`, `TODO.md`) to the current release line.
 
 ## [2.7.315] — 2026-03-17
@@ -2422,8 +2422,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.7.151] — 2026-03-15
 
-- feat(core/mcp): downstream MCP processes now default to lazy session mode (`BORG_MCP_LAZY_SESSIONS`), preventing idle prewarm spawns until a tool is actually executed.
-- feat(core/mcp): global single-active downstream lifecycle added (`BORG_MCP_SINGLE_ACTIVE_SERVER`) so one downstream server process remains active at a time; stale active/idle sessions are cleaned before switching.
+- feat(core/mcp): downstream MCP processes now default to lazy session mode (`HYPERCODE_MCP_LAZY_SESSIONS`), preventing idle prewarm spawns until a tool is actually executed.
+- feat(core/mcp): global single-active downstream lifecycle added (`HYPERCODE_MCP_SINGLE_ACTIVE_SERVER`) so one downstream server process remains active at a time; stale active/idle sessions are cleaned before switching.
 - changed(core/mcp): `tools/list` in MetaMCP proxy now prefers cached tool inventory (`getCachedToolInventory`) to avoid spawning all downstream servers during initial MCP host load.
 - changed(core/mcp): downstream tool execution now lazy-connects on first call when no active client mapping exists, instead of requiring eager bootstrap during discovery.
 - changed(core/mcp): STDIO downstream client wiring now logs both `stderr` and `stdout` to MetaMCP log store while keeping child processes hidden on Windows.
@@ -2561,7 +2561,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed(mcp/config): local dashboard compatibility-mode MCP config writes now target HyperCode config home (`~/.hypercode/mcp.jsonc` + `~/.hypercode/mcp.json`) instead of repo-root files.
 - changed(mcp/config): local compatibility-mode reads now prioritize HyperCode config home and retain repo-root `mcp.jsonc`/`mcp.json` as legacy fallback read sources only.
-- test(mcp/config): updated tRPC route compatibility tests to run against an isolated temporary `BORG_CONFIG_DIR`, validating local managed-server actions without mutating workspace-root config files.
+- test(mcp/config): updated tRPC route compatibility tests to run against an isolated temporary `HYPERCODE_CONFIG_DIR`, validating local managed-server actions without mutating workspace-root config files.
 - changed(mcp/search-ui): MCP JSONC editor tooltip now reflects HyperCode config-home save location rather than claiming root-repo writes.
 
 ## [2.7.129] — 2026-03-14
@@ -2685,7 +2685,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(dashboard): added `/dashboard/command` — Command Center page with live slash-command list, REPL execution via `commands` tRPC namespace, and arrow-key history navigation.
 - feat(dashboard): added `/dashboard/chronicle` — Git Chronicle page with configurable commit log and working-tree status via `git` tRPC namespace.
 - feat(dashboard): added `/dashboard/library` — Resource Library hub linking to scripts, skills, tool sets, memory, plans, manual, chronicle, and architecture with live item counts from `savedScripts` and `skills` tRPC namespaces.
-- feat(dashboard): added `/dashboard/context` — Context Manager page for add/remove/clear of context files and assembled context prompt viewer via `borgContext` tRPC namespace.
+- feat(dashboard): added `/dashboard/context` — Context Manager page for add/remove/clear of context files and assembled context prompt viewer via `hypercodeContext` tRPC namespace.
 - changed(nav): added "Sessions" link to `CORE_DASHBOARD_NAV` pointing to `/dashboard/session` so the session supervisor is reachable from the main nav section.
 - changed(nav): added "Context Manager" entry to `LABS_DASHBOARD_NAV` pointing to `/dashboard/context`.
 - changed(nav): added inline descriptions for `Command`, `Symbols`, `Code`, `Chronicle`, and `Library` nav items.
@@ -2716,7 +2716,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - docs(deploy): aligned `DEPLOY.md` with the verified `0.9.0-beta` control-plane workflow, including the root `pnpm run dev` readiness launcher, dashboard port fallback behavior, core bridge probes on `3001`, and startup troubleshooting for dynamic dashboard ports.
 
-- fix(startup): gate verbose `packages/core/src/MCPServer.ts` import/boot progress logs behind `BORG_MCP_SERVER_DEBUG=1` or `DEBUG=hypercode:mcp-server`, keeping normal `pnpm run dev` output quiet while preserving real errors and fallback warnings.
+- fix(startup): gate verbose `packages/core/src/MCPServer.ts` import/boot progress logs behind `HYPERCODE_MCP_SERVER_DEBUG=1` or `DEBUG=hypercode:mcp-server`, keeping normal `pnpm run dev` output quiet while preserving real errors and fallback warnings.
 
 - fix(startup): `pnpm run dev` now best-effort replaces a reused HyperCode core bridge that is healthy but serving an older `startupStatus` contract by stopping the stale owner via the HyperCode startup lock when available, or via the current port-3001 listener PID only when that listener's command line still looks HyperCode-owned, before launching a fresh CLI/core instance.
 
@@ -2751,7 +2751,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - changed(dashboard): updated the home dashboard, MCP system status helpers, and launcher waiting labels to explain cached-vs-live MCP posture, memory/context readiness, and non-blocking warmup behavior more truthfully.
 - test(startup): added focused regression coverage for always-on cached tool advertisement, cached-vs-live startup checklist copy, system status rows, and launcher wait-label semantics.
 - fix(mcp): `discoverServerTools` now supports SSE and STREAMABLE_HTTP transports alongside STDIO, with a 30-second timeout to prevent hanging discoveries.
-- fix(config): `mcp.json` and `mcp.jsonc` now default to `~/.hypercode/` instead of the workspace root via new `getBorgConfigDir()` helper; `JsonConfigProvider` updated to match.
+- fix(config): `mcp.json` and `mcp.jsonc` now default to `~/.hypercode/` instead of the workspace root via new `getHypercodeConfigDir()` helper; `JsonConfigProvider` updated to match.
 ## [0.9.0-beta] - 2026-03-11
 
 ### ✨ Features & Parity Updates
@@ -2781,7 +2781,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added default-section coverage reporting to `memory.getClaudeMemStatus` plus state-aware operator guidance on `/dashboard/memory/claude-mem`, so the parity page now distinguishes between a missing adapter store, an empty seeded store, incomplete default bucket coverage, and an actively populated claude-mem shell.
 - Added active memory-pipeline reporting to `memory.getClaudeMemStatus`, so `/dashboard/memory/claude-mem` now shows whether claude-mem is actually wired into HyperCode's current runtime memory fan-out instead of only inferring readiness from the presence of `.hypercode/claude_mem.json` on disk.
 - Added a core-backed install-artifact detector for the Integration Hub so `/dashboard/integrations` now reports whether browser-extension bundles, Firefox-ready assets, VS Code `.vsix` packages, and HyperCode MCP config sources actually exist on disk instead of only showing static build hints.
-- Added a formal extension-bridge client registration contract in `packages/core/src/bridge/bridge-manifest.ts`, including `BORG_CLIENT_HELLO` metadata normalization plus supported non-MCP capability and hook-phase manifests for live bridge clients.
+- Added a formal extension-bridge client registration contract in `packages/core/src/bridge/bridge-manifest.ts`, including `HYPERCODE_CLIENT_HELLO` metadata normalization plus supported non-MCP capability and hook-phase manifests for live bridge clients.
 - Added focused bridge-manifest regression coverage in `packages/core/src/bridge/bridge-manifest.test.ts` for default client registration, hello metadata merge behavior, and stable manifest generation.
 - Added task-filtered fallback-chain inspection to `billing.getFallbackChain`, plus a selector on `/dashboard/billing` so operators can inspect the ranked provider chain for general, coding, planning, research, worker, and supervisor work instead of only a single generic fallback list.
 - Added a core-backed `memory.getClaudeMemStatus` query plus live adapter-store details on `/dashboard/memory/claude-mem`, so the parity page now reports actual `.hypercode/claude_mem.json` existence, section counts, and last-update state instead of only static audit copy.
@@ -2826,7 +2826,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enriched `/dashboard/integrations` install-surface detection and cards with declared package version plus artifact age/freshness metadata, so operators can tell whether a detected extension bundle, VSIX, or config source looks current instead of only knowing that a path exists.
 - Tightened `/dashboard/integrations` so browser-extension install cards now point at the current packaged `apps/hypercode-extension` workspace and include status-aware next-step guidance such as build, package, load, or sync actions instead of only static install prose.
 - Refined the `startupStatus` readiness contract so HyperCode now treats an initialized-but-empty MCP inventory as valid, reports the extension bridge as ready when the listener is accepting connections even before any clients attach, and keeps the dashboard startup checklist aligned with that fresher boot semantics instead of waiting forever on zero-client/zero-server fresh installs.
-- Replaced the root `build` entrypoint with a cross-platform `scripts/build_all.mjs` orchestrator that now builds HyperCode's first-party Turbo workspace graph, refreshes and builds the excluded `apps/hypercode-extension` workspace for both Chromium and Firefox while preserving separate `dist-chromium` / `dist-firefox` outputs, and skips the JetBrains plugin only when Gradle is unavailable unless `BORG_REQUIRE_JETBRAINS_BUILD=true` is set.
+- Replaced the root `build` entrypoint with a cross-platform `scripts/build_all.mjs` orchestrator that now builds HyperCode's first-party Turbo workspace graph, refreshes and builds the excluded `apps/hypercode-extension` workspace for both Chromium and Firefox while preserving separate `dist-chromium` / `dist-firefox` outputs, and skips the JetBrains plugin only when Gradle is unavailable unless `HYPERCODE_REQUIRE_JETBRAINS_BUILD=true` is set.
 - Extended HyperCode Core's live extension bridge in `packages/core/src/MCPServer.ts` and `packages/core/src/routers/systemProcedures.ts` so connected browser and VS Code clients now self-identify, advertise non-MCP capabilities and supported hook phases, and surface that richer runtime state through `startupStatus` instead of only reporting a raw websocket client count.
 - Updated the browser extension, VS Code extension, and `/dashboard/integrations` operator surface so live bridge clients now register with HyperCode Core on connect and the Integration Hub shows connected clients, advertised non-MCP capabilities, hook phases, and last-seen metadata.
 - Updated the home dashboard session ordering so attention-needed supervised sessions (`error`, `restarting`, and other transitional states) now appear ahead of merely recent healthy sessions, making crash/restart posture easier to spot at a glance.
@@ -3243,7 +3243,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.7.64] - 2026-03-06
 ### Fixed
 - **Phase 104: Browser Extension Env-Safe URLs**
-  - Replaced hardcoded `localhost:3001` in `background.ts` with configurable `chrome.storage.sync` keys (`borgCoreUrl`, `borgWsUrl`).
+  - Replaced hardcoded `localhost:3001` in `background.ts` with configurable `chrome.storage.sync` keys (`hypercodeCoreUrl`, `hypercodeWsUrl`).
   - WebSocket auto-reconnects when storage values change.
   - Updated Extension Parity Matrix Milestone 1 items.
 
@@ -3312,7 +3312,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Phase 97: External Link Ingestion Telemetry**
   - Built `scripts/record-fetch-outcome.mjs` to incrementally log fetch failures, successes, and pending queue targets.
-  - Deployed `Ingestion Dashboard` (`/dashboard/ingestion`) displaying real-time metrics for total, processed, pending, and failed ingestion queue items along with their respective stack traces from `BORG_MASTER_INDEX.jsonc`.
+  - Deployed `Ingestion Dashboard` (`/dashboard/ingestion`) displaying real-time metrics for total, processed, pending, and failed ingestion queue items along with their respective stack traces from `HYPERCODE_MASTER_INDEX.jsonc`.
   - Check-marked Phase 97 implementation points in `ROADMAP.md` and `DETAILED_BACKLOG.md` (Item 6.2).
 
 ## [2.7.56] - 2026-03-05
@@ -3710,7 +3710,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Phase 69: Deep Submodule Assimilation Sprint** — Completed full integration of all four core submodules.
 - **MetaMCP True Proxy Architecture**: `MCPServer.executeTool` now delegates to `executeProxiedTool` from the MetaMCP proxy service, with legacy fallbacks retained for backward compatibility.
-- **MCP-SuperAssistant HyperCode Bridge**: Injected HyperCode Hub WebSocket bridge (`connectBorgHub`) into SuperAssistant's background script and `window.hypercode.callTool()` API + console interceptor into the content script.
+- **MCP-SuperAssistant HyperCode Bridge**: Injected HyperCode Hub WebSocket bridge (`connectHypercodeHub`) into SuperAssistant's background script and `window.hypercode.callTool()` API + console interceptor into the content script.
 - **claude-mem Redundant Memory Pipeline**: Created `ClaudeMemAdapter.ts` (section-based storage) and `RedundantMemoryManager.ts` (fan-out writes to all providers). Default `MemoryManager` provider changed from `json` to `redundant`.
 - **Cloud Dev Management Dashboard**: Created `cloudDevRouter.ts` tRPC router for multi-provider cloud dev session management (Jules, Codex, Copilot Workspace, Devin) and `/dashboard/cloud-dev/page.tsx` with full CRUD UI.
 
@@ -4044,7 +4044,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Scalable Link Ingestion Sync**:
-  - Added `scripts/sync_master_index.mjs` to normalize and synchronize `BORG_MASTER_INDEX.jsonc` from `scripts/resources-list.json` and `scripts/ingestion-status.json`.
+  - Added `scripts/sync_master_index.mjs` to normalize and synchronize `HYPERCODE_MASTER_INDEX.jsonc` from `scripts/resources-list.json` and `scripts/ingestion-status.json`.
   - Added `scripts/ingestion-status.json` for explicit processed/pending/failed outcome tracking and failure retry seeds.
   - Added root script alias: `npm run index:sync`.
 
@@ -4059,7 +4059,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Master Index Schema Upgrade**:
-  - Upgraded `BORG_MASTER_INDEX.jsonc` to schema `hypercode-master-index/v2`.
+  - Upgraded `HYPERCODE_MASTER_INDEX.jsonc` to schema `hypercode-master-index/v2`.
   - Added ingestion telemetry (`ingestion.sources`, `ingestion.queue`) and expanded per-entry metadata (`fetch_status`, `fetch_error`, `fetch_attempts`, `last_checked_at`, `processed_at`, `normalized_url`, `discovered_from`).
   - Synced canonical corpus to 565 tracked links with queue visibility (`processed=6`, `pending=558`, `failed=1`).
 
@@ -4150,7 +4150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dashboard Build Stabilization (18 component fixes)**:
   - Fixed 6 disabled router references (TraceViewer, SystemStatus, RemoteAccessCard, GlobalSearch, ConfigEditor, TestStatusWidget) — replaced with static placeholder UI
   - Fixed TrafficInspector `handleReplay()` — disabled `logs.read` router replaced with console warning
-  - Fixed router name mismatches: `context`→`borgContext` (ContextWidget), `repoGraph`→`graph` (GraphWidget), `audit.getLogs`→`audit.query` (AuditLogViewer)
+  - Fixed router name mismatches: `context`→`hypercodeContext` (ContextWidget), `repoGraph`→`graph` (GraphWidget), `audit.getLogs`→`audit.query` (AuditLogViewer)
   - Fixed procedure: `shell.execute`→`commands.execute` (CommandRunner), input shape `path`→`filePath` (ContextWidget)
   - Fixed union type access with safe casts: IndexingStatus, SystemPulse, CouncilConfig
   - Fixed Badge variants: `"success"`→`"default"` (SystemPulse, evolution/page, security/page)

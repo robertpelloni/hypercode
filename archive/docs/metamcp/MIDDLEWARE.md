@@ -1,6 +1,6 @@
 # MetaMCP Middleware
 
-This document explains the middleware pipeline system for customizing tool execution in Borg.
+This document explains the middleware pipeline system for customizing tool execution in Hypercode.
 
 ## Overview
 
@@ -97,7 +97,7 @@ interface MiddlewareContext {
 Records all tool calls to the `tool_call_logs` table.
 
 ```typescript
-import { loggingMiddleware } from '@borg/core';
+import { loggingMiddleware } from '@hypercode/core';
 
 // Automatically logs:
 // - Tool name
@@ -133,7 +133,7 @@ loggingMiddleware({
 Enforces access control policies.
 
 ```typescript
-import { policyMiddleware } from '@borg/core';
+import { policyMiddleware } from '@hypercode/core';
 
 // Evaluates policies in priority order
 // First matching policy determines access
@@ -152,7 +152,7 @@ import { policyMiddleware } from '@borg/core';
 Removes tools from listings based on criteria.
 
 ```typescript
-import { filterToolsMiddleware } from '@borg/core';
+import { filterToolsMiddleware } from '@hypercode/core';
 
 filterToolsMiddleware({
   // Only show tools matching these patterns
@@ -174,7 +174,7 @@ filterToolsMiddleware({
 Transforms tool metadata.
 
 ```typescript
-import { toolOverridesMiddleware } from '@borg/core';
+import { toolOverridesMiddleware } from '@hypercode/core';
 
 toolOverridesMiddleware({
   overrides: {
@@ -200,7 +200,7 @@ toolOverridesMiddleware({
 Use `compose()` to chain middleware functions:
 
 ```typescript
-import { compose, loggingMiddleware, policyMiddleware, filterToolsMiddleware } from '@borg/core';
+import { compose, loggingMiddleware, policyMiddleware, filterToolsMiddleware } from '@hypercode/core';
 
 const callToolPipeline = compose(
   loggingMiddleware(),
@@ -313,7 +313,7 @@ const permissionMiddleware: ListToolsMiddleware = (tools, context) => {
 Middleware results can be cached for performance:
 
 ```typescript
-import { withCache } from '@borg/core';
+import { withCache } from '@hypercode/core';
 
 const cachedFilterMiddleware = withCache(
   filterToolsMiddleware({ hideInactive: true }),

@@ -1,7 +1,7 @@
 # Universal Skill Integration Strategy
 
 ## Objective
-To aggregate, normalize, and expose capabilities (skills) from diverse sources (Anthropic, OpenAI, community repos) into a unified, platform-agnostic registry available to all borg agents.
+To aggregate, normalize, and expose capabilities (skills) from diverse sources (Anthropic, OpenAI, community repos) into a unified, platform-agnostic registry available to all hypercode agents.
 
 ## 1. Source Aggregation
 We have established a `references/skills_repos` directory to mirror external skill collections as git submodules.

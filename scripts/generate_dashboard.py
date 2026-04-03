@@ -133,12 +133,12 @@ def generate_dashboard():
         })
 
     # Generate Markdown
-    content = f"""# Borg Ecosystem Dashboard
+    content = f"""# Hypercode Ecosystem Dashboard
 
 **Last Updated:** {date_str}
 **Total Modules:** {len(registered)}
 
-This dashboard tracks the status of all {len(registered)} integrated submodules and tools within the Borg ecosystem.
+This dashboard tracks the status of all {len(registered)} integrated submodules and tools within the Hypercode ecosystem.
 
 """
 
@@ -193,7 +193,7 @@ This dashboard tracks the status of all {len(registered)} integrated submodules 
 | **`computer-use/`** | Desktop automation and GUI control tools. |
 | **`browser-use/`** | Browser automation and web scraping tools. |
 | **`RAG/`** | Retrieval Augmented Generation systems and parsers. |
-| **`packages/`** | Core Borg monorepo packages (`core`, `ui`, `cli`). |
+| **`packages/`** | Core Hypercode monorepo packages (`core`, `ui`, `cli`). |
 """
 
     return content

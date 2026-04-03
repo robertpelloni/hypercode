@@ -1,13 +1,13 @@
 # Research & Integration Walkthrough (Batches 1-29 + Core Integrations)
 
-This document summarizes the completion of the "Deep Research" phase and the subsequent "Core Integration" phase for the Borg ecosystem.
+This document summarizes the completion of the "Deep Research" phase and the subsequent "Core Integration" phase for the Hypercode ecosystem.
 
 ## Part 1: Deep Research (Batches 1-29)
 I have completed the deep research, categorization, and indexing of all external AI tools and repositories from the `INBOX_LINKS.md` list. This research spanned 29 batches and included a wide array of agent frameworks, MCP servers, local RAG systems, and AI hardware optimizations.
 [... See legacy research notes in previous versions ...]
 
 ## Part 2: Core Integration Priorities
-Following the research, I implemented the four critical technologies identified as "Best-in-Class" for the Borg architecture.
+Following the research, I implemented the four critical technologies identified as "Best-in-Class" for the Hypercode architecture.
 
 ### 1. Graph Memory (Cognee)
 **Goal:** Upgrade memory from simple vector storage to graph-based reasoning.

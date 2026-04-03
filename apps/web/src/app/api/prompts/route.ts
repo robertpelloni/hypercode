@@ -5,7 +5,7 @@ import path from 'path';
 
 // Resolve the monorepo root safely without overly broad path traversals
 function getMonorepoRoot(): string {
-    return process.env.BORG_ROOT || path.resolve(process.cwd(), '..', '..');
+    return process.env.HYPERCODE_ROOT || path.resolve(process.cwd(), '..', '..');
 }
 
 const PROMPTS_DIR = path.join(getMonorepoRoot(), '.hypercode', 'prompts');

@@ -101,7 +101,7 @@ function renderSurfaceState(tabUrl?: string) {
         return;
     }
 
-    surfaceSummary.textContent = `${surface.name} is inside Borg's current MCP-SA migration footprint.`;
+    surfaceSummary.textContent = `${surface.name} is inside Hypercode's current MCP-SA migration footprint.`;
     renderPills(surfaceTags, [
         { label: surface.name, tone: 'ok' },
         { label: 'Adapter scaffold live', tone: 'ok' },
@@ -127,7 +127,7 @@ function setStatus(response: { connected?: boolean; coreUrl?: string; wsUrl?: st
     statusSpan.style.color = connected ? 'green' : 'red';
     detailSpan.textContent = connected
         ? `Core status: ${response?.status || 'online'}`
-        : `Core unreachable${response?.error ? ` — ${response.error}` : '. Start Borg Core or update settings.'}`;
+        : `Core unreachable${response?.error ? ` — ${response.error}` : '. Start Hypercode Core or update settings.'}`;
     endpointSpan.textContent = `HTTP ${response?.coreUrl || 'http://localhost:3001'} • WS ${response?.wsUrl || 'ws://localhost:3001'}`;
     setActionState(connected);
 }
@@ -160,7 +160,7 @@ ingestUrlBtn.addEventListener('click', async () => {
         return;
     }
 
-    msgDiv.textContent = 'Ingesting URL into Borg Knowledge...';
+    msgDiv.textContent = 'Ingesting URL into Hypercode Knowledge...';
     chrome.runtime.sendMessage({ type: 'INGEST_URL', url }, (res) => {
         if (res && res.success) {
             msgDiv.textContent = '✅ URL ingested into Knowledge!';
@@ -200,7 +200,7 @@ saveBtn.addEventListener('click', async () => {
 
     try {
         const { tab, content, title } = await scrapeActivePage();
-        msgDiv.textContent = 'Saving to Borg Core...';
+        msgDiv.textContent = 'Saving to Hypercode Core...';
 
         chrome.runtime.sendMessage({
             type: 'SAVE_CONTEXT',
@@ -226,7 +226,7 @@ ragBtn.addEventListener('click', async () => {
 
     try {
         const { tab, content, title } = await scrapeActivePage();
-        msgDiv.textContent = 'Ingesting into Borg RAG...';
+        msgDiv.textContent = 'Ingesting into Hypercode RAG...';
 
         chrome.runtime.sendMessage({
             type: 'INGEST_RAG_TEXT',

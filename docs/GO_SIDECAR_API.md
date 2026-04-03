@@ -13,7 +13,7 @@ These endpoints read actual configuration, database rows, or lock files natively
 * **`/api/mesh/peers`**: Queries the local peer table (if implemented) or broadcasts standard UDP discovery packets.
 
 ## 2. Bridge-Only Passthroughs (tRPC Wrappers)
-These endpoints exist to maintain API parity for clients connecting to the Go sidecar on port `4000`, but they strictly proxy to the upstream Node.js TRPC control plane (default `3000` or defined in `.borg_startup_marker`). If the Node process is offline, these routes will return `503 Service Unavailable`.
+These endpoints exist to maintain API parity for clients connecting to the Go sidecar on port `4000`, but they strictly proxy to the upstream Node.js TRPC control plane (default `3000` or defined in `.hypercode_startup_marker`). If the Node process is offline, these routes will return `503 Service Unavailable`.
 
 ### Sessions & Harnesses
 * **`/api/sessions/supervisor/*`**: Proxies to `trpc.supervisor.*`

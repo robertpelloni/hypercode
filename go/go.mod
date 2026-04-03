@@ -1,4 +1,4 @@
-module github.com/borghq/hypercode-go
+module github.com/hypercodehq/hypercode-go
 
 go 1.22
 

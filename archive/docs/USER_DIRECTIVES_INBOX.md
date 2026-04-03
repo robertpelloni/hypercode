@@ -56,6 +56,6 @@
 - **Safety**: No social media, no unapproved logins.
 
 ### TUI (Terminal Interface)
-- **Dashboard**: Run `npm start` in `@borg/cli`.
+- **Dashboard**: Run `npm start` in `@hypercode/cli`.
 - **Features**: Real-time "Pulse" logs, Agent Status Grid, Chat Input.
 - **Director Access**: Chat directly with `Director` via the specialized TUI input.

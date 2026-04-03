@@ -4,7 +4,7 @@
 
 ## Overview
 
-CLI harnesses are command-line tools that provide AI-powered coding capabilities. This category tracks all major CLI tools to achieve feature parity with Borg's own CLI/TUI/WebUI.
+CLI harnesses are command-line tools that provide AI-powered coding capabilities. This category tracks all major CLI tools to achieve feature parity with Hypercode's own CLI/TUI/WebUI.
 
 ## Feature Parity Tracker
 
@@ -77,13 +77,13 @@ CLI harnesses are command-line tools that provide AI-powered coding capabilities
 3. **Extract reusable patterns** and utilities
 4. **Create wrappers** where beneficial (direct code calls)
 5. **Implement feature parity** for core functionality
-6. **Migrate unique features** to Borg CLI
+6. **Migrate unique features** to Hypercode CLI
 
 ---
 
-## Borg CLI Architecture
+## Hypercode CLI Architecture
 
-Borg CLI should provide:
+Hypercode CLI should provide:
 - **Universal provider support** (OpenAI, Anthropic, Google, xAI, etc.)
 - **Multi-model routing** with intelligent selection
 - **Session management** with history and export/import
@@ -107,7 +107,7 @@ Borg CLI should provide:
 - [ ] Research TUI frameworks used
 - [ ] Document mobile access patterns
 - [ ] Create feature matrix comparison
-- [ ] Implement missing features in Borg CLI
+- [ ] Implement missing features in Hypercode CLI
 
 ---
 

@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 import type { Command } from 'commander';
 import { readCanonicalVersion } from '../version.js';
 
-export interface BorgStartLockRecord {
+export interface HypercodeStartLockRecord {
   instanceId: string;
   pid: number;
   port: number;
@@ -30,7 +30,7 @@ export interface BorgStartLockRecord {
   createdAt: string;
 }
 
-export interface BorgStartLockHandle {
+export interface HypercodeStartLockHandle {
   port: number;
   lockPath: string;
   clearedStaleLock: boolean;
@@ -40,7 +40,7 @@ export interface BorgStartLockHandle {
   releaseSync: () => void;
 }
 
-export interface BorgStartLifecycleHandlers {
+export interface HypercodeStartLifecycleHandlers {
   cleanup: () => void;
   handleSigint: () => void;
   handleSigterm: () => void;
@@ -142,9 +142,9 @@ export async function isPortFree(port: number): Promise<boolean> {
   });
 }
 
-function readStartLock(lockPath: string): BorgStartLockRecord | null {
+function readStartLock(lockPath: string): HypercodeStartLockRecord | null {
   try {
-    const parsed = JSON.parse(readFileSync(lockPath, 'utf8')) as Partial<BorgStartLockRecord>;
+    const parsed = JSON.parse(readFileSync(lockPath, 'utf8')) as Partial<HypercodeStartLockRecord>;
     if (
       typeof parsed.instanceId !== 'string'
       || typeof parsed.pid !== 'number'
@@ -155,13 +155,13 @@ function readStartLock(lockPath: string): BorgStartLockRecord | null {
       return null;
     }
 
-    return parsed as BorgStartLockRecord;
+    return parsed as HypercodeStartLockRecord;
   } catch {
     return null;
   }
 }
 
-function writeStartLock(lockPath: string, record: BorgStartLockRecord): void {
+function writeStartLock(lockPath: string, record: HypercodeStartLockRecord): void {
   const fd = openSync(lockPath, 'wx');
   try {
     writeFileSync(fd, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
@@ -173,7 +173,7 @@ function writeStartLock(lockPath: string, record: BorgStartLockRecord): void {
 export async function acquireSingleInstanceLock(
   options: AcquireSingleInstanceLockOptions,
   deps: AcquireSingleInstanceLockDeps = {},
-): Promise<BorgStartLockHandle> {
+): Promise<HypercodeStartLockHandle> {
   const now = deps.now ?? (() => new Date());
   const getPid = deps.getPid ?? (() => process.pid);
   const checkProcessRunning = deps.isProcessRunning ?? isProcessRunning;
@@ -480,7 +480,7 @@ export async function pickAvailableControlPlaneFallbackPort(
 }
 
 export function syncLockHandlePort(
-  lockHandle: BorgStartLockHandle,
+  lockHandle: HypercodeStartLockHandle,
   runtimePort: number | null | undefined,
 ): void {
   if (!Number.isInteger(runtimePort) || runtimePort === null || runtimePort === undefined) {
@@ -509,9 +509,9 @@ function getDashboardSpawnSpec(webRoot: string, repoRoot: string, host: string, 
 }
 
 export function createLockLifecycleHandlers(
-  lockHandle: BorgStartLockHandle,
+  lockHandle: HypercodeStartLockHandle,
   deps: CreateLockLifecycleHandlersDeps = {},
-): BorgStartLifecycleHandlers {
+): HypercodeStartLifecycleHandlers {
   const exit = deps.exit ?? ((code: number) => process.exit(code));
   const logError = deps.logError ?? ((message?: unknown, ...optionalParams: unknown[]) => console.error(message, ...optionalParams));
 
@@ -573,14 +573,14 @@ Examples:
       const host = opts.host;
       const explicitPort = process.argv.includes('--port') || process.argv.includes('-p');
       const explicitDashboardPort = process.argv.some((arg) => arg === '--dashboard-port' || arg.startsWith('--dashboard-port='));
-      let lockHandle: BorgStartLockHandle | null = null;
+      let lockHandle: HypercodeStartLockHandle | null = null;
       let dashboardChild: ChildProcess | null = null;
 
       const cliDir = dirname(fileURLToPath(import.meta.url));
-      const borgVersion = readCanonicalVersion(cliDir);
+      const hypercodeVersion = readCanonicalVersion(cliDir);
       const repoRoot = resolveRepoRoot(cliDir) ?? resolve(cliDir, '..', '..', '..', '..', '..');
       const webRoot = join(repoRoot, 'apps', 'web');
-      console.log(chalk.bold.cyan(`\n  ⬡ HyperCode v${borgVersion}`));
+      console.log(chalk.bold.cyan(`\n  ⬡ HyperCode v${hypercodeVersion}`));
       console.log(chalk.dim('  The Neural Operating System\n'));
 
       try {
@@ -698,8 +698,8 @@ Examples:
               stdio: 'inherit',
               env: {
                 ...process.env,
-                BORG_TRPC_UPSTREAM: `${orchestratorBaseUrl}/trpc`,
-                NEXT_PUBLIC_BORG_ORCHESTRATOR_URL: orchestratorBaseUrl,
+                HYPERCODE_TRPC_UPSTREAM: `${orchestratorBaseUrl}/trpc`,
+                NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL: orchestratorBaseUrl,
                 NEXT_PUBLIC_AUTOPILOT_URL: orchestratorBaseUrl,
               },
               windowsHide: true,

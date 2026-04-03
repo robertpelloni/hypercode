@@ -1,10 +1,10 @@
-# Borg MCP Bridge Guide
+# Hypercode MCP Bridge Guide
 
-> Borg's MCP router can delegate bridge responsibilities to an upstream MetaMCP-backed layer for aggregation, middleware, and gateway behavior.
+> Hypercode's MCP router can delegate bridge responsibilities to an upstream MetaMCP-backed layer for aggregation, middleware, and gateway behavior.
 
 ## Overview
 
-This guide covers the upstream bridge layer that Borg can use behind its MCP router control plane. The bridge functionality originated in MetaMCP and now serves as an implementation detail within Borg's broader router architecture. This enables:
+This guide covers the upstream bridge layer that Hypercode can use behind its MCP router control plane. The bridge functionality originated in MetaMCP and now serves as an implementation detail within Hypercode's broader router architecture. This enables:
 
 - **Progressive Tool Disclosure**: Minimize context window usage by exposing only meta-tools
 - **Semantic Tool Search**: "Tool RAG" using embeddings for intelligent tool discovery
@@ -17,7 +17,7 @@ This guide covers the upstream bridge layer that Borg can use behind its MCP rou
 
 ```
                     ┌─────────────────────────────────────────┐
-                    │           Borg Core Engine               │
+                    │           Hypercode Core Engine               │
                     │  ┌─────────────────────────────────────┐ │
                     │  │         McpManager                  │ │
                     │  │  ┌───────────┐  ┌───────────────┐  │ │
@@ -95,7 +95,7 @@ Extended MCP management with:
 ### Accessing MCP Tools
 
 ```typescript
-import { McpManager } from '@borg/core';
+import { McpManager } from '@hypercode/core';
 
 const manager = McpManager.getInstance();
 
@@ -109,7 +109,7 @@ const result = await manager.callTool('namespace', 'tool_name', { arg: 'value' }
 ### Using Code Mode
 
 ```typescript
-import { CodeExecutorService } from '@borg/core';
+import { CodeExecutorService } from '@hypercode/core';
 
 const executor = new CodeExecutorService(manager);
 
@@ -124,7 +124,7 @@ const result = await executor.execute(`
 ### Searching for Tools
 
 ```typescript
-import { ToolSearchService } from '@borg/core';
+import { ToolSearchService } from '@hypercode/core';
 
 const searchService = new ToolSearchService(manager);
 
@@ -149,7 +149,7 @@ const hybridResults = await searchService.searchTools(
 
 ## Transports
 
-Borg supports multiple MCP transport mechanisms:
+Hypercode supports multiple MCP transport mechanisms:
 
 | Transport | Use Case | Configuration |
 |-----------|----------|---------------|
@@ -167,9 +167,9 @@ Borg supports multiple MCP transport mechanisms:
 
 ## Migration from Standalone MetaMCP
 
-If you were using the standalone MetaMCP Docker image, the core functionality is now available directly in Borg:
+If you were using the standalone MetaMCP Docker image, the core functionality is now available directly in Hypercode:
 
-| MetaMCP Feature | Borg Equivalent |
+| MetaMCP Feature | Hypercode Equivalent |
 |-----------------|-----------------|
 | `docker compose up` | `pnpm run start:all` |
 | Dashboard at `:12009` | Dashboard at `:3000` |
@@ -179,13 +179,13 @@ If you were using the standalone MetaMCP Docker image, the core functionality is
 
 ### Key Differences
 
-1. **Database**: Borg uses SQLite instead of PostgreSQL. No external database required.
+1. **Database**: Hypercode uses SQLite instead of PostgreSQL. No external database required.
 2. **Embeddings**: Semantic search uses cosine similarity on pre-computed embeddings rather than pgvector.
 3. **API**: REST endpoints instead of tRPC. See [API Reference](./API.md).
 4. **Auth**: Bearer token via `SUPER_AI_TOKEN` environment variable.
 
 ## Related Documentation
 
-- [Borg API Reference](../API_REFERENCE.md) - Full REST API documentation
-- [Borg Deployment Guide](../DEPLOYMENT.md) - Production deployment
+- [Hypercode API Reference](../API_REFERENCE.md) - Full REST API documentation
+- [Hypercode Deployment Guide](../DEPLOYMENT.md) - Production deployment
 - [Original MetaMCP](https://docs.metamcp.com) - Reference documentation

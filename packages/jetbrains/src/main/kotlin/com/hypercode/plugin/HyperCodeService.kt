@@ -15,7 +15,7 @@ import com.google.gson.JsonObject
 import java.io.IOException
 
 @Service(Service.Level.PROJECT)
-class BorgService(private val project: Project) {
+class HypercodeService(private val project: Project) {
     
     private val client = OkHttpClient()
     private val gson = Gson()
@@ -117,7 +117,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 @Service(Service.Level.PROJECT)
-class BorgService(private val project: Project) {
+class HypercodeService(private val project: Project) {
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)

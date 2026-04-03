@@ -4,7 +4,7 @@
 
 ## 1. Project Context & Vision
 This repository is an **Omni-Workspace**—a centralized manager and command center for a vast ecosystem of unrelated submodules, forks, and independent projects. 
-*   **The Scope:** Includes AI operating systems (`borg`), game engines (`itgmania`, `okgame`, `bg`), web platforms (`fwber`, `raindropioapp`), and numerous development tools.
+*   **The Scope:** Includes AI operating systems (`hypercode`), game engines (`itgmania`, `okgame`, `bg`), web platforms (`fwber`, `raindropioapp`), and numerous development tools.
 *   **The Goal:** Maintain, synchronize, and orchestrate updates across 100+ nested repositories without regressions or data loss.
 *   **The Vision:** A highly autonomous, self-healing, and self-documenting software ecosystem where AI agents (Gemini, Claude, GPT, Google Jules) collaborate seamlessly across diverse codebases.
 
@@ -49,6 +49,6 @@ This repository is an **Omni-Workspace**—a centralized manager and command cen
 *   `docs/`: Workspace-level documentation and universal instructions.
 *   `scripts/`: Automation and maintenance scripts.
 *   `logs/`: Operation logs and handoff archives.
-*   `borg/`, `metamcp/`: AI Orchestration layers.
+*   `hypercode/`, `metamcp/`: AI Orchestration layers.
 *   `bobmani/`: Rhythm game engine suite.
 *   `fwber/`, `bobcoin/`: Full-stack applications.

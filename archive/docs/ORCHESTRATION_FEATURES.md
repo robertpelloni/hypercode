@@ -102,7 +102,7 @@
 
 ---
 
-## Implementation Priority for Borg
+## Implementation Priority for Hypercode
 
 ### Phase 1: Core Multi-Agent
 1. Graph-based agent workflow (like LangGraph)

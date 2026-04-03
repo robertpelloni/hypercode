@@ -44,7 +44,7 @@
 
 ---
 
-## Implementation Priority for Borg
+## Implementation Priority for Hypercode
 
 ### Phase 1: Core Agent UI
 1. Agent state streaming to frontend

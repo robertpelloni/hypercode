@@ -8,7 +8,7 @@ async function testSecurity() {
 
     // 1. Setup Services
     const policy = new PolicyService(process.cwd());
-    const audit = new AuditService(path.join(process.cwd(), '.borg_test_audit'));
+    const audit = new AuditService(path.join(process.cwd(), '.hypercode_test_audit'));
 
     // 2. Test Default Policy (Allow)
     console.log("\n1. Testing Default Policy (Allow)");

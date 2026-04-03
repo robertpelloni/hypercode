@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Runs deterministic release gate checks for Borg workspace.
+ * Runs deterministic release gate checks for Hypercode workspace.
  *
  * Why this exists:
  * - Readiness checks are now machine-readable JSON and should gate releases.

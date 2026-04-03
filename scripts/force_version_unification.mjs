@@ -34,7 +34,7 @@ for (const f of allFiles) {
          // Target pure package.json logic via regex to catch all strings safely
          content = content.replace(/"version"\s*:\s*"[^"]+"/g, `"version": "${NEW_VERSION}"`);
          // Also fix deps to internal workspaces that might be hardcoded 
-         content = content.replace(/"(@borg\/[^"]+)"\s*:\s*"[^"]+"/g, `"$1": "workspace:*"`);
+         content = content.replace(/"(@hypercode\/[^"]+)"\s*:\s*"[^"]+"/g, `"$1": "workspace:*"`);
       } else {
          for (const regex of BAD_VERSIONS) {
             content = content.replace(regex, NEW_VERSION);

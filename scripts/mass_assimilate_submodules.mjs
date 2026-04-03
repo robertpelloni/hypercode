@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const ROOT = process.cwd();
-const MASTER_INDEX_PATH = path.join(ROOT, 'BORG_MASTER_INDEX.jsonc');
+const MASTER_INDEX_PATH = path.join(ROOT, 'HYPERCODE_MASTER_INDEX.jsonc');
 
 async function main() {
   const content = await fs.readFile(MASTER_INDEX_PATH, 'utf-8');
@@ -25,7 +25,7 @@ async function main() {
   index.last_updated = new Date().toISOString().slice(0, 10);
 
   await fs.writeFile(MASTER_INDEX_PATH, JSON.stringify(index, null, 2), 'utf-8');
-  console.log(`Mass assimilated ${count} links in BORG_MASTER_INDEX.jsonc.`);
+  console.log(`Mass assimilated ${count} links in HYPERCODE_MASTER_INDEX.jsonc.`);
 }
 
 main().catch(console.error);

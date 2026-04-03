@@ -4,17 +4,17 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { resolveBorgConfigDir, resolveBorgLockPath, resolveLockedBorgBase, resolveOrchestratorBase } from './hypercode-orchestrator.js';
+import { resolveHypercodeConfigDir, resolveHypercodeLockPath, resolveLockedHypercodeBase, resolveOrchestratorBase } from './hypercode-orchestrator.js';
 
 describe('hypercode orchestrator helpers', () => {
     it('uses explicit env bases before lock-derived values', () => {
         expect(resolveOrchestratorBase({
-            BORG_ORCHESTRATOR_URL: 'http://127.0.0.1:4100/',
-            BORG_TRPC_UPSTREAM: 'http://127.0.0.1:4200/trpc',
+            HYPERCODE_ORCHESTRATOR_URL: 'http://127.0.0.1:4100/',
+            HYPERCODE_TRPC_UPSTREAM: 'http://127.0.0.1:4200/trpc',
         })).toBe('http://127.0.0.1:4100');
 
         expect(resolveOrchestratorBase({
-            BORG_TRPC_UPSTREAM: 'http://127.0.0.1:4200/trpc/',
+            HYPERCODE_TRPC_UPSTREAM: 'http://127.0.0.1:4200/trpc/',
         })).toBe('http://127.0.0.1:4200');
     });
 
@@ -22,12 +22,12 @@ describe('hypercode orchestrator helpers', () => {
         const configDir = mkdtempSync(path.join(os.tmpdir(), 'hypercode-lock-'));
         writeFileSync(path.join(configDir, 'lock'), JSON.stringify({ host: '0.0.0.0', port: 4312 }));
 
-        expect(resolveBorgConfigDir({ BORG_CONFIG_DIR: configDir })).toBe(configDir);
-        expect(resolveBorgLockPath({ BORG_CONFIG_DIR: configDir })).toBe(path.join(configDir, 'lock'));
-        expect(resolveLockedBorgBase({ BORG_CONFIG_DIR: configDir })).toBe('http://127.0.0.1:4312');
+        expect(resolveHypercodeConfigDir({ HYPERCODE_CONFIG_DIR: configDir })).toBe(configDir);
+        expect(resolveHypercodeLockPath({ HYPERCODE_CONFIG_DIR: configDir })).toBe(path.join(configDir, 'lock'));
+        expect(resolveLockedHypercodeBase({ HYPERCODE_CONFIG_DIR: configDir })).toBe('http://127.0.0.1:4312');
         expect(resolveOrchestratorBase({
-            BORG_CONFIG_DIR: configDir,
-            NEXT_PUBLIC_BORG_ORCHESTRATOR_URL: 'http://127.0.0.1:3847',
+            HYPERCODE_CONFIG_DIR: configDir,
+            NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL: 'http://127.0.0.1:3847',
         })).toBe('http://127.0.0.1:4312');
     });
 
@@ -36,12 +36,12 @@ describe('hypercode orchestrator helpers', () => {
         mkdirSync(configDir, { recursive: true });
 
         expect(resolveOrchestratorBase({
-            BORG_CONFIG_DIR: configDir,
-            NEXT_PUBLIC_BORG_ORCHESTRATOR_URL: 'http://127.0.0.1:5001/',
+            HYPERCODE_CONFIG_DIR: configDir,
+            NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL: 'http://127.0.0.1:5001/',
         })).toBe('http://127.0.0.1:5001');
 
         expect(resolveOrchestratorBase({
-            BORG_CONFIG_DIR: configDir,
+            HYPERCODE_CONFIG_DIR: configDir,
             NEXT_PUBLIC_AUTOPILOT_URL: 'http://127.0.0.1:3847',
         })).toBe('http://127.0.0.1:3847');
     });

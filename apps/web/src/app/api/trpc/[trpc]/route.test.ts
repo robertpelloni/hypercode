@@ -51,31 +51,31 @@ async function readOptionalFile(filePath: string): Promise<string | null> {
 }
 
 describe('resolveUpstreamBases', () => {
-  const originalUpstream = process.env.BORG_TRPC_UPSTREAM;
-  const originalBorgConfigDir = process.env.BORG_CONFIG_DIR;
+  const originalUpstream = process.env.HYPERCODE_TRPC_UPSTREAM;
+  const originalHypercodeConfigDir = process.env.HYPERCODE_CONFIG_DIR;
   let tempConfigDir = '';
 
   beforeEach(async () => {
     tempConfigDir = await fs.mkdtemp(path.join(os.tmpdir(), 'hypercode-trpc-upstream-'));
-    process.env.BORG_CONFIG_DIR = tempConfigDir;
+    process.env.HYPERCODE_CONFIG_DIR = tempConfigDir;
   });
 
   afterEach(() => {
     if (originalUpstream === undefined) {
-      delete process.env.BORG_TRPC_UPSTREAM;
+      delete process.env.HYPERCODE_TRPC_UPSTREAM;
     } else {
-      process.env.BORG_TRPC_UPSTREAM = originalUpstream;
+      process.env.HYPERCODE_TRPC_UPSTREAM = originalUpstream;
     }
 
-    if (originalBorgConfigDir === undefined) {
-      delete process.env.BORG_CONFIG_DIR;
+    if (originalHypercodeConfigDir === undefined) {
+      delete process.env.HYPERCODE_CONFIG_DIR;
     } else {
-      process.env.BORG_CONFIG_DIR = originalBorgConfigDir;
+      process.env.HYPERCODE_CONFIG_DIR = originalHypercodeConfigDir;
     }
   });
 
   it('includes HyperCode core\'s default tRPC port before legacy fallbacks', () => {
-    delete process.env.BORG_TRPC_UPSTREAM;
+    delete process.env.HYPERCODE_TRPC_UPSTREAM;
 
     expect(resolveUpstreamBases()).toEqual([
       'http://127.0.0.1:3100/trpc',
@@ -87,7 +87,7 @@ describe('resolveUpstreamBases', () => {
   });
 
   it('prepends a configured upstream while deduplicating defaults', () => {
-    process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:4000/trpc';
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4000/trpc';
 
     expect(resolveUpstreamBases()).toEqual([
       'http://127.0.0.1:4000/trpc',
@@ -99,7 +99,7 @@ describe('resolveUpstreamBases', () => {
   });
 
   it('prefers the live HyperCode lock port over stale configured upstreams', async () => {
-    process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:4000/trpc';
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4000/trpc';
     await fs.writeFile(
       path.join(tempConfigDir, 'lock'),
       JSON.stringify({ host: '0.0.0.0', port: 4001 }),
@@ -118,28 +118,28 @@ describe('resolveUpstreamBases', () => {
 
 describe('legacy MCP dashboard compatibility bridge', () => {
   const originalFetch = global.fetch;
-  const originalUpstream = process.env.BORG_TRPC_UPSTREAM;
-  const originalBorgConfigDir = process.env.BORG_CONFIG_DIR;
+  const originalUpstream = process.env.HYPERCODE_TRPC_UPSTREAM;
+  const originalHypercodeConfigDir = process.env.HYPERCODE_CONFIG_DIR;
   let compatConfigDir = '';
 
   beforeEach(async () => {
     compatConfigDir = await fs.mkdtemp(path.join(os.tmpdir(), 'hypercode-trpc-compat-'));
-    process.env.BORG_CONFIG_DIR = compatConfigDir;
+    process.env.HYPERCODE_CONFIG_DIR = compatConfigDir;
   });
 
   afterEach(async () => {
     global.fetch = originalFetch;
 
     if (originalUpstream === undefined) {
-      delete process.env.BORG_TRPC_UPSTREAM;
+      delete process.env.HYPERCODE_TRPC_UPSTREAM;
     } else {
-      process.env.BORG_TRPC_UPSTREAM = originalUpstream;
+      process.env.HYPERCODE_TRPC_UPSTREAM = originalUpstream;
     }
 
-    if (originalBorgConfigDir === undefined) {
-      delete process.env.BORG_CONFIG_DIR;
+    if (originalHypercodeConfigDir === undefined) {
+      delete process.env.HYPERCODE_CONFIG_DIR;
     } else {
-      process.env.BORG_CONFIG_DIR = originalBorgConfigDir;
+      process.env.HYPERCODE_CONFIG_DIR = originalHypercodeConfigDir;
     }
 
     if (compatConfigDir) {
@@ -149,7 +149,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
   });
 
   it('returns compatibility data for modern MCP procedure batches when upstreams are unavailable', async () => {
-    process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
     global.fetch = vi.fn(async () => {
       throw new Error('connect ECONNREFUSED');
     }) as typeof fetch;
@@ -185,7 +185,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
   });
 
   it('supports mixed legacy and modern MCP procedure aliases in the same batch', async () => {
-    process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
     global.fetch = vi.fn(async () => {
       throw new Error('connect ECONNREFUSED');
     }) as typeof fetch;
@@ -221,7 +221,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
   });
 
   it('probes top-level mcpServers.list when bridging legacy MCP batches', async () => {
-    process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:4100/trpc';
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4100/trpc';
     const upstreamServers = [
       {
         uuid: 'server-1',
@@ -290,7 +290,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
   });
 
   it('returns local dashboard fallback data for richer MCP pages when upstreams are unavailable', async () => {
-    process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
     global.fetch = vi.fn(async () => {
       throw new Error('connect ECONNREFUSED');
     }) as typeof fetch;
@@ -360,7 +360,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
   });
 
   it('normalizes batched bulk import payloads before proxying them upstream', async () => {
-    process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:3100/trpc';
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:3100/trpc';
     const upstreamResponse = [
       {
         result: {
@@ -420,7 +420,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
   });
 
   it('preserves realistic mixed transport/auth fields when normalizing batched bulk imports', async () => {
-    process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:3100/trpc';
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:3100/trpc';
     const upstreamResponse = [
       {
         result: {
@@ -490,7 +490,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
   });
 
   it('imports realistic mixed transport servers via local bulk import fallback', async () => {
-    process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
     global.fetch = vi.fn(async () => {
       throw new Error('connect ECONNREFUSED');
     }) as typeof fetch;
@@ -598,7 +598,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
   });
 
   it('supports local pseudo-managed MCP server actions when upstreams are unavailable', async () => {
-    process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
     global.fetch = vi.fn(async () => {
       throw new Error('connect ECONNREFUSED');
     }) as typeof fetch;
@@ -765,7 +765,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
   });
 
   it('returns an explicit local fallback error when mcpServers.get misses locally', async () => {
-    process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:59999/trpc';
     global.fetch = vi.fn(async () => {
       throw new Error('connect ECONNREFUSED');
     }) as typeof fetch;
@@ -791,7 +791,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
   });
 
     it('bridges bulk imports via legacy mcpServers format when upstream rejects modern array body', async () => {
-      process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:4100/trpc';
+      process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4100/trpc';
 
       const legacyUpstreamResult = { imported: 2, skipped: 0 };
 
