@@ -37,6 +37,7 @@ import (
 	"github.com/hypercodehq/hypercode-go/internal/mesh"
 	"github.com/hypercodehq/hypercode-go/internal/providers"
 	"github.com/hypercodehq/hypercode-go/internal/sessionimport"
+	bobbySync "github.com/hypercodehq/hypercode-go/internal/sync"
 	_ "modernc.org/sqlite"
 )
 
@@ -6736,7 +6737,61 @@ func (s *Server) handleLinksBacklogGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleLinksBacklogSync(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "linksBacklog.syncFromBobbyBookmarks")
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
+		return
+	}
+
+	var payload struct {
+		BaseURL           string `json:"baseUrl"`
+		PerPage           int    `json:"perPage"`
+		IncludeDuplicates bool   `json:"includeDuplicates"`
+		IncludeResearched bool   `json:"includeResearched"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	if payload.BaseURL == "" {
+		payload.BaseURL = "https://robertpelloni.com"
+	}
+	if payload.PerPage <= 0 {
+		payload.PerPage = 100
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "linksBacklog.syncFromBobbyBookmarks", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "linksBacklog.syncFromBobbyBookmarks",
+			},
+		})
+		return
+	}
+
+	report, fallbackErr := bobbySync.SyncBobbyBookmarks(r.Context(), s.localMetaMCPDBPath(), payload.BaseURL, payload.PerPage, payload.IncludeDuplicates, payload.IncludeResearched)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    report,
+		"bridge": map[string]any{
+			"fallback":  "go-local-bobbybookmarks-sync",
+			"procedure": "linksBacklog.syncFromBobbyBookmarks",
+			"reason":    "upstream unavailable; using native Go bobbybookmarks sync",
+		},
+	})
 }
 
 func (s *Server) handleInfrastructureStatus(w http.ResponseWriter, r *http.Request) {
