@@ -32,6 +32,7 @@ import (
 	"github.com/hypercodehq/hypercode-go/internal/controlplane"
 	"github.com/hypercodehq/hypercode-go/internal/harnesses"
 	"github.com/hypercodehq/hypercode-go/internal/interop"
+	"github.com/hypercodehq/hypercode-go/internal/mcp"
 	"github.com/hypercodehq/hypercode-go/internal/memorystore"
 	"github.com/hypercodehq/hypercode-go/internal/mesh"
 	"github.com/hypercodehq/hypercode-go/internal/providers"
@@ -54,6 +55,7 @@ type Server struct {
 	cfg            config.Config
 	detector       controlplane.ToolProvider
 	mesh           *mesh.Service
+	aggregator     *mcp.Aggregator
 	startedAt      time.Time
 	mux            *http.ServeMux
 	lifecycleModes map[string]any
@@ -349,11 +351,12 @@ type SummaryBucket struct {
 
 func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
 	server := &Server{
-		cfg:       cfg,
-		detector:  detector,
-		mesh:      mesh.New(cfg),
-		startedAt: time.Now().UTC(),
-		mux:       http.NewServeMux(),
+		cfg:        cfg,
+		detector:   detector,
+		mesh:       mesh.New(cfg),
+		aggregator: mcp.NewAggregator(),
+		startedAt:  time.Now().UTC(),
+		mux:        http.NewServeMux(),
 		lifecycleModes: map[string]any{
 			"lazySessionMode":        false,
 			"singleActiveServerMode": false,
