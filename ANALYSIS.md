@@ -17,6 +17,7 @@ The experimental Go orchestrator (`apps/maestro-go`) has been significantly enha
 - **Agent Detection:** Ported the PATH-based agent detection logic into the `agents` Go package.
 - **MCP Aggregation Core:** Bootstrapped `mcp.Aggregator` in `go/internal/mcp` capable of maintaining persistent Stdio `Client` structs, tracking `jsonrpc` message IDs, and marshaling `tools/list` broadcasts locally.
 - **Omniscient Memory Expansion:** Implemented a direct SQLite full-text search capability in `go/internal/memorystore/search.go`. The Go sidecar now falls back to native high-performance searches across `web_memories` and `imported_session_memories` when the primary Node router is unavailable, ensuring absolute read-parity.
+- **Cloud Orchestrator Routes:** Added Jules Autopilot API parity via `/api/jules/manifest`, `/api/jules/sessions`, and `/api/system/submodules` handlers inside the Go sidecar (`cloud_orchestrator_handlers.go`).
 
 ## 4. Total Submodule Alignment
 - All submodules, including `prism-mcp`, `hypercode`, `Maestro`, `OmniRoute`, and the `claude-mem` archives, have been synchronized.
