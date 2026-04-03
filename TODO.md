@@ -17,18 +17,18 @@ Make HyperCode feel trustworthy in daily operator use.
 
 ## P1 — Should do next
 
-- [ ] Add targeted regression coverage for provider fallback, session recovery, and discovery failures
-- [ ] Improve session attach and restart clarity
+- [x] Add targeted regression coverage for provider fallback, session recovery, and discovery failures
+- [x] Improve session attach and restart clarity
 - [ ] Deepen `hypercode` assimilation beyond harness registration once the upstream submodule exposes real runtime entrypoints
-- [ ] Improve memory provenance and retrieval debugging
+- [x] Improve memory provenance and retrieval debugging
 - [x] Improve MCP import and export error reporting
 - [x] Improve provider fallback history and quota clarity
-- [ ] Improve first-run empty states and setup guidance
-- [ ] Improve MCP health and validation reporting
+- [x] Improve first-run empty states and setup guidance
+- [x] Improve MCP health and validation reporting
 - [x] Define package seams for `hypercoded`, `hypermcpd`, `hypermemd`, `hyperingest`, and `hyperharnessd` before extracting binaries
-- [ ] Reduce duplicated orchestration logic across CLI, web, desktop, and sidecar surfaces so daemon ownership is clearer
-- [ ] Continue Go truth-parity work only where the sidecar can read the same SQLite tables, config files, session artifacts, or deterministic local defaults without pretending to own live orchestration state
-- [ ] Keep documenting which Go routes are truthful local fallbacks versus bridge-only passthroughs so operator expectations stay honest
+- [x] Reduce duplicated orchestration logic across CLI, web, desktop, and sidecar surfaces so daemon ownership is clearer
+- [x] Continue Go truth-parity work only where the sidecar can read the same SQLite tables, config files, session artifacts, or deterministic local defaults without pretending to own live orchestration state
+- [x] Keep documenting which Go routes are truthful local fallbacks versus bridge-only passthroughs so operator expectations stay honest
 
 ## P2 — Helpful but not urgent
 
@@ -36,7 +36,7 @@ Make HyperCode feel trustworthy in daily operator use.
 - [ ] Improve benchmark and diagnostics visibility
 - [ ] Reduce duplicate or low-value dashboard surfaces
 - [ ] Improve tool search and working-set ergonomics
-- [ ] Design the internal MCP server library pipeline: ingestion from public lists, dedupe, provenance, and refresh rules
+- [x] Design the internal MCP server library pipeline: ingestion from public lists, dedupe, provenance, and refresh rules
 - [ ] Design how HyperCode benchmarks and ranks overlapping MCP servers and tools over time
 - [ ] Promote the most justified package seams into standalone binaries only after contracts and ownership are stable
 

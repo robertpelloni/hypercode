@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0-alpha.1] - 2026-04-02
 
+### Added
+- **Go Sidecar API Documentation**: Created `docs/GO_SIDECAR_API.md` to explicitly map and classify truthful local fallbacks vs bridge-only passthroughs in the experimental Go sidecar.
+- **P1 Feature Freeze**: Successfully implemented, tested, and validated all P1 core features identified in the previous stabilization passes.
+
+## [1.0.0-alpha.1] - 2026-04-02
+
 ### Fixed
 - **MCP Database Destructive Sync**: Fixed a critical bug in `McpConfigService.syncWithDatabase()` that was wiping out SQLite tool records (and resetting their `always_on` status) when `mcp.jsonc` was empty.
 - **Config Directory Resolution**: Changed `getBorgConfigDir()` to respect local workspace `mcp.jsonc` configs, improving the loader's ability to find active tool caches.
