@@ -1051,6 +1051,48 @@ Results:
 - Go build passed
 - full Go suite passed
 
+## Follow-up MCP metadata step (truthful JSONC metadata inspection)
+After aligning configured-server read/write authority around JSONC, the next improvement targeted the stale placeholder behavior in native metadata refresh/cache endpoints.
+
+### What changed
+- `go/internal/httpapi/server.go`
+  - native configured-server metadata reload now performs a truthful local JSONC inspection/cache normalization pass instead of only stamping a generic placeholder state
+  - cached tool metadata is preserved and normalized when present
+  - transport/type hints are derived from the configured server entry
+  - metadata source now differentiates between:
+    - `jsonc-cache`
+    - `jsonc-derived`
+    - `cleared`
+  - `reloadDecision` now distinguishes cache-backed inspection from cleared-cache state instead of always returning `go-local-placeholder`
+- `go/internal/httpapi/server_test.go`
+  - updated metadata refresh/cache tests to verify the new truthful semantics
+
+### Important truthfulness note
+This is better than the previous placeholder path, but it is still **not** a full binary/tool discovery refresh parity implementation.
+
+What is true now:
+- native metadata reload no longer pretends the same thing happened in every case
+- if cached tools exist in JSONC metadata, Go reports that honestly
+- if no cache exists, Go now says it only inspected local JSONC/config state and did not perform full binary probing
+- clear-cache behavior is explicitly represented as a cleared local metadata state
+
+What is not true yet:
+- native Go metadata refresh still does not perform full downstream binary execution + tool discovery parity
+- real tool schema/tool-count refresh from live server process probing remains incomplete in Go
+
+### Validation performed for this metadata step
+```bash
+gofmt -w go/internal/httpapi/server.go go/internal/httpapi/server_test.go
+cd go && go test ./internal/httpapi
+cd go && go build -buildvcs=false ./cmd/hypercode
+cd go && go test ./...
+```
+
+Results:
+- targeted httpapi tests passed
+- Go build passed
+- full Go suite passed
+
 ## Bottom line
 This pass meaningfully strengthened the **Go-primary migration path** and improved TypeScript survivability while the migration continues:
 - broader provider routing
@@ -1084,6 +1126,7 @@ This pass meaningfully strengthened the **Go-primary migration path** and improv
 - native file-based imported-session ingest in Go with heuristic memory extraction and instruction-doc regeneration
 - native DB-backed imported-session parsing in Go for `llm-cli` and Prism artifacts
 - MCP configured-server reads and writes now share JSONC as the native local authority in Go fallback mode
+- native MCP metadata refresh/cache endpoints now use truthful JSONC inspection semantics instead of a generic placeholder-only state
 - a tested Go-native replacement path for multiple TS-owned persistence surfaces, even though mixed-runtime cleanup is not fully finished yet
 - a small but real Maestro UX fix
 

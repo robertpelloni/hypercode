@@ -9394,7 +9394,7 @@ func (s *Server) handleConfiguredServerMutation(w http.ResponseWriter, r *http.R
 		"bridge": map[string]any{
 			"fallback":  "go-local-jsonc",
 			"procedure": procedure,
-			"reason":    "upstream unavailable; applying local JSONC metadata placeholder fallback",
+			"reason":    "upstream unavailable; applying local JSONC MCP config fallback",
 		},
 	})
 }
@@ -15820,24 +15820,7 @@ func (s *Server) localReloadConfiguredServerMetadata(payload map[string]any) (an
 	if entry == nil {
 		entry = map[string]any{}
 	}
-	now := time.Now().UTC().Format(time.RFC3339)
-	meta, _ := entry["_meta"].(map[string]any)
-	if meta == nil {
-		meta = map[string]any{}
-	}
-	meta["status"] = "pending"
-	meta["metadataVersion"] = 2
-	meta["metadataSource"] = "derived"
-	meta["cacheHydratedAt"] = now
-	meta["lastAttemptedBinaryLoadAt"] = now
-	meta["reloadableFromCache"] = false
-	if _, ok := meta["toolCount"]; !ok {
-		meta["toolCount"] = 0
-	}
-	if _, ok := meta["tools"]; !ok {
-		meta["tools"] = []any{}
-	}
-	meta["error"] = "Go fallback refreshed metadata cache placeholder using local configuration only (" + mode + ")."
+	meta, reloadDecision := inspectConfiguredServerMetadata(entry, mode)
 	entry["_meta"] = meta
 	servers[targetName] = entry
 	config["mcpServers"] = servers
@@ -15852,7 +15835,7 @@ func (s *Server) localReloadConfiguredServerMetadata(payload map[string]any) (an
 		"server":         server,
 		"metadata":       meta,
 		"toolCount":      meta["toolCount"],
-		"reloadDecision": "go-local-placeholder",
+		"reloadDecision": reloadDecision,
 		"ok":             true,
 	}, nil
 }
@@ -15879,15 +15862,17 @@ func (s *Server) localClearConfiguredServerMetadata(payload map[string]any) (any
 	meta := map[string]any{
 		"status":                     "pending",
 		"metadataVersion":            2,
-		"metadataSource":             "derived",
+		"metadataSource":             "cleared",
 		"reloadableFromCache":        false,
 		"toolCount":                  0,
 		"tools":                      []any{},
-		"error":                      "Cache cleared at " + clearedAt,
+		"error":                      "Metadata cache cleared locally at " + clearedAt,
 		"cacheHydratedAt":            nil,
-		"discoveredAt":               nil,
+		"discoveredAt":               clearedAt,
 		"lastAttemptedBinaryLoadAt":  nil,
 		"lastSuccessfulBinaryLoadAt": nil,
+		"lastRefreshMode":            nil,
+		"transportHint":              configuredServerTransportHint(entry),
 	}
 	entry["_meta"] = meta
 	servers[targetName] = entry
@@ -15900,10 +15885,11 @@ func (s *Server) localClearConfiguredServerMetadata(payload map[string]any) (any
 		return nil, err
 	}
 	return map[string]any{
-		"server":    server,
-		"metadata":  meta,
-		"toolCount": 0,
-		"ok":        true,
+		"server":         server,
+		"metadata":       meta,
+		"toolCount":      0,
+		"reloadDecision": "go-local-metadata-cleared",
+		"ok":             true,
 	}, nil
 }
 
@@ -15992,6 +15978,70 @@ func (s *Server) readLocalMCPConfigObject() (map[string]any, error) {
 
 func (s *Server) writeLocalMCPConfigObject(config map[string]any) error {
 	return s.saveLocalMCPJsonc(prettyJSON(config))
+}
+
+func inspectConfiguredServerMetadata(entry map[string]any, mode string) (map[string]any, string) {
+	now := time.Now().UTC().Format(time.RFC3339)
+	existingMeta, _ := entry["_meta"].(map[string]any)
+	meta := map[string]any{}
+	for key, value := range existingMeta {
+		meta[key] = value
+	}
+	tools, _ := meta["tools"].([]any)
+	if tools == nil {
+		tools = []any{}
+	}
+	toolCount := intNumber(meta["toolCount"])
+	if len(tools) > 0 {
+		toolCount = len(tools)
+	}
+	reloadableFromCache := toolCount > 0
+	status := "configured"
+	metadataSource := "jsonc-derived"
+	reloadDecision := "go-local-jsonc-inspection"
+	errorMessage := any(nil)
+	if reloadableFromCache {
+		status = "ready"
+		metadataSource = "jsonc-cache"
+		reloadDecision = "go-local-jsonc-cache"
+		if existing, ok := meta["lastSuccessfulBinaryLoadAt"]; ok && existing != nil {
+			meta["lastSuccessfulBinaryLoadAt"] = existing
+		}
+	} else if strings.EqualFold(mode, "cache") {
+		status = "pending"
+		errorMessage = "No cached tool metadata is available locally; native Go refresh inspected JSONC configuration only."
+	}
+	meta["status"] = status
+	meta["metadataVersion"] = 2
+	meta["metadataSource"] = metadataSource
+	meta["cacheHydratedAt"] = now
+	meta["discoveredAt"] = now
+	meta["lastRefreshMode"] = mode
+	meta["transportHint"] = configuredServerTransportHint(entry)
+	meta["reloadableFromCache"] = reloadableFromCache
+	meta["toolCount"] = toolCount
+	meta["tools"] = tools
+	if strings.EqualFold(mode, "binary") {
+		meta["lastAttemptedBinaryLoadAt"] = now
+		if !reloadableFromCache {
+			errorMessage = "Native Go metadata refresh currently inspects local JSONC configuration and cached metadata only; direct binary probing is not implemented yet."
+		}
+	}
+	meta["error"] = errorMessage
+	return meta, reloadDecision
+}
+
+func configuredServerTransportHint(entry map[string]any) string {
+	if serverType, ok := entry["type"].(string); ok && strings.TrimSpace(serverType) != "" {
+		return serverType
+	}
+	if url, ok := entry["url"].(string); ok && strings.TrimSpace(url) != "" {
+		return "STREAMABLE_HTTP"
+	}
+	if command, ok := entry["command"].(string); ok && strings.TrimSpace(command) != "" {
+		return "STDIO"
+	}
+	return "unknown"
 }
 
 func configuredServerEntryFromPayload(payload map[string]any) map[string]any {

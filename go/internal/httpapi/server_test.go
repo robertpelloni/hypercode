@@ -10101,11 +10101,14 @@ func TestMCPConfiguredServerMetadataMutationsFallBackToLocalJsonc(t *testing.T) 
 	reloadRequest.Header.Set("content-type", "application/json")
 	reloadRecorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(reloadRecorder, reloadRequest)
-	if reloadRecorder.Code != http.StatusOK || !strings.Contains(reloadRecorder.Body.String(), `"reloadDecision":"go-local-placeholder"`) || !strings.Contains(reloadRecorder.Body.String(), `"fallback":"go-local-jsonc"`) {
+	if reloadRecorder.Code != http.StatusOK || !strings.Contains(reloadRecorder.Body.String(), `"reloadDecision":"go-local-jsonc-cache"`) || !strings.Contains(reloadRecorder.Body.String(), `"fallback":"go-local-jsonc"`) {
 		t.Fatalf("expected reload metadata fallback response, got %d %s", reloadRecorder.Code, reloadRecorder.Body.String())
 	}
-	if !strings.Contains(reloadRecorder.Body.String(), `applying local JSONC metadata placeholder fallback`) {
+	if !strings.Contains(reloadRecorder.Body.String(), `applying local JSONC MCP config fallback`) {
 		t.Fatalf("expected reload metadata fallback reason, got %s", reloadRecorder.Body.String())
+	}
+	if !strings.Contains(reloadRecorder.Body.String(), `"metadataSource":"jsonc-cache"`) || !strings.Contains(reloadRecorder.Body.String(), `"reloadableFromCache":true`) {
+		t.Fatalf("expected cache-aware metadata refresh payload, got %s", reloadRecorder.Body.String())
 	}
 
 	clearRequest := httptest.NewRequest(http.MethodPost, "/api/mcp/servers/clear-metadata-cache", strings.NewReader(`{"uuid":"`+uuid+`"}`))
@@ -10115,15 +10118,18 @@ func TestMCPConfiguredServerMetadataMutationsFallBackToLocalJsonc(t *testing.T) 
 	if clearRecorder.Code != http.StatusOK || !strings.Contains(clearRecorder.Body.String(), `"toolCount":0`) || !strings.Contains(clearRecorder.Body.String(), `"ok":true`) {
 		t.Fatalf("expected clear metadata fallback response, got %d %s", clearRecorder.Code, clearRecorder.Body.String())
 	}
-	if !strings.Contains(clearRecorder.Body.String(), `applying local JSONC metadata placeholder fallback`) {
+	if !strings.Contains(clearRecorder.Body.String(), `applying local JSONC MCP config fallback`) {
 		t.Fatalf("expected clear metadata fallback reason, got %s", clearRecorder.Body.String())
+	}
+	if !strings.Contains(clearRecorder.Body.String(), `"reloadDecision":"go-local-metadata-cleared"`) || !strings.Contains(clearRecorder.Body.String(), `"metadataSource":"cleared"`) {
+		t.Fatalf("expected cleared metadata semantics, got %s", clearRecorder.Body.String())
 	}
 
 	written, err := os.ReadFile(filepath.Join(mainConfigDir, "mcp.jsonc"))
 	if err != nil {
 		t.Fatalf("expected updated jsonc file: %v", err)
 	}
-	if !strings.Contains(string(written), `"status": "pending"`) || !strings.Contains(string(written), `"toolCount": 0`) || !strings.Contains(string(written), `Cache cleared at`) {
+	if !strings.Contains(string(written), `"status": "pending"`) || !strings.Contains(string(written), `"toolCount": 0`) || !strings.Contains(string(written), `Metadata cache cleared locally at`) {
 		t.Fatalf("expected cleared metadata cache state, got %s", string(written))
 	}
 }
