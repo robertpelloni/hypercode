@@ -377,6 +377,53 @@ At this point in the stabilization sequence:
 - the native git fallback tests are green
 - **`cd go && go test ./...` is green**
 
+## Follow-up MCP and provider-routing test coverage pass
+With the core Go suite green, the next stabilization pass added regression coverage around MCP inventory/ranking and native provider selection behavior.
+
+### Additional fixes and hardening in this pass
+- `go/internal/ai/llm.go`
+  - extracted provider selection into a testable helper: `resolveProviderSelection()`
+  - `ListConfiguredProviders()` now deduplicates alias-backed providers (notably Google via `GOOGLE_API_KEY` and `GEMINI_API_KEY`)
+- `go/internal/ai/llm_test.go`
+  - verifies provider priority ordering (`anthropic > google > openai > deepseek > openrouter`)
+  - verifies Gemini alias resolution via `GEMINI_API_KEY`
+  - verifies configured-provider listing is deduplicated
+  - explicitly clears ambient workstation provider env vars inside tests to avoid false results from the local machine environment
+- `go/internal/mcp/inventory_test.go`
+  - verifies JSONC config loading with comment stripping
+  - verifies mixed inventory loading from both:
+    - config (`mcp.json`/`mcp.jsonc`)
+    - SQLite database (`packages/core/metamcp.db`)
+  - verifies server/tool normalization and database-source preference when DB-backed tool rows are present
+- `go/internal/mcp/ranking_test.go`
+  - verifies token normalization/filtering
+  - verifies ranking prefers strong name matches over weaker description matches
+  - verifies tags/semantic groups contribute to ranking
+  - verifies empty-query ranking behaves as a stable default listing
+- `go/internal/providers/routing_test.go`
+  - verifies catalog entries inherit configured/authenticated status from provider snapshots
+  - verifies routing summaries reflect configured providers for coding/planning task preferences
+
+### Validation performed in this pass
+Commands run:
+```bash
+cd go && go test ./internal/mcp ./internal/ai ./internal/providers
+cd go && go test ./...
+cd go && go build -buildvcs=false ./cmd/hypercode
+```
+
+Results:
+- targeted MCP / AI / providers tests passed
+- full Go suite remained green
+- Go sidecar build passed
+
+### Updated truthfulness assessment
+This pass did not introduce large new runtime surfaces; it improved confidence and correctness around existing ones:
+- MCP inventory loading behavior is now covered for both config and DB-backed sources
+- MCP ranking behavior is now regression-tested
+- provider selection order is now testable and less vulnerable to environment-specific ambiguity
+- provider alias handling is now more truthful in configured-provider summaries
+
 ## Bottom line
 This pass meaningfully strengthened the **Go sidecar as a truthful local fallback control plane**:
 - broader provider routing
@@ -389,6 +436,8 @@ This pass meaningfully strengthened the **Go sidecar as a truthful local fallbac
 - repaired bridge-first behavior for key memory/MCP/council routes
 - graceful empty-result fallback for missing local memory DB state
 - hardened native git submodule parsing and fallback reporting
+- regression coverage for MCP inventory/ranking and provider selection behavior
+- deduplicated provider alias reporting for configured native providers
 - a small but real Maestro UX fix
 
-It was validated by successful Go compilation, successful targeted Go tests for the new native surfaces, successful targeted regression tests for the repaired memory/MCP/council routes, a successful full Go test suite run (`go test ./...`), and the previously successful full workspace build. The new systems are real and integrated, but several of them should still be described as **Beta** or **Experimental**, not full parity.
+It was validated by successful Go compilation, successful targeted Go tests for the new native surfaces, successful targeted regression tests for the repaired memory/MCP/council routes, a successful full Go test suite run (`go test ./...`), targeted MCP/provider test coverage, and the previously successful full workspace build. The new systems are real and integrated, but several of them should still be described as **Beta** or **Experimental**, not full parity.

@@ -321,40 +321,65 @@ var ProviderPriority = []struct {
 	{"OPENROUTER_API_KEY", "openrouter", "openrouter/auto", func(k string) Provider { return &OpenRouterProvider{APIKey: k} }},
 }
 
+type providerSelection struct {
+	EnvVar       string
+	ProviderName string
+	DefaultModel string
+	Factory      func(apiKey string) Provider
+	APIKey       string
+}
+
+func resolveProviderSelection() (providerSelection, bool) {
+	for _, entry := range ProviderPriority {
+		if key := os.Getenv(entry.EnvVar); key != "" {
+			return providerSelection{
+				EnvVar:       entry.EnvVar,
+				ProviderName: entry.ProviderName,
+				DefaultModel: entry.DefaultModel,
+				Factory:      entry.Factory,
+				APIKey:       key,
+			}, true
+		}
+	}
+	return providerSelection{}, false
+}
+
 // AutoRoute selects the best available provider based on environment variables.
 // Priority: Anthropic > Gemini > OpenAI > DeepSeek > OpenRouter
 // This acts as a lightweight fallback router when the main TypeScript Core is unavailable.
 func AutoRoute(ctx context.Context, messages []Message) (*LLMResponse, error) {
-	for _, entry := range ProviderPriority {
-		if key := os.Getenv(entry.EnvVar); key != "" {
-			return entry.Factory(key).GenerateText(ctx, entry.DefaultModel, messages)
-		}
+	selection, ok := resolveProviderSelection()
+	if !ok {
+		return nil, fmt.Errorf("no LLM provider configured (set ANTHROPIC_API_KEY, GOOGLE_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, DEEPSEEK_API_KEY, or OPENROUTER_API_KEY)")
 	}
-
-	return nil, fmt.Errorf("no LLM provider configured (set ANTHROPIC_API_KEY, GOOGLE_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, DEEPSEEK_API_KEY, or OPENROUTER_API_KEY)")
+	return selection.Factory(selection.APIKey).GenerateText(ctx, selection.DefaultModel, messages)
 }
 
 // AutoRouteWithModel selects the best provider and allows model override
 func AutoRouteWithModel(ctx context.Context, model string, messages []Message) (*LLMResponse, error) {
-	for _, entry := range ProviderPriority {
-		if key := os.Getenv(entry.EnvVar); key != "" {
-			if model == "" {
-				model = entry.DefaultModel
-			}
-			return entry.Factory(key).GenerateText(ctx, model, messages)
-		}
+	selection, ok := resolveProviderSelection()
+	if !ok {
+		return nil, fmt.Errorf("no LLM provider configured")
 	}
-
-	return nil, fmt.Errorf("no LLM provider configured")
+	if model == "" {
+		model = selection.DefaultModel
+	}
+	return selection.Factory(selection.APIKey).GenerateText(ctx, model, messages)
 }
 
 // ListConfiguredProviders returns which providers have API keys set
 func ListConfiguredProviders() []string {
 	var configured []string
+	seen := map[string]struct{}{}
 	for _, entry := range ProviderPriority {
-		if os.Getenv(entry.EnvVar) != "" {
-			configured = append(configured, entry.ProviderName)
+		if os.Getenv(entry.EnvVar) == "" {
+			continue
 		}
+		if _, ok := seen[entry.ProviderName]; ok {
+			continue
+		}
+		seen[entry.ProviderName] = struct{}{}
+		configured = append(configured, entry.ProviderName)
 	}
 	return configured
 }
