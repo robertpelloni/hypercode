@@ -152,10 +152,26 @@ func (s *Server) handleMCPRuntimeServers(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": localErr.Error()})
 		return
 	}
+	baseServers := fallbackRuntimeServers(summary.InstalledHarnesses)
+	runtimeRecords := s.runtimeServers.list()
+	for _, record := range runtimeRecords {
+		baseServers = append(baseServers, map[string]any{
+			"name":                record.Name,
+			"runtimeConnected":    record.RuntimeConnected,
+			"toolCount":           record.ToolCount,
+			"toolInventoryStatus": record.ToolInventoryStatus,
+			"integrationLevel":    record.IntegrationLevel,
+			"source":              record.Source,
+			"command":             record.Command,
+			"args":                record.Args,
+			"lastCheckedAt":       record.LastCheckedAt,
+			"lastError":           nullableString(record.LastError),
+		})
+	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    fallbackRuntimeServers(summary.InstalledHarnesses),
+		"data":    baseServers,
 		"bridge": map[string]any{
 			"fallback":  "go-local-mcp",
 			"procedure": "mcp.listServers",

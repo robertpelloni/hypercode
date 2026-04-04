@@ -1141,6 +1141,55 @@ Results:
 - Go build passed
 - full Go suite passed
 
+## Follow-up MCP runtime mutation step (native runtime registry)
+The next MCP slice targeted the gap between config mutation and runtime mutation.
+
+### Problem
+Go already had local configured-server config mutation fallbacks, but runtime add/remove/list fallback behavior was still shallow:
+- runtime add/remove mostly looked like config-adjacent wrappers
+- runtime list fallback did not reflect a native Go-owned registry of added runtime servers
+
+### What changed
+- added `go/internal/httpapi/mcp_runtime_registry.go`
+  - native in-memory runtime server registry
+  - best-effort runtime probe state for added stdio servers
+  - stored fields include runtime connectivity, tool count, tool inventory status, last check time, and last error
+- updated `go/internal/httpapi/server.go`
+  - server now owns a `runtimeServers` registry
+  - `/api/mcp/runtime-servers/add` now:
+    - persists configured server fallback state
+    - best-effort probes the added runtime server
+    - records native runtime server state in the Go registry
+  - `/api/mcp/runtime-servers/remove` now:
+    - removes both configured-server fallback state and native runtime registry state
+- updated `go/internal/httpapi/mcp_handlers.go`
+  - `/api/mcp/servers/runtime` fallback now includes the native Go runtime registry snapshot alongside the existing local runtime summary
+
+### Important truthfulness note
+This is a meaningful runtime mutation upgrade, but still not complete runtime lifecycle parity.
+
+What is true now:
+- Go fallback mode has a real runtime server registry for add/remove/list
+- runtime mutation is no longer only config-shaped
+- added runtime servers can carry native best-effort probe results in the Go lane
+
+What is not true yet:
+- runtime servers are not managed with full persistent lifecycle parity across all transports
+- there is still no full native equivalent of every TS runtime orchestration behavior
+
+### Validation performed for this runtime mutation step
+```bash
+gofmt -w go/internal/httpapi/mcp_runtime_registry.go go/internal/httpapi/mcp_handlers.go go/internal/httpapi/server.go
+cd go && go test ./internal/httpapi
+cd go && go build -buildvcs=false ./cmd/hypercode
+cd go && go test ./...
+```
+
+Results:
+- targeted httpapi tests passed
+- Go build passed
+- full Go suite passed
+
 ## Bottom line
 This pass meaningfully strengthened the **Go-primary migration path** and improved TypeScript survivability while the migration continues:
 - broader provider routing
@@ -1176,6 +1225,7 @@ This pass meaningfully strengthened the **Go-primary migration path** and improv
 - MCP configured-server reads and writes now share JSONC as the native local authority in Go fallback mode
 - native MCP metadata refresh/cache endpoints now use truthful JSONC inspection semantics instead of a generic placeholder-only state
 - native MCP stdio metadata refresh can now perform live `tools/list` probing for probeable configured servers
+- native MCP runtime add/remove/list fallback now uses a real Go runtime registry instead of only config-shaped behavior
 - a tested Go-native replacement path for multiple TS-owned persistence surfaces, even though mixed-runtime cleanup is not fully finished yet
 - a small but real Maestro UX fix
 

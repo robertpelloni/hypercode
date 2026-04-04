@@ -68,6 +68,7 @@ type Server struct {
 	workflowEngine    *workflow.Engine
 	linkCrawler       *bobbySync.LinkCrawlerManager
 	debateHistory     *orchestration.DebateHistoryStore
+	runtimeServers    *runtimeServerRegistry
 }
 
 type providerFallbackEvent struct {
@@ -386,7 +387,8 @@ func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
 			resolveLinkCrawlerInterval(),
 			resolveLinkCrawlerClassifyTags(),
 		),
-		debateHistory: orchestration.NewDebateHistoryStore(filepath.Join(cfg.WorkspaceRoot, "metamcp.db")),
+		debateHistory:  orchestration.NewDebateHistoryStore(filepath.Join(cfg.WorkspaceRoot, "metamcp.db")),
+		runtimeServers: newRuntimeServerRegistry(),
 	}
 
 	server.registerRoutes()
@@ -3193,19 +3195,31 @@ func (s *Server) handleMCPAddServer(w http.ResponseWriter, r *http.Request) {
 			return nil, err
 		}
 		name, _ := payload["name"].(string)
+		command, _ := payload["command"].(string)
+		args := stringSlice(payload["args"])
+		env := stringMap(payload["env"])
+		record := probeRuntimeServer(context.Background(), name, command, args, env)
+		s.runtimeServers.upsert(record)
 		return map[string]any{
-			"success": true,
-			"name":    name,
-			"server":  result,
+			"success":       true,
+			"name":          name,
+			"server":        result,
+			"runtimeServer": record,
 		}, nil
 	})
 }
 
 func (s *Server) handleMCPRemoveServer(w http.ResponseWriter, r *http.Request) {
 	s.handleConfiguredServerMutation(w, r, "mcp.removeServer", func(payload map[string]any) (any, error) {
-		if _, err := s.localDeleteConfiguredServer(payload); err != nil {
+		name, _ := payload["name"].(string)
+		if strings.TrimSpace(name) == "" {
+			return nil, errors.New("missing server name")
+		}
+		deletePayload := map[string]any{"uuid": syntheticServerUUID(name)}
+		if _, err := s.localDeleteConfiguredServer(deletePayload); err != nil {
 			return nil, err
 		}
+		s.runtimeServers.remove(name)
 		return map[string]any{
 			"success": true,
 		}, nil

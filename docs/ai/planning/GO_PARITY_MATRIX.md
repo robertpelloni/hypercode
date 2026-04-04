@@ -32,7 +32,7 @@ Status values:
 | Tool listing/search/call | Bridge-first with Native Go fallback | native aggregation and ranking exist |
 | Runtime server list/status | Bridge-first | route exists, still aligned to TS semantics |
 | Configured server CRUD | Partial Native Go | Go now has native JSONC-backed configured-server create/update/delete plus JSONC-first read fallback; broader ecosystem authority cleanup still remains |
-| Runtime server add/remove/mutation | Bridge-only / partial | some bridge routes exist, not full native ownership |
+| Runtime server add/remove/mutation | Partial Native Go | Go now has a native runtime-server registry for add/remove/list fallback behavior, with best-effort probe status, but full transport/lifecycle parity is still incomplete |
 | Metadata refresh/cache management | Partial Native Go | native JSONC inspection/cache normalization exists, and probeable STDIO servers can now attempt live `tools/list` refresh; broader multi-transport live discovery parity is still incomplete |
 | Telemetry/history/write surfaces | Missing / partial | still primarily TS |
 | MCP config import/export/client sync | Bridge-only | not yet full native authority |
