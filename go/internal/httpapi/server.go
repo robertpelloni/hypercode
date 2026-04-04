@@ -5408,7 +5408,7 @@ func (s *Server) handleToolsList(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
-			"data":    fallbackControlToolsFromInventory(view),
+			"data":    fallbackControlToolListFromInventory(view),
 			"bridge":  bridge,
 		})
 		return
@@ -5426,7 +5426,7 @@ func (s *Server) handleToolsList(w http.ResponseWriter, r *http.Request) {
 			}
 			writeJSON(w, http.StatusOK, map[string]any{
 				"success": true,
-				"data":    fallbackControlToolsFromInventory(view),
+				"data":    fallbackControlToolListFromInventory(view),
 				"bridge":  bridge,
 			})
 			return
@@ -5475,7 +5475,7 @@ func (s *Server) handleToolsByServer(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		cacheTools := fallbackControlToolsFromInventory(view)
+		cacheTools := fallbackControlToolListFromInventory(view)
 		filteredCacheTools := make([]map[string]any, 0)
 		for _, tool := range cacheTools {
 			if stringValue(tool["mcpServerUuid"]) == serverID || stringValue(tool["server"]) == serverID {
@@ -5500,7 +5500,7 @@ func (s *Server) handleToolsByServer(w http.ResponseWriter, r *http.Request) {
 	if len(filtered) == 0 {
 		view, invErr := s.localMCPInventoryView()
 		if invErr == nil && view != nil && len(view.Inventory.Tools) > 0 {
-			cacheTools := fallbackControlToolsFromInventory(view)
+			cacheTools := fallbackControlToolListFromInventory(view)
 			filteredCacheTools := make([]map[string]any, 0)
 			for _, tool := range cacheTools {
 				if stringValue(tool["mcpServerUuid"]) == serverID || stringValue(tool["server"]) == serverID {

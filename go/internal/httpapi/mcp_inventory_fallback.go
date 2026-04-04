@@ -388,7 +388,7 @@ func fallbackMCPInventoryTools(view *localMCPInventoryView) []map[string]any {
 		for key, value := range inventoryToolLayerMeta(view, tool.Server) {
 			item[key] = value
 		}
-		result = append(result, item)
+		result = append(result, primaryProvenanceOnly(item))
 	}
 	return result
 }
@@ -473,6 +473,15 @@ func fallbackControlToolsFromInventory(view *localMCPInventoryView) []map[string
 		result = append(result, item)
 	}
 	return result
+}
+
+func fallbackControlToolListFromInventory(view *localMCPInventoryView) []map[string]any {
+	items := fallbackControlToolsFromInventory(view)
+	trimmed := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		trimmed = append(trimmed, primaryProvenanceOnly(item))
+	}
+	return trimmed
 }
 
 func fallbackControlToolFromInventory(view *localMCPInventoryView, uuid string) any {

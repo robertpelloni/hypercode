@@ -6082,7 +6082,8 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 		{
 			name:     "control tools list",
 			path:     "/api/tools",
-			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"name":"search_tools"`, `"server":"cache-core"`, `"originLayer":"base-inventory"`, `"layerCachedAt":"2020-01-01T00:00:00Z"`, `"layerStaleHeuristic":true`, `"provenance":{"ageMs":`, `"cacheAuthority":"go-local-live-sync"`, `"cachedAt":"2020-01-01T00:00:00Z"`, `"compatibilityMode":"legacy-top-level-mirrors-retained"`, `"legacyMirrorFields":["originLayer","layerCachedAt","layerAgeMs","layerStaleHeuristic"]`, `"layer":"base-inventory"`, `"metadataAuthority":"mcp.jsonc"`, `"primary":true`, `"schemaVersion":1`, `"source":"cache"`, `"staleHeuristic":true`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"originLayer":"live-runtime-overlay"`, `"layerCachedAt":"2020-01-01T00:00:05Z"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`, `"baseInventoryCachedAt":"2020-01-01T00:00:00Z"`, `"liveOverlayCachedAt":"2020-01-01T00:00:05Z"`, `"baseInventoryAgeMs":`, `"liveOverlayAgeMs":`, `"liveOverlayStaleHeuristic":true`},
+			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"name":"search_tools"`, `"server":"cache-core"`, `"provenance":{"ageMs":`, `"cacheAuthority":"go-local-live-sync"`, `"cachedAt":"2020-01-01T00:00:00Z"`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"base-inventory"`, `"metadataAuthority":"mcp.jsonc"`, `"primary":true`, `"schemaVersion":1`, `"source":"cache"`, `"staleHeuristic":true`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`, `"baseInventoryCachedAt":"2020-01-01T00:00:00Z"`, `"liveOverlayCachedAt":"2020-01-01T00:00:05Z"`, `"baseInventoryAgeMs":`, `"liveOverlayAgeMs":`, `"liveOverlayStaleHeuristic":true`},
+			absent:   []string{`"originLayer":"base-inventory"`, `"layerCachedAt":"2020-01-01T00:00:00Z"`},
 		},
 		{
 			name:     "control tools search",
@@ -6103,7 +6104,8 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 		{
 			name:     "mcp tools list",
 			path:     "/api/mcp/tools",
-			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP inventory cache`, `"name":"search_tools"`, `"server":"cache-core"`, `"originLayer":"base-inventory"`, `"provenance":{"ageMs":`, `"layer":"base-inventory"`, `"source":"cache"`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"originLayer":"live-runtime-overlay"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`, `"cachedAt":"2020-01-01T00:00:00Z"`, `"cacheAuthority":"go-local-live-sync"`, `"metadataAuthority":"mcp.jsonc"`, `"baseInventoryStaleHeuristic":true`, `"liveOverlayStaleHeuristic":true`},
+			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP inventory cache`, `"name":"search_tools"`, `"server":"cache-core"`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"base-inventory"`, `"source":"cache"`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`, `"cachedAt":"2020-01-01T00:00:00Z"`, `"cacheAuthority":"go-local-live-sync"`, `"metadataAuthority":"mcp.jsonc"`, `"baseInventoryStaleHeuristic":true`, `"liveOverlayStaleHeuristic":true`},
+			absent:   []string{`"originLayer":"base-inventory"`, `"layerCachedAt":"2020-01-01T00:00:00Z"`},
 		},
 		{
 			name:     "mcp tools search",
@@ -6179,9 +6181,14 @@ func TestPersistedRuntimeOverlayFallbackWithoutLiveRegistry(t *testing.T) {
 	if toolRecorder.Code != http.StatusOK {
 		t.Fatalf("expected fallback status 200, got %d with body %s", toolRecorder.Code, toolRecorder.Body.String())
 	}
-	for _, needle := range []string{`"name":"runtime_search"`, `"source":"go-persisted-runtime-overlay"`, `"originLayer":"persisted-runtime-overlay"`, `"layerCachedAt":"2020-01-01T00:00:05Z"`, `"provenance":{"ageMs":`, `"layer":"persisted-runtime-overlay"`, `"source":"go-persisted-runtime-overlay"`, `"persistedOverlayToolCount":1`, `"runtimeOverlayToolCount":0`, `"persistedOverlayCachedAt":"2020-01-01T00:00:05Z"`, `"persistedOverlayAgeMs":`, `"persistedOverlayStaleHeuristic":true`} {
+	for _, needle := range []string{`"name":"runtime_search"`, `"source":"go-persisted-runtime-overlay"`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"persisted-runtime-overlay"`, `"source":"go-persisted-runtime-overlay"`, `"persistedOverlayToolCount":1`, `"runtimeOverlayToolCount":0`, `"persistedOverlayCachedAt":"2020-01-01T00:00:05Z"`, `"persistedOverlayAgeMs":`, `"persistedOverlayStaleHeuristic":true`} {
 		if !strings.Contains(toolRecorder.Body.String(), needle) {
 			t.Fatalf("expected response to contain %s, got %s", needle, toolRecorder.Body.String())
+		}
+	}
+	for _, needle := range []string{`"originLayer":"persisted-runtime-overlay"`, `"layerCachedAt":"2020-01-01T00:00:05Z"`} {
+		if strings.Contains(toolRecorder.Body.String(), needle) {
+			t.Fatalf("expected trimmed tool list response to omit %s, got %s", needle, toolRecorder.Body.String())
 		}
 	}
 
