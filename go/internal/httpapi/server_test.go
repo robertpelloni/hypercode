@@ -6077,6 +6077,7 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 		name     string
 		path     string
 		contains []string
+		absent   []string
 	}{
 		{
 			name:     "control tools list",
@@ -6086,7 +6087,8 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 		{
 			name:     "control tools search",
 			path:     "/api/tools/search?query=search",
-			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"name":"search_tools"`},
+			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"name":"search_tools"`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`},
+			absent:   []string{`"originLayer":"base-inventory"`, `"layerCachedAt":"2020-01-01T00:00:00Z"`},
 		},
 		{
 			name:     "control tools get",
@@ -6106,7 +6108,8 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 		{
 			name:     "mcp tools search",
 			path:     "/api/mcp/tools/search?query=search",
-			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP inventory cache`, `"name":"search_tools"`, `"runtimeOverlayToolCount":1`},
+			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP inventory cache`, `"name":"search_tools"`, `"runtimeOverlayToolCount":1`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`},
+			absent:   []string{`"originLayer":"base-inventory"`, `"layerCachedAt":"2020-01-01T00:00:00Z"`},
 		},
 	}
 
@@ -6120,6 +6123,11 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 			for _, needle := range tc.contains {
 				if !strings.Contains(recorder.Body.String(), needle) {
 					t.Fatalf("expected response to contain %s, got %s", needle, recorder.Body.String())
+				}
+			}
+			for _, needle := range tc.absent {
+				if strings.Contains(recorder.Body.String(), needle) {
+					t.Fatalf("expected response to omit %s, got %s", needle, recorder.Body.String())
 				}
 			}
 		})

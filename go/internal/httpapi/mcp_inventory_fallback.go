@@ -412,9 +412,27 @@ func fallbackSearchMCPInventoryTools(query string, view *localMCPInventoryView, 
 		for key, value := range inventoryToolLayerMeta(view, item.Server) {
 			result[key] = value
 		}
-		results = append(results, result)
+		results = append(results, primaryProvenanceOnly(result))
 	}
 	return results
+}
+
+func primaryProvenanceOnly(record map[string]any) map[string]any {
+	if record == nil {
+		return map[string]any{}
+	}
+	result := cloneMap(record)
+	delete(result, "originLayer")
+	delete(result, "layerCachedAt")
+	delete(result, "layerAgeMs")
+	delete(result, "layerStaleHeuristic")
+	if provenance, ok := result["provenance"].(map[string]any); ok {
+		cloned := cloneMap(provenance)
+		cloned["compatibilityMode"] = "legacy-top-level-mirrors-trimmed"
+		cloned["legacyMirrorFields"] = []string{}
+		result["provenance"] = cloned
+	}
+	return result
 }
 
 func fallbackControlToolsFromInventory(view *localMCPInventoryView) []map[string]any {

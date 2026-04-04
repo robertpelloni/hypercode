@@ -5582,7 +5582,7 @@ func (s *Server) handleToolsSearch(w http.ResponseWriter, r *http.Request) {
 			description := strings.ToLower(stringValue(tool["description"]))
 			server := strings.ToLower(stringValue(tool["server"]))
 			if strings.Contains(name, queryLower) || strings.Contains(description, queryLower) || strings.Contains(server, queryLower) {
-				cacheResults = append(cacheResults, tool)
+				cacheResults = append(cacheResults, primaryProvenanceOnly(tool))
 				if limit > 0 && len(cacheResults) >= limit {
 					break
 				}
@@ -5613,7 +5613,7 @@ func (s *Server) handleToolsSearch(w http.ResponseWriter, r *http.Request) {
 				description := strings.ToLower(stringValue(tool["description"]))
 				server := strings.ToLower(stringValue(tool["server"]))
 				if strings.Contains(name, queryLower) || strings.Contains(description, queryLower) || strings.Contains(server, queryLower) {
-					cacheResults = append(cacheResults, tool)
+					cacheResults = append(cacheResults, primaryProvenanceOnly(tool))
 					if limit > 0 && len(cacheResults) >= limit {
 						break
 					}

@@ -2099,6 +2099,63 @@ Results:
 - Go build passed
 - full Go suite passed
 
+## Follow-up low-risk provenance-trim step (search-result records)
+The next cleanup step was to begin actually reducing duplicated top-level provenance fields, but only on the lowest-risk MCP fallback surfaces first.
+
+### Why search results were chosen first
+Search-result records are a good first candidate because they are:
+- read-only
+- transient/result-oriented
+- less likely to be treated as long-lived object contracts than list/get payloads
+
+That makes them a safer place to begin trimming duplicated provenance mirrors while preserving the nested `provenance` object as the primary contract.
+
+### What changed
+- updated `go/internal/httpapi/mcp_inventory_fallback.go`
+  - added `primaryProvenanceOnly(...)`
+  - MCP/cache-backed **search result** records now:
+    - keep the nested `provenance` object
+    - switch `compatibilityMode` to `legacy-top-level-mirrors-trimmed`
+    - clear `legacyMirrorFields`
+    - drop top-level layer mirror fields such as:
+      - `originLayer`
+      - `layerCachedAt`
+      - `layerAgeMs`
+      - `layerStaleHeuristic`
+- updated `go/internal/httpapi/server.go`
+  - cache-backed `/api/tools/search` search results now also use the trimmed provenance-mirror form
+- expanded `go/internal/httpapi/server_test.go`
+  - search-result tests now verify:
+    - nested `provenance` is present
+    - compatibility mode is `legacy-top-level-mirrors-trimmed`
+    - legacy mirror list is empty
+    - trimmed top-level layer mirrors are absent from search-result payloads
+
+### Important truthfulness note
+What is true now:
+- search-result surfaces are the first MCP fallback records where legacy top-level provenance mirrors are actually being trimmed
+- nested `provenance` remains the authoritative schema on those responses
+- list/get surfaces still retain compatibility mirrors for now
+
+What is still not true yet:
+- top-level provenance duplication has not been removed across all fallback surfaces
+- this is a selective low-risk migration step, not a global breaking contract change
+- TS/Go contract consolidation is still incomplete
+
+### Validation performed for this low-risk provenance-trim step
+```bash
+gofmt -w go/internal/httpapi/mcp_inventory_fallback.go go/internal/httpapi/server.go go/internal/httpapi/server_test.go
+cd go && go test ./internal/httpapi ./internal/mcp
+cd go && go build -buildvcs=false ./cmd/hypercode
+cd go && go test ./...
+```
+
+Results:
+- targeted httpapi tests passed
+- targeted mcp tests passed
+- Go build passed
+- full Go suite passed
+
 ## Bottom line
 This pass meaningfully strengthened the **Go-primary migration path** and improved TypeScript survivability while the migration continues:
 - broader provider routing
@@ -2147,6 +2204,7 @@ This pass meaningfully strengthened the **Go-primary migration path** and improv
 - configured-server fallback records now carry record-level definition-layer provenance plus metadata freshness/provenance fields across JSONC-backed and DB-backed fallback reads
 - MCP fallback records now expose a stable nested `provenance` object across tools, runtime servers, and configured servers, and that nested object is now explicitly marked as the primary contract while legacy top-level fields remain as compatibility mirrors
 - nested `provenance` now explicitly lists its `legacyMirrorFields`, making the compatibility boundary machine-readable as well as documented
+- low-risk search-result fallback surfaces are now the first places where redundant top-level provenance mirrors have actually been trimmed in favor of the primary nested `provenance` contract
 - a tested Go-native replacement path for multiple TS-owned persistence surfaces, even though mixed-runtime cleanup is not fully finished yet
 - a small but real Maestro UX fix
 
