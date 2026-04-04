@@ -424,6 +424,46 @@ This pass did not introduce large new runtime surfaces; it improved confidence a
 - provider selection order is now testable and less vulnerable to environment-specific ambiguity
 - provider alias handling is now more truthful in configured-provider summaries
 
+## Follow-up supervisor and exporter coverage pass
+With MCP/provider behavior covered, the next stabilization pass added regression coverage for the Go supervisor and session exporter.
+
+### Additional coverage in this pass
+- `go/internal/supervisor/supervisor_test.go`
+  - verifies duplicate session creation is rejected
+  - verifies a short-lived supervised process reaches `stopped`
+  - verifies missing sessions return an error on start
+  - verifies a failing process restarts according to `MaxRestarts` and eventually reaches `failed`
+  - verifies session metadata is captured correctly at creation time
+  - uses short-lived commands only; no long-running process management was introduced
+- `go/internal/sessionimport/exporter_test.go`
+  - verifies `BuildManifest()` reflects candidate counts and timestamps
+  - verifies `ExportSessions()` writes exported session files and `export-manifest.json`
+  - verifies exported content matches the source content
+  - verifies default export directory behavior when no output path is provided
+
+### Validation performed in this pass
+Commands run:
+```bash
+cd go && go test ./internal/supervisor ./internal/sessionimport
+cd go && go test ./...
+cd go && go build -buildvcs=false ./cmd/hypercode
+```
+
+Results:
+- targeted supervisor/sessionimport tests passed
+- full Go suite remained green
+- Go sidecar build passed
+
+### Updated truthfulness assessment
+The Go sidecar now has meaningful test coverage across more of its critical local-runtime responsibilities:
+- HTTP bridge/fallback routes
+- workflow execution
+- supervisor process lifecycle basics
+- session export generation
+- MCP inventory/ranking
+- provider selection/routing summaries
+- native git submodule fallback behavior
+
 ## Bottom line
 This pass meaningfully strengthened the **Go sidecar as a truthful local fallback control plane**:
 - broader provider routing
@@ -437,7 +477,8 @@ This pass meaningfully strengthened the **Go sidecar as a truthful local fallbac
 - graceful empty-result fallback for missing local memory DB state
 - hardened native git submodule parsing and fallback reporting
 - regression coverage for MCP inventory/ranking and provider selection behavior
+- regression coverage for supervisor lifecycle basics and session export generation
 - deduplicated provider alias reporting for configured native providers
 - a small but real Maestro UX fix
 
-It was validated by successful Go compilation, successful targeted Go tests for the new native surfaces, successful targeted regression tests for the repaired memory/MCP/council routes, a successful full Go test suite run (`go test ./...`), targeted MCP/provider test coverage, and the previously successful full workspace build. The new systems are real and integrated, but several of them should still be described as **Beta** or **Experimental**, not full parity.
+It was validated by successful Go compilation, successful targeted Go tests for the new native surfaces, successful targeted regression tests for the repaired memory/MCP/council routes, a successful full Go test suite run (`go test ./...`), targeted MCP/provider/supervisor/exporter test coverage, and the previously successful full workspace build. The new systems are real and integrated, but several of them should still be described as **Beta** or **Experimental**, not full parity.
