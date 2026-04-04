@@ -2318,6 +2318,60 @@ Results:
 - Go build passed
 - full Go suite passed
 
+## Follow-up Go-primary backend slice (native skills assimilation fallback)
+The next higher-leverage move after the MCP provenance cleanup was to replace a real TS-only backend behavior with native Go ownership where the repo already had enough local primitives to do something useful and truthful.
+
+### The gap before this step
+Before this step:
+- `/api/skills/assimilate` was still bridge-only to TypeScript
+- Go already had native local skill scanning/reading/creating/saving primitives
+- but Go could not own even a basic fallback assimilation path when TS was unavailable
+
+### What changed
+- updated `go/internal/httpapi/server.go`
+  - `/api/skills/assimilate` now uses `handleSkillMutation(...)` like other skill mutations instead of being bridge-only
+  - added `localAssimilateSkill(...)`
+- native Go assimilation fallback now:
+  - validates the requested topic
+  - derives a safe local skill ID
+  - creates a real local skill scaffold under `.hypercode/skills/<id>/SKILL.md`
+  - records the requested topic
+  - records the optional docs URL
+  - logs clearly that this is a native Go fallback scaffold, not a fully researched TS/LLM assimilation output
+  - returns structured success/log output instead of only failing when TS is unavailable
+- expanded `go/internal/httpapi/server_test.go`
+  - added regression coverage proving:
+    - `/api/skills/assimilate` falls back locally when upstream is unavailable
+    - a real `SKILL.md` scaffold is written
+    - the scaffold preserves topic/docs URL context
+
+### Important truthfulness note
+This is a **real Go-native fallback**, but it is not full TS feature parity.
+
+What is true now:
+- `/api/skills/assimilate` is no longer bridge-only
+- Go can create a real local starter skill scaffold when TS is unavailable
+- the fallback is explicit about its limitations and does not pretend to be a full research/LLM assimilation pipeline
+
+What is still not true yet:
+- this is not full Darwin/LLM/research-driven assimilation parity
+- the Go fallback does not yet replicate DeepResearch + LLM code-generation behavior from TS
+- richer autonomous skill generation remains incomplete in Go
+
+### Validation performed for this native skills-assimilation step
+```bash
+gofmt -w go/internal/httpapi/server.go go/internal/httpapi/server_test.go
+cd go && go test ./internal/httpapi ./internal/mcp
+cd go && go build -buildvcs=false ./cmd/hypercode
+cd go && go test ./...
+```
+
+Results:
+- targeted httpapi tests passed
+- targeted mcp tests passed
+- Go build passed
+- full Go suite passed
+
 ## Bottom line
 This pass meaningfully strengthened the **Go-primary migration path** and improved TypeScript survivability while the migration continues:
 - broader provider routing
@@ -2371,6 +2425,7 @@ This pass meaningfully strengthened the **Go-primary migration path** and improv
 - low-risk runtime/configured server list surfaces now also use the trimmed primary nested `provenance` contract while corresponding get/detail responses remain compatibility-heavy for now
 - `/api/tools/get` is now the first detail-adjacent MCP fallback surface to adopt the trimmed primary nested `provenance` contract while higher-risk detail surfaces remain compatibility-heavy
 - configured-server get fallback now also adopts the trimmed primary nested `provenance` contract while the remaining highest-risk config/detail surfaces stay compatibility-heavy for now
+- `/api/skills/assimilate` now has a native Go fallback that writes a real local starter skill scaffold instead of remaining bridge-only
 - a tested Go-native replacement path for multiple TS-owned persistence surfaces, even though mixed-runtime cleanup is not fully finished yet
 - a small but real Maestro UX fix
 
