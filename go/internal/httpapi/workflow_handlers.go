@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -52,9 +53,11 @@ func (s *Server) handleNativeWorkflowRun(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Run asynchronously
+	// Run asynchronously using a detached context so execution is not canceled
+	// when the originating HTTP request completes.
+	runCtx := context.WithoutCancel(r.Context())
 	go func() {
-		_ = s.workflowEngine.RunWorkflow(r.Context(), body.ID)
+		_ = s.workflowEngine.RunWorkflow(runCtx, body.ID)
 	}()
 
 	writeJSON(w, http.StatusAccepted, map[string]any{

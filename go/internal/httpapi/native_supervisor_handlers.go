@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -70,7 +71,9 @@ func (s *Server) handleNativeSupervisorStart(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err := s.supervisorManager.StartSession(r.Context(), body.ID); err != nil {
+	// Detach from the request context so supervised processes are not tied to
+	// the lifetime of a single HTTP request.
+	if err := s.supervisorManager.StartSession(context.WithoutCancel(r.Context()), body.ID); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": err.Error()})
 		return
 	}

@@ -253,6 +253,42 @@ These warnings predated this pass’s Go work and did **not** block successful b
 
 ---
 
+## Follow-up stabilization pass — native endpoint regression coverage
+After shipping the native workflow/supervisor/export surfaces, a follow-up pass focused on **regression coverage** and one important lifecycle fix.
+
+### Additional fixes
+- `go/internal/httpapi/workflow_handlers.go`
+  - `handleNativeWorkflowRun` now detaches from the request context using `context.WithoutCancel(...)` before launching asynchronous workflow execution.
+  - This fixes a real stability issue where the workflow could be canceled immediately when the HTTP request completed.
+- `go/internal/httpapi/native_supervisor_handlers.go`
+  - `handleNativeSupervisorStart` now detaches from the request context before starting supervised processes.
+  - This fixes a real stability issue where supervised commands could be tied to the lifetime of the originating HTTP request.
+
+### Added regression tests
+- `go/internal/workflow/engine_test.go`
+  - verifies dependency-output propagation across workflow steps
+  - verifies dependent-step skipping when an upstream step fails
+- `go/internal/httpapi/native_endpoints_test.go`
+  - verifies native workflow create/list/get/run flows
+  - verifies native supervisor create/list/start/status flows
+  - verifies native session export endpoint writes exported artifacts and manifest
+
+### Validation performed in the follow-up pass
+Commands run:
+```bash
+cd go && go test ./internal/workflow -run 'TestWorkflow'
+cd go && go test ./internal/httpapi -run 'TestNative(Workflow|Supervisor|SessionExport)'
+cd go && go test ./internal/sessionimport -run 'Test'
+cd go && go build -buildvcs=false ./cmd/hypercode
+```
+
+Results:
+- all newly added targeted tests passed
+- Go sidecar build passed
+
+### Important validation note
+A broader run of `go test ./internal/httpapi` still reports **pre-existing unrelated failures** in other fallback/bridge tests. Those failures were not introduced by this pass, and this pass was therefore validated using the smallest truthful targeted test set for the new code.
+
 ## Bottom line
 This pass meaningfully strengthened the **Go sidecar as a truthful local fallback control plane**:
 - broader provider routing
@@ -260,6 +296,8 @@ This pass meaningfully strengthened the **Go sidecar as a truthful local fallbac
 - native supervisor endpoints
 - native export
 - native submodule update orchestration
+- detached async execution for workflow/supervisor request lifecycles
+- regression tests for the new native surfaces
 - a small but real Maestro UX fix
 
-It was validated by successful Go compilation and a successful full workspace build. The new systems are real and integrated, but several of them should still be described as **Beta** or **Experimental**, not full parity.
+It was validated by successful Go compilation, successful targeted Go tests for the new native surfaces, and the previously successful full workspace build. The new systems are real and integrated, but several of them should still be described as **Beta** or **Experimental**, not full parity.
