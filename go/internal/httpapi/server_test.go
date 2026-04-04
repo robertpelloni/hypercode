@@ -11004,6 +11004,61 @@ func TestImportedSessionPersistNativeStoresRecordAndDoc(t *testing.T) {
 	}
 }
 
+func TestImportedSessionIngestNativePersistsSupportedFileCandidates(t *testing.T) {
+	workspaceRoot := t.TempDir()
+	t.Setenv("HOME", workspaceRoot)
+	t.Setenv("USERPROFILE", workspaceRoot)
+	t.Setenv("APPDATA", workspaceRoot)
+	t.Setenv("LOCALAPPDATA", workspaceRoot)
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".claude"), 0o755); err != nil {
+		t.Fatalf("failed to create claude dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".claude", "session-history.jsonl"), []byte(`{"role":"assistant","content":"Always use port 4000 for HyperCode."}`), 0o644); err != nil {
+		t.Fatalf("failed to seed jsonl session: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".llm"), 0o755); err != nil {
+		t.Fatalf("failed to create llm dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".llm", "logs.db"), []byte("SQLite format 3\x00fake llm db"), 0o644); err != nil {
+		t.Fatalf("failed to seed db candidate: %v", err)
+	}
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	request := httptest.NewRequest(http.MethodPost, "/api/sessions/imported/ingest-native", strings.NewReader(`{"force":false,"maxFiles":20}`))
+	request.Header.Set("content-type", "application/json")
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected ingest-native status 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"procedure":"session.importedIngestNative"`) {
+		t.Fatalf("expected ingest-native procedure metadata, got %s", recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"importedCount":1`) {
+		t.Fatalf("expected one imported candidate, got %s", recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `database-log ingestion is not yet implemented natively`) {
+		t.Fatalf("expected explicit db skip reason, got %s", recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `auto-imported-agent-instructions.md`) {
+		t.Fatalf("expected regenerated instruction doc path, got %s", recorder.Body.String())
+	}
+
+	listRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/imported/list?limit=5", nil))
+	if listRecorder.Code != http.StatusOK {
+		t.Fatalf("expected list status 200 after ingest-native, got %d with body %s", listRecorder.Code, listRecorder.Body.String())
+	}
+	if !strings.Contains(listRecorder.Body.String(), `Always use port 4000 for HyperCode.`) {
+		t.Fatalf("expected ingested transcript in list output, got %s", listRecorder.Body.String())
+	}
+}
+
 func TestMemoryBridgeRoutes(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")

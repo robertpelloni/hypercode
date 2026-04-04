@@ -58,7 +58,7 @@ Status values:
 |---|---|---|
 | Sectioned memory status/search | Bridge-first with Native Go fallback | native SQLite fallback exists |
 | Memory search endpoints | Bridge-first | truthful fallback semantics restored |
-| Imported session storage | Partial Native Go | Go now has a real imported-session store with transcript-hash dedup, archived transcript persistence, memory rows, and a native persist endpoint, but full native scan/import parsing ownership is still incomplete |
+| Imported session storage | Partial Native Go | Go now has a real imported-session store plus a native file-based ingest endpoint with transcript-hash dedup, archived transcript persistence, memory rows, and instruction-doc regeneration; DB-backed special log parser parity is still incomplete |
 | Imported session docs/maintenance | Partial Native Go | Go now provides instruction-doc generation/listing and maintenance stats from the native store, though mixed-runtime cleanup is still ongoing |
 | Transcript dedup / retention maintenance | Partial Native Go | transcript-hash dedup now exists in the native Go imported-session store, but broader retention/backfill ownership is still incomplete |
 | Workspace/config/secret persistence | Mixed | some Go read surfaces, TS still owns many writes |
