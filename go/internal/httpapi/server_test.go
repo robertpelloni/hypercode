@@ -10134,6 +10134,71 @@ func TestMCPConfiguredServerMetadataMutationsFallBackToLocalJsonc(t *testing.T) 
 	}
 }
 
+func TestMCPConfiguredServerMetadataReloadPerformsLiveStdioProbe(t *testing.T) {
+	mainConfigDir := t.TempDir()
+	probeDir := t.TempDir()
+	var command string
+	var args []string
+	if runtime.GOOS == "windows" {
+		command = "powershell"
+		args = []string{"-NoProfile", "-Command", "$line=[Console]::In.ReadLine(); [Console]::Out.WriteLine('{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"tools\":[{\"name\":\"live_search\",\"description\":\"Search over a live stdio probe\",\"inputSchema\":{\"type\":\"object\"}}]}}')"}
+	} else {
+		scriptPath := filepath.Join(probeDir, "probe.sh")
+		script := "#!/bin/sh\nread line\necho '{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[{\"name\":\"live_search\",\"description\":\"Search over a live stdio probe\",\"inputSchema\":{\"type\":\"object\"}}]}}'\n"
+		if err := os.WriteFile(scriptPath, []byte(script), 0o755); err != nil {
+			t.Fatalf("failed to write probe shell script: %v", err)
+		}
+		command = scriptPath
+		args = []string{}
+	}
+	jsoncContent := fmt.Sprintf(`// HyperCode MCP configuration
+{
+  "mcpServers": {
+    "probe": {
+      "command": %q,
+      "args": %s
+    }
+  }
+}
+`, command, prettyJSON(args))
+	if err := os.WriteFile(filepath.Join(mainConfigDir, "mcp.jsonc"), []byte(jsoncContent), 0o644); err != nil {
+		t.Fatalf("failed to seed local mcp jsonc: %v", err)
+	}
+
+	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	cfg := config.Default()
+	cfg.WorkspaceRoot = t.TempDir()
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = mainConfigDir
+	server := New(cfg, stubDetector{})
+
+	uuid := syntheticServerUUID("probe")
+	reloadRequest := httptest.NewRequest(http.MethodPost, "/api/mcp/servers/reload-metadata", strings.NewReader(`{"uuid":"`+uuid+`","mode":"binary"}`))
+	reloadRequest.Header.Set("content-type", "application/json")
+	reloadRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(reloadRecorder, reloadRequest)
+	if reloadRecorder.Code != http.StatusOK {
+		t.Fatalf("expected live reload metadata response, got %d %s", reloadRecorder.Code, reloadRecorder.Body.String())
+	}
+	if !strings.Contains(reloadRecorder.Body.String(), `"reloadDecision":"go-local-live-stdio"`) {
+		t.Fatalf("expected live stdio reload decision, got %s", reloadRecorder.Body.String())
+	}
+	if !strings.Contains(reloadRecorder.Body.String(), `"metadataSource":"live-probe"`) || !strings.Contains(reloadRecorder.Body.String(), `"toolCount":1`) {
+		t.Fatalf("expected live-probe metadata payload, got %s", reloadRecorder.Body.String())
+	}
+	if !strings.Contains(reloadRecorder.Body.String(), `"name":"live_search"`) {
+		t.Fatalf("expected probed tool metadata, got %s", reloadRecorder.Body.String())
+	}
+
+	written, err := os.ReadFile(filepath.Join(mainConfigDir, "mcp.jsonc"))
+	if err != nil {
+		t.Fatalf("expected updated jsonc file: %v", err)
+	}
+	if !strings.Contains(string(written), `"metadataSource": "live-probe"`) || !strings.Contains(string(written), `"toolCount": 1`) {
+		t.Fatalf("expected persisted live metadata state, got %s", string(written))
+	}
+}
+
 func TestSkillsFallBackToLocalSkillRegistry(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	skillDir := filepath.Join(workspaceRoot, ".hypercode", "skills", "debug")

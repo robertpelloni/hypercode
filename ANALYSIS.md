@@ -1093,6 +1093,54 @@ Results:
 - Go build passed
 - full Go suite passed
 
+## Follow-up MCP live probe step (native stdio tools/list refresh)
+The next MCP slice moved metadata refresh beyond JSONC/cache inspection into a real live probe path where practical.
+
+### What changed
+- `go/internal/httpapi/server.go`
+  - native metadata reload now attempts a live stdio MCP `tools/list` probe when the configured server is:
+    - local / command-backed
+    - `STDIO`
+    - not explicitly cache-only mode
+  - successful live probe now produces metadata like:
+    - `metadataSource: live-probe`
+    - real `toolCount`
+    - real `tools` payload
+    - `lastSuccessfulBinaryLoadAt`
+    - `reloadDecision: go-local-live-stdio`
+  - probe failures now degrade truthfully back to JSONC/cache inspection semantics with explicit error state instead of pretending success
+- `go/internal/mcp/client.go`
+  - fixed child process env handling so stdio MCP child processes inherit the current environment and remain viable on Windows
+  - switched outbound JSON-RPC request ids to strings so response correlation is robust instead of depending on mixed int/float interface behavior
+- `go/internal/httpapi/server_test.go`
+  - added a live stdio probe regression test using a local shell/powershell helper process that responds to `tools/list`
+
+### Important truthfulness note
+This is a real step forward, but still not universal MCP live discovery parity.
+
+What is true now:
+- Go can perform live stdio `tools/list` refresh for probeable configured servers
+- successful probe results are persisted back into JSONC metadata
+- Go no longer relies only on cached/derived metadata for every refresh attempt
+
+What is not true yet:
+- live discovery parity across non-stdio transports is still incomplete
+- richer multi-step MCP initialization/probing semantics are still partial
+- some MCP admin/operator surfaces remain mixed or bridge-heavy
+
+### Validation performed for this live probe step
+```bash
+gofmt -w go/internal/mcp/client.go go/internal/httpapi/server.go go/internal/httpapi/server_test.go
+cd go && go test ./internal/httpapi ./internal/mcp
+cd go && go build -buildvcs=false ./cmd/hypercode
+cd go && go test ./...
+```
+
+Results:
+- targeted httpapi/mcp tests passed
+- Go build passed
+- full Go suite passed
+
 ## Bottom line
 This pass meaningfully strengthened the **Go-primary migration path** and improved TypeScript survivability while the migration continues:
 - broader provider routing
@@ -1127,6 +1175,7 @@ This pass meaningfully strengthened the **Go-primary migration path** and improv
 - native DB-backed imported-session parsing in Go for `llm-cli` and Prism artifacts
 - MCP configured-server reads and writes now share JSONC as the native local authority in Go fallback mode
 - native MCP metadata refresh/cache endpoints now use truthful JSONC inspection semantics instead of a generic placeholder-only state
+- native MCP stdio metadata refresh can now perform live `tools/list` probing for probeable configured servers
 - a tested Go-native replacement path for multiple TS-owned persistence surfaces, even though mixed-runtime cleanup is not fully finished yet
 - a small but real Maestro UX fix
 

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"sync"
 )
@@ -33,7 +34,7 @@ type StdioClient struct {
 	cmd    *exec.Cmd
 	stdin  io.WriteCloser
 	stdout io.ReadCloser
-	
+
 	pendingMu sync.Mutex
 	pending   map[interface{}]chan *JsonRpcResponse
 	nextID    int
@@ -51,8 +52,10 @@ func NewStdioClient(name, command string, args []string, env map[string]string) 
 
 func (c *StdioClient) Start() error {
 	c.cmd = exec.Command(c.Command, c.Args...)
-	
-	// Setup env
+
+	// Setup env by extending the current process environment so child processes
+	// keep required platform/runtime variables (important on Windows).
+	c.cmd.Env = append([]string{}, os.Environ()...)
 	for k, v := range c.Env {
 		c.cmd.Env = append(c.cmd.Env, fmt.Sprintf("%s=%s", k, v))
 	}
@@ -96,7 +99,7 @@ func (c *StdioClient) readLoop() {
 func (c *StdioClient) Call(ctx context.Context, method string, params interface{}) (*JsonRpcResponse, error) {
 	c.pendingMu.Lock()
 	c.nextID++
-	id := c.nextID
+	id := fmt.Sprintf("%d", c.nextID)
 	ch := make(chan *JsonRpcResponse, 1)
 	c.pending[id] = ch
 	c.pendingMu.Unlock()

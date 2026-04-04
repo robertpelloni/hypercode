@@ -15821,6 +15821,15 @@ func (s *Server) localReloadConfiguredServerMetadata(payload map[string]any) (an
 		entry = map[string]any{}
 	}
 	meta, reloadDecision := inspectConfiguredServerMetadata(entry, mode)
+	if liveMeta, liveDecision, liveErr := s.tryProbeConfiguredServerMetadata(entry, mode); liveMeta != nil {
+		meta = liveMeta
+		reloadDecision = liveDecision
+	} else if liveErr != nil {
+		if intNumber(meta["toolCount"]) > 0 {
+			meta["status"] = "degraded"
+		}
+		meta["error"] = liveErr.Error()
+	}
 	entry["_meta"] = meta
 	servers[targetName] = entry
 	config["mcpServers"] = servers
@@ -15978,6 +15987,83 @@ func (s *Server) readLocalMCPConfigObject() (map[string]any, error) {
 
 func (s *Server) writeLocalMCPConfigObject(config map[string]any) error {
 	return s.saveLocalMCPJsonc(prettyJSON(config))
+}
+
+func (s *Server) tryProbeConfiguredServerMetadata(entry map[string]any, mode string) (map[string]any, string, error) {
+	if strings.EqualFold(mode, "cache") {
+		return nil, "", nil
+	}
+	if configuredServerTransportHint(entry) != "STDIO" {
+		return nil, "", nil
+	}
+	command, _ := entry["command"].(string)
+	if strings.TrimSpace(command) == "" {
+		return nil, "", nil
+	}
+	args := stringSlice(entry["args"])
+	env := stringMap(entry["env"])
+	secretEnv, err := s.localWorkspaceSecretEnv()
+	if err != nil {
+		return nil, "", err
+	}
+	for key, value := range secretEnv {
+		if _, ok := env[key]; !ok {
+			env[key] = value
+		}
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	client := mcp.NewStdioClient("metadata-probe", command, args, env)
+	if err := client.Start(); err != nil {
+		return nil, "", fmt.Errorf("native stdio metadata probe failed to start: %w", err)
+	}
+	defer client.Stop()
+	resp, err := client.Call(ctx, "tools/list", nil)
+	if err != nil {
+		return nil, "", fmt.Errorf("native stdio metadata probe failed during tools/list: %w", err)
+	}
+	if resp.Error != nil {
+		return nil, "", fmt.Errorf("native stdio metadata probe returned an MCP error")
+	}
+	resultBytes, err := json.Marshal(resp.Result)
+	if err != nil {
+		return nil, "", err
+	}
+	var listResult struct {
+		Tools []struct {
+			Name        string      `json:"name"`
+			Description string      `json:"description"`
+			InputSchema interface{} `json:"inputSchema"`
+		} `json:"tools"`
+	}
+	if err := json.Unmarshal(resultBytes, &listResult); err != nil {
+		return nil, "", err
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	tools := make([]any, 0, len(listResult.Tools))
+	for _, tool := range listResult.Tools {
+		tools = append(tools, map[string]any{
+			"name":        tool.Name,
+			"description": tool.Description,
+			"inputSchema": tool.InputSchema,
+		})
+	}
+	meta := map[string]any{
+		"status":                     "ready",
+		"metadataVersion":            2,
+		"metadataSource":             "live-probe",
+		"cacheHydratedAt":            now,
+		"discoveredAt":               now,
+		"lastRefreshMode":            mode,
+		"transportHint":              configuredServerTransportHint(entry),
+		"reloadableFromCache":        true,
+		"toolCount":                  len(tools),
+		"tools":                      tools,
+		"lastAttemptedBinaryLoadAt":  now,
+		"lastSuccessfulBinaryLoadAt": now,
+		"error":                      nil,
+	}
+	return meta, "go-local-live-stdio", nil
 }
 
 func inspectConfiguredServerMetadata(entry map[string]any, mode string) (map[string]any, string) {
