@@ -15,8 +15,12 @@ import {
     resolveControlPlaneFallbackPort,
     resolveDashboardUrl,
     resolveDataDir,
+    resolveGoConfigDir,
+    resolveRuntimePreference,
+    runtimeSupportsIntegratedDashboard,
     syncLockHandlePort,
     startCoreRuntime,
+    waitForHypercodeServer,
 } from './start.js';
 
 const tempDirs: string[] = [];
@@ -351,10 +355,71 @@ describe('resolveDataDir', () => {
     });
 });
 
+describe('runtime selection helpers', () => {
+    it('defaults to auto and accepts explicit runtime modes', () => {
+        expect(resolveRuntimePreference(undefined, undefined)).toBe('auto');
+        expect(resolveRuntimePreference('go')).toBe('go');
+        expect(resolveRuntimePreference('node')).toBe('node');
+        expect(resolveRuntimePreference(undefined, 'go')).toBe('go');
+    });
+
+    it('fails clearly for unsupported runtime values', () => {
+        expect(() => resolveRuntimePreference('python')).toThrow("Unsupported runtime 'python'");
+    });
+
+    it('derives a sibling .hypercode-go directory from the main data dir by default', () => {
+        expect(resolveGoConfigDir('C:/tmp/home/.hypercode', undefined).replaceAll('\\', '/')).toBe('C:/tmp/home/.hypercode-go');
+        expect(resolveGoConfigDir('C:/tmp/custom-state', undefined).replaceAll('\\', '/')).toBe('C:/tmp/custom-state-go');
+    });
+
+    it('honors an explicit HYPERCODE_GO_CONFIG_DIR override', () => {
+        expect(resolveGoConfigDir('C:/tmp/home/.hypercode', 'C:/tmp/go-state').replaceAll('\\', '/')).toBe('C:/tmp/go-state');
+    });
+
+    it('only treats the Node runtime as dashboard-compatible for now', () => {
+        expect(runtimeSupportsIntegratedDashboard('node')).toBe(true);
+        expect(runtimeSupportsIntegratedDashboard('go')).toBe(false);
+    });
+});
+
 describe('dashboard startup helpers', () => {
     it('rewrites wildcard hosts to a browser-safe dashboard URL', () => {
         expect(resolveDashboardUrl('0.0.0.0', 3000)).toBe('http://127.0.0.1:3000/dashboard');
         expect(resolveDashboardUrl('127.0.0.1', 3010)).toBe('http://127.0.0.1:3010/dashboard');
+    });
+
+    it('waits for a HyperCode server health endpoint to become ready', async () => {
+        const fetchImpl = vi
+            .fn()
+            .mockResolvedValueOnce({ ok: false, headers: { get: () => 'application/json' } })
+            .mockResolvedValueOnce({
+                ok: true,
+                headers: { get: () => 'application/json' },
+                json: async () => ({ service: 'hypercode-go', ok: true }),
+            });
+
+        await expect(waitForHypercodeServer({
+            host: '127.0.0.1',
+            port: 4000,
+            timeoutMs: 50,
+            pollIntervalMs: 1,
+        }, {
+            fetchImpl: fetchImpl as any,
+        })).resolves.toBe(true);
+    });
+
+    it('returns false when HyperCode readiness polling aborts before the service becomes ready', async () => {
+        const fetchImpl = vi.fn().mockResolvedValue({ ok: false, headers: { get: () => 'application/json' } });
+
+        await expect(waitForHypercodeServer({
+            host: '127.0.0.1',
+            port: 4000,
+            timeoutMs: 5,
+            pollIntervalMs: 1,
+            shouldAbort: () => true,
+        }, {
+            fetchImpl: fetchImpl as any,
+        })).resolves.toBe(false);
     });
 
     it('detects a HyperCode server from JSON health endpoints', async () => {

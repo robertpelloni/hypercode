@@ -16,7 +16,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import net from 'node:net';
 import { homedir } from 'node:os';
-import { isAbsolute, join, resolve, sep, dirname } from 'node:path';
+import { isAbsolute, join, resolve, sep, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { Command } from 'commander';
@@ -84,6 +84,8 @@ type CoreRuntimeModule = {
 
 type FetchLike = typeof globalThis.fetch;
 
+export type HypercodeRuntimeMode = 'auto' | 'node' | 'go';
+
 class HypercodeAlreadyRunningError extends Error {
   constructor(
     readonly host: string,
@@ -104,6 +106,7 @@ const DASHBOARD_PORT_CANDIDATES = [3000, 3010, 3020, 3030, 3040] as const;
 const CONTROL_PLANE_FALLBACK_OFFSETS = [1, 2, 3, 4, 5] as const;
 const DEFAULT_DASHBOARD_READY_TIMEOUT_MS = 30_000;
 const DEFAULT_DASHBOARD_POLL_INTERVAL_MS = 500;
+const DEFAULT_GO_READY_TIMEOUT_MS = 45_000;
 
 export function resolveDataDir(dataDir: string, homeDirectory: string = homedir()): string {
   if (dataDir === '~') {
@@ -343,6 +346,38 @@ export async function startCoreRuntime(
   });
 }
 
+export function resolveRuntimePreference(
+  runtime: string | undefined,
+  envRuntime: string | undefined = process.env.HYPERCODE_RUNTIME,
+): HypercodeRuntimeMode {
+  const candidate = (runtime ?? envRuntime ?? 'auto').trim().toLowerCase();
+  if (candidate === 'auto' || candidate === 'node' || candidate === 'go') {
+    return candidate;
+  }
+
+  throw new Error(`Unsupported runtime '${runtime ?? envRuntime}'. Use one of: auto, node, go.`);
+}
+
+export function resolveGoConfigDir(
+  mainDataDir: string,
+  configuredGoConfigDir: string | undefined = process.env.HYPERCODE_GO_CONFIG_DIR,
+): string {
+  if (configuredGoConfigDir?.trim()) {
+    return resolveDataDir(configuredGoConfigDir.trim());
+  }
+
+  const resolvedMainDataDir = resolveDataDir(mainDataDir);
+  if (basename(resolvedMainDataDir) === '.hypercode') {
+    return join(dirname(resolvedMainDataDir), '.hypercode-go');
+  }
+
+  return `${resolvedMainDataDir}-go`;
+}
+
+export function runtimeSupportsIntegratedDashboard(runtime: Exclude<HypercodeRuntimeMode, 'auto'>): boolean {
+  return runtime === 'node';
+}
+
 export function resolveBrowserHost(host: string): string {
   return host === '0.0.0.0' || host === '::' || host === '[::]'
     ? '127.0.0.1'
@@ -419,6 +454,39 @@ export async function waitForHttpReady(
 
   do {
     if (await isHttpReady(options.url, fetchImpl)) {
+      return true;
+    }
+
+    if (options.shouldAbort?.()) {
+      return false;
+    }
+
+    if (Date.now() >= deadline) {
+      return false;
+    }
+
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, pollIntervalMs));
+  } while (true);
+}
+
+export async function waitForHypercodeServer(
+  options: {
+    host: string;
+    port: number;
+    timeoutMs?: number;
+    pollIntervalMs?: number;
+    shouldAbort?: () => boolean;
+  },
+  deps: {
+    fetchImpl?: FetchLike;
+  } = {},
+): Promise<boolean> {
+  const fetchImpl = deps.fetchImpl ?? globalThis.fetch;
+  const deadline = Date.now() + (options.timeoutMs ?? DEFAULT_GO_READY_TIMEOUT_MS);
+  const pollIntervalMs = options.pollIntervalMs ?? DEFAULT_DASHBOARD_POLL_INTERVAL_MS;
+
+  do {
+    if (await isHypercodeServer(options.host, options.port, fetchImpl)) {
       return true;
     }
 
@@ -560,6 +628,97 @@ export function syncLockHandlePort(
   lockHandle.updatePort(runtimePort);
 }
 
+export async function startGoRuntime(
+  options: {
+    host: string;
+    port: number;
+    repoRoot: string;
+    dataDir: string;
+  },
+  deps: {
+    spawnImpl?: typeof spawn;
+    fetchImpl?: FetchLike;
+  } = {},
+): Promise<{
+  host: string;
+  trpcPort: number;
+  bridgePort: null;
+  child: ChildProcess;
+  configDir: string;
+}> {
+  const spawnImpl = deps.spawnImpl ?? spawn;
+  const fetchImpl = deps.fetchImpl ?? globalThis.fetch;
+  const goRoot = join(options.repoRoot, 'go');
+  if (!existsSync(join(goRoot, 'go.mod'))) {
+    throw new Error(`Go runtime workspace is unavailable at ${goRoot}.`);
+  }
+
+  const goConfigDir = resolveGoConfigDir(options.dataDir);
+  let childExited = false;
+  let launchError: string | null = null;
+  const child = spawnImpl(
+    'go',
+    [
+      'run',
+      './cmd/hypercode',
+      'serve',
+      '--host', options.host,
+      '--port', String(options.port),
+      '--config-dir', goConfigDir,
+    ],
+    {
+      cwd: goRoot,
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        HYPERCODE_MAIN_CONFIG_DIR: resolveDataDir(options.dataDir),
+      },
+      windowsHide: true,
+    },
+  );
+
+  child.once('exit', () => {
+    childExited = true;
+  });
+  child.once('error', (error) => {
+    launchError = error instanceof Error ? error.message : String(error);
+    childExited = true;
+  });
+
+  const ready = await waitForHypercodeServer(
+    {
+      host: options.host,
+      port: options.port,
+      shouldAbort: () => childExited,
+    },
+    { fetchImpl },
+  );
+
+  if (!ready) {
+    if (!child.killed && !childExited) {
+      child.kill();
+    }
+
+    if (launchError) {
+      throw new Error(`Go control plane failed to launch: ${launchError}`);
+    }
+
+    if (childExited) {
+      throw new Error(`Go control plane exited before it became ready on port ${options.port}.`);
+    }
+
+    throw new Error(`Go control plane did not become ready on port ${options.port}.`);
+  }
+
+  return {
+    host: options.host,
+    trpcPort: options.port,
+    bridgePort: null,
+    child,
+    configDir: goConfigDir,
+  };
+}
+
 function getDashboardSpawnSpec(webRoot: string, repoRoot: string, host: string, port: number) {
   const nextBinCandidates = [
     join(repoRoot, 'node_modules', 'next', 'dist', 'bin', 'next'),
@@ -618,6 +777,7 @@ export function registerStartCommand(program: Command): void {
     .option('--no-mcp', 'Disable the MCP server endpoint')
     .option('--supervisor', 'Enable HyperCode supervisor startup')
     .option('--auto-drive', 'Enable Director auto-drive after startup')
+    .option('--runtime <mode>', 'Runtime mode: auto, go, or node (default: auto, prefers Go)', 'auto')
     .option('--no-dashboard', 'Disable serving the WebUI dashboard')
     .option('--no-open-dashboard', 'Start the dashboard runtime without opening the browser')
     .option('-c, --config <path>', 'Path to config file')
@@ -625,10 +785,12 @@ export function registerStartCommand(program: Command): void {
     .option('--daemon', 'Run as background daemon')
     .addHelpText('after', `
 Examples:
-  $ hypercode start                     Start with defaults (tRPC on port 4000)
+  $ hypercode start                     Start with auto runtime selection (prefers Go)
+  $ hypercode start --runtime go        Start the Go control plane explicitly
+  $ hypercode start --runtime node      Start the legacy Node/tRPC control plane explicitly
   $ hypercode start -p 8080             Start on port 8080
-  $ hypercode start --no-mcp            Start without MCP server
-  $ hypercode start --auto-drive        Start the Director after boot completes
+  $ hypercode start --no-mcp            Start without MCP server (Node runtime only)
+  $ hypercode start --auto-drive        Start the Director after boot completes (Node runtime only)
   $ hypercode start --daemon            Run as background service
   $ hypercode start --host 127.0.0.1    Bind to localhost only
     `)
@@ -641,11 +803,13 @@ Examples:
       const explicitDashboardPort = process.argv.some((arg) => arg === '--dashboard-port' || arg.startsWith('--dashboard-port='));
       let lockHandle: HypercodeStartLockHandle | null = null;
       let dashboardChild: ChildProcess | null = null;
+      let controlPlaneChild: ChildProcess | null = null;
 
       const cliDir = dirname(fileURLToPath(import.meta.url));
       const hypercodeVersion = readCanonicalVersion(cliDir);
       const repoRoot = resolveRepoRoot(cliDir) ?? resolve(cliDir, '..', '..', '..', '..', '..');
       const webRoot = join(repoRoot, 'apps', 'web');
+      const requestedRuntime = resolveRuntimePreference(opts.runtime);
       console.log(chalk.bold.cyan(`\n  ⬡ HyperCode v${hypercodeVersion}`));
       console.log(chalk.dim('  The Neural Operating System\n'));
 
@@ -657,13 +821,20 @@ Examples:
           host,
         });
 
-        const port = lockHandle.port;
-        const lifecycle = createLockLifecycleHandlers(lockHandle);
+        const acquiredLockHandle = lockHandle;
+        const port = acquiredLockHandle.port;
+        const lifecycle = createLockLifecycleHandlers(acquiredLockHandle);
         const cleanupDashboardChild = () => {
           if (dashboardChild && !dashboardChild.killed) {
             dashboardChild.kill();
           }
           dashboardChild = null;
+        };
+        const cleanupControlPlaneChild = () => {
+          if (controlPlaneChild && !controlPlaneChild.killed) {
+            controlPlaneChild.kill();
+          }
+          controlPlaneChild = null;
         };
 
         console.log(chalk.yellow('  Starting server...'));
@@ -671,10 +842,11 @@ Examples:
         console.log(chalk.dim(`  MCP:  ${opts.mcp ? 'enabled' : 'disabled'}`));
         console.log(chalk.dim(`  Supervisor: ${opts.supervisor ? 'enabled' : 'disabled'}`));
         console.log(chalk.dim(`  Auto-Drive: ${opts.autoDrive ? 'enabled' : 'disabled'}`));
+        console.log(chalk.dim(`  Runtime preference: ${requestedRuntime}`));
         console.log(chalk.dim(`  Dashboard: ${opts.dashboard ? 'enabled' : 'disabled'}`));
-        console.log(chalk.dim(`  Lock: ${lockHandle.lockPath}`));
-        if (lockHandle.clearedStaleLock) {
-          console.log(chalk.yellow(`  ↺ Cleared stale HyperCode lock${lockHandle.reusedStalePort ? ` and reused port ${port}` : ''}`));
+        console.log(chalk.dim(`  Lock: ${acquiredLockHandle.lockPath}`));
+        if (acquiredLockHandle.clearedStaleLock) {
+          console.log(chalk.yellow(`  ↺ Cleared stale HyperCode lock${acquiredLockHandle.reusedStalePort ? ` and reused port ${port}` : ''}`));
         }
         if (!explicitPort && requestedPort !== port) {
           console.log(chalk.yellow(`  ↺ Port ${requestedPort} was already occupied before startup; using ${port} instead.`));
@@ -682,167 +854,227 @@ Examples:
         console.log('');
 
         let runtime;
+        let runtimeKind: Exclude<HypercodeRuntimeMode, 'auto'> = 'node';
         let activePort = port;
 
-        try {
-          runtime = await startCoreRuntime({
-            host,
-            port: activePort,
-            mcp: Boolean(opts.mcp),
-            supervisor: Boolean(opts.supervisor),
-            autoDrive: Boolean(opts.autoDrive),
-          });
-          activePort = runtime.trpcPort;
-          syncLockHandlePort(lockHandle, runtime.trpcPort);
-        } catch (startupError) {
-          const fallbackPort = resolveControlPlaneFallbackPort({
-            requestedPort,
-            selectedPort: activePort,
-            explicitPort,
-            reusedStalePort: lockHandle.reusedStalePort,
-            startupError,
-          });
+        const startNodeRuntimeWithFallback = async () => {
+          try {
+            const startedRuntime = await startCoreRuntime({
+              host,
+              port: activePort,
+              mcp: Boolean(opts.mcp),
+              supervisor: Boolean(opts.supervisor),
+              autoDrive: Boolean(opts.autoDrive),
+            });
+            activePort = startedRuntime.trpcPort;
+            syncLockHandlePort(acquiredLockHandle, startedRuntime.trpcPort);
+            return startedRuntime;
+          } catch (startupError) {
+            const fallbackPort = resolveControlPlaneFallbackPort({
+              requestedPort,
+              selectedPort: activePort,
+              explicitPort,
+              reusedStalePort: acquiredLockHandle.reusedStalePort,
+              startupError,
+            });
 
-          if (fallbackPort === null) {
-            throw startupError;
+            if (fallbackPort === null) {
+              throw startupError;
+            }
+
+            const resolvedFallbackPort = await pickAvailableControlPlaneFallbackPort(fallbackPort);
+            if (resolvedFallbackPort === null) {
+              throw startupError;
+            }
+
+            if (acquiredLockHandle.port !== resolvedFallbackPort) {
+              console.log(chalk.yellow(`  ↺ Port ${activePort} was unavailable at bind time; retrying control-plane startup on port ${resolvedFallbackPort}.`));
+            }
+            activePort = resolvedFallbackPort;
+
+            const startedRuntime = await startCoreRuntime({
+              host,
+              port: activePort,
+              mcp: Boolean(opts.mcp),
+              supervisor: Boolean(opts.supervisor),
+              autoDrive: Boolean(opts.autoDrive),
+            });
+            activePort = startedRuntime.trpcPort;
+            syncLockHandlePort(acquiredLockHandle, startedRuntime.trpcPort);
+            return startedRuntime;
           }
+        };
 
-          const resolvedFallbackPort = await pickAvailableControlPlaneFallbackPort(fallbackPort);
-          if (resolvedFallbackPort === null) {
-            throw startupError;
+        if (requestedRuntime !== 'node') {
+          try {
+            runtime = await startGoRuntime({
+              host,
+              port: activePort,
+              repoRoot,
+              dataDir: opts.dataDir,
+            });
+            runtimeKind = 'go';
+            controlPlaneChild = runtime.child;
+            activePort = runtime.trpcPort;
+            syncLockHandlePort(acquiredLockHandle, runtime.trpcPort);
+          } catch (error) {
+            if (requestedRuntime === 'go') {
+              throw error;
+            }
+
+            const message = error instanceof Error ? error.message : String(error);
+            console.log(chalk.yellow(`  ⚠ Go runtime startup failed, falling back to Node compatibility runtime: ${message}`));
+            runtime = await startNodeRuntimeWithFallback();
+            runtimeKind = 'node';
           }
-
-          if (lockHandle.port !== resolvedFallbackPort) {
-            console.log(chalk.yellow(`  ↺ Port ${activePort} was unavailable at bind time; retrying control-plane startup on port ${resolvedFallbackPort}.`));
-          }
-          activePort = resolvedFallbackPort;
-
-          runtime = await startCoreRuntime({
-            host,
-            port: activePort,
-            mcp: Boolean(opts.mcp),
-            supervisor: Boolean(opts.supervisor),
-            autoDrive: Boolean(opts.autoDrive),
-          });
-          activePort = runtime.trpcPort;
-          syncLockHandlePort(lockHandle, runtime.trpcPort);
+        } else {
+          runtime = await startNodeRuntimeWithFallback();
+          runtimeKind = 'node';
         }
 
-        console.log(chalk.dim('  Core loaded: orchestrator started'));
-        console.log(chalk.green(`  ✓ tRPC control plane running at http://${runtime.host}:${runtime.trpcPort}/trpc`));
-        if (opts.mcp) {
-          console.log(chalk.green(`  ✓ MCP bridge target ws://127.0.0.1:${runtime.bridgePort ?? 3001} (+ HTTP health on /health when available)`));
-        }
-        if (opts.supervisor) {
-          console.log(chalk.green('  ✓ Supervisor startup enabled for this run'));
+        if (runtimeKind === 'go') {
+          console.log(chalk.dim('  Core loaded: Go control plane started'));
+          console.log(chalk.green(`  ✓ Go control plane running at http://${resolveBrowserHost(runtime.host)}:${runtime.trpcPort}`));
+          console.log(chalk.dim(`  API index: http://${resolveBrowserHost(runtime.host)}:${runtime.trpcPort}/api/index`));
+          if (!opts.mcp) {
+            console.log(chalk.yellow('  ⚠ --no-mcp is currently a Node-runtime option; Go runtime startup does not yet disable MCP-related API surfaces.'));
+          }
+          if (opts.supervisor) {
+            console.log(chalk.yellow('  ⚠ --supervisor currently maps to Node startup behavior; Go runtime already exposes native supervisor APIs but does not yet mirror that startup flag.'));
+          }
+          if (opts.autoDrive) {
+            console.log(chalk.yellow('  ⚠ --auto-drive currently maps to Node startup behavior and is not yet implemented as a Go startup flag.'));
+          }
+        } else {
+          console.log(chalk.dim('  Core loaded: orchestrator started'));
+          console.log(chalk.green(`  ✓ tRPC control plane running at http://${runtime.host}:${runtime.trpcPort}/trpc`));
+          if (opts.mcp) {
+            console.log(chalk.green(`  ✓ MCP bridge target ws://127.0.0.1:${runtime.bridgePort ?? 3001} (+ HTTP health on /health when available)`));
+          }
+          if (opts.supervisor) {
+            console.log(chalk.green('  ✓ Supervisor startup enabled for this run'));
+          }
         }
         if (opts.dashboard) {
-          const browserHost = resolveBrowserHost(runtime.host);
-          const orchestratorBaseUrl = `http://${browserHost}:${runtime.trpcPort}`;
-          const dashboardSelection = await pickDashboardPort(
-            requestedDashboardPort,
-            explicitDashboardPort,
-            host,
-            {
-              allowReuseExisting: activePort === requestedPort,
-            },
-          );
-          const dashboardUrl = resolveDashboardUrl(host, dashboardSelection.port);
-          const shouldOpenDashboard = opts.openDashboard !== false && !opts.daemon;
-
-          if (dashboardSelection.reusedExisting) {
-            console.log(chalk.green(`  ✓ Reusing dashboard runtime at ${dashboardUrl}`));
+          if (!runtimeSupportsIntegratedDashboard(runtimeKind)) {
+            console.log(chalk.yellow('  ⚠ Dashboard startup is being skipped because the current web UI still depends heavily on the Node/tRPC compatibility backend.'));
+            console.log(chalk.yellow('  ⚠ Use --runtime node when you need the full integrated dashboard during the migration to Go-primary control-plane ownership.'));
           } else {
-            const { command, args, cwd } = getDashboardSpawnSpec(
-              webRoot,
-              repoRoot,
+            const browserHost = resolveBrowserHost(runtime.host);
+            const orchestratorBaseUrl = `http://${browserHost}:${runtime.trpcPort}`;
+            const dashboardSelection = await pickDashboardPort(
+              requestedDashboardPort,
+              explicitDashboardPort,
               host,
-              dashboardSelection.port,
-            );
-            let dashboardExited = false;
-            let dashboardLaunchErrorMessage: string | null = null;
-
-            dashboardChild = spawn(command, args, {
-              cwd,
-              stdio: 'inherit',
-              env: {
-                ...process.env,
-                HYPERCODE_TRPC_UPSTREAM: `${orchestratorBaseUrl}/trpc`,
-                NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL: orchestratorBaseUrl,
-                NEXT_PUBLIC_AUTOPILOT_URL: orchestratorBaseUrl,
+              {
+                allowReuseExisting: activePort === requestedPort,
               },
-              windowsHide: true,
-            });
-            dashboardChild.once('exit', () => {
-              dashboardExited = true;
-              dashboardChild = null;
-            });
-            dashboardChild.once('error', (error) => {
-              dashboardLaunchErrorMessage = error instanceof Error ? error.message : String(error);
-              dashboardExited = true;
-              dashboardChild = null;
-            });
+            );
+            const dashboardUrl = resolveDashboardUrl(host, dashboardSelection.port);
+            const shouldOpenDashboard = opts.openDashboard !== false && !opts.daemon;
 
-            if (!explicitDashboardPort && dashboardSelection.port !== requestedDashboardPort) {
-              console.log(chalk.yellow(`  ↺ Dashboard port ${requestedDashboardPort} busy, falling back to ${dashboardSelection.port}`));
-              if (activePort !== requestedPort) {
-                console.log(chalk.yellow(`  ↺ Started a fresh dashboard runtime so it can target the live control plane at ${orchestratorBaseUrl}`));
+            if (dashboardSelection.reusedExisting) {
+              console.log(chalk.green(`  ✓ Reusing dashboard runtime at ${dashboardUrl}`));
+            } else {
+              const { command, args, cwd } = getDashboardSpawnSpec(
+                webRoot,
+                repoRoot,
+                host,
+                dashboardSelection.port,
+              );
+              let dashboardExited = false;
+              let dashboardLaunchErrorMessage: string | null = null;
+
+              dashboardChild = spawn(command, args, {
+                cwd,
+                stdio: 'inherit',
+                env: {
+                  ...process.env,
+                  HYPERCODE_TRPC_UPSTREAM: `${orchestratorBaseUrl}/trpc`,
+                  NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL: orchestratorBaseUrl,
+                  NEXT_PUBLIC_AUTOPILOT_URL: orchestratorBaseUrl,
+                },
+                windowsHide: true,
+              });
+              dashboardChild.once('exit', () => {
+                dashboardExited = true;
+                dashboardChild = null;
+              });
+              dashboardChild.once('error', (error) => {
+                dashboardLaunchErrorMessage = error instanceof Error ? error.message : String(error);
+                dashboardExited = true;
+                dashboardChild = null;
+              });
+
+              if (!explicitDashboardPort && dashboardSelection.port !== requestedDashboardPort) {
+                console.log(chalk.yellow(`  ↺ Dashboard port ${requestedDashboardPort} busy, falling back to ${dashboardSelection.port}`));
+                if (activePort !== requestedPort) {
+                  console.log(chalk.yellow(`  ↺ Started a fresh dashboard runtime so it can target the live control plane at ${orchestratorBaseUrl}`));
+                }
+              }
+
+              const dashboardReady = await waitForHttpReady({
+                url: dashboardUrl,
+                shouldAbort: () => dashboardExited,
+              });
+
+              if (dashboardReady) {
+                console.log(chalk.green(`  ✓ Dashboard runtime ready at ${dashboardUrl}`));
+              } else if (dashboardLaunchErrorMessage) {
+                console.log(chalk.yellow(`  ⚠ Dashboard runtime failed to launch: ${dashboardLaunchErrorMessage}`));
+              } else if (dashboardExited) {
+                console.log(chalk.yellow(`  ⚠ Dashboard runtime exited before ${dashboardUrl} became ready.`));
+              } else {
+                console.log(chalk.yellow(`  ⚠ Dashboard runtime is still starting. Visit ${dashboardUrl} in a moment.`));
               }
             }
 
-            const dashboardReady = await waitForHttpReady({
-              url: dashboardUrl,
-              shouldAbort: () => dashboardExited,
-            });
-
-            if (dashboardReady) {
-              console.log(chalk.green(`  ✓ Dashboard runtime ready at ${dashboardUrl}`));
-            } else if (dashboardLaunchErrorMessage) {
-              console.log(chalk.yellow(`  ⚠ Dashboard runtime failed to launch: ${dashboardLaunchErrorMessage}`));
-            } else if (dashboardExited) {
-              console.log(chalk.yellow(`  ⚠ Dashboard runtime exited before ${dashboardUrl} became ready.`));
+            if (shouldOpenDashboard) {
+              try {
+                const open = (await import('open')).default;
+                await open(dashboardUrl);
+                console.log(chalk.green(`  ✓ Opened dashboard at ${dashboardUrl}`));
+              } catch {
+                console.log(chalk.yellow(`  ⚠ Could not open the browser automatically. Visit ${dashboardUrl} manually.`));
+              }
             } else {
-              console.log(chalk.yellow(`  ⚠ Dashboard runtime is still starting. Visit ${dashboardUrl} in a moment.`));
+              console.log(chalk.dim(`  Dashboard URL: ${dashboardUrl}`));
             }
-          }
-
-          if (shouldOpenDashboard) {
-            try {
-              const open = (await import('open')).default;
-              await open(dashboardUrl);
-              console.log(chalk.green(`  ✓ Opened dashboard at ${dashboardUrl}`));
-            } catch {
-              console.log(chalk.yellow(`  ⚠ Could not open the browser automatically. Visit ${dashboardUrl} manually.`));
-            }
-          } else {
-            console.log(chalk.dim(`  Dashboard URL: ${dashboardUrl}`));
           }
         }
         console.log(chalk.dim('\n  Press Ctrl+C to stop\n'));
 
         process.once('exit', () => {
           cleanupDashboardChild();
+          cleanupControlPlaneChild();
           lifecycle.cleanup();
         });
         process.once('SIGINT', () => {
           cleanupDashboardChild();
+          cleanupControlPlaneChild();
           lifecycle.handleSigint();
         });
         process.once('SIGTERM', () => {
           cleanupDashboardChild();
+          cleanupControlPlaneChild();
           lifecycle.handleSigterm();
         });
         process.once('uncaughtException', (error) => {
           cleanupDashboardChild();
+          cleanupControlPlaneChild();
           lifecycle.handleUncaughtException(error);
         });
         process.once('unhandledRejection', (reason) => {
           cleanupDashboardChild();
+          cleanupControlPlaneChild();
           lifecycle.handleUnhandledRejection(reason);
         });
       } catch (err: unknown) {
         if (dashboardChild && !dashboardChild.killed) {
           dashboardChild.kill();
+        }
+        if (controlPlaneChild && !controlPlaneChild.killed) {
+          controlPlaneChild.kill();
         }
         lockHandle?.releaseSync();
 

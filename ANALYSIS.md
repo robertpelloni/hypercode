@@ -684,6 +684,47 @@ These documents define:
   4. orchestration/session/council parity
   5. dashboard/backend contract migration away from TS ownership
 
+## Follow-up launcher step (Go-primary runtime selection)
+The next concrete implementation step after defining the migration plan was to make launcher/runtime selection reflect that goal.
+
+### What changed
+- `packages/cli/src/commands/start.ts`
+  - added `--runtime <auto|go|node>`
+  - default runtime selection is now `auto`, which **prefers Go first**
+  - added explicit Go config-dir derivation for the Go control plane (`.hypercode-go` sibling by default)
+  - added Go health/readiness polling using the Go `/health` / `/api/health/server` surfaces
+  - added Go child-process startup via `go run ./cmd/hypercode serve ...`
+  - if `--runtime auto` is used and Go startup fails, launcher now falls back truthfully to the Node compatibility runtime
+  - if `--runtime go` is used, startup fails explicitly instead of silently downgrading
+  - integrated dashboard startup is now **intentionally skipped in Go runtime mode** with an explicit warning, because the current web UI still depends heavily on TS/tRPC compatibility contracts
+  - added truthful warnings that `--no-mcp`, `--supervisor`, and `--auto-drive` currently map to Node-startup behavior more than Go-startup behavior
+
+### Important truthfulness note
+This is a **Go-primary launcher preference**, not full Go-primary product parity.
+
+What is true now:
+- the operator can explicitly select `go`, `node`, or `auto`
+- `auto` prefers the Go control plane first
+- Node remains the compatibility fallback when Go startup fails
+- dashboard startup is treated honestly instead of pretending the web app is already fully Go-native
+
+What is **not** true yet:
+- the web dashboard is not fully Go-backed
+- all Node startup flags do not yet map 1:1 to Go startup semantics
+- the overall repo should still be described as **in migration toward Go-primary**, not fully there
+
+### Validation performed for this launcher step
+```bash
+pnpm -C packages/cli exec vitest run src/commands/start.test.ts
+pnpm -C packages/cli run type-check
+pnpm -C packages/cli build
+```
+
+Results:
+- CLI start tests passed (`33/33`)
+- CLI type-check passed
+- CLI build passed
+
 ## Bottom line
 This pass meaningfully strengthened the **Go-primary migration path** and improved TypeScript survivability while the migration continues:
 - broader provider routing
@@ -706,6 +747,8 @@ This pass meaningfully strengthened the **Go-primary migration path** and improv
 - auto-import background failures now degrade truthfully instead of risking unhandled async startup noise
 - concise once-per-surface SQLite degraded-mode logging for more startup-time ingestion paths
 - explicit Go-primary migration planning artifacts
+- Go-primary runtime selection in the CLI launcher (`auto|go|node`, with auto preferring Go)
+- truthful dashboard skipping/warnings when Go runtime is selected but TS/tRPC compatibility is still required for the current web UI
 - a small but real Maestro UX fix
 
 It was validated by successful Go compilation, successful targeted Go tests for the new native surfaces, successful targeted regression tests for repaired bridge/fallback routes, a successful full Go test suite run (`go test ./...`), targeted CLI startup tests and type-checking, council/sync coverage, targeted AI/core validation, and repeated successful workspace builds. The new systems are real and integrated, but several of them should still be described as **Beta** or **Experimental**, not full parity.
