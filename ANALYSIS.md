@@ -1402,6 +1402,78 @@ Results:
 - Go build passed
 - full Go suite passed
 
+## Follow-up MCP cache-authority refinement step (runtime overlay + cache freshness metadata)
+The next refinement was to reduce the remaining “split-brain” feeling between:
+- persisted MCP inventory cache data
+- runtime-registry live-probed tool data
+- operator-facing fallback responses
+
+### What changed
+- rewrote `go/internal/httpapi/mcp_inventory_fallback.go`
+  - introduced a `localMCPInventoryView` abstraction that:
+    - loads Go-owned persisted inventory/cache state
+    - records cache presence and cache path
+    - records inventory source and cached timestamp
+    - overlays runtime-registry live-probed tools/servers onto the fallback inventory view
+    - tracks runtime overlay counts
+  - fallback inventory formatting helpers now emit richer tool records including:
+    - per-tool source
+    - `inventoryCachedAt`
+- updated `go/internal/httpapi/mcp_handlers.go`
+  - cache-backed `/api/mcp/tools`
+  - cache-backed `/api/mcp/tools/search`
+  now include truthful bridge metadata such as:
+    - `inventorySource`
+    - `cachedAt`
+    - `cachePath`
+    - `cachePresent`
+    - `runtimeOverlayServerCount`
+    - `runtimeOverlayToolCount`
+- updated `go/internal/httpapi/server.go`
+  - cache-backed `/api/tools`
+  - cache-backed `/api/tools/by-server`
+  - cache-backed `/api/tools/search`
+  - cache-backed `/api/tools/get`
+  now include the same cache/source/freshness metadata on fallback responses
+- expanded `go/internal/httpapi/server_test.go`
+  - persisted inventory cache fallback tests now also prove:
+    - runtime overlay tools appear in cache-backed fallback results
+    - cache freshness metadata is exposed in fallback responses
+    - runtime overlay counts are exposed in bridge metadata
+
+### Why this matters
+Before this step, runtime-registry live-probed tools and the persisted inventory cache could both exist, but operators had no clear signal about:
+- whether cache-backed results were fresh or stale
+- whether runtime-added/probed tools had been incorporated into the fallback view
+- whether a response was pure cache, live local inventory, or a blended cache+runtime overlay
+
+This step does not fully solve all cache-authority questions, but it materially improves inspectability and reduces divergence in the most operator-visible fallback routes.
+
+### Important truthfulness note
+What is true now:
+- cache-backed fallback responses surface cache freshness/source metadata
+- runtime live-probed tools can be blended into cache-backed fallback inventory views
+- cache-backed MCP/control tool responses are more inspectable and less ambiguous than before
+
+What is still not true yet:
+- this is still a response-layer unification step, not a complete single-authority lifecycle manager for all MCP cache state
+- persisted inventory cache and JSONC metadata cache are still related but not fully unified under one durable registry model
+- runtime overlay data is still opportunistic and memory-scoped unless separately persisted through other flows
+
+### Validation performed for this MCP cache-authority refinement step
+```bash
+gofmt -w go/internal/httpapi/mcp_inventory_fallback.go go/internal/httpapi/mcp_handlers.go go/internal/httpapi/server.go go/internal/httpapi/server_test.go
+cd go && go test ./internal/httpapi ./internal/mcp
+cd go && go build -buildvcs=false ./cmd/hypercode
+cd go && go test ./...
+```
+
+Results:
+- targeted httpapi tests passed
+- targeted mcp tests passed
+- Go build passed
+- full Go suite passed
+
 ## Bottom line
 This pass meaningfully strengthened the **Go-primary migration path** and improved TypeScript survivability while the migration continues:
 - broader provider routing
@@ -1440,6 +1512,7 @@ This pass meaningfully strengthened the **Go-primary migration path** and improv
 - native MCP runtime add/remove/list fallback now uses a real Go runtime registry instead of only config-shaped behavior
 - native MCP fallback mode now has persisted local working-set state, eviction history, and tool-selection telemetry via Go-owned `mcp_state.json`
 - native MCP inventory now has a Go-owned persisted cache layer via `mcp_inventory_cache.json`, and key MCP/control tool list/search fallbacks can recover from it
+- cache-backed MCP/control fallback responses now expose source/freshness metadata and can overlay runtime-registry live-probed tools into the operator-visible fallback inventory view
 - a tested Go-native replacement path for multiple TS-owned persistence surfaces, even though mixed-runtime cleanup is not fully finished yet
 - a small but real Maestro UX fix
 

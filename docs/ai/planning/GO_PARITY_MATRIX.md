@@ -28,8 +28,8 @@ Status values:
 
 | Surface | Current status | Notes |
 |---|---|---|
-| MCP inventory snapshot | Bridge-first / Partial Native Go | Go inventory now reads live `mcp.jsonc`, local `metamcp.db`, and a Go-owned persisted inventory cache file (`mcp_inventory_cache.json`) in the Go config dir; bridge semantics are still preserved where needed |
-| Tool listing/search/call | Bridge-first with Partial Native Go fallback | native aggregation and ranking exist, and Go fallback now prefers persisted local inventory cache data for MCP tool list/search plus secondary `/api/tools*` cache-backed recovery when local DB rows are unavailable |
+| MCP inventory snapshot | Bridge-first / Partial Native Go | Go inventory now reads live `mcp.jsonc`, local `metamcp.db`, and a Go-owned persisted inventory cache file (`mcp_inventory_cache.json`) in the Go config dir, and fallback inventory views can overlay runtime-registry live-probed tools while surfacing cache freshness/source metadata |
+| Tool listing/search/call | Bridge-first with Partial Native Go fallback | native aggregation and ranking exist, Go fallback prefers persisted local inventory cache data for MCP tool list/search plus secondary `/api/tools*` cache-backed recovery when local DB rows are unavailable, and cache-backed responses now surface source/freshness metadata and runtime-overlay counts |
 | Runtime server list/status | Bridge-first | route exists, still aligned to TS semantics |
 | Configured server CRUD | Partial Native Go | Go now has native JSONC-backed configured-server create/update/delete plus JSONC-first read fallback; broader ecosystem authority cleanup still remains |
 | Runtime server add/remove/mutation | Partial Native Go | Go now has a native runtime-server registry for add/remove/list fallback behavior, with best-effort probe status, but full transport/lifecycle parity is still incomplete |

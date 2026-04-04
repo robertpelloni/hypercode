@@ -62,16 +62,20 @@ func (s *Server) handleMCPTools(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	inventory, invErr := s.localMCPInventory()
-	if invErr == nil && len(inventory.Tools) > 0 {
+	view, invErr := s.localMCPInventoryView()
+	if invErr == nil && view != nil && len(view.Inventory.Tools) > 0 {
+		bridge := map[string]any{
+			"fallback":  "go-local-mcp",
+			"procedure": "mcp.listTools",
+			"reason":    "upstream unavailable; using local MCP inventory cache",
+		}
+		for key, value := range inventoryBridgeMeta(view) {
+			bridge[key] = value
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
-			"data":    fallbackMCPInventoryTools(inventory),
-			"bridge": map[string]any{
-				"fallback":  "go-local-mcp",
-				"procedure": "mcp.listTools",
-				"reason":    "upstream unavailable; using local MCP inventory cache",
-			},
+			"data":    fallbackMCPInventoryTools(view),
+			"bridge":  bridge,
 		})
 		return
 	}
@@ -82,14 +86,18 @@ func (s *Server) handleMCPTools(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": localErr.Error()})
 			return
 		}
+		bridge := map[string]any{
+			"fallback":  "go-local-mcp",
+			"procedure": "mcp.listTools",
+			"reason":    "upstream unavailable; local MCP inventory cache is empty",
+		}
+		for key, value := range inventoryBridgeMeta(view) {
+			bridge[key] = value
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"data":    []map[string]any{},
-			"bridge": map[string]any{
-				"fallback":  "go-local-mcp",
-				"procedure": "mcp.listTools",
-				"reason":    "upstream unavailable; local MCP inventory cache is empty",
-			},
+			"bridge":  bridge,
 		})
 		return
 	}
@@ -125,16 +133,20 @@ func (s *Server) handleMCPSearchTools(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	inventory, invErr := s.localMCPInventory()
-	if invErr == nil && len(inventory.Tools) > 0 {
+	view, invErr := s.localMCPInventoryView()
+	if invErr == nil && view != nil && len(view.Inventory.Tools) > 0 {
+		bridge := map[string]any{
+			"fallback":  "go-local-mcp",
+			"procedure": "mcp.searchTools",
+			"reason":    "upstream unavailable; using local MCP inventory cache",
+		}
+		for key, value := range inventoryBridgeMeta(view) {
+			bridge[key] = value
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
-			"data":    fallbackSearchMCPInventoryTools(query, inventory, 20),
-			"bridge": map[string]any{
-				"fallback":  "go-local-mcp",
-				"procedure": "mcp.searchTools",
-				"reason":    "upstream unavailable; using local MCP inventory cache",
-			},
+			"data":    fallbackSearchMCPInventoryTools(query, view, 20),
+			"bridge":  bridge,
 		})
 		return
 	}
@@ -145,14 +157,18 @@ func (s *Server) handleMCPSearchTools(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": localErr.Error()})
 			return
 		}
+		bridge := map[string]any{
+			"fallback":  "go-local-mcp",
+			"procedure": "mcp.searchTools",
+			"reason":    "upstream unavailable; local MCP inventory cache is empty",
+		}
+		for key, value := range inventoryBridgeMeta(view) {
+			bridge[key] = value
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"data":    []map[string]any{},
-			"bridge": map[string]any{
-				"fallback":  "go-local-mcp",
-				"procedure": "mcp.searchTools",
-				"reason":    "upstream unavailable; local MCP inventory cache is empty",
-			},
+			"bridge":  bridge,
 		})
 		return
 	}

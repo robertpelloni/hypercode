@@ -6055,6 +6055,20 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 	cfg.ConfigDir = configDir
 	cfg.MainConfigDir = t.TempDir()
 	server := New(cfg, stubDetector{err: errors.New("detector unavailable")})
+	server.runtimeServers.upsert(runtimeServerRecord{
+		Name:                "runtime-core",
+		Command:             "node",
+		Args:                []string{"runtime-server.js"},
+		RuntimeConnected:    true,
+		ToolCount:           1,
+		ToolInventoryStatus: "live-probed",
+		IntegrationLevel:    "runtime-added",
+		Source:              "go-runtime-registry",
+		LastCheckedAt:       "2026-04-04T00:00:05Z",
+		Tools: []map[string]any{
+			{"name": "runtime_search", "description": "Runtime search", "inputSchema": map[string]any{"type": "object"}},
+		},
+	})
 
 	cases := []struct {
 		name     string
@@ -6064,7 +6078,7 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 		{
 			name:     "control tools list",
 			path:     "/api/tools",
-			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"name":"search_tools"`, `"server":"cache-core"`},
+			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"name":"search_tools"`, `"server":"cache-core"`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`},
 		},
 		{
 			name:     "control tools search",
@@ -6074,17 +6088,17 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 		{
 			name:     "control tools get",
 			path:     "/api/tools/get?uuid=search_tools",
-			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"uuid":"search_tools"`},
+			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"uuid":"search_tools"`, `"cachedAt":"2026-04-04T00:00:00Z"`},
 		},
 		{
 			name:     "mcp tools list",
 			path:     "/api/mcp/tools",
-			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP inventory cache`, `"name":"search_tools"`, `"server":"cache-core"`},
+			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP inventory cache`, `"name":"search_tools"`, `"server":"cache-core"`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`, `"cachedAt":"2026-04-04T00:00:00Z"`},
 		},
 		{
 			name:     "mcp tools search",
 			path:     "/api/mcp/tools/search?query=search",
-			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP inventory cache`, `"name":"search_tools"`},
+			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP inventory cache`, `"name":"search_tools"`, `"runtimeOverlayToolCount":1`},
 		},
 	}
 

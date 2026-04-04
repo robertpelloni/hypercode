@@ -5384,36 +5384,44 @@ func (s *Server) handleToolsList(w http.ResponseWriter, r *http.Request) {
 
 	tools, fallbackErr := s.localDBTools()
 	if fallbackErr != nil {
-		inventory, invErr := s.localMCPInventory()
-		if invErr != nil || len(inventory.Tools) == 0 {
+		view, invErr := s.localMCPInventoryView()
+		if invErr != nil || view == nil || len(view.Inventory.Tools) == 0 {
 			writeJSON(w, http.StatusInternalServerError, map[string]any{
 				"success": false,
 				"error":   fallbackErr.Error(),
 			})
 			return
 		}
+		bridge := map[string]any{
+			"fallback":  "go-local-mcp-inventory-cache",
+			"procedure": "tools.list",
+			"reason":    "upstream unavailable; using local MCP inventory cache because metamcp.db is unavailable",
+		}
+		for key, value := range inventoryBridgeMeta(view) {
+			bridge[key] = value
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
-			"data":    fallbackControlToolsFromInventory(inventory),
-			"bridge": map[string]any{
-				"fallback":  "go-local-mcp-inventory-cache",
-				"procedure": "tools.list",
-				"reason":    "upstream unavailable; using local MCP inventory cache because metamcp.db is unavailable",
-			},
+			"data":    fallbackControlToolsFromInventory(view),
+			"bridge":  bridge,
 		})
 		return
 	}
 	if len(tools) == 0 {
-		inventory, invErr := s.localMCPInventory()
-		if invErr == nil && len(inventory.Tools) > 0 {
+		view, invErr := s.localMCPInventoryView()
+		if invErr == nil && view != nil && len(view.Inventory.Tools) > 0 {
+			bridge := map[string]any{
+				"fallback":  "go-local-mcp-inventory-cache",
+				"procedure": "tools.list",
+				"reason":    "upstream unavailable; using local MCP inventory cache because metamcp.db returned no local tool rows",
+			}
+			for key, value := range inventoryBridgeMeta(view) {
+				bridge[key] = value
+			}
 			writeJSON(w, http.StatusOK, map[string]any{
 				"success": true,
-				"data":    fallbackControlToolsFromInventory(inventory),
-				"bridge": map[string]any{
-					"fallback":  "go-local-mcp-inventory-cache",
-					"procedure": "tools.list",
-					"reason":    "upstream unavailable; using local MCP inventory cache because metamcp.db returned no local tool rows",
-				},
+				"data":    fallbackControlToolsFromInventory(view),
+				"bridge":  bridge,
 			})
 			return
 		}
@@ -5453,50 +5461,58 @@ func (s *Server) handleToolsByServer(w http.ResponseWriter, r *http.Request) {
 
 	filtered, fallbackErr := s.localDBToolsByServer(serverID)
 	if fallbackErr != nil {
-		inventory, invErr := s.localMCPInventory()
-		if invErr != nil || len(inventory.Tools) == 0 {
+		view, invErr := s.localMCPInventoryView()
+		if invErr != nil || view == nil || len(view.Inventory.Tools) == 0 {
 			writeJSON(w, http.StatusInternalServerError, map[string]any{
 				"success": false,
 				"error":   fallbackErr.Error(),
 			})
 			return
 		}
-		cacheTools := fallbackControlToolsFromInventory(inventory)
+		cacheTools := fallbackControlToolsFromInventory(view)
 		filteredCacheTools := make([]map[string]any, 0)
 		for _, tool := range cacheTools {
 			if stringValue(tool["mcpServerUuid"]) == serverID || stringValue(tool["server"]) == serverID {
 				filteredCacheTools = append(filteredCacheTools, tool)
 			}
 		}
+		bridge := map[string]any{
+			"fallback":  "go-local-mcp-inventory-cache",
+			"procedure": "tools.listByServer",
+			"reason":    "upstream unavailable; filtering local MCP inventory cache by server because metamcp.db is unavailable",
+		}
+		for key, value := range inventoryBridgeMeta(view) {
+			bridge[key] = value
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"data":    filteredCacheTools,
-			"bridge": map[string]any{
-				"fallback":  "go-local-mcp-inventory-cache",
-				"procedure": "tools.listByServer",
-				"reason":    "upstream unavailable; filtering local MCP inventory cache by server because metamcp.db is unavailable",
-			},
+			"bridge":  bridge,
 		})
 		return
 	}
 	if len(filtered) == 0 {
-		inventory, invErr := s.localMCPInventory()
-		if invErr == nil && len(inventory.Tools) > 0 {
-			cacheTools := fallbackControlToolsFromInventory(inventory)
+		view, invErr := s.localMCPInventoryView()
+		if invErr == nil && view != nil && len(view.Inventory.Tools) > 0 {
+			cacheTools := fallbackControlToolsFromInventory(view)
 			filteredCacheTools := make([]map[string]any, 0)
 			for _, tool := range cacheTools {
 				if stringValue(tool["mcpServerUuid"]) == serverID || stringValue(tool["server"]) == serverID {
 					filteredCacheTools = append(filteredCacheTools, tool)
 				}
 			}
+			bridge := map[string]any{
+				"fallback":  "go-local-mcp-inventory-cache",
+				"procedure": "tools.listByServer",
+				"reason":    "upstream unavailable; filtering local MCP inventory cache by server because metamcp.db returned no matching rows",
+			}
+			for key, value := range inventoryBridgeMeta(view) {
+				bridge[key] = value
+			}
 			writeJSON(w, http.StatusOK, map[string]any{
 				"success": true,
 				"data":    filteredCacheTools,
-				"bridge": map[string]any{
-					"fallback":  "go-local-mcp-inventory-cache",
-					"procedure": "tools.listByServer",
-					"reason":    "upstream unavailable; filtering local MCP inventory cache by server because metamcp.db returned no matching rows",
-				},
+				"bridge":  bridge,
 			})
 			return
 		}
@@ -5545,8 +5561,8 @@ func (s *Server) handleToolsSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	results, fallbackErr := s.localDBToolSearch(query, limit)
 	if fallbackErr != nil {
-		inventory, invErr := s.localMCPInventory()
-		if invErr != nil || len(inventory.Tools) == 0 {
+		view, invErr := s.localMCPInventoryView()
+		if invErr != nil || view == nil || len(view.Inventory.Tools) == 0 {
 			writeJSON(w, http.StatusInternalServerError, map[string]any{
 				"success": false,
 				"error":   fallbackErr.Error(),
@@ -5555,7 +5571,7 @@ func (s *Server) handleToolsSearch(w http.ResponseWriter, r *http.Request) {
 		}
 		cacheResults := make([]map[string]any, 0)
 		queryLower := strings.ToLower(query)
-		for _, tool := range fallbackControlToolsFromInventory(inventory) {
+		for _, tool := range fallbackControlToolsFromInventory(view) {
 			name := strings.ToLower(stringValue(tool["name"]))
 			description := strings.ToLower(stringValue(tool["description"]))
 			server := strings.ToLower(stringValue(tool["server"]))
@@ -5566,23 +5582,27 @@ func (s *Server) handleToolsSearch(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
+		bridge := map[string]any{
+			"fallback":  "go-local-mcp-inventory-cache",
+			"procedure": "tools.search",
+			"reason":    "upstream unavailable; searching local MCP inventory cache because metamcp.db is unavailable",
+		}
+		for key, value := range inventoryBridgeMeta(view) {
+			bridge[key] = value
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"data":    cacheResults,
-			"bridge": map[string]any{
-				"fallback":  "go-local-mcp-inventory-cache",
-				"procedure": "tools.search",
-				"reason":    "upstream unavailable; searching local MCP inventory cache because metamcp.db is unavailable",
-			},
+			"bridge":  bridge,
 		})
 		return
 	}
 	if len(results) == 0 {
-		inventory, invErr := s.localMCPInventory()
-		if invErr == nil && len(inventory.Tools) > 0 {
+		view, invErr := s.localMCPInventoryView()
+		if invErr == nil && view != nil && len(view.Inventory.Tools) > 0 {
 			cacheResults := make([]map[string]any, 0)
 			queryLower := strings.ToLower(query)
-			for _, tool := range fallbackControlToolsFromInventory(inventory) {
+			for _, tool := range fallbackControlToolsFromInventory(view) {
 				name := strings.ToLower(stringValue(tool["name"]))
 				description := strings.ToLower(stringValue(tool["description"]))
 				server := strings.ToLower(stringValue(tool["server"]))
@@ -5593,14 +5613,18 @@ func (s *Server) handleToolsSearch(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			}
+			bridge := map[string]any{
+				"fallback":  "go-local-mcp-inventory-cache",
+				"procedure": "tools.search",
+				"reason":    "upstream unavailable; searching local MCP inventory cache because metamcp.db returned no matching rows",
+			}
+			for key, value := range inventoryBridgeMeta(view) {
+				bridge[key] = value
+			}
 			writeJSON(w, http.StatusOK, map[string]any{
 				"success": true,
 				"data":    cacheResults,
-				"bridge": map[string]any{
-					"fallback":  "go-local-mcp-inventory-cache",
-					"procedure": "tools.search",
-					"reason":    "upstream unavailable; searching local MCP inventory cache because metamcp.db returned no matching rows",
-				},
+				"bridge":  bridge,
 			})
 			return
 		}
@@ -5739,36 +5763,44 @@ func (s *Server) handleToolsGet(w http.ResponseWriter, r *http.Request) {
 
 	fallbackTool, fallbackErr := s.localDBTool(uuid)
 	if fallbackErr != nil {
-		inventory, invErr := s.localMCPInventory()
-		if invErr != nil || len(inventory.Tools) == 0 {
+		view, invErr := s.localMCPInventoryView()
+		if invErr != nil || view == nil || len(view.Inventory.Tools) == 0 {
 			writeJSON(w, http.StatusInternalServerError, map[string]any{
 				"success": false,
 				"error":   fallbackErr.Error(),
 			})
 			return
 		}
+		bridge := map[string]any{
+			"fallback":  "go-local-mcp-inventory-cache",
+			"procedure": "tools.get",
+			"reason":    "upstream unavailable; using local MCP inventory cache because metamcp.db is unavailable",
+		}
+		for key, value := range inventoryBridgeMeta(view) {
+			bridge[key] = value
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
-			"data":    fallbackControlToolFromInventory(inventory, uuid),
-			"bridge": map[string]any{
-				"fallback":  "go-local-mcp-inventory-cache",
-				"procedure": "tools.get",
-				"reason":    "upstream unavailable; using local MCP inventory cache because metamcp.db is unavailable",
-			},
+			"data":    fallbackControlToolFromInventory(view, uuid),
+			"bridge":  bridge,
 		})
 		return
 	}
 	if fallbackTool == nil {
-		inventory, invErr := s.localMCPInventory()
-		if invErr == nil && len(inventory.Tools) > 0 {
+		view, invErr := s.localMCPInventoryView()
+		if invErr == nil && view != nil && len(view.Inventory.Tools) > 0 {
+			bridge := map[string]any{
+				"fallback":  "go-local-mcp-inventory-cache",
+				"procedure": "tools.get",
+				"reason":    "upstream unavailable; using local MCP inventory cache because metamcp.db returned no matching row",
+			}
+			for key, value := range inventoryBridgeMeta(view) {
+				bridge[key] = value
+			}
 			writeJSON(w, http.StatusOK, map[string]any{
 				"success": true,
-				"data":    fallbackControlToolFromInventory(inventory, uuid),
-				"bridge": map[string]any{
-					"fallback":  "go-local-mcp-inventory-cache",
-					"procedure": "tools.get",
-					"reason":    "upstream unavailable; using local MCP inventory cache because metamcp.db returned no matching row",
-				},
+				"data":    fallbackControlToolFromInventory(view, uuid),
+				"bridge":  bridge,
 			})
 			return
 		}
