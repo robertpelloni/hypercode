@@ -7,15 +7,35 @@ if errorlevel 1 (
     call npm install -g pnpm
 )
 
+set RUNTIME_MODE=%HYPERCODE_RUNTIME%
+if "%RUNTIME_MODE%"=="" set RUNTIME_MODE=auto
+
 set SKIP_INSTALL=0
 if /I "%HYPERCODE_SKIP_INSTALL%"=="1" set SKIP_INSTALL=1
 
 if "%SKIP_INSTALL%"=="1" (
     echo Skipping dependency install ^(HYPERCODE_SKIP_INSTALL=1^)...
 ) else (
-    echo Installing dependencies...
-    call pnpm install
-    if errorlevel 1 exit /b 1
+    set STARTUP_INSTALL_PROFILE=workspace
+    if /I "%RUNTIME_MODE%"=="auto" set STARTUP_INSTALL_PROFILE=go-primary
+    if /I "%RUNTIME_MODE%"=="go" set STARTUP_INSTALL_PROFILE=go-primary
+
+    set INSTALL_REQUIRED=1
+    if /I "%STARTUP_INSTALL_PROFILE%"=="go-primary" if /I not "%HYPERCODE_FORCE_INSTALL%"=="1" (
+        echo Checking whether Go-primary startup dependencies are already ready...
+        call node scripts\check_startup_install.mjs --profile=go-primary
+        set INSTALL_CHECK_EXIT=%ERRORLEVEL%
+        if "%INSTALL_CHECK_EXIT%"=="0" (
+            set INSTALL_REQUIRED=0
+            echo Skipping pnpm install because Go-primary startup dependencies are already present.
+        )
+    )
+
+    if "%INSTALL_REQUIRED%"=="1" (
+        echo Installing dependencies...
+        call pnpm install
+        if errorlevel 1 exit /b 1
+    )
 )
 
 set SKIP_NATIVE_PREFLIGHT=0
@@ -28,9 +48,6 @@ if "%SKIP_NATIVE_PREFLIGHT%"=="1" (
     call node scripts\ensure_native_runtime.mjs
     if errorlevel 1 exit /b 1
 )
-
-set RUNTIME_MODE=%HYPERCODE_RUNTIME%
-if "%RUNTIME_MODE%"=="" set RUNTIME_MODE=auto
 
 set BUILD_TARGET=build:startup-go
 if /I "%RUNTIME_MODE%"=="node" set BUILD_TARGET=build:workspace

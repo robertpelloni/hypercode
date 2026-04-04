@@ -101,7 +101,8 @@ Make Go the default runtime started by operator entrypoints.
 
 ### Progress note
 - `start.bat` now defaults to a Go-primary startup build profile for `auto`/`go` runtime modes: it validates the Go control plane and CLI without requiring a full workspace build first
-- explicit Node compatibility mode still uses the full workspace build path
+- `start.bat` now also probes whether Go-primary startup dependencies are already present and can skip `pnpm install` when the current workspace is already ready
+- explicit Node compatibility mode still uses the full workspace build path and still defaults to a full install/build posture
 - full builds remain available via `HYPERCODE_FULL_BUILD=1`
 
 ---

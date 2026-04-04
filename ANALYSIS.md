@@ -73,6 +73,30 @@ Why this matters:
 - it avoids making Go startup hostage to unrelated TS/UI build noise
 - it keeps Node compatibility mode available explicitly instead of as the default validation burden
 
+#### Go-primary install-skip probe
+Added a startup dependency readiness probe:
+- `scripts/check_startup_install.mjs`
+
+Updated `start.bat` so that in `auto` / `go` runtime modes it now:
+- checks whether the workspace already has the minimum Go-primary startup dependencies present
+- skips `pnpm install` when those dependencies are already resolvable and the lock/modules state is in sync
+- still performs `pnpm install` when the probe says install is required
+- still allows a forced install with:
+  - `HYPERCODE_FORCE_INSTALL=1`
+- still allows a full manual skip with:
+  - `HYPERCODE_SKIP_INSTALL=1`
+
+What the probe currently verifies:
+- `node_modules/.modules.yaml` exists
+- `pnpm-lock.yaml` is not newer than the modules state file
+- `packages/cli` can resolve the dependencies needed for the Go-primary startup path
+- the Go control-plane entrypoint exists at `go/cmd/hypercode/main.go`
+
+Why this matters:
+- it avoids rerunning a noisy workspace-wide install on every Go-primary startup attempt
+- it reduces exposure to known non-blocking install-time failures like the Windows/Node 24 Maestro `electron-rebuild` issue when the workspace is already usable
+- it makes Go-primary startup faster and more truthful without pretending Node compatibility surfaces are validated when they were intentionally skipped
+
 #### Lockfile hygiene
 - The refreshed `pnpm-lock.yaml` no longer contains legacy-name references for the main workspace packages.
 
@@ -92,12 +116,18 @@ Results:
 pnpm -C packages/cli run build
 cd go && go build -buildvcs=false ./cmd/hypercode
 node scripts/build_startup.mjs --profile=go-primary
+node scripts/check_startup_install.mjs --profile=go-primary
 ```
 
 Results:
 - CLI build passed
 - Go control-plane build passed
 - new Go-primary startup build profile passed
+- install-skip readiness probe correctly reported the current workspace as already ready for Go-primary startup
+
+Validation boundary:
+- `start.bat` itself was not executed end-to-end in this pass because doing so would intentionally launch the Hub and additional long-running runtime processes
+- instead, the startup contract was validated at the exact install/build decision points that `start.bat` now delegates to
 
 #### Full workspace validation
 ```bash
@@ -113,12 +143,14 @@ Result:
 - the previously failing startup build blockers in `@hypercode/core` and `@hypercode/web` are fixed
 - `pnpm run build:workspace` now succeeds again
 - the new Go-primary startup build path succeeds
+- the new install-skip readiness probe succeeds for the current workspace state
 - `start.bat` now validates Go-first startup surfaces by default for `auto`/`go` runtime modes instead of always requiring a full workspace build first
+- `start.bat` can now skip `pnpm install` in Go-primary mode when the workspace is already ready
 - the main monorepo (excluding archived content and external harness submodules) no longer contains textual legacy-name references
 
 #### Still non-blocking / still present
 - `apps/maestro` postinstall still reports an `electron-rebuild` failure under Node 24 on Windows during install
-- in this workspace, that failure is currently **non-blocking** for the startup wrapper because the wrapper continues into prerequisite checks and workspace build
+- in this workspace, that failure is currently **non-blocking** for the startup wrapper because the wrapper can continue into prerequisite checks and build validation, and in Go-primary mode can now often skip install entirely when the workspace is already ready
 - Maestro production builds themselves completed successfully during this pass despite that install-time warning/failure
 
 #### Still outside the main workspace boundary
