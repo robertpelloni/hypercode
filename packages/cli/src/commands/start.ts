@@ -65,6 +65,7 @@ interface AcquireSingleInstanceLockDeps {
   getPid?: () => number;
   isProcessRunning?: (pid: number) => boolean;
   isPortFree?: (port: number) => Promise<boolean>;
+  isExistingHypercode?: (host: string, port: number) => Promise<boolean>;
 }
 
 type CoreRuntimeModule = {
@@ -82,6 +83,22 @@ type CoreRuntimeModule = {
 };
 
 type FetchLike = typeof globalThis.fetch;
+
+class HypercodeAlreadyRunningError extends Error {
+  constructor(
+    readonly host: string,
+    readonly port: number,
+    readonly source: 'lock' | 'port',
+    readonly pid?: number,
+  ) {
+    super(
+      pid
+        ? `HyperCode is already running (PID ${pid}) on port ${port}.`
+        : `HyperCode is already running on port ${port}.`,
+    );
+    this.name = 'HypercodeAlreadyRunningError';
+  }
+}
 
 const DASHBOARD_PORT_CANDIDATES = [3000, 3010, 3020, 3030, 3040] as const;
 const CONTROL_PLANE_FALLBACK_OFFSETS = [1, 2, 3, 4, 5] as const;
@@ -178,6 +195,7 @@ export async function acquireSingleInstanceLock(
   const getPid = deps.getPid ?? (() => process.pid);
   const checkProcessRunning = deps.isProcessRunning ?? isProcessRunning;
   const checkPortFree = deps.isPortFree ?? isPortFree;
+  const checkExistingHypercode = deps.isExistingHypercode ?? isHypercodeServer;
 
   const resolvedDataDir = resolveDataDir(options.dataDir);
   const lockPath = join(resolvedDataDir, 'lock');
@@ -234,6 +252,9 @@ export async function acquireSingleInstanceLock(
 
       if (!selectedPortIsFree) {
         releaseSync();
+        if (await checkExistingHypercode(options.host, selectedPort)) {
+          throw new HypercodeAlreadyRunningError(options.host, selectedPort, 'port');
+        }
         throw new Error(
           `Port ${selectedPort} is already in use by another process. `
           + `Stop that process or start HyperCode with --port <free-port>.`,
@@ -266,10 +287,7 @@ export async function acquireSingleInstanceLock(
           : false;
 
         if (!lockedPortIsFree) {
-          throw new Error(
-            `HyperCode is already running (PID ${existingLock.pid}) on port ${existingLock.port}. `
-            + `Stop that process before starting another instance, or remove ${lockPath} if it is incorrect.`,
-          );
+          throw new HypercodeAlreadyRunningError(options.host, existingLock.port, 'lock', existingLock.pid);
         }
       }
 
@@ -334,6 +352,43 @@ export async function isHttpReady(
   } catch {
     return false;
   }
+}
+
+export async function isHypercodeServer(
+  host: string,
+  port: number,
+  fetchImpl: FetchLike = globalThis.fetch,
+): Promise<boolean> {
+  const browserHost = resolveBrowserHost(host);
+  const urls = [
+    `http://${browserHost}:${port}/health`,
+    `http://${browserHost}:${port}/api/health/server`,
+  ];
+
+  for (const url of urls) {
+    try {
+      const response = await fetchImpl(url, { method: 'GET' });
+      if (!response.ok) {
+        continue;
+      }
+      const contentType = response.headers.get('content-type') ?? '';
+      if (contentType.includes('application/json')) {
+        const payload = await response.json() as { service?: string; ok?: boolean };
+        if (payload?.service === 'hypercode-go' || payload?.ok === true) {
+          return true;
+        }
+      } else {
+        const text = await response.text();
+        if (text.toLowerCase().includes('hypercode')) {
+          return true;
+        }
+      }
+    } catch {
+      // Try the next health URL.
+    }
+  }
+
+  return false;
 }
 
 export async function waitForHttpReady(
@@ -776,6 +831,17 @@ Examples:
           dashboardChild.kill();
         }
         lockHandle?.releaseSync();
+
+        if (err instanceof HypercodeAlreadyRunningError) {
+          const browserHost = resolveBrowserHost(err.host);
+          console.log(chalk.green(`  ✓ HyperCode is already running at http://${browserHost}:${err.port}`));
+          if (err.pid) {
+            console.log(chalk.dim(`  Existing PID: ${err.pid}`));
+          }
+          console.log(chalk.dim('  Reusing the existing control plane instead of starting a duplicate instance.'));
+          return;
+        }
+
         const msg = err instanceof Error ? err.message : String(err);
         console.error(chalk.red(`  ✗ Failed to start: ${msg}`));
         process.exit(1);

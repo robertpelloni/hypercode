@@ -9,6 +9,7 @@ import {
     acquireSingleInstanceLock,
     createLockLifecycleHandlers,
     isAddrInUseError,
+    isHypercodeServer,
     pickAvailableControlPlaneFallbackPort,
     pickDashboardPort,
     resolveControlPlaneFallbackPort,
@@ -214,7 +215,26 @@ describe('acquireSingleInstanceLock', () => {
             host: '127.0.0.1',
         }, {
             isPortFree: async () => false,
+            isExistingHypercode: async () => false,
         })).rejects.toThrow('Port 4000 is already in use by another process');
+    });
+
+    it('treats an occupied port serving HyperCode as an already-running instance', async () => {
+        const dataDir = createTempDir();
+
+        await expect(acquireSingleInstanceLock({
+            dataDir,
+            requestedPort: 4000,
+            explicitPort: false,
+            host: '127.0.0.1',
+        }, {
+            isPortFree: async () => false,
+            isExistingHypercode: async () => true,
+        })).rejects.toMatchObject({
+            name: 'HypercodeAlreadyRunningError',
+            port: 4000,
+            source: 'port',
+        });
     });
 
     it('updates the lock record port when the active control-plane port changes', async () => {
@@ -318,6 +338,28 @@ describe('dashboard startup helpers', () => {
     it('rewrites wildcard hosts to a browser-safe dashboard URL', () => {
         expect(resolveDashboardUrl('0.0.0.0', 3000)).toBe('http://127.0.0.1:3000/dashboard');
         expect(resolveDashboardUrl('127.0.0.1', 3010)).toBe('http://127.0.0.1:3010/dashboard');
+    });
+
+    it('detects a HyperCode server from JSON health endpoints', async () => {
+        const fetchImpl = vi.fn().mockResolvedValue({
+            ok: true,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ service: 'hypercode-go', ok: true }),
+        });
+
+        await expect(isHypercodeServer('127.0.0.1', 4000, fetchImpl as any)).resolves.toBe(true);
+        expect(fetchImpl).toHaveBeenCalled();
+    });
+
+    it('returns false when health endpoints do not look like HyperCode', async () => {
+        const fetchImpl = vi.fn().mockResolvedValue({
+            ok: true,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ service: 'other-service', ok: false }),
+            text: async () => 'other-service',
+        });
+
+        await expect(isHypercodeServer('127.0.0.1', 4000, fetchImpl as any)).resolves.toBe(false);
     });
 
     it('reuses an already-running dashboard on the requested port', async () => {

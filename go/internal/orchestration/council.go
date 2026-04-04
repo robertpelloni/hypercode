@@ -8,6 +8,8 @@ import (
 	"github.com/hypercodehq/hypercode-go/internal/ai"
 )
 
+var autoRoute = ai.AutoRoute
+
 type DebateResult struct {
 	Approved      bool               `json:"approved"`
 	FinalPlan     string             `json:"finalPlan"`
@@ -34,7 +36,7 @@ Context: %s
 
 Propose a high-level implementation plan. Be concise and focus on structural integrity.`, objective, contextData)
 
-	architectResp, err := ai.AutoRoute(ctx, []ai.Message{
+	architectResp, err := autoRoute(ctx, []ai.Message{
 		{Role: "user", Content: architectPrompt},
 	})
 	if err != nil {
@@ -52,7 +54,7 @@ The Architect proposed this plan:
 
 Review this plan strictly for security vulnerabilities, edge cases, and failure modes. If it is safe, say "APPROVE". Otherwise, list concerns.`, architectResp.Content)
 
-	reviewerResp, err := ai.AutoRoute(ctx, []ai.Message{
+	reviewerResp, err := autoRoute(ctx, []ai.Message{
 		{Role: "user", Content: reviewerPrompt},
 	})
 	if err != nil {
@@ -73,7 +75,7 @@ Reviewer Critique:
 
 Synthesize the final, actionable implementation plan incorporating the critique. If the reviewer rejected it fundamentally, output "REJECTED" as the first word.`, architectResp.Content, reviewerResp.Content)
 
-	leadResp, err := ai.AutoRoute(ctx, []ai.Message{
+	leadResp, err := autoRoute(ctx, []ai.Message{
 		{Role: "user", Content: leadPrompt},
 	})
 	if err != nil {

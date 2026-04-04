@@ -95,9 +95,9 @@ func SyncBobbyBookmarks(ctx context.Context, dbPath string, baseURL string, perP
 			report.Errors = append(report.Errors, fmt.Sprintf("page %d fetch error: %v", page, err))
 			break
 		}
-		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
 			report.Errors = append(report.Errors, fmt.Sprintf("page %d HTTP %d", page, resp.StatusCode))
 			break
 		}
@@ -108,9 +108,11 @@ func SyncBobbyBookmarks(ctx context.Context, dbPath string, baseURL string, perP
 			Items []Bookmark `json:"items"`
 		}
 		
-		if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
-			// Try decoding as plain array
-			// Not perfectly robust, but handles multiple structures
+		decodeErr := json.NewDecoder(resp.Body).Decode(&payload)
+		resp.Body.Close()
+		if decodeErr != nil {
+			report.Errors = append(report.Errors, fmt.Sprintf("page %d decode error: %v", page, decodeErr))
+			break
 		}
 
 		bookmarks := payload.Data
@@ -204,8 +206,15 @@ func SyncBobbyBookmarks(ctx context.Context, dbPath string, baseURL string, perP
 			}
 		}
 
-		stmt.Close()
-		tx.Commit()
+		if err := stmt.Close(); err != nil {
+			tx.Rollback()
+			report.Errors = append(report.Errors, "stmt close error: "+err.Error())
+			break
+		}
+		if err := tx.Commit(); err != nil {
+			report.Errors = append(report.Errors, "tx commit error: "+err.Error())
+			break
+		}
 
 		if len(bookmarks) < perPage {
 			break

@@ -464,8 +464,70 @@ The Go sidecar now has meaningful test coverage across more of its critical loca
 - provider selection/routing summaries
 - native git submodule fallback behavior
 
+## Follow-up council/sync coverage and CLI startup resilience pass
+A later stabilization pass addressed two additional areas:
+1. regression coverage for the Go council debate engine and BobbyBookmarks sync
+2. an operator-facing startup fix for the CLI when port `4000` is already occupied by an existing HyperCode instance
+
+### Additional coverage and fixes in this pass
+- `go/internal/orchestration/council.go`
+  - introduced a test seam via package-level `autoRoute` indirection so council debate tests can run deterministically without calling live provider APIs
+- `go/internal/orchestration/council_test.go`
+  - verifies approved debate flow
+  - verifies rejected debate flow
+  - verifies architect-stage provider errors are propagated clearly
+- `go/internal/sync/bobbybookmarks.go`
+  - tightened response/body handling inside the pagination loop
+  - explicit decode errors are now reported in `SyncReport.Errors`
+  - explicit `stmt.Close()` / `tx.Commit()` error handling added for clearer failure reporting
+- `go/internal/sync/bobbybookmarks_test.go`
+  - verifies paginated BobbyBookmarks payloads are fetched and upserted into SQLite
+  - verifies malformed JSON payloads are surfaced as sync-report errors instead of silently proceeding
+- `packages/cli/src/commands/start.ts`
+  - added `isHypercodeServer(host, port, fetchImpl)` health probing helper
+  - `acquireSingleInstanceLock(...)` now distinguishes between:
+    - a foreign process occupying the requested port
+    - an already-running HyperCode instance occupying that port
+  - when the port is occupied by a live HyperCode instance, startup now exits cleanly with a reuse message instead of failing hard
+  - introduced `HypercodeAlreadyRunningError` to represent the non-fatal reuse case explicitly
+- `packages/cli/src/commands/start.test.ts`
+  - verifies occupied-port behavior still errors for non-HyperCode processes
+  - verifies occupied-port behavior is treated as an already-running instance when HyperCode health checks succeed
+  - verifies `isHypercodeServer(...)` detection against JSON health responses
+
+### User-reported startup issue addressed
+Observed from a real operator run:
+- `start.bat` completed install/build steps
+- the hub failed at the final CLI startup phase with:
+  - `Port 4000 is already in use by another process`
+
+This was misleading when the port owner was actually an existing HyperCode instance. The CLI now handles that case truthfully and non-destructively.
+
+### Validation performed in this pass
+Commands run:
+```bash
+pnpm exec vitest run packages/cli/src/commands/start.test.ts
+cd packages/cli && pnpm run type-check
+cd go && go test ./internal/orchestration ./internal/sync
+cd go && go test ./...
+pnpm run build:workspace
+```
+
+Results:
+- CLI startup tests passed (`25/25` in `start.test.ts`)
+- CLI type-check passed
+- council/sync tests passed
+- full Go suite remained green
+- workspace build remained green
+
+### Updated truthfulness assessment
+This pass improved both operator UX and native-sidecar confidence:
+- startup is now more truthful when an existing HyperCode instance is already serving the requested port
+- council fallback logic is now testable without live model calls
+- BobbyBookmarks sync error handling is stricter and now covered by tests
+
 ## Bottom line
-This pass meaningfully strengthened the **Go sidecar as a truthful local fallback control plane**:
+This pass meaningfully strengthened the **Go sidecar as a truthful local fallback control plane** and improved CLI startup ergonomics:
 - broader provider routing
 - native workflows
 - native supervisor endpoints
@@ -478,7 +540,9 @@ This pass meaningfully strengthened the **Go sidecar as a truthful local fallbac
 - hardened native git submodule parsing and fallback reporting
 - regression coverage for MCP inventory/ranking and provider selection behavior
 - regression coverage for supervisor lifecycle basics and session export generation
+- regression coverage for council debate orchestration and BobbyBookmarks sync
 - deduplicated provider alias reporting for configured native providers
+- truthful CLI startup reuse when HyperCode is already running on port 4000
 - a small but real Maestro UX fix
 
-It was validated by successful Go compilation, successful targeted Go tests for the new native surfaces, successful targeted regression tests for the repaired memory/MCP/council routes, a successful full Go test suite run (`go test ./...`), targeted MCP/provider/supervisor/exporter test coverage, and the previously successful full workspace build. The new systems are real and integrated, but several of them should still be described as **Beta** or **Experimental**, not full parity.
+It was validated by successful Go compilation, successful targeted Go tests for the new native surfaces, successful targeted regression tests for repaired bridge/fallback routes, a successful full Go test suite run (`go test ./...`), targeted CLI startup tests and type-checking, council/sync test coverage, and repeated successful workspace builds. The new systems are real and integrated, but several of them should still be described as **Beta** or **Experimental**, not full parity.
