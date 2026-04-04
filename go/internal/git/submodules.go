@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -32,20 +34,39 @@ func ListSubmodules(ctx context.Context, repoRoot string) ([]string, error) {
 		return nil, fmt.Errorf("failed to list submodules: %w", err)
 	}
 
+	return parseSubmoduleStatusOutput(string(output)), nil
+}
+
+func parseSubmoduleStatusOutput(output string) []string {
 	var paths []string
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-		// status output format: [status_char][hash] [path] ([tag/branch])
-		parts := strings.Fields(line[1:])
-		if len(parts) >= 2 {
-			paths = append(paths, parts[1])
+	for _, line := range strings.Split(output, "\n") {
+		if path, ok := parseSubmoduleStatusLine(line); ok {
+			paths = append(paths, path)
 		}
 	}
-	return paths, nil
+	sort.Strings(paths)
+	return paths
+}
+
+func parseSubmoduleStatusLine(line string) (string, bool) {
+	line = strings.TrimSpace(line)
+	if line == "" {
+		return "", false
+	}
+
+	// git submodule status format is effectively:
+	// [status+hash] [path] ([ref])
+	parts := strings.Fields(line)
+	if len(parts) < 2 {
+		return "", false
+	}
+
+	path := strings.TrimSpace(parts[1])
+	if path == "" {
+		return "", false
+	}
+
+	return path, true
 }
 
 // UpdateAll concurrently updates all submodules to their remote tracked branches.
@@ -110,13 +131,18 @@ func UpdateAll(ctx context.Context, repoRoot string) (*UpdateReport, error) {
 	}
 
 	wg.Wait()
+	sort.Slice(report.Details, func(i, j int) bool {
+		if report.Details[i].Path == report.Details[j].Path {
+			return report.Details[i].Name < report.Details[j].Name
+		}
+		return report.Details[i].Path < report.Details[j].Path
+	})
 	return report, nil
 }
 
 func filepathBase(path string) string {
-	parts := strings.Split(path, "/")
-	if len(parts) == 0 {
+	if path == "" {
 		return path
 	}
-	return parts[len(parts)-1]
+	return filepath.Base(strings.ReplaceAll(path, "\\", "/"))
 }

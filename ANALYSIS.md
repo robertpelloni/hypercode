@@ -332,6 +332,51 @@ The affected bridge/fallback routes are now more credible because they:
 - return bridge metadata consistently
 - degrade to empty local results where appropriate instead of throwing avoidable internal errors
 
+## Follow-up git fallback hardening pass
+After the bridge/fallback repair work, the next stabilization pass hardened the native git submodule fallback implementation and extended regression coverage.
+
+### Additional fixes in this pass
+- `go/internal/git/submodules.go`
+  - replaced brittle ad-hoc submodule status parsing with dedicated helpers:
+    - `parseSubmoduleStatusLine(...)`
+    - `parseSubmoduleStatusOutput(...)`
+  - parsing no longer relies on slicing off the first character of a status line
+  - parsed submodule paths are now sorted deterministically
+  - update report details are now sorted deterministically for more stable behavior and easier testing
+  - `filepathBase(...)` now handles both forward-slash and backslash style paths safely
+- `go/internal/git/submodules_test.go`
+  - covers status-line parsing for:
+    - clean entries
+    - missing entries (`-`)
+    - modified entries (`+`)
+    - conflicted entries (`U`)
+    - malformed / blank lines
+  - covers deterministic sorted output parsing
+  - covers slash and backslash base-name extraction
+- `go/internal/httpapi/git_native_test.go`
+  - covers `/api/submodules/update-all` native fallback behavior in a real temporary git repo with no submodules
+  - verifies fallback metadata and empty-report semantics (`total=0`, `successful=0`, `failed=0`)
+
+### Validation performed in this pass
+Commands run:
+```bash
+cd go && go test ./internal/git ./internal/httpapi -run 'Test(SubmoduleUpdateAllFallsBackToNativeGitReport)'
+cd go && go test ./...
+cd go && go build -buildvcs=false ./cmd/hypercode
+```
+
+Results:
+- targeted git/httpapi fallback test passed
+- **entire Go test suite passed**
+- Go sidecar build passed
+
+### Major milestone
+At this point in the stabilization sequence:
+- the repaired `httpapi` bridge/fallback surfaces are green
+- the new native workflow/supervisor/export tests are green
+- the native git fallback tests are green
+- **`cd go && go test ./...` is green**
+
 ## Bottom line
 This pass meaningfully strengthened the **Go sidecar as a truthful local fallback control plane**:
 - broader provider routing
@@ -343,6 +388,7 @@ This pass meaningfully strengthened the **Go sidecar as a truthful local fallbac
 - regression tests for the new native surfaces
 - repaired bridge-first behavior for key memory/MCP/council routes
 - graceful empty-result fallback for missing local memory DB state
+- hardened native git submodule parsing and fallback reporting
 - a small but real Maestro UX fix
 
-It was validated by successful Go compilation, successful targeted Go tests for the new native surfaces, successful targeted regression tests for the repaired memory/MCP/council routes, and the previously successful full workspace build. The new systems are real and integrated, but several of them should still be described as **Beta** or **Experimental**, not full parity.
+It was validated by successful Go compilation, successful targeted Go tests for the new native surfaces, successful targeted regression tests for the repaired memory/MCP/council routes, a successful full Go test suite run (`go test ./...`), and the previously successful full workspace build. The new systems are real and integrated, but several of them should still be described as **Beta** or **Experimental**, not full parity.
