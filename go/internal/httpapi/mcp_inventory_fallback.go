@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/hypercodehq/hypercode-go/internal/mcp"
 )
@@ -14,6 +15,8 @@ type localMCPInventoryView struct {
 	CachePresent                bool
 	InventorySource             string
 	CachedAt                    string
+	PersistedOverlayCheckedAt   string
+	LiveOverlayCheckedAt        string
 	PersistedOverlayServerCount int
 	PersistedOverlayToolCount   int
 	RuntimeOverlayServerCount   int
@@ -53,11 +56,14 @@ func (s *Server) localMCPInventoryView() (*localMCPInventoryView, error) {
 	}
 	if snapshot, snapshotErr := mcp.LoadInventoryCacheSnapshot(cachePath); snapshotErr == nil && snapshot != nil {
 		view.applyPersistedRuntimeOverlay(snapshot.RuntimeOverlay)
+		view.PersistedOverlayCheckedAt = freshestRuntimeOverlayCheck(snapshot.RuntimeOverlay, snapshot.CachedAt)
 		if view.CachedAt == "" {
 			view.CachedAt = snapshot.CachedAt
 		}
 	}
-	view.applyRuntimeOverlay(runtimeOverlayServersFromRecords(s.runtimeServers.list()))
+	liveOverlay := runtimeOverlayServersFromRecords(s.runtimeServers.list())
+	view.LiveOverlayCheckedAt = freshestRuntimeOverlayCheck(liveOverlay, "")
+	view.applyRuntimeOverlay(liveOverlay)
 	return view, nil
 }
 
@@ -211,7 +217,7 @@ func inventoryBridgeMeta(view *localMCPInventoryView) map[string]any {
 	if view == nil {
 		return map[string]any{}
 	}
-	return map[string]any{
+	meta := map[string]any{
 		"inventorySource":             view.InventorySource,
 		"cachedAt":                    nullableString(view.CachedAt),
 		"cachePath":                   view.CachePath,
@@ -223,6 +229,63 @@ func inventoryBridgeMeta(view *localMCPInventoryView) map[string]any {
 		"runtimeOverlayServerCount":   view.RuntimeOverlayServerCount,
 		"runtimeOverlayToolCount":     view.RuntimeOverlayToolCount,
 	}
+	for key, value := range freshnessBridgeMeta("baseInventory", view.CachedAt, 24*time.Hour) {
+		meta[key] = value
+	}
+	for key, value := range freshnessBridgeMeta("persistedOverlay", view.PersistedOverlayCheckedAt, 15*time.Minute) {
+		meta[key] = value
+	}
+	for key, value := range freshnessBridgeMeta("liveOverlay", view.LiveOverlayCheckedAt, 15*time.Minute) {
+		meta[key] = value
+	}
+	return meta
+}
+
+func freshestRuntimeOverlayCheck(records []mcp.RuntimeOverlayServer, fallback string) string {
+	freshest := strings.TrimSpace(fallback)
+	freshestTime := parseFreshnessTimestamp(freshest)
+	for _, record := range records {
+		candidate := strings.TrimSpace(record.LastCheckedAt)
+		candidateTime := parseFreshnessTimestamp(candidate)
+		if candidateTime.IsZero() {
+			continue
+		}
+		if freshestTime.IsZero() || candidateTime.After(freshestTime) {
+			freshest = candidate
+			freshestTime = candidateTime
+		}
+	}
+	return freshest
+}
+
+func freshnessBridgeMeta(prefix string, timestamp string, staleAfter time.Duration) map[string]any {
+	meta := map[string]any{
+		prefix + "CachedAt": nullableString(timestamp),
+	}
+	parsed := parseFreshnessTimestamp(timestamp)
+	if parsed.IsZero() {
+		meta[prefix+"AgeMs"] = nil
+		meta[prefix+"StaleHeuristic"] = nil
+		return meta
+	}
+	age := time.Since(parsed)
+	if age < 0 {
+		age = 0
+	}
+	meta[prefix+"AgeMs"] = age.Milliseconds()
+	meta[prefix+"StaleHeuristic"] = age > staleAfter
+	return meta
+}
+
+func parseFreshnessTimestamp(value string) time.Time {
+	if strings.TrimSpace(value) == "" {
+		return time.Time{}
+	}
+	parsed, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return time.Time{}
+	}
+	return parsed.UTC()
 }
 
 func genericAnySlice(items []map[string]any) []any {

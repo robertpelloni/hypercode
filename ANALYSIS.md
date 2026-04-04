@@ -1700,6 +1700,77 @@ Results:
 - Go build passed
 - full Go suite passed
 
+## Follow-up MCP freshness-semantics step (per-layer age and stale heuristics)
+The next refinement was to make cache-backed fallback truthfulness more precise by distinguishing freshness across different cache layers instead of treating the whole response as one freshness bucket.
+
+### The ambiguity before this step
+Before this step, fallback responses could already tell operators:
+- the cache source
+- whether persisted runtime overlay existed
+- whether live runtime overlay existed
+
+But they still could not clearly answer:
+- how old the base live-synced inventory snapshot was
+- how old the persisted runtime overlay snapshot was
+- how old the current-process live runtime overlay was
+- whether any of those layers were old enough to deserve caution
+
+### What changed
+- updated `go/internal/httpapi/mcp_inventory_fallback.go`
+  - local inventory views now track:
+    - `PersistedOverlayCheckedAt`
+    - `LiveOverlayCheckedAt`
+  - bridge metadata now exposes separate freshness fields for:
+    - base inventory layer
+    - persisted runtime overlay layer
+    - live runtime overlay layer
+- cache-backed bridge metadata now includes fields such as:
+  - `baseInventoryCachedAt`
+  - `baseInventoryAgeMs`
+  - `baseInventoryStaleHeuristic`
+  - `persistedOverlayCachedAt`
+  - `persistedOverlayAgeMs`
+  - `persistedOverlayStaleHeuristic`
+  - `liveOverlayCachedAt`
+  - `liveOverlayAgeMs`
+  - `liveOverlayStaleHeuristic`
+- heuristic thresholds are intentionally simple and truthful:
+  - base inventory stale heuristic: older than 24 hours
+  - persisted runtime overlay stale heuristic: older than 15 minutes
+  - live runtime overlay stale heuristic: older than 15 minutes
+- expanded `go/internal/httpapi/server_test.go`
+  - cache-backed fallback tests now verify the new age/staleness metadata for:
+    - base inventory cache
+    - persisted runtime overlay
+    - live runtime overlay
+
+### Important truthfulness note
+These are **heuristic** freshness signals, not assertions that data is invalid.
+
+What is true now:
+- operators can see per-layer cache age information
+- operators can distinguish base inventory freshness from persisted overlay freshness from live overlay freshness
+- stale heuristic flags are now explicit instead of implicit guesswork
+
+What is not true yet:
+- a stale heuristic does not mean the data is definitely wrong
+- a non-stale heuristic does not guarantee the downstream server is currently healthy or reachable
+- this is still observability/truthfulness improvement, not full lifecycle authority
+
+### Validation performed for this MCP freshness-semantics step
+```bash
+gofmt -w go/internal/httpapi/mcp_inventory_fallback.go go/internal/httpapi/server_test.go
+cd go && go test ./internal/httpapi ./internal/mcp
+cd go && go build -buildvcs=false ./cmd/hypercode
+cd go && go test ./...
+```
+
+Results:
+- targeted httpapi tests passed
+- targeted mcp tests passed
+- Go build passed
+- full Go suite passed
+
 ## Bottom line
 This pass meaningfully strengthened the **Go-primary migration path** and improved TypeScript survivability while the migration continues:
 - broader provider routing
@@ -1742,6 +1813,7 @@ This pass meaningfully strengthened the **Go-primary migration path** and improv
 - JSONC metadata save/mutation flows now actively resync `mcp_inventory_cache.json` from live sources so metadata clear/refresh actions do not preserve stale cached tool inventory
 - canonical MCP metadata-tool normalization is now shared between JSONC metadata handling, inventory-cache generation, runtime overlay inventory views, and live metadata refresh serialization
 - the canonical MCP cache file now persists the durable subset of successful runtime overlay tool metadata and fallback responses distinguish persisted-vs-live runtime overlay counts
+- cache-backed fallback responses now expose per-layer age and stale heuristics for base inventory, persisted runtime overlay, and live runtime overlay
 - a tested Go-native replacement path for multiple TS-owned persistence surfaces, even though mixed-runtime cleanup is not fully finished yet
 - a small but real Maestro UX fix
 

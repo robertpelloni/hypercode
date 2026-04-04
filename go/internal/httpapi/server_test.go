@@ -6044,7 +6044,7 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
       }
     ],
     "source": "config",
-    "cachedAt": "2026-04-04T00:00:00Z"
+    "cachedAt": "2020-01-01T00:00:00Z"
   }
 }`
 	if err := os.WriteFile(filepath.Join(configDir, "mcp_inventory_cache.json"), []byte(cacheContent), 0o644); err != nil {
@@ -6066,7 +6066,7 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 		ToolInventoryStatus: "live-probed",
 		IntegrationLevel:    "runtime-added",
 		Source:              "go-runtime-registry",
-		LastCheckedAt:       "2026-04-04T00:00:05Z",
+		LastCheckedAt:       "2020-01-01T00:00:05Z",
 		Tools: []map[string]any{
 			{"name": "runtime_search", "description": "Runtime search", "inputSchema": map[string]any{"type": "object"}},
 		},
@@ -6080,7 +6080,7 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 		{
 			name:     "control tools list",
 			path:     "/api/tools",
-			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"name":"search_tools"`, `"server":"cache-core"`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`, `"cacheAuthority":"go-local-live-sync"`},
+			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"name":"search_tools"`, `"server":"cache-core"`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`, `"cacheAuthority":"go-local-live-sync"`, `"baseInventoryCachedAt":"2020-01-01T00:00:00Z"`, `"liveOverlayCachedAt":"2020-01-01T00:00:05Z"`, `"baseInventoryAgeMs":`, `"liveOverlayAgeMs":`, `"liveOverlayStaleHeuristic":true`},
 		},
 		{
 			name:     "control tools search",
@@ -6090,12 +6090,12 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 		{
 			name:     "control tools get",
 			path:     "/api/tools/get?uuid=search_tools",
-			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"uuid":"search_tools"`, `"cachedAt":"2026-04-04T00:00:00Z"`},
+			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"uuid":"search_tools"`, `"cachedAt":"2020-01-01T00:00:00Z"`, `"baseInventoryStaleHeuristic":true`},
 		},
 		{
 			name:     "mcp tools list",
 			path:     "/api/mcp/tools",
-			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP inventory cache`, `"name":"search_tools"`, `"server":"cache-core"`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`, `"cachedAt":"2026-04-04T00:00:00Z"`, `"cacheAuthority":"go-local-live-sync"`, `"metadataAuthority":"mcp.jsonc"`},
+			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP inventory cache`, `"name":"search_tools"`, `"server":"cache-core"`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`, `"cachedAt":"2020-01-01T00:00:00Z"`, `"cacheAuthority":"go-local-live-sync"`, `"metadataAuthority":"mcp.jsonc"`, `"baseInventoryStaleHeuristic":true`, `"liveOverlayStaleHeuristic":true`},
 		},
 		{
 			name:     "mcp tools search",
@@ -6125,12 +6125,12 @@ func TestPersistedRuntimeOverlayFallbackWithoutLiveRegistry(t *testing.T) {
 	configDir := t.TempDir()
 	cacheContent := `{
   "version": 1,
-  "cachedAt": "2026-04-04T00:00:00Z",
+  "cachedAt": "2020-01-01T00:00:00Z",
   "inventory": {
     "servers": [],
     "tools": [],
     "source": "empty",
-    "cachedAt": "2026-04-04T00:00:00Z"
+    "cachedAt": "2020-01-01T00:00:00Z"
   },
   "runtimeOverlay": [
     {
@@ -6142,7 +6142,7 @@ func TestPersistedRuntimeOverlayFallbackWithoutLiveRegistry(t *testing.T) {
       "toolInventoryStatus": "live-probed",
       "integrationLevel": "runtime-added",
       "source": "go-runtime-registry",
-      "lastCheckedAt": "2026-04-04T00:00:05Z",
+      "lastCheckedAt": "2020-01-01T00:00:05Z",
       "tools": [
         {"name": "runtime_search", "description": "Runtime search", "inputSchema": {"type": "object"}}
       ]
@@ -6165,7 +6165,7 @@ func TestPersistedRuntimeOverlayFallbackWithoutLiveRegistry(t *testing.T) {
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected fallback status 200, got %d with body %s", recorder.Code, recorder.Body.String())
 	}
-	for _, needle := range []string{`"name":"runtime_search"`, `"source":"go-persisted-runtime-overlay"`, `"persistedOverlayToolCount":1`, `"runtimeOverlayToolCount":0`} {
+	for _, needle := range []string{`"name":"runtime_search"`, `"source":"go-persisted-runtime-overlay"`, `"persistedOverlayToolCount":1`, `"runtimeOverlayToolCount":0`, `"persistedOverlayCachedAt":"2020-01-01T00:00:05Z"`, `"persistedOverlayAgeMs":`, `"persistedOverlayStaleHeuristic":true`} {
 		if !strings.Contains(recorder.Body.String(), needle) {
 			t.Fatalf("expected response to contain %s, got %s", needle, recorder.Body.String())
 		}
