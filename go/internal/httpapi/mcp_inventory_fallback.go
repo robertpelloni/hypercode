@@ -351,16 +351,23 @@ func inventoryLayerMeta(view *localMCPInventoryView, source string, defaultLayer
 	for key, value := range freshnessBridgeMeta("layer", timestamp, staleAfter) {
 		meta[key] = value
 	}
-	meta["provenance"] = map[string]any{
+	meta["provenance"] = newRecordProvenanceObject(layer, source, nullableString(timestamp), meta["layerAgeMs"], meta["layerStaleHeuristic"])
+	return meta
+}
+
+func newRecordProvenanceObject(layer string, source string, cachedAt any, ageMs any, staleHeuristic any) map[string]any {
+	return map[string]any{
+		"schemaVersion":     1,
+		"primary":           true,
+		"compatibilityMode": "legacy-top-level-mirrors-retained",
 		"layer":             layer,
 		"source":            source,
-		"cachedAt":          nullableString(timestamp),
-		"ageMs":             meta["layerAgeMs"],
-		"staleHeuristic":    meta["layerStaleHeuristic"],
+		"cachedAt":          cachedAt,
+		"ageMs":             ageMs,
+		"staleHeuristic":    staleHeuristic,
 		"cacheAuthority":    "go-local-live-sync",
 		"metadataAuthority": "mcp.jsonc",
 	}
-	return meta
 }
 
 func fallbackMCPInventoryTools(view *localMCPInventoryView) []map[string]any {

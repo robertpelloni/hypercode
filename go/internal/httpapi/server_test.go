@@ -6081,7 +6081,7 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 		{
 			name:     "control tools list",
 			path:     "/api/tools",
-			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"name":"search_tools"`, `"server":"cache-core"`, `"originLayer":"base-inventory"`, `"layerCachedAt":"2020-01-01T00:00:00Z"`, `"layerStaleHeuristic":true`, `"provenance":{"ageMs":`, `"cacheAuthority":"go-local-live-sync"`, `"cachedAt":"2020-01-01T00:00:00Z"`, `"layer":"base-inventory"`, `"metadataAuthority":"mcp.jsonc"`, `"source":"cache"`, `"staleHeuristic":true`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"originLayer":"live-runtime-overlay"`, `"layerCachedAt":"2020-01-01T00:00:05Z"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`, `"baseInventoryCachedAt":"2020-01-01T00:00:00Z"`, `"liveOverlayCachedAt":"2020-01-01T00:00:05Z"`, `"baseInventoryAgeMs":`, `"liveOverlayAgeMs":`, `"liveOverlayStaleHeuristic":true`},
+			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"name":"search_tools"`, `"server":"cache-core"`, `"originLayer":"base-inventory"`, `"layerCachedAt":"2020-01-01T00:00:00Z"`, `"layerStaleHeuristic":true`, `"provenance":{"ageMs":`, `"cacheAuthority":"go-local-live-sync"`, `"cachedAt":"2020-01-01T00:00:00Z"`, `"compatibilityMode":"legacy-top-level-mirrors-retained"`, `"layer":"base-inventory"`, `"metadataAuthority":"mcp.jsonc"`, `"primary":true`, `"schemaVersion":1`, `"source":"cache"`, `"staleHeuristic":true`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"originLayer":"live-runtime-overlay"`, `"layerCachedAt":"2020-01-01T00:00:05Z"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`, `"baseInventoryCachedAt":"2020-01-01T00:00:00Z"`, `"liveOverlayCachedAt":"2020-01-01T00:00:05Z"`, `"baseInventoryAgeMs":`, `"liveOverlayAgeMs":`, `"liveOverlayStaleHeuristic":true`},
 		},
 		{
 			name:     "control tools search",
@@ -10210,7 +10210,7 @@ func TestMCPConfiguredServersFallBackToLocalJsonc(t *testing.T) {
 	if !strings.Contains(listRecorder.Body.String(), `"toolCount":1`) {
 		t.Fatalf("expected jsonc _meta payload, got %s", listRecorder.Body.String())
 	}
-	for _, needle := range []string{`"originLayer":"configured-jsonc"`, `"metadataOrigin":"jsonc-cache"`, `"metadataCachedAt":"2024-01-01T00:00:00Z"`, `"metadataStaleHeuristic":true`, `"provenance":{"ageMs":`, `"layer":"configured-jsonc"`, `"source":"jsonc-cache"`} {
+	for _, needle := range []string{`"originLayer":"configured-jsonc"`, `"metadataOrigin":"jsonc-cache"`, `"metadataCachedAt":"2024-01-01T00:00:00Z"`, `"metadataStaleHeuristic":true`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-retained"`, `"layer":"configured-jsonc"`, `"primary":true`, `"schemaVersion":1`, `"source":"jsonc-cache"`} {
 		if !strings.Contains(listRecorder.Body.String(), needle) {
 			t.Fatalf("expected configured server list provenance %s, got %s", needle, listRecorder.Body.String())
 		}
@@ -10233,7 +10233,7 @@ func TestMCPConfiguredServersFallBackToLocalJsonc(t *testing.T) {
 	if !strings.Contains(getRecorder.Body.String(), `"name":"core"`) {
 		t.Fatalf("expected configured server get payload, got %s", getRecorder.Body.String())
 	}
-	for _, needle := range []string{`"originLayer":"configured-jsonc"`, `"metadataOrigin":"jsonc-cache"`, `"metadataCachedAt":"2024-01-01T00:00:00Z"`, `"provenance":{"ageMs":`, `"layer":"configured-jsonc"`, `"source":"jsonc-cache"`} {
+	for _, needle := range []string{`"originLayer":"configured-jsonc"`, `"metadataOrigin":"jsonc-cache"`, `"metadataCachedAt":"2024-01-01T00:00:00Z"`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-retained"`, `"layer":"configured-jsonc"`, `"primary":true`, `"schemaVersion":1`, `"source":"jsonc-cache"`} {
 		if !strings.Contains(getRecorder.Body.String(), needle) {
 			t.Fatalf("expected configured server get provenance %s, got %s", needle, getRecorder.Body.String())
 		}
