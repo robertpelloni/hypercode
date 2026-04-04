@@ -237,6 +237,23 @@ describe('acquireSingleInstanceLock', () => {
         });
     });
 
+    it('falls forward to the next free control-plane port when the default port is occupied by another process', async () => {
+        const dataDir = createTempDir();
+
+        const handle = await acquireSingleInstanceLock({
+            dataDir,
+            requestedPort: 4000,
+            explicitPort: false,
+            host: '127.0.0.1',
+        }, {
+            isPortFree: async (port) => port === 4001,
+            isExistingHypercode: async () => false,
+        });
+
+        expect(handle.port).toBe(4001);
+        handle.releaseSync();
+    });
+
     it('updates the lock record port when the active control-plane port changes', async () => {
         const dataDir = createTempDir();
         const handle = await acquireSingleInstanceLock({

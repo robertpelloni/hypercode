@@ -500,22 +500,37 @@ Observed from a real operator run:
 - `start.bat` completed install/build steps
 - the hub failed at the final CLI startup phase with:
   - `Port 4000 is already in use by another process`
+- direct probing showed that `127.0.0.1:4000` was accepting TCP connections but returning generic Express-style `404 Cannot GET /...` responses for the initial HyperCode health probes
 
-This was misleading when the port owner was actually an existing HyperCode instance. The CLI now handles that case truthfully and non-destructively.
+This revealed **two distinct occupied-port cases**:
+1. the port is occupied by an existing HyperCode instance → reuse it cleanly
+2. the port is occupied by a different process and the user did not explicitly request that port → automatically fall forward to the next free control-plane port instead of failing hard
+
+The CLI now handles both cases non-destructively.
+
+### Additional startup hardening in the follow-up pass
+- `packages/cli/src/commands/start.ts`
+  - `acquireSingleInstanceLock(...)` now falls forward to the next available control-plane port **during lock acquisition**, not only later during core bind retry
+  - this specifically fixes the case where startup previously failed before the existing runtime fallback logic even had a chance to run
+  - startup now emits a clear note when the default port was occupied and a new port is selected
+- `packages/cli/src/commands/start.test.ts`
+  - added regression coverage verifying that a non-HyperCode process on the default port causes automatic fallback to the next free port when the user did not explicitly request a port
 
 ### Validation performed in this pass
 Commands run:
 ```bash
 pnpm exec vitest run packages/cli/src/commands/start.test.ts
 cd packages/cli && pnpm run type-check
+pnpm -C packages/cli build
 cd go && go test ./internal/orchestration ./internal/sync
 cd go && go test ./...
 pnpm run build:workspace
 ```
 
 Results:
-- CLI startup tests passed (`25/25` in `start.test.ts`)
+- CLI startup tests passed (`26/26` in `start.test.ts`)
 - CLI type-check passed
+- CLI package build passed
 - council/sync tests passed
 - full Go suite remained green
 - workspace build remained green
@@ -523,6 +538,7 @@ Results:
 ### Updated truthfulness assessment
 This pass improved both operator UX and native-sidecar confidence:
 - startup is now more truthful when an existing HyperCode instance is already serving the requested port
+- startup is also more resilient when the default port is occupied by a different process, because it can now automatically fall forward to the next free port
 - council fallback logic is now testable without live model calls
 - BobbyBookmarks sync error handling is stricter and now covered by tests
 

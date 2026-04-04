@@ -255,6 +255,17 @@ export async function acquireSingleInstanceLock(
         if (await checkExistingHypercode(options.host, selectedPort)) {
           throw new HypercodeAlreadyRunningError(options.host, selectedPort, 'port');
         }
+
+        if (!options.explicitPort) {
+          const fallbackPort = await pickAvailableControlPlaneFallbackPort(selectedPort + 1, {
+            isPortFree: checkPortFree,
+          });
+          if (fallbackPort !== null) {
+            selectedPort = fallbackPort;
+            continue;
+          }
+        }
+
         throw new Error(
           `Port ${selectedPort} is already in use by another process. `
           + `Stop that process or start HyperCode with --port <free-port>.`,
@@ -664,6 +675,9 @@ Examples:
         console.log(chalk.dim(`  Lock: ${lockHandle.lockPath}`));
         if (lockHandle.clearedStaleLock) {
           console.log(chalk.yellow(`  ↺ Cleared stale HyperCode lock${lockHandle.reusedStalePort ? ` and reused port ${port}` : ''}`));
+        }
+        if (!explicitPort && requestedPort !== port) {
+          console.log(chalk.yellow(`  ↺ Port ${requestedPort} was already occupied before startup; using ${port} instead.`));
         }
         console.log('');
 
