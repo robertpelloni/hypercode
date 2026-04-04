@@ -15696,6 +15696,15 @@ func configuredServerProvenance(server map[string]any, originLayer string) map[s
 	for key, value := range freshnessBridgeMeta("metadata", metadataCachedAt, 24*time.Hour) {
 		result[key] = value
 	}
+	result["provenance"] = map[string]any{
+		"layer":             originLayer,
+		"source":            metadataOrigin,
+		"cachedAt":          nullableString(metadataCachedAt),
+		"ageMs":             result["metadataAgeMs"],
+		"staleHeuristic":    result["metadataStaleHeuristic"],
+		"cacheAuthority":    "go-local-live-sync",
+		"metadataAuthority": "mcp.jsonc",
+	}
 	return result
 }
 

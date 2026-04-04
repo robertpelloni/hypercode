@@ -351,6 +351,15 @@ func inventoryLayerMeta(view *localMCPInventoryView, source string, defaultLayer
 	for key, value := range freshnessBridgeMeta("layer", timestamp, staleAfter) {
 		meta[key] = value
 	}
+	meta["provenance"] = map[string]any{
+		"layer":             layer,
+		"source":            source,
+		"cachedAt":          nullableString(timestamp),
+		"ageMs":             meta["layerAgeMs"],
+		"staleHeuristic":    meta["layerStaleHeuristic"],
+		"cacheAuthority":    "go-local-live-sync",
+		"metadataAuthority": "mcp.jsonc",
+	}
 	return meta
 }
 

@@ -1931,6 +1931,73 @@ Results:
 - Go build passed
 - full Go suite passed
 
+## Follow-up provenance-schema unification step (stable nested `provenance` object)
+The next cleanup target was naming consistency.
+
+### The inconsistency before this step
+By this point, fallback records had become much more truthful, but the naming model was still mixed:
+- `source`
+- `originLayer`
+- `metadataOrigin`
+- `layerCachedAt`
+- `metadataCachedAt`
+
+That was workable for humans reading raw JSON, but not ideal for UI/API consumers trying to rely on one predictable provenance schema across all MCP fallback records.
+
+### What changed
+- updated `go/internal/httpapi/mcp_inventory_fallback.go`
+  - tool fallback records now expose a nested `provenance` object with fields like:
+    - `layer`
+    - `source`
+    - `cachedAt`
+    - `ageMs`
+    - `staleHeuristic`
+    - `cacheAuthority`
+    - `metadataAuthority`
+  - runtime server fallback records now use the same nested `provenance` object model
+- updated `go/internal/httpapi/server.go`
+  - configured-server fallback records now also expose a nested `provenance` object while preserving the richer configured-server-specific metadata fields already present at the top level
+- expanded `go/internal/httpapi/server_test.go`
+  - fallback tests now verify the nested `provenance` object across:
+    - tool fallback records
+    - runtime server fallback records
+    - configured-server fallback records
+
+### Compatibility note
+This step was intentionally additive.
+
+What changed for consumers:
+- there is now one stable nested `provenance` object to read across MCP fallback record types
+
+What did **not** change yet:
+- the legacy top-level fields remain present for compatibility
+- this is a schema unification step, not a breaking rename/removal step
+
+### Important truthfulness note
+What is true now:
+- MCP fallback records now have a more uniform provenance schema
+- clients can read one nested `provenance` object across tools, runtime servers, and configured servers
+- the schema is more predictable without pretending old fields never existed
+
+What is still not true yet:
+- some legacy top-level provenance fields still remain alongside the nested object
+- there is still not a single shared typed API contract across TS and Go for all these record shapes
+- this improves consistency, not full end-state contract parity
+
+### Validation performed for this provenance-schema unification step
+```bash
+gofmt -w go/internal/httpapi/mcp_inventory_fallback.go go/internal/httpapi/server.go go/internal/httpapi/server_test.go
+cd go && go test ./internal/httpapi ./internal/mcp
+cd go && go build -buildvcs=false ./cmd/hypercode
+cd go && go test ./...
+```
+
+Results:
+- targeted httpapi tests passed
+- targeted mcp tests passed
+- Go build passed
+- full Go suite passed
+
 ## Bottom line
 This pass meaningfully strengthened the **Go-primary migration path** and improved TypeScript survivability while the migration continues:
 - broader provider routing
@@ -1977,6 +2044,7 @@ This pass meaningfully strengthened the **Go-primary migration path** and improv
 - individual fallback tool records now carry origin-layer and layer freshness metadata so clients can explain per-tool provenance directly
 - runtime server fallback records now also carry server-level origin-layer and layer freshness metadata, and can recover from persisted runtime overlay cache when live summary detection is unavailable
 - configured-server fallback records now carry record-level definition-layer provenance plus metadata freshness/provenance fields across JSONC-backed and DB-backed fallback reads
+- MCP fallback records now expose a stable nested `provenance` object across tools, runtime servers, and configured servers while preserving legacy top-level fields for compatibility
 - a tested Go-native replacement path for multiple TS-owned persistence surfaces, even though mixed-runtime cleanup is not fully finished yet
 - a small but real Maestro UX fix
 
