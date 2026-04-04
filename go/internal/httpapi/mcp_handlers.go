@@ -216,12 +216,12 @@ func (s *Server) handleMCPRuntimeServers(w http.ResponseWriter, r *http.Request)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
-			"data":    fallbackRuntimeServersWithProvenance(nil, view),
+			"data":    fallbackRuntimeServerListWithPrimaryProvenance(nil, view),
 			"bridge":  bridge,
 		})
 		return
 	}
-	baseServers := fallbackRuntimeServersWithProvenance(summary.InstalledHarnesses, view)
+	baseServers := fallbackRuntimeServerListWithPrimaryProvenance(summary.InstalledHarnesses, view)
 	bridge := map[string]any{
 		"fallback":  "go-local-mcp",
 		"procedure": "mcp.listServers",

@@ -2259,9 +2259,13 @@ func (s *Server) handleMCPConfiguredServers(w http.ResponseWriter, r *http.Reque
 
 	fallbackServers, fallbackErr := s.localConfiguredMCPServers()
 	if fallbackErr == nil && len(fallbackServers) > 0 {
+		trimmedServers := make([]map[string]any, 0, len(fallbackServers))
+		for _, server := range fallbackServers {
+			trimmedServers = append(trimmedServers, primaryConfiguredServerProvenanceOnly(server))
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
-			"data":    fallbackServers,
+			"data":    trimmedServers,
 			"bridge": map[string]any{
 				"fallback":  "go-local-jsonc",
 				"procedure": "mcpServers.list",
@@ -2281,9 +2285,13 @@ func (s *Server) handleMCPConfiguredServers(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	trimmedServers := make([]map[string]any, 0, len(fallbackServers))
+	for _, server := range fallbackServers {
+		trimmedServers = append(trimmedServers, primaryConfiguredServerProvenanceOnly(server))
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    fallbackServers,
+		"data":    trimmedServers,
 		"bridge": map[string]any{
 			"fallback":  "go-local-mcp-db",
 			"procedure": "mcpServers.list",

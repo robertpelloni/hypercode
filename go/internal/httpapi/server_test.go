@@ -5905,7 +5905,10 @@ var AutoCallTool = struct{
 				`using local MCP runtime server summary`,
 				`"name":"hypercode"`,
 				`"toolInventoryStatus":"source-backed"`,
-				`"originLayer":"source-backed-summary"`,
+				`"provenance":{"ageMs":null`,
+				`"compatibilityMode":"legacy-top-level-mirrors-trimmed"`,
+				`"legacyMirrorFields":[]`,
+				`"layer":"source-backed-summary"`,
 			},
 		},
 		{
@@ -6099,7 +6102,8 @@ func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
 		{
 			name:     "mcp runtime servers",
 			path:     "/api/mcp/servers/runtime",
-			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP runtime overlay cache`, `"name":"runtime-core"`, `"originLayer":"live-runtime-overlay"`, `"layerCachedAt":"2020-01-01T00:00:05Z"`, `"provenance":{"ageMs":`, `"layer":"live-runtime-overlay"`, `"source":"go-runtime-registry"`, `"runtimeOverlayServerCount":1`, `"liveOverlayStaleHeuristic":true`, `"cacheAuthority":"go-local-live-sync"`},
+			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP runtime overlay cache`, `"name":"runtime-core"`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"live-runtime-overlay"`, `"source":"go-runtime-registry"`, `"runtimeOverlayServerCount":1`, `"liveOverlayStaleHeuristic":true`, `"cacheAuthority":"go-local-live-sync"`},
+			absent:   []string{`"originLayer":"live-runtime-overlay"`, `"layerCachedAt":"2020-01-01T00:00:05Z"`},
 		},
 		{
 			name:     "mcp tools list",
@@ -6197,9 +6201,14 @@ func TestPersistedRuntimeOverlayFallbackWithoutLiveRegistry(t *testing.T) {
 	if serverRecorder.Code != http.StatusOK {
 		t.Fatalf("expected runtime server fallback status 200, got %d with body %s", serverRecorder.Code, serverRecorder.Body.String())
 	}
-	for _, needle := range []string{`"name":"runtime-core"`, `"source":"go-persisted-runtime-overlay"`, `"originLayer":"persisted-runtime-overlay"`, `"layerCachedAt":"2020-01-01T00:00:05Z"`, `"provenance":{"ageMs":`, `"layer":"persisted-runtime-overlay"`, `"source":"go-persisted-runtime-overlay"`, `"persistedOverlayServerCount":1`, `"runtimeOverlayServerCount":0`, `"persistedOverlayCachedAt":"2020-01-01T00:00:05Z"`, `"persistedOverlayStaleHeuristic":true`} {
+	for _, needle := range []string{`"name":"runtime-core"`, `"source":"go-persisted-runtime-overlay"`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"persisted-runtime-overlay"`, `"source":"go-persisted-runtime-overlay"`, `"persistedOverlayServerCount":1`, `"runtimeOverlayServerCount":0`, `"persistedOverlayCachedAt":"2020-01-01T00:00:05Z"`, `"persistedOverlayStaleHeuristic":true`} {
 		if !strings.Contains(serverRecorder.Body.String(), needle) {
 			t.Fatalf("expected runtime server response to contain %s, got %s", needle, serverRecorder.Body.String())
+		}
+	}
+	for _, needle := range []string{`"originLayer":"persisted-runtime-overlay"`, `"layerCachedAt":"2020-01-01T00:00:05Z"`} {
+		if strings.Contains(serverRecorder.Body.String(), needle) {
+			t.Fatalf("expected trimmed runtime server list response to omit %s, got %s", needle, serverRecorder.Body.String())
 		}
 	}
 }
@@ -10225,9 +10234,14 @@ func TestMCPConfiguredServersFallBackToLocalJsonc(t *testing.T) {
 	if !strings.Contains(listRecorder.Body.String(), `"toolCount":1`) {
 		t.Fatalf("expected jsonc _meta payload, got %s", listRecorder.Body.String())
 	}
-	for _, needle := range []string{`"originLayer":"configured-jsonc"`, `"metadataOrigin":"jsonc-cache"`, `"metadataCachedAt":"2024-01-01T00:00:00Z"`, `"metadataStaleHeuristic":true`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-retained"`, `"legacyMirrorFields":["originLayer","metadataOrigin","metadataCachedAt","metadataAgeMs","metadataStaleHeuristic"]`, `"layer":"configured-jsonc"`, `"primary":true`, `"schemaVersion":1`, `"source":"jsonc-cache"`} {
+	for _, needle := range []string{`"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"configured-jsonc"`, `"primary":true`, `"schemaVersion":1`, `"source":"jsonc-cache"`, `"cachedAt":"2024-01-01T00:00:00Z"`, `"staleHeuristic":true`} {
 		if !strings.Contains(listRecorder.Body.String(), needle) {
 			t.Fatalf("expected configured server list provenance %s, got %s", needle, listRecorder.Body.String())
+		}
+	}
+	for _, needle := range []string{`"originLayer":"configured-jsonc"`, `"metadataOrigin":"jsonc-cache"`, `"metadataCachedAt":"2024-01-01T00:00:00Z"`, `"metadataStaleHeuristic":true`} {
+		if strings.Contains(listRecorder.Body.String(), needle) {
+			t.Fatalf("expected configured server list to omit legacy field %s, got %s", needle, listRecorder.Body.String())
 		}
 	}
 

@@ -435,6 +435,25 @@ func primaryProvenanceOnly(record map[string]any) map[string]any {
 	return result
 }
 
+func primaryConfiguredServerProvenanceOnly(record map[string]any) map[string]any {
+	if record == nil {
+		return map[string]any{}
+	}
+	result := cloneMap(record)
+	delete(result, "originLayer")
+	delete(result, "metadataOrigin")
+	delete(result, "metadataCachedAt")
+	delete(result, "metadataAgeMs")
+	delete(result, "metadataStaleHeuristic")
+	if provenance, ok := result["provenance"].(map[string]any); ok {
+		cloned := cloneMap(provenance)
+		cloned["compatibilityMode"] = "legacy-top-level-mirrors-trimmed"
+		cloned["legacyMirrorFields"] = []string{}
+		result["provenance"] = cloned
+	}
+	return result
+}
+
 func fallbackControlToolsFromInventory(view *localMCPInventoryView) []map[string]any {
 	if view == nil || view.Inventory == nil {
 		return []map[string]any{}
@@ -491,6 +510,15 @@ func fallbackControlToolFromInventory(view *localMCPInventoryView, uuid string) 
 		}
 	}
 	return nil
+}
+
+func fallbackRuntimeServerListWithPrimaryProvenance(definitions []harnesses.Definition, view *localMCPInventoryView) []map[string]any {
+	items := fallbackRuntimeServersWithProvenance(definitions, view)
+	trimmed := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		trimmed = append(trimmed, primaryProvenanceOnly(item))
+	}
+	return trimmed
 }
 
 func fallbackRuntimeServersWithProvenance(definitions []harnesses.Definition, view *localMCPInventoryView) []map[string]any {
