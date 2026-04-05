@@ -1097,7 +1097,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/sessions/supervisor/update-state", Category: "sessions", Description: "Update the shared session-manager state through TypeScript when available, with native Go persisted session-state fallback when unavailable."},
 				{Path: "/api/sessions/supervisor/clear", Category: "sessions", Description: "Clear the shared session-manager state through TypeScript when available, with native Go persisted session-state fallback when unavailable."},
 				{Path: "/api/sessions/supervisor/heartbeat", Category: "sessions", Description: "Touch the shared session-manager heartbeat through TypeScript when available, with native Go persisted session-state fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/restore", Category: "sessions", Description: "Restore supervised sessions through the TypeScript control plane."},
+				{Path: "/api/sessions/supervisor/restore", Category: "sessions", Description: "Restore supervised sessions through TypeScript when available, with native Go persisted supervisor restore fallback when unavailable."},
 				{Path: "/api/sessions/imported/list", Category: "sessions", Description: "Bridge to imported sessions already processed by the TypeScript control plane, with local Go persistence fallback."},
 				{Path: "/api/sessions/imported/get", Category: "sessions", Description: "Bridge to a specific imported session record from the TypeScript control plane, with local Go persistence fallback."},
 				{Path: "/api/sessions/imported/scan", Category: "sessions", Description: "Trigger TypeScript imported-session scanning, import, and memory extraction."},

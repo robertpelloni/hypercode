@@ -636,7 +636,37 @@ func (s *Server) handleSupervisorSessionHeartbeat(w http.ResponseWriter, r *http
 }
 
 func (s *Server) handleSupervisorSessionRestore(w http.ResponseWriter, r *http.Request) {
-	s.handleSessionBridgeCall(w, r, http.MethodPost, "session.restore", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "session.restore", map[string]any{}, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "session.restore",
+			},
+		})
+		return
+	}
+
+	restored := s.supervisorManager.RestoreSessions()
+	status := s.supervisorManager.GetRestoreStatus()
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"restoredCount":    len(restored),
+			"sessions":         restored,
+			"autoResumeCount":  status.AutoResumeCount,
+			"lastRestoreAt":    status.LastRestoreAt,
+			"restoredSessions": restored,
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-supervisor",
+			"procedure": "session.restore",
+			"reason":    "upstream unavailable; reloaded native Go persisted supervisor sessions",
+		},
+	})
 }
 
 func defaultLocalSessionCommand(cliType string, providedArgs []string) (string, []string) {

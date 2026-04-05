@@ -491,6 +491,11 @@ func (m *Manager) GetRestoreStatus() RestoreStatus {
 	return status
 }
 
+func (m *Manager) RestoreSessions() []SupervisedSession {
+	m.restoreSessions()
+	return m.ListSessions()
+}
+
 func (m *Manager) Shutdown() error {
 	m.mu.Lock()
 	for _, session := range m.sessions {

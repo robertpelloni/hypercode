@@ -1,5 +1,70 @@
 # HyperCode Stabilization Analysis — 2026-04-03
 
+## Latest stabilization pass — native Go restore fallback for persisted supervisor sessions
+
+### Context
+After the previous durability pass, Go fallback-created supervised sessions could survive Go runtime restart via `.hypercode-go/session-supervisor.json`, but the public restore route still remained bridge-only:
+- `POST /api/sessions/supervisor/restore`
+
+That meant Go could durably remember its own fallback supervisor inventory, but it could not yet explicitly reload that persisted inventory on demand through the same public operator surface when the TypeScript runtime was unavailable.
+
+### What changed
+#### 1. Added an explicit public restore method to the Go supervisor manager
+Updated:
+- `go/internal/supervisor/supervisor.go`
+
+The Go supervisor manager now exposes:
+- `RestoreSessions()`
+- `GetRestoreStatus()`
+
+This allows the HTTP layer to explicitly reload the Go-owned persisted supervisor inventory instead of depending only on constructor-time restore behavior.
+
+#### 2. Reworked the public restore route from bridge-only to upstream-first with native Go fallback
+Updated:
+- `go/internal/httpapi/session_supervisor_handlers.go`
+- `go/internal/httpapi/server.go`
+- `go/internal/httpapi/server_test.go`
+
+`POST /api/sessions/supervisor/restore` now:
+- tries TypeScript first when available
+- falls back to reloading the native Go persisted supervisor inventory when TypeScript is unavailable
+- returns explicit fallback metadata under:
+  - `fallback: "go-local-supervisor"`
+
+The local restore response now truthfully includes:
+- `restoredCount`
+- `sessions`
+- `restoredSessions`
+- `autoResumeCount`
+- `lastRestoreAt`
+
+That makes the restore result operator-visible instead of silently relying on server startup side effects.
+
+#### 3. Added focused route coverage for restore-on-demand
+Updated:
+- `go/internal/httpapi/server_test.go`
+
+Added a regression that:
+- starts a Go server with an empty in-memory supervisor inventory
+- writes a persisted Go supervisor state file directly to `.hypercode-go/session-supervisor.json`
+- calls `/api/sessions/supervisor/restore`
+- verifies the route reloads the persisted session into the live Go supervisor inventory
+- verifies subsequent `list` reflects the restored session
+
+### Validation
+Executed truthfully without killing any processes:
+- `cd go && gofmt -w internal/httpapi/server.go internal/httpapi/server_test.go internal/httpapi/session_supervisor_handlers.go internal/supervisor/supervisor.go`
+- `cd go && go test ./internal/httpapi ./internal/supervisor -run 'TestSupervisorSessionRestoreFallsBackToLocalGoPersistence|TestSupervisorSessionRoutesPersistAcrossServerRestart|TestSupervisorSessionRoutesFallBackToLocalGoSupervisor|TestSupervisorSessionBridgeRoutes|TestManagerPersistsAndRestoresCreatedSessions|TestManagerRestoreNormalizesTransientRunningStateToStoppedWithoutAutoResume' -count=1`
+- `cd go && go test ./internal/httpapi ./internal/supervisor ./internal/git -count=1`
+
+### Why this matters
+This closes the loop on the new Go supervisor durability lane:
+- Go can now persist its fallback supervisor inventory
+- Go can restore that inventory on startup
+- Go can also explicitly reload that inventory through the public restore route when TS is unavailable
+
+That is still not full TypeScript supervisor parity, but it makes the Go fallback lifecycle much more coherent and operator-credible.
+
 ## Latest stabilization pass — durable Go supervisor lifecycle persistence across runtime restarts
 
 ### Context

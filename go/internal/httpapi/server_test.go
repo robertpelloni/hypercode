@@ -5916,6 +5916,72 @@ func TestSupervisorSessionRoutesPersistAcrossServerRestart(t *testing.T) {
 	}
 }
 
+func TestSupervisorSessionRestoreFallsBackToLocalGoPersistence(t *testing.T) {
+	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	workspaceRoot := t.TempDir()
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspaceRoot
+	cfg.ConfigDir = filepath.Join(workspaceRoot, ".hypercode-go")
+	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".hypercode")
+	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
+		t.Fatalf("failed to create go config dir: %v", err)
+	}
+	if err := os.MkdirAll(cfg.MainConfigDir, 0o755); err != nil {
+		t.Fatalf("failed to create main config dir: %v", err)
+	}
+
+	server := New(cfg, stubDetector{})
+	persistedPath := filepath.Join(cfg.ConfigDir, "session-supervisor.json")
+	persistedJSON := `{
+  "sessions": [
+    {
+      "id": "restore-http-session",
+      "name": "Restored HTTP Session",
+      "cliType": "custom",
+      "command": "go",
+      "args": ["version"],
+      "env": {},
+      "executionProfile": "auto",
+      "requestedWorkingDirectory": "` + strings.ReplaceAll(workspaceRoot, `\`, `\\`) + `",
+      "workingDirectory": "` + strings.ReplaceAll(workspaceRoot, `\`, `\\`) + `",
+      "autoRestart": false,
+      "isolateWorktree": false,
+      "status": "created",
+      "restartCount": 0,
+      "maxRestartAttempts": 0,
+      "createdAt": 1,
+      "lastActivityAt": 1,
+      "metadata": {"source": "restore-route-test"},
+      "logs": []
+    }
+  ],
+  "savedAt": 1
+}`
+	if err := os.WriteFile(persistedPath, []byte(persistedJSON), 0o644); err != nil {
+		t.Fatalf("failed to write persisted supervisor state: %v", err)
+	}
+
+	restoreRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(restoreRecorder, httptest.NewRequest(http.MethodPost, "/api/sessions/supervisor/restore", nil))
+	if restoreRecorder.Code != http.StatusOK {
+		t.Fatalf("expected status 200 from local restore fallback, got %d %s", restoreRecorder.Code, restoreRecorder.Body.String())
+	}
+	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.restore"`, `"restoredCount":1`, `"restore-http-session"`, `"Restored HTTP Session"`} {
+		if !strings.Contains(restoreRecorder.Body.String(), needle) {
+			t.Fatalf("expected local restore payload to contain %s, got %s", needle, restoreRecorder.Body.String())
+		}
+	}
+
+	listRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/supervisor/list", nil))
+	if listRecorder.Code != http.StatusOK {
+		t.Fatalf("expected status 200 from local list after restore, got %d %s", listRecorder.Code, listRecorder.Body.String())
+	}
+	if !strings.Contains(listRecorder.Body.String(), `"restore-http-session"`) {
+		t.Fatalf("expected restored session in local list payload, got %s", listRecorder.Body.String())
+	}
+}
+
 func TestMCPBridgeRoutes(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")

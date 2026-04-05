@@ -3,6 +3,34 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
+### Latest incremental pass — native Go restore fallback for persisted supervisor sessions
+This follow-up made the public supervisor restore route truthful in degraded mode by letting Go explicitly reload its own persisted supervisor inventory when TypeScript is unavailable.
+
+#### What changed
+- Added/used a public `RestoreSessions()` method on the Go supervisor manager in `go/internal/supervisor/supervisor.go`
+- Reworked `/api/sessions/supervisor/restore` in `go/internal/httpapi/session_supervisor_handlers.go` so it now behaves as upstream-first with native Go fallback instead of bridge-only
+- Updated the Go API index description in `go/internal/httpapi/server.go`
+- Added focused restore-route regression coverage in `go/internal/httpapi/server_test.go`
+
+#### Fallback semantics
+When TS is unavailable, `POST /api/sessions/supervisor/restore` now truthfully reloads the Go-owned persisted supervisor inventory from:
+- `.hypercode-go/session-supervisor.json`
+
+The local restore response includes:
+- `restoredCount`
+- `sessions`
+- `restoredSessions`
+- `autoResumeCount`
+- `lastRestoreAt`
+
+#### Validation performed
+- `cd go && gofmt -w internal/httpapi/server.go internal/httpapi/server_test.go internal/httpapi/session_supervisor_handlers.go internal/supervisor/supervisor.go`
+- `cd go && go test ./internal/httpapi ./internal/supervisor -run 'TestSupervisorSessionRestoreFallsBackToLocalGoPersistence|TestSupervisorSessionRoutesPersistAcrossServerRestart|TestSupervisorSessionRoutesFallBackToLocalGoSupervisor|TestSupervisorSessionBridgeRoutes|TestManagerPersistsAndRestoresCreatedSessions|TestManagerRestoreNormalizesTransientRunningStateToStoppedWithoutAutoResume' -count=1`
+- `cd go && go test ./internal/httpapi ./internal/supervisor ./internal/git -count=1`
+
+#### Recommended next step after this pass
+Continue deeper Go-native supervisor parity by narrowing the remaining higher-value gaps around execution-policy/worktree ownership and any remaining TS-only restore/control semantics.
+
 ### Latest incremental pass — durable Go supervised-session lifecycle persistence
 This follow-up made the new native Go supervised-session fallback durable across Go runtime restarts instead of leaving it as an in-memory-only rescue path.
 
