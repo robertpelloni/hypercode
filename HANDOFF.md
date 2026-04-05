@@ -22,6 +22,7 @@
 6. Committed and pushed:
    - `7785a9a3` — `feat: surface startup provenance in system dashboards`
    - `38b10684` — `feat: surface startup provenance in orchestrator dashboard`
+   - `590d8848` — `feat: prefer go startup truth in web compat fallback`
 
 ### Files changed in this slice
 - `apps/web/src/app/dashboard/system/page.tsx`
