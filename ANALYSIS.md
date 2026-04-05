@@ -286,6 +286,15 @@ The adjacent session-management gap was `session.catalog`. There is no direct Go
 
 This is intentionally framed as a derived catalog fallback, not as proof that the TypeScript session harness catalog runtime has been fully ported.
 
+The next broader degraded-mode gap was `tools.detectExecutionEnvironment`. Unlike `session.catalog`, this one already had a real Go-native truth source: `/api/tools/detect-execution-environment` bridges the TypeScript router when available and falls back to native Go shell/tool/harness detection when the router is unavailable. The web compat layer simply was not using it yet. That is now fixed. The local dashboard compat path now:
+- prefers Go-native execution-environment truth for `tools.detectExecutionEnvironment`
+- normalizes native shell rows into the existing dashboard contract (`id`, `name`, `installed`, `verified`, `preferred`, `resolvedPath`, `family`, `version`)
+- normalizes native tool rows into the existing dashboard contract (`id`, `name`, `installed`, `verified`, `resolvedPath`, `version`, `capabilities`)
+- preserves native execution summary fields such as preferred shell, verified shell/tool counts, harness counts, PowerShell/POSIX support, and operator notes
+- reuses the same normalized summary to populate `startupStatus.checks.executionEnvironment` during degraded-mode fallback, so dashboard home/system summaries stop drifting away from the AI Tools page
+
+When the execution-environment endpoint is itself unavailable, the compat layer now still preserves truthful harness counts from the already-upgraded Go harness inventory instead of collapsing the entire execution-environment shape back to all-zero synthetic placeholders.
+
 Why this matters:
 - it makes Go-primary launch use the same compiled artifact that the startup build profile already validates
 - it reduces repeated `go run` compilation overhead at runtime
@@ -346,6 +355,10 @@ Results:
 - a focused dashboard render test was added, but `vitest` is not directly installed in `apps/web`, so that new test was validated indirectly through the successful web build rather than executed as a standalone test command in this pass
 - a focused app-route compat regression was executed successfully through the root Vitest runner (`pnpm exec vitest run apps/web/src/app/api/trpc/[trpc]/route.test.ts`), validating Go-native `/api/startup/status` + `/api/runtime/status` preference when `startupStatus` is unavailable, Go-native `/api/mcp/status` preference when `mcp.getStatus` is unavailable, Go-native provider quota/fallback-chain preference when TypeScript billing procedures are unavailable, Go-native `/api/cli/harnesses` preference when `tools.detectCliHarnesses` is unavailable, Go-native `/api/sessions` preference when `session.list` is unavailable, and Go-derived `session.catalog` fallback from the native harness inventory
 - startup truthfulness validation also reproduced the exact operator path from `start.bat` without launching a long-lived process by using `start.bat --help`; after the fix, Go-primary startup now truthfully reports and executes the build when `scripts/check_startup_build.mjs` returns non-zero, and forced Go-primary installs now use `pnpm install --ignore-scripts` by default instead of tripping unrelated Maestro/Electron postinstall rebuilds
+- the execution-environment compat slice was validated with:
+  - `pnpm exec vitest run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+  - `pnpm -C apps/web run build`
+  - the route regression now proves Go-native `/api/tools/detect-execution-environment` preference for `tools.detectExecutionEnvironment` and verifies that the same normalized summary is injected into degraded `startupStatus.checks.executionEnvironment`
 - concrete validation for the startup slice included:
   - `pnpm -C packages/cli run build`
   - `powershell.exe -NoProfile -Command '$env:HYPERCODE_FORCE_INSTALL="1"; $env:HYPERCODE_SKIP_NATIVE_PREFLIGHT="1"; $env:HYPERCODE_SKIP_BUILD="1"; cmd.exe /c "start.bat --help"'`
@@ -393,6 +406,7 @@ Result:
 - the web compat fallback now also derives `session.catalog` from Go-native `/api/cli/harnesses` when the TypeScript catalog is unavailable, reducing reliance on empty session-harness catalog placeholders in degraded mode
 - `start.bat` no longer captures startup probe exit codes with parse-time `%ERRORLEVEL%` inside parenthesized blocks; it now uses runtime `!ERRORLEVEL!`, fixing a real contradiction where startup could print `Go-primary startup build is required` and then incorrectly claim `Skipping startup build because Go-primary build artifacts already current`
 - Go-primary startup installs now default to `pnpm install --ignore-scripts` (unless `HYPERCODE_STARTUP_INSTALL_SCRIPTS=1` is set), reducing unnecessary coupling to unrelated workspace postinstall hooks such as Maestro/Electron rebuilds while still allowing the operator to force the full scripted install path when needed
+- the web compat fallback now also prefers Go-native `/api/tools/detect-execution-environment` when `tools.detectExecutionEnvironment` is unavailable, and reuses that same normalized summary inside degraded `startupStatus.checks.executionEnvironment`
 - the Go-native `/api/runtime/status` surface now also exposes startup provenance, making the native backend itself self-describing
 - `start.bat` now validates Go-first startup surfaces by default for `auto`/`go` runtime modes instead of always requiring a full workspace build first
 - `start.bat` can now skip `pnpm install` in Go-primary mode when the workspace is already ready

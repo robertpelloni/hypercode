@@ -817,6 +817,42 @@ function normalizeNativeSessionStatus(value: unknown): string {
   return 'created';
 }
 
+function normalizeCliHarnessDetection(entry: unknown): Record<string, unknown> | null {
+  const record = asObjectRecord(entry);
+  if (!record) {
+    return null;
+  }
+
+  const id = readString(record.id);
+  if (!id) {
+    return null;
+  }
+
+  const runtime = readString(record.runtime);
+  const launchCommand = readString(record.launchCommand);
+  const description = readString(record.description);
+  const parityNotes = readString(record.parityNotes);
+  const maturity = readString(record.maturity);
+  const upstream = readString(record.upstream);
+  const installed = readBoolean(record.installed);
+  const primary = readBoolean(record.primary) === true;
+
+  return {
+    id,
+    name: id,
+    command: launchCommand ?? '',
+    homepage: upstream ?? '#',
+    docsUrl: upstream ?? '#',
+    installHint: parityNotes ?? description ?? runtime ?? 'CLI harness metadata available from native Go inventory.',
+    sessionCapable: true,
+    installed: installed ?? false,
+    resolvedPath: installed ? (launchCommand ?? null) : null,
+    version: maturity,
+    detectionError: installed ? null : 'Not detected in current environment',
+    primary,
+  };
+}
+
 async function buildPreferredCliHarnessDetections(): Promise<unknown[]> {
   for (const base of resolveNativeStatusBases()) {
     try {
@@ -831,41 +867,7 @@ async function buildPreferredCliHarnessDetections(): Promise<unknown[]> {
       }
 
       return payload.data
-        .map((entry, index) => {
-          const record = asObjectRecord(entry);
-          if (!record) {
-            return null;
-          }
-
-          const id = readString(record.id);
-          if (!id) {
-            return null;
-          }
-
-          const runtime = readString(record.runtime);
-          const launchCommand = readString(record.launchCommand);
-          const description = readString(record.description);
-          const parityNotes = readString(record.parityNotes);
-          const maturity = readString(record.maturity);
-          const upstream = readString(record.upstream);
-          const installed = readBoolean(record.installed);
-          const primary = readBoolean(record.primary) === true;
-
-          return {
-            id,
-            name: id,
-            command: launchCommand ?? '',
-            homepage: upstream ?? '#',
-            docsUrl: upstream ?? '#',
-            installHint: parityNotes ?? description ?? runtime ?? 'CLI harness metadata available from native Go inventory.',
-            sessionCapable: true,
-            installed: installed ?? false,
-            resolvedPath: installed ? (launchCommand ?? null) : null,
-            version: maturity,
-            detectionError: installed ? null : 'Not detected in current environment',
-            primary,
-          };
-        })
+        .map((entry) => normalizeCliHarnessDetection(entry))
         .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
     } catch {
       // Try the next native control-plane base.
@@ -873,6 +875,120 @@ async function buildPreferredCliHarnessDetections(): Promise<unknown[]> {
   }
 
   return [];
+}
+
+function buildFallbackExecutionEnvironment(cliHarnessDetections: unknown[]): Record<string, unknown> {
+  const harnesses = (Array.isArray(cliHarnessDetections) ? cliHarnessDetections : [])
+    .map((entry) => asObjectRecord(entry))
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+
+  const verifiedHarnessCount = harnesses.filter((entry) => readBoolean(entry.installed) === true && !readString(entry.detectionError)).length;
+
+  return {
+    os: 'unknown',
+    summary: {
+      ready: false,
+      preferredShellId: null,
+      preferredShellLabel: null,
+      shellCount: 0,
+      verifiedShellCount: 0,
+      toolCount: 0,
+      verifiedToolCount: 0,
+      harnessCount: harnesses.length,
+      verifiedHarnessCount,
+      supportsPowerShell: false,
+      supportsPosixShell: false,
+      notes: [],
+    },
+    shells: [],
+    tools: [],
+    harnesses,
+  };
+}
+
+async function buildPreferredExecutionEnvironment(cliHarnessDetections: unknown[]): Promise<Record<string, unknown>> {
+  const nativeExecutionEnvironment = await fetchNativeStatusPayload<Record<string, unknown>>('/api/tools/detect-execution-environment');
+  if (!nativeExecutionEnvironment) {
+    return buildFallbackExecutionEnvironment(cliHarnessDetections);
+  }
+
+  const nativeSummary = asObjectRecord(nativeExecutionEnvironment.summary);
+  const normalizedShells = Array.isArray(nativeExecutionEnvironment.shells)
+    ? nativeExecutionEnvironment.shells
+      .map((entry, index) => {
+        const record = asObjectRecord(entry);
+        if (!record) {
+          return null;
+        }
+
+        return {
+          id: readString(record.id) ?? `shell-${index}`,
+          name: readString(record.name) ?? 'Unknown shell',
+          installed: readBoolean(record.installed) ?? false,
+          verified: readBoolean(record.verified) ?? false,
+          preferred: readBoolean(record.preferred) ?? false,
+          resolvedPath: readString(record.resolvedPath),
+          family: readString(record.family) ?? 'unknown',
+          version: readString(record.version),
+          notes: readStringArray(record.notes),
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+    : [];
+  const normalizedTools = Array.isArray(nativeExecutionEnvironment.tools)
+    ? nativeExecutionEnvironment.tools
+      .map((entry, index) => {
+        const record = asObjectRecord(entry);
+        if (!record) {
+          return null;
+        }
+
+        return {
+          id: readString(record.id) ?? `tool-${index}`,
+          name: readString(record.name) ?? 'Unknown tool',
+          installed: readBoolean(record.installed) ?? false,
+          verified: readBoolean(record.verified) ?? false,
+          resolvedPath: readString(record.resolvedPath),
+          version: readString(record.version),
+          capabilities: readStringArray(record.capabilities),
+          notes: readStringArray(record.notes),
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+    : [];
+  const normalizedHarnesses = Array.isArray(nativeExecutionEnvironment.harnesses)
+    ? nativeExecutionEnvironment.harnesses
+      .map((entry) => normalizeCliHarnessDetection(entry))
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+    : [];
+  const effectiveHarnesses = normalizedHarnesses.length > 0
+    ? normalizedHarnesses
+    : (Array.isArray(cliHarnessDetections) ? cliHarnessDetections : []).filter((entry): entry is Record<string, unknown> => asObjectRecord(entry) !== null);
+
+  const verifiedShellCount = normalizedShells.filter((entry) => entry.verified).length;
+  const verifiedToolCount = normalizedTools.filter((entry) => entry.verified).length;
+  const verifiedHarnessCount = effectiveHarnesses.filter((entry) => readBoolean(entry.installed) === true && !readString(entry.detectionError)).length;
+
+  return {
+    os: readString(nativeExecutionEnvironment.os) ?? 'unknown',
+    summary: {
+      ready: readBoolean(nativeSummary?.ready) ?? (verifiedShellCount > 0),
+      preferredShellId: readString(nativeSummary?.preferredShellId),
+      preferredShellLabel: readString(nativeSummary?.preferredShellLabel),
+      shellCount: readNumber(nativeSummary?.shellCount) ?? normalizedShells.length,
+      verifiedShellCount: readNumber(nativeSummary?.verifiedShellCount) ?? verifiedShellCount,
+      toolCount: readNumber(nativeSummary?.toolCount) ?? normalizedTools.length,
+      verifiedToolCount: readNumber(nativeSummary?.verifiedToolCount) ?? verifiedToolCount,
+      harnessCount: readNumber(nativeSummary?.harnessCount) ?? effectiveHarnesses.length,
+      verifiedHarnessCount: readNumber(nativeSummary?.verifiedHarnessCount) ?? verifiedHarnessCount,
+      supportsPowerShell: readBoolean(nativeSummary?.supportsPowerShell) ?? false,
+      supportsPosixShell: readBoolean(nativeSummary?.supportsPosixShell) ?? false,
+      notes: readStringArray(nativeSummary?.notes),
+    },
+    shells: normalizedShells,
+    tools: normalizedTools,
+    harnesses: effectiveHarnesses,
+  };
 }
 
 function buildPreferredSessionCatalog(cliHarnessDetections: unknown[]): unknown[] {
@@ -1154,16 +1270,15 @@ async function buildPreferredMcpStatus(servers: unknown[]): Promise<Record<strin
   return mergedStatus;
 }
 
-async function buildLocalStartupStatus(servers: unknown[]): Promise<LocalCompatStartupStatus> {
+async function buildLocalStartupStatus(
+  servers: unknown[],
+  executionEnvironment?: Record<string, unknown> | null,
+): Promise<LocalCompatStartupStatus> {
   const baseStatus = buildLocalCompatStartupStatusBase(servers);
   const [nativeStartupStatus, nativeRuntimeStatus] = await Promise.all([
     fetchNativeStatusPayload<NativeStartupStatusPayload>('/api/startup/status'),
     fetchNativeStatusPayload<NativeRuntimeStatusPayload>('/api/runtime/status'),
   ]);
-
-  if (!nativeStartupStatus && !nativeRuntimeStatus) {
-    return baseStatus;
-  }
 
   const mergedStatus: LocalCompatStartupStatus = {
     ...baseStatus,
@@ -1314,6 +1429,27 @@ async function buildLocalStartupStatus(servers: unknown[]): Promise<LocalCompatS
     }
   }
 
+  const executionSummary = asObjectRecord(executionEnvironment?.summary);
+  if (executionSummary) {
+    mergedStatus.checks = {
+      ...mergedStatus.checks,
+      executionEnvironment: {
+        ready: readBoolean(executionSummary.ready) ?? mergedStatus.checks.executionEnvironment.ready,
+        preferredShellId: readString(executionSummary.preferredShellId),
+        preferredShellLabel: readString(executionSummary.preferredShellLabel),
+        shellCount: readNumber(executionSummary.shellCount) ?? 0,
+        verifiedShellCount: readNumber(executionSummary.verifiedShellCount) ?? 0,
+        toolCount: readNumber(executionSummary.toolCount) ?? 0,
+        verifiedToolCount: readNumber(executionSummary.verifiedToolCount) ?? 0,
+        harnessCount: readNumber(executionSummary.harnessCount) ?? 0,
+        verifiedHarnessCount: readNumber(executionSummary.verifiedHarnessCount) ?? 0,
+        supportsPowerShell: readBoolean(executionSummary.supportsPowerShell) ?? false,
+        supportsPosixShell: readBoolean(executionSummary.supportsPosixShell) ?? false,
+        notes: readStringArray(executionSummary.notes),
+      },
+    };
+  }
+
   return mergedStatus;
 }
 
@@ -1427,9 +1563,10 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
   const localConfigSource = await readLocalMcpSource();
   const localServers = mapConfigToServerList(localConfig);
   const localStatus = await buildPreferredMcpStatus(localServers);
-  const localStartupStatus = await buildLocalStartupStatus(localServers);
   const providerQuotas = await buildPreferredProviderQuotas();
   const cliHarnessDetections = await buildPreferredCliHarnessDetections();
+  const executionEnvironment = await buildPreferredExecutionEnvironment(cliHarnessDetections);
+  const localStartupStatus = await buildLocalStartupStatus(localServers, executionEnvironment);
   const sessionCatalog = buildPreferredSessionCatalog(cliHarnessDetections);
   const sessionList = await buildPreferredSessionList();
 
@@ -1462,26 +1599,7 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
     'mcpServers.get': undefined,
     'apiKeys.list': [],
     'tools.detectCliHarnesses': cliHarnessDetections,
-    'tools.detectExecutionEnvironment': {
-      os: 'unknown',
-      summary: {
-        ready: false,
-        preferredShellId: null,
-        preferredShellLabel: null,
-        shellCount: 0,
-        verifiedShellCount: 0,
-        toolCount: 0,
-        verifiedToolCount: 0,
-        harnessCount: 0,
-        verifiedHarnessCount: 0,
-        supportsPowerShell: false,
-        supportsPosixShell: false,
-        notes: [],
-      },
-      shells: [],
-      tools: [],
-      harnesses: [],
-    },
+    'tools.detectExecutionEnvironment': executionEnvironment,
     'tools.detectInstallSurfaces': [],
     'expert.getStatus': {},
     'session.catalog': sessionCatalog,

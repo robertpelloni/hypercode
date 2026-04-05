@@ -663,7 +663,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4100/api/billing/fallback-chain?taskType=coding')).toBe(true);
   });
 
-  it('prefers go-native provider quotas, fallback chain, cli harnesses, session catalog, and sessions in local dashboard fallback mode', async () => {
+  it('prefers go-native execution environment, provider quotas, fallback chain, cli harnesses, session catalog, and sessions in local dashboard fallback mode', async () => {
     process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4200/trpc';
     global.fetch = vi.fn(async (input) => {
       const url = String(input);
@@ -743,6 +743,82 @@ describe('legacy MCP dashboard compatibility bridge', () => {
           headers: { 'content-type': 'application/json' },
         });
       }
+      if (url === 'http://127.0.0.1:4200/api/tools/detect-execution-environment') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: {
+            os: 'windows',
+            summary: {
+              ready: true,
+              preferredShellId: 'pwsh',
+              preferredShellLabel: 'PowerShell 7',
+              shellCount: 2,
+              verifiedShellCount: 2,
+              toolCount: 3,
+              verifiedToolCount: 2,
+              harnessCount: 2,
+              verifiedHarnessCount: 1,
+              supportsPowerShell: true,
+              supportsPosixShell: true,
+              notes: ['Prefer PowerShell 7 for default shell execution.'],
+            },
+            shells: [
+              {
+                id: 'pwsh',
+                name: 'PowerShell 7',
+                installed: true,
+                verified: true,
+                preferred: true,
+                resolvedPath: 'C:/Program Files/PowerShell/7/pwsh.exe',
+                family: 'powershell',
+                version: '7.5.0',
+              },
+              {
+                id: 'git-bash',
+                name: 'Git Bash',
+                installed: true,
+                verified: true,
+                preferred: false,
+                resolvedPath: 'C:/Program Files/Git/bin/bash.exe',
+                family: 'posix',
+                version: null,
+              },
+            ],
+            tools: [
+              {
+                id: 'node',
+                name: 'Node.js',
+                installed: true,
+                verified: true,
+                resolvedPath: 'C:/Program Files/nodejs/node.exe',
+                version: '24.10.0',
+                capabilities: ['runtime', 'scripts'],
+              },
+              {
+                id: 'go',
+                name: 'Go',
+                installed: true,
+                verified: true,
+                resolvedPath: 'C:/Go/bin/go.exe',
+                version: '1.22.0',
+                capabilities: ['build', 'test'],
+              },
+              {
+                id: 'aider',
+                name: 'Aider CLI',
+                installed: true,
+                verified: false,
+                resolvedPath: 'C:/Users/hyper/AppData/Roaming/Python/Scripts/aider.exe',
+                version: null,
+                capabilities: ['chat'],
+              },
+            ],
+          },
+        }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
       if (url === 'http://127.0.0.1:4200/api/sessions') {
         return new Response(JSON.stringify({
           success: true,
@@ -775,18 +851,36 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     }) as typeof fetch;
 
     const response = await POST(new Request(
-      'http://localhost:3010/api/trpc/billing.getProviderQuotas,billing.getFallbackChain,tools.detectCliHarnesses,session.catalog,session.list?batch=1',
+      'http://localhost:3010/api/trpc/startupStatus,billing.getProviderQuotas,billing.getFallbackChain,tools.detectCliHarnesses,tools.detectExecutionEnvironment,session.catalog,session.list?batch=1',
       {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ 0: { json: null }, 1: { json: null }, 2: { json: null }, 3: { json: null }, 4: { json: null } }),
+        body: JSON.stringify({ 0: { json: null }, 1: { json: null }, 2: { json: null }, 3: { json: null }, 4: { json: null }, 5: { json: null }, 6: { json: null } }),
       },
     ));
     const payload = await response.json();
 
     expect(response.status).toBe(200);
     expect(response.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
-    expect(payload?.[0]?.result?.data).toEqual([
+    expect(payload?.[0]?.result?.data).toEqual(expect.objectContaining({
+      checks: expect.objectContaining({
+        executionEnvironment: expect.objectContaining({
+          ready: true,
+          preferredShellId: 'pwsh',
+          preferredShellLabel: 'PowerShell 7',
+          shellCount: 2,
+          verifiedShellCount: 2,
+          toolCount: 3,
+          verifiedToolCount: 2,
+          harnessCount: 2,
+          verifiedHarnessCount: 1,
+          supportsPowerShell: true,
+          supportsPosixShell: true,
+          notes: ['Prefer PowerShell 7 for default shell execution.'],
+        }),
+      }),
+    }));
+    expect(payload?.[1]?.result?.data).toEqual([
       expect.objectContaining({
         provider: 'anthropic',
         name: 'Anthropic',
@@ -796,7 +890,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
         remaining: 750,
       }),
     ]);
-    expect(payload?.[1]?.result?.data).toEqual({
+    expect(payload?.[2]?.result?.data).toEqual({
       selectedTaskType: null,
       chain: [
         {
@@ -813,7 +907,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
         },
       ],
     });
-    expect(payload?.[2]?.result?.data).toEqual([
+    expect(payload?.[3]?.result?.data).toEqual([
       expect.objectContaining({
         id: 'hypercode',
         name: 'hypercode',
@@ -826,7 +920,30 @@ describe('legacy MCP dashboard compatibility bridge', () => {
         installed: false,
       }),
     ]);
-    expect(payload?.[3]?.result?.data).toEqual([
+    expect(payload?.[4]?.result?.data).toEqual(expect.objectContaining({
+      os: 'windows',
+      summary: expect.objectContaining({
+        ready: true,
+        preferredShellId: 'pwsh',
+        preferredShellLabel: 'PowerShell 7',
+        verifiedToolCount: 2,
+        supportsPosixShell: true,
+      }),
+      shells: [
+        expect.objectContaining({ id: 'pwsh', preferred: true, verified: true }),
+        expect.objectContaining({ id: 'git-bash', verified: true, family: 'posix' }),
+      ],
+      tools: [
+        expect.objectContaining({ id: 'node', verified: true, version: '24.10.0' }),
+        expect.objectContaining({ id: 'go', verified: true, version: '1.22.0' }),
+        expect.objectContaining({ id: 'aider', verified: false }),
+      ],
+      harnesses: [
+        expect.objectContaining({ id: 'hypercode', installed: true }),
+        expect.objectContaining({ id: 'claude-code', installed: false }),
+      ],
+    }));
+    expect(payload?.[5]?.result?.data).toEqual([
       expect.objectContaining({
         id: 'hypercode',
         name: 'hypercode',
@@ -842,7 +959,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
         category: 'cli',
       }),
     ]);
-    expect(payload?.[4]?.result?.data).toEqual([
+    expect(payload?.[6]?.result?.data).toEqual([
       expect.objectContaining({
         id: 'sess-1',
         name: 'Refactor startup fallback',
@@ -857,6 +974,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4200/api/billing/provider-quotas')).toBe(true);
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4200/api/billing/fallback-chain')).toBe(true);
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4200/api/cli/harnesses')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4200/api/tools/detect-execution-environment')).toBe(true);
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4200/api/sessions')).toBe(true);
   });
 
