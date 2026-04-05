@@ -407,6 +407,12 @@ export function resolveGoRuntimeSpawnSpec(
   };
 }
 
+export function describeGoRuntimeLaunchMode(usingPrebuiltBinary: boolean): string {
+  return usingPrebuiltBinary
+    ? 'prebuilt Go binary'
+    : 'source fallback via go run';
+}
+
 export function runtimeSupportsIntegratedDashboard(runtime: Exclude<HypercodeRuntimeMode, 'auto'>): boolean {
   return runtime === 'node';
 }
@@ -678,6 +684,7 @@ export async function startGoRuntime(
   bridgePort: null;
   child: ChildProcess;
   configDir: string;
+  launchMode: 'prebuilt-binary' | 'source-fallback';
 }> {
   const spawnImpl = deps.spawnImpl ?? spawn;
   const fetchImpl = deps.fetchImpl ?? globalThis.fetch;
@@ -749,6 +756,7 @@ export async function startGoRuntime(
     bridgePort: null,
     child,
     configDir: goConfigDir,
+    launchMode: launchSpec.usingPrebuiltBinary ? 'prebuilt-binary' : 'source-fallback',
   };
 }
 
@@ -888,6 +896,8 @@ Examples:
 
         let runtime;
         let runtimeKind: Exclude<HypercodeRuntimeMode, 'auto'> = 'node';
+        let nodeRuntimeMode: 'explicit-node' | 'go-fallback' = 'explicit-node';
+        let goRuntimeMode: 'prebuilt-binary' | 'source-fallback' | null = null;
         let activePort = port;
 
         const startNodeRuntimeWithFallback = async () => {
@@ -947,6 +957,7 @@ Examples:
               dataDir: opts.dataDir,
             });
             runtimeKind = 'go';
+            goRuntimeMode = runtime.launchMode;
             controlPlaneChild = runtime.child;
             activePort = runtime.trpcPort;
             syncLockHandlePort(acquiredLockHandle, runtime.trpcPort);
@@ -959,6 +970,7 @@ Examples:
             console.log(chalk.yellow(`  ⚠ Go runtime startup failed, falling back to Node compatibility runtime: ${message}`));
             runtime = await startNodeRuntimeWithFallback();
             runtimeKind = 'node';
+            nodeRuntimeMode = 'go-fallback';
           }
         } else {
           runtime = await startNodeRuntimeWithFallback();
@@ -967,6 +979,7 @@ Examples:
 
         if (runtimeKind === 'go') {
           console.log(chalk.dim('  Core loaded: Go control plane started'));
+          console.log(chalk.dim(`  Launch mode: ${describeGoRuntimeLaunchMode(goRuntimeMode === 'prebuilt-binary')}`));
           console.log(chalk.green(`  ✓ Go control plane running at http://${resolveBrowserHost(runtime.host)}:${runtime.trpcPort}`));
           console.log(chalk.dim(`  API index: http://${resolveBrowserHost(runtime.host)}:${runtime.trpcPort}/api/index`));
           if (!opts.mcp) {
@@ -980,6 +993,7 @@ Examples:
           }
         } else {
           console.log(chalk.dim('  Core loaded: orchestrator started'));
+          console.log(chalk.dim(`  Launch mode: ${nodeRuntimeMode === 'go-fallback' ? 'Node compatibility runtime (Go fallback)' : 'Node compatibility runtime (explicit selection)'}`));
           console.log(chalk.green(`  ✓ tRPC control plane running at http://${runtime.host}:${runtime.trpcPort}/trpc`));
           if (opts.mcp) {
             console.log(chalk.green(`  ✓ MCP bridge target ws://127.0.0.1:${runtime.bridgePort ?? 3001} (+ HTTP health on /health when available)`));

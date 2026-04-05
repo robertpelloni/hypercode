@@ -115,10 +115,17 @@ Updated `packages/cli/src/commands/start.ts` so the Go runtime launcher now:
 - allows forcing source launch with:
   - `HYPERCODE_GO_USE_SOURCE=1`
 
+Additionally, startup output now reports the runtime provenance explicitly:
+- `Launch mode: prebuilt Go binary`
+- `Launch mode: source fallback via go run`
+- `Launch mode: Node compatibility runtime (explicit selection)`
+- `Launch mode: Node compatibility runtime (Go fallback)`
+
 Why this matters:
 - it makes Go-primary launch use the same compiled artifact that the startup build profile already validates
 - it reduces repeated `go run` compilation overhead at runtime
 - it moves the actual control-plane launch path closer to a real production-style Go-primary binary handoff
+- it makes the runtime choice operator-visible instead of implicit
 
 #### Lockfile hygiene
 - The refreshed `pnpm-lock.yaml` no longer contains legacy-name references for the main workspace packages.
@@ -151,6 +158,7 @@ Results:
 - new Go-primary startup build profile passed
 - install-skip readiness probe correctly reported the current workspace as already ready for Go-primary startup
 - direct built-CLI launch path resolved and printed `hypercode start --help` successfully
+- runtime provenance helper coverage passed in the CLI regression suite
 
 Validation boundary:
 - `start.bat` itself was not executed end-to-end in this pass because doing so would intentionally launch the Hub and additional long-running runtime processes
@@ -173,6 +181,7 @@ Result:
 - the new install-skip readiness probe succeeds for the current workspace state
 - the direct built-CLI launch path succeeds
 - the CLI Go runtime launcher now prefers the prebuilt Go binary when available
+- startup output now truthfully reports runtime provenance for Go and Node compatibility paths
 - `start.bat` now validates Go-first startup surfaces by default for `auto`/`go` runtime modes instead of always requiring a full workspace build first
 - `start.bat` can now skip `pnpm install` in Go-primary mode when the workspace is already ready
 - `start.bat` now launches directly through the built CLI when available instead of depending on `pnpm start` for the final handoff

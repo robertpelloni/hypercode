@@ -15,6 +15,7 @@ import {
     resolveControlPlaneFallbackPort,
     resolveDashboardUrl,
     resolveDataDir,
+    describeGoRuntimeLaunchMode,
     resolveGoConfigDir,
     resolveGoRuntimeSpawnSpec,
     resolveRuntimePreference,
@@ -406,6 +407,11 @@ describe('runtime selection helpers', () => {
         expect(spec.command).toBe('go');
         expect(spec.args).toEqual(['run', './cmd/hypercode']);
         expect(spec.usingPrebuiltBinary).toBe(false);
+    });
+
+    it('describes Go runtime launch provenance truthfully', () => {
+        expect(describeGoRuntimeLaunchMode(true)).toBe('prebuilt Go binary');
+        expect(describeGoRuntimeLaunchMode(false)).toBe('source fallback via go run');
     });
 });
 
