@@ -1156,6 +1156,40 @@ function formatFallbackLabel(entry: DashboardFallbackSummary): string {
     return entry.model ? `${entry.provider} · ${entry.model}` : entry.provider;
 }
 
+function buildStartupModeEntries(startupStatus: DashboardStartupStatus): Array<{
+    label: string;
+    value: string;
+    detail?: string;
+}> {
+    const startupMode = startupStatus.startupMode;
+    if (!startupMode) {
+        return [];
+    }
+
+    return [
+        {
+            label: 'Requested runtime',
+            value: startupMode.requestedRuntime?.trim() || '—',
+            detail: startupMode.activeRuntime ? `Active runtime: ${startupMode.activeRuntime}` : undefined,
+        },
+        {
+            label: 'Launch mode',
+            value: startupMode.launchMode?.trim() || '—',
+            detail: startupMode.dashboardMode ? `Dashboard: ${startupMode.dashboardMode}` : undefined,
+        },
+        {
+            label: 'Install decision',
+            value: startupMode.installDecision?.trim() || '—',
+            detail: startupMode.installReason?.trim() || undefined,
+        },
+        {
+            label: 'Build decision',
+            value: startupMode.buildDecision?.trim() || '—',
+            detail: startupMode.buildReason?.trim() || undefined,
+        },
+    ];
+}
+
 function getAlertTone(severity: DashboardAlert['severity']): string {
     switch (severity) {
         case 'critical':
@@ -1198,6 +1232,8 @@ export function DashboardHomeView({
         providersError,
     });
     const startupChecklist = startupStatusError ? [] : buildStartupChecklist(startupStatus, isBootstrapping, installSurfaceArtifacts);
+    const startupModeEntries = startupStatusError ? [] : buildStartupModeEntries(startupStatus);
+    const startupModeUpdatedAt = startupStatus.startupMode?.updatedAt ? Date.parse(startupStatus.startupMode.updatedAt) : Number.NaN;
     const startupBlockingReasons = isBootstrapping || startupStatusError
         ? []
         : getPrioritizedStartupBlockingReasons(getStartupBlockingReasons(startupStatus));
@@ -1405,6 +1441,33 @@ export function DashboardHomeView({
                                     ))}
                                 </div>
                             )}
+
+                            {startupModeEntries.length > 0 ? (
+                                <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div>
+                                            <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Startup mode</h4>
+                                            <p className="mt-1 text-sm text-slate-500">Persisted launch provenance captured from the most recent startup handoff.</p>
+                                        </div>
+                                        {Number.isFinite(startupModeUpdatedAt) ? (
+                                            <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-xs font-medium text-slate-200">
+                                                Updated {formatRelativeTimestamp(startupModeUpdatedAt, currentTimestamp)}
+                                            </span>
+                                        ) : null}
+                                    </div>
+                                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                                        {startupModeEntries.map((entry) => (
+                                            <div key={entry.label} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 text-sm">
+                                                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{entry.label}</div>
+                                                <div className="mt-2 text-sm font-medium text-white">{entry.value}</div>
+                                                {entry.detail ? (
+                                                    <p className="mt-2 text-xs text-slate-400">{entry.detail}</p>
+                                                ) : null}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : null}
 
                             {startupBlockingReasons.length > 0 ? (
                                 <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">

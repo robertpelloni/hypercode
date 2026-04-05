@@ -111,6 +111,7 @@ Make Go the default runtime started by operator entrypoints.
 - the CLI now also prints a concise startup mode summary block describing which surfaces are actually active/compatibility-only in the chosen runtime
 - `hypercode status` now exposes persisted startup provenance from the local startup lock when available
 - the TypeScript `startupStatus` API surface now also exposes that persisted startup provenance, making the same truth available to dashboard and API consumers
+- the dashboard startup-readiness UI now renders a visible `Startup mode` section backed by that persisted/API-visible provenance
 - explicit Node compatibility mode still uses the full workspace build path and still defaults to a full install/build posture
 - full builds remain available via `HYPERCODE_FULL_BUILD=1`
 
