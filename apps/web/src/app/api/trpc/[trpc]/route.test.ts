@@ -1795,6 +1795,68 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4550/api/secrets/delete')).toBe(true);
   });
 
+  it('prefers go-native tool set reads and mutations in local dashboard fallback mode', async () => {
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4580/trpc';
+    global.fetch = vi.fn(async (input, init) => {
+      const url = String(input);
+
+      if (url.includes('/trpc/')) {
+        throw new Error('connect ECONNREFUSED');
+      }
+
+      if (url === 'http://127.0.0.1:4580/api/tool-sets') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [
+            { uuid: 'toolset-1', name: 'Core Set', description: 'useful tools', tools: ['tool-1', 'tool-2'] },
+          ],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4580/api/tool-sets/create' && init?.method === 'POST') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: { uuid: 'toolset-created-1', name: 'Core Set', description: 'useful tools', tools: ['tool-1', 'tool-2'] },
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4580/api/tool-sets/delete' && init?.method === 'POST') {
+        return new Response(JSON.stringify({ success: true, data: { success: true } }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    const listResponse = await POST(new Request('http://localhost:3010/api/trpc/toolSets.list', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: null }),
+    }));
+    expect(listResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+    expect((await listResponse.json())?.result?.data).toEqual([
+      expect.objectContaining({ uuid: 'toolset-1', name: 'Core Set' }),
+    ]);
+
+    const createResponse = await POST(new Request('http://localhost:3010/api/trpc/toolSets.create', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { name: 'Core Set', description: 'useful tools', tools: ['tool-1', 'tool-2'] } }),
+    }));
+    expect(createResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-operator-action');
+    expect((await createResponse.json())?.result?.data).toEqual(expect.objectContaining({ uuid: 'toolset-created-1', name: 'Core Set' }));
+
+    const deleteResponse = await POST(new Request('http://localhost:3010/api/trpc/toolSets.delete', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { uuid: 'toolset-created-1' } }),
+    }));
+    expect((await deleteResponse.json())?.result?.data).toEqual({ success: true });
+
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4580/api/tool-sets')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4580/api/tool-sets/create')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4580/api/tool-sets/delete')).toBe(true);
+  });
+
   it('prefers go-native policy reads and mutations in local dashboard fallback mode', async () => {
     process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4570/trpc';
     global.fetch = vi.fn(async (input, init) => {

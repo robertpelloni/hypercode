@@ -139,6 +139,7 @@ Make Go the default runtime started by operator entrypoints.
 - Go now also owns native fallback behavior for API key and workspace-secret writes in the HTTP layer, and the shared Next.js compat route exposes `secrets.list` plus API key/secret admin mutations during `/trpc` outage, making the governance/admin dashboard cluster more usable in Go-primary degraded mode
 - Go now also owns native fallback behavior for the DB-backed `tools.setAlwaysOn` mutation through `/api/tools/always-on`, and the shared Next.js compat route exposes that always-on toggle during `/trpc` outage, improving MCP Catalog / MCP Inspector usability in Go-primary degraded mode
 - Go now also owns native fallback behavior for policy CRUD through the HTTP layer, and the shared Next.js compat route exposes `policies.list` plus policy mutations during `/trpc` outage, making the Policies governance dashboard cluster more usable in Go-primary degraded mode
+- Go now also owns native fallback behavior for tool-set create/delete through the HTTP layer, and the shared Next.js compat route exposes `toolSets.list` plus tool-set mutations during `/trpc` outage, making the Tool Sets dashboard cluster more usable in Go-primary degraded mode
 - explicit Node compatibility mode still uses the full workspace build path and still defaults to a full install/build posture
 - full builds remain available via `HYPERCODE_FULL_BUILD=1`
 

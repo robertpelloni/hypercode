@@ -151,6 +151,7 @@ const LOCAL_COMPAT_RESPONSE_KEYS = {
   'session.logs': 'session.logs',
   'session.attachInfo': 'session.attachInfo',
   'session.health': 'session.health',
+  'toolSets.list': 'toolSets.list',
   'agentMemory.stats': 'agentMemory.stats',
   'shell.getSystemHistory': 'shell.getSystemHistory',
   'serverHealth.check': 'serverHealth.check',
@@ -184,6 +185,8 @@ const LOCAL_OPERATOR_MUTATION_PROCEDURES = new Set([
   'policies.create',
   'policies.update',
   'policies.delete',
+  'toolSets.create',
+  'toolSets.delete',
 ]);
 const LOCAL_TOOL_MUTATION_PROCEDURES = new Set([
   'tools.setAlwaysOn',
@@ -1411,6 +1414,11 @@ async function buildPreferredPoliciesList(): Promise<unknown[]> {
   return Array.isArray(policies) ? policies : [];
 }
 
+async function buildPreferredToolSetsList(): Promise<unknown[]> {
+  const toolSets = await fetchNativeControlPlaneData<unknown[]>('/api/tool-sets');
+  return Array.isArray(toolSets) ? toolSets : [];
+}
+
 async function buildPreferredExpertStatus(): Promise<Record<string, unknown>> {
   const nativeExpertStatus = await fetchNativeStatusPayload<Record<string, unknown>>('/api/expert/status');
   if (!nativeExpertStatus) {
@@ -2311,6 +2319,7 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
     'session.logs': [],
     'session.attachInfo': null,
     'session.health': null,
+    'toolSets.list': await buildPreferredToolSetsList(),
     'agentMemory.stats': agentMemoryStats,
     'shell.getSystemHistory': [],
     'serverHealth.check': {
@@ -2820,6 +2829,10 @@ async function tryLocalOperatorMutation(req: Request, body: string | undefined):
     endpointPath = '/api/policies/update';
   } else if (procedureName === 'policies.delete') {
     endpointPath = '/api/policies/delete';
+  } else if (procedureName === 'toolSets.create') {
+    endpointPath = '/api/tool-sets/create';
+  } else if (procedureName === 'toolSets.delete') {
+    endpointPath = '/api/tool-sets/delete';
   }
 
   if (!endpointPath) {

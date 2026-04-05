@@ -5982,7 +5982,41 @@ func (s *Server) handleToolSetsGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleToolSetsCreate(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "toolSets.create")
+	var payload map[string]any
+	if err := decodeJSONBody(r, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "toolSets.create", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "toolSets.create",
+			},
+		})
+		return
+	}
+
+	toolSet, fallbackErr := s.localCreateToolSet(payload)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    toolSet,
+		"bridge": map[string]any{
+			"fallback":  "go-local-operator",
+			"procedure": "toolSets.create",
+			"reason":    "upstream unavailable; created local metamcp tool set",
+		},
+	})
 }
 
 func (s *Server) handleToolSetsUpdate(w http.ResponseWriter, r *http.Request) {
@@ -5990,7 +6024,41 @@ func (s *Server) handleToolSetsUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleToolSetsDelete(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "toolSets.delete")
+	var payload map[string]any
+	if err := decodeJSONBody(r, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "toolSets.delete", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "toolSets.delete",
+			},
+		})
+		return
+	}
+
+	deleteResult, fallbackErr := s.localDeleteToolSet(strings.TrimSpace(stringValue(payload["uuid"])))
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    deleteResult,
+		"bridge": map[string]any{
+			"fallback":  "go-local-operator",
+			"procedure": "toolSets.delete",
+			"reason":    "upstream unavailable; deleted local metamcp tool set",
+		},
+	})
 }
 
 func (s *Server) handleProjectContext(w http.ResponseWriter, r *http.Request) {
@@ -13270,6 +13338,103 @@ func (s *Server) localToolSets() ([]map[string]any, error) {
 	}
 
 	return toolSets, nil
+}
+
+func (s *Server) localCreateToolSet(payload map[string]any) (any, error) {
+	name := strings.TrimSpace(stringValue(payload["name"]))
+	if name == "" {
+		return nil, fmt.Errorf("missing tool set name")
+	}
+	description := nullableString(payload["description"])
+	toolUUIDs := stringSlice(payload["tools"])
+
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	now := time.Now().UTC().Unix()
+	toolSetUUID := uuid.NewString()
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if tx != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	if _, err := tx.Exec(`
+		INSERT INTO tool_sets (uuid, name, description, created_at, updated_at, user_id)
+		VALUES (?, ?, ?, ?, ?, NULL)
+	`, toolSetUUID, name, description, now, now); err != nil {
+		return nil, err
+	}
+	for _, toolUUID := range toolUUIDs {
+		trimmed := strings.TrimSpace(toolUUID)
+		if trimmed == "" {
+			continue
+		}
+		if _, err := tx.Exec(`
+			INSERT INTO tool_set_items (uuid, tool_set_uuid, tool_uuid, created_at)
+			VALUES (?, ?, ?, ?)
+		`, uuid.NewString(), toolSetUUID, trimmed, now); err != nil {
+			return nil, err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	tx = nil
+
+	toolSets, err := s.localToolSets()
+	if err != nil {
+		return nil, err
+	}
+	for _, toolSet := range toolSets {
+		if stringValue(toolSet["uuid"]) == toolSetUUID {
+			return toolSet, nil
+		}
+	}
+	return nil, nil
+}
+
+func (s *Server) localDeleteToolSet(toolSetUUID string) (any, error) {
+	if strings.TrimSpace(toolSetUUID) == "" {
+		return nil, fmt.Errorf("missing tool set uuid")
+	}
+
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if tx != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	if _, err := tx.Exec(`DELETE FROM tool_set_items WHERE tool_set_uuid = ?`, toolSetUUID); err != nil {
+		return nil, err
+	}
+	result, err := tx.Exec(`DELETE FROM tool_sets WHERE uuid = ?`, toolSetUUID)
+	if err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	tx = nil
+	rowsAffected, _ := result.RowsAffected()
+	return map[string]any{"success": rowsAffected > 0}, nil
 }
 
 func (s *Server) localToolChains() ([]map[string]any, error) {

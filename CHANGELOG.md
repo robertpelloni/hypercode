@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Go-Backed Tool-Set Dashboard Compatibility**: Go now owns native fallback behavior for `toolSets.create` and `toolSets.delete` through the HTTP layer when `/trpc` is unavailable, and the shared Next.js `/api/trpc/[trpc]` compat route now exposes `toolSets.list` plus tool-set create/delete mutations to the Tool Sets dashboard in degraded Go-primary mode.
 - **Go-Backed Policy Dashboard Compatibility**: Go now owns native fallback behavior for `policies.create`, `policies.update`, and `policies.delete` through the HTTP layer when `/trpc` is unavailable, and the shared Next.js `/api/trpc/[trpc]` compat route now exposes `policies.list` plus policy CRUD mutations to the Policies dashboard in degraded Go-primary mode.
 - **Go-Backed Tool Always-On Mutation Compatibility**: Go now owns native fallback behavior for `tools.setAlwaysOn` through `/api/tools/always-on` when `/trpc` is unavailable, and the shared Next.js `/api/trpc/[trpc]` compat route now exposes the MCP Catalog / MCP Inspector always-on toggle in degraded Go-primary mode.
 - **Go-Backed Operator Admin Write Compatibility**: Go now owns native fallback behavior for `apiKeys.create`, `apiKeys.delete`, `secrets.set`, and `secrets.delete` through the HTTP layer when `/trpc` is unavailable, and the shared Next.js `/api/trpc/[trpc]` compat route now exposes `secrets.list` plus these API key/secret admin mutations to the dashboard in degraded Go-primary mode.

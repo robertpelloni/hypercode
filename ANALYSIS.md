@@ -1,5 +1,74 @@
 # HyperCode Stabilization Analysis — 2026-04-03
 
+## Latest stabilization pass — Go-backed tool-set dashboard compatibility in degraded mode
+
+### Context
+After the previous dashboard compatibility slices, Go-primary degraded mode already covered:
+- supervised session reads/mutations
+- MCP runtime-control mutations
+- API key and secret admin writes
+- DB-backed `tools.setAlwaysOn`
+- policy dashboard CRUD
+
+The next operator-facing gap was the Tool Sets dashboard:
+- `/dashboard/mcp/tool-sets` reads `toolSets.list`
+- it mutates `toolSets.create` and `toolSets.delete`
+- Go already had local fallback reads for `toolSets.list` / `toolSets.get`
+- but tool-set writes were still bridge-only in the Go HTTP layer
+- and the shared Next.js compat route still did not expose `toolSets.list` or tool-set mutations during `/trpc` outage
+
+That meant another real operator-facing organizational surface could still become unusable in Go-primary degraded mode even though the local `metamcp.db` already had durable tool-set state.
+
+### What changed
+#### 1. Added native Go fallback ownership for tool-set writes
+Updated:
+- `go/internal/httpapi/server.go`
+- `go/internal/httpapi/server_test.go`
+
+The Go HTTP server now falls back natively for:
+- `POST /api/tool-sets/create`
+- `POST /api/tool-sets/delete`
+
+Native fallback behavior:
+- creates/deletes `tool_sets` and `tool_set_items` rows in local `metamcp.db`
+- preserves the selected tool UUID membership set
+- returns truthful local fallback responses instead of pretending TypeScript handled the mutation
+
+#### 2. Extended the shared Next.js compat route for tool-set reads/writes
+Updated:
+- `apps/web/src/app/api/trpc/[trpc]/route.ts`
+- `apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+
+The shared compat route now supports:
+- `toolSets.list`
+- `toolSets.create`
+- `toolSets.delete`
+
+These now map onto the Go HTTP surface when `/trpc` is unavailable:
+- `/api/tool-sets`
+- `/api/tool-sets/create`
+- `/api/tool-sets/delete`
+
+That makes the Tool Sets dashboard much closer to fully usable on top of the Go control plane in degraded mode, using the same shared compat strategy already applied to sessions, MCP runtime control, governance/admin writes, policy CRUD, and tool always-on toggles.
+
+### Validation
+Executed truthfully without killing any processes:
+- `cd go && gofmt -w internal/httpapi/server.go internal/httpapi/server_test.go`
+- `cd go && go test ./internal/httpapi -run 'TestToolSetsCreateAndDeleteFallBackToLocalDB' -count=1`
+- `pnpm exec vitest run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+- `pnpm -C apps/web run build`
+
+### Why this matters
+This continues the same migration pattern and extends Go-primary degraded-mode dashboard usability into another operator-focused organizational cluster:
+- tool-set inventory is no longer just readable
+- create/delete actions now have truthful Go fallback ownership through both the HTTP layer and the shared Next.js compat route
+- another admin/organization surface can now function on top of the Go control plane without requiring `/trpc` uptime
+
+The next best slices remain the same class of work:
+- other operator-critical dashboard mutations still gated on `/trpc`
+- bridge-only Go HTTP routes that already have enough local durable state to become truthful fallbacks
+- deeper native Go ownership where the backend surface still does not exist at all
+
 ## Latest stabilization pass — Go-backed policy dashboard compatibility in degraded mode
 
 ### Context

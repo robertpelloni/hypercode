@@ -7953,6 +7953,82 @@ func TestAPIKeysCreateAndDeleteFallBackToLocalDB(t *testing.T) {
 	}
 }
 
+func TestToolSetsCreateAndDeleteFallBackToLocalDB(t *testing.T) {
+	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	workspace := t.TempDir()
+	dbPath := filepath.Join(workspace, "metamcp.db")
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("failed to open sqlite db: %v", err)
+	}
+	defer db.Close()
+
+	if _, err := db.Exec(`
+		CREATE TABLE tool_sets (
+			uuid TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			description TEXT,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL,
+			user_id TEXT
+		);
+		CREATE TABLE tool_set_items (
+			uuid TEXT PRIMARY KEY,
+			tool_set_uuid TEXT NOT NULL,
+			tool_uuid TEXT NOT NULL,
+			created_at INTEGER NOT NULL
+		);
+	`); err != nil {
+		t.Fatalf("failed to create sqlite db schema: %v", err)
+	}
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspace
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	createReq := httptest.NewRequest(http.MethodPost, "/api/tool-sets/create", strings.NewReader(`{"name":"Core Set","description":"useful tools","tools":["tool-1","tool-2"]}`))
+	createReq.Header.Set("content-type", "application/json")
+	createRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(createRecorder, createReq)
+	if createRecorder.Code != http.StatusOK {
+		t.Fatalf("expected 200 from toolSets.create fallback, got %d with body %s", createRecorder.Code, createRecorder.Body.String())
+	}
+	for _, needle := range []string{`"fallback":"go-local-operator"`, `"procedure":"toolSets.create"`, `"name":"Core Set"`, `"tool-1"`, `"tool-2"`} {
+		if !strings.Contains(createRecorder.Body.String(), needle) {
+			t.Fatalf("expected toolSets.create fallback to contain %s, got %s", needle, createRecorder.Body.String())
+		}
+	}
+
+	var toolSetUUID string
+	if err := db.QueryRow(`SELECT uuid FROM tool_sets WHERE name = 'Core Set'`).Scan(&toolSetUUID); err != nil {
+		t.Fatalf("failed to verify created tool set: %v", err)
+	}
+
+	deleteReq := httptest.NewRequest(http.MethodPost, "/api/tool-sets/delete", strings.NewReader(`{"uuid":"`+toolSetUUID+`"}`))
+	deleteReq.Header.Set("content-type", "application/json")
+	deleteRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(deleteRecorder, deleteReq)
+	if deleteRecorder.Code != http.StatusOK {
+		t.Fatalf("expected 200 from toolSets.delete fallback, got %d with body %s", deleteRecorder.Code, deleteRecorder.Body.String())
+	}
+	for _, needle := range []string{`"fallback":"go-local-operator"`, `"procedure":"toolSets.delete"`, `"success":true`} {
+		if !strings.Contains(deleteRecorder.Body.String(), needle) {
+			t.Fatalf("expected toolSets.delete fallback to contain %s, got %s", needle, deleteRecorder.Body.String())
+		}
+	}
+
+	var remaining int
+	if err := db.QueryRow(`SELECT count(*) FROM tool_sets WHERE uuid = ?`, toolSetUUID).Scan(&remaining); err != nil {
+		t.Fatalf("failed to count remaining tool sets: %v", err)
+	}
+	if remaining != 0 {
+		t.Fatalf("expected deleted tool set to be removed, found %d rows", remaining)
+	}
+}
+
 func TestToolsAlwaysOnFallsBackToLocalDB(t *testing.T) {
 	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 

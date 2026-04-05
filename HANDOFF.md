@@ -3,6 +3,30 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
+### Latest incremental pass — Go-backed tool-set dashboard compatibility in degraded mode
+This follow-up added native Go fallback ownership plus shared dashboard compat support for the Tool Sets dashboard cluster.
+
+#### What changed
+- Updated `go/internal/httpapi/server.go` so these routes now have native Go fallback ownership when upstream `/trpc` is unavailable:
+  - `POST /api/tool-sets/create`
+  - `POST /api/tool-sets/delete`
+- Added focused Go coverage in `go/internal/httpapi/server_test.go`:
+  - `TestToolSetsCreateAndDeleteFallBackToLocalDB`
+- Updated `apps/web/src/app/api/trpc/[trpc]/route.ts` so the shared Next.js compat route now supports:
+  - `toolSets.list`
+  - `toolSets.create`
+  - `toolSets.delete`
+- Added focused web compat regression coverage in `apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+
+#### Validation performed
+- `cd go && gofmt -w internal/httpapi/server.go internal/httpapi/server_test.go`
+- `cd go && go test ./internal/httpapi -run 'TestToolSetsCreateAndDeleteFallBackToLocalDB' -count=1`
+- `pnpm exec vitest run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+- `pnpm -C apps/web run build`
+
+#### Recommended next step after this pass
+Continue targeting remaining dashboard mutation clusters that still depend on `/trpc`, especially places where the Go backend already has durable local state and only lacks truthful fallback ownership or shared compat plumbing.
+
 ### Latest incremental pass — Go-backed policy dashboard compatibility in degraded mode
 This follow-up added native Go fallback ownership plus shared dashboard compat support for the Policies dashboard cluster.
 
