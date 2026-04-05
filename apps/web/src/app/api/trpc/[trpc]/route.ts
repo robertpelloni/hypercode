@@ -137,6 +137,7 @@ const LOCAL_COMPAT_RESPONSE_KEYS = {
   'mcp.getJsoncEditor': 'mcp.getJsoncEditor',
   'mcpServers.get': 'mcpServers.get',
   'apiKeys.list': 'apiKeys.list',
+  'savedScripts.list': 'savedScripts.list',
   'tools.detectCliHarnesses': 'tools.detectCliHarnesses',
   'tools.detectExecutionEnvironment': 'tools.detectExecutionEnvironment',
   'tools.detectInstallSurfaces': 'tools.detectInstallSurfaces',
@@ -167,6 +168,11 @@ const LEGACY_COMPAT_RESPONSES: Record<LegacyCompatResponseKey, unknown> = {
 
 const LEGACY_MCP_PROCEDURES = new Set(Object.keys(LEGACY_COMPAT_RESPONSE_KEYS));
 const LOCAL_COMPAT_PROCEDURES = new Set(Object.keys(LOCAL_COMPAT_RESPONSE_KEYS));
+const LOCAL_OPERATOR_MUTATION_PROCEDURES = new Set([
+  'savedScripts.create',
+  'savedScripts.delete',
+  'savedScripts.execute',
+]);
 const LOCAL_COMPAT_MUTATION_PROCEDURES = new Set([
   'mcpServers.create',
   'mcpServers.update',
@@ -174,6 +180,7 @@ const LOCAL_COMPAT_MUTATION_PROCEDURES = new Set([
   'mcpServers.reloadMetadata',
   'mcpServers.clearMetadataCache',
   'serverHealth.reset',
+  ...LOCAL_OPERATOR_MUTATION_PROCEDURES,
 ]);
 
 const LEGACY_MCP_SERVERS_LIST_PROCEDURES = [
