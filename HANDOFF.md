@@ -45,6 +45,7 @@
    - `50c9fb47` — `feat: prefer go install surfaces in web compat fallback`
    - `ce47464e` — `feat: prefer go imported maintenance in web compat fallback`
    - `a5a50a33` — `feat: prefer go mcp inspector state in web compat fallback`
+   - `87f601eb` — `feat: prefer go operator reads in web compat fallback`
 
 ### Files changed in this slice
 - `apps/web/src/app/dashboard/system/page.tsx`
