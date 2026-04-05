@@ -32,10 +32,20 @@ Behavior:
 Updated `apps/web/src/app/api/trpc/[trpc]/route.ts` so degraded/local dashboard mode now supports:
 - `savedScripts.list` via `GET /api/scripts`
 - `savedScripts.create` via `POST /api/scripts/create`
+- `savedScripts.update` via `POST /api/scripts/update`
 - `savedScripts.delete` via `POST /api/scripts/delete`
 - `savedScripts.execute` via `POST /api/scripts/execute`
 
 The shared compat route now treats saved-scripts as operator mutations rather than pretending they belong to the MCP managed-server mutation path.
+
+### Follow-up completion: `savedScripts.update`
+After create/delete/execute were in place, the remaining meaningful mutation gap was `savedScripts.update`.
+
+Additional validated behavior:
+- Go now owns truthful local fallback behavior for `POST /api/scripts/update` when `/trpc` is unavailable.
+- The fallback mutates the workspace `.hypercode/config.json` record for the requested script `uuid`.
+- The shared Next.js compat route now translates `savedScripts.update` onto `/api/scripts/update` in degraded mode.
+- Focused regression coverage was expanded from create/execute/delete to create/update/execute/delete, verifying that execution uses the updated script body.
 
 ### Additional build-drift fixes
 Validation surfaced two real build drifts that were fixed as part of the tranche:

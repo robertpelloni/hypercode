@@ -1820,6 +1820,13 @@ describe('legacy MCP dashboard compatibility bridge', () => {
         }), { status: 200, headers: { 'content-type': 'application/json' } });
       }
 
+      if (url === 'http://127.0.0.1:4590/api/scripts/update' && init?.method === 'POST') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: { uuid: 'script-created-1', name: 'Hello Script Updated', description: 'demo-updated', code: 'console.log("updated")' },
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
       if (url === 'http://127.0.0.1:4590/api/scripts/delete' && init?.method === 'POST') {
         return new Response(JSON.stringify({ success: true, data: { success: true } }), { status: 200, headers: { 'content-type': 'application/json' } });
       }
@@ -1862,6 +1869,14 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     expect(createResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-operator-action');
     expect((await createResponse.json())?.result?.data).toEqual(expect.objectContaining({ uuid: 'script-created-1', name: 'Hello Script' }));
 
+    const updateResponse = await POST(new Request('http://localhost:3010/api/trpc/savedScripts.update', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { uuid: 'script-created-1', name: 'Hello Script Updated', description: 'demo-updated', code: 'console.log("updated")' } }),
+    }));
+    expect(updateResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-operator-action');
+    expect((await updateResponse.json())?.result?.data).toEqual(expect.objectContaining({ uuid: 'script-created-1', name: 'Hello Script Updated' }));
+
     const executeResponse = await POST(new Request('http://localhost:3010/api/trpc/savedScripts.execute', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -1878,6 +1893,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
 
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4590/api/scripts')).toBe(true);
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4590/api/scripts/create')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4590/api/scripts/update')).toBe(true);
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4590/api/scripts/execute')).toBe(true);
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4590/api/scripts/delete')).toBe(true);
   });

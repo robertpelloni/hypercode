@@ -11,20 +11,22 @@ This follow-up advanced the tracked harness submodule and completed the saved-sc
 - Confirmed `superai` is not present in tracked `.gitmodules` configuration.
 - Updated `go/internal/httpapi/server.go` so these routes now have truthful local Go fallback ownership when `/trpc` is unavailable:
   - `POST /api/scripts/create`
+  - `POST /api/scripts/update`
   - `POST /api/scripts/delete`
   - `POST /api/scripts/execute`
 - Added focused Go coverage in `go/internal/httpapi/server_test.go`:
-  - `TestSavedScriptsCreateDeleteAndExecuteFallBackToLocalConfig`
+  - `TestSavedScriptsCreateUpdateDeleteAndExecuteFallBackToLocalConfig`
 - Updated `apps/web/src/app/api/trpc/[trpc]/route.ts` so the shared Next.js compat route now supports:
   - `savedScripts.list`
   - `savedScripts.create`
+  - `savedScripts.update`
   - `savedScripts.delete`
   - `savedScripts.execute`
 - Added focused web compat regression coverage in `apps/web/src/app/api/trpc/[trpc]/route.test.ts`.
 - Repaired build drift by restoring `MetricsService.getStats().series` and keeping the typed context-router surface aligned on `hypercodeContext`.
 
 #### Validation performed
-- `cd go && go test ./internal/httpapi -run 'TestSavedScriptsCreateDeleteAndExecuteFallBackToLocalConfig' -count=1`
+- `cd go && go test ./internal/httpapi -run 'TestSavedScriptsCreateUpdateDeleteAndExecuteFallBackToLocalConfig' -count=1`
 - `pnpm exec vitest run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
 - `pnpm -C packages/core run build`
 - `pnpm -C apps/web run build`

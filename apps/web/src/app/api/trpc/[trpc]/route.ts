@@ -189,6 +189,7 @@ const LOCAL_OPERATOR_MUTATION_PROCEDURES = new Set([
   'toolSets.create',
   'toolSets.delete',
   'savedScripts.create',
+  'savedScripts.update',
   'savedScripts.delete',
   'savedScripts.execute',
 ]);
@@ -2845,6 +2846,8 @@ async function tryLocalOperatorMutation(req: Request, body: string | undefined):
     endpointPath = '/api/tool-sets/delete';
   } else if (procedureName === 'savedScripts.create') {
     endpointPath = '/api/scripts/create';
+  } else if (procedureName === 'savedScripts.update') {
+    endpointPath = '/api/scripts/update';
   } else if (procedureName === 'savedScripts.delete') {
     endpointPath = '/api/scripts/delete';
   } else if (procedureName === 'savedScripts.execute') {

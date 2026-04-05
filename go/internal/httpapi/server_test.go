@@ -15459,7 +15459,7 @@ func demo() {
 	}
 }
 
-func TestSavedScriptsCreateDeleteAndExecuteFallBackToLocalConfig(t *testing.T) {
+func TestSavedScriptsCreateUpdateDeleteAndExecuteFallBackToLocalConfig(t *testing.T) {
 	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 	if _, err := exec.LookPath("node"); err != nil {
 		t.Skip("node runtime not available")
@@ -15504,6 +15504,26 @@ func TestSavedScriptsCreateDeleteAndExecuteFallBackToLocalConfig(t *testing.T) {
 		t.Fatalf("expected created saved script uuid, got %s", createRecorder.Body.String())
 	}
 
+	updateReq := httptest.NewRequest(http.MethodPost, "/api/scripts/update", strings.NewReader(`{"uuid":"`+created.Data.UUID+`","name":"Hello Script Updated","description":"demo-updated","code":"console.log('updated-script-output')"}`))
+	updateReq.Header.Set("content-type", "application/json")
+	updateRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(updateRecorder, updateReq)
+	if updateRecorder.Code != http.StatusOK {
+		t.Fatalf("expected 200 from savedScripts.update fallback, got %d with body %s", updateRecorder.Code, updateRecorder.Body.String())
+	}
+	for _, needle := range []string{`"fallback":"go-local-operator"`, `"procedure":"savedScripts.update"`, `"name":"Hello Script Updated"`} {
+		if !strings.Contains(updateRecorder.Body.String(), needle) {
+			t.Fatalf("expected savedScripts.update fallback to contain %s, got %s", needle, updateRecorder.Body.String())
+		}
+	}
+	configAfterUpdate, err := os.ReadFile(filepath.Join(workspace, ".hypercode", "config.json"))
+	if err != nil {
+		t.Fatalf("failed to read local config after saved script update: %v", err)
+	}
+	if !strings.Contains(string(configAfterUpdate), `"Hello Script Updated"`) || !strings.Contains(string(configAfterUpdate), `updated-script-output`) {
+		t.Fatalf("expected local config to contain updated saved script, got %s", string(configAfterUpdate))
+	}
+
 	executeReq := httptest.NewRequest(http.MethodPost, "/api/scripts/execute", strings.NewReader(`{"uuid":"`+created.Data.UUID+`"}`))
 	executeReq.Header.Set("content-type", "application/json")
 	executeRecorder := httptest.NewRecorder()
@@ -15511,7 +15531,7 @@ func TestSavedScriptsCreateDeleteAndExecuteFallBackToLocalConfig(t *testing.T) {
 	if executeRecorder.Code != http.StatusOK {
 		t.Fatalf("expected 200 from savedScripts.execute fallback, got %d with body %s", executeRecorder.Code, executeRecorder.Body.String())
 	}
-	for _, needle := range []string{`"fallback":"go-local-operator"`, `"procedure":"savedScripts.execute"`, `hello-from-script`, `"success":true`} {
+	for _, needle := range []string{`"fallback":"go-local-operator"`, `"procedure":"savedScripts.execute"`, `updated-script-output`, `"success":true`} {
 		if !strings.Contains(executeRecorder.Body.String(), needle) {
 			t.Fatalf("expected savedScripts.execute fallback to contain %s, got %s", needle, executeRecorder.Body.String())
 		}

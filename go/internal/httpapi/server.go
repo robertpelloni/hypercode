@@ -7240,7 +7240,41 @@ func (s *Server) handleSavedScriptsCreate(w http.ResponseWriter, r *http.Request
 }
 
 func (s *Server) handleSavedScriptsUpdate(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "savedScripts.update")
+	var payload map[string]any
+	if err := decodeJSONBody(r, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "savedScripts.update", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "savedScripts.update",
+			},
+		})
+		return
+	}
+
+	updateResult, fallbackErr := s.localUpdateSavedScript(payload)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    updateResult,
+		"bridge": map[string]any{
+			"fallback":  "go-local-operator",
+			"procedure": "savedScripts.update",
+			"reason":    "upstream unavailable; updated saved script in local HyperCode config",
+		},
+	})
 }
 
 func (s *Server) handleSavedScriptsDelete(w http.ResponseWriter, r *http.Request) {
@@ -13409,6 +13443,53 @@ func (s *Server) localCreateSavedScript(payload map[string]any) (any, error) {
 		return nil, err
 	}
 	return newScript, nil
+}
+
+func (s *Server) localUpdateSavedScript(payload map[string]any) (any, error) {
+	targetUUID := strings.TrimSpace(stringValue(payload["uuid"]))
+	if targetUUID == "" {
+		return nil, fmt.Errorf("missing script uuid")
+	}
+	config := localSettingsConfig(s.cfg.WorkspaceRoot)
+	rawScripts, _ := config["scripts"].([]any)
+	updated := false
+	var updatedScript map[string]any
+	for index, entry := range rawScripts {
+		script, ok := entry.(map[string]any)
+		if !ok {
+			continue
+		}
+		if stringValue(script["uuid"]) != targetUUID {
+			continue
+		}
+
+		nextScript := cloneMap(script)
+		if name := strings.TrimSpace(stringValue(payload["name"])); name != "" {
+			nextScript["name"] = name
+		}
+		if _, exists := payload["description"]; exists {
+			nextScript["description"] = nullableString(payload["description"])
+		}
+		if _, exists := payload["code"]; exists {
+			code := stringValue(payload["code"])
+			if strings.TrimSpace(code) == "" {
+				return nil, fmt.Errorf("missing script code")
+			}
+			nextScript["code"] = code
+		}
+		rawScripts[index] = nextScript
+		updated = true
+		updatedScript = nextScript
+		break
+	}
+	if !updated {
+		return nil, fmt.Errorf("script not found")
+	}
+	config["scripts"] = rawScripts
+	if err := writeLocalSettingsConfig(s.cfg.WorkspaceRoot, config); err != nil {
+		return nil, err
+	}
+	return updatedScript, nil
 }
 
 func (s *Server) localDeleteSavedScript(targetUUID string) (any, error) {
