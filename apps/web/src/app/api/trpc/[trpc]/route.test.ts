@@ -439,15 +439,35 @@ describe('legacy MCP dashboard compatibility bridge', () => {
         });
       }
 
+      if (url === 'http://127.0.0.1:4000/api/mcp/status') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: {
+            initialized: true,
+            connected: true,
+            toolCount: 5,
+            serverCount: 3,
+            connectedCount: 2,
+            sourceBackedHarnessCount: 2,
+            source: 'source-backed-local-summary',
+            lazySessionMode: true,
+            singleActiveServerMode: false,
+          },
+        }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+
       throw new Error(`Unexpected fetch: ${url}`);
     }) as typeof fetch;
 
     const response = await POST(new Request(
-      'http://localhost:3010/api/trpc/startupStatus?batch=1',
+      'http://localhost:3010/api/trpc/startupStatus,mcp.getStatus?batch=1',
       {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ 0: { json: null } }),
+        body: JSON.stringify({ 0: { json: null }, 1: { json: null } }),
       },
     ));
     const payload = await response.json();
@@ -498,9 +518,89 @@ describe('legacy MCP dashboard compatibility bridge', () => {
         },
       }),
     }));
+    expect(payload?.[1]?.result?.data).toEqual(expect.objectContaining({
+      initialized: true,
+      toolCount: 5,
+      serverCount: 3,
+      connectedCount: 2,
+      sourceBackedHarnessCount: 2,
+      source: 'source-backed-local-summary',
+      lifecycle: expect.objectContaining({
+        lazySessionMode: true,
+        singleActiveServerMode: false,
+      }),
+    }));
 
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4000/api/startup/status')).toBe(true);
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4000/api/runtime/status')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4000/api/mcp/status')).toBe(true);
+  });
+
+  it('prefers go-native mcp status in legacy MCP compatibility batches', async () => {
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4100/trpc';
+    global.fetch = vi.fn(async (input) => {
+      const url = String(input);
+
+      if (url === 'http://127.0.0.1:4100/trpc/mcpServers.list?input=%7B%7D') {
+        throw new Error('connect ECONNREFUSED');
+      }
+      if (url.includes('/trpc/')) {
+        throw new Error('connect ECONNREFUSED');
+      }
+      if (url === 'http://127.0.0.1:4100/api/mcp/status') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: {
+            initialized: true,
+            connected: true,
+            toolCount: 9,
+            serverCount: 4,
+            connectedCount: 3,
+            lazySessionMode: true,
+            singleActiveServerMode: false,
+            source: 'source-backed-local-summary',
+          },
+        }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      if (url === 'http://127.0.0.1:4100/api/startup/status' || url === 'http://127.0.0.1:4100/api/runtime/status') {
+        return new Response(JSON.stringify({ success: false }), {
+          status: 503,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    const request = new Request(
+      'http://localhost:3010/api/trpc/mcp.listServers,mcp.getStatus?batch=1',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ 0: { json: null }, 1: { json: null } }),
+      },
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-hypercode-trpc-compat')).toBe('legacy-mcp-dashboard-bridge');
+    expect(payload?.[1]?.result?.data).toEqual(expect.objectContaining({
+      initialized: true,
+      serverCount: 4,
+      toolCount: 9,
+      connectedCount: 3,
+      source: 'source-backed-local-summary',
+      lifecycle: expect.objectContaining({
+        lazySessionMode: true,
+        singleActiveServerMode: false,
+      }),
+    }));
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4100/api/mcp/status')).toBe(true);
   });
 
   it('normalizes batched bulk import payloads before proxying them upstream', async () => {

@@ -115,6 +115,7 @@ Make Go the default runtime started by operator entrypoints.
 - the dashboard Health, Integrations, System, MCP System, and Orchestrator pages now also surface startup/runtime provenance so operators can see launch truth across the major runtime views
 - the web local-compat startup fallback now also carries `startupMode` from the local lock, reducing dependence on a live TS startup snapshot for this runtime truth
 - the web tRPC compat layer now prefers Go-native `/api/startup/status` and `/api/runtime/status` when the TypeScript `startupStatus` procedure is unavailable, so dashboard startup truth degrades to native Go state instead of only local lock/config guesses
+- the web tRPC compat layer now also prefers Go-native `/api/mcp/status` when the TypeScript `mcp.getStatus` procedure is unavailable, improving dashboard MCP/system/router truth across both legacy MCP bridge batches and richer local dashboard fallback mode
 - the Go-native `/api/runtime/status` surface now also exposes startup provenance, making the native backend self-describing rather than depending on the TS compatibility surface for that truth
 - this dashboard propagation cluster is now complete; the next focus is reducing remaining TS compatibility dependence by switching more runtime-heavy dashboard/system reads onto Go-native truth where equivalent native surfaces already exist
 - explicit Node compatibility mode still uses the full workspace build path and still defaults to a full install/build posture

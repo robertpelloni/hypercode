@@ -676,6 +676,21 @@ type NativeRuntimeStatusPayload = {
   startupMode?: unknown;
 };
 
+type NativeMcpStatusPayload = {
+  initialized?: unknown;
+  connected?: unknown;
+  toolCount?: unknown;
+  serverCount?: unknown;
+  connectedCount?: unknown;
+  sourceBackedHarnessCount?: unknown;
+  source?: unknown;
+  lazySessionMode?: unknown;
+  singleActiveServerMode?: unknown;
+  lifecycle?: unknown;
+  pool?: unknown;
+  aggregatorStatus?: unknown;
+};
+
 function asObjectRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -729,6 +744,73 @@ async function fetchNativeStatusPayload<T extends Record<string, unknown>>(endpo
   }
 
   return null;
+}
+
+async function buildPreferredMcpStatus(servers: unknown[]): Promise<Record<string, unknown>> {
+  const baseStatus = buildStatusFromServers(servers) as Record<string, unknown>;
+  const nativeMcpStatus = await fetchNativeStatusPayload<NativeMcpStatusPayload>('/api/mcp/status');
+
+  if (!nativeMcpStatus) {
+    return baseStatus;
+  }
+
+  const mergedStatus: Record<string, unknown> = {
+    ...baseStatus,
+  };
+
+  const initialized = readBoolean(nativeMcpStatus.initialized);
+  const connected = readBoolean(nativeMcpStatus.connected);
+  const toolCount = readNumber(nativeMcpStatus.toolCount);
+  const serverCount = readNumber(nativeMcpStatus.serverCount);
+  const connectedCount = readNumber(nativeMcpStatus.connectedCount);
+  const sourceBackedHarnessCount = readNumber(nativeMcpStatus.sourceBackedHarnessCount);
+  const source = readString(nativeMcpStatus.source);
+  const lifecycle = asObjectRecord(nativeMcpStatus.lifecycle);
+  const pool = asObjectRecord(nativeMcpStatus.pool);
+  const aggregatorStatus = asObjectRecord(nativeMcpStatus.aggregatorStatus);
+  const lazySessionMode = readBoolean(nativeMcpStatus.lazySessionMode);
+  const singleActiveServerMode = readBoolean(nativeMcpStatus.singleActiveServerMode);
+
+  if (initialized !== null) {
+    mergedStatus.initialized = initialized;
+  }
+  if (toolCount !== null) {
+    mergedStatus.toolCount = toolCount;
+  }
+  if (serverCount !== null) {
+    mergedStatus.serverCount = serverCount;
+  }
+  if (connectedCount !== null) {
+    mergedStatus.connectedCount = connectedCount;
+  } else if (connected !== null) {
+    mergedStatus.connectedCount = connected ? Math.max(1, Number(mergedStatus.connectedCount ?? 0)) : 0;
+  }
+  if (connected !== null) {
+    mergedStatus.connected = connected;
+  }
+  if (sourceBackedHarnessCount !== null) {
+    mergedStatus.sourceBackedHarnessCount = sourceBackedHarnessCount;
+  }
+  if (source) {
+    mergedStatus.source = source;
+  }
+  if (aggregatorStatus) {
+    mergedStatus.aggregatorStatus = aggregatorStatus;
+  }
+  if (pool) {
+    mergedStatus.pool = pool;
+  }
+  if (lifecycle) {
+    mergedStatus.lifecycle = lifecycle;
+  } else if (lazySessionMode !== null || singleActiveServerMode !== null) {
+    mergedStatus.lifecycle = {
+      ...(asObjectRecord(mergedStatus.lifecycle) ?? {}),
+      ...(lazySessionMode !== null ? { lazySessionMode } : {}),
+      ...(singleActiveServerMode !== null ? { singleActiveServerMode } : {}),
+    };
+  }
+
+  return mergedStatus;
 }
 
 async function buildLocalStartupStatus(servers: unknown[]): Promise<LocalCompatStartupStatus> {
@@ -942,7 +1024,7 @@ async function tryResolveLegacyMcpResponse(
   const localConfig = await loadLocalMcpConfig();
   const normalizedServers = normalizeServerList(rawServers);
   const effectiveServers = normalizedServers.length > 0 ? normalizedServers : mapConfigToServerList(localConfig);
-  const status = buildStatusFromServers(effectiveServers);
+  const status = await buildPreferredMcpStatus(effectiveServers);
 
   const dataByResponseKey: Record<LegacyCompatResponseKey, unknown> = {
     'mcpServers.list': effectiveServers,
@@ -988,7 +1070,7 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
   const localConfig = await loadLocalMcpConfig();
   const localConfigSource = await readLocalMcpSource();
   const localServers = mapConfigToServerList(localConfig);
-  const localStatus = buildStatusFromServers(localServers);
+  const localStatus = await buildPreferredMcpStatus(localServers);
   const localStartupStatus = await buildLocalStartupStatus(localServers);
 
   const dataByResponseKey: Record<LocalCompatResponseKey, unknown> = {
