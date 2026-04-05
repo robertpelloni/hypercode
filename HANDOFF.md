@@ -39,6 +39,7 @@
    - `772c6afd` — `feat: prefer go session catalog in web compat fallback`
    - `7e0a3409` — `fix: make go startup phase checks truthful`
    - `23f308fb` — `feat: prefer go execution environment in web compat fallback`
+   - `50c9fb47` — `feat: prefer go install surfaces in web compat fallback`
 
 ### Files changed in this slice
 - `apps/web/src/app/dashboard/system/page.tsx`
