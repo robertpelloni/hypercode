@@ -23,6 +23,17 @@ export interface DashboardStartupStatus {
         code: string;
         detail: string;
     }>;
+    startupMode?: {
+        requestedRuntime?: string;
+        activeRuntime?: string;
+        launchMode?: string;
+        dashboardMode?: string;
+        installDecision?: string;
+        installReason?: string;
+        buildDecision?: string;
+        buildReason?: string;
+        updatedAt?: string;
+    } | null;
     runtime?: {
         nodeEnv?: string | null;
         platform?: string | null;

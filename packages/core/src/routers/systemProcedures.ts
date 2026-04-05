@@ -13,6 +13,7 @@ import {
     getSessionImportService,
     getMcpConfigService,
 } from '../lib/trpc-core.js';
+import { readLocalStartupProvenance } from '../lib/startup-provenance.js';
 import { buildStartupStatusSnapshot } from './startupStatus.js';
 import { detectLocalExecutionEnvironment } from '../services/execution-environment.js';
 import { getCachedToolInventory } from '../mcp/cachedToolInventory.js';
@@ -83,6 +84,7 @@ export const systemProcedures = {
         const memoryManager = (mcpServer as { memoryManager?: { getPipelineSummary?: () => MemoryPipelineSummary } }).memoryManager;
         const memoryPipelineSummary: MemoryPipelineSummary | null = memoryManager?.getPipelineSummary?.() ?? null;
 
+        const startupMode = readLocalStartupProvenance();
         const [runtimeServers, sessionCount, browserStatus, executionEnvironment, cachedInventory, sectionedMemoryStoreStatus, importedMaintenanceStats] = await Promise.all([
             aggregator?.listServers?.().catch(() => []) ?? [],
             Promise.resolve(sessionSupervisor?.listSessions?.().length ?? 0),
@@ -164,6 +166,7 @@ export const systemProcedures = {
                     missingRetentionSummaryCount: Number((importedMaintenanceStats as { missingRetentionSummaryCount?: number }).missingRetentionSummaryCount ?? 0),
                 }
                 : null,
+            startupMode,
         });
     }),
     getTaskStatus: publicProcedure

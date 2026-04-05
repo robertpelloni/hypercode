@@ -93,6 +93,91 @@ describe('buildStartupStatusSnapshot', () => {
             archivedTranscriptCount: 0,
             missingRetentionSummaryCount: 0,
         });
+        expect(snapshot.startupMode).toBeNull();
+    });
+
+    it('preserves startup provenance when provided', async () => {
+        const snapshot = await buildStartupStatusSnapshot({
+            mcpServer: {
+                memoryManager: {},
+                isMemoryInitialized: true,
+                getBridgeStatus: () => ({
+                    port: 3011,
+                    ready: true,
+                    clientCount: 0,
+                    clients: [],
+                    supportedCapabilities: [],
+                    supportedHookPhases: [],
+                    websocketUrl: 'ws://127.0.0.1:3011',
+                    healthUrl: 'http://127.0.0.1:3011/health',
+                    streamUrl: 'http://127.0.0.1:3011/api/mesh/stream',
+                }),
+            },
+            aggregator: {
+                getInitializationStatus: () => ({
+                    inProgress: false,
+                    initialized: true,
+                    connectedClientCount: 0,
+                    configuredServerCount: 0,
+                }),
+            },
+            agentMemory: {},
+            browserService: {},
+            browserStatus: { active: false, pageCount: 0, pageIds: [] },
+            sessionSupervisor: {
+                getRestoreStatus: () => ({
+                    lastRestoreAt: 1_700_000_000_000,
+                    restoredSessionCount: 0,
+                    autoResumeCount: 0,
+                }),
+            },
+            sessionCount: 0,
+            mcpConfigService: {
+                getStatus: () => ({
+                    inProgress: false,
+                    lastCompletedAt: 1_700_000_000_000,
+                    lastSuccessAt: 1_700_000_000_000,
+                    lastServerCount: 0,
+                    lastToolCount: 0,
+                }),
+            },
+            liveServerCount: 0,
+            persistedServerCount: 0,
+            persistedToolCount: 0,
+            persistedAlwaysOnServerCount: 0,
+            persistedAlwaysOnToolCount: 0,
+            executionEnvironment: {
+                ready: true,
+                preferredShellId: 'pwsh',
+                preferredShellLabel: 'PowerShell 7',
+                shellCount: 1,
+                verifiedShellCount: 1,
+                toolCount: 3,
+                verifiedToolCount: 3,
+                harnessCount: 1,
+                verifiedHarnessCount: 1,
+                supportsPowerShell: true,
+                supportsPosixShell: false,
+                notes: ['Prefer PowerShell 7.'],
+            },
+            startupMode: {
+                requestedRuntime: 'auto',
+                activeRuntime: 'go',
+                launchMode: 'prebuilt Go binary',
+                dashboardMode: 'compatibility-only; skipped for Go runtime',
+                installDecision: 'skipped',
+                buildDecision: 'skipped',
+            },
+        });
+
+        expect(snapshot.startupMode).toEqual({
+            requestedRuntime: 'auto',
+            activeRuntime: 'go',
+            launchMode: 'prebuilt Go binary',
+            dashboardMode: 'compatibility-only; skipped for Go runtime',
+            installDecision: 'skipped',
+            buildDecision: 'skipped',
+        });
     });
 
     it('keeps startup pending when the bridge listener is offline', async () => {

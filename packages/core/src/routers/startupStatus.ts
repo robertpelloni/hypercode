@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { RegisteredBridgeClient } from '../bridge/bridge-manifest.js';
+import type { HypercodeStartupProvenance } from '../lib/startup-provenance.js';
 import type { ExecutionEnvironmentSummary } from '../services/execution-environment.js';
 
 let hypercodeVersionPromise: Promise<string> | null = null;
@@ -109,6 +110,7 @@ type StartupStatusInput = {
         archivedTranscriptCount: number;
         missingRetentionSummaryCount: number;
     } | null;
+    startupMode?: HypercodeStartupProvenance | null;
 };
 
 type StartupBlockingReasonCode =
@@ -153,6 +155,7 @@ export async function buildStartupStatusSnapshot(input: StartupStatusInput) {
         executionEnvironment,
         sectionedMemory,
         importedSessions,
+        startupMode,
     } = input;
     const mcpServerRuntime = mcpServer as {
         memoryManager?: unknown;
@@ -358,6 +361,7 @@ export async function buildStartupStatusSnapshot(input: StartupStatusInput) {
             platform: process.platform,
             version,
         },
+        startupMode: startupMode ?? null,
         checks: {
             mcpAggregator: {
                 ready: liveReady,

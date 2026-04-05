@@ -176,6 +176,8 @@ In the same slice, startup provenance is now persisted into the local startup lo
 
 This makes the startup truthfulness durable instead of transient.
 
+That provenance is now also exposed through the TypeScript control-plane startup snapshot (`startupStatus`). The `startupStatus` API payload now includes a top-level `startupMode` field carrying the same persisted provenance, and the dashboard startup status type has been updated accordingly.
+
 Why this matters:
 - it makes Go-primary launch use the same compiled artifact that the startup build profile already validates
 - it reduces repeated `go run` compilation overhead at runtime
@@ -183,6 +185,7 @@ Why this matters:
 - it makes the runtime choice operator-visible instead of implicit
 - it makes post-launch surface availability explicit instead of forcing operators to infer it from scattered warnings
 - it makes startup decisions queryable through `hypercode status` instead of leaving them in terminal scrollback only
+- it makes the same startup truth available to dashboard/API consumers rather than restricting it to the CLI
 
 #### Lockfile hygiene
 - The refreshed `pnpm-lock.yaml` no longer contains legacy-name references for the main workspace packages.
@@ -213,7 +216,10 @@ powershell.exe -NoProfile -Command "cmd /c 'call start.bat --help'"
 Results:
 - CLI start-command regression tests passed
 - CLI status-command regression tests passed
+- core startup-status router regression tests passed
 - CLI build passed
+- core build passed
+- web build passed
 - Go control-plane build passed
 - new Go-primary startup build profile passed
 - install-skip readiness probe correctly reported the current workspace as already ready for Go-primary startup
@@ -222,6 +228,7 @@ Results:
 - runtime provenance helper coverage passed in the CLI regression suite
 - startup mode summary helper coverage passed in the CLI regression suite
 - persisted startup-provenance status coverage passed in the CLI regression suite
+- startupStatus snapshot coverage now also verifies persisted startup provenance propagation through the server/API-visible status payload
 - a short-lived `start.bat --help` run also completed and showed the new install/build phase summary lines before exiting through CLI help output
 
 Validation boundary:
@@ -251,6 +258,7 @@ Result:
 - startup output now truthfully reports whether install/build phases ran or were skipped and why
 - startup output now also provides a concise startup-mode surface summary for the selected runtime
 - startup provenance is now persisted into the local startup lock and exposed by `hypercode status` when available
+- the TypeScript `startupStatus` API surface now also exposes that persisted startup provenance to dashboard/API consumers
 - `start.bat` now validates Go-first startup surfaces by default for `auto`/`go` runtime modes instead of always requiring a full workspace build first
 - `start.bat` can now skip `pnpm install` in Go-primary mode when the workspace is already ready
 - `start.bat` can now also skip the Go-primary startup build when the built CLI and Go binary artifacts are already current
