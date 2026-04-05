@@ -135,10 +135,17 @@ Current scope of artifact freshness checks:
 - Go output:
   - `go/hypercode(.exe)`
 
+In the same pass, `start.bat` was updated to print explicit phase summaries:
+- `Install phase summary: ...`
+- `Build phase summary: ...`
+
+Those summaries now make the operator-visible startup contract much clearer by saying whether a phase ran or was skipped and the reason behind that decision.
+
 Why this matters:
 - repeat Go-primary startup can now avoid both install and build when the workspace is already ready
 - it reduces startup latency and TS coupling further without pretending stale artifacts are acceptable
 - it moves repeat startup behavior closer to a real binary-first operational model
+- it makes the startup decision path operator-visible instead of leaving it implicit in probe noise
 
 #### Prebuilt Go binary runtime launch preference
 Updated `packages/cli/src/commands/start.ts` so the Go runtime launcher now:
@@ -182,6 +189,7 @@ node scripts/build_startup.mjs --profile=go-primary
 node scripts/check_startup_install.mjs --profile=go-primary
 node scripts/check_startup_build.mjs --profile=go-primary
 node packages/cli/dist/cli/src/index.js start --help
+powershell.exe -NoProfile -Command "cmd /c 'call start.bat --help'"
 ```
 
 Results:
@@ -193,10 +201,12 @@ Results:
 - build-skip artifact freshness probe correctly reported the current workspace artifacts as already current for Go-primary startup
 - direct built-CLI launch path resolved and printed `hypercode start --help` successfully
 - runtime provenance helper coverage passed in the CLI regression suite
+- a short-lived `start.bat --help` run also completed and showed the new install/build phase summary lines before exiting through CLI help output
 
 Validation boundary:
-- `start.bat` itself was not executed end-to-end in this pass because doing so would intentionally launch the Hub and additional long-running runtime processes
-- instead, the startup contract was validated at the exact install/build/launch decision points that `start.bat` now delegates to
+- no long-running Hub/runtime session was intentionally launched in this pass
+- the batch-script help run exercised startup decisions and exited through CLI help rather than serving the control plane
+- the PowerShell wrapper attempt to inject `HYPERCODE_SKIP_NATIVE_PREFLIGHT=1` was syntactically imperfect, so native preflight still ran during that specific batch help validation; this was observed and documented rather than hidden
 
 #### Full workspace validation
 ```bash
@@ -217,6 +227,7 @@ Result:
 - the direct built-CLI launch path succeeds
 - the CLI Go runtime launcher now prefers the prebuilt Go binary when available
 - startup output now truthfully reports runtime provenance for Go and Node compatibility paths
+- startup output now truthfully reports whether install/build phases ran or were skipped and why
 - `start.bat` now validates Go-first startup surfaces by default for `auto`/`go` runtime modes instead of always requiring a full workspace build first
 - `start.bat` can now skip `pnpm install` in Go-primary mode when the workspace is already ready
 - `start.bat` can now also skip the Go-primary startup build when the built CLI and Go binary artifacts are already current
