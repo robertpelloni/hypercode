@@ -32,6 +32,7 @@
    - `94c45e3f` — `feat: prefer go provider status in web compat fallback`
    - `d01ff222` — `feat: prefer go cli harnesses in web compat fallback`
    - `744d94f9` — `feat: prefer go sessions in web compat fallback`
+   - `772c6afd` — `feat: prefer go session catalog in web compat fallback`
 
 ### Files changed in this slice
 - `apps/web/src/app/dashboard/system/page.tsx`
