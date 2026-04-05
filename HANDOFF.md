@@ -3,6 +3,32 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
+### Latest incremental pass — Go-backed policy dashboard compatibility in degraded mode
+This follow-up added native Go fallback ownership plus shared dashboard compat support for the Policies dashboard cluster.
+
+#### What changed
+- Updated `go/internal/httpapi/server.go` so these routes now have native Go fallback ownership when upstream `/trpc` is unavailable:
+  - `POST /api/policies/create`
+  - `POST /api/policies/update`
+  - `POST /api/policies/delete`
+- Added focused Go coverage in `go/internal/httpapi/server_test.go`:
+  - `TestPoliciesCreateUpdateAndDeleteFallBackToLocalDB`
+- Updated `apps/web/src/app/api/trpc/[trpc]/route.ts` so the shared Next.js compat route now supports:
+  - `policies.list`
+  - `policies.create`
+  - `policies.update`
+  - `policies.delete`
+- Added focused web compat regression coverage in `apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+
+#### Validation performed
+- `cd go && gofmt -w internal/httpapi/server.go internal/httpapi/server_test.go`
+- `cd go && go test ./internal/httpapi -run 'TestPoliciesCreateUpdateAndDeleteFallBackToLocalDB' -count=1`
+- `pnpm exec vitest run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+- `pnpm -C apps/web run build`
+
+#### Recommended next step after this pass
+Continue targeting remaining dashboard mutation clusters that still depend on `/trpc`, especially governance/operator surfaces where Go already has durable local `metamcp.db` state and only lacks truthful fallback ownership or shared compat plumbing.
+
 ### Latest incremental pass — Go-backed tool always-on mutation compatibility for MCP dashboards
 This follow-up added native Go fallback ownership plus shared dashboard compat support for `tools.setAlwaysOn`, which is used by the MCP Catalog and MCP Inspector.
 

@@ -7668,6 +7668,89 @@ func TestSecretsListFallsBackToLocalDB(t *testing.T) {
 	}
 }
 
+func TestPoliciesCreateUpdateAndDeleteFallBackToLocalDB(t *testing.T) {
+	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	workspace := t.TempDir()
+	dbPath := filepath.Join(workspace, "metamcp.db")
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("failed to open sqlite db: %v", err)
+	}
+	defer db.Close()
+
+	if _, err := db.Exec(`
+		CREATE TABLE policies (
+			uuid TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			description TEXT,
+			rules TEXT NOT NULL DEFAULT '{}',
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL
+		);
+	`); err != nil {
+		t.Fatalf("failed to create sqlite db schema: %v", err)
+	}
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = workspace
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	createReq := httptest.NewRequest(http.MethodPost, "/api/policies/create", strings.NewReader(`{"name":"Read Only","description":"baseline policy","rules":{"allow":["tool.read"],"deny":["tool.write"]}}`))
+	createReq.Header.Set("content-type", "application/json")
+	createRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(createRecorder, createReq)
+	if createRecorder.Code != http.StatusOK {
+		t.Fatalf("expected 200 from policies.create fallback, got %d with body %s", createRecorder.Code, createRecorder.Body.String())
+	}
+	for _, needle := range []string{`"fallback":"go-local-policy-db"`, `"procedure":"policies.create"`, `"name":"Read Only"`, `"allow":["tool.read"]`} {
+		if !strings.Contains(createRecorder.Body.String(), needle) {
+			t.Fatalf("expected policies.create fallback to contain %s, got %s", needle, createRecorder.Body.String())
+		}
+	}
+
+	var policyUUID string
+	if err := db.QueryRow(`SELECT uuid FROM policies WHERE name = 'Read Only'`).Scan(&policyUUID); err != nil {
+		t.Fatalf("failed to verify created policy: %v", err)
+	}
+
+	updateReq := httptest.NewRequest(http.MethodPost, "/api/policies/update", strings.NewReader(`{"uuid":"`+policyUUID+`","name":"Read Mostly","rules":{"allow":["tool.read","tool.search"],"deny":["tool.write"]}}`))
+	updateReq.Header.Set("content-type", "application/json")
+	updateRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(updateRecorder, updateReq)
+	if updateRecorder.Code != http.StatusOK {
+		t.Fatalf("expected 200 from policies.update fallback, got %d with body %s", updateRecorder.Code, updateRecorder.Body.String())
+	}
+	for _, needle := range []string{`"fallback":"go-local-policy-db"`, `"procedure":"policies.update"`, `"name":"Read Mostly"`, `"tool.search"`} {
+		if !strings.Contains(updateRecorder.Body.String(), needle) {
+			t.Fatalf("expected policies.update fallback to contain %s, got %s", needle, updateRecorder.Body.String())
+		}
+	}
+
+	deleteReq := httptest.NewRequest(http.MethodPost, "/api/policies/delete", strings.NewReader(`{"uuid":"`+policyUUID+`"}`))
+	deleteReq.Header.Set("content-type", "application/json")
+	deleteRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(deleteRecorder, deleteReq)
+	if deleteRecorder.Code != http.StatusOK {
+		t.Fatalf("expected 200 from policies.delete fallback, got %d with body %s", deleteRecorder.Code, deleteRecorder.Body.String())
+	}
+	for _, needle := range []string{`"fallback":"go-local-policy-db"`, `"procedure":"policies.delete"`, `"success":true`} {
+		if !strings.Contains(deleteRecorder.Body.String(), needle) {
+			t.Fatalf("expected policies.delete fallback to contain %s, got %s", needle, deleteRecorder.Body.String())
+		}
+	}
+
+	var remaining int
+	if err := db.QueryRow(`SELECT count(*) FROM policies WHERE uuid = ?`, policyUUID).Scan(&remaining); err != nil {
+		t.Fatalf("failed to count remaining policies: %v", err)
+	}
+	if remaining != 0 {
+		t.Fatalf("expected deleted policy to be removed, found %d rows", remaining)
+	}
+}
+
 func TestSecretsSetAndDeleteFallBackToLocalDB(t *testing.T) {
 	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 

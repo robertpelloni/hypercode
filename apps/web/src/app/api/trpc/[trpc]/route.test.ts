@@ -1795,6 +1795,78 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4550/api/secrets/delete')).toBe(true);
   });
 
+  it('prefers go-native policy reads and mutations in local dashboard fallback mode', async () => {
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4570/trpc';
+    global.fetch = vi.fn(async (input, init) => {
+      const url = String(input);
+
+      if (url.includes('/trpc/')) {
+        throw new Error('connect ECONNREFUSED');
+      }
+
+      if (url === 'http://127.0.0.1:4570/api/policies') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [
+            {
+              uuid: 'policy-1',
+              name: 'Default',
+              description: 'baseline policy',
+              rules: { allow: ['tool.read'], deny: ['tool.delete'] },
+            },
+          ],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4570/api/policies/create' && init?.method === 'POST') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: {
+            uuid: 'policy-created-1',
+            name: 'Read Only',
+            description: 'new policy',
+            rules: { allow: ['tool.read'], deny: ['tool.write'] },
+          },
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4570/api/policies/delete' && init?.method === 'POST') {
+        return new Response(JSON.stringify({ success: true, data: { success: true } }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    const listResponse = await POST(new Request('http://localhost:3010/api/trpc/policies.list', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: null }),
+    }));
+    expect(listResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+    expect((await listResponse.json())?.result?.data).toEqual([
+      expect.objectContaining({ uuid: 'policy-1', name: 'Default' }),
+    ]);
+
+    const createResponse = await POST(new Request('http://localhost:3010/api/trpc/policies.create', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { name: 'Read Only', description: 'new policy', rules: { allow: ['tool.read'], deny: ['tool.write'] } } }),
+    }));
+    expect(createResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-operator-action');
+    expect((await createResponse.json())?.result?.data).toEqual(expect.objectContaining({ uuid: 'policy-created-1', name: 'Read Only' }));
+
+    const deleteResponse = await POST(new Request('http://localhost:3010/api/trpc/policies.delete', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { uuid: 'policy-created-1' } }),
+    }));
+    expect((await deleteResponse.json())?.result?.data).toEqual({ success: true });
+
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4570/api/policies')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4570/api/policies/create')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4570/api/policies/delete')).toBe(true);
+  });
+
   it('prefers go-native tool always-on mutations in local dashboard fallback mode', async () => {
     process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4560/trpc';
     global.fetch = vi.fn(async (input, init) => {

@@ -7610,15 +7610,130 @@ func (s *Server) handlePoliciesGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePoliciesCreate(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "policies.create")
+	var payload map[string]any
+	if err := decodeJSONBody(r, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "policies.create", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "policies.create",
+			},
+		})
+		return
+	}
+
+	policy, fallbackErr := s.localCreatePolicy(payload)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    policy,
+		"bridge": map[string]any{
+			"fallback":  "go-local-policy-db",
+			"procedure": "policies.create",
+			"reason":    "upstream unavailable; created local metamcp policy record",
+		},
+	})
 }
 
 func (s *Server) handlePoliciesUpdate(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "policies.update")
+	var payload map[string]any
+	if err := decodeJSONBody(r, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "policies.update", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "policies.update",
+			},
+		})
+		return
+	}
+
+	policy, fallbackErr := s.localUpdatePolicy(payload)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
+		return
+	}
+	if policy == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   "policy unavailable",
+			"detail":  "upstream unavailable; policy was not found in local metamcp policy records",
+			"bridge": map[string]any{
+				"fallback":  "go-local-policy-db",
+				"procedure": "policies.update",
+				"reason":    "upstream unavailable; policy was not found in local metamcp policy records",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    policy,
+		"bridge": map[string]any{
+			"fallback":  "go-local-policy-db",
+			"procedure": "policies.update",
+			"reason":    "upstream unavailable; updated local metamcp policy record",
+		},
+	})
 }
 
 func (s *Server) handlePoliciesDelete(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "policies.delete")
+	var payload map[string]any
+	if err := decodeJSONBody(r, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "policies.delete", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "policies.delete",
+			},
+		})
+		return
+	}
+
+	deleteResult, fallbackErr := s.localDeletePolicy(strings.TrimSpace(stringValue(payload["uuid"])))
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    deleteResult,
+		"bridge": map[string]any{
+			"fallback":  "go-local-policy-db",
+			"procedure": "policies.delete",
+			"reason":    "upstream unavailable; deleted local metamcp policy record",
+		},
+	})
 }
 
 func (s *Server) handleSecretsList(w http.ResponseWriter, r *http.Request) {
@@ -10455,6 +10570,101 @@ func (s *Server) localPolicies() ([]map[string]any, error) {
 	}
 
 	return results, nil
+}
+
+func (s *Server) localCreatePolicy(payload map[string]any) (any, error) {
+	name := strings.TrimSpace(stringValue(payload["name"]))
+	if name == "" {
+		return nil, fmt.Errorf("missing policy name")
+	}
+	description := nullableString(payload["description"])
+	rulesJSON, err := json.Marshal(payload["rules"])
+	if err != nil || strings.TrimSpace(string(rulesJSON)) == "" || string(rulesJSON) == "null" {
+		rulesJSON = []byte(`{}`)
+	}
+
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	policyUUID := uuid.NewString()
+	now := time.Now().UTC().Unix()
+	if _, err := db.Exec(`
+		INSERT INTO policies (uuid, name, description, rules, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`, policyUUID, name, description, string(rulesJSON), now, now); err != nil {
+		return nil, err
+	}
+	return s.localPolicy(policyUUID)
+}
+
+func (s *Server) localUpdatePolicy(payload map[string]any) (any, error) {
+	policyUUID := strings.TrimSpace(stringValue(payload["uuid"]))
+	if policyUUID == "" {
+		return nil, fmt.Errorf("missing policy uuid")
+	}
+	existing, err := s.localPolicy(policyUUID)
+	if err != nil || existing == nil {
+		return existing, err
+	}
+	existingMap, _ := existing.(map[string]any)
+	name := strings.TrimSpace(stringValue(payload["name"]))
+	if name == "" {
+		name = stringValue(existingMap["name"])
+	}
+	description := nullableString(payload["description"])
+	if description == nil {
+		description = nullableString(existingMap["description"])
+	}
+	rulesValue, hasRules := payload["rules"]
+	if !hasRules {
+		rulesValue = existingMap["rules"]
+	}
+	rulesJSON, err := json.Marshal(rulesValue)
+	if err != nil || strings.TrimSpace(string(rulesJSON)) == "" || string(rulesJSON) == "null" {
+		rulesJSON = []byte(`{}`)
+	}
+
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	result, err := db.Exec(`
+		UPDATE policies
+		SET name = ?, description = ?, rules = ?, updated_at = ?
+		WHERE uuid = ?
+	`, name, description, string(rulesJSON), time.Now().UTC().Unix(), policyUUID)
+	if err != nil {
+		return nil, err
+	}
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return nil, nil
+	}
+	return s.localPolicy(policyUUID)
+}
+
+func (s *Server) localDeletePolicy(policyUUID string) (any, error) {
+	if strings.TrimSpace(policyUUID) == "" {
+		return nil, fmt.Errorf("missing policy uuid")
+	}
+
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	result, err := db.Exec(`DELETE FROM policies WHERE uuid = ?`, policyUUID)
+	if err != nil {
+		return nil, err
+	}
+	rowsAffected, _ := result.RowsAffected()
+	return map[string]any{"success": rowsAffected > 0}, nil
 }
 
 func (s *Server) localSecrets() ([]map[string]any, error) {

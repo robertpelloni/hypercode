@@ -139,6 +139,7 @@ const LOCAL_COMPAT_RESPONSE_KEYS = {
   'mcpServers.get': 'mcpServers.get',
   'apiKeys.list': 'apiKeys.list',
   'secrets.list': 'secrets.list',
+  'policies.list': 'policies.list',
   'tools.detectCliHarnesses': 'tools.detectCliHarnesses',
   'tools.detectExecutionEnvironment': 'tools.detectExecutionEnvironment',
   'tools.detectInstallSurfaces': 'tools.detectInstallSurfaces',
@@ -180,6 +181,9 @@ const LOCAL_OPERATOR_MUTATION_PROCEDURES = new Set([
   'apiKeys.delete',
   'secrets.set',
   'secrets.delete',
+  'policies.create',
+  'policies.update',
+  'policies.delete',
 ]);
 const LOCAL_TOOL_MUTATION_PROCEDURES = new Set([
   'tools.setAlwaysOn',
@@ -1402,6 +1406,11 @@ async function buildPreferredSecretsList(): Promise<unknown[]> {
   return Array.isArray(secrets) ? secrets : [];
 }
 
+async function buildPreferredPoliciesList(): Promise<unknown[]> {
+  const policies = await fetchNativeControlPlaneData<unknown[]>('/api/policies');
+  return Array.isArray(policies) ? policies : [];
+}
+
 async function buildPreferredExpertStatus(): Promise<Record<string, unknown>> {
   const nativeExpertStatus = await fetchNativeStatusPayload<Record<string, unknown>>('/api/expert/status');
   if (!nativeExpertStatus) {
@@ -2290,6 +2299,7 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
     'mcpServers.get': undefined,
     'apiKeys.list': apiKeys,
     'secrets.list': await buildPreferredSecretsList(),
+    'policies.list': await buildPreferredPoliciesList(),
     'tools.detectCliHarnesses': cliHarnessDetections,
     'tools.detectExecutionEnvironment': executionEnvironment,
     'tools.detectInstallSurfaces': installSurfaces,
@@ -2804,6 +2814,12 @@ async function tryLocalOperatorMutation(req: Request, body: string | undefined):
     endpointPath = '/api/secrets/set';
   } else if (procedureName === 'secrets.delete') {
     endpointPath = '/api/secrets/delete';
+  } else if (procedureName === 'policies.create') {
+    endpointPath = '/api/policies/create';
+  } else if (procedureName === 'policies.update') {
+    endpointPath = '/api/policies/update';
+  } else if (procedureName === 'policies.delete') {
+    endpointPath = '/api/policies/delete';
   }
 
   if (!endpointPath) {

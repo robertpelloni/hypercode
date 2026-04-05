@@ -121,7 +121,7 @@ Status values:
 |---|---|---|
 | SSE broker | Native Go | implemented for extension parity |
 | Browser extension support APIs | Partial Native Go / bridge mix | some parity exists, not complete |
-| Dashboard backend contract | TS-only critical | web app still materially depends on TS-oriented surfaces/contracts, but Go-primary startup can now launch the Next.js dashboard in compatibility-backed mode against the live Go control plane instead of hard-skipping dashboard startup entirely; the shared compat route now also covers the supervised-session dashboard cluster, key MCP inspector/runtime-control mutations, API key/secret admin actions, and the DB-backed `tools.setAlwaysOn` toggle during `/trpc` outage |
+| Dashboard backend contract | TS-only critical | web app still materially depends on TS-oriented surfaces/contracts, but Go-primary startup can now launch the Next.js dashboard in compatibility-backed mode against the live Go control plane instead of hard-skipping dashboard startup entirely; the shared compat route now also covers the supervised-session dashboard cluster, key MCP inspector/runtime-control mutations, API key/secret admin actions, the DB-backed `tools.setAlwaysOn` toggle, and policy dashboard CRUD during `/trpc` outage |
 | Native client/operator APIs | Growing Native Go | good progress, but not enough for full backend replacement |
 
 ---
@@ -138,7 +138,7 @@ Status values:
 3. **MCP write/config parity is incomplete in Go**
    - CRUD/mutation/cache/telemetry surfaces still lag.
 4. **Dashboard still depends heavily on TS-era backend contracts**
-   - Go can now host the primary control plane while startup launches the Next.js dashboard in compatibility-backed mode, and the supervised-session dashboard cluster plus key MCP runtime-control mutations, API key/secret admin actions, and the DB-backed tool always-on toggle now map onto Go routes during `/trpc` outage, but the UI still does not yet rely on a fully Go-authoritative backend contract.
+   - Go can now host the primary control plane while startup launches the Next.js dashboard in compatibility-backed mode, and the supervised-session dashboard cluster plus key MCP runtime-control mutations, API key/secret admin actions, the DB-backed tool always-on toggle, and policy dashboard CRUD now map onto Go routes during `/trpc` outage, but the UI still does not yet rely on a fully Go-authoritative backend contract.
 5. **Background-service LLM execution is still partly TS-owned**
    - despite OpenRouter-free default migration, execution ownership is not fully in Go.
 

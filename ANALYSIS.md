@@ -1,5 +1,76 @@
 # HyperCode Stabilization Analysis — 2026-04-03
 
+## Latest stabilization pass — Go-backed policy dashboard compatibility in degraded mode
+
+### Context
+After the previous dashboard compatibility slices, Go-primary degraded mode already covered:
+- supervised session reads/mutations
+- MCP runtime-control mutations
+- API key and secret admin writes
+- DB-backed `tools.setAlwaysOn`
+
+The next governance/admin gap was the Policies dashboard:
+- `/dashboard/mcp/policies` reads `policies.list`
+- it mutates `policies.create` and `policies.delete`
+- Go already had local fallback reads for policy inventory and detail
+- but policy writes were still bridge-only in the Go HTTP layer
+- and the shared Next.js compat route still did not expose `policies.list` or policy write mutations during `/trpc` outage
+
+That meant the dashboard had a real governance/admin page that could still become unusable in Go-primary degraded mode despite the local `metamcp.db` already containing durable policy state.
+
+### What changed
+#### 1. Added native Go fallback ownership for policy writes
+Updated:
+- `go/internal/httpapi/server.go`
+- `go/internal/httpapi/server_test.go`
+
+The Go HTTP server now falls back natively for:
+- `POST /api/policies/create`
+- `POST /api/policies/update`
+- `POST /api/policies/delete`
+
+Native fallback behavior:
+- creates/updates/deletes rows in the local `policies` table in `metamcp.db`
+- persists the JSON-encoded `rules` payload
+- returns truthful local fallback responses instead of pretending TS handled the mutation
+
+#### 2. Extended the shared Next.js compat route for policy reads/writes
+Updated:
+- `apps/web/src/app/api/trpc/[trpc]/route.ts`
+- `apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+
+The shared compat route now supports:
+- `policies.list`
+- `policies.create`
+- `policies.update`
+- `policies.delete`
+
+These now map onto the Go HTTP surface when `/trpc` is unavailable:
+- `/api/policies`
+- `/api/policies/create`
+- `/api/policies/update`
+- `/api/policies/delete`
+
+That makes the Policies dashboard much closer to fully usable on top of the Go control plane in degraded mode, following the same shared-compat strategy used for sessions, MCP runtime control, governance/admin writes, and tool always-on toggles.
+
+### Validation
+Executed truthfully without killing any processes:
+- `cd go && gofmt -w internal/httpapi/server.go internal/httpapi/server_test.go`
+- `cd go && go test ./internal/httpapi -run 'TestPoliciesCreateUpdateAndDeleteFallBackToLocalDB' -count=1`
+- `pnpm exec vitest run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+- `pnpm -C apps/web run build`
+
+### Why this matters
+This continues the same migration pattern and pushes Go-primary degraded-mode dashboard usability further into governance/admin ownership:
+- the Policies dashboard is no longer just a TS-era surface for reads
+- policy CRUD now has truthful Go fallback behavior through both the HTTP layer and the shared Next.js compat route
+- another operator-facing governance cluster can now function on top of the Go control plane without requiring `/trpc` uptime
+
+The next best slices remain the same category of work:
+- continue finding operator-critical dashboard mutations still gated on `/trpc`
+- prefer existing Go `/api/*` routes and local durable state
+- add native Go fallback ownership only where the backend surface is still bridge-only
+
 ## Latest stabilization pass — Go-backed tool always-on mutation compatibility for MCP dashboards
 
 ### Context
