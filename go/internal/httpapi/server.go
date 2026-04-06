@@ -1158,6 +1158,10 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/memory/context/save", Category: "memory", Description: "Save a memory context through the TypeScript control plane, with local saved-context registry fallback when upstream is unavailable."},
 				{Path: "/api/memory/context/get", Category: "memory", Description: "Bridge to a specific saved memory context, with local inline-content fallback when upstream is unavailable."},
 				{Path: "/api/memory/context/delete", Category: "memory", Description: "Delete a saved memory context through the TypeScript control plane, with local registry-deletion fallback when upstream is unavailable."},
+				{Path: "/api/memory/interchange-formats", Category: "memory", Description: "Bridge to TypeScript memory interchange-format list, with truthful local format inventory fallback when upstream is unavailable."},
+				{Path: "/api/memory/export", Category: "memory", Description: "Bridge to TypeScript memory export, with a local export fallback from memory.json or the contexts registry when upstream is unavailable."},
+				{Path: "/api/memory/import", Category: "memory", Description: "Bridge to TypeScript memory import, with local saved-context registry import fallback when upstream is unavailable."},
+				{Path: "/api/memory/convert", Category: "memory", Description: "Bridge to TypeScript memory format conversion, with local canonical/provider format conversion fallback when upstream is unavailable."},
 				{Path: "/api/memory/agent-stats", Category: "memory", Description: "Bridge to TypeScript agent-memory statistics."},
 				{Path: "/api/memory/agent-search", Category: "memory", Description: "Bridge to TypeScript agent-memory search."},
 				{Path: "/api/memory/facts/add", Category: "memory", Description: "Add a memory fact through the TypeScript control plane."},
@@ -1176,10 +1180,10 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/memory/session-summaries/recent", Category: "memory", Description: "Bridge to recent session-summary memories from the TypeScript control plane."},
 				{Path: "/api/memory/session-summaries/search", Category: "memory", Description: "Bridge to session-summary memory search from the TypeScript control plane."},
 				{Path: "/api/memory/sectioned-status", Category: "memory", Description: "Bridge to the TypeScript sectioned-memory status snapshot."},
-				{Path: "/api/memory/interchange-formats", Category: "memory", Description: "Bridge to the TypeScript memory interchange-format list."},
+				{Path: "/api/memory/interchange-formats", Category: "memory", Description: "Bridge to the TypeScript memory interchange-format list, with truthful local format inventory fallback when upstream is unavailable."},
 				{Path: "/api/memory/export", Category: "memory", Description: "Bridge to TypeScript memory export, with a local export fallback from memory.json or the contexts registry when upstream is unavailable."},
-				{Path: "/api/memory/import", Category: "memory", Description: "Bridge to TypeScript memory import."},
-				{Path: "/api/memory/convert", Category: "memory", Description: "Bridge to TypeScript memory format conversion."},
+				{Path: "/api/memory/import", Category: "memory", Description: "Bridge to TypeScript memory import, with local saved-context registry import fallback when upstream is unavailable."},
+				{Path: "/api/memory/convert", Category: "memory", Description: "Bridge to TypeScript memory format conversion, with local canonical/provider format conversion fallback when upstream is unavailable."},
 				{Path: "/api/agent-memory/search", Category: "memory", Description: "Bridge to TypeScript agent-memory search across namespaces and tiers, with an explicit empty-result fallback when agent memory is unavailable."},
 				{Path: "/api/agent-memory/add", Category: "memory", Description: "Add an agent-memory entry through the TypeScript control plane."},
 				{Path: "/api/agent-memory/recent", Category: "memory", Description: "Bridge to recent TypeScript agent-memory entries, with an explicit empty-result fallback when agent memory is unavailable."},
@@ -4326,7 +4330,7 @@ func (s *Server) handleMemoryInterchangeFormats(w http.ResponseWriter, r *http.R
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    []string{"json", "markdown"},
+		"data":    localMemoryInterchangeFormats(),
 		"bridge": map[string]any{
 			"fallback":  "go-local-memory",
 			"procedure": "memory.listInterchangeFormats",
@@ -4385,11 +4389,98 @@ func (s *Server) handleMemoryExport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleMemoryImport(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "memory.importMemories")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.importMemories", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.importMemories",
+			},
+		})
+		return
+	}
+
+	data := stringValue(payload["data"])
+	if strings.TrimSpace(data) == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing data"})
+		return
+	}
+	format := stringValue(firstNonEmptyString(payload["format"], "json"))
+	userID := stringValue(firstNonEmptyString(payload["userId"], "default"))
+	imported, localErr := s.localImportMemories(data, format, userID)
+	if localErr != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    imported,
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.importMemories",
+			"reason":    "upstream unavailable; importing local saved-context records",
+		},
+	})
 }
 
 func (s *Server) handleMemoryConvert(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "memory.convertMemories")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.convertMemories", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.convertMemories",
+			},
+		})
+		return
+	}
+
+	data := stringValue(payload["data"])
+	if strings.TrimSpace(data) == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing data"})
+		return
+	}
+	fromFormat := stringValue(payload["fromFormat"])
+	toFormat := stringValue(payload["toFormat"])
+	if strings.TrimSpace(fromFormat) == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing fromFormat"})
+		return
+	}
+	if strings.TrimSpace(toFormat) == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing toFormat"})
+		return
+	}
+	userID := stringValue(firstNonEmptyString(payload["userId"], "default"))
+	converted, localErr := s.localConvertMemories(data, fromFormat, toFormat, userID)
+	if localErr != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    converted,
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.convertMemories",
+			"reason":    "upstream unavailable; converting local memory interchange data",
+		},
+	})
 }
 
 func (s *Server) handleAgentMemorySearch(w http.ResponseWriter, r *http.Request) {

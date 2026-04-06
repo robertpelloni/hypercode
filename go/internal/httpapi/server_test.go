@@ -893,7 +893,7 @@ func TestMemorySectionedStatusAndFormatsFallBackLocally(t *testing.T) {
 
 	formatsRecorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(formatsRecorder, httptest.NewRequest(http.MethodGet, "/api/memory/interchange-formats", nil))
-	if formatsRecorder.Code != http.StatusOK || !strings.Contains(formatsRecorder.Body.String(), `"markdown"`) || !strings.Contains(formatsRecorder.Body.String(), `"fallback":"go-local-memory"`) {
+	if formatsRecorder.Code != http.StatusOK || !strings.Contains(formatsRecorder.Body.String(), `"json-provider"`) || !strings.Contains(formatsRecorder.Body.String(), `"sectioned-memory-store"`) || !strings.Contains(formatsRecorder.Body.String(), `"fallback":"go-local-memory"`) {
 		t.Fatalf("expected local interchange formats fallback, got %d %s", formatsRecorder.Code, formatsRecorder.Body.String())
 	}
 }
@@ -10671,6 +10671,66 @@ func TestMemoryExportFallsBackToLocalSnapshotAndRegistry(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestMemoryImportAndConvertFallBackLocally(t *testing.T) {
+	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	cfg := config.Default()
+	cfg.WorkspaceRoot = t.TempDir()
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	canonicalJSON := `[{"uuid":"import-ctx-1","content":"Imported parity memory","title":"Imported Context","source":"docs","url":"https://example.com/import","metadata":{"section":"project_context","tags":["import","go"],"source":"docs","url":"https://example.com/import"},"createdAt":"2026-04-06T00:00:00Z"}]`
+
+	importBody := `{"userId":"default","format":"json","data":` + strconv.Quote(canonicalJSON) + `}`
+	importRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(importRecorder, httptest.NewRequest(http.MethodPost, "/api/memory/import", strings.NewReader(importBody)))
+	if importRecorder.Code != http.StatusOK {
+		t.Fatalf("expected local memory import fallback, got %d %s", importRecorder.Code, importRecorder.Body.String())
+	}
+	for _, needle := range []string{
+		`"fallback":"go-local-memory"`,
+		`"procedure":"memory.importMemories"`,
+		`importing local saved-context records`,
+		`"imported":1`,
+		`"errors":0`,
+	} {
+		if !strings.Contains(importRecorder.Body.String(), needle) {
+			t.Fatalf("expected local import fallback to contain %s, got %s", needle, importRecorder.Body.String())
+		}
+	}
+
+	listRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/memory/contexts", nil))
+	if listRecorder.Code != http.StatusOK || !strings.Contains(listRecorder.Body.String(), `"import-ctx-1"`) || !strings.Contains(listRecorder.Body.String(), `Imported Context`) {
+		t.Fatalf("expected imported memory to appear in local contexts, got %d %s", listRecorder.Code, listRecorder.Body.String())
+	}
+
+	getRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(getRecorder, httptest.NewRequest(http.MethodGet, "/api/memory/context/get?id="+url.QueryEscape("import-ctx-1"), nil))
+	if getRecorder.Code != http.StatusOK || !strings.Contains(getRecorder.Body.String(), `Imported parity memory`) || !strings.Contains(getRecorder.Body.String(), `https://example.com/import`) {
+		t.Fatalf("expected imported memory to be readable locally, got %d %s", getRecorder.Code, getRecorder.Body.String())
+	}
+
+	convertBody := `{"userId":"default","fromFormat":"json","toFormat":"sectioned-memory-store","data":` + strconv.Quote(canonicalJSON) + `}`
+	convertRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(convertRecorder, httptest.NewRequest(http.MethodPost, "/api/memory/convert", strings.NewReader(convertBody)))
+	if convertRecorder.Code != http.StatusOK {
+		t.Fatalf("expected local memory convert fallback, got %d %s", convertRecorder.Code, convertRecorder.Body.String())
+	}
+	for _, needle := range []string{
+		`"fallback":"go-local-memory"`,
+		`"procedure":"memory.convertMemories"`,
+		`converting local memory interchange data`,
+		`"toFormat":"sectioned-memory-store"`,
+		`project_context`,
+		`import-ctx-1`,
+	} {
+		if !strings.Contains(convertRecorder.Body.String(), needle) {
+			t.Fatalf("expected local convert fallback to contain %s, got %s", needle, convertRecorder.Body.String())
+		}
+	}
 }
 
 func TestAgentMemoryStatsFallsBackToPersistedState(t *testing.T) {

@@ -3,6 +3,39 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
+### Latest incremental pass — local Go memory interchange fallback ownership
+This follow-up stayed in the same Go-primary memory lane and replaced the remaining bridge-only/stale behavior around memory interchange routes with truthful local fallback ownership.
+
+#### What changed
+- Added `go/internal/httpapi/memory_interchange_local.go` to centralize local memory interchange behavior for:
+  - truthful structured format inventory
+  - canonical record normalization
+  - local parsing for `json`, `json-provider`, `jsonl`, `csv`, and `sectioned-memory-store`
+  - local serialization back into those same supported formats
+  - local import persistence into `.hypercode/memory/contexts.json`
+  - local conversion between supported interchange formats
+- Updated `go/internal/httpapi/server.go` so degraded local fallback now supports:
+  - `GET /api/memory/interchange-formats` returning the real structured local format list instead of a stale `json`/`markdown` placeholder
+  - `POST /api/memory/import` importing local memory records into `.hypercode/memory/contexts.json`
+  - `POST /api/memory/convert` converting local memory payloads without `/trpc`
+- Updated the built-in Go route descriptions for the interchange cluster so they now describe local fallback ownership honestly instead of sounding bridge-only.
+- Updated focused Go coverage in `go/internal/httpapi/server_test.go`:
+  - `TestMemorySectionedStatusAndFormatsFallBackLocally`
+  - `TestMemoryImportAndConvertFallBackLocally`
+- The new tests verify that local fallback now:
+  - advertises the actual supported formats
+  - imports canonical memory records locally
+  - exposes imported records through saved-context routes
+  - converts canonical JSON into sectioned-memory-store output truthfully
+
+#### Validation performed
+- `cd ../hypercode-push/go && gofmt -w internal/httpapi/memory_interchange_local.go internal/httpapi/server.go internal/httpapi/server_test.go`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -run 'Test(MemorySectionedStatusAndFormatsFallBackLocally|MemoryExportFallsBackToLocalSnapshotAndRegistry|MemoryImportAndConvertFallBackLocally)' -count=1`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -count=1`
+
+#### Recommended next step after this pass
+Keep finishing the remaining persisted-memory truth gaps in narrow slices, especially any remaining public memory routes that still act bridge-only even though the local Go runtime already has enough durable state or canonicalization helpers to answer truthfully.
+
 ### Latest incremental pass — local Go memory context save fallback ownership
 This follow-up completed the obvious next saved-context gap in the Go-primary memory lane: degraded mode can now create saved contexts locally instead of only reading/querying/deleting them.
 

@@ -1,5 +1,120 @@
 # HyperCode Stabilization Analysis — 2026-04-03
 
+## Latest stabilization pass — local Go memory interchange fallback ownership (2026-04-06)
+
+### Scope
+This follow-up stayed in the same Go-primary memory lane and targeted the remaining memory interchange routes that still behaved like bridge-only surfaces despite already having durable local export/state helpers:
+- `memory.listInterchangeFormats`
+- `memory.importMemories`
+- `memory.convertMemories`
+
+### Findings
+- The clean push worktree already had truthful local export behavior for:
+  - `json`
+  - `json-provider`
+  - `jsonl`
+  - `csv`
+  - `sectioned-memory-store`
+- But the adjacent routes were still inconsistent:
+  - local `memory.listInterchangeFormats` incorrectly advertised `json` and `markdown`
+  - local `memory.importMemories` was still pure bridge-only behavior
+  - local `memory.convertMemories` was still pure bridge-only behavior
+- The TypeScript `memoryRouter` contract was explicit enough to mirror honestly in Go fallback:
+  - `listInterchangeFormats` returns the structured `MEMORY_INTERCHANGE_FORMATS` inventory
+  - `importMemories` returns `{ imported, errors, importedAt }`
+  - `convertMemories` returns `{ data, fromFormat, toFormat, convertedAt }`
+- The local Go runtime already had enough building blocks to support this without inventing new state:
+  - `.hypercode/memory/contexts.json` for durable saved-context persistence
+  - local export serialization helpers
+  - local sectioned-memory export generation
+  - local saved-context CRUD/read/query behavior from the previous passes
+
+### What changed
+#### 1. Added local memory interchange helpers
+Created:
+- `go/internal/httpapi/memory_interchange_local.go`
+
+New local helpers now provide:
+- truthful structured local interchange-format inventory
+- canonical normalization for imported memory records
+- local parsing for:
+  - `json`
+  - `json-provider`
+  - `jsonl`
+  - `csv`
+  - `sectioned-memory-store`
+- local serialization back to:
+  - `json`
+  - `json-provider`
+  - `jsonl`
+  - `csv`
+  - `sectioned-memory-store`
+- local import persistence into `.hypercode/memory/contexts.json`
+- local convert behavior using the same canonical parse/serialize path
+
+#### 2. Replaced stale local format advertising with truthful format inventory
+Updated:
+- `go/internal/httpapi/server.go`
+
+Behavior now:
+- upstream TypeScript `memory.listInterchangeFormats` still wins when available
+- local fallback now returns a structured format inventory matching the actual local Go capabilities instead of the stale `json`/`markdown` placeholder
+
+#### 3. Added truthful local `memory.importMemories` fallback ownership
+Updated:
+- `go/internal/httpapi/server.go`
+
+Behavior now:
+- upstream TypeScript `memory.importMemories` still wins when available
+- when `/trpc` is unavailable, Go now:
+  - validates the request body
+  - parses the provided interchange payload in the requested format
+  - normalizes records into the local canonical/export shape
+  - persists them into `.hypercode/memory/contexts.json`
+  - returns truthful local import results with `imported`, `errors`, and `importedAt`
+
+#### 4. Added truthful local `memory.convertMemories` fallback ownership
+Updated:
+- `go/internal/httpapi/server.go`
+
+Behavior now:
+- upstream TypeScript `memory.convertMemories` still wins when available
+- when `/trpc` is unavailable, Go now converts between the locally-supported interchange formats using the same canonical record shape used by import/export
+- the response now truthfully includes `data`, `fromFormat`, `toFormat`, and `convertedAt`
+
+#### 5. Tightened route-catalog truthfulness for memory interchange endpoints
+Updated:
+- `go/internal/httpapi/server.go`
+
+The built-in route descriptions for `/api/memory/interchange-formats`, `/api/memory/import`, and `/api/memory/convert` now describe their local fallback ownership honestly instead of sounding bridge-only.
+
+### Regression coverage
+Updated:
+- `go/internal/httpapi/server_test.go`
+
+Adjusted/added focused coverage:
+- `TestMemorySectionedStatusAndFormatsFallBackLocally`
+- `TestMemoryImportAndConvertFallBackLocally`
+
+The new coverage now verifies that degraded local memory interchange behavior:
+- advertises the actual supported formats
+- imports canonical JSON into the local saved-context registry
+- makes imported records visible through local saved-context reads
+- converts local memory payloads into sectioned-memory-store output truthfully
+
+### Validation performed
+Executed truthfully without killing any processes, in the clean push worktree:
+- `cd ../hypercode-push/go && gofmt -w internal/httpapi/memory_interchange_local.go internal/httpapi/server.go internal/httpapi/server_test.go`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -run 'Test(MemorySectionedStatusAndFormatsFallBackLocally|MemoryExportFallsBackToLocalSnapshotAndRegistry|MemoryImportAndConvertFallBackLocally)' -count=1`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -count=1`
+
+### Why this matters
+This closes another operator-facing degraded-mode gap in the Go memory story:
+- the local runtime now tells the truth about which memory interchange formats it actually supports
+- import/export/convert are now much more coherent in Go-primary degraded mode instead of splitting between local export and bridge-only import/convert behavior
+- imported local memories immediately feed back into the saved-context surfaces already ported in the previous passes
+- Go still does **not** claim full vector/provider parity; this is scoped local interchange and saved-context ownership only
+
 ## Latest stabilization pass — local Go memory context save fallback ownership (2026-04-06)
 
 ### Scope
