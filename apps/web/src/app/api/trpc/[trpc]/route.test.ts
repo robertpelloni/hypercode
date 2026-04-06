@@ -1429,6 +1429,247 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4200/api/sessions')).toBe(true);
   });
 
+  it('prefers go-native memory reads in local dashboard fallback mode', async () => {
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4545/trpc';
+    global.fetch = vi.fn(async (input, init) => {
+      const url = String(input);
+
+      if (url.includes('/trpc/')) {
+        throw new Error('connect ECONNREFUSED');
+      }
+
+      if (url === 'http://127.0.0.1:4545/api/memory/agent-stats') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: {
+            sessionCount: 1,
+            workingCount: 2,
+            longTermCount: 3,
+            observationCount: 4,
+            sessionSummaryCount: 2,
+            promptCount: 1,
+          },
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4545/api/memory/observations/recent?limit=6&namespace=project') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [{ id: 'obs-1', content: 'Recent observation', type: 'working', metadata: { source: 'project' } }],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4545/api/memory/user-prompts/recent?limit=5') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [{ id: 'prompt-1', content: 'Need help with parity', type: 'long_term', metadata: { role: 'user' } }],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4545/api/memory/session-summaries/recent?limit=4') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [{ id: 'summary-1', content: 'Session summary', type: 'long_term', metadata: { sessionId: 'sess-1' } }],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4545/api/memory/agent-search?query=go+parity&type=working&limit=20') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [{ id: 'mem-1', content: 'Go parity memory', type: 'working', metadata: { namespace: 'project' } }],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4545/api/memory/observations/search?query=go+parity&limit=20&namespace=project') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [{ id: 'obs-search-1', content: 'Observation search result', type: 'working', metadata: { namespace: 'project' } }],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4545/api/memory/user-prompts/search?query=go+parity&limit=20') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [{ id: 'prompt-search-1', content: 'Prompt search result', type: 'long_term', metadata: { role: 'user' } }],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4545/api/memory/session-summaries/search?query=go+parity&limit=20') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [{ id: 'summary-search-1', content: 'Summary search result', type: 'long_term', metadata: { sessionId: 'sess-2' } }],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4545/api/memory/interchange-formats') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [
+            { id: 'json', label: 'Canonical JSON' },
+            { id: 'sectioned-memory-store', label: 'Sectioned Memory Store' },
+          ],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4545/api/memory/export?userId=default&format=json') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: {
+            data: '[{"uuid":"mem-1","content":"Go parity memory"}]',
+            format: 'json',
+            exportedAt: '2026-04-06T06:00:00.000Z',
+          },
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4545/api/memory/pivot/search' && init?.method === 'POST') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [{ id: 'pivot-1', content: 'Pivot result', type: 'working', metadata: { pivot: 'goal' } }],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4545/api/memory/timeline/window' && init?.method === 'POST') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [{ id: 'timeline-1', content: 'Timeline result', type: 'working', metadata: { sessionId: 'sess-1' } }],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4545/api/memory/cross-session-links' && init?.method === 'POST') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [{ memory: { id: 'related-1', content: 'Related memory', type: 'working', metadata: { sessionId: 'sess-2' } }, score: 0.92, reasons: ['same goal'] }],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    const readResponse = await POST(new Request(
+      'http://localhost:3010/api/trpc/memory.getAgentStats,memory.getRecentObservations,memory.getRecentUserPrompts,memory.getRecentSessionSummaries,memory.searchAgentMemory,memory.searchObservations,memory.searchUserPrompts,memory.searchSessionSummaries,memory.listInterchangeFormats?batch=1',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          0: { json: null },
+          1: { json: { limit: 6, namespace: 'project' } },
+          2: { json: { limit: 5 } },
+          3: { json: { limit: 4 } },
+          4: { json: { query: 'go parity', type: 'working', limit: 20 } },
+          5: { json: { query: 'go parity', limit: 20, namespace: 'project' } },
+          6: { json: { query: 'go parity', limit: 20 } },
+          7: { json: { query: 'go parity', limit: 20 } },
+          8: { json: null },
+        }),
+      },
+    ));
+    const readPayload = await readResponse.json();
+
+    expect(readResponse.status).toBe(200);
+    expect(readResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+    expect(readPayload?.[0]?.result?.data).toEqual(expect.objectContaining({ sessionCount: 1, workingCount: 2, longTermCount: 3 }));
+    expect(readPayload?.[1]?.result?.data).toEqual([expect.objectContaining({ id: 'obs-1', content: 'Recent observation' })]);
+    expect(readPayload?.[2]?.result?.data).toEqual([expect.objectContaining({ id: 'prompt-1', content: 'Need help with parity' })]);
+    expect(readPayload?.[3]?.result?.data).toEqual([expect.objectContaining({ id: 'summary-1', content: 'Session summary' })]);
+    expect(readPayload?.[4]?.result?.data).toEqual([expect.objectContaining({ id: 'mem-1', content: 'Go parity memory' })]);
+    expect(readPayload?.[5]?.result?.data).toEqual([expect.objectContaining({ id: 'obs-search-1' })]);
+    expect(readPayload?.[6]?.result?.data).toEqual([expect.objectContaining({ id: 'prompt-search-1' })]);
+    expect(readPayload?.[7]?.result?.data).toEqual([expect.objectContaining({ id: 'summary-search-1' })]);
+    expect(readPayload?.[8]?.result?.data).toEqual([
+      expect.objectContaining({ id: 'json' }),
+      expect.objectContaining({ id: 'sectioned-memory-store' }),
+    ]);
+
+    const pivotResponse = await POST(new Request('http://localhost:3010/api/trpc/memory.searchMemoryPivot', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { pivot: 'goal', value: 'ship parity', limit: 20 } }),
+    }));
+    expect(pivotResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+    expect((await pivotResponse.json())?.result?.data).toEqual([expect.objectContaining({ id: 'pivot-1' })]);
+
+    const timelineResponse = await POST(new Request('http://localhost:3010/api/trpc/memory.getMemoryTimelineWindow', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { sessionId: 'sess-1', anchorTimestamp: 1710000000000, before: 3, after: 3 } }),
+    }));
+    expect((await timelineResponse.json())?.result?.data).toEqual([expect.objectContaining({ id: 'timeline-1' })]);
+
+    const linksResponse = await POST(new Request('http://localhost:3010/api/trpc/memory.getCrossSessionMemoryLinks', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { memoryId: 'mem-1', limit: 4 } }),
+    }));
+    expect((await linksResponse.json())?.result?.data).toEqual([
+      expect.objectContaining({ memory: expect.objectContaining({ id: 'related-1' }), score: 0.92 }),
+    ]);
+
+    const exportResponse = await GET(new Request(`http://localhost:3010/api/trpc/memory.exportMemories?input=${encodeURIComponent(JSON.stringify({ userId: 'default', format: 'json' }))}`));
+    expect(exportResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+    expect((await exportResponse.json())?.result?.data).toEqual(expect.objectContaining({ format: 'json' }));
+
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4545/api/memory/agent-stats')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4545/api/memory/interchange-formats')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4545/api/memory/export?userId=default&format=json')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4545/api/memory/pivot/search')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4545/api/memory/timeline/window')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4545/api/memory/cross-session-links')).toBe(true);
+  });
+
+  it('prefers go-native memory mutations in local dashboard fallback mode', async () => {
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4546/trpc';
+    global.fetch = vi.fn(async (input, init) => {
+      const url = String(input);
+
+      if (url.includes('/trpc/')) {
+        throw new Error('connect ECONNREFUSED');
+      }
+
+      if (url === 'http://127.0.0.1:4546/api/memory/facts/add' && init?.method === 'POST') {
+        return new Response(JSON.stringify({ success: true, data: { success: true } }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4546/api/memory/import' && init?.method === 'POST') {
+        return new Response(JSON.stringify({ success: true, data: { imported: 1, errors: 0, importedAt: '2026-04-06T06:05:00.000Z' } }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4546/api/memory/convert' && init?.method === 'POST') {
+        return new Response(JSON.stringify({ success: true, data: { data: '{"ok":true}', fromFormat: 'json', toFormat: 'jsonl', convertedAt: '2026-04-06T06:06:00.000Z' } }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    const addFactResponse = await POST(new Request('http://localhost:3010/api/trpc/memory.addFact', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { content: 'remember this', type: 'working' } }),
+    }));
+    expect(addFactResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-memory-action');
+    expect((await addFactResponse.json())?.result?.data).toEqual({ success: true });
+
+    const importResponse = await POST(new Request('http://localhost:3010/api/trpc/memory.importMemories', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { userId: 'default', format: 'json', data: '[{"uuid":"mem-1","content":"hello"}]' } }),
+    }));
+    expect(importResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-memory-action');
+    expect((await importResponse.json())?.result?.data).toEqual(expect.objectContaining({ imported: 1, errors: 0 }));
+
+    const convertResponse = await POST(new Request('http://localhost:3010/api/trpc/memory.convertMemories', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { userId: 'default', fromFormat: 'json', toFormat: 'jsonl', data: '[{"uuid":"mem-1","content":"hello"}]' } }),
+    }));
+    expect(convertResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-memory-action');
+    expect((await convertResponse.json())?.result?.data).toEqual(expect.objectContaining({ fromFormat: 'json', toFormat: 'jsonl' }));
+
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4546/api/memory/facts/add')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4546/api/memory/import')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4546/api/memory/convert')).toBe(true);
+  });
+
   it('prefers go-native supervised session reads and mutations in local dashboard fallback mode', async () => {
     process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4400/trpc';
     global.fetch = vi.fn(async (input, init) => {

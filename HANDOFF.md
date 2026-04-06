@@ -3,6 +3,48 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
+### Latest incremental pass — dashboard memory compat routed to Go fallback ownership
+This follow-up stayed in the same Go-memory lane but closed the shared compat-layer gap that still left the dashboard memory page overly dependent on `/trpc`.
+
+#### What changed
+- Updated `apps/web/src/app/api/trpc/[trpc]/route.ts` so local dashboard fallback now supports Go-backed memory read procedures for:
+  - `memory.getAgentStats`
+  - `memory.getRecentObservations`
+  - `memory.getRecentUserPrompts`
+  - `memory.getRecentSessionSummaries`
+  - `memory.searchAgentMemory`
+  - `memory.searchObservations`
+  - `memory.searchUserPrompts`
+  - `memory.searchSessionSummaries`
+  - `memory.searchMemoryPivot`
+  - `memory.getMemoryTimelineWindow`
+  - `memory.getCrossSessionMemoryLinks`
+  - `memory.listInterchangeFormats`
+  - `memory.exportMemories`
+- Added dedicated local memory mutation compat routing for:
+  - `memory.addFact`
+  - `memory.importMemories`
+  - `memory.convertMemories`
+- These now target the live Go control-plane routes under `/api/memory/*` instead of failing only because `/trpc` is unavailable.
+- Updated `apps/web/src/app/api/trpc/[trpc]/route.test.ts` with focused memory compat coverage for:
+  - batched memory dashboard reads
+  - pivot/timeline/cross-session detail reads
+  - export GET handling
+  - add/import/convert mutations
+
+#### Validation performed
+- `cd ../hypercode-push/go && gofmt -w internal/httpapi/memory_interchange_local.go internal/httpapi/server.go internal/httpapi/server_test.go`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -run 'Test(MemorySectionedStatusAndFormatsFallBackLocally|MemoryExportFallsBackToLocalSnapshotAndRegistry|MemoryImportAndConvertFallBackLocally)' -count=1`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -count=1`
+- `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+
+#### Validation limitation
+- `apps/web` production build was not run from the clean push worktree because that worktree lacks its own installed Next.js toolchain.
+- A direct `next build` attempt through the primary workspace toolchain also failed because `next` was unavailable on that command path.
+
+#### Recommended next step after this pass
+Continue shrinking the remaining Go-primary/dashboard memory gap by finding any other operator-facing memory or context workflows that already have truthful Go `/api/*` ownership but still do not flow through the shared web compat layer.
+
 ### Latest incremental pass — local Go memory interchange fallback ownership
 This follow-up stayed in the same Go-primary memory lane and replaced the remaining bridge-only/stale behavior around memory interchange routes with truthful local fallback ownership.
 

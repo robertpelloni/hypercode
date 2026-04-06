@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Dashboard Memory Compat Routed to Go Fallbacks**: The shared Next.js `/api/trpc/[trpc]` compat route now translates the memory dashboard’s key reads and actions onto the Go `/api/memory/*` surface when `/trpc` is unavailable, including memory stats, recent/search result queries, pivot/timeline/cross-session detail reads, interchange-format/export reads, and add/import/convert mutations.
 - **Go Memory Interchange Import/Convert Fallback Parity**: Go degraded mode now also owns truthful local fallback behavior for `memory.importMemories` and `memory.convertMemories`, parsing and converting `json`, `json-provider`, `jsonl`, `csv`, and `sectioned-memory-store` payloads locally and persisting imported records into `.hypercode/memory/contexts.json` when `/trpc` is unavailable.
 - **Go Memory Interchange Format Truthfulness**: The local Go fallback for `memory.listInterchangeFormats` now returns the real structured supported-format inventory instead of a stale `json`/`markdown` placeholder.
 - **Go Saved-Context Save Fallback Parity**: Go degraded mode now also owns truthful local fallback behavior for `memory.saveContext`, validating required saved-context fields and persisting new entries into `.hypercode/memory/contexts.json` with generated ids so they immediately participate in local list/query/get/delete behavior when `/trpc` is unavailable.

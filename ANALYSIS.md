@@ -1,5 +1,108 @@
 # HyperCode Stabilization Analysis — 2026-04-03
 
+## Latest stabilization pass — dashboard memory compat routed to Go fallback ownership (2026-04-06)
+
+### Scope
+This follow-up stayed in the same memory lane but shifted one layer outward to the shared Next.js compat path used by the dashboard in degraded mode.
+
+The key finding was that the Go HTTP layer already owned most of the memory dashboard’s public read/write surfaces truthfully, but the shared `/api/trpc/[trpc]` compat route still did not expose that family. That meant the dashboard memory page could still degrade poorly in Go-primary mode even after the underlying Go endpoints were fixed.
+
+### Findings
+- `apps/web/src/app/dashboard/memory/page.tsx` actively uses a large `trpc.memory.*` surface, including:
+  - `memory.getAgentStats`
+  - `memory.getRecentObservations`
+  - `memory.getRecentUserPrompts`
+  - `memory.getRecentSessionSummaries`
+  - `memory.searchAgentMemory`
+  - `memory.searchObservations`
+  - `memory.searchUserPrompts`
+  - `memory.searchSessionSummaries`
+  - `memory.searchMemoryPivot`
+  - `memory.getMemoryTimelineWindow`
+  - `memory.getCrossSessionMemoryLinks`
+  - `memory.addFact`
+  - direct fetches to `memory.exportMemories`, `memory.importMemories`, and `memory.convertMemories`
+- The Go backend now already had truthful local fallback ownership for most of those routes.
+- But `apps/web/src/app/api/trpc/[trpc]/route.ts` still lacked the corresponding compat mappings, so degraded dashboard behavior would not inherit the new Go truth automatically.
+
+### What changed
+#### 1. Extended local compat read support for the dashboard memory page
+Updated:
+- `apps/web/src/app/api/trpc/[trpc]/route.ts`
+
+The shared local compat route now supports these memory read procedures when `/trpc` is unavailable:
+- `memory.getAgentStats`
+- `memory.getRecentObservations`
+- `memory.getRecentUserPrompts`
+- `memory.getRecentSessionSummaries`
+- `memory.searchAgentMemory`
+- `memory.searchObservations`
+- `memory.searchUserPrompts`
+- `memory.searchSessionSummaries`
+- `memory.searchMemoryPivot`
+- `memory.getMemoryTimelineWindow`
+- `memory.getCrossSessionMemoryLinks`
+- `memory.listInterchangeFormats`
+- `memory.exportMemories`
+
+These now map onto the Go HTTP surface under `/api/memory/*` instead of failing just because the TypeScript tRPC backend is unavailable.
+
+#### 2. Added local compat mutation support for the memory dashboard
+Updated:
+- `apps/web/src/app/api/trpc/[trpc]/route.ts`
+
+The shared compat route now also supports these memory mutations through a dedicated local memory mutation path:
+- `memory.addFact`
+- `memory.importMemories`
+- `memory.convertMemories`
+
+These now route onto the existing Go endpoints:
+- `/api/memory/facts/add`
+- `/api/memory/import`
+- `/api/memory/convert`
+
+#### 3. Kept compat payloads aligned with actual memory page expectations
+The compat layer now returns data shapes that match the memory dashboard’s expectations more closely:
+- memory stats retain `sessionCount`, `workingCount`, `longTermCount`, `observationCount`, `sessionSummaryCount`, `promptCount`
+- read/search procedures return arrays from the native Go endpoints directly
+- export returns the existing `{ data, format, exportedAt }` object
+- mutations return the Go-native results without pretending the TypeScript router handled them
+
+### Regression coverage
+Updated:
+- `apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+
+Added focused compat coverage for:
+- degraded memory dashboard reads
+- degraded memory dashboard mutations
+- export GET handling through the compat route
+
+The new tests verify that the compat route now prefers Go-native memory endpoints for:
+- batched memory page reads
+- pivot/timeline/cross-session detail queries
+- memory add/import/convert mutations
+- direct export fetches used by the dashboard page
+
+### Validation performed
+Executed truthfully without killing any processes:
+- Clean push worktree backend validation:
+  - `cd ../hypercode-push/go && gofmt -w internal/httpapi/memory_interchange_local.go internal/httpapi/server.go internal/httpapi/server_test.go`
+  - `cd ../hypercode-push/go && go test ./internal/httpapi -run 'Test(MemorySectionedStatusAndFormatsFallBackLocally|MemoryExportFallsBackToLocalSnapshotAndRegistry|MemoryImportAndConvertFallBackLocally)' -count=1`
+  - `cd ../hypercode-push/go && go test ./internal/httpapi -count=1`
+- Route-level compat validation against the clean push worktree, using the primary workspace's installed Vitest toolchain:
+  - `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+
+### Validation limitation
+- A production `apps/web` build was **not** run from the clean push worktree because that worktree does not have its own installed Next.js/toolchain binaries.
+- An opportunistic attempt to invoke `next build` through the primary workspace toolchain also failed because `next` was not available on that execution path.
+- This slice is therefore validated by the route-level compat suite plus the Go HTTP test suite, and that limitation should remain explicit.
+
+### Why this matters
+This closes an important integration gap between the Go backend migration and the operator-facing dashboard:
+- the memory dashboard can now inherit the Go-native memory fallbacks already landed in earlier passes
+- degraded Go-primary mode is more truthful not only at the backend route level but also at the shared tRPC compat layer actually used by the dashboard
+- the memory page’s export/import/convert workflow is now much less dependent on live TypeScript availability
+
 ## Latest stabilization pass — local Go memory interchange fallback ownership (2026-04-06)
 
 ### Scope

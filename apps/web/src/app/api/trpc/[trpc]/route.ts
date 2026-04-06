@@ -154,6 +154,19 @@ const LOCAL_COMPAT_RESPONSE_KEYS = {
   'session.health': 'session.health',
   'toolSets.list': 'toolSets.list',
   'agentMemory.stats': 'agentMemory.stats',
+  'memory.getAgentStats': 'memory.getAgentStats',
+  'memory.getRecentObservations': 'memory.getRecentObservations',
+  'memory.searchObservations': 'memory.searchObservations',
+  'memory.getRecentUserPrompts': 'memory.getRecentUserPrompts',
+  'memory.searchUserPrompts': 'memory.searchUserPrompts',
+  'memory.getRecentSessionSummaries': 'memory.getRecentSessionSummaries',
+  'memory.searchSessionSummaries': 'memory.searchSessionSummaries',
+  'memory.searchAgentMemory': 'memory.searchAgentMemory',
+  'memory.searchMemoryPivot': 'memory.searchMemoryPivot',
+  'memory.getMemoryTimelineWindow': 'memory.getMemoryTimelineWindow',
+  'memory.getCrossSessionMemoryLinks': 'memory.getCrossSessionMemoryLinks',
+  'memory.listInterchangeFormats': 'memory.listInterchangeFormats',
+  'memory.exportMemories': 'memory.exportMemories',
   'shell.getSystemHistory': 'shell.getSystemHistory',
   'serverHealth.check': 'serverHealth.check',
 } as const;
@@ -196,6 +209,11 @@ const LOCAL_OPERATOR_MUTATION_PROCEDURES = new Set([
 const LOCAL_TOOL_MUTATION_PROCEDURES = new Set([
   'tools.setAlwaysOn',
 ]);
+const LOCAL_MEMORY_MUTATION_PROCEDURES = new Set([
+  'memory.addFact',
+  'memory.importMemories',
+  'memory.convertMemories',
+]);
 const LOCAL_MCP_CONFIG_MUTATION_PROCEDURES = new Set([
   'mcpServers.create',
   'mcpServers.update',
@@ -224,6 +242,7 @@ const LOCAL_SESSION_MUTATION_PROCEDURES = new Set([
 const LOCAL_COMPAT_MUTATION_PROCEDURES = new Set([
   ...LOCAL_OPERATOR_MUTATION_PROCEDURES,
   ...LOCAL_TOOL_MUTATION_PROCEDURES,
+  ...LOCAL_MEMORY_MUTATION_PROCEDURES,
   ...LOCAL_MCP_CONFIG_MUTATION_PROCEDURES,
   ...LOCAL_MCP_RUNTIME_MUTATION_PROCEDURES,
   ...LOCAL_SESSION_MUTATION_PROCEDURES,
@@ -1429,6 +1448,29 @@ async function buildPreferredSavedScriptsList(): Promise<unknown[]> {
   return Array.isArray(scripts) ? scripts : [];
 }
 
+async function buildPreferredMemoryStats(): Promise<Record<string, unknown>> {
+  const nativeMemoryStats = await fetchNativeStatusPayload<Record<string, unknown>>('/api/memory/agent-stats');
+  if (!nativeMemoryStats) {
+    return {
+      sessionCount: 0,
+      workingCount: 0,
+      longTermCount: 0,
+      observationCount: 0,
+      sessionSummaryCount: 0,
+      promptCount: 0,
+    };
+  }
+
+  return {
+    sessionCount: readNumber(nativeMemoryStats.sessionCount) ?? readNumber(nativeMemoryStats.session) ?? 0,
+    workingCount: readNumber(nativeMemoryStats.workingCount) ?? readNumber(nativeMemoryStats.working) ?? 0,
+    longTermCount: readNumber(nativeMemoryStats.longTermCount) ?? readNumber(nativeMemoryStats.longTerm) ?? 0,
+    observationCount: readNumber(nativeMemoryStats.observationCount) ?? 0,
+    sessionSummaryCount: readNumber(nativeMemoryStats.sessionSummaryCount) ?? 0,
+    promptCount: readNumber(nativeMemoryStats.promptCount) ?? 0,
+  };
+}
+
 async function buildPreferredExpertStatus(): Promise<Record<string, unknown>> {
   const nativeExpertStatus = await fetchNativeStatusPayload<Record<string, unknown>>('/api/expert/status');
   if (!nativeExpertStatus) {
@@ -1458,6 +1500,21 @@ async function buildPreferredAgentMemoryStats(): Promise<Record<string, unknown>
     longTerm: readNumber(nativeAgentMemoryStats.longTerm) ?? readNumber(nativeAgentMemoryStats.longTermCount) ?? 0,
     total: readNumber(nativeAgentMemoryStats.total) ?? readNumber(nativeAgentMemoryStats.totalCount) ?? 0,
   };
+}
+
+function buildMemoryQueryString(entries: Record<string, string | number | null | undefined>): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(entries)) {
+    if (value === null || value === undefined) {
+      continue;
+    }
+    if (typeof value === 'string' && value.trim().length === 0) {
+      continue;
+    }
+    params.set(key, String(value));
+  }
+  const serialized = params.toString();
+  return serialized ? `?${serialized}` : '';
 }
 
 async function buildPreferredShellSystemHistory(limit?: number | null): Promise<unknown[]> {
@@ -2293,6 +2350,7 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
   const agentMemoryStats = await buildPreferredAgentMemoryStats();
   const importedMaintenanceStats = await buildPreferredImportedMaintenanceStats();
   const installSurfaces = await buildPreferredInstallSurfaces();
+  const memoryStats = await buildPreferredMemoryStats();
   const localStartupStatus = await buildLocalStartupStatus(localServers, executionEnvironment, importedMaintenanceStats);
   const sessionCatalog = buildPreferredSessionCatalog(cliHarnessDetections);
   const sessionList = await buildPreferredSessionList();
@@ -2332,6 +2390,19 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
     'session.health': null,
     'toolSets.list': await buildPreferredToolSetsList(),
     'agentMemory.stats': agentMemoryStats,
+    'memory.getAgentStats': memoryStats,
+    'memory.getRecentObservations': [],
+    'memory.searchObservations': [],
+    'memory.getRecentUserPrompts': [],
+    'memory.searchUserPrompts': [],
+    'memory.getRecentSessionSummaries': [],
+    'memory.searchSessionSummaries': [],
+    'memory.searchAgentMemory': [],
+    'memory.searchMemoryPivot': [],
+    'memory.getMemoryTimelineWindow': [],
+    'memory.getCrossSessionMemoryLinks': [],
+    'memory.listInterchangeFormats': [],
+    'memory.exportMemories': { data: '', format: 'json', exportedAt: null },
     'shell.getSystemHistory': [],
     'serverHealth.check': {
       status: 'unavailable',
@@ -2384,6 +2455,97 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
       const input = procedureInputs[index];
       const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
       data = await buildPreferredShellSystemHistory(limit);
+    }
+
+    if (responseKey === 'memory.getRecentObservations' || responseKey === 'memory.searchObservations' || responseKey === 'memory.getRecentUserPrompts' || responseKey === 'memory.searchUserPrompts' || responseKey === 'memory.getRecentSessionSummaries' || responseKey === 'memory.searchSessionSummaries' || responseKey === 'memory.searchAgentMemory' || responseKey === 'memory.listInterchangeFormats' || responseKey === 'memory.exportMemories') {
+      const input = procedureInputs[index];
+      const record = input && typeof input === 'object' ? (input as Record<string, unknown>) : {};
+      let endpointPath = '';
+
+      if (responseKey === 'memory.getRecentObservations') {
+        endpointPath = `/api/memory/observations/recent${buildMemoryQueryString({
+          limit: readNumber(record.limit),
+          namespace: readString(record.namespace),
+          type: readString(record.type),
+        })}`;
+      } else if (responseKey === 'memory.searchObservations') {
+        endpointPath = `/api/memory/observations/search${buildMemoryQueryString({
+          query: readString(record.query),
+          limit: readNumber(record.limit),
+          namespace: readString(record.namespace),
+          type: readString(record.type),
+        })}`;
+      } else if (responseKey === 'memory.getRecentUserPrompts') {
+        endpointPath = `/api/memory/user-prompts/recent${buildMemoryQueryString({
+          limit: readNumber(record.limit),
+          role: readString(record.role),
+        })}`;
+      } else if (responseKey === 'memory.searchUserPrompts') {
+        endpointPath = `/api/memory/user-prompts/search${buildMemoryQueryString({
+          query: readString(record.query),
+          limit: readNumber(record.limit),
+          role: readString(record.role),
+        })}`;
+      } else if (responseKey === 'memory.getRecentSessionSummaries') {
+        endpointPath = `/api/memory/session-summaries/recent${buildMemoryQueryString({
+          limit: readNumber(record.limit),
+        })}`;
+      } else if (responseKey === 'memory.searchSessionSummaries') {
+        endpointPath = `/api/memory/session-summaries/search${buildMemoryQueryString({
+          query: readString(record.query),
+          limit: readNumber(record.limit),
+        })}`;
+      } else if (responseKey === 'memory.searchAgentMemory') {
+        endpointPath = `/api/memory/agent-search${buildMemoryQueryString({
+          query: readString(record.query),
+          type: readString(record.type),
+          limit: readNumber(record.limit),
+        })}`;
+      } else if (responseKey === 'memory.listInterchangeFormats') {
+        endpointPath = '/api/memory/interchange-formats';
+      } else if (responseKey === 'memory.exportMemories') {
+        endpointPath = `/api/memory/export${buildMemoryQueryString({
+          userId: readString(record.userId) ?? 'default',
+          format: readString(record.format) ?? 'json',
+        })}`;
+      }
+
+      if (endpointPath) {
+        data = await fetchNativeControlPlaneData<unknown>(endpointPath);
+        if (data === null) {
+          if (responseKey === 'memory.exportMemories') {
+            data = { data: '', format: readString(record.format) ?? 'json', exportedAt: null };
+          } else {
+            data = [];
+          }
+        }
+      }
+    }
+
+    if (responseKey === 'memory.searchMemoryPivot' || responseKey === 'memory.getMemoryTimelineWindow' || responseKey === 'memory.getCrossSessionMemoryLinks') {
+      const input = procedureInputs[index];
+      const record = input && typeof input === 'object' ? (input as Record<string, unknown>) : null;
+      let endpointPath = '';
+      if (responseKey === 'memory.searchMemoryPivot') {
+        endpointPath = '/api/memory/pivot/search';
+      } else if (responseKey === 'memory.getMemoryTimelineWindow') {
+        endpointPath = '/api/memory/timeline/window';
+      } else if (responseKey === 'memory.getCrossSessionMemoryLinks') {
+        endpointPath = '/api/memory/cross-session-links';
+      }
+
+      if (endpointPath && record) {
+        data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify(record),
+        });
+        if (data === null) {
+          data = [];
+        }
+      }
     }
 
     if (responseKey === 'session.get') {
@@ -2908,6 +3070,52 @@ async function tryLocalToolMutation(req: Request, body: string | undefined): Pro
   });
 }
 
+async function tryLocalMemoryMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_MEMORY_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  if (!input || typeof input !== 'object') {
+    return buildTrpcResponse(req, undefined, {
+      status: 400,
+      statusText: 'Invalid local memory compat input',
+      headers: { 'x-hypercode-trpc-compat': 'local-memory-action' },
+    });
+  }
+
+  let endpointPath = '';
+  if (procedureName === 'memory.addFact') {
+    endpointPath = '/api/memory/facts/add';
+  } else if (procedureName === 'memory.importMemories') {
+    endpointPath = '/api/memory/import';
+  } else if (procedureName === 'memory.convertMemories') {
+    endpointPath = '/api/memory/convert';
+  }
+
+  if (!endpointPath) {
+    return null;
+  }
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (data === null) {
+    return null;
+  }
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-memory-action' },
+  });
+}
+
 async function tryLocalMCPRuntimeMutation(req: Request, body: string | undefined): Promise<Response | null> {
   const procedures = getProcedureNames(req);
   const procedureName = procedures[0] ?? '';
@@ -3236,6 +3444,11 @@ async function handler(req: Request): Promise<Response> {
     const localToolMutationResponse = await tryLocalToolMutation(req, body);
     if (localToolMutationResponse) {
       return localToolMutationResponse;
+    }
+
+    const localMemoryMutationResponse = await tryLocalMemoryMutation(req, body);
+    if (localMemoryMutationResponse) {
+      return localMemoryMutationResponse;
     }
 
     const localMCPRuntimeMutationResponse = await tryLocalMCPRuntimeMutation(req, body);
