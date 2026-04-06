@@ -3,6 +3,37 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
+### Latest incremental pass — already-running startup path now explains dashboard reuse truthfully
+This follow-up stayed in the startup-truth lane and improved the `hypercode start` branch where an existing control plane is detected.
+
+#### What changed
+- Updated `packages/cli/src/commands/start.ts` so the already-running branch now:
+  - reports whether the existing instance was detected via startup lock or live port probe
+  - probes for an existing dashboard runtime too
+  - reuses and opens the dashboard when one is already running and opening is allowed
+  - otherwise explains clearly that the control plane is running but no dashboard runtime was detected
+  - prints the live control-plane API index for operators who still want to inspect the running instance immediately
+- Added `resolveAlreadyRunningDashboardReuse(...)` helper to centralize the already-running dashboard decision path
+- Updated `packages/cli/src/commands/start.test.ts` with focused coverage for:
+  - dashboard reuse during control-plane reuse
+  - truthful absence reporting when no running dashboard runtime is detected
+
+#### Validation performed
+- `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run packages/cli/src/commands/start.test.ts`
+
+#### Validation results
+Passed:
+- `packages/cli/src/commands/start.test.ts`
+  - `41/41` tests passed
+
+#### Recommended next step after this pass
+The next best startup-truth slice is another real operator `start.bat` replay. At this point the startup path has improved in three meaningful ways:
+- broader non-destructive control-plane port fallback
+- durable port provenance across status surfaces
+- clearer already-running dashboard reuse behavior
+
+The next pasted operator log should tell us whether the next remaining truth gap is in dashboard absence handling, explicit-port behavior, or some different startup/runtime branch.
+
 ### Latest incremental pass — legacy startup locks now derive truthful port provenance
 This follow-up stayed in the startup-truth lane and tightened backward compatibility for the new port provenance metadata.
 

@@ -501,6 +501,57 @@ export function resolveDashboardUrl(host: string, port: number): string {
   return `http://${resolveBrowserHost(host)}:${port}/dashboard`;
 }
 
+export async function resolveAlreadyRunningDashboardReuse(options: {
+  dashboardRequested: boolean;
+  requestedDashboardPort: number;
+  explicitDashboardPort: boolean;
+  host: string;
+  shouldOpenDashboard: boolean;
+}, deps: {
+  pickDashboardPortFn?: typeof pickDashboardPort;
+} = {}): Promise<{
+  dashboardMode: string;
+  dashboardUrl: string | null;
+  reusedExisting: boolean;
+  shouldOpenDashboard: boolean;
+}> {
+  if (!options.dashboardRequested) {
+    return {
+      dashboardMode: 'disabled by request',
+      dashboardUrl: null,
+      reusedExisting: false,
+      shouldOpenDashboard: false,
+    };
+  }
+
+  const pickDashboardPortFn = deps.pickDashboardPortFn ?? pickDashboardPort;
+  const dashboardSelection = await pickDashboardPortFn(
+    options.requestedDashboardPort,
+    options.explicitDashboardPort,
+    options.host,
+    { allowReuseExisting: true },
+  );
+  const dashboardUrl = resolveDashboardUrl(options.host, dashboardSelection.port);
+
+  if (dashboardSelection.reusedExisting) {
+    return {
+      dashboardMode: 'reused existing dashboard runtime',
+      dashboardUrl,
+      reusedExisting: true,
+      shouldOpenDashboard: options.shouldOpenDashboard,
+    };
+  }
+
+  return {
+    dashboardMode: options.explicitDashboardPort
+      ? 'requested dashboard runtime not detected'
+      : 'no existing dashboard runtime detected',
+    dashboardUrl,
+    reusedExisting: false,
+    shouldOpenDashboard: false,
+  };
+}
+
 export async function isHttpReady(
   url: string,
   fetchImpl: FetchLike = globalThis.fetch,
@@ -1276,11 +1327,44 @@ Examples:
 
         if (err instanceof HypercodeAlreadyRunningError) {
           const browserHost = resolveBrowserHost(err.host);
-          console.log(chalk.green(`  ✓ HyperCode is already running at http://${browserHost}:${err.port}`));
+          const existingControlPlaneBase = `http://${browserHost}:${err.port}`;
+          console.log(chalk.green(`  ✓ HyperCode is already running at ${existingControlPlaneBase}`));
           if (err.pid) {
             console.log(chalk.dim(`  Existing PID: ${err.pid}`));
           }
+          console.log(chalk.dim(`  Detection source: ${err.source === 'lock' ? 'startup lock' : 'live port probe'}`));
           console.log(chalk.dim('  Reusing the existing control plane instead of starting a duplicate instance.'));
+
+          const dashboardReuse = await resolveAlreadyRunningDashboardReuse({
+            dashboardRequested: Boolean(opts.dashboard),
+            requestedDashboardPort,
+            explicitDashboardPort,
+            host,
+            shouldOpenDashboard: opts.openDashboard !== false && !opts.daemon,
+          });
+
+          if (dashboardReuse.dashboardUrl && dashboardReuse.reusedExisting) {
+            console.log(chalk.dim(`  Dashboard mode: ${dashboardReuse.dashboardMode}`));
+            console.log(chalk.green(`  ✓ Reusing dashboard runtime at ${dashboardReuse.dashboardUrl}`));
+            if (dashboardReuse.shouldOpenDashboard) {
+              try {
+                const open = (await import('open')).default;
+                await open(dashboardReuse.dashboardUrl);
+                console.log(chalk.green(`  ✓ Opened dashboard at ${dashboardReuse.dashboardUrl}`));
+              } catch {
+                console.log(chalk.yellow(`  ⚠ Could not open the browser automatically. Visit ${dashboardReuse.dashboardUrl} manually.`));
+              }
+            } else {
+              console.log(chalk.dim(`  Dashboard URL: ${dashboardReuse.dashboardUrl}`));
+            }
+          } else if (opts.dashboard) {
+            console.log(chalk.dim(`  Dashboard mode: ${dashboardReuse.dashboardMode}`));
+            if (dashboardReuse.dashboardUrl) {
+              console.log(chalk.yellow(`  ⚠ No running dashboard runtime was detected at ${dashboardReuse.dashboardUrl}.`));
+            }
+            console.log(chalk.dim(`  Control plane API index: ${existingControlPlaneBase}/api/index`));
+            console.log(chalk.dim('  Start or refresh the dashboard separately if you still want the web UI attached to this running control plane.'));
+          }
           return;
         }
 

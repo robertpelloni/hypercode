@@ -12,6 +12,7 @@ import {
     isHypercodeServer,
     pickAvailableControlPlaneFallbackPort,
     pickDashboardPort,
+    resolveAlreadyRunningDashboardReuse,
     resolveControlPlaneFallbackPort,
     resolveDashboardUrl,
     resolveDataDir,
@@ -557,6 +558,40 @@ describe('dashboard startup helpers', () => {
         )).resolves.toEqual({
             port: 3010,
             reusedExisting: false,
+        });
+    });
+
+    it('reuses an already-running dashboard when reusing an existing control plane', async () => {
+        await expect(resolveAlreadyRunningDashboardReuse({
+            dashboardRequested: true,
+            requestedDashboardPort: 3000,
+            explicitDashboardPort: false,
+            host: '127.0.0.1',
+            shouldOpenDashboard: true,
+        }, {
+            pickDashboardPortFn: vi.fn().mockResolvedValue({ port: 3010, reusedExisting: true }) as any,
+        })).resolves.toEqual({
+            dashboardMode: 'reused existing dashboard runtime',
+            dashboardUrl: 'http://127.0.0.1:3010/dashboard',
+            reusedExisting: true,
+            shouldOpenDashboard: true,
+        });
+    });
+
+    it('reports when no existing dashboard runtime is detected while reusing an existing control plane', async () => {
+        await expect(resolveAlreadyRunningDashboardReuse({
+            dashboardRequested: true,
+            requestedDashboardPort: 3000,
+            explicitDashboardPort: true,
+            host: '127.0.0.1',
+            shouldOpenDashboard: true,
+        }, {
+            pickDashboardPortFn: vi.fn().mockResolvedValue({ port: 3000, reusedExisting: false }) as any,
+        })).resolves.toEqual({
+            dashboardMode: 'requested dashboard runtime not detected',
+            dashboardUrl: 'http://127.0.0.1:3000/dashboard',
+            reusedExisting: false,
+            shouldOpenDashboard: false,
         });
     });
 });

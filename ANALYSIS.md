@@ -1,5 +1,84 @@
 # HyperCode Stabilization Analysis — 2026-04-03
 
+## Latest stabilization pass — already-running startup path now explains dashboard reuse truthfully (2026-04-06)
+
+### Scope
+This follow-up stayed in the startup-truth lane and targeted the already-running control-plane branch of `hypercode start`.
+
+That branch was already non-destructive:
+- it correctly detected an existing HyperCode instance
+- it refused to start a duplicate control plane
+
+But it still had an operator-experience truth gap:
+- once an existing control plane was detected, startup returned immediately
+- it did not provide the same dashboard reuse guidance as the normal startup path
+- operators could be left unsure whether the dashboard was already running, should be opened, or was absent
+
+### Findings
+- `packages/cli/src/commands/start.ts` already had:
+  - `HypercodeAlreadyRunningError`
+  - truthful reuse logging for the control plane itself
+  - dashboard helpers for the normal startup branch (`pickDashboardPort`, `resolveDashboardUrl`, browser-open logic)
+- However, those dashboard helpers were only used after starting a new control plane.
+- The already-running branch did not:
+  - probe for an existing dashboard runtime
+  - reuse/open the dashboard when present
+  - distinguish between “dashboard reused” and “control plane reused but dashboard absent”
+
+### What changed
+Updated:
+- `packages/cli/src/commands/start.ts`
+- `packages/cli/src/commands/start.test.ts`
+
+#### 1. Added a dedicated helper for dashboard reuse when the control plane already exists
+New helper:
+- `resolveAlreadyRunningDashboardReuse(...)`
+
+It determines, for the already-running control-plane branch:
+- whether dashboard usage was requested
+- whether an existing dashboard runtime can be reused
+- the effective dashboard URL
+- whether auto-open should still happen
+- a truthful dashboard-mode label
+
+#### 2. Improved the `HypercodeAlreadyRunningError` branch
+When startup detects an already-running HyperCode instance, it now also:
+- prints the detection source:
+  - startup lock
+  - live port probe
+- probes for an existing dashboard runtime on the usual dashboard ports
+- reuses and opens that dashboard when present (if opening is allowed)
+- otherwise reports clearly that:
+  - the control plane is already running
+  - no running dashboard runtime was detected
+  - the control-plane API index remains available
+  - the dashboard can be started/refreshed separately if needed
+
+This keeps the path non-destructive while making it much more operator-friendly and truthful.
+
+### Regression coverage
+Updated:
+- `packages/cli/src/commands/start.test.ts`
+
+Added focused coverage for:
+- reusing an already-running dashboard when the control plane is being reused
+- truthfully reporting when no running dashboard runtime is detected during control-plane reuse
+
+### Validation performed
+Executed truthfully without killing any processes:
+- `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run packages/cli/src/commands/start.test.ts`
+
+### Validation results
+Passed:
+- `packages/cli/src/commands/start.test.ts`
+  - `41/41` tests passed
+
+### Why this matters
+This improves a real operator branch that appears naturally during repeated startup attempts:
+- reusing an existing control plane is now more informative
+- dashboard reuse is no longer implicit or mysterious
+- startup remains non-destructive while offering a clearer path to the existing UI surface
+
 ## Latest stabilization pass — legacy startup locks now derive truthful port provenance (2026-04-06)
 
 ### Scope
