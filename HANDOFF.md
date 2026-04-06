@@ -3,6 +3,24 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
+### Latest incremental pass — submodule, git, and catalog compat routed to Go fallback
+This follow-up returned to the shared web compat lane and wired two major dashboard clusters that still depended on `/trpc` even though Go already had native ownership.
+
+#### What changed
+- Updated `apps/web/src/app/api/trpc/[trpc]/route.ts` to support:
+  - `submodule.list`, `submodule.detectCapabilities`
+  - `git.getModules`, `git.getLog`, `git.getStatus`
+  - `catalog.list`, `catalog.get`, `catalog.listRuns`, `catalog.stats`, `catalog.listLinkedServers`
+- Added mutation support for submodule and catalog operations
+- Added two new test cases in `route.test.ts` for submodule and catalog fallback
+
+#### Validation performed
+- `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+- result: `31/31` tests passed
+
+#### Recommended next step after this pass
+The Knowledge, Architecture, and MCP Registry pages are now much more functional in degraded mode. The next highest-value compat target is likely `browser.*` (Browser page) or deeper director/council orchestration surfaces. Alternatively, we can do another real `start.bat` validation pass to see what the current runtime surfaces.
+
 ### Latest incremental pass — already-running startup path now reuses or attaches the dashboard truthfully
 This follow-up stayed in the startup-truth lane and improved the `hypercode start` branch where an existing control plane is detected.
 
