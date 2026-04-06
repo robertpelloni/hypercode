@@ -13,6 +13,7 @@ import {
     attachDashboardToRunningControlPlane,
     pickAvailableControlPlaneFallbackPort,
     pickDashboardPort,
+    readMatchingStartupProvenanceFromLock,
     resolveAlreadyRunningDashboardReuse,
     resolveControlPlaneFallbackPort,
     resolveDashboardUrl,
@@ -756,5 +757,49 @@ describe('control-plane fallback helpers', () => {
         await expect(pickAvailableControlPlaneFallbackPort(4001, {
             isPortFree: async () => false,
         })).resolves.toBeNull();
+    });
+});
+
+describe('readMatchingStartupProvenanceFromLock', () => {
+    it('returns null if the lock file does not exist', () => {
+        const dataDir = createTempDir();
+        expect(readMatchingStartupProvenanceFromLock(dataDir, 4000)).toBeNull();
+    });
+
+    it('returns null if the lock file exists but the port does not match', () => {
+        const dataDir = createTempDir();
+        writeFileSync(join(dataDir, 'lock'), JSON.stringify({
+            instanceId: 'hypercode-stale',
+            pid: 1234,
+            port: 4000,
+            host: '127.0.0.1',
+            createdAt: '2026-04-06T00:00:00.000Z',
+            startup: {
+                activeRuntime: 'go',
+            }
+        }), 'utf8');
+
+        expect(readMatchingStartupProvenanceFromLock(dataDir, 4001)).toBeNull();
+    });
+
+    it('returns normalized startup provenance if the lock file matches the port', () => {
+        const dataDir = createTempDir();
+        writeFileSync(join(dataDir, 'lock'), JSON.stringify({
+            instanceId: 'hypercode-live',
+            pid: 1234,
+            port: 4000,
+            host: '127.0.0.1',
+            createdAt: '2026-04-06T00:00:00.000Z',
+            startup: {
+                activeRuntime: 'go',
+                launchMode: 'prebuilt Go binary',
+            }
+        }), 'utf8');
+
+        const prov = readMatchingStartupProvenanceFromLock(dataDir, 4000);
+        expect(prov).not.toBeNull();
+        expect(prov?.activeRuntime).toBe('go');
+        expect(prov?.launchMode).toBe('prebuilt Go binary');
+        expect(prov?.portDecision).toBe('derived from lock record');
     });
 });

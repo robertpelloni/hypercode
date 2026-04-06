@@ -34,14 +34,18 @@ Passed:
 - tightened the new attach flow so it can reuse the already-selected dashboard port/URL instead of re-probing and potentially drifting to a different port
 - attach helper now also returns detailed failure text when available, so operator logs can be more exact than a generic “failed to launch” message
 
+- the already-running branch now reads live startup provenance directly from the lock record associated with the running port, allowing it to accurately report whether the running instance is Go or Node, how it launched, and which port decision it made
+- the already-running branch now applies the same Go compatibility warning to its attach-dashboard flow as the normal Go startup path does
+
 #### Recommended next step after this pass
-The next best startup-truth slice is another real operator `start.bat` replay. At this point the startup path has improved in four meaningful ways:
+The next best startup-truth slice is another real operator `start.bat` replay. At this point the startup path has improved in five meaningful ways:
 - broader non-destructive control-plane port fallback
 - durable port provenance across status surfaces
 - backward-compatible legacy-lock provenance
 - clearer already-running dashboard reuse/attach behavior
+- truthful already-running instance inspection (runtime/launch/port metadata surfaced dynamically instead of treated generically)
 
-The next pasted operator log should tell us whether the next remaining truth gap is in explicit-port behavior, dashboard launch failures on the real machine, or some different startup/runtime branch.
+The next pasted operator log should tell us whether the next remaining truth gap is in explicit-port behavior, dashboard launch failures on the real machine, or some different startup/runtime branch. If no further startup flaws remain, the next target should be another high-value shared compat cluster still blocked on `/trpc` despite existing Go `/api/*` ownership (such as Git/Submodules, the MCP Registry, or the Director/Autopilot surfaces).
 
 ### Latest incremental pass — legacy startup locks now derive truthful port provenance
 This follow-up stayed in the startup-truth lane and tightened backward compatibility for the new port provenance metadata.

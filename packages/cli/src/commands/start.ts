@@ -208,6 +208,40 @@ function writeStartLock(lockPath: string, record: HypercodeStartLockRecord): voi
   }
 }
 
+function normalizeStartupProvenanceFromLockRecord(record: HypercodeStartLockRecord | null): HypercodeStartupProvenance | null {
+  if (!record || record.port <= 0) {
+    return null;
+  }
+
+  const startup = record.startup ?? {};
+  const activePort = typeof startup.activePort === 'number' && startup.activePort > 0
+    ? startup.activePort
+    : record.port;
+  const requestedPort = typeof startup.requestedPort === 'number' && startup.requestedPort > 0
+    ? startup.requestedPort
+    : activePort;
+
+  return {
+    ...startup,
+    requestedPort,
+    activePort,
+    portDecision: startup.portDecision?.trim() || 'derived from lock record',
+    portReason: startup.portReason?.trim() || 'Detailed startup port provenance was unavailable; using the current control-plane lock port.',
+    updatedAt: startup.updatedAt?.trim() || record.createdAt,
+  };
+}
+
+export function readMatchingStartupProvenanceFromLock(dataDir: string, port: number): HypercodeStartupProvenance | null {
+  const resolvedDataDir = resolveDataDir(dataDir);
+  const lockPath = join(resolvedDataDir, 'lock');
+  const record = readStartLock(lockPath);
+  if (!record || record.port !== port) {
+    return null;
+  }
+
+  return normalizeStartupProvenanceFromLockRecord(record);
+}
+
 export async function acquireSingleInstanceLock(
   options: AcquireSingleInstanceLockOptions,
   deps: AcquireSingleInstanceLockDeps = {},
@@ -1460,11 +1494,25 @@ Examples:
         if (err instanceof HypercodeAlreadyRunningError) {
           const browserHost = resolveBrowserHost(err.host);
           const existingControlPlaneBase = `http://${browserHost}:${err.port}`;
+          const existingStartup = readMatchingStartupProvenanceFromLock(opts.dataDir, err.port);
           console.log(chalk.green(`  ✓ HyperCode is already running at ${existingControlPlaneBase}`));
           if (err.pid) {
             console.log(chalk.dim(`  Existing PID: ${err.pid}`));
           }
           console.log(chalk.dim(`  Detection source: ${err.source === 'lock' ? 'startup lock' : 'live port probe'}`));
+          if (existingStartup) {
+            const existingRuntimeSummary = [
+              existingStartup.activeRuntime ? `Runtime: ${existingStartup.activeRuntime}` : null,
+              existingStartup.launchMode ? `Launch: ${existingStartup.launchMode}` : null,
+              typeof existingStartup.activePort === 'number' ? `Port: ${existingStartup.activePort}` : null,
+            ].filter(Boolean).join(' | ');
+            if (existingRuntimeSummary) {
+              console.log(chalk.dim(`  Existing startup: ${existingRuntimeSummary}`));
+            }
+            if (existingStartup.portDecision) {
+              console.log(chalk.dim(`  Existing port decision: ${existingStartup.portDecision}`));
+            }
+          }
           console.log(chalk.dim('  Reusing the existing control plane instead of starting a duplicate instance.'));
 
           if (!opts.dashboard) {
@@ -1482,6 +1530,9 @@ Examples:
           if (dashboardReuse.reusedExisting && dashboardReuse.dashboardUrl) {
             console.log(chalk.dim(`  Dashboard mode: ${dashboardReuse.dashboardMode}`));
             console.log(chalk.green(`  ✓ Reusing dashboard runtime at ${dashboardReuse.dashboardUrl}`));
+            if (existingStartup?.activeRuntime === 'go') {
+              console.log(chalk.yellow('  ⚠ Dashboard is running through the Node web compatibility layer against the existing Go control plane. Some mutation-heavy surfaces may still rely on compatibility fallbacks during the migration.'));
+            }
             if (dashboardReuse.shouldOpenDashboard) {
               try {
                 const open = (await import('open')).default;
@@ -1521,6 +1572,9 @@ Examples:
           }
           if (attachedDashboard.dashboardMode === 'started dashboard runtime attached to existing control plane') {
             console.log(chalk.green(`  ✓ Dashboard runtime ready at ${attachedDashboard.dashboardUrl}`));
+            if (existingStartup?.activeRuntime === 'go') {
+              console.log(chalk.yellow('  ⚠ Dashboard is running through the Node web compatibility layer against the existing Go control plane. Some mutation-heavy surfaces may still rely on compatibility fallbacks during the migration.'));
+            }
           } else if (attachedDashboard.dashboardMode === 'dashboard launch attempted but failed') {
             console.log(chalk.yellow(`  ⚠ Dashboard runtime failed to launch: ${attachedDashboard.detail ?? attachedDashboard.dashboardUrl}`));
           } else if (attachedDashboard.dashboardMode === 'dashboard launch attempted but exited early') {
