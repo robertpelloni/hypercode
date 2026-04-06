@@ -664,3 +664,14 @@ This follow-up made the existing deploy/apply result operator-visible in the pag
 
 #### Validation performed
 - `pnpm -C apps/web run build` (executed in the primary workspace)
+
+
+### Latest incremental pass — billing connection test result visibility
+This follow-up made the existing provider connection test result operator-visible in the page itself.
+
+#### What changed
+- Updated `apps/web/src/app/dashboard/billing/page.tsx`.
+- The latest provider connection test now renders inline with provider name, success/failure state, latency, and error text.
+
+#### Validation performed
+- `pnpm -C apps/web run build` (executed in the primary workspace)

@@ -4522,3 +4522,25 @@ Executed in the primary workspace:
 - `pnpm -C apps/web run build`
 
 Result: passed.
+
+
+## Latest stabilization pass — billing connection test result visibility (2026-04-05)
+
+### Problem
+The Billing / Provider Matrix page could test provider connections, but the result was only surfaced through toasts. Operators could not inspect the latest connection-test provider, latency, or error inline.
+
+### What changed
+Updated:
+- `apps/web/src/app/dashboard/billing/page.tsx`
+
+The page now stores and renders the latest provider connection test result directly in the UI:
+- provider name
+- success/failure state
+- latency when available
+- error text when present
+
+### Validation
+Executed in the primary workspace:
+- `pnpm -C apps/web run build`
+
+Result: passed.

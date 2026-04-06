@@ -86,6 +86,13 @@ type FallbackHistoryRow = {
     causeCode: (typeof FALLBACK_HISTORY_CAUSE_CODES)[number];
 };
 
+type ProviderConnectionTestResult = {
+    provider: string;
+    success: boolean;
+    latencyMs?: number;
+    error?: string | null;
+};
+
 export default function ProviderAuthBillingMatrix() {
     const [historyDays, setHistoryDays] = useState(30);
     const [fallbackTaskType, setFallbackTaskType] = useState<BillingTaskRoutingRuleSummary['taskType']>('general');
@@ -96,6 +103,7 @@ export default function ProviderAuthBillingMatrix() {
     const [activePortalId, setActivePortalId] = useState<string | null>(null);
     const [activePortalName, setActivePortalName] = useState<string>('');
     const [newKeyValue, setNewKeyValue] = useState<string>('');
+    const [lastConnectionTest, setLastConnectionTest] = useState<ProviderConnectionTestResult | null>(null);
 
     // Provider detail sheet state
     const [selectedProvider, setSelectedProvider] = useState<BillingQuotaTableRow | null>(null);
@@ -161,7 +169,16 @@ export default function ProviderAuthBillingMatrix() {
     });
 
     const testConnectionMutation = trpc.settings.testConnection.useMutation({
-        onSuccess: async (result) => {
+        onSuccess: async (result, variables) => {
+            const testedProvider = variables && typeof variables === 'object' && 'provider' in variables && typeof variables.provider === 'string'
+                ? variables.provider
+                : 'unknown';
+            setLastConnectionTest({
+                provider: testedProvider,
+                success: result.success,
+                latencyMs: result.latencyMs,
+                error: result.error ?? null,
+            });
             if (result.success) {
                 toast.success(`Connection test successful! (${result.latencyMs}ms)`);
             } else {
@@ -304,6 +321,29 @@ export default function ProviderAuthBillingMatrix() {
                 <Card className="border border-red-900/30 bg-red-950/10">
                     <CardContent className="p-4 text-sm text-red-200">
                         {primaryBillingError.message}
+                    </CardContent>
+                </Card>
+            ) : null}
+
+            {lastConnectionTest ? (
+                <Card className="bg-zinc-900 border-zinc-800 shadow-xl">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                            <Shield className="h-4 w-4 text-cyan-400" />
+                            Last Provider Connection Test
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-2 space-y-2 text-sm">
+                        <div className={`font-medium ${lastConnectionTest.success ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {lastConnectionTest.success ? 'Connection successful' : 'Connection failed'}
+                        </div>
+                        <div className="text-zinc-300">Provider: <span className="font-mono">{lastConnectionTest.provider}</span></div>
+                        {typeof lastConnectionTest.latencyMs === 'number' ? (
+                            <div className="text-zinc-400">Latency: <span className="font-mono">{lastConnectionTest.latencyMs}ms</span></div>
+                        ) : null}
+                        {lastConnectionTest.error ? (
+                            <div className="text-red-300">Error: {lastConnectionTest.error}</div>
+                        ) : null}
                     </CardContent>
                 </Card>
             ) : null}
