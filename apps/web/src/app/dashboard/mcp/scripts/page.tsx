@@ -22,13 +22,31 @@ function isSavedScriptRowPayload(value: unknown): value is {
         && typeof (value as { code?: unknown }).code === 'string';
 }
 
+type SavedScriptFormData = {
+    uuid?: string;
+    name: string;
+    description: string;
+    code: string;
+};
+
 export default function ScriptsDashboard() {
     const scriptsQuery = trpc.savedScripts.list.useQuery();
     const { data: scripts, isLoading, refetch } = scriptsQuery;
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [editingScript, setEditingScript] = useState<SavedScriptFormData | null>(null);
     const normalizedScripts = normalizeSavedScripts(scripts);
     const scriptsUnavailable = scriptsQuery.isError
         || (scripts != null && (!Array.isArray(scripts) || !scripts.every(isSavedScriptRowPayload)));
+
+    const handleCreateSuccess = () => {
+        setIsCreateOpen(false);
+        refetch();
+    };
+
+    const handleEditSuccess = () => {
+        setEditingScript(null);
+        refetch();
+    };
 
     return (
         <div className="p-8 space-y-8">
@@ -40,14 +58,30 @@ export default function ScriptsDashboard() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button onClick={() => setIsCreateOpen(!isCreateOpen)} className="bg-blue-600 hover:bg-blue-500">
+                    <Button onClick={() => {
+                        setEditingScript(null);
+                        setIsCreateOpen((open) => !open);
+                    }} className="bg-blue-600 hover:bg-blue-500">
                         <Plus className="mr-2 h-4 w-4" /> New Script
                     </Button>
                 </div>
             </div>
 
             {isCreateOpen && (
-                <CreateScriptForm onSuccess={() => { setIsCreateOpen(false); refetch(); }} />
+                <ScriptForm
+                    mode="create"
+                    onCancel={() => setIsCreateOpen(false)}
+                    onSuccess={handleCreateSuccess}
+                />
+            )}
+
+            {editingScript && (
+                <ScriptForm
+                    mode="edit"
+                    initialData={editingScript}
+                    onCancel={() => setEditingScript(null)}
+                    onSuccess={handleEditSuccess}
+                />
             )}
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -68,14 +102,30 @@ export default function ScriptsDashboard() {
                         <p className="text-sm mt-1">Save your common automation tasks here.</p>
                     </div>
                 ) : normalizedScripts.map((script) => (
-                    <ScriptCard key={script.uuid} script={script} onUpdate={refetch} />
+                    <ScriptCard
+                        key={script.uuid}
+                        script={script}
+                        onUpdate={refetch}
+                        onEdit={(nextScript) => {
+                            setIsCreateOpen(false);
+                            setEditingScript(nextScript);
+                        }}
+                    />
                 ))}
             </div>
         </div>
     );
 }
 
-function ScriptCard({ script, onUpdate }: { script: any; onUpdate: () => void }) {
+function ScriptCard({
+    script,
+    onUpdate,
+    onEdit,
+}: {
+    script: SavedScriptFormData;
+    onUpdate: () => void;
+    onEdit: (script: SavedScriptFormData) => void;
+}) {
     const deleteMutation = trpc.savedScripts.delete.useMutation({
         onSuccess: () => {
             toast.success("Script deleted");
@@ -119,6 +169,16 @@ function ScriptCard({ script, onUpdate }: { script: any; onUpdate: () => void })
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
+                            onEdit(script);
+                        }}
+                        className="text-zinc-600 hover:text-blue-400 transition-colors opacity-0 group-hover:opacity-100"
+                        title="Edit Script"
+                    >
+                        <Edit2 className="h-4 w-4" />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
                             if (confirm(`Delete script "${script.name}"?`)) {
                                 deleteMutation.mutate({ uuid: script.uuid });
                             }
@@ -145,11 +205,22 @@ function ScriptCard({ script, onUpdate }: { script: any; onUpdate: () => void })
     );
 }
 
-function CreateScriptForm({ onSuccess }: { onSuccess: () => void }) {
-    const [formData, setFormData] = useState({
-        name: '',
-        description: '',
-        code: `// Write your script here
+function ScriptForm({
+    mode,
+    initialData,
+    onCancel,
+    onSuccess,
+}: {
+    mode: 'create' | 'edit';
+    initialData?: SavedScriptFormData | null;
+    onCancel: () => void;
+    onSuccess: () => void;
+}) {
+    const [formData, setFormData] = useState<SavedScriptFormData>({
+        uuid: initialData?.uuid,
+        name: initialData?.name ?? '',
+        description: initialData?.description ?? '',
+        code: initialData?.code ?? `// Write your script here
 // Use 'await mcp.toolName({...})' to call tools
 
 console.log("Hello World");
@@ -166,9 +237,34 @@ console.log("Hello World");
         }
     });
 
+    const updateMutation = trpc.savedScripts.update.useMutation({
+        onSuccess: () => {
+            toast.success("Script updated");
+            onSuccess();
+        },
+        onError: (err) => {
+            toast.error(`Error updating script: ${err.message}`);
+        }
+    });
+
+    const isPending = createMutation.isPending || updateMutation.isPending;
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        createMutation.mutate(formData);
+        if (mode === 'edit' && formData.uuid) {
+            updateMutation.mutate({
+                uuid: formData.uuid,
+                name: formData.name,
+                description: formData.description,
+                code: formData.code,
+            });
+            return;
+        }
+        createMutation.mutate({
+            name: formData.name,
+            description: formData.description,
+            code: formData.code,
+        });
     };
 
     return (
@@ -176,9 +272,10 @@ console.log("Hello World");
             <CardContent className="pt-6">
                 <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
-                        <Plus className="h-3 w-3" /> New Script
+                        {mode === 'create' ? <Plus className="h-3 w-3" /> : <Edit2 className="h-3 w-3" />}
+                        {mode === 'create' ? 'New Script' : 'Edit Script'}
                     </div>
-                    <Button variant="ghost" size="sm" onClick={onSuccess} className="text-zinc-500 hover:text-white h-6 w-6 p-0 rounded-full">
+                    <Button variant="ghost" size="sm" onClick={onCancel} className="text-zinc-500 hover:text-white h-6 w-6 p-0 rounded-full">
                         X
                     </Button>
                 </div>
@@ -213,10 +310,13 @@ console.log("Hello World");
                         />
                     </div>
 
-                    <div className="flex justify-end pt-2">
-                        <Button type="submit" disabled={createMutation.isPending} className="bg-yellow-600 hover:bg-yellow-500 text-white font-medium">
-                            {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Script
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button type="button" variant="ghost" onClick={onCancel} className="text-zinc-400 hover:text-white">
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={isPending} className="bg-yellow-600 hover:bg-yellow-500 text-white font-medium">
+                            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {mode === 'create' ? 'Save Script' : 'Update Script'}
                         </Button>
                     </div>
                 </form>

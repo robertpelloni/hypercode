@@ -4363,3 +4363,26 @@ This pass meaningfully strengthened the **Go-primary migration path** and improv
 - a small but real Maestro UX fix
 
 It was validated by successful Go compilation, successful targeted Go tests for the new native surfaces, successful targeted regression tests for repaired bridge/fallback routes, a successful full Go test suite run (`go test ./...`), targeted CLI startup tests and type-checking, council/sync coverage, targeted AI/core validation, and repeated successful workspace builds. The new systems are real and integrated, but several of them should still be described as **Beta** or **Experimental**, not full parity.
+
+
+## Latest stabilization pass — saved-scripts dashboard edit flow (2026-04-05)
+
+### Context
+After the previous saved-scripts backend and degraded-compat work, operators could create, update, delete, and execute scripts through the backend surfaces, but the actual Saved Scripts dashboard UI still only exposed create/run/delete.
+
+### What changed
+Updated:
+- `apps/web/src/app/dashboard/mcp/scripts/page.tsx`
+
+The dashboard now exposes a real edit/update flow:
+- each script card now has an edit control
+- editing opens the same script form in `edit` mode
+- the form now supports both create and update paths
+- update is wired to `trpc.savedScripts.update.useMutation()`
+- successful updates close the editor and refetch the list
+
+### Validation
+Executed in the primary workspace:
+- `pnpm -C apps/web run build`
+
+Result: passed.

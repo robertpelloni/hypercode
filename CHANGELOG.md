@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Saved Scripts Dashboard Edit Flow**: The Saved Scripts dashboard now exposes a real edit/update UI wired to `savedScripts.update`, so operators can modify existing scripts directly from `/dashboard/mcp/scripts` instead of relying on backend-only update support.
 - **Saved Scripts Update Fallback Parity**: Extended the saved-scripts Go/degraded-dashboard parity slice to cover `savedScripts.update`, adding truthful local `.hypercode/config.json` update ownership in Go plus shared Next.js compat routing through `/api/scripts/update` when the TypeScript control plane is unavailable.
 - **Saved Scripts Go Fallback Parity**: Go now owns truthful local fallback behavior for saved script create/delete/execute when `/trpc` is unavailable, including workspace `.hypercode/config.json` persistence, local node-backed execution, focused Go HTTP coverage, and degraded dashboard compat routing through `/api/scripts*`.
 - **Hyperharness Submodule Refresh**: advanced the tracked `submodules/hyperharness` gitlink from `37830d726a39988cdb54f073c21c1a0924dfea0b` to upstream HEAD `98785f5c95c0c870e71aa4c635dd293017504802` while keeping `superai` absent from tracked submodule configuration.

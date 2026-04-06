@@ -578,3 +578,16 @@ We have addressed a major split-brain issue between the MCP database cache and t
 1. **Validate Stdio Loader**: Run `pi` or test the stdio proxy directly to ensure it now broadcasts the combined DB and manual tool inventory.
 2. **Dashboard Review**: Check if the `always_on` toggles in the React dashboard correctly persist across server restarts now that the destructive wipe bug is gone.
 3. **Continue Porting**: The Go bridge needs more direct mappings. Evaluate `PORTING_MAP.md` and continue porting features safely without violating the `UNIVERSAL_LLM_INSTRUCTIONS.md` stabilization rule.
+
+
+### Latest incremental pass — saved-scripts dashboard edit flow
+This follow-up exposed the already-supported `savedScripts.update` path in the operator UI.
+
+#### What changed
+- Updated `apps/web/src/app/dashboard/mcp/scripts/page.tsx`.
+- Added an edit control on each script card.
+- Unified the create/edit form so it can submit either `savedScripts.create` or `savedScripts.update`.
+- Successful updates now close the editor and refetch the script list.
+
+#### Validation performed
+- `pnpm -C apps/web run build`
