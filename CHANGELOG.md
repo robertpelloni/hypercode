@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **MCP Settings Compat Routed to Go Fallbacks**: The shared Next.js `/api/trpc/[trpc]` compat route now translates the MCP Settings dashboard cluster onto Go-native `/api/config/*` and `/api/mcp/servers/*` routes when `/trpc` is unavailable, including config list/update plus client sync target discovery, export preview, and sync execution.
 - **Dashboard Skills Compat Routed to Go Fallbacks**: The shared Next.js `/api/trpc/[trpc]` compat route now translates the operator-facing `skills.*` cluster onto the Go `/api/skills/*` surface when `/trpc` is unavailable, including local skill list/read plus skill assimilation.
 - **Dashboard Project Compat Routed to Go Fallbacks**: The shared Next.js `/api/trpc/[trpc]` compat route now translates the Project Constitution dashboard cluster onto the Go `/api/project/*` surface when `/trpc` is unavailable, and Go now also owns truthful local fallback behavior for `project.updateContext` by writing `.hypercode/project_context.md` when the TypeScript control plane is unavailable.
 - **Dashboard Agent-Memory Compat Routed to Go Fallbacks**: The shared Next.js `/api/trpc/[trpc]` compat route now translates the operator-facing `agentMemory.*` cluster onto the Go `/api/agent-memory/*` surface when `/trpc` is unavailable, including recent/search/export reads plus add/delete/clear-session/handoff/pickup mutations.

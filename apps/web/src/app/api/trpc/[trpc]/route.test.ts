@@ -1747,6 +1747,130 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4542/api/skills/assimilate')).toBe(true);
   });
 
+  it('prefers go-native mcp settings reads and sync mutations in local dashboard fallback mode', async () => {
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4541/trpc';
+    global.fetch = vi.fn(async (input, init) => {
+      const url = String(input);
+
+      if (url.includes('/trpc/')) {
+        throw new Error('connect ECONNREFUSED');
+      }
+
+      if (url === 'http://127.0.0.1:4541/api/config/list') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [
+            { key: 'theme', value: 'dark' },
+            { key: 'telemetry', value: 'enabled' },
+          ],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4541/api/mcp/servers/sync-targets') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [
+            {
+              client: 'claude-desktop',
+              path: 'C:/Users/hyper/AppData/Roaming/Claude/claude_desktop_config.json',
+              candidates: ['C:/Users/hyper/AppData/Roaming/Claude/claude_desktop_config.json'],
+              exists: true,
+            },
+          ],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4541/api/mcp/servers/export-client-config?client=claude-desktop') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: {
+            client: 'claude-desktop',
+            targetPath: 'C:/Users/hyper/AppData/Roaming/Claude/claude_desktop_config.json',
+            existed: true,
+            serverCount: 2,
+            document: { mcpServers: { hypercode: { command: 'hypercode' } } },
+            json: '{"mcpServers":{"hypercode":{"command":"hypercode"}}}',
+          },
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4541/api/config/update' && init?.method === 'POST') {
+        return new Response(JSON.stringify({ success: true, data: true }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4541/api/mcp/servers/sync-client-config' && init?.method === 'POST') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: {
+            client: 'claude-desktop',
+            targetPath: 'C:/Users/hyper/AppData/Roaming/Claude/claude_desktop_config.json',
+            existed: true,
+            serverCount: 2,
+            document: { mcpServers: { hypercode: { command: 'hypercode' } } },
+            json: '{"mcpServers":{"hypercode":{"command":"hypercode"}}}',
+            written: true,
+          },
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    const readResponse = await POST(new Request(
+      'http://localhost:3010/api/trpc/config.list,mcpServers.syncTargets,mcpServers.exportClientConfig?batch=1',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          0: { json: null },
+          1: { json: null },
+          2: { json: { client: 'claude-desktop' } },
+        }),
+      },
+    ));
+    const readPayload = await readResponse.json();
+
+    expect(readResponse.status).toBe(200);
+    expect(readResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+    expect(readPayload?.[0]?.result?.data).toEqual([
+      expect.objectContaining({ key: 'theme', value: 'dark' }),
+      expect.objectContaining({ key: 'telemetry', value: 'enabled' }),
+    ]);
+    expect(readPayload?.[1]?.result?.data).toEqual([
+      expect.objectContaining({ client: 'claude-desktop', exists: true }),
+    ]);
+    expect(readPayload?.[2]?.result?.data).toEqual(expect.objectContaining({
+      client: 'claude-desktop',
+      serverCount: 2,
+      targetPath: 'C:/Users/hyper/AppData/Roaming/Claude/claude_desktop_config.json',
+    }));
+
+    const updateResponse = await POST(new Request('http://localhost:3010/api/trpc/config.update', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { key: 'theme', value: 'light' } }),
+    }));
+    expect(updateResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-config-action');
+    expect((await updateResponse.json())?.result?.data).toBe(true);
+
+    const syncResponse = await POST(new Request('http://localhost:3010/api/trpc/mcpServers.syncClientConfig', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { client: 'claude-desktop' } }),
+    }));
+    expect(syncResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-mcp-managed-action');
+    expect((await syncResponse.json())?.result?.data).toEqual(expect.objectContaining({
+      client: 'claude-desktop',
+      written: true,
+    }));
+
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4541/api/config/list')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4541/api/mcp/servers/sync-targets')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4541/api/mcp/servers/export-client-config?client=claude-desktop')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4541/api/config/update')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4541/api/mcp/servers/sync-client-config')).toBe(true);
+  });
+
   it('prefers go-native project reads and mutations in local dashboard fallback mode', async () => {
     process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4543/trpc';
     global.fetch = vi.fn(async (input, init) => {

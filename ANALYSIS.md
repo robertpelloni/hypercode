@@ -1,5 +1,84 @@
 # HyperCode Stabilization Analysis — 2026-04-03
 
+## Latest stabilization pass — MCP Settings dashboard compat routed to Go fallback ownership (2026-04-06)
+
+### Scope
+This follow-up stayed in the shared compat lane and targeted the MCP Settings dashboard cluster rather than expanding into a larger speculative config migration.
+
+The practical goal was simple: when `/trpc` is unavailable, the MCP Settings page should still be able to:
+- list config rows
+- inspect client sync targets
+- preview exported client config
+- save config edits
+- run client config sync
+
+The Go backend already exposed truthful `/api/*` routes for those settings/sync operations, but the shared Next.js `/api/trpc/[trpc]` compat route still did not translate them.
+
+### Findings
+- `apps/web/src/app/dashboard/mcp/settings/page.tsx` depends on these procedures for its main operator workflow:
+  - `config.list`
+  - `config.update`
+  - `mcpServers.syncTargets`
+  - `mcpServers.exportClientConfig`
+  - `mcpServers.syncClientConfig`
+- The Go backend already had truthful routes for all five:
+  - `GET /api/config/list`
+  - `POST /api/config/update`
+  - `GET /api/mcp/servers/sync-targets`
+  - `GET /api/mcp/servers/export-client-config`
+  - `POST /api/mcp/servers/sync-client-config`
+- The gap was entirely in the shared compat route. The page still looked `/trpc`-dependent even though the Go control plane could already serve the underlying settings and sync data.
+
+### What changed
+#### 1. Extended shared compat reads for the MCP Settings page
+Updated:
+- `apps/web/src/app/api/trpc/[trpc]/route.ts`
+
+The shared local dashboard fallback now supports:
+- `config.list` → `/api/config/list`
+- `mcpServers.syncTargets` → `/api/mcp/servers/sync-targets`
+- `mcpServers.exportClientConfig` → `/api/mcp/servers/export-client-config?client=...&path=...`
+
+#### 2. Added local compat mutation support for settings save + client sync
+Updated:
+- `apps/web/src/app/api/trpc/[trpc]/route.ts`
+
+The shared compat route now also supports:
+- `config.update` → `/api/config/update`
+- `mcpServers.syncClientConfig` → `/api/mcp/servers/sync-client-config`
+
+Mutation headers now distinguish the degraded-mode paths honestly:
+- `x-hypercode-trpc-compat: local-config-action`
+- `x-hypercode-trpc-compat: local-mcp-managed-action`
+
+### Regression coverage
+Updated:
+- `apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+
+Added focused coverage for:
+- batch reads covering config rows, sync targets, and exported client-config preview
+- config update mutation
+- client sync mutation
+
+### Validation performed
+Executed truthfully without killing any processes:
+- Route-level compat validation against the clean push worktree, using the primary workspace's installed Vitest toolchain:
+  - `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+
+Result:
+- `29/29` route compat tests passed
+
+### Validation limitation
+- I did not claim an `apps/web` production build for the clean push worktree.
+- As with the previous compat slices, the clean worktree still lacks its own installed Next.js toolchain.
+- This slice is validated by the shared route-level compat suite.
+
+### Why this matters
+This is another concrete Go-primary/dashboard truthfulness win:
+- the MCP Settings page no longer loses its core operator workflow just because `/trpc` is unavailable
+- the settings/config sync flow can now still expose real Go-native status and actions in degraded mode
+- the shared compat layer continues to shrink the UI surface area that is artificially TypeScript-dependent even when truthful Go ownership already exists
+
 ## Latest stabilization pass — dashboard skills compat routed to Go fallback ownership (2026-04-06)
 
 ### Scope

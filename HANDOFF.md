@@ -3,6 +3,37 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
+### Latest incremental pass — MCP Settings dashboard compat routed to Go fallback ownership
+This follow-up stayed in the shared compat lane and extended the MCP Settings dashboard cluster onto the Go control plane during `/trpc` outage.
+
+#### What changed
+- Updated `apps/web/src/app/api/trpc/[trpc]/route.ts` so local dashboard fallback now supports:
+  - `config.list` → `/api/config/list`
+  - `config.update` → `/api/config/update`
+  - `mcpServers.syncTargets` → `/api/mcp/servers/sync-targets`
+  - `mcpServers.exportClientConfig` → `/api/mcp/servers/export-client-config?client=...&path=...`
+  - `mcpServers.syncClientConfig` → `/api/mcp/servers/sync-client-config`
+- Added dedicated local config mutation compat header:
+  - `x-hypercode-trpc-compat: local-config-action`
+- Reused the existing local managed MCP mutation compat header for client sync:
+  - `x-hypercode-trpc-compat: local-mcp-managed-action`
+- Updated `apps/web/src/app/api/trpc/[trpc]/route.test.ts` with focused compat coverage for:
+  - config list
+  - sync target reads
+  - export client config preview
+  - config update
+  - sync client config
+
+#### Validation performed
+- `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+
+#### Validation limitation
+- `apps/web` production build was not run from the clean push worktree because that worktree still lacks its own installed Next.js toolchain.
+- This slice is validated by the shared route-level compat suite.
+
+#### Recommended next step after this pass
+Keep shrinking the remaining Go-primary/dashboard compatibility gap by targeting another operator-facing dashboard cluster where Go already has truthful `/api/*` ownership but the shared `/api/trpc/[trpc]` compat route still does not expose it.
+
 ### Latest incremental pass — dashboard skills compat routed to Go fallback ownership
 This follow-up stayed in the shared compat lane and extended the Skills dashboard/library cluster onto the Go control plane during `/trpc` outage.
 

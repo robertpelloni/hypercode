@@ -137,10 +137,13 @@ const LOCAL_COMPAT_RESPONSE_KEYS = {
   'mcp.getToolPreferences': 'mcp.getToolPreferences',
   'mcp.getJsoncEditor': 'mcp.getJsoncEditor',
   'mcpServers.get': 'mcpServers.get',
+  'mcpServers.syncTargets': 'mcpServers.syncTargets',
+  'mcpServers.exportClientConfig': 'mcpServers.exportClientConfig',
   'apiKeys.list': 'apiKeys.list',
   'secrets.list': 'secrets.list',
   'policies.list': 'policies.list',
   'savedScripts.list': 'savedScripts.list',
+  'config.list': 'config.list',
   'tools.detectCliHarnesses': 'tools.detectCliHarnesses',
   'tools.detectExecutionEnvironment': 'tools.detectExecutionEnvironment',
   'tools.detectInstallSurfaces': 'tools.detectInstallSurfaces',
@@ -220,6 +223,9 @@ const LOCAL_OPERATOR_MUTATION_PROCEDURES = new Set([
   'savedScripts.delete',
   'savedScripts.execute',
 ]);
+const LOCAL_CONFIG_MUTATION_PROCEDURES = new Set([
+  'config.update',
+]);
 const LOCAL_TOOL_MUTATION_PROCEDURES = new Set([
   'tools.setAlwaysOn',
 ]);
@@ -241,6 +247,7 @@ const LOCAL_MCP_CONFIG_MUTATION_PROCEDURES = new Set([
   'mcpServers.delete',
   'mcpServers.reloadMetadata',
   'mcpServers.clearMetadataCache',
+  'mcpServers.syncClientConfig',
   'serverHealth.reset',
 ]);
 const LOCAL_MCP_RUNTIME_MUTATION_PROCEDURES = new Set([
@@ -268,6 +275,7 @@ const LOCAL_SKILL_MUTATION_PROCEDURES = new Set([
 ]);
 const LOCAL_COMPAT_MUTATION_PROCEDURES = new Set([
   ...LOCAL_OPERATOR_MUTATION_PROCEDURES,
+  ...LOCAL_CONFIG_MUTATION_PROCEDURES,
   ...LOCAL_TOOL_MUTATION_PROCEDURES,
   ...LOCAL_MEMORY_MUTATION_PROCEDURES,
   ...LOCAL_AGENT_MEMORY_MUTATION_PROCEDURES,
@@ -2403,10 +2411,13 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
       content: localConfigSource.content,
     },
     'mcpServers.get': undefined,
+    'mcpServers.syncTargets': [],
+    'mcpServers.exportClientConfig': null,
     'apiKeys.list': apiKeys,
     'secrets.list': await buildPreferredSecretsList(),
     'policies.list': await buildPreferredPoliciesList(),
     'savedScripts.list': await buildPreferredSavedScriptsList(),
+    'config.list': [],
     'tools.detectCliHarnesses': cliHarnessDetections,
     'tools.detectExecutionEnvironment': executionEnvironment,
     'tools.detectInstallSurfaces': installSurfaces,
@@ -2480,6 +2491,25 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
         };
       }
       data = buildLocalManagedServerRecord(match.name, match.server);
+    }
+
+    if (responseKey === 'mcpServers.syncTargets') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/mcp/servers/sync-targets');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'mcpServers.exportClientConfig') {
+      const input = procedureInputs[index];
+      const client = input && typeof input === 'object' ? readString((input as { client?: unknown }).client) : null;
+      const overridePath = input && typeof input === 'object' ? readString((input as { path?: unknown }).path) : null;
+      data = client
+        ? await fetchNativeControlPlaneData<unknown>(`/api/mcp/servers/export-client-config${buildMemoryQueryString({ client, path: overridePath })}`)
+        : null;
+      if (data === null) {
+        data = null;
+      }
     }
 
     if (responseKey === 'billing.getFallbackChain') {
@@ -2658,6 +2688,13 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
       const input = procedureInputs[index];
       const uuid = input && typeof input === 'object' ? String((input as { serverUuid?: unknown }).serverUuid ?? '') : '';
       data = await buildPreferredServerHealth(uuid, localConfig);
+    }
+
+    if (responseKey === 'config.list') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/config/list');
+      if (data === null) {
+        data = [];
+      }
     }
 
     if (responseKey === 'project.getContext') {
@@ -3148,6 +3185,39 @@ async function tryLocalOperatorMutation(req: Request, body: string | undefined):
   });
 }
 
+async function tryLocalConfigMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_CONFIG_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  if (!input || typeof input !== 'object') {
+    return buildTrpcResponse(req, undefined, {
+      status: 400,
+      statusText: 'Invalid local config compat input',
+      headers: { 'x-hypercode-trpc-compat': 'local-config-action' },
+    });
+  }
+
+  const data = await fetchNativeControlPlaneData<unknown>('/api/config/update', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (data === null) {
+    return null;
+  }
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-config-action' },
+  });
+}
+
 async function tryLocalToolMutation(req: Request, body: string | undefined): Promise<Response | null> {
   const procedures = getProcedureNames(req);
   const procedureName = procedures[0] ?? '';
@@ -3420,8 +3490,26 @@ async function tryLocalManagedServerMutation(req: Request, body: string | undefi
     });
   }
 
-  const localConfig = await loadLocalMcpConfig();
   const procedureName = procedures[0] ?? '';
+  if (procedureName === 'mcpServers.syncClientConfig') {
+    const data = await fetchNativeControlPlaneData<unknown>('/api/mcp/servers/sync-client-config', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(input),
+    });
+    if (data === null) {
+      return null;
+    }
+
+    return buildTrpcResponse(req, data, {
+      status: 200,
+      headers: { 'x-hypercode-trpc-compat': 'local-mcp-managed-action' },
+    });
+  }
+
+  const localConfig = await loadLocalMcpConfig();
 
   if (procedureName === 'mcpServers.create') {
     const name = String((input as { name?: unknown }).name ?? '').trim();
@@ -3667,6 +3755,11 @@ async function handler(req: Request): Promise<Response> {
     const localOperatorMutationResponse = await tryLocalOperatorMutation(req, body);
     if (localOperatorMutationResponse) {
       return localOperatorMutationResponse;
+    }
+
+    const localConfigMutationResponse = await tryLocalConfigMutation(req, body);
+    if (localConfigMutationResponse) {
+      return localConfigMutationResponse;
     }
 
     const localToolMutationResponse = await tryLocalToolMutation(req, body);
