@@ -1670,6 +1670,127 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4546/api/memory/convert')).toBe(true);
   });
 
+  it('prefers go-native submodule reads and mutations in local dashboard fallback mode', async () => {
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4549/trpc';
+    global.fetch = vi.fn(async (input, init) => {
+      const url = String(input);
+
+      if (url.includes('/trpc/')) {
+        throw new Error('connect ECONNREFUSED');
+      }
+
+      if (url === 'http://127.0.0.1:4549/api/submodules') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [
+            { path: 'submodules/demo', url: 'https://example.com/demo.git', branch: 'main' },
+          ],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4549/api/submodules/update-all' && init?.method === 'POST') {
+        return new Response(JSON.stringify({ success: true, data: { success: true } }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4549/api/submodules/capabilities?path=submodules%2Fdemo') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: ['build', 'install'],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    const readResponse = await POST(new Request(
+      'http://localhost:3010/api/trpc/submodule.list,submodule.detectCapabilities?batch=1',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          0: { json: null },
+          1: { json: { path: 'submodules/demo' } },
+        }),
+      },
+    ));
+    const readPayload = await readResponse.json();
+
+    expect(readResponse.status).toBe(200);
+    expect(readResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+    expect(readPayload?.[0]?.result?.data).toEqual([
+      expect.objectContaining({ path: 'submodules/demo' }),
+    ]);
+    expect(readPayload?.[1]?.result?.data).toEqual(['build', 'install']);
+
+    const updateResponse = await POST(new Request('http://localhost:3010/api/trpc/submodule.updateAll', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: null }),
+    }));
+    expect(updateResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-submodule-action');
+    expect((await updateResponse.json())?.result?.data).toEqual({ success: true });
+  });
+
+  it('prefers go-native catalog reads and mutations in local dashboard fallback mode', async () => {
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4559/trpc';
+    global.fetch = vi.fn(async (input, init) => {
+      const url = String(input);
+
+      if (url.includes('/trpc/')) {
+        throw new Error('connect ECONNREFUSED');
+      }
+
+      if (url === 'http://127.0.0.1:4559/api/catalog/stats') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: { total: 10, by_status: { published: 10 }, by_transport: { STDIO: 10 }, providers: 2 },
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4559/api/catalog?limit=10&offset=0') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: { items: [{ uuid: 'cat-1', canonical_id: 'tool-1' }], total: 1 },
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4559/api/catalog/ingest' && init?.method === 'POST') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: { total_upserted: 3 },
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    const readResponse = await POST(new Request(
+      'http://localhost:3010/api/trpc/catalog.stats,catalog.list?batch=1',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          0: { json: null },
+          1: { json: { limit: 10, offset: 0 } },
+        }),
+      },
+    ));
+    const readPayload = await readResponse.json();
+
+    expect(readResponse.status).toBe(200);
+    expect(readResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+    expect(readPayload?.[0]?.result?.data).toEqual(expect.objectContaining({ total: 10, providers: 2 }));
+    expect(readPayload?.[1]?.result?.data).toEqual(expect.objectContaining({ total: 1, items: [expect.objectContaining({ uuid: 'cat-1' })] }));
+
+    const ingestResponse = await POST(new Request('http://localhost:3010/api/trpc/catalog.triggerIngestion', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: null }),
+    }));
+    expect(ingestResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-catalog-action');
+    expect((await ingestResponse.json())?.result?.data).toEqual(expect.objectContaining({ total_upserted: 3 }));
+  });
+
   it('prefers go-native skills reads and assimilation in local dashboard fallback mode', async () => {
     process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4542/trpc';
     global.fetch = vi.fn(async (input, init) => {

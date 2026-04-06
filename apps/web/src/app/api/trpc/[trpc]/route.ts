@@ -186,6 +186,16 @@ const LOCAL_COMPAT_RESPONSE_KEYS = {
   'project.getHandoffs': 'project.getHandoffs',
   'skills.list': 'skills.list',
   'skills.read': 'skills.read',
+  'submodule.list': 'submodule.list',
+  'submodule.detectCapabilities': 'submodule.detectCapabilities',
+  'git.getModules': 'git.getModules',
+  'git.getLog': 'git.getLog',
+  'git.getStatus': 'git.getStatus',
+  'catalog.list': 'catalog.list',
+  'catalog.get': 'catalog.get',
+  'catalog.listRuns': 'catalog.listRuns',
+  'catalog.stats': 'catalog.stats',
+  'catalog.listLinkedServers': 'catalog.listLinkedServers',
 } as const;
 
 type LocalCompatProcedure = keyof typeof LOCAL_COMPAT_RESPONSE_KEYS;
@@ -273,6 +283,19 @@ const LOCAL_PROJECT_MUTATION_PROCEDURES = new Set([
 const LOCAL_SKILL_MUTATION_PROCEDURES = new Set([
   'skills.assimilate',
 ]);
+const LOCAL_SUBMODULE_MUTATION_PROCEDURES = new Set([
+  'submodule.updateAll',
+  'submodule.installDependencies',
+  'submodule.build',
+  'submodule.enable',
+  'git.revert',
+]);
+const LOCAL_CATALOG_MUTATION_PROCEDURES = new Set([
+  'catalog.triggerIngestion',
+  'catalog.triggerValidation',
+  'catalog.installFromRecipe',
+  'catalog.triggerBatchValidation',
+]);
 const LOCAL_COMPAT_MUTATION_PROCEDURES = new Set([
   ...LOCAL_OPERATOR_MUTATION_PROCEDURES,
   ...LOCAL_CONFIG_MUTATION_PROCEDURES,
@@ -284,6 +307,8 @@ const LOCAL_COMPAT_MUTATION_PROCEDURES = new Set([
   ...LOCAL_SESSION_MUTATION_PROCEDURES,
   ...LOCAL_PROJECT_MUTATION_PROCEDURES,
   ...LOCAL_SKILL_MUTATION_PROCEDURES,
+  ...LOCAL_SUBMODULE_MUTATION_PROCEDURES,
+  ...LOCAL_CATALOG_MUTATION_PROCEDURES,
 ]);
 
 const LEGACY_MCP_SERVERS_LIST_PROCEDURES = [
@@ -2464,6 +2489,16 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
     'project.getHandoffs': [],
     'skills.list': [],
     'skills.read': { content: [] },
+    'submodule.list': [],
+    'submodule.detectCapabilities': [],
+    'git.getModules': [],
+    'git.getLog': [],
+    'git.getStatus': { branch: 'unknown', clean: false, files: [] },
+    'catalog.list': { items: [], total: 0 },
+    'catalog.get': null,
+    'catalog.listRuns': [],
+    'catalog.stats': { total: 0, by_status: {}, by_transport: {}, last_ingest_at: null, providers: 0 },
+    'catalog.listLinkedServers': [],
   };
 
   const compatEntries = await Promise.all(procedureNames.map(async (procedureName, index) => {
@@ -2724,6 +2759,93 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
       data = name ? await fetchNativeControlPlaneData<unknown>(`/api/skills/read${buildMemoryQueryString({ name })}`) : null;
       if (data === null) {
         data = { content: [] };
+      }
+    }
+
+    if (responseKey === 'submodule.list') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/submodules');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'submodule.detectCapabilities') {
+      const input = procedureInputs[index];
+      const submodulePath = input && typeof input === 'object' ? readString((input as { path?: unknown }).path) : null;
+      data = submodulePath ? await fetchNativeControlPlaneData<unknown>(`/api/submodules/capabilities${buildMemoryQueryString({ path: submodulePath })}`) : null;
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'git.getModules') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/git/modules');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'git.getLog') {
+      const input = procedureInputs[index];
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      data = await fetchNativeControlPlaneData<unknown>(`/api/git/log${buildMemoryQueryString({ limit })}`);
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'git.getStatus') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/git/status');
+      if (data === null) {
+        data = { branch: 'unknown', clean: false, files: [] };
+      }
+    }
+
+    if (responseKey === 'catalog.list') {
+      const input = procedureInputs[index];
+      const search = input && typeof input === 'object' ? readString((input as { search?: unknown }).search) : null;
+      const status = input && typeof input === 'object' ? readString((input as { status?: unknown }).status) : null;
+      const transport = input && typeof input === 'object' ? readString((input as { transport?: unknown }).transport) : null;
+      const install_method = input && typeof input === 'object' ? readString((input as { install_method?: unknown }).install_method) : null;
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      const offset = input && typeof input === 'object' ? readNumber((input as { offset?: unknown }).offset) : null;
+      
+      data = await fetchNativeControlPlaneData<unknown>(`/api/catalog${buildMemoryQueryString({ search, status, transport, install_method, limit, offset })}`);
+      if (data === null) {
+        data = { items: [], total: 0 };
+      }
+    }
+
+    if (responseKey === 'catalog.get') {
+      const input = procedureInputs[index];
+      const uuid = input && typeof input === 'object' ? readString((input as { uuid?: unknown }).uuid) : null;
+      data = uuid ? await fetchNativeControlPlaneData<unknown>(`/api/catalog/get${buildMemoryQueryString({ uuid })}`) : null;
+    }
+
+    if (responseKey === 'catalog.listRuns') {
+      const input = procedureInputs[index];
+      const server_uuid = input && typeof input === 'object' ? readString((input as { server_uuid?: unknown }).server_uuid) : null;
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      const offset = input && typeof input === 'object' ? readNumber((input as { offset?: unknown }).offset) : null;
+      data = server_uuid ? await fetchNativeControlPlaneData<unknown>(`/api/catalog/runs${buildMemoryQueryString({ server_uuid, limit, offset })}`) : null;
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'catalog.stats') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/catalog/stats');
+      if (data === null) {
+        data = { total: 0, by_status: {}, by_transport: {}, last_ingest_at: null, providers: 0 };
+      }
+    }
+
+    if (responseKey === 'catalog.listLinkedServers') {
+      const input = procedureInputs[index];
+      const published_server_uuid = input && typeof input === 'object' ? readString((input as { published_server_uuid?: unknown }).published_server_uuid) : null;
+      data = published_server_uuid ? await fetchNativeControlPlaneData<unknown>(`/api/catalog/linked-servers${buildMemoryQueryString({ published_server_uuid })}`) : null;
+      if (data === null) {
+        data = [];
       }
     }
 
@@ -3414,6 +3536,90 @@ async function tryLocalSkillMutation(req: Request, body: string | undefined): Pr
   });
 }
 
+async function tryLocalSubmoduleMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_SUBMODULE_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+
+  let endpointPath = '';
+  if (procedureName === 'submodule.updateAll') {
+    endpointPath = '/api/submodules/update-all';
+  } else if (procedureName === 'submodule.installDependencies') {
+    endpointPath = '/api/submodules/install-dependencies';
+  } else if (procedureName === 'submodule.build') {
+    endpointPath = '/api/submodules/build';
+  } else if (procedureName === 'submodule.enable') {
+    endpointPath = '/api/submodules/enable';
+  } else if (procedureName === 'git.revert') {
+    endpointPath = '/api/git/revert';
+  }
+
+  if (!endpointPath) {
+    return null;
+  }
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (data === null) {
+    return null;
+  }
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-submodule-action' },
+  });
+}
+
+async function tryLocalCatalogMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_CATALOG_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+
+  let endpointPath = '';
+  if (procedureName === 'catalog.triggerIngestion') {
+    endpointPath = '/api/catalog/ingest';
+  } else if (procedureName === 'catalog.triggerValidation') {
+    endpointPath = '/api/catalog/validate';
+  } else if (procedureName === 'catalog.installFromRecipe') {
+    endpointPath = '/api/catalog/install';
+  } else if (procedureName === 'catalog.triggerBatchValidation') {
+    endpointPath = '/api/catalog/validate-batch';
+  }
+
+  if (!endpointPath) {
+    return null;
+  }
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (data === null) {
+    return null;
+  }
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-catalog-action' },
+  });
+}
+
 async function tryLocalMCPRuntimeMutation(req: Request, body: string | undefined): Promise<Response | null> {
   const procedures = getProcedureNames(req);
   const procedureName = procedures[0] ?? '';
@@ -3785,6 +3991,16 @@ async function handler(req: Request): Promise<Response> {
     const localSkillMutationResponse = await tryLocalSkillMutation(req, body);
     if (localSkillMutationResponse) {
       return localSkillMutationResponse;
+    }
+
+    const localSubmoduleMutationResponse = await tryLocalSubmoduleMutation(req, body);
+    if (localSubmoduleMutationResponse) {
+      return localSubmoduleMutationResponse;
+    }
+
+    const localCatalogMutationResponse = await tryLocalCatalogMutation(req, body);
+    if (localCatalogMutationResponse) {
+      return localCatalogMutationResponse;
     }
 
     const localMCPRuntimeMutationResponse = await tryLocalMCPRuntimeMutation(req, body);
