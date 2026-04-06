@@ -21,49 +21,25 @@ This follow-up returned to the shared web compat lane and wired two major dashbo
 #### Recommended next step after this pass
 The Knowledge, Architecture, and MCP Registry pages are now much more functional in degraded mode. The next highest-value compat target is likely `browser.*` (Browser page) or deeper director/council orchestration surfaces. Alternatively, we can do another real `start.bat` validation pass to see what the current runtime surfaces.
 
-### Latest incremental pass — already-running startup path now reuses or attaches the dashboard truthfully
-This follow-up stayed in the startup-truth lane and improved the `hypercode start` branch where an existing control plane is detected.
+### Latest incremental pass — submodule, git, and catalog compat routed to Go fallback
+This follow-up returned to the shared web compat lane and wired two major dashboard clusters that still depended on `/trpc` even though Go already had native ownership.
 
 #### What changed
-- Updated `packages/cli/src/commands/start.ts` so the already-running branch now:
-  - reports whether the existing instance was detected via startup lock or live port probe
-  - probes for an existing dashboard runtime too
-  - reuses and opens the dashboard when one is already running and opening is allowed
-  - otherwise starts a dashboard-only runtime attached to the live control plane
-  - reports truthfully if that dashboard attach fails, exits early, or is still starting
-  - prints the live control-plane API index alongside the dashboard outcome
-- Added helpers:
-  - `resolveAlreadyRunningDashboardReuse(...)`
-  - `attachDashboardToRunningControlPlane(...)`
-- Updated `packages/cli/src/commands/start.test.ts` with focused coverage for:
-  - dashboard reuse during control-plane reuse
-  - truthful absence reporting when no running dashboard runtime is detected
-  - starting a dashboard-only runtime attached to an already-running control plane
+- Updated `apps/web/src/app/api/trpc/[trpc]/route.ts` to support:
+  - `submodule.list`, `submodule.detectCapabilities`
+  - `git.getModules`, `git.getLog`, `git.getStatus`
+  - `catalog.list`, `catalog.get`, `catalog.listRuns`, `catalog.stats`, `catalog.listLinkedServers`
+- Added mutation support for submodule and catalog operations
+- Added two new test cases in `route.test.ts` for submodule and catalog fallback
 
 #### Validation performed
-- `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run packages/cli/src/commands/start.test.ts`
-
-#### Validation results
-Passed:
-- `packages/cli/src/commands/start.test.ts`
-  - `43/43` tests passed
-
-#### Additional refinement included in this pass
-- tightened the new attach flow so it can reuse the already-selected dashboard port/URL instead of re-probing and potentially drifting to a different port
-- attach helper now also returns detailed failure text when available, so operator logs can be more exact than a generic “failed to launch” message
-
-- the already-running branch now reads live startup provenance directly from the lock record associated with the running port, allowing it to accurately report whether the running instance is Go or Node, how it launched, and which port decision it made
-- the already-running branch now applies the same Go compatibility warning to its attach-dashboard flow as the normal Go startup path does
+- `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+- result: `31/31` tests passed
 
 #### Recommended next step after this pass
-The next best startup-truth slice is another real operator `start.bat` replay. At this point the startup path has improved in five meaningful ways:
-- broader non-destructive control-plane port fallback
-- durable port provenance across status surfaces
-- backward-compatible legacy-lock provenance
-- clearer already-running dashboard reuse/attach behavior
-- truthful already-running instance inspection (runtime/launch/port metadata surfaced dynamically instead of treated generically)
+The Knowledge, Architecture, and MCP Registry pages are now much more functional in degraded mode. The next highest-value compat target is likely `browser.*` (Browser page) or deeper director/council orchestration surfaces. Alternatively, we can do another real `start.bat` validation pass to see what the current runtime surfaces.
 
-The next pasted operator log should tell us whether the next remaining truth gap is in explicit-port behavior, dashboard launch failures on the real machine, or some different startup/runtime branch. If no further startup flaws remain, the next target should be another high-value shared compat cluster still blocked on `/trpc` despite existing Go `/api/*` ownership (such as Git/Submodules, the MCP Registry, or the Director/Autopilot surfaces).
+### Latest incremental pass — already-running startup path now reuses or attaches the dashboard truthfully
 
 ### Latest incremental pass — legacy startup locks now derive truthful port provenance
 This follow-up stayed in the startup-truth lane and tightened backward compatibility for the new port provenance metadata.
