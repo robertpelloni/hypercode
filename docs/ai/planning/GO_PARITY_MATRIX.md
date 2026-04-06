@@ -57,8 +57,8 @@ Status values:
 | Surface | Current status | Notes |
 |---|---|---|
 | Sectioned memory status/search | Bridge-first with Native Go fallback | native SQLite fallback exists |
-| Memory search endpoints | Bridge-first with Partial Native Go fallback | Go now owns persisted local fallback capture/search for agent-memory-backed facts, observations, user prompts, and session summaries, but generic memory graph/pivot/timeline parity is still incomplete |
-| Agent memory runtime | Partial Native Go | Go now owns persisted local add/delete/clear/search/recent/filter/export/stats fallback behavior through `.hypercode/agent_memory/memories.json`, while handoff/pickup and deeper vector-backed parity are still TS-first |
+| Memory search endpoints | Bridge-first with Partial Native Go fallback | Go now owns persisted local fallback capture/search for agent-memory-backed facts, observations, user prompts, session summaries, pivot search, timeline windows, and cross-session links, but broader generic memory graph/vector parity is still incomplete |
+| Agent memory runtime | Partial Native Go | Go now owns persisted local add/delete/clear/search/recent/filter/export/stats/handoff/pickup fallback behavior through `.hypercode/agent_memory/memories.json`, while deeper vector-backed parity and mixed-runtime authority are still TS-first |
 | Imported session storage | Partial Native Go | Go now has a real imported-session store plus native file-based and DB-backed ingest paths (`llm-cli` logs.db and Prism DB artifacts), with transcript-hash dedup, archived transcript persistence, memory rows, and instruction-doc regeneration; some niche parser parity gaps still remain |
 | Imported session docs/maintenance | Partial Native Go | Go now provides instruction-doc generation/listing and maintenance stats from the native store, though mixed-runtime cleanup is still ongoing |
 | Transcript dedup / retention maintenance | Partial Native Go | transcript-hash dedup now exists in the native Go imported-session store, but broader retention/backfill ownership is still incomplete |

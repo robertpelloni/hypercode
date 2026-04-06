@@ -3873,15 +3873,114 @@ func (s *Server) handleMemorySearchUserPrompts(w http.ResponseWriter, r *http.Re
 }
 
 func (s *Server) handleMemorySearchPivot(w http.ResponseWriter, r *http.Request) {
-	s.handleReadOnlyMemoryBodyFallback(w, r, "memory.searchMemoryPivot")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.searchMemoryPivot", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.searchMemoryPivot",
+			},
+		})
+		return
+	}
+
+	data, reason, localErr := s.localSearchMemoryPivotPayload(payload)
+	if localErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    data,
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.searchMemoryPivot",
+			"reason":    reason,
+		},
+	})
 }
 
 func (s *Server) handleMemoryTimelineWindow(w http.ResponseWriter, r *http.Request) {
-	s.handleReadOnlyMemoryBodyFallback(w, r, "memory.getMemoryTimelineWindow")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.getMemoryTimelineWindow", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.getMemoryTimelineWindow",
+			},
+		})
+		return
+	}
+
+	data, reason, localErr := s.localTimelineWindowPayload(payload)
+	if localErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    data,
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.getMemoryTimelineWindow",
+			"reason":    reason,
+		},
+	})
 }
 
 func (s *Server) handleMemoryCrossSessionLinks(w http.ResponseWriter, r *http.Request) {
-	s.handleReadOnlyMemoryBodyFallback(w, r, "memory.getCrossSessionMemoryLinks")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.getCrossSessionMemoryLinks", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.getCrossSessionMemoryLinks",
+			},
+		})
+		return
+	}
+
+	data, reason, localErr := s.localCrossSessionMemoryLinksPayload(payload)
+	if localErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    data,
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.getCrossSessionMemoryLinks",
+			"reason":    reason,
+		},
+	})
 }
 
 func (s *Server) handleMemorySessionBootstrap(w http.ResponseWriter, r *http.Request) {
@@ -4514,11 +4613,61 @@ func (s *Server) handleAgentMemoryExport(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) handleAgentMemoryHandoff(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "agentMemory.handoff")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "agentMemory.handoff", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "agentMemory.handoff"}})
+		return
+	}
+
+	artifact, localErr := s.localAgentMemoryHandoffArtifact(payload)
+	if localErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    artifact,
+		"bridge": map[string]any{
+			"fallback":  "go-local-agent-memory",
+			"procedure": "agentMemory.handoff",
+			"reason":    "upstream unavailable; generated local agent-memory handoff artifact",
+		},
+	})
 }
 
 func (s *Server) handleAgentMemoryPickup(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "agentMemory.pickup")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "agentMemory.pickup", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "agentMemory.pickup"}})
+		return
+	}
+
+	pickupResult, localErr := s.localAgentMemoryPickupArtifact(stringValue(payload["artifact"]))
+	if localErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    pickupResult,
+		"bridge": map[string]any{
+			"fallback":  "go-local-agent-memory",
+			"procedure": "agentMemory.pickup",
+			"reason":    "upstream unavailable; restored local agent-memory handoff artifact",
+		},
+	})
 }
 
 func (s *Server) handleAgentMemoryStats(w http.ResponseWriter, r *http.Request) {

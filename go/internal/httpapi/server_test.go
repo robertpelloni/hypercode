@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -1276,9 +1277,9 @@ func TestMemoryServiceBackedMutationsFallBackLocally(t *testing.T) {
 		{path: "/api/memory/facts/add", body: `{"content":"remember this","type":"working"}`, expectedStatus: http.StatusOK, containsAny: []string{`"fallback":"go-local-memory"`, `persisted memory fact locally`, `"content":"remember this"`}},
 		{path: "/api/memory/observations/record", body: `{"content":"Observation","type":"fact","namespace":"project"}`, expectedStatus: http.StatusOK, containsAny: []string{`"fallback":"go-local-memory"`, `persisted structured observation locally`, `"structuredObservation"`}},
 		{path: "/api/memory/user-prompts/capture", body: `{"content":"Need help","role":"user"}`, expectedStatus: http.StatusOK, containsAny: []string{`"fallback":"go-local-memory"`, `persisted user prompt locally`, `"promptRole":"user"`}},
-		{path: "/api/memory/pivot/search", body: `{"pivotMemoryId":"mem-1","limit":5}`, expectedStatus: http.StatusServiceUnavailable, containsAny: []string{`"fallback":"go-local-memory"`, `local memory fallback has no persisted body results for memory.searchMemoryPivot`}},
-		{path: "/api/memory/timeline/window", body: `{"centerMemoryId":"mem-1","before":2,"after":2}`, expectedStatus: http.StatusServiceUnavailable, containsAny: []string{`"fallback":"go-local-memory"`, `local memory fallback has no persisted body results for memory.getMemoryTimelineWindow`}},
-		{path: "/api/memory/cross-session-links", body: `{"memoryId":"mem-1","limit":5}`, expectedStatus: http.StatusServiceUnavailable, containsAny: []string{`"fallback":"go-local-memory"`, `local memory fallback has no persisted body results for memory.getCrossSessionMemoryLinks`}},
+		{path: "/api/memory/pivot/search", body: `{"pivotMemoryId":"mem-1","limit":5}`, expectedStatus: http.StatusOK, containsAny: []string{`"fallback":"go-local-memory"`, `local memory pivot anchor was not found`}},
+		{path: "/api/memory/timeline/window", body: `{"centerMemoryId":"mem-1","before":2,"after":2}`, expectedStatus: http.StatusOK, containsAny: []string{`"fallback":"go-local-memory"`, `local timeline anchor was not found`}},
+		{path: "/api/memory/cross-session-links", body: `{"memoryId":"mem-1","limit":5}`, expectedStatus: http.StatusOK, containsAny: []string{`"fallback":"go-local-memory"`, `local cross-session link search found no related persisted memories`}},
 		{path: "/api/memory/session-summaries/capture", body: `{"sessionId":"sess-1","status":"stopped"}`, expectedStatus: http.StatusOK, containsAny: []string{`"fallback":"go-local-memory"`, `persisted session summary locally`, `"sessionId":"sess-1"`}},
 	}
 
@@ -1319,6 +1320,114 @@ func TestMemoryServiceBackedMutationsFallBackLocally(t *testing.T) {
 	server.Handler().ServeHTTP(summaryRecorder, httptest.NewRequest(http.MethodGet, "/api/memory/session-summaries/recent?limit=5", nil))
 	if summaryRecorder.Code != http.StatusOK || !strings.Contains(summaryRecorder.Body.String(), `"sessionId":"sess-1"`) {
 		t.Fatalf("expected persisted local session summary after mutation, got %d %s", summaryRecorder.Code, summaryRecorder.Body.String())
+	}
+}
+
+func seedPersistedAgentMemoryRelations(t *testing.T, workspaceRoot string) {
+	t.Helper()
+	seedPersistedAgentMemories(t, workspaceRoot)
+
+	agentMemoryPath := filepath.Join(workspaceRoot, ".hypercode", "agent_memory", "memories.json")
+	raw, err := os.ReadFile(agentMemoryPath)
+	if err != nil {
+		t.Fatalf("read persisted memories: %v", err)
+	}
+
+	var snapshot struct {
+		Version  int                      `json:"version"`
+		Memories []localAgentMemoryRecord `json:"memories"`
+	}
+	if err := json.Unmarshal(raw, &snapshot); err != nil {
+		t.Fatalf("unmarshal persisted memories: %v", err)
+	}
+
+	now := time.Now().UTC()
+	snapshot.Memories = append(snapshot.Memories,
+		localAgentMemoryRecord{
+			ID:        "prompt-goal-1",
+			Type:      "long_term",
+			Namespace: "project",
+			Content:   "Ship parity",
+			Metadata: map[string]any{
+				"sessionId": "sess-1",
+				"structuredUserPrompt": map[string]any{
+					"role":          "goal",
+					"content":       "Ship parity",
+					"sessionId":     "sess-1",
+					"activeGoal":    "ship parity",
+					"lastObjective": "surface jit tool context",
+					"contentHash":   "prompt-goal-1",
+					"promptNumber":  2,
+					"recordedAt":    float64(now.Add(-40 * time.Second).UnixMilli()),
+				},
+			},
+			CreatedAt:   now.Add(-40 * time.Second).Format(time.RFC3339Nano),
+			AccessedAt:  now.Add(-35 * time.Second).Format(time.RFC3339Nano),
+			AccessCount: 1,
+		},
+		localAgentMemoryRecord{
+			ID:        "obs-fix-2",
+			Type:      "working",
+			Namespace: "project",
+			Content:   "Applied the same search_tools memory fix in a follow-up session",
+			Metadata: map[string]any{
+				"sessionId": "sess-2",
+				"source":    "search_tools",
+				"structuredObservation": map[string]any{
+					"type":          "fix",
+					"title":         "search_tools follow-up parity fix",
+					"narrative":     "Applied the same search_tools memory fix in a follow-up session",
+					"toolName":      "search_tools",
+					"contentHash":   "obs-fix-2",
+					"recordedAt":    float64(now.Add(-10 * time.Second).UnixMilli()),
+					"concepts":      []string{"search", "tools", "memory"},
+					"filesRead":     []string{"go/internal/httpapi/server.go"},
+					"filesModified": []string{"go/internal/httpapi/server.go"},
+				},
+			},
+			CreatedAt:   now.Add(-10 * time.Second).Format(time.RFC3339Nano),
+			AccessedAt:  now.Add(-5 * time.Second).Format(time.RFC3339Nano),
+			AccessCount: 1,
+		},
+	)
+
+	updatedRaw, err := json.Marshal(map[string]any{
+		"version":  1,
+		"memories": snapshot.Memories,
+	})
+	if err != nil {
+		t.Fatalf("marshal related persisted memories: %v", err)
+	}
+	if err := os.WriteFile(agentMemoryPath, updatedRaw, 0o644); err != nil {
+		t.Fatalf("write related persisted memories: %v", err)
+	}
+}
+
+func TestMemoryRelationshipRoutesFallBackToPersistedData(t *testing.T) {
+	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	cfg := config.Default()
+	cfg.WorkspaceRoot = t.TempDir()
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	seedPersistedAgentMemoryRelations(t, cfg.WorkspaceRoot)
+	server := New(cfg, stubDetector{})
+
+	pivotRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(pivotRecorder, httptest.NewRequest(http.MethodPost, "/api/memory/pivot/search", strings.NewReader(`{"pivotMemoryId":"obs-fix-1","limit":5}`)))
+	if pivotRecorder.Code != http.StatusOK || !strings.Contains(pivotRecorder.Body.String(), `using local inferred pivot search from anchor memory`) || !strings.Contains(pivotRecorder.Body.String(), `"obs-fix-2"`) {
+		t.Fatalf("expected local pivot-search fallback to return inferred related memories, got %d %s", pivotRecorder.Code, pivotRecorder.Body.String())
+	}
+
+	timelineRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(timelineRecorder, httptest.NewRequest(http.MethodPost, "/api/memory/timeline/window", strings.NewReader(`{"centerMemoryId":"summary-1","before":2,"after":2}`)))
+	if timelineRecorder.Code != http.StatusOK || !strings.Contains(timelineRecorder.Body.String(), `using local timeline window inferred from anchor memory`) || !strings.Contains(timelineRecorder.Body.String(), `"summary-1"`) || !strings.Contains(timelineRecorder.Body.String(), `"prompt-goal-1"`) {
+		t.Fatalf("expected local timeline-window fallback to return session window data, got %d %s", timelineRecorder.Code, timelineRecorder.Body.String())
+	}
+
+	linksRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(linksRecorder, httptest.NewRequest(http.MethodPost, "/api/memory/cross-session-links", strings.NewReader(`{"memoryId":"obs-fix-1","limit":5}`)))
+	if linksRecorder.Code != http.StatusOK || !strings.Contains(linksRecorder.Body.String(), `using local persisted cross-session memory links`) || !strings.Contains(linksRecorder.Body.String(), `"obs-fix-2"`) || !strings.Contains(linksRecorder.Body.String(), `same tool (search_tools)`) {
+		t.Fatalf("expected local cross-session-link fallback to return related session links, got %d %s", linksRecorder.Code, linksRecorder.Body.String())
 	}
 }
 
@@ -10636,6 +10745,60 @@ func TestAgentMemoryMutationRoutesFallBackToLocalPersistence(t *testing.T) {
 	server.Handler().ServeHTTP(recentRecorder, httptest.NewRequest(http.MethodGet, "/api/agent-memory/recent?limit=10", nil))
 	if recentRecorder.Code != http.StatusOK || strings.Contains(recentRecorder.Body.String(), `"prompt-1"`) || !strings.Contains(recentRecorder.Body.String(), `remember local agent parity`) {
 		t.Fatalf("expected persisted agent-memory mutation effects, got %d %s", recentRecorder.Code, recentRecorder.Body.String())
+	}
+}
+
+func TestAgentMemoryHandoffAndPickupFallBackToLocalPersistence(t *testing.T) {
+	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+
+	cfg := config.Default()
+	cfg.WorkspaceRoot = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	seedPersistedAgentMemoryRelations(t, cfg.WorkspaceRoot)
+	server := New(cfg, stubDetector{})
+
+	addSessionRecorder := httptest.NewRecorder()
+	addSessionReq := httptest.NewRequest(http.MethodPost, "/api/agent-memory/add", strings.NewReader(`{"content":"volatile handoff context","type":"session","namespace":"agent"}`))
+	server.Handler().ServeHTTP(addSessionRecorder, addSessionReq)
+	if addSessionRecorder.Code != http.StatusOK {
+		t.Fatalf("expected local session memory before handoff, got %d %s", addSessionRecorder.Code, addSessionRecorder.Body.String())
+	}
+
+	handoffRecorder := httptest.NewRecorder()
+	handoffReq := httptest.NewRequest(http.MethodPost, "/api/agent-memory/handoff", strings.NewReader(`{"notes":"bridge handoff"}`))
+	server.Handler().ServeHTTP(handoffRecorder, handoffReq)
+	if handoffRecorder.Code != http.StatusOK || !strings.Contains(handoffRecorder.Body.String(), `generated local agent-memory handoff artifact`) {
+		t.Fatalf("expected local handoff fallback, got %d %s", handoffRecorder.Code, handoffRecorder.Body.String())
+	}
+
+	var handoffResponse struct {
+		Success bool   `json:"success"`
+		Data    string `json:"data"`
+	}
+	if err := json.Unmarshal(handoffRecorder.Body.Bytes(), &handoffResponse); err != nil {
+		t.Fatalf("unmarshal handoff response: %v", err)
+	}
+	if !handoffResponse.Success || !strings.Contains(handoffResponse.Data, `"notes": "bridge handoff"`) || !strings.Contains(handoffResponse.Data, `volatile handoff context`) {
+		t.Fatalf("expected handoff artifact payload, got %s", handoffRecorder.Body.String())
+	}
+
+	clearRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(clearRecorder, httptest.NewRequest(http.MethodPost, "/api/agent-memory/clear-session", nil))
+	if clearRecorder.Code != http.StatusOK {
+		t.Fatalf("expected clear-session fallback before pickup, got %d %s", clearRecorder.Code, clearRecorder.Body.String())
+	}
+
+	pickupRecorder := httptest.NewRecorder()
+	pickupReq := httptest.NewRequest(http.MethodPost, "/api/agent-memory/pickup", strings.NewReader(`{"artifact":`+strconv.Quote(handoffResponse.Data)+`}`))
+	server.Handler().ServeHTTP(pickupRecorder, pickupReq)
+	if pickupRecorder.Code != http.StatusOK || !strings.Contains(pickupRecorder.Body.String(), `restored local agent-memory handoff artifact`) || !strings.Contains(pickupRecorder.Body.String(), `"count":1`) {
+		t.Fatalf("expected local pickup fallback, got %d %s", pickupRecorder.Code, pickupRecorder.Body.String())
+	}
+
+	recentRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recentRecorder, httptest.NewRequest(http.MethodGet, "/api/agent-memory/recent?type=session&limit=10", nil))
+	if recentRecorder.Code != http.StatusOK || !strings.Contains(recentRecorder.Body.String(), `volatile handoff context`) {
+		t.Fatalf("expected pickup to restore session memory, got %d %s", recentRecorder.Code, recentRecorder.Body.String())
 	}
 }
 

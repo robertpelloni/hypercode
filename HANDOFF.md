@@ -786,3 +786,30 @@ Executed in the primary workspace:
 
 #### Recommended next step after this pass
 Continue tightening startup/build truth around real workspace/package identities surfaced by operator logs, especially where old logical labels no longer match current pnpm/Turbo reality.
+
+### Latest incremental pass — Go-native advanced memory relations and handoff/pickup fallback ownership
+This follow-up continued the same Go-primary memory migration and closed the next meaningful backend gap inside that subsystem.
+
+#### What changed
+- Added `go/internal/httpapi/agent_memory_relations_local.go`.
+- Updated `go/internal/httpapi/server.go` so Go fallback now owns persisted local behavior for:
+  - `POST /api/memory/pivot/search`
+  - `POST /api/memory/timeline/window`
+  - `POST /api/memory/cross-session-links`
+  - `POST /api/agent-memory/handoff`
+  - `POST /api/agent-memory/pickup`
+- Updated `go/internal/httpapi/server_test.go` so the old placeholder-only expectations are replaced with truthful local ownership checks, plus focused regression coverage for:
+  - inferred pivot search from anchor memory
+  - timeline reconstruction from anchor memory
+  - scored cross-session links
+  - local handoff artifact generation
+  - local pickup restore back into session-tier memory
+
+#### Validation performed
+- `cd go && gofmt -w internal/httpapi/agent_memory_local.go internal/httpapi/agent_memory_relations_local.go internal/httpapi/server.go internal/httpapi/server_test.go`
+- `cd go && go test ./internal/httpapi -run 'Test(MemoryServiceBackedMutationsFallBackLocally|MemoryRelationshipRoutesFallBackToPersistedData|AgentMemoryHandoffAndPickupFallBackToLocalPersistence|AgentMemoryMutationRoutesFallBackToLocalPersistence|ReadOnlyMemoryRoutesFallBackLocally)' -count=1`
+- `cd go && go test ./internal/httpapi -count=1`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -count=1`
+
+#### Recommended next step after this pass
+Stay inside the same Go-primary backend lane and continue shrinking the remaining TypeScript-only seams that still sit on top of durable local state, especially where the Go runtime already has the data but some public routes still return synthetic empties or bridge-only behavior.

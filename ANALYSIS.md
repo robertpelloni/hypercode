@@ -4761,3 +4761,81 @@ Observed result:
 ### Boundary
 This pass tightens the claude-mem exclusion escape hatch in `build_all.mjs`.
 It does not rename the upstream claude-mem package or alter its external publish identity.
+
+## Latest stabilization pass — Go-native advanced memory relations and handoff/pickup fallback ownership (2026-04-06)
+
+### Scope
+This pass continued the same Go-primary memory migration instead of jumping to an unrelated subsystem.
+
+The previous memory tranche already gave Go truthful local ownership for:
+- fact capture
+- structured observation capture
+- user prompt capture
+- session summary capture
+- direct `/api/agent-memory/*` add/delete/clear/search/recent/filter/export/stats routes
+
+The remaining high-value gaps in the same subsystem were:
+- `memory.searchMemoryPivot`
+- `memory.getMemoryTimelineWindow`
+- `memory.getCrossSessionMemoryLinks`
+- `agentMemory.handoff`
+- `agentMemory.pickup`
+
+### What changed
+Updated:
+- `go/internal/httpapi/server.go`
+- `go/internal/httpapi/server_test.go`
+- `go/internal/httpapi/agent_memory_relations_local.go` (new)
+
+#### Newly Go-owned advanced memory reads
+Go fallback now owns persisted local behavior for:
+- `POST /api/memory/pivot/search`
+- `POST /api/memory/timeline/window`
+- `POST /api/memory/cross-session-links`
+
+Behavior:
+- upstream TypeScript still wins when available
+- pivot search now supports the current body payloads already seen in the HTTP layer, including the older anchor-style `pivotMemoryId` input
+- timeline-window fallback can infer `sessionId` + anchor timestamp from `centerMemoryId`
+- cross-session link fallback now returns real scored links with `memory`, `score`, and `reasons` instead of a flat unavailable placeholder
+
+#### Newly Go-owned direct agent-memory portability routes
+Go fallback now owns persisted local behavior for:
+- `POST /api/agent-memory/handoff`
+- `POST /api/agent-memory/pickup`
+
+Behavior:
+- `handoff` now generates a real portable JSON artifact from local persisted agent-memory state
+- the artifact includes version, timestamp, stats, recent session-tier context, and notes
+- `pickup` now restores session-tier memories from that artifact into the local persisted Go store
+- this matches the practical TS contract much more closely than the previous bridge-only behavior
+
+### Implementation notes
+The new helper file ports the same core ideas the TypeScript memory layer uses:
+- pivot matching across session/tool/concept/file/goal/objective signals
+- session-window reconstruction by session id and nearest anchor timestamp
+- scored cross-session link analysis using shared concepts, shared files, shared tool identity, source affinity, and goal/objective-theme overlap
+- portable handoff artifact generation using recent session memories plus aggregate stats
+- pickup restore that rehydrates session-tier memories from the artifact payload
+
+Important boundary:
+- this is still not full vector-backed or graph-backed parity
+- the fallback remains local-file-backed and honest about that scope
+- the generic `memory.query` / broader graph-style semantics are still not fully Go-native
+
+### Validation
+Executed in the primary workspace without killing any processes:
+- `cd go && gofmt -w internal/httpapi/agent_memory_local.go internal/httpapi/agent_memory_relations_local.go internal/httpapi/server.go internal/httpapi/server_test.go`
+- `cd go && go test ./internal/httpapi -run 'Test(MemoryServiceBackedMutationsFallBackLocally|MemoryRelationshipRoutesFallBackToPersistedData|AgentMemoryHandoffAndPickupFallBackToLocalPersistence|AgentMemoryMutationRoutesFallBackToLocalPersistence|ReadOnlyMemoryRoutesFallBackLocally)' -count=1`
+- `cd go && go test ./internal/httpapi -count=1`
+
+Executed again in the clean push worktree:
+- `cd ../hypercode-push/go && gofmt -w internal/httpapi/agent_memory_local.go internal/httpapi/agent_memory_relations_local.go internal/httpapi/server.go internal/httpapi/server_test.go`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -count=1`
+
+### Why this matters
+This keeps the migration coherent and materially improves Go-primary truthfulness in a subsystem that already had good local state foundations:
+- memory routes no longer stop at recent-list and basic search parity
+- relationship-style memory reads now survive TypeScript outage with truthful local results
+- session handoff/pickup no longer collapses to bridge-only behavior when the Go runtime is the surviving control plane
+- the agent-memory lane is becoming a genuinely useful Go-owned local-first subsystem instead of a collection of placeholders
