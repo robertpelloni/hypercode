@@ -179,6 +179,8 @@ const LOCAL_COMPAT_RESPONSE_KEYS = {
   'memory.exportMemories': 'memory.exportMemories',
   'shell.getSystemHistory': 'shell.getSystemHistory',
   'serverHealth.check': 'serverHealth.check',
+  'project.getContext': 'project.getContext',
+  'project.getHandoffs': 'project.getHandoffs',
 } as const;
 
 type LocalCompatProcedure = keyof typeof LOCAL_COMPAT_RESPONSE_KEYS;
@@ -256,6 +258,9 @@ const LOCAL_SESSION_MUTATION_PROCEDURES = new Set([
   'session.updateState',
   'session.clear',
 ]);
+const LOCAL_PROJECT_MUTATION_PROCEDURES = new Set([
+  'project.updateContext',
+]);
 const LOCAL_COMPAT_MUTATION_PROCEDURES = new Set([
   ...LOCAL_OPERATOR_MUTATION_PROCEDURES,
   ...LOCAL_TOOL_MUTATION_PROCEDURES,
@@ -264,6 +269,7 @@ const LOCAL_COMPAT_MUTATION_PROCEDURES = new Set([
   ...LOCAL_MCP_CONFIG_MUTATION_PROCEDURES,
   ...LOCAL_MCP_RUNTIME_MUTATION_PROCEDURES,
   ...LOCAL_SESSION_MUTATION_PROCEDURES,
+  ...LOCAL_PROJECT_MUTATION_PROCEDURES,
 ]);
 
 const LEGACY_MCP_SERVERS_LIST_PROCEDURES = [
@@ -2437,6 +2443,8 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
       crashCount: 0,
       maxAttempts: 0,
     },
+    'project.getContext': '',
+    'project.getHandoffs': [],
   };
 
   const compatEntries = await Promise.all(procedureNames.map(async (procedureName, index) => {
@@ -2642,6 +2650,20 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
       const input = procedureInputs[index];
       const uuid = input && typeof input === 'object' ? String((input as { serverUuid?: unknown }).serverUuid ?? '') : '';
       data = await buildPreferredServerHealth(uuid, localConfig);
+    }
+
+    if (responseKey === 'project.getContext') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/project/context');
+      if (data === null) {
+        data = '';
+      }
+    }
+
+    if (responseKey === 'project.getHandoffs') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/project/handoffs');
+      if (data === null) {
+        data = [];
+      }
     }
 
     return {
@@ -3232,6 +3254,39 @@ async function tryLocalAgentMemoryMutation(req: Request, body: string | undefine
   });
 }
 
+async function tryLocalProjectMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_PROJECT_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  if (!input || typeof input !== 'object') {
+    return buildTrpcResponse(req, undefined, {
+      status: 400,
+      statusText: 'Invalid local project compat input',
+      headers: { 'x-hypercode-trpc-compat': 'local-project-action' },
+    });
+  }
+
+  const data = await fetchNativeControlPlaneData<unknown>('/api/project/context/update', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (data === null) {
+    return null;
+  }
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-project-action' },
+  });
+}
+
 async function tryLocalMCPRuntimeMutation(req: Request, body: string | undefined): Promise<Response | null> {
   const procedures = getProcedureNames(req);
   const procedureName = procedures[0] ?? '';
@@ -3570,6 +3625,11 @@ async function handler(req: Request): Promise<Response> {
     const localAgentMemoryMutationResponse = await tryLocalAgentMemoryMutation(req, body);
     if (localAgentMemoryMutationResponse) {
       return localAgentMemoryMutationResponse;
+    }
+
+    const localProjectMutationResponse = await tryLocalProjectMutation(req, body);
+    if (localProjectMutationResponse) {
+      return localProjectMutationResponse;
     }
 
     const localMCPRuntimeMutationResponse = await tryLocalMCPRuntimeMutation(req, body);

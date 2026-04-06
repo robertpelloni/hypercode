@@ -898,6 +898,37 @@ func TestMemorySectionedStatusAndFormatsFallBackLocally(t *testing.T) {
 	}
 }
 
+func TestProjectContextUpdateFallsBackToLocalDocument(t *testing.T) {
+	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	cfg := config.Default()
+	cfg.WorkspaceRoot = t.TempDir()
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	updateRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(updateRecorder, httptest.NewRequest(http.MethodPost, "/api/project/context/update", strings.NewReader(`{"content":"# Project Context\n\nShip Go-first degraded truth."}`)))
+	if updateRecorder.Code != http.StatusOK {
+		t.Fatalf("expected local project context update fallback, got %d %s", updateRecorder.Code, updateRecorder.Body.String())
+	}
+	for _, needle := range []string{
+		`"fallback":"go-local-project"`,
+		`"procedure":"project.updateContext"`,
+		`writing local project context document`,
+		`"success":true`,
+	} {
+		if !strings.Contains(updateRecorder.Body.String(), needle) {
+			t.Fatalf("expected project context update fallback to contain %s, got %s", needle, updateRecorder.Body.String())
+		}
+	}
+
+	readRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(readRecorder, httptest.NewRequest(http.MethodGet, "/api/project/context", nil))
+	if readRecorder.Code != http.StatusOK || !strings.Contains(readRecorder.Body.String(), `Ship Go-first degraded truth.`) {
+		t.Fatalf("expected updated local project context to be readable, got %d %s", readRecorder.Code, readRecorder.Body.String())
+	}
+}
+
 func TestMemoryContextsFallsBackToLocalRegistry(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	seedPersistedMemoryContexts(t, workspaceRoot)

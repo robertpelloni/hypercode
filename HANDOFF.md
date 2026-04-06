@@ -3,6 +3,37 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
+### Latest incremental pass — dashboard project compat routed to Go fallback ownership
+This follow-up stayed in the shared compat lane and extended the Project Constitution dashboard cluster onto the Go control plane during `/trpc` outage.
+
+#### What changed
+- Added `go/internal/httpapi/project_local.go` and updated `go/internal/httpapi/server.go` so `POST /api/project/context/update` now has truthful local Go fallback ownership:
+  - TypeScript still wins when available
+  - Go writes `.hypercode/project_context.md` when `/trpc` is unavailable
+- Updated `apps/web/src/app/api/trpc/[trpc]/route.ts` so local dashboard fallback now supports:
+  - `project.getContext` → `/api/project/context`
+  - `project.getHandoffs` → `/api/project/handoffs`
+  - `project.updateContext` → `/api/project/context/update`
+- Added focused Go coverage in `go/internal/httpapi/server_test.go`:
+  - `TestProjectContextUpdateFallsBackToLocalDocument`
+- Added focused shared compat regression coverage in `apps/web/src/app/api/trpc/[trpc]/route.test.ts` for:
+  - project context reads
+  - project handoff reads
+  - project context update mutation
+
+#### Validation performed
+- `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+- `cd ../hypercode-push/go && gofmt -w internal/httpapi/project_local.go internal/httpapi/server.go internal/httpapi/server_test.go`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -run 'Test(ProjectContextUpdateFallsBackToLocalDocument|FileBackedReadEndpointsFallBackLocally)' -count=1`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -count=1`
+
+#### Validation limitation
+- `apps/web` production build was not run from the clean push worktree because that worktree still lacks its own installed Next.js toolchain.
+- This slice is validated by the shared route-level compat suite plus the Go HTTP suite.
+
+#### Recommended next step after this pass
+Keep shrinking the remaining Go-primary/dashboard compatibility gap by targeting another operator-facing cluster where Go already has truthful local `/api/*` ownership but the shared `/api/trpc/[trpc]` compat route still does not expose it.
+
 ### Latest incremental pass — dashboard agent-memory compat routed to Go fallback ownership
 This follow-up stayed in the shared compat lane and extended the dashboard's `agentMemory.*` procedures onto the Go control plane during `/trpc` outage.
 

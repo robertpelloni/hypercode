@@ -1,5 +1,102 @@
 # HyperCode Stabilization Analysis — 2026-04-03
 
+## Latest stabilization pass — dashboard project compat routed to Go fallback ownership (2026-04-06)
+
+### Scope
+This follow-up stayed in the same shared compat lane and targeted the Project Constitution dashboard cluster.
+
+The project page already had truthful Go-backed read routes for:
+- `project.getContext`
+- `project.getHandoffs`
+
+But two gaps remained:
+- the shared Next.js compat route still did not expose `project.*`
+- `project.updateContext` was still bridge-only in the Go HTTP layer even though the project context is just a workspace file
+
+### Findings
+- `apps/web/src/app/dashboard/project/page.tsx` depends on:
+  - `project.getContext`
+  - `project.getHandoffs`
+  - `project.updateContext`
+  - plus `agentMemory.pickup` for recovery actions (already covered in the previous pass)
+- The Go backend already had truthful local fallback reads for:
+  - `.hypercode/project_context.md`
+  - `.hypercode/handoffs/*`
+- The missing piece was local write ownership for `project.updateContext` plus the compat-layer plumbing that would actually let the dashboard use those Go routes.
+
+### What changed
+#### 1. Added truthful local `project.updateContext` fallback ownership in Go
+Created:
+- `go/internal/httpapi/project_local.go`
+
+Updated:
+- `go/internal/httpapi/server.go`
+- `go/internal/httpapi/server_test.go`
+
+Behavior now:
+- upstream TypeScript `project.updateContext` still wins when available
+- when `/trpc` is unavailable, Go now writes the requested content into:
+  - `.hypercode/project_context.md`
+- the response is explicit and truthful:
+  - local fallback owner: `go-local-project`
+  - procedure: `project.updateContext`
+  - reason: local project context document write
+
+#### 2. Routed project reads through the shared web compat layer
+Updated:
+- `apps/web/src/app/api/trpc/[trpc]/route.ts`
+
+The shared local compat route now supports:
+- `project.getContext`
+- `project.getHandoffs`
+
+These now map onto:
+- `/api/project/context`
+- `/api/project/handoffs`
+
+#### 3. Routed project mutation through the shared web compat layer
+Updated:
+- `apps/web/src/app/api/trpc/[trpc]/route.ts`
+
+The shared local compat route now supports:
+- `project.updateContext`
+
+This now maps onto:
+- `/api/project/context/update`
+
+A dedicated compat response header distinguishes the mutation path as:
+- `x-hypercode-trpc-compat: local-project-action`
+
+### Regression coverage
+Updated:
+- `go/internal/httpapi/server_test.go`
+- `apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+
+Added focused coverage for:
+- local Go project-context update fallback writing the workspace file and then serving the updated content back
+- shared compat read fallback for project context + handoff history
+- shared compat mutation fallback for project context update
+
+### Validation performed
+Executed truthfully without killing any processes:
+- Route-level compat validation against the clean push worktree, using the primary workspace's installed Vitest toolchain:
+  - `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+- Focused Go validation:
+  - `cd ../hypercode-push/go && gofmt -w internal/httpapi/project_local.go internal/httpapi/server.go internal/httpapi/server_test.go`
+  - `cd ../hypercode-push/go && go test ./internal/httpapi -run 'Test(ProjectContextUpdateFallsBackToLocalDocument|FileBackedReadEndpointsFallBackLocally)' -count=1`
+- Broader Go sanity pass:
+  - `cd ../hypercode-push/go && go test ./internal/httpapi -count=1`
+
+### Validation limitation
+- As with the previous compat slices, I did not claim an `apps/web` production build for the clean push worktree because that worktree still lacks its own installed Next.js toolchain.
+- This slice is validated by the shared route-level compat suite plus the Go HTTP suite.
+
+### Why this matters
+This continues the same migration pattern on another operator-facing page:
+- the Project Constitution page can now read and save through Go in degraded mode
+- local Go ownership now matches the reality that project context is just a workspace document
+- the shared compat route is again less misleading about which dashboard clusters are actually usable without `/trpc`
+
 ## Latest stabilization pass — dashboard agent-memory compat routed to Go fallback ownership (2026-04-06)
 
 ### Scope

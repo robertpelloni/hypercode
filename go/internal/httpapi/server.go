@@ -1270,7 +1270,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/tool-sets/update", Category: "control", Description: "Update a tool set through the TypeScript control plane."},
 				{Path: "/api/tool-sets/delete", Category: "control", Description: "Delete a tool set through the TypeScript control plane."},
 				{Path: "/api/project/context", Category: "control", Description: "Bridge to the TypeScript project context document, with a local .hypercode/project_context.md fallback when the TypeScript control plane is unavailable."},
-				{Path: "/api/project/context/update", Category: "control", Description: "Update the TypeScript project context document."},
+				{Path: "/api/project/context/update", Category: "control", Description: "Update the TypeScript project context document, with a local .hypercode/project_context.md write fallback when the TypeScript control plane is unavailable."},
 				{Path: "/api/project/handoffs", Category: "control", Description: "Bridge to TypeScript project handoff metadata, with a local .hypercode/handoffs listing fallback when the TypeScript control plane is unavailable."},
 				{Path: "/api/shell/log", Category: "control", Description: "Log a shell command through the TypeScript shell service."},
 				{Path: "/api/shell/history/query", Category: "control", Description: "Bridge to TypeScript shell history search, with a local .hypercode/shell_history.json fallback when unavailable."},
@@ -6684,7 +6684,45 @@ func (s *Server) handleProjectContext(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleProjectContextUpdate(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "project.updateContext")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "project.updateContext", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "project.updateContext",
+			},
+		})
+		return
+	}
+
+	content, ok := payload["content"].(string)
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing content"})
+		return
+	}
+	if localErr := localWriteProjectContext(s.cfg.WorkspaceRoot, content); localErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"success": true,
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-project",
+			"procedure": "project.updateContext",
+			"reason":    "upstream unavailable; writing local project context document",
+		},
+	})
 }
 
 func (s *Server) handleProjectHandoffs(w http.ResponseWriter, r *http.Request) {

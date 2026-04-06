@@ -122,7 +122,7 @@ Status values:
 |---|---|---|
 | SSE broker | Native Go | implemented for extension parity |
 | Browser extension support APIs | Partial Native Go / bridge mix | some parity exists, not complete |
-| Dashboard backend contract | TS-only critical | web app still materially depends on TS-oriented surfaces/contracts, but Go-primary startup can now launch the Next.js dashboard in compatibility-backed mode against the live Go control plane instead of hard-skipping dashboard startup entirely; the shared compat route now also covers the supervised-session dashboard cluster, the memory dashboard’s key read/export/import/convert flows, the operator-facing `agentMemory.*` cluster, key MCP inspector/runtime-control mutations, API key/secret admin actions, the DB-backed `tools.setAlwaysOn` toggle, policy dashboard CRUD, and tool-set dashboard mutations during `/trpc` outage |
+| Dashboard backend contract | TS-only critical | web app still materially depends on TS-oriented surfaces/contracts, but Go-primary startup can now launch the Next.js dashboard in compatibility-backed mode against the live Go control plane instead of hard-skipping dashboard startup entirely; the shared compat route now also covers the supervised-session dashboard cluster, the memory dashboard’s key read/export/import/convert flows, the operator-facing `agentMemory.*` cluster, the Project Constitution dashboard cluster, key MCP inspector/runtime-control mutations, API key/secret admin actions, the DB-backed `tools.setAlwaysOn` toggle, policy dashboard CRUD, and tool-set dashboard mutations during `/trpc` outage |
 | Native client/operator APIs | Growing Native Go | good progress, but not enough for full backend replacement |
 
 ---

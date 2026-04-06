@@ -1670,6 +1670,74 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4546/api/memory/convert')).toBe(true);
   });
 
+  it('prefers go-native project reads and mutations in local dashboard fallback mode', async () => {
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4543/trpc';
+    global.fetch = vi.fn(async (input, init) => {
+      const url = String(input);
+
+      if (url.includes('/trpc/')) {
+        throw new Error('connect ECONNREFUSED');
+      }
+
+      if (url === 'http://127.0.0.1:4543/api/project/context') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: '# Project Context\n\nShip reliable Go-first fallbacks.',
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4543/api/project/handoffs') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [
+            { id: 'handoff_1710000000000.json', timestamp: 1710000000000, path: 'handoff_1710000000000.json' },
+          ],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4543/api/project/context/update' && init?.method === 'POST') {
+        return new Response(JSON.stringify({
+          success: true,
+          data: { success: true },
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    const readResponse = await POST(new Request(
+      'http://localhost:3010/api/trpc/project.getContext,project.getHandoffs?batch=1',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          0: { json: null },
+          1: { json: null },
+        }),
+      },
+    ));
+    const readPayload = await readResponse.json();
+
+    expect(readResponse.status).toBe(200);
+    expect(readResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+    expect(readPayload?.[0]?.result?.data).toBe('# Project Context\n\nShip reliable Go-first fallbacks.');
+    expect(readPayload?.[1]?.result?.data).toEqual([
+      expect.objectContaining({ id: 'handoff_1710000000000.json' }),
+    ]);
+
+    const updateResponse = await POST(new Request('http://localhost:3010/api/trpc/project.updateContext', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: { content: '# Project Context\n\nUpdated from dashboard.' } }),
+    }));
+    expect(updateResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-project-action');
+    expect((await updateResponse.json())?.result?.data).toEqual({ success: true });
+
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4543/api/project/context')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4543/api/project/handoffs')).toBe(true);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url) === 'http://127.0.0.1:4543/api/project/context/update')).toBe(true);
+  });
+
   it('prefers go-native agent-memory reads and mutations in local dashboard fallback mode', async () => {
     process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4544/trpc';
     global.fetch = vi.fn(async (input, init) => {
