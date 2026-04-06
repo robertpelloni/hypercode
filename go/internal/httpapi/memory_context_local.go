@@ -1,6 +1,8 @@
 package httpapi
 
 import (
+	crand "crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -24,6 +26,14 @@ func (s *Server) localWriteMemoryContexts(contexts []map[string]any) error {
 		return err
 	}
 	return os.WriteFile(path, raw, 0o644)
+}
+
+func localNewMemoryContextID() string {
+	buf := make([]byte, 6)
+	if _, err := crand.Read(buf); err == nil {
+		return "ctx/" + strconv.FormatInt(time.Now().UnixMilli(), 10) + "/" + hex.EncodeToString(buf)
+	}
+	return "ctx/" + strconv.FormatInt(time.Now().UnixMilli(), 10)
 }
 
 func localMemoryContextID(context map[string]any, fallbackIndex int) string {
@@ -95,6 +105,54 @@ func (s *Server) localFindMemoryContext(id string) (map[string]any, bool, error)
 	return nil, false, nil
 }
 
+func (s *Server) localSaveMemoryContext(payload map[string]any) (map[string]any, error) {
+	content := strings.TrimSpace(stringValue(payload["content"]))
+	if content == "" {
+		return nil, os.ErrInvalid
+	}
+
+	rawSource := strings.TrimSpace(stringValue(payload["source"]))
+	rawURL := strings.TrimSpace(stringValue(payload["url"]))
+	metadata, _ := payload["metadata"].(map[string]any)
+	mergedMetadata := cloneMap(metadata)
+	if rawSource != "" {
+		mergedMetadata["source"] = rawSource
+	}
+	if rawURL != "" {
+		mergedMetadata["url"] = rawURL
+	}
+	if title := strings.TrimSpace(stringValue(payload["title"])); title != "" {
+		mergedMetadata["title"] = title
+	}
+
+	title := stringValue(firstNonEmptyString(mergedMetadata["title"], rawURL, "Untitled"))
+	source := stringValue(firstNonEmptyString(mergedMetadata["source"], rawSource, "unknown"))
+	url := stringValue(firstNonEmptyString(mergedMetadata["url"], rawURL))
+	now := time.Now().UTC().Format(time.RFC3339)
+	entry := map[string]any{
+		"id":        localNewMemoryContextID(),
+		"title":     title,
+		"source":    source,
+		"url":       url,
+		"content":   content,
+		"createdAt": now,
+		"chunks":    1,
+		"metadata":  mergedMetadata,
+	}
+
+	contexts, err := s.localMemoryContexts()
+	if err != nil {
+		return nil, err
+	}
+	updated := make([]map[string]any, 0, len(contexts)+1)
+	updated = append(updated, entry)
+	updated = append(updated, contexts...)
+	if err := s.localWriteMemoryContexts(updated); err != nil {
+		return nil, err
+	}
+	return entry, nil
+}
+
 func (s *Server) localDeleteMemoryContext(id string) (bool, error) {
 	contexts, err := s.localMemoryContexts()
 	if err != nil {
@@ -147,9 +205,9 @@ func (s *Server) localMemoryQueryResults(query string, limit int) ([]map[string]
 		createdAt, _ := time.Parse(time.RFC3339, localMemoryContextCreatedAt(record))
 		metadata, _ := record["metadata"].(map[string]any)
 		resultMetadata := cloneMap(metadata)
-		resultMetadata["title"] = stringValue(record["title"])
-		resultMetadata["source"] = stringValue(record["source"])
-		resultMetadata["url"] = stringValue(record["url"])
+		resultMetadata["title"] = stringValue(firstNonEmptyString(record["title"], resultMetadata["title"]))
+		resultMetadata["source"] = stringValue(firstNonEmptyString(record["source"], resultMetadata["source"]))
+		resultMetadata["url"] = stringValue(firstNonEmptyString(record["url"], resultMetadata["url"]))
 		resultMetadata["createdAt"] = localMemoryContextCreatedAt(record)
 		resultMetadata["userId"] = stringValue(record["userId"])
 		resultMetadata["agentId"] = stringValue(record["agentId"])

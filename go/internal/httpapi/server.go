@@ -1153,11 +1153,11 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/mcp/working-set/evictions/clear", Category: "mcp", Description: "Clear MCP working-set eviction history, with a local no-op fallback when the TypeScript MCP router is unavailable."},
 				{Path: "/api/mcp/working-set/load", Category: "mcp", Description: "Load an MCP tool into the TypeScript working set."},
 				{Path: "/api/mcp/working-set/unload", Category: "mcp", Description: "Unload an MCP tool from the TypeScript working set."},
-				{Path: "/api/memory/search", Category: "memory", Description: "Bridge to TypeScript contextual memory search."},
-				{Path: "/api/memory/contexts", Category: "memory", Description: "Bridge to TypeScript saved context listing."},
-				{Path: "/api/memory/context/save", Category: "memory", Description: "Save a memory context through the TypeScript control plane."},
-				{Path: "/api/memory/context/get", Category: "memory", Description: "Bridge to a specific saved memory context."},
-				{Path: "/api/memory/context/delete", Category: "memory", Description: "Delete a saved memory context through the TypeScript control plane."},
+				{Path: "/api/memory/search", Category: "memory", Description: "Bridge to TypeScript contextual memory search, with local persisted SQLite/context-registry fallback when upstream is unavailable."},
+				{Path: "/api/memory/contexts", Category: "memory", Description: "Bridge to TypeScript saved context listing, with local context-registry fallback when upstream is unavailable."},
+				{Path: "/api/memory/context/save", Category: "memory", Description: "Save a memory context through the TypeScript control plane, with local saved-context registry fallback when upstream is unavailable."},
+				{Path: "/api/memory/context/get", Category: "memory", Description: "Bridge to a specific saved memory context, with local inline-content fallback when upstream is unavailable."},
+				{Path: "/api/memory/context/delete", Category: "memory", Description: "Delete a saved memory context through the TypeScript control plane, with local registry-deletion fallback when upstream is unavailable."},
 				{Path: "/api/memory/agent-stats", Category: "memory", Description: "Bridge to TypeScript agent-memory statistics."},
 				{Path: "/api/memory/agent-search", Category: "memory", Description: "Bridge to TypeScript agent-memory search."},
 				{Path: "/api/memory/facts/add", Category: "memory", Description: "Add a memory fact through the TypeScript control plane."},
@@ -3432,7 +3432,56 @@ func (s *Server) handleMCPUnloadTool(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleMemoryContextSave(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "memory.saveContext")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.saveContext", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.saveContext",
+			},
+		})
+		return
+	}
+
+	if strings.TrimSpace(stringValue(payload["source"])) == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing source"})
+		return
+	}
+	if strings.TrimSpace(stringValue(payload["url"])) == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing url"})
+		return
+	}
+	if strings.TrimSpace(stringValue(payload["content"])) == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing content"})
+		return
+	}
+
+	record, localErr := s.localSaveMemoryContext(payload)
+	if localErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"success": true,
+			"id":      stringValue(record["id"]),
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.saveContext",
+			"reason":    "upstream unavailable; saving local memory context registry entry",
+		},
+	})
 }
 
 func (s *Server) handleMemoryContextGet(w http.ResponseWriter, r *http.Request) {
@@ -3466,8 +3515,9 @@ func (s *Server) handleMemoryContextGet(w http.ResponseWriter, r *http.Request) 
 	if found && strings.TrimSpace(stringValue(contextRecord["content"])) != "" {
 		metadata, _ := contextRecord["metadata"].(map[string]any)
 		responseMetadata := cloneMap(metadata)
-		responseMetadata["title"] = stringValue(contextRecord["title"])
-		responseMetadata["source"] = stringValue(contextRecord["source"])
+		responseMetadata["title"] = stringValue(firstNonEmptyString(contextRecord["title"], responseMetadata["title"]))
+		responseMetadata["source"] = stringValue(firstNonEmptyString(contextRecord["source"], responseMetadata["source"]))
+		responseMetadata["url"] = stringValue(firstNonEmptyString(contextRecord["url"], responseMetadata["url"]))
 		responseMetadata["createdAt"] = contextRecord["createdAt"]
 		responseMetadata["chunks"] = contextRecord["chunks"]
 		response := map[string]any{
@@ -16779,6 +16829,9 @@ func (s *Server) localMemoryExportRecords(userID string) ([]map[string]any, erro
 		memories = append(memories, map[string]any{
 			"uuid":      uuid,
 			"content":   stringValue(context["content"]),
+			"title":     stringValue(firstNonEmptyString(context["title"], metadata["title"])),
+			"source":    stringValue(firstNonEmptyString(context["source"], metadata["source"])),
+			"url":       stringValue(firstNonEmptyString(context["url"], metadata["url"])),
 			"metadata":  metadata,
 			"userId":    userID,
 			"createdAt": createdAt,

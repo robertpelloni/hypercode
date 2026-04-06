@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Go Saved-Context Save Fallback Parity**: Go degraded mode now also owns truthful local fallback behavior for `memory.saveContext`, validating required saved-context fields and persisting new entries into `.hypercode/memory/contexts.json` with generated ids so they immediately participate in local list/query/get/delete behavior when `/trpc` is unavailable.
 - **Go Saved-Context Query/Read/Delete Fallback Parity**: Go degraded mode now owns truthful local fallback behavior for generic `memory.query`, `memory.getContext`, and `memory.deleteContext` across persisted `.hypercode/memory/contexts.json` state, including local context-body reads, local registry deletion, and merged local search results that combine SQLite-backed memory rows with saved-context registry/export records when `/trpc` is unavailable.
 - **Saved Scripts Dashboard Edit Flow**: The Saved Scripts dashboard now exposes a real edit/update UI wired to `savedScripts.update`, so operators can modify existing scripts directly from `/dashboard/mcp/scripts` instead of relying on backend-only update support.
 - **Saved Scripts Update Fallback Parity**: Extended the saved-scripts Go/degraded-dashboard parity slice to cover `savedScripts.update`, adding truthful local `.hypercode/config.json` update ownership in Go plus shared Next.js compat routing through `/api/scripts/update` when the TypeScript control plane is unavailable.

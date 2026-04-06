@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -920,6 +921,58 @@ func TestMemoryContextsFallsBackToLocalRegistry(t *testing.T) {
 	}
 	if !strings.Contains(body, `using local memory context list`) || !strings.Contains(body, `"topic":"parity"`) {
 		t.Fatalf("expected local context-list fallback reason and metadata, got %s", body)
+	}
+}
+
+func TestMemoryContextSaveFallsBackToLocalRegistry(t *testing.T) {
+	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
+	cfg := config.Default()
+	cfg.WorkspaceRoot = t.TempDir()
+	cfg.ConfigDir = t.TempDir()
+	cfg.MainConfigDir = t.TempDir()
+	server := New(cfg, stubDetector{})
+
+	saveRecorder := httptest.NewRecorder()
+	saveRequest := httptest.NewRequest(http.MethodPost, "/api/memory/context/save", strings.NewReader(`{"source":"docs","url":"https://example.com/go-parity","title":"Go parity note","content":"Saved locally for truthful degraded mode.","metadata":{"topic":"parity","tags":["go","memory"]}}`))
+	server.Handler().ServeHTTP(saveRecorder, saveRequest)
+	if saveRecorder.Code != http.StatusOK {
+		t.Fatalf("expected local save fallback to succeed, got %d %s", saveRecorder.Code, saveRecorder.Body.String())
+	}
+	body := saveRecorder.Body.String()
+	if !strings.Contains(body, `"fallback":"go-local-memory"`) || !strings.Contains(body, `saving local memory context registry entry`) {
+		t.Fatalf("expected local save fallback metadata, got %s", body)
+	}
+
+	var response struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Success bool   `json:"success"`
+			ID      string `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(saveRecorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("unmarshal save response: %v", err)
+	}
+	if !response.Success || !response.Data.Success || strings.TrimSpace(response.Data.ID) == "" {
+		t.Fatalf("expected save response to include success and id, got %+v", response)
+	}
+
+	getRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(getRecorder, httptest.NewRequest(http.MethodGet, "/api/memory/context/get?id="+url.QueryEscape(response.Data.ID), nil))
+	if getRecorder.Code != http.StatusOK || !strings.Contains(getRecorder.Body.String(), `Saved locally for truthful degraded mode.`) || !strings.Contains(getRecorder.Body.String(), `"topic":"parity"`) {
+		t.Fatalf("expected saved context to be readable locally, got %d %s", getRecorder.Code, getRecorder.Body.String())
+	}
+
+	listRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/memory/contexts", nil))
+	if listRecorder.Code != http.StatusOK || !strings.Contains(listRecorder.Body.String(), response.Data.ID) || !strings.Contains(listRecorder.Body.String(), `Go parity note`) {
+		t.Fatalf("expected saved context to appear in local registry list, got %d %s", listRecorder.Code, listRecorder.Body.String())
+	}
+
+	searchRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(searchRecorder, httptest.NewRequest(http.MethodGet, "/api/memory/search?query=truthful%20degraded%20mode&limit=5", nil))
+	if searchRecorder.Code != http.StatusOK || !strings.Contains(searchRecorder.Body.String(), response.Data.ID) || !strings.Contains(searchRecorder.Body.String(), `using local persisted memory search`) {
+		t.Fatalf("expected saved context to participate in local query fallback, got %d %s", searchRecorder.Code, searchRecorder.Body.String())
 	}
 }
 

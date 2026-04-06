@@ -3,6 +3,34 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
+### Latest incremental pass — local Go memory context save fallback ownership
+This follow-up completed the obvious next saved-context gap in the Go-primary memory lane: degraded mode can now create saved contexts locally instead of only reading/querying/deleting them.
+
+#### What changed
+- Updated `go/internal/httpapi/memory_context_local.go` to add local saved-context creation helpers, including generated local ids and merged saved-context metadata.
+- Updated `go/internal/httpapi/server.go` so `POST /api/memory/context/save` now:
+  - still uses TypeScript `memory.saveContext` when available
+  - falls back locally when `/trpc` is unavailable
+  - validates `source`, `url`, and `content`
+  - writes the saved entry into `.hypercode/memory/contexts.json`
+  - returns a truthful `{ success: true, id }` response
+- Tightened local saved-context normalization so `title`, `source`, and `url` survive more cleanly through local export/query/get fallback paths.
+- Updated the built-in Go route descriptions for the saved-context cluster so they now describe local fallback ownership honestly instead of sounding bridge-only.
+- Added focused coverage in `go/internal/httpapi/server_test.go`:
+  - `TestMemoryContextSaveFallsBackToLocalRegistry`
+- The new test verifies that a context saved in degraded mode is immediately visible to:
+  - `memory.getContext`
+  - `memory.listContexts`
+  - `memory.query`
+
+#### Validation performed
+- `cd ../hypercode-push/go && gofmt -w internal/httpapi/memory_context_local.go internal/httpapi/memory_handlers.go internal/httpapi/server.go internal/httpapi/server_test.go`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -run 'Test(MemoryContextSaveFallsBackToLocalRegistry|MemoryContextsFallsBackToLocalRegistry|ReadOnlyMemoryRoutesFallBackLocally|MemoryServiceBackedMutationsFallBackLocally)' -count=1`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -count=1`
+
+#### Recommended next step after this pass
+Keep finishing the remaining persisted-memory truth gaps in narrow slices, especially any public memory routes that still remain bridge-only or placeholder-shaped despite already having enough durable local state for honest fallback ownership.
+
 ### Latest incremental pass — local Go memory query/context fallback ownership
 This follow-up stayed in the Go-primary memory lane and closed another truthful degraded-mode gap around saved memory contexts.
 

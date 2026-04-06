@@ -1,5 +1,89 @@
 # HyperCode Stabilization Analysis — 2026-04-03
 
+## Latest stabilization pass — local Go memory context save fallback ownership (2026-04-06)
+
+### Scope
+This follow-up stayed in the same Go-primary memory lane and closed the next obvious degraded-mode gap after query/get/delete parity:
+- `memory.saveContext` still depended entirely on `/trpc`
+- degraded mode could now read/query/delete local saved contexts truthfully
+- but it still could not create new saved contexts locally
+
+### Findings
+- The TypeScript `memory.saveContext` contract is straightforward: it accepts `{ source, url, title?, content, metadata? }` and returns `{ success: true, id }`.
+- The local Go fallback now had enough durable state to support that contract honestly:
+  - `.hypercode/memory/contexts.json` already existed as the saved-context registry
+  - the previous pass had already taught Go fallback to list/query/read/delete against that registry
+- In the clean push worktree, generic `memory.query` already merged:
+  - SQLite-backed local memory search results
+  - context-registry/export-backed results
+- That meant local create was the remaining high-value missing piece for coherent saved-context CRUD/read/search behavior during TypeScript outage.
+
+### What changed
+#### 1. Added truthful local saved-context creation
+Updated:
+- `go/internal/httpapi/memory_context_local.go`
+- `go/internal/httpapi/server.go`
+
+Behavior now:
+- upstream TypeScript `memory.saveContext` still wins when available
+- when `/trpc` is unavailable, Go now validates the required payload fields:
+  - `source`
+  - `url`
+  - `content`
+- Go then writes a new entry into `.hypercode/memory/contexts.json` with:
+  - generated local context id
+  - title/source/url
+  - inline content
+  - createdAt
+  - chunks
+  - merged metadata
+- the HTTP response stays truthful and contract-compatible: `{ success: true, id }`
+
+#### 2. Kept saved-context metadata useful after local creation
+Updated:
+- `go/internal/httpapi/memory_context_local.go`
+- `go/internal/httpapi/server.go`
+
+Additional normalization now preserves saved-context operator truth better by:
+- generating stable local ids in a TS-like `ctx/<timestamp>/<random>` shape
+- carrying top-level `title`, `source`, and `url` alongside the local saved entry
+- preserving those fields when local export/query helpers rehydrate saved contexts
+- surfacing `url` alongside title/source in local `memory.getContext` metadata
+
+#### 3. Tightened route-catalog truthfulness
+Updated:
+- `go/internal/httpapi/server.go`
+
+The built-in route descriptions for `/api/memory/search`, `/api/memory/contexts`, `/api/memory/context/save`, `/api/memory/context/get`, and `/api/memory/context/delete` now describe their local fallback behavior instead of implying pure bridge-only ownership.
+
+### Regression coverage
+Updated:
+- `go/internal/httpapi/server_test.go`
+
+Added focused coverage:
+- `TestMemoryContextSaveFallsBackToLocalRegistry`
+
+This test now verifies that a saved context created during `/trpc` outage:
+- returns a real generated id
+- is readable via `memory.getContext`
+- appears in `memory.listContexts`
+- participates in local `memory.query`
+
+Previously-added tests continue verifying the adjacent read/delete behavior.
+
+### Validation performed
+Executed truthfully without killing any processes, in the clean push worktree:
+- `cd ../hypercode-push/go && gofmt -w internal/httpapi/memory_context_local.go internal/httpapi/memory_handlers.go internal/httpapi/server.go internal/httpapi/server_test.go`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -run 'Test(MemoryContextSaveFallsBackToLocalRegistry|MemoryContextsFallsBackToLocalRegistry|ReadOnlyMemoryRoutesFallBackLocally|MemoryServiceBackedMutationsFallBackLocally)' -count=1`
+- `cd ../hypercode-push/go && go test ./internal/httpapi -count=1`
+
+### Why this matters
+This makes the Go saved-context fallback story materially more complete and more operator-useful:
+- degraded mode can now create, list, query, read, and delete saved contexts without TS help
+- new locally-saved contexts immediately participate in the same local search/read surfaces added in the previous pass
+- the route catalog and API behavior now tell the truth about that capability
+- Go still does **not** claim full vector/LanceDB parity; this is scoped local registry ownership only
+
 ## Latest stabilization pass — local Go memory query/context fallback ownership (2026-04-06)
 
 ### Scope
