@@ -603,3 +603,12 @@ This follow-up made the existing execute path operator-visible in the page itsel
 
 #### Validation performed
 - `pnpm -C apps/web run build` (executed in the primary workspace because the clean push worktree has no installed Next.js toolchain)
+
+
+### Latest incremental pass — Resource Library prompt inventory parity
+This follow-up made prompts visible as a first-class resource in the Library dashboard.
+
+#### What changed
+- Updated `apps/web/src/app/dashboard/library/page.tsx`.
+- Added a `Prompts & Templates` card and live prompt count using the existing `trpc.prompts.list` query.
+- Updated the page copy so prompts are included in the library summary.

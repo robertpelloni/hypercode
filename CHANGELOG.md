@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0-alpha.1] - 2026-04-02
 
 ### Added
+- **Resource Library Prompt Inventory**: The Resource Library dashboard now includes a `Prompts & Templates` card with a live prompt count backed by the existing `trpc.prompts.list` surface, making prompt templates visible alongside scripts and skills.
 - **Saved Scripts Execution Result Panel**: The Saved Scripts dashboard now renders the most recent `savedScripts.execute` result inline, showing script name, success/failure state, timing, and output/error text instead of only emitting a toast and logging the payload to the browser console.
 - **Global Workspace Tracker**: Added a `WorkspaceTracker` daemon service that automatically registers new session directories into `~/.hypercode/workspaces.json`. The web dashboard (`/dashboard/session`) now prominently features a "Recent Workspaces" visualization for fast multi-project hopping.
 - **Robust Regression Coverage**: Created dedicated Vitest suites in `cachedToolInventory.test.ts` to strictly validate MCP discovery fallback behavior under simulated SQLite failures.

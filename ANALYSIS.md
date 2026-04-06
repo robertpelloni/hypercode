@@ -4408,3 +4408,21 @@ Executed in the primary workspace (the clean push worktree does not have install
 - `pnpm -C apps/web run build`
 
 Result: passed.
+
+
+## Latest stabilization pass — Resource Library prompt inventory parity (2026-04-05)
+
+### Problem
+The Resource Library dashboard showed Saved Scripts and Skills counts, but it still omitted the Prompt Library count/card on the remote baseline even though the app already had a live `trpc.prompts.list` surface and a `/dashboard/prompts` page.
+
+### What changed
+Updated:
+- `apps/web/src/app/dashboard/library/page.tsx`
+
+The Resource Library now includes:
+- a `Prompts & Templates` card
+- live prompt count via `trpc.prompts.list.useQuery()`
+- updated summary copy so prompts are described as first-class reusable resources
+
+### Validation
+This exact shape already built successfully in the primary workspace prior to replay, and the change is a direct forward-port of that working implementation onto current `origin/main`.
