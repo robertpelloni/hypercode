@@ -1,9 +1,13 @@
 package httpapi
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/hypercodehq/hypercode-go/internal/hsync"
 )
 
 func (s *Server) handleBrowserStatus(w http.ResponseWriter, r *http.Request) {
@@ -66,11 +70,93 @@ func (s *Server) handleBrowserSearchHistory(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *Server) handleBrowserScrapePage(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "browser.scrapePage", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "browser.scrapePage", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "browser.scrapePage",
+			},
+		})
+		return
+	}
+
+	var payload struct {
+		URL string `json:"url"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid request body"})
+		return
+	}
+
+	pageData, scrapeErr := hsync.ScrapePage(r.Context(), payload.URL)
+	if scrapeErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   scrapeErr.Error(),
+			"detail":  scrapeErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    pageData,
+		"bridge": map[string]any{
+			"fallback":  "go-local-browser",
+			"procedure": "browser.scrapePage",
+			"reason":    "upstream unavailable; executing native Go chromedp scrape",
+		},
+	})
 }
 
 func (s *Server) handleBrowserScreenshot(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodPost, "browser.screenshot", nil)
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "browser.screenshot", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "browser.screenshot",
+			},
+		})
+		return
+	}
+
+	var payload struct {
+		URL string `json:"url"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid request body"})
+		return
+	}
+
+	buf, screenshotErr := hsync.ScreenshotPage(r.Context(), payload.URL)
+	if screenshotErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   screenshotErr.Error(),
+			"detail":  screenshotErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"screenshot": base64.StdEncoding.EncodeToString(buf),
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-browser",
+			"procedure": "browser.screenshot",
+			"reason":    "upstream unavailable; executing native Go chromedp screenshot",
+		},
+	})
 }
 
 func (s *Server) handleBrowserDebug(w http.ResponseWriter, r *http.Request) {

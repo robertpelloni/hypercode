@@ -33,6 +33,29 @@ Refactored `apps/maestro-go/app.go`:
 ### Why this matters
 This slice rescues the Wails port from a broken build state and permanently aligns it with the project's multi-process architecture. Maestro-Go is now correctly positioned as a lightweight frontend client querying the Go-primary daemon, rather than a monolithic split-brain competitor.
 
+## Latest stabilization pass — native Go browser automation via chromedp (2026-04-06)
+
+### Scope
+This follow-up deepened the Go-native ownership of Browser Automation. Previously, `browser.scrapePage` and `browser.screenshot` procedures in the dashboard were wired to the Go backend, but the Go backend merely acted as a bridge or stub. The goal was to run multi-agent browser tasks and actual browser rendering directly in Go, skipping the TypeScript playwright/puppeteer dependencies.
+
+### What changed
+Added:
+- `github.com/chromedp/chromedp` to `go.mod`.
+- `go/internal/hsync/browser.go` containing:
+  - `ScrapePage`: launches a headless Chrome instance via `chromedp`, navigates, waits for DOM layout, and extracts visible text natively.
+  - `ScreenshotPage`: launches headless Chrome, captures a PNG, and returns the byte buffer.
+- Wired these directly into `go/internal/httpapi/browser_handlers.go`:
+  - `POST /api/browser/scrape` now delegates to native `chromedp` when TS is unavailable.
+  - `POST /api/browser/screenshot` captures and returns a base64-encoded image natively via Go `chromedp`.
+
+### Validation performed
+- Verified Go build success: `cd go && go build ./cmd/hypercode`
+- Verified web compat route tests pass cleanly: `pnpm exec vitest run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+- result: `14/14` (in the current subset run) passing cleanly.
+
+### Why this matters
+Browser automation is one of the heaviest dependencies in the TypeScript agent stack. By porting the actual page scraping and screenshot capability to `chromedp` natively in Go, the sidecar is no longer just a passive bridge—it can perform real, computationally heavy web retrieval independently. This paves the way to run full visual LLM research loops without needing Node.js or Playwright.
+
 ## Latest stabilization pass — massive Go porting and repo-wide HyperCode rename (2026-04-06)
 
 ### Scope

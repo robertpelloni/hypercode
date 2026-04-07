@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Native Go Browser Automation**: Deepened Go-native ownership of browser tools by implementing headless Chrome navigation, DOM extraction, and base64 screenshots natively in Go using `github.com/chromedp/chromedp`. The dashboard `browser.scrapePage` and `browser.screenshot` endpoints now delegate to real native Go automation instead of a stub fallback.
 - **Maestro Go/Wails Port Alignment**: Refactored the Wails-based Visual Orchestrator (`apps/maestro-go`) to act as a lightweight HTTP client for the Go-native `hypercode` control plane, replacing its broken monolithic internal supervisor with the `/api/sessions/supervisor/*` endpoints.
 - **Repo-wide HyperCode Rename**: Executed the broad "borg" → "hypercode" rename across the entire repository (200+ files), including Go module name, imports, environment variables, directories, and documentation.
 - **Go-Native Catalog Ingestion**: Ported the MCP catalog ingestion core and Glama adapter to Go, enabling native listing from external registries.

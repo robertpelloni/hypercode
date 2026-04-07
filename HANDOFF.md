@@ -3,6 +3,26 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
+### Latest incremental pass — native Go browser automation via chromedp
+This major follow-up deepened the Go-native ownership of Browser Automation. Previously, `browser.scrapePage` and `browser.screenshot` procedures in the dashboard were wired to the Go backend, but the Go backend merely acted as a bridge or stub. The goal was to run multi-agent browser tasks and actual browser rendering directly in Go.
+
+#### What changed
+- Added `github.com/chromedp/chromedp` to `go.mod`.
+- Created `go/internal/hsync/browser.go` containing:
+  - `ScrapePage`: launches a headless Chrome instance via `chromedp`, navigates, waits for DOM layout, and extracts visible text natively.
+  - `ScreenshotPage`: launches headless Chrome, captures a PNG, and returns the byte buffer.
+- Wired these directly into `go/internal/httpapi/browser_handlers.go`:
+  - `POST /api/browser/scrape` now delegates to native `chromedp` when TS is unavailable.
+  - `POST /api/browser/screenshot` captures and returns a base64-encoded image natively via Go `chromedp`.
+
+#### Validation performed
+- Verified Go build success: `cd go && go build ./cmd/hypercode`
+- Verified web compat route tests pass cleanly: `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+  - result: `14/14` (in current subset run) passed.
+
+#### Recommended next step after this pass
+Browser automation is one of the heaviest dependencies in the TypeScript agent stack. By porting the actual page scraping and screenshot capability to `chromedp` natively in Go, the sidecar is no longer just a passive bridge—it can perform real, computationally heavy web retrieval independently. The next high-value target is refining the remaining Maestro (Visual Orchestrator) Go/Wails port.
+
 ### Latest incremental pass — Maestro Go/Wails port alignment (2026-04-06)
 This pass fulfilled a core vision mandate to convert Maestro into a lightweight UI that connects to the Go control plane, rescuing the Wails port from an unbuildable state.
 
