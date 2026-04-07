@@ -36,8 +36,11 @@ import (
 	"github.com/hypercodehq/hypercode-go/internal/mesh"
 	"github.com/hypercodehq/hypercode-go/internal/providers"
 	"github.com/hypercodehq/hypercode-go/internal/sessionimport"
+	"github.com/hypercodehq/hypercode-go/internal/hsync"
 	"github.com/hypercodehq/hypercode-go/internal/mcp"
-	"github.com/hypercodehq/hypercode-go/internal/sync"
+	"github.com/hypercodehq/hypercode-go/internal/orchestration"
+	"github.com/hypercodehq/hypercode-go/internal/supervisor"
+	"github.com/hypercodehq/hypercode-go/internal/workflow"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )
@@ -61,9 +64,15 @@ type Server struct {
 	mux            *http.ServeMux
 	lifecycleModes map[string]any
 	fallbackBuffer *providerFallbackBuffer
-	autoDev        *localAutoDevManager
-	squad          *localSquadManager
-	swarm          *localSwarmManager
+	autoDev           *localAutoDevManager
+	squad             *localSquadManager
+	swarm             *localSwarmManager
+	debateHistory     *orchestration.DebateHistoryStore
+	darwinState       *localDarwinStateManager
+	runtimeServers    *runtimeServerRegistry
+	supervisorManager *supervisor.Manager
+	sessionState      *localSessionStateManager
+	workflowEngine    *workflow.Engine
 }
 
 type providerFallbackEvent struct {
@@ -365,9 +374,15 @@ func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
 			"singleActiveServerMode": false,
 		},
 		fallbackBuffer: newProviderFallbackBuffer(50),
-		autoDev:        newLocalAutoDevManager(cfg.WorkspaceRoot),
-		squad:          newLocalSquadManager(cfg.WorkspaceRoot),
-		swarm:          newLocalSwarmManager(cfg.WorkspaceRoot),
+		autoDev:           newLocalAutoDevManager(cfg.WorkspaceRoot),
+		squad:             newLocalSquadManager(cfg.WorkspaceRoot),
+		swarm:             newLocalSwarmManager(cfg.WorkspaceRoot),
+		debateHistory:     orchestration.NewDebateHistoryStore(filepath.Join(cfg.WorkspaceRoot, "debate_history.db")),
+		darwinState:       newLocalDarwinStateManager(filepath.Join(cfg.WorkspaceRoot, "darwin_state.json")),
+		runtimeServers:    newRuntimeServerRegistry(),
+		supervisorManager: supervisor.NewManager(supervisor.ManagerOptions{WorktreeRoot: cfg.WorkspaceRoot, PersistencePath: filepath.Join(cfg.ConfigDir, "session-supervisor.json")}),
+		sessionState:      newLocalSessionStateManager(filepath.Join(cfg.WorkspaceRoot, ".hypercode-session.json")),
+		workflowEngine:    workflow.NewEngine(),
 	}
 	server.squad.load()
 	server.swarm.load()
@@ -1595,37 +1610,11 @@ func (s *Server) handleSupervisorSessionCatalog(w http.ResponseWriter, r *http.R
 	s.handleSessionBridgeCall(w, r, http.MethodGet, "session.catalog", nil)
 }
 
-func (s *Server) handleSupervisorSessionList(w http.ResponseWriter, r *http.Request) {
-	s.handleSessionBridgeCall(w, r, http.MethodGet, "session.list", nil)
-}
 
-func (s *Server) handleSupervisorSessionGet(w http.ResponseWriter, r *http.Request) {
-	sessionID := strings.TrimSpace(r.URL.Query().Get("id"))
-	if sessionID == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{
-			"success": false,
-			"error":   "missing id query parameter",
-		})
-		return
-	}
-	s.handleSessionBridgeCall(w, r, http.MethodGet, "session.get", map[string]any{"id": sessionID})
-}
 
-func (s *Server) handleSupervisorSessionCreate(w http.ResponseWriter, r *http.Request) {
-	s.handleSessionBridgeBodyCall(w, r, "session.create")
-}
 
-func (s *Server) handleSupervisorSessionStart(w http.ResponseWriter, r *http.Request) {
-	s.handleSessionBridgeBodyCall(w, r, "session.start")
-}
 
-func (s *Server) handleSupervisorSessionStop(w http.ResponseWriter, r *http.Request) {
-	s.handleSessionBridgeBodyCall(w, r, "session.stop")
-}
 
-func (s *Server) handleSupervisorSessionRestart(w http.ResponseWriter, r *http.Request) {
-	s.handleSessionBridgeBodyCall(w, r, "session.restart")
-}
 
 func (s *Server) handleImportedSessionList(w http.ResponseWriter, r *http.Request) {
 	limit := strings.TrimSpace(r.URL.Query().Get("limit"))
@@ -2005,106 +1994,7 @@ func (s *Server) handleImportedSessionMaintenanceStats(w http.ResponseWriter, r 
 	})
 }
 
-func (s *Server) handleMCPStatus(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
-			"success": false,
-			"error":   "method not allowed",
-		})
-		return
-	}
 
-	var status map[string]any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.getStatus", nil, &status)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    status,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "mcp.getStatus",
-			},
-		})
-		return
-	}
-
-	tools, summary, fallbackErr := s.localMCPSummary(r.Context())
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-			"success": false,
-			"error":   fallbackErr.Error(),
-			"detail":  fallbackErr.Error(),
-		})
-		return
-	}
-
-	sourceBackedServers := sourceBackedInstalledHarnesses(summary.InstalledHarnesses)
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data": map[string]any{
-			"connected":                false,
-			"serverCount":              len(sourceBackedServers),
-			"toolCount":                sourceBackedToolCount(summary.InstalledHarnesses),
-			"availableToolCount":       len(tools),
-			"harnessCount":             summary.HarnessCount,
-			"sourceBackedHarnessCount": summary.SourceBackedHarnessCount,
-			"lifecycle": map[string]any{
-				"lazySessionMode":        s.lifecycleModes["lazySessionMode"],
-				"singleActiveServerMode": s.lifecycleModes["singleActiveServerMode"],
-				"events":                 []map[string]any{},
-			},
-		},
-		"bridge": map[string]any{
-			"fallback":  "go-local-mcp",
-			"procedure": "mcp.getStatus",
-			"reason":    "upstream unavailable; using local MCP harness summary",
-		},
-	})
-}
-
-func (s *Server) handleMCPRuntimeServers(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
-			"success": false,
-			"error":   "method not allowed",
-		})
-		return
-	}
-
-	var servers []map[string]any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.listServers", nil, &servers)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    servers,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "mcp.listServers",
-			},
-		})
-		return
-	}
-
-	_, summary, fallbackErr := s.localMCPSummary(r.Context())
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-			"success": false,
-			"error":   fallbackErr.Error(),
-			"detail":  fallbackErr.Error(),
-		})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    fallbackRuntimeServers(summary.InstalledHarnesses),
-		"bridge": map[string]any{
-			"fallback":  "go-local-mcp",
-			"procedure": "mcp.listServers",
-			"reason":    "upstream unavailable; using local MCP runtime server summary",
-		},
-	})
-}
 
 func (s *Server) handleMCPConfiguredServers(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -2453,94 +2343,7 @@ func (s *Server) handleMCPSyncClientConfig(w http.ResponseWriter, r *http.Reques
 	})
 }
 
-func (s *Server) handleMCPTools(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
-			"success": false,
-			"error":   "method not allowed",
-		})
-		return
-	}
 
-	var tools []map[string]any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.listTools", nil, &tools)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    tools,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "mcp.listTools",
-			},
-		})
-		return
-	}
-
-	_, summary, fallbackErr := s.localMCPSummary(r.Context())
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-			"success": false,
-			"error":   fallbackErr.Error(),
-			"detail":  fallbackErr.Error(),
-		})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    fallbackMCPTools(summary.InstalledHarnesses),
-		"bridge": map[string]any{
-			"fallback":  "go-local-mcp",
-			"procedure": "mcp.listTools",
-			"reason":    "upstream unavailable; using local MCP tool inventory",
-		},
-	})
-}
-
-func (s *Server) handleMCPSearchTools(w http.ResponseWriter, r *http.Request) {
-	query := strings.TrimSpace(r.URL.Query().Get("query"))
-	profile := strings.TrimSpace(r.URL.Query().Get("profile"))
-	payload := map[string]any{
-		"query": query,
-	}
-	if profile != "" {
-		payload["profile"] = profile
-	}
-
-	var results []map[string]any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.searchTools", payload, &results)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    results,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "mcp.searchTools",
-			},
-		})
-		return
-	}
-
-	_, summary, fallbackErr := s.localMCPSummary(r.Context())
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-			"success": false,
-			"error":   fallbackErr.Error(),
-			"detail":  fallbackErr.Error(),
-		})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    fallbackSearchMCPTools(summary.InstalledHarnesses, query),
-		"bridge": map[string]any{
-			"fallback":  "go-local-mcp",
-			"procedure": "mcp.searchTools",
-			"reason":    "upstream unavailable; using local MCP tool search results",
-		},
-	})
-}
 
 func (s *Server) handleMCPCallTool(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -3344,91 +3147,7 @@ func (s *Server) handleMCPUnloadTool(w http.ResponseWriter, r *http.Request) {
 	s.handleMCPManualToolMutation(w, r, "mcp.unloadTool")
 }
 
-func (s *Server) handleMemorySearch(w http.ResponseWriter, r *http.Request) {
-	query := strings.TrimSpace(r.URL.Query().Get("query"))
-	if query == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{
-			"success": false,
-			"error":   "missing query parameter",
-		})
-		return
-	}
-	payload := map[string]any{"query": query}
-	limit := 5
-	if limitParam := strings.TrimSpace(r.URL.Query().Get("limit")); limitParam != "" {
-		if parsed, err := strconv.Atoi(limitParam); err == nil {
-			payload["limit"] = parsed
-			if parsed > 0 {
-				limit = parsed
-			}
-		}
-	}
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.query", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "memory.query",
-			},
-		})
-		return
-	}
 
-	results, localErr := s.localMemoryQueryResults(query, limit)
-	if localErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    results,
-		"bridge": map[string]any{
-			"fallback":  "go-local-memory",
-			"procedure": "memory.query",
-			"reason":    "upstream unavailable; using local persisted memory search",
-		},
-	})
-}
-
-func (s *Server) handleMemoryContexts(w http.ResponseWriter, r *http.Request) {
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.listContexts", nil, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "memory.listContexts",
-			},
-		})
-		return
-	}
-
-	contexts, fallbackErr := s.localMemoryContexts()
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-			"success": false,
-			"error":   fallbackErr.Error(),
-			"detail":  fallbackErr.Error(),
-		})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    contexts,
-		"bridge": map[string]any{
-			"fallback":  "go-local-memory",
-			"procedure": "memory.listContexts",
-			"reason":    "upstream unavailable; using local memory context list",
-		},
-	})
-}
 
 func (s *Server) handleMemoryContextSave(w http.ResponseWriter, r *http.Request) {
 	s.handleTRPCBridgeBodyCall(w, r, "memory.saveContext")
@@ -4258,40 +3977,6 @@ func (s *Server) handleMemorySearchSessionSummaries(w http.ResponseWriter, r *ht
 	})
 }
 
-func (s *Server) handleMemorySectionedStatus(w http.ResponseWriter, r *http.Request) {
-	var result map[string]any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.getSectionedMemoryStatus", nil, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "memory.getSectionedMemoryStatus",
-			},
-		})
-		return
-	}
-
-	status, fallbackErr := memorystore.ReadStatus(s.cfg.WorkspaceRoot)
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data": map[string]any{
-			"available": status.Exists,
-			"sections":  status.Sections,
-			"storePath": status.StorePath,
-		},
-		"bridge": map[string]any{
-			"fallback":  "go-local-memory",
-			"procedure": "memory.getSectionedMemoryStatus",
-			"reason":    "upstream unavailable; using local sectioned memory status",
-		},
-	})
-}
 
 func (s *Server) handleMemoryInterchangeFormats(w http.ResponseWriter, r *http.Request) {
 	var result any
@@ -6400,9 +6085,6 @@ func (s *Server) handleAgentRunTool(w http.ResponseWriter, r *http.Request) {
 	s.handleTRPCBridgeBodyCall(w, r, "agent.runTool")
 }
 
-func (s *Server) handleAgentChat(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "agent.chat")
-}
 
 func (s *Server) handleCommandsExecute(w http.ResponseWriter, r *http.Request) {
 	s.handleTRPCBridgeBodyCall(w, r, "commands.execute")
@@ -7655,7 +7337,7 @@ func (s *Server) handleLinksBacklogSync(w http.ResponseWriter, r *http.Request) 
 	}
 	defer db.Close()
 
-	res, fallbackErr := sync.SyncFromBobbyBookmarks(r.Context(), db)
+	res, fallbackErr := hsync.SyncBobbyBookmarks(r.Context(), s.localMetaMCPDBPath(), "https://bobbybookmarks.com", 100, false, false)
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
@@ -7717,7 +7399,7 @@ func (s *Server) handleInfrastructureDoctor(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	res, fallbackErr := sync.RunInfrastructureDoctor(s.cfg.WorkspaceRoot)
+	res, fallbackErr := hsync.RunInfrastructureDoctor(s.cfg.WorkspaceRoot)
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
@@ -7753,7 +7435,7 @@ func (s *Server) handleInfrastructureApply(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	res, fallbackErr := sync.ApplyInfrastructureConfigurations(s.cfg.WorkspaceRoot)
+	res, fallbackErr := hsync.ApplyInfrastructureConfigurations(s.cfg.WorkspaceRoot)
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
@@ -7797,7 +7479,7 @@ func (s *Server) handleExpertResearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, fallbackErr := sync.ExpertResearch(payload.Topic)
+	res, fallbackErr := hsync.ExpertResearch(payload.Topic)
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
@@ -7841,7 +7523,7 @@ func (s *Server) handleExpertCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, fallbackErr := sync.ExpertCode(payload.Instruction)
+	res, fallbackErr := hsync.ExpertCode(payload.Instruction)
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
@@ -9041,9 +8723,6 @@ func (s *Server) handleSubmoduleList(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *Server) handleSubmoduleUpdateAll(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "submodule.updateAll")
-}
 
 func (s *Server) handleSubmoduleInstallDependencies(w http.ResponseWriter, r *http.Request) {
 	s.handleTRPCBridgeBodyCall(w, r, "submodule.installDependencies")
@@ -9139,7 +8818,7 @@ func (s *Server) handleSuggestionsResolve(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res, fallbackErr := sync.ResolveSuggestion(payload.ID, payload.Status)
+	res, fallbackErr := hsync.ResolveSuggestion(payload.ID, payload.Status)
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
@@ -9175,7 +8854,7 @@ func (s *Server) handleSuggestionsClear(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	res, fallbackErr := sync.ClearAllSuggestions()
+	res, fallbackErr := hsync.ClearAllSuggestions()
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,

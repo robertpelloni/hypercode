@@ -1,6 +1,9 @@
 package httpapi
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
 
 func (s *Server) handleSquadList(w http.ResponseWriter, r *http.Request) {
 	var result any

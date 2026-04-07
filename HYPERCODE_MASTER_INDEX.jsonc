@@ -3,7 +3,7 @@
   "schema": "hypercode-master-index/v2.1",
   "last_updated": "2026-03-19",
   "project": {
-    "name": "BORG",
+    "name": "HYPERCODE",
     "description": "Multi-agent orchestration platform with built-in tools parity tracking",
     "status": "active"
   },
