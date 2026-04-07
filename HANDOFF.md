@@ -3,6 +3,23 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
+### Latest incremental pass — Maestro Go/Wails port alignment (2026-04-06)
+This pass fulfilled a core vision mandate to convert Maestro into a lightweight UI that connects to the Go control plane, rescuing the Wails port from an unbuildable state.
+
+#### What changed
+- `apps/maestro-go/go.mod`
+  - Added workspace `replace` directive.
+- `apps/maestro-go/app.go`
+  - Replaced the embedded supervisor logic with HTTP client proxies pointing at `http://127.0.0.1:4000/api/sessions/supervisor/*`.
+  - The UI now legitimately acts as a client to the already-running daemon instead of spawning an isolated one and breaking package boundaries.
+
+#### Validation performed
+- Built `apps/maestro-go` from source via `go build`.
+- Passed cleanly without `internal/` package violations.
+
+#### Recommended next step after this pass
+Now that the core Maestro-Go architecture points to the right APIs, the next high-value slice is deepening the Go-native ownership of Director/Council logic (e.g. state management beyond basic bridges) or taking on **Browser Automation** via `chromedp`.
+
 ### Latest incremental pass — massive Go porting and repo-wide HyperCode rename (2026-04-06)
 This defining pass executed the broad "borg" → "hypercode" rename repo-wide and significantly expanded Go-native ownership of core services.
 

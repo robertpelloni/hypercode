@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Maestro Go/Wails Port Alignment**: Refactored the Wails-based Visual Orchestrator (`apps/maestro-go`) to act as a lightweight HTTP client for the Go-native `hypercode` control plane, replacing its broken monolithic internal supervisor with the `/api/sessions/supervisor/*` endpoints.
 - **Repo-wide HyperCode Rename**: Executed the broad "borg" → "hypercode" rename across the entire repository (200+ files), including Go module name, imports, environment variables, directories, and documentation.
 - **Go-Native Catalog Ingestion**: Ported the MCP catalog ingestion core and Glama adapter to Go, enabling native listing from external registries.
 - **Go-Native AutoDev Manager**: Ported the test/lint retry loop logic to Go, allowing native shell execution with retries in degraded mode.

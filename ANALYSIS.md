@@ -1,5 +1,38 @@
 # Analysis — 2026-04-05 Stabilization / Go Parity Tranche
 
+## Latest stabilization pass — Maestro Go/Wails port alignment (2026-04-06)
+
+### Scope
+This follow-up shifted from the core orchestration API to **Maestro (Visual Orchestrator)**. The goal was to refine the Go/Wails port (`apps/maestro-go`) so it actually compiles and adheres to the project roadmap's architecture principle: "keep CLIs and GUIs as clients of daemon-owned state".
+
+### Findings
+Previously, `apps/maestro-go` was importing `github.com/hypercodehq/hypercode-go/internal/supervisor` directly to run its own background task manager. This violated Go module boundaries (internal packages cannot be imported from outside the module tree) and architectural boundaries (the UI should connect to the already-running HyperCode daemon, not spawn a second one).
+
+### What changed
+Updated:
+- `apps/maestro-go/go.mod`
+- `apps/maestro-go/app.go`
+
+#### 1. Go Module Boundaries
+Added a `replace` directive in `apps/maestro-go/go.mod` to resolve the workspace-local `hypercode-go` module correctly without version pin errors.
+
+#### 2. Architecture Alignment
+Refactored `apps/maestro-go/app.go`:
+- Removed the illegal `internal/supervisor` import.
+- Replaced the embedded, isolated supervisor manager with an HTTP client that talks to the live Go control plane (`http://127.0.0.1:4000/api/sessions/supervisor/*`).
+- Re-implemented `CreateSupervisedSession`, `StartSupervisedSession`, `StopSupervisedSession`, and `ListSupervisedSessions` as lightweight HTTP proxies to the HyperCode daemon.
+
+### Validation performed
+- Built `maestro-go` from source.
+  - `cd apps/maestro-go && go mod tidy && go build`
+  - result: successfully built.
+- Re-verified the core Go daemon.
+  - `cd go && go build ./cmd/hypercode`
+  - result: successfully built.
+
+### Why this matters
+This slice rescues the Wails port from a broken build state and permanently aligns it with the project's multi-process architecture. Maestro-Go is now correctly positioned as a lightweight frontend client querying the Go-primary daemon, rather than a monolithic split-brain competitor.
+
 ## Latest stabilization pass — massive Go porting and repo-wide HyperCode rename (2026-04-06)
 
 ### Scope
