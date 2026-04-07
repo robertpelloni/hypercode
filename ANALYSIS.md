@@ -1,5 +1,45 @@
 # Analysis — 2026-04-05 Stabilization / Go Parity Tranche
 
+## Latest stabilization pass — massive Go porting and repo-wide HyperCode rename (2026-04-06)
+
+### Scope
+This major pass executed the broad "borg" → "hypercode" rename across the entire repository and significantly expanded the Go backend's native ownership of core services.
+
+### Findings
+The repository still had over 200 files referencing "borg" in module names, imports, environment variables, and documentation. Additionally, several key orchestrator and maintenance features were still pure bridges to TypeScript, even though the Go backend could reasonably own their state.
+
+### What changed
+#### 1. Repo-wide HyperCode Rename
+- Renamed Go module to `github.com/hypercodehq/hypercode-go`.
+- Updated imports in all 200+ Go files.
+- Renamed key directories:
+  - `apps/borg-extension` → `apps/hypercode-extension`
+  - `packages/borg-supervisor` → `packages/hypercode-supervisor`
+  - `submodules/hyperharness/borg` → `submodules/hyperharness/hypercode`
+- Renamed hidden session and state files:
+  - `.borg-session.json` → `.hypercode-session.json`
+- Replaced all "borg" string occurrences in active code and docs with "hypercode".
+
+#### 2. Expanded Go-Native Ownership
+Ported the following features to Go with truthful local state fallbacks:
+- **MCP Catalog Ingestion**: Core engine + Glama adapter (native listing from external registries).
+- **AutoDev Loop Manager**: Native Go implementation of test/lint retry loops with shell execution.
+- **Squad & Swarm State**: Native Go management of squad members and swarm missions, persisted to `squad_state.json` and `swarm_state.json`.
+- **Marketplace Listing**: Native Go listing from `registry.json`.
+- **Links Backlog Sync**: Ported the BobbyBookmarks sync engine to Go.
+- **Infrastructure & Expert Services**: Ported diagnostic and AI assistance hooks to Go.
+
+### Validation performed
+- Verified Go module rename and imports.
+- Verified file and directory renames.
+- `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+  - result: `34/34` tests passed.
+- Go HTTP suite: `cd go && go test ./internal/httpapi`
+  - result: passed.
+
+### Why this matters
+This is a defining milestone for the project. HyperCode is no longer just a "renamed borg"; it is a coherent neural operating system with a Go-primary backend that truthfully owns the majority of its operator-facing state and logic. The shared web compatibility layer is now nearly complete, allowing the entire dashboard to remain functional in degraded mode.
+
 ## Scope completed in this tranche
 
 This session focused on four tightly related stabilization tasks:

@@ -3,7 +3,30 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
-Latest validated tranche (2026-04-05):
+### Latest incremental pass — massive Go porting and repo-wide HyperCode rename (2026-04-06)
+This defining pass executed the broad "borg" → "hypercode" rename repo-wide and significantly expanded Go-native ownership of core services.
+
+#### 1. Repo-wide Rename
+- Renamed Go module to `github.com/hypercodehq/hypercode-go`.
+- Updated all internal imports and directory references.
+- Replaced all "borg" strings in active code and documentation.
+
+#### 2. Go-Native Porting
+Implemented native Go handlers and state management for:
+- **MCP Catalog Ingestion**: Core engine + Glama adapter.
+- **AutoDev Manager**: Test/lint retry loops with native shell execution.
+- **Squad & Swarm**: Local member and mission state management.
+- **Marketplace & Sync**: Native listing and BobbyBookmarks sync.
+- **Infrastructure & Expert**: Ported diagnostic and AI assistance hooks.
+
+#### 3. Dashboard Compatibility
+- Almost all dashboard clusters now route to Go fallbacks in degraded mode.
+- Validated with 34 green route tests.
+
+#### Recommended next step after this pass
+The transition to a Go-primary backend is nearly complete for the operator experience. The next high-value target is refining the **Maestro (Visual Orchestrator)** Go/Wails port to bring the visual layer into the Go-primary fold. Alternatively, focus on **Browser Automation** deeper native Go ownership.
+
+### Latest validated tranche (2026-04-05):
 
 - `submodules/hyperharness` is back to being the canonical tracked harness gitlink.
 - `submodules/hyperharness` is aligned to upstream HEAD `98785f5c95c0c870e71aa4c635dd293017504802`.

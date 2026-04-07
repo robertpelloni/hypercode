@@ -50,6 +50,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Repo-wide HyperCode Rename**: Executed the broad "borg" → "hypercode" rename across the entire repository (200+ files), including Go module name, imports, environment variables, directories, and documentation.
+- **Go-Native Catalog Ingestion**: Ported the MCP catalog ingestion core and Glama adapter to Go, enabling native listing from external registries.
+- **Go-Native AutoDev Manager**: Ported the test/lint retry loop logic to Go, allowing native shell execution with retries in degraded mode.
+- **Go-Native Swarm & Squad State**: Ported swarm mission and squad member state management to Go, persisted to local JSON state files.
+- **Go-Native Marketplace & Sync**: Ported marketplace listing, BobbyBookmarks sync, and infrastructure diagnostic hooks to Go.
+- **Near-Total Dashboard Compat Routed to Go Fallbacks**: The shared Next.js `/api/trpc/[trpc]` compat route now translates almost all remaining dashboard clusters—including Swarm, Squad, Marketplace, Links Backlog, Infrastructure, Expert, and Suggestions—onto Go-native endpoints.
+
+### Added
 - **Saved Scripts Dashboard Edit Flow**: The Saved Scripts dashboard now exposes a real edit/update UI wired to `savedScripts.update`, so operators can modify existing scripts directly from `/dashboard/mcp/scripts` instead of relying on backend-only update support.
 - **Saved Scripts Update Fallback Parity**: Extended the saved-scripts Go/degraded-dashboard parity slice to cover `savedScripts.update`, adding truthful local `.hypercode/config.json` update ownership in Go plus shared Next.js compat routing through `/api/scripts/update` when the TypeScript control plane is unavailable.
 - **Saved Scripts Go Fallback Parity**: Completed truthful Go-local fallback ownership for saved script create/delete/execute routes, including local `.hypercode/config.json` persistence, local node-backed execution, focused Go HTTP regression coverage, and degraded dashboard compat routing through `/api/scripts*` when the TypeScript control plane is unavailable.
