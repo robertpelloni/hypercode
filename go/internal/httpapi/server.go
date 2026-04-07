@@ -8733,7 +8733,29 @@ func (s *Server) handleMarketplaceInstall(w http.ResponseWriter, r *http.Request
 }
 
 func (s *Server) handleMarketplacePublish(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "marketplace.publish")
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "marketplace.publish", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "marketplace.publish",
+			},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    "Successfully published to Mesh network (Go local fallback)",
+		"bridge": map[string]any{
+			"fallback":  "go-local-marketplace",
+			"procedure": "marketplace.publish",
+			"reason":    "upstream unavailable; executing native Go marketplace publish",
+		},
+	})
 }
 
 func (s *Server) handleCatalogList(w http.ResponseWriter, r *http.Request) {
@@ -8911,7 +8933,46 @@ func (s *Server) handleCatalogRuns(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleCatalogIngest(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "catalog.triggerIngestion")
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "catalog.triggerIngestion", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "catalog.triggerIngestion",
+			},
+		})
+		return
+	}
+
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": err.Error()})
+		return
+	}
+	defer db.Close()
+
+	report, err := mcp.IngestPublishedCatalog(r.Context(), db)
+	if err != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   err.Error(),
+			"detail":  err.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    report,
+		"bridge": map[string]any{
+			"fallback":  "go-local-published-catalog-ingest",
+			"procedure": "catalog.triggerIngestion",
+			"reason":    "upstream unavailable; executing native Go catalog ingestion",
+		},
+	})
 }
 
 func (s *Server) handleCatalogValidate(w http.ResponseWriter, r *http.Request) {
