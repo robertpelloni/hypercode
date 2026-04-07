@@ -1,5 +1,5 @@
-// Hypercode MCP configuration
-// This file is Hypercode-owned and may include cached server metadata under mcpServers.<name>._meta.
+// HyperCode MCP configuration
+// This file is HyperCode-owned and may include cached server metadata under mcpServers.<name>._meta.
 {
   "mcpServers": {
     "hypercode-supervisor": {

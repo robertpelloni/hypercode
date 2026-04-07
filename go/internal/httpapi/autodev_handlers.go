@@ -1,25 +1,13 @@
 package httpapi
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 )
 
 func (s *Server) handleAutoDevStartLoop(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
-		return
-	}
-
-	var payload map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-
 	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "autoDev.startLoop", payload, &result)
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "autoDev.startLoop", nil, &result)
 	if err == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -32,50 +20,27 @@ func (s *Server) handleAutoDevStartLoop(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	loopType := strings.TrimSpace(stringValue(payload["type"]))
-	if loopType == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing type"})
+	var config localAutoDevLoopConfig
+	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid request body"})
 		return
 	}
-	maxAttempts := intNumber(payload["maxAttempts"])
-	if maxAttempts <= 0 {
-		maxAttempts = 3
-	}
-	loop := s.autoDevState.startLoop(localAutoDevLoopConfig{
-		Type:        loopType,
-		MaxAttempts: maxAttempts,
-		Target:      strings.TrimSpace(stringValue(payload["target"])),
-		Command:     strings.TrimSpace(stringValue(payload["command"])),
-	})
+
+	loopID := s.autoDev.startLoop(config)
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data": map[string]any{
-			"success": true,
-			"loopId":  loop.ID,
-			"loop":    loop,
-		},
+		"data":    loopID,
 		"bridge": map[string]any{
 			"fallback":  "go-local-autodev",
 			"procedure": "autoDev.startLoop",
-			"reason":    "upstream unavailable; using native Go AutoDev fallback loop manager",
+			"reason":    "upstream unavailable; starting native Go autodev loop",
 		},
 	})
 }
 
 func (s *Server) handleAutoDevCancelLoop(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
-		return
-	}
-
-	var payload map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-
 	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "autoDev.cancelLoop", payload, &result)
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "autoDev.cancelLoop", nil, &result)
 	if err == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -88,18 +53,22 @@ func (s *Server) handleAutoDevCancelLoop(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	loopID := strings.TrimSpace(stringValue(payload["loopId"]))
-	if loopID == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing loopId"})
+	var payload struct {
+		LoopID string `json:"loopId"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid request body"})
 		return
 	}
+
+	success := s.autoDev.cancelLoop(payload.LoopID)
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    s.autoDevState.cancelLoop(loopID),
+		"data":    success,
 		"bridge": map[string]any{
 			"fallback":  "go-local-autodev",
 			"procedure": "autoDev.cancelLoop",
-			"reason":    "upstream unavailable; using native Go AutoDev fallback loop manager",
+			"reason":    "upstream unavailable; cancelling native Go autodev loop",
 		},
 	})
 }
@@ -119,13 +88,14 @@ func (s *Server) handleAutoDevGetLoops(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	loops := s.autoDev.getLoops()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    s.autoDevState.getLoops(),
+		"data":    loops,
 		"bridge": map[string]any{
 			"fallback":  "go-local-autodev",
 			"procedure": "autoDev.getLoops",
-			"reason":    "upstream unavailable; using native Go AutoDev fallback loop state",
+			"reason":    "upstream unavailable; listing native Go autodev loops",
 		},
 	})
 }
@@ -151,26 +121,19 @@ func (s *Server) handleAutoDevGetLoop(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loop, ok := s.autoDevState.getLoop(loopID)
+	loop, ok := s.autoDev.getLoop(loopID)
 	if !ok {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    nil,
-			"bridge": map[string]any{
-				"fallback":  "go-local-autodev",
-				"procedure": "autoDev.getLoop",
-				"reason":    "upstream unavailable; loop not present in native Go AutoDev fallback state",
-			},
-		})
+		writeJSON(w, http.StatusNotFound, map[string]any{"success": false, "error": "loop not found"})
 		return
 	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
 		"data":    loop,
 		"bridge": map[string]any{
 			"fallback":  "go-local-autodev",
 			"procedure": "autoDev.getLoop",
-			"reason":    "upstream unavailable; using native Go AutoDev fallback loop state",
+			"reason":    "upstream unavailable; reading native Go autodev loop",
 		},
 	})
 }
@@ -190,13 +153,14 @@ func (s *Server) handleAutoDevClearCompleted(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	count := s.autoDev.clearCompleted()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    s.autoDevState.clearCompleted(),
+		"data":    count,
 		"bridge": map[string]any{
 			"fallback":  "go-local-autodev",
 			"procedure": "autoDev.clearCompleted",
-			"reason":    "upstream unavailable; using native Go AutoDev fallback loop state",
+			"reason":    "upstream unavailable; clearing native Go autodev loops",
 		},
 	})
 }

@@ -73,7 +73,7 @@ flowchart TD
     TYPES["packages/types\nshared types"]
     MCP["packages/mcp-registry + packages/mcp-client\nMCP metadata and client surfaces"]
     GO["go/\nexperimental Go sidecar"]
-    SUB["submodules/hyperharness\nexternal CLI harness upstream"]
+    SUB["submodules/hypercode\nexternal CLI harness upstream"]
     DATA["data/\nbookmarks, imports, local knowledge"]
 
     CLI --> CORE
@@ -293,7 +293,7 @@ The current submodules directory includes at least two important external lanes:
 
 | Path | Purpose |
 | --- | --- |
-| `submodules/hyperharness` | Experimental external CLI harness/upstream assimilation lane |
+| `submodules/hypercode` | Experimental external CLI harness/upstream assimilation lane |
 | `submodules/prism-mcp` | External Prism MCP reference lane |
 
 This submodule matters because the CLI/session/harness story is no longer only local handwritten code; it also depends on tracked external harness contracts and source-backed tool inventories.
@@ -316,7 +316,7 @@ It connects mainly to:
 | Area | Primary module(s) | Connected to |
 | --- | --- | --- |
 | Operator UI | `apps/web`, `apps/maestro`, `packages/ui` | `packages/core` |
-| CLI orchestration | `packages/cli` | `packages/core`, `submodules/hyperharness` |
+| CLI orchestration | `packages/cli` | `packages/core`, `submodules/hypercode` |
 | Core control plane | `packages/core` | nearly everything |
 | Provider routing | `packages/ai`, `packages/core` | model/provider SDKs, memory, dashboard |
 | Memory and retrieval | `packages/memory`, `packages/core` | sessions, imports, dashboard, providers |

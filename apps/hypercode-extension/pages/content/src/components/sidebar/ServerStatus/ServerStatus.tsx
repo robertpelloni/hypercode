@@ -939,7 +939,7 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ status: initialStatus }) =>
                   <div className="group relative">
                     <Icon name="info" size="xs" className="text-slate-400 hover:text-blue-500 cursor-help" />
                     <div className="absolute left-0 bottom-full mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                      The URL where your local proxy or remote MCP server is running (e.g., http://localhost:4000/sse).
+                      The URL where your local proxy or remote MCP server is running (e.g., http://localhost:3006/sse).
                     </div>
                   </div>
                 </div>
@@ -952,10 +952,10 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ status: initialStatus }) =>
                   onBlur={handleServerUriBlur}
                   placeholder={
                     connectionType === 'sse'
-                      ? 'http://localhost:4000/sse'
+                      ? 'http://localhost:3006/sse'
                       : connectionType === 'websocket'
-                        ? 'ws://localhost:4000/message'
-                        : 'http://localhost:4000/mcp'
+                        ? 'ws://localhost:3006/message'
+                        : 'http://localhost:3006/mcp'
                   }
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent outline-none transition-all duration-200 hover:border-slate-400 dark:hover:border-slate-500"
                 />

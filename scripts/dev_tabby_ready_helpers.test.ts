@@ -7,17 +7,17 @@ import { describe, expect, it } from 'vitest';
 
 import {
     chooseStaleCoreRefreshTarget,
-    getHypercodeStartLockPath,
+    getHyperCodeStartLockPath,
     getPendingStartupChecks,
     getWaitingReasons,
     isCompatibleStartupStatusContract,
-    isLikelyHypercodeCoreCommand,
+    isLikelyHyperCodeCoreCommand,
     isDirectExecution,
     isHttpProbeResponsive,
     parseListeningPidFromLsof,
     parseListeningPidFromNetstat,
-    readHypercodeStartLockRecord,
-    resolveHypercodeDataDir,
+    readHyperCodeStartLockRecord,
+    resolveHyperCodeDataDir,
     summarizeBrowserExtensionArtifacts,
     waitForCoreBridgeShutdown,
 } from './dev_tabby_ready_helpers.mjs';
@@ -225,14 +225,14 @@ describe('isDirectExecution', () => {
         });
     });
 
-    it('expands the Hypercode data dir shorthand and derives the lock path', () => {
-        const resolved = resolveHypercodeDataDir('~/.hypercode');
+    it('expands the HyperCode data dir shorthand and derives the lock path', () => {
+        const resolved = resolveHyperCodeDataDir('~/.hypercode');
 
         expect(resolved.toLowerCase()).toContain(path.join('.hypercode').toLowerCase());
-        expect(getHypercodeStartLockPath('~/.hypercode').toLowerCase()).toContain(path.join('.hypercode', 'lock').toLowerCase());
+        expect(getHyperCodeStartLockPath('~/.hypercode').toLowerCase()).toContain(path.join('.hypercode', 'lock').toLowerCase());
     });
 
-    it('reads a valid Hypercode startup lock record from disk', () => {
+    it('reads a valid HyperCode startup lock record from disk', () => {
         const dataDir = createTempDir();
         const lockPath = path.join(dataDir, 'lock');
         writeFileSync(lockPath, JSON.stringify({
@@ -243,7 +243,7 @@ describe('isDirectExecution', () => {
             createdAt: '2026-03-13T00:00:00.000Z',
         }), 'utf8');
 
-        expect(readHypercodeStartLockRecord(lockPath)).toEqual({
+        expect(readHyperCodeStartLockRecord(lockPath)).toEqual({
             instanceId: 'hypercode-123',
             pid: 123,
             port: 4000,
@@ -290,17 +290,17 @@ describe('isDirectExecution', () => {
         expect(parseListeningPidFromLsof('4242\n')).toBe(4242);
     });
 
-    it('treats Hypercode CLI command lines as safe stale-core owners', () => {
-        expect(isLikelyHypercodeCoreCommand('node C:\\repo\\hypercode\\node_modules\\tsx\\dist\\cli.mjs src/index.ts start --port 3100')).toBe(true);
-        expect(isLikelyHypercodeCoreCommand('node /workspace/hypercode/packages/core/dist/server-stdio.js')).toBe(true);
+    it('treats HyperCode CLI command lines as safe stale-core owners', () => {
+        expect(isLikelyHyperCodeCoreCommand('node C:\\repo\\hypercode\\node_modules\\tsx\\dist\\cli.mjs src/index.ts start --port 3100')).toBe(true);
+        expect(isLikelyHyperCodeCoreCommand('node /workspace/hypercode/packages/core/dist/server-stdio.js')).toBe(true);
     });
 
     it('rejects unrelated port owners for stale-core termination', () => {
-        expect(isLikelyHypercodeCoreCommand('node C:\\other-app\\server.js --port 3001')).toBe(false);
-        expect(isLikelyHypercodeCoreCommand('python -m http.server 3001')).toBe(false);
+        expect(isLikelyHyperCodeCoreCommand('node C:\\other-app\\server.js --port 3001')).toBe(false);
+        expect(isLikelyHyperCodeCoreCommand('python -m http.server 3001')).toBe(false);
     });
 
-    it('prefers the Hypercode startup lock over port-owner fallback when both exist', () => {
+    it('prefers the HyperCode startup lock over port-owner fallback when both exist', () => {
         expect(chooseStaleCoreRefreshTarget({
             lockRecord: { pid: 111, instanceId: 'hypercode', port: 3001, host: '127.0.0.1', createdAt: '2026-03-13T00:00:00.000Z' },
             owner: { pid: 222, trusted: true, commandLine: 'node hypercode' },
@@ -313,7 +313,7 @@ describe('isDirectExecution', () => {
         });
     });
 
-    it('uses a trusted port owner when no valid Hypercode lock exists', () => {
+    it('uses a trusted port owner when no valid HyperCode lock exists', () => {
         expect(chooseStaleCoreRefreshTarget({
             lockRecord: null,
             owner: { pid: 222, trusted: true, commandLine: 'node hypercode' },
@@ -326,7 +326,7 @@ describe('isDirectExecution', () => {
         });
     });
 
-    it('skips automatic refresh when the port owner is not Hypercode-owned', () => {
+    it('skips automatic refresh when the port owner is not HyperCode-owned', () => {
         expect(chooseStaleCoreRefreshTarget({
             lockRecord: null,
             owner: { pid: 333, trusted: false, commandLine: 'python -m http.server 3001' },

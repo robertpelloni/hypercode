@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { resolveHypercodeConfigDir, resolveHypercodeLockPath, resolveLockedHypercodeBase, resolveOrchestratorBase } from './hypercode-orchestrator.js';
+import { resolveHyperCodeConfigDir, resolveHyperCodeLockPath, resolveLockedHyperCodeBase, resolveOrchestratorBase } from './hypercode-orchestrator.js';
 
 describe('hypercode orchestrator helpers', () => {
     it('uses explicit env bases before lock-derived values', () => {
@@ -22,9 +22,9 @@ describe('hypercode orchestrator helpers', () => {
         const configDir = mkdtempSync(path.join(os.tmpdir(), 'hypercode-lock-'));
         writeFileSync(path.join(configDir, 'lock'), JSON.stringify({ host: '0.0.0.0', port: 4312 }));
 
-        expect(resolveHypercodeConfigDir({ HYPERCODE_CONFIG_DIR: configDir })).toBe(configDir);
-        expect(resolveHypercodeLockPath({ HYPERCODE_CONFIG_DIR: configDir })).toBe(path.join(configDir, 'lock'));
-        expect(resolveLockedHypercodeBase({ HYPERCODE_CONFIG_DIR: configDir })).toBe('http://127.0.0.1:4312');
+        expect(resolveHyperCodeConfigDir({ HYPERCODE_CONFIG_DIR: configDir })).toBe(configDir);
+        expect(resolveHyperCodeLockPath({ HYPERCODE_CONFIG_DIR: configDir })).toBe(path.join(configDir, 'lock'));
+        expect(resolveLockedHyperCodeBase({ HYPERCODE_CONFIG_DIR: configDir })).toBe('http://127.0.0.1:4312');
         expect(resolveOrchestratorBase({
             HYPERCODE_CONFIG_DIR: configDir,
             NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL: 'http://127.0.0.1:3847',

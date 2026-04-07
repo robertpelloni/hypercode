@@ -40,8 +40,8 @@ func TestSnapshotReportsKeyPaths(t *testing.T) {
 	if !status.HypercodeSubmodule.Exists {
 		t.Fatalf("expected hypercode submodule path to exist")
 	}
-	if !status.HypercodeConfigFile.Exists || !status.MCPConfigFile.Exists {
-		t.Fatalf("expected repo config files to exist, got hypercode=%+v mcp=%+v", status.HypercodeConfigFile, status.MCPConfigFile)
+	if !status.HyperCodeConfigFile.Exists || !status.MCPConfigFile.Exists {
+		t.Fatalf("expected repo config files to exist, got hypercode=%+v mcp=%+v", status.HyperCodeConfigFile, status.MCPConfigFile)
 	}
 	if status.SectionedMemoryStore.Exists {
 		t.Fatalf("expected sectioned memory store to be absent by default")

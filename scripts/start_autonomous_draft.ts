@@ -4,7 +4,7 @@ import { WebSocketClientTransport } from "@modelcontextprotocol/sdk/client/webso
 import WebSocket from "ws"; // Requires 'ws' package or global in Node 22+
 
 async function run() {
-    console.log("Connecting to Hypercode Core via WebSocket...");
+    console.log("Connecting to HyperCode Core via WebSocket...");
 
     // Create a WebSocket transport (Core runs on 3001 for WS)
     // Note: We need to ensure global WebSocket is available if the SDK expects it, 
@@ -24,7 +24,7 @@ async function run() {
 
     try {
         await client.connect(transport);
-        console.log("Connected to Hypercode Core!");
+        console.log("Connected to HyperCode Core!");
 
         // Trigger Auto-Drive
         console.log("Starting Auto-Drive...");

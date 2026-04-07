@@ -28,7 +28,7 @@ const CALLS = [
 ];
 
 ws.on('open', async () => {
-    console.log("Connected to Hypercode Core (ws://localhost:3001)");
+    console.log("Connected to HyperCode Core (ws://localhost:3001)");
 
     let id = 1;
     for (const call of CALLS) {
@@ -56,6 +56,6 @@ ws.on('message', (data) => {
 
 ws.on('error', (err) => {
     console.error("Connection Error:", err.message);
-    console.error("Ensure Hypercode Core is running (pnpm start)!");
+    console.error("Ensure HyperCode Core is running (pnpm start)!");
     process.exit(1);
 });

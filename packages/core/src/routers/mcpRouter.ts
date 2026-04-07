@@ -13,7 +13,7 @@ import {
     type ToolSearchScoreBreakdown,
 } from '../mcp/toolSearchRanking.js';
 import { toolSelectionTelemetry } from '../mcp/toolSelectionTelemetry.js';
-import { getHypercodeMcpJsoncPath, loadHypercodeMcpConfig, stripJsonComments, writeHypercodeMcpConfig } from '../mcp/mcpJsonConfig.js';
+import { getHyperCodeMcpJsoncPath, loadHyperCodeMcpConfig, stripJsonComments, writeHyperCodeMcpConfig } from '../mcp/mcpJsonConfig.js';
 import {
     applyToolPreferencePatch,
     buildToolPreferenceSettings,
@@ -241,7 +241,7 @@ const toolSearchProfileSchema = z.enum(['web-research', 'repo-coding', 'browser-
 
 async function readToolPreferences(): Promise<ToolPreferences> {
     try {
-        const config = await loadHypercodeMcpConfig();
+        const config = await loadHyperCodeMcpConfig();
         const settings = config.settings as { toolSelection?: { importantTools?: unknown; alwaysLoadedTools?: unknown; autoLoadMinConfidence?: unknown; maxLoadedTools?: unknown; maxHydratedSchemas?: unknown; idleEvictionThresholdMs?: unknown } } | undefined;
         return readToolPreferencesFromSettings(settings?.toolSelection);
     } catch {
@@ -250,7 +250,7 @@ async function readToolPreferences(): Promise<ToolPreferences> {
 }
 
 async function writeToolPreferences(nextPreferences: ToolPreferences): Promise<ToolPreferences> {
-    const config = await loadHypercodeMcpConfig();
+    const config = await loadHyperCodeMcpConfig();
     const existingSettings = config.settings && typeof config.settings === 'object'
         ? config.settings as Record<string, unknown>
         : {};
@@ -258,7 +258,7 @@ async function writeToolPreferences(nextPreferences: ToolPreferences): Promise<T
     const normalized = readToolPreferencesFromSettings(nextPreferences);
     const nextSettings = buildToolPreferenceSettings(existingSettings, normalized);
 
-    await writeHypercodeMcpConfig({
+    await writeHyperCodeMcpConfig({
         ...config,
         settings: nextSettings,
     });
@@ -951,14 +951,14 @@ export const mcpRouter = t.router({
     }),
 
     getJsoncEditor: publicProcedure.query(async () => {
-        const jsoncPath = getHypercodeMcpJsoncPath();
+        const jsoncPath = getHyperCodeMcpJsoncPath();
         try {
             const content = await fs.readFile(jsoncPath, 'utf-8');
             return { path: jsoncPath, content };
         } catch (error) {
             const errorCode = (error as NodeJS.ErrnoException).code;
             if (errorCode === 'ENOENT') {
-                const fallbackConfig = await loadHypercodeMcpConfig();
+                const fallbackConfig = await loadHyperCodeMcpConfig();
                 return {
                     path: jsoncPath,
                     content: `// HyperCode MCP configuration\n${JSON.stringify(fallbackConfig, null, 2)}\n`,
@@ -972,7 +972,7 @@ export const mcpRouter = t.router({
         content: z.string().min(2),
     })).mutation(async ({ input }) => {
         const parsed = JSON.parse(stripJsonComments(input.content)) as Record<string, unknown>;
-        await writeHypercodeMcpConfig(parsed as never);
+        await writeHyperCodeMcpConfig(parsed as never);
         return { ok: true };
     }),
 

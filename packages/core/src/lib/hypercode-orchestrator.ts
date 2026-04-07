@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-type HypercodeLockRecord = {
+type HyperCodeLockRecord = {
     port?: number;
     host?: string;
 };
@@ -27,7 +27,7 @@ function resolveBrowserHost(host: string): string {
         : host;
 }
 
-export function resolveHypercodeConfigDir(env: OrchestratorEnv = process.env): string {
+export function resolveHyperCodeConfigDir(env: OrchestratorEnv = process.env): string {
     const configuredDir = env.HYPERCODE_CONFIG_DIR?.trim();
     if (configuredDir) {
         return configuredDir;
@@ -36,18 +36,18 @@ export function resolveHypercodeConfigDir(env: OrchestratorEnv = process.env): s
     return path.join(os.homedir(), '.hypercode');
 }
 
-export function resolveHypercodeLockPath(env: OrchestratorEnv = process.env): string {
-    return path.join(resolveHypercodeConfigDir(env), 'lock');
+export function resolveHyperCodeLockPath(env: OrchestratorEnv = process.env): string {
+    return path.join(resolveHyperCodeConfigDir(env), 'lock');
 }
 
-export function resolveLockedHypercodeBase(env: OrchestratorEnv = process.env): string | null {
-    const lockPath = resolveHypercodeLockPath(env);
+export function resolveLockedHyperCodeBase(env: OrchestratorEnv = process.env): string | null {
+    const lockPath = resolveHyperCodeLockPath(env);
     if (!existsSync(lockPath)) {
         return null;
     }
 
     try {
-        const parsed = JSON.parse(readFileSync(lockPath, 'utf8')) as HypercodeLockRecord;
+        const parsed = JSON.parse(readFileSync(lockPath, 'utf8')) as HyperCodeLockRecord;
         if (!parsed || typeof parsed.port !== 'number' || parsed.port <= 0) {
             return null;
         }
@@ -65,7 +65,7 @@ export function resolveLockedHypercodeBase(env: OrchestratorEnv = process.env): 
 export function resolveOrchestratorBase(env: OrchestratorEnv = process.env): string | null {
     return normalizeBaseURL(env.HYPERCODE_ORCHESTRATOR_URL)
         ?? normalizeBaseURL(env.HYPERCODE_TRPC_UPSTREAM)
-        ?? resolveLockedHypercodeBase(env)
+        ?? resolveLockedHyperCodeBase(env)
         ?? normalizeBaseURL(env.NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL)
         ?? normalizeBaseURL(env.NEXT_PUBLIC_AUTOPILOT_URL);
 }

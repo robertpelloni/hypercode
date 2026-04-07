@@ -3,19 +3,8 @@ package httpapi
 import (
 	"encoding/json"
 	"net/http"
-	"os/exec"
-	"strings"
 	"time"
 )
-
-type CloudOrchestratorSubmodule struct {
-	Name     string `json:"name"`
-	Path     string `json:"path"`
-	Hash     string `json:"hash"`
-	FullHash string `json:"fullHash"`
-	Ref      string `json:"ref"`
-	Status   string `json:"status"`
-}
 
 func (s *Server) handleCloudOrchestratorPing() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -49,71 +38,6 @@ func (s *Server) handleCloudOrchestratorManifest() http.HandlerFunc {
 				"reindex":  "/api/rag/reindex",
 			},
 			"hypercodeCompatible": true,
-		})
-	}
-}
-
-func (s *Server) handleCloudOrchestratorSubmodules() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		
-		cmd := exec.Command("git", "submodule", "status")
-		cmd.Dir = s.cfg.WorkspaceRoot
-		output, err := cmd.Output()
-		
-		submodules := []CloudOrchestratorSubmodule{}
-		if err == nil {
-			lines := strings.Split(string(output), "\n")
-			for _, line := range lines {
-				line = strings.TrimSpace(line)
-				if line == "" {
-					continue
-				}
-				
-				// e.g. " 1f287028c28de1e3819f46515d0d89c418878d64 archive/claude-mem (heads/main)"
-				// or "+1f287028c28de1e3819f46515d0d89c418878d64 archive/claude-mem (heads/main)"
-				// The first char indicates status: ' ' (synced), '+' (modified), '-' (uninitialized)
-				
-				statusChar := string(line[0])
-				status := "synced"
-				if statusChar == "+" {
-					status = "modified"
-				} else if statusChar == "-" {
-					status = "uninitialized"
-				}
-				
-				parts := strings.Fields(line[1:])
-				if len(parts) >= 2 {
-					fullHash := parts[0]
-					hash := fullHash
-					if len(hash) > 7 {
-						hash = hash[:7]
-					}
-					
-					path := parts[1]
-					pathParts := strings.Split(path, "/")
-					name := pathParts[len(pathParts)-1]
-					
-					ref := "unknown"
-					if len(parts) > 2 {
-						refStr := strings.Join(parts[2:], " ")
-						ref = strings.Trim(refStr, "()")
-					}
-					
-					submodules = append(submodules, CloudOrchestratorSubmodule{
-						Name:     name,
-						Path:     path,
-						Hash:     hash,
-						FullHash: fullHash,
-						Ref:      ref,
-						Status:   status,
-					})
-				}
-			}
-		}
-
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"submodules": submodules,
 		})
 	}
 }

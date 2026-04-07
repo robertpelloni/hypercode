@@ -14,7 +14,7 @@ const CALLS = [
 ];
 
 ws.on('open', async () => {
-    console.log("Connected to Hypercode Core (ws://localhost:3001) - Testing Injection...");
+    console.log("Connected to HyperCode Core (ws://localhost:3001) - Testing Injection...");
 
     for (const call of CALLS) {
         const request = {

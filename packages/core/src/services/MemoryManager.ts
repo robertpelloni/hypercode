@@ -34,7 +34,7 @@ interface VectorStoreLike {
     listDocuments(where?: string, limit?: number): Promise<VectorStoreDocument[]>;
 }
 
-interface HypercodeMemoryModule {
+interface HyperCodeMemoryModule {
     LanceDBStore: new (dbPath: string) => VectorStoreLike;
     MemoryVectorStore: new () => VectorStoreLike;
     GraphMemory: new () => GraphMemory;
@@ -128,7 +128,7 @@ export class MemoryManager {
 
         // Lazy load the providers from @hypercode/memory
         // This allows switching to Chroma/SQLite/Memory based on config
-        const { LanceDBStore, MemoryVectorStore, GraphMemory } = await import('@hypercode/memory') as unknown as HypercodeMemoryModule;
+        const { LanceDBStore, MemoryVectorStore, GraphMemory } = await import('@hypercode/memory') as unknown as HyperCodeMemoryModule;
 
         // Select Backend
         let store: VectorStoreLike;

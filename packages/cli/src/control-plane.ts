@@ -6,52 +6,12 @@ import { resolveDataDir } from './commands/start.js';
 const DEFAULT_TRPC_HOST = '127.0.0.1';
 const DEFAULT_TRPC_PORT = 4000;
 
-export interface HypercodeStartupProvenance {
-  requestedRuntime?: string;
-  activeRuntime?: string;
-  requestedPort?: number;
-  activePort?: number;
-  portDecision?: string;
-  portReason?: string;
-  launchMode?: string;
-  dashboardMode?: string;
-  installDecision?: string;
-  installReason?: string;
-  buildDecision?: string;
-  buildReason?: string;
-  updatedAt?: string;
-}
-
-interface HypercodeStartLockRecord {
+interface HyperCodeStartLockRecord {
   instanceId: string;
   pid: number;
   port: number;
   host: string;
   createdAt: string;
-  startup?: HypercodeStartupProvenance;
-}
-
-function normalizeStartupProvenance(record: HypercodeStartLockRecord | null): HypercodeStartupProvenance | null {
-  if (!record || typeof record.port !== 'number' || record.port <= 0) {
-    return null;
-  }
-
-  const startup = record.startup ?? {};
-  const activePort = typeof startup.activePort === 'number' && startup.activePort > 0
-    ? startup.activePort
-    : record.port;
-  const requestedPort = typeof startup.requestedPort === 'number' && startup.requestedPort > 0
-    ? startup.requestedPort
-    : activePort;
-
-  return {
-    ...startup,
-    requestedPort,
-    activePort,
-    portDecision: startup.portDecision?.trim() || 'derived from lock record',
-    portReason: startup.portReason?.trim() || 'Detailed startup port provenance was unavailable; using the current control-plane lock port.',
-    updatedAt: startup.updatedAt?.trim() || record.createdAt,
-  };
 }
 
 export interface ControlPlaneLocation {
@@ -86,14 +46,14 @@ function normalizeTrpcBaseUrl(raw: string): string {
   return trimmed.endsWith('/trpc') ? trimmed : `${trimmed}/trpc`;
 }
 
-function readStartLockRecord(dataDir: string): HypercodeStartLockRecord | null {
+function readStartLockRecord(dataDir: string): HyperCodeStartLockRecord | null {
   const lockPath = join(resolveDataDir(dataDir), 'lock');
   if (!existsSync(lockPath)) {
     return null;
   }
 
   try {
-    const parsed = JSON.parse(readFileSync(lockPath, 'utf8')) as Partial<HypercodeStartLockRecord>;
+    const parsed = JSON.parse(readFileSync(lockPath, 'utf8')) as Partial<HyperCodeStartLockRecord>;
     if (
       typeof parsed.instanceId !== 'string'
       || typeof parsed.pid !== 'number'
@@ -104,14 +64,10 @@ function readStartLockRecord(dataDir: string): HypercodeStartLockRecord | null {
       return null;
     }
 
-    return parsed as HypercodeStartLockRecord;
+    return parsed as HyperCodeStartLockRecord;
   } catch {
     return null;
   }
-}
-
-export function readLocalStartupProvenance(dataDir: string = '~/.hypercode'): HypercodeStartupProvenance | null {
-  return normalizeStartupProvenance(readStartLockRecord(dataDir));
 }
 
 export function resolveControlPlaneLocation(options: {

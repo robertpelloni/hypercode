@@ -169,11 +169,11 @@ To connect the Chrome extension to a local server for proxying connections:
 1. Start the proxy server using one of the commands above
 2. Open the HyperCode Extension sidebar in one of the supported AI platforms, this should show the sidebar UI
 3. Click on the server status indicator (usually showing as "Disconnected")
-4. Enter the local server URL (default: `http://localhost:4000/sse`)
+4. Enter the local server URL (default: `http://localhost:3006/sse`)
    URL format depends on the --outputTransport method used:
-   - For SSE: `http://localhost:4000/sse`
-   - For Streamable HTTP: `http://localhost:4000/mcp`
-   - For WebSocket: `ws://localhost:4000/message`
+   - For SSE: `http://localhost:3006/sse`
+   - For Streamable HTTP: `http://localhost:3006/mcp`
+   - For WebSocket: `ws://localhost:3006/message`
    - Choose the appropriate transport method (SSE or Streamable HTTP or WebSocket) 
    - You can add any remote MCP server URL here as well, if it supports CORS or is proxied via this local proxy server. Try [Composio mcp](https://mcp.composio.dev/), [Zappier mcp](https://zapier.com/mcp), or [smithery](https://smithery.ai/) or any other remote MCP server.
 5. Click "Connect" to establish the connection

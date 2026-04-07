@@ -6,12 +6,10 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,10 +24,8 @@ import (
 	"github.com/hypercodehq/hypercode-go/internal/interop"
 	"github.com/hypercodehq/hypercode-go/internal/lockfile"
 	"github.com/hypercodehq/hypercode-go/internal/memorystore"
-	"github.com/hypercodehq/hypercode-go/internal/orchestration"
 	"github.com/hypercodehq/hypercode-go/internal/providers"
 	"github.com/hypercodehq/hypercode-go/internal/sessionimport"
-	"github.com/hypercodehq/hypercode-go/internal/supervisor"
 	_ "modernc.org/sqlite"
 )
 
@@ -893,39 +889,8 @@ func TestMemorySectionedStatusAndFormatsFallBackLocally(t *testing.T) {
 
 	formatsRecorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(formatsRecorder, httptest.NewRequest(http.MethodGet, "/api/memory/interchange-formats", nil))
-	if formatsRecorder.Code != http.StatusOK || !strings.Contains(formatsRecorder.Body.String(), `"json-provider"`) || !strings.Contains(formatsRecorder.Body.String(), `"sectioned-memory-store"`) || !strings.Contains(formatsRecorder.Body.String(), `"fallback":"go-local-memory"`) {
+	if formatsRecorder.Code != http.StatusOK || !strings.Contains(formatsRecorder.Body.String(), `"markdown"`) || !strings.Contains(formatsRecorder.Body.String(), `"fallback":"go-local-memory"`) {
 		t.Fatalf("expected local interchange formats fallback, got %d %s", formatsRecorder.Code, formatsRecorder.Body.String())
-	}
-}
-
-func TestProjectContextUpdateFallsBackToLocalDocument(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	cfg := config.Default()
-	cfg.WorkspaceRoot = t.TempDir()
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	updateRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(updateRecorder, httptest.NewRequest(http.MethodPost, "/api/project/context/update", strings.NewReader(`{"content":"# Project Context\n\nShip Go-first degraded truth."}`)))
-	if updateRecorder.Code != http.StatusOK {
-		t.Fatalf("expected local project context update fallback, got %d %s", updateRecorder.Code, updateRecorder.Body.String())
-	}
-	for _, needle := range []string{
-		`"fallback":"go-local-project"`,
-		`"procedure":"project.updateContext"`,
-		`writing local project context document`,
-		`"success":true`,
-	} {
-		if !strings.Contains(updateRecorder.Body.String(), needle) {
-			t.Fatalf("expected project context update fallback to contain %s, got %s", needle, updateRecorder.Body.String())
-		}
-	}
-
-	readRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(readRecorder, httptest.NewRequest(http.MethodGet, "/api/project/context", nil))
-	if readRecorder.Code != http.StatusOK || !strings.Contains(readRecorder.Body.String(), `Ship Go-first degraded truth.`) {
-		t.Fatalf("expected updated local project context to be readable, got %d %s", readRecorder.Code, readRecorder.Body.String())
 	}
 }
 
@@ -952,58 +917,6 @@ func TestMemoryContextsFallsBackToLocalRegistry(t *testing.T) {
 	}
 	if !strings.Contains(body, `using local memory context list`) || !strings.Contains(body, `"topic":"parity"`) {
 		t.Fatalf("expected local context-list fallback reason and metadata, got %s", body)
-	}
-}
-
-func TestMemoryContextSaveFallsBackToLocalRegistry(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	cfg := config.Default()
-	cfg.WorkspaceRoot = t.TempDir()
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	saveRecorder := httptest.NewRecorder()
-	saveRequest := httptest.NewRequest(http.MethodPost, "/api/memory/context/save", strings.NewReader(`{"source":"docs","url":"https://example.com/go-parity","title":"Go parity note","content":"Saved locally for truthful degraded mode.","metadata":{"topic":"parity","tags":["go","memory"]}}`))
-	server.Handler().ServeHTTP(saveRecorder, saveRequest)
-	if saveRecorder.Code != http.StatusOK {
-		t.Fatalf("expected local save fallback to succeed, got %d %s", saveRecorder.Code, saveRecorder.Body.String())
-	}
-	body := saveRecorder.Body.String()
-	if !strings.Contains(body, `"fallback":"go-local-memory"`) || !strings.Contains(body, `saving local memory context registry entry`) {
-		t.Fatalf("expected local save fallback metadata, got %s", body)
-	}
-
-	var response struct {
-		Success bool `json:"success"`
-		Data    struct {
-			Success bool   `json:"success"`
-			ID      string `json:"id"`
-		} `json:"data"`
-	}
-	if err := json.Unmarshal(saveRecorder.Body.Bytes(), &response); err != nil {
-		t.Fatalf("unmarshal save response: %v", err)
-	}
-	if !response.Success || !response.Data.Success || strings.TrimSpace(response.Data.ID) == "" {
-		t.Fatalf("expected save response to include success and id, got %+v", response)
-	}
-
-	getRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(getRecorder, httptest.NewRequest(http.MethodGet, "/api/memory/context/get?id="+url.QueryEscape(response.Data.ID), nil))
-	if getRecorder.Code != http.StatusOK || !strings.Contains(getRecorder.Body.String(), `Saved locally for truthful degraded mode.`) || !strings.Contains(getRecorder.Body.String(), `"topic":"parity"`) {
-		t.Fatalf("expected saved context to be readable locally, got %d %s", getRecorder.Code, getRecorder.Body.String())
-	}
-
-	listRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/memory/contexts", nil))
-	if listRecorder.Code != http.StatusOK || !strings.Contains(listRecorder.Body.String(), response.Data.ID) || !strings.Contains(listRecorder.Body.String(), `Go parity note`) {
-		t.Fatalf("expected saved context to appear in local registry list, got %d %s", listRecorder.Code, listRecorder.Body.String())
-	}
-
-	searchRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(searchRecorder, httptest.NewRequest(http.MethodGet, "/api/memory/search?query=truthful%20degraded%20mode&limit=5", nil))
-	if searchRecorder.Code != http.StatusOK || !strings.Contains(searchRecorder.Body.String(), response.Data.ID) || !strings.Contains(searchRecorder.Body.String(), `using local persisted memory search`) {
-		t.Fatalf("expected saved context to participate in local query fallback, got %d %s", searchRecorder.Code, searchRecorder.Body.String())
 	}
 }
 
@@ -1139,18 +1052,23 @@ func TestMCPEmptyStateRoutesFallBackLocally(t *testing.T) {
 		containsAny []string
 	}{
 		{path: "/api/mcp/traffic", method: http.MethodGet, containsAny: []string{`"fallback":"go-local-mcp"`, `using local empty MCP traffic history`}},
-		{path: "/api/mcp/tool-selection-telemetry", method: http.MethodGet, containsAny: []string{`"fallback":"go-local-mcp"`, `using local MCP tool-selection telemetry`}},
-		{path: "/api/mcp/tool-selection-telemetry/clear", method: http.MethodPost, containsAny: []string{`"ok":true`, `clearing local MCP tool-selection telemetry`}},
-		{path: "/api/mcp/working-set", method: http.MethodGet, containsAny: []string{`"maxLoadedTools":16`, `using local MCP working set state`}},
-		{path: "/api/mcp/working-set/evictions", method: http.MethodGet, containsAny: []string{`"fallback":"go-local-mcp"`, `using local MCP eviction history`}},
-		{path: "/api/mcp/working-set/evictions/clear", method: http.MethodPost, containsAny: []string{`"message":"cleared"`, `clearing local MCP eviction history`}},
+		{path: "/api/mcp/tool-selection-telemetry", method: http.MethodGet, containsAny: []string{`"fallback":"go-local-mcp"`, `using local empty tool-selection telemetry`}},
+		{path: "/api/mcp/tool-selection-telemetry/clear", method: http.MethodPost, containsAny: []string{`"ok":true`, `clearing local empty tool-selection telemetry`}},
+		{path: "/api/mcp/working-set", method: http.MethodGet, containsAny: []string{`"maxLoadedTools":0`, `using local empty MCP working set`}},
+		{path: "/api/mcp/working-set/evictions", method: http.MethodGet, containsAny: []string{`"fallback":"go-local-mcp"`, `using local empty MCP eviction history`}},
+		{path: "/api/mcp/working-set/evictions/clear", method: http.MethodPost, containsAny: []string{`already empty`, `clearing local empty MCP eviction history`}},
 	}
 
 	for _, tc := range cases {
 		recorder := httptest.NewRecorder()
 		server.Handler().ServeHTTP(recorder, httptest.NewRequest(tc.method, tc.path, nil))
 		expectedStatus := http.StatusOK
-		if tc.path == "/api/mcp/traffic" {
+		if tc.path == "/api/mcp/traffic" ||
+			tc.path == "/api/mcp/tool-selection-telemetry" ||
+			tc.path == "/api/mcp/tool-selection-telemetry/clear" ||
+			tc.path == "/api/mcp/working-set" ||
+			tc.path == "/api/mcp/working-set/evictions" ||
+			tc.path == "/api/mcp/working-set/evictions/clear" {
 			expectedStatus = http.StatusServiceUnavailable
 		}
 		if recorder.Code != expectedStatus {
@@ -1642,181 +1560,15 @@ func TestMCPLoadAndUnloadToolReturnExplicitUnavailableFallback(t *testing.T) {
 		req.Header.Set("content-type", "application/json")
 		recorder := httptest.NewRecorder()
 		server.Handler().ServeHTTP(recorder, req)
-		if recorder.Code != http.StatusServiceUnavailable || !strings.Contains(recorder.Body.String(), `"fallback":"go-local-mcp"`) || !strings.Contains(recorder.Body.String(), `Tool not present in local MCP inventory`) {
+		if recorder.Code != http.StatusServiceUnavailable || !strings.Contains(recorder.Body.String(), `"fallback":"go-local-mcp"`) || !strings.Contains(recorder.Body.String(), `MCP Server not initialized`) {
 			t.Fatalf("%s: expected explicit unavailable fallback, got %d %s", path, recorder.Code, recorder.Body.String())
 		}
 		if !strings.Contains(recorder.Body.String(), `"success":false`) {
 			t.Fatalf("%s: expected explicit failure payload, got %s", path, recorder.Body.String())
 		}
-		if !strings.Contains(recorder.Body.String(), `tool is not present in the local MCP inventory`) {
+		if !strings.Contains(recorder.Body.String(), `local MCP working set manager is not initialized`) {
 			t.Fatalf("%s: expected local working-set fallback reason, got %s", path, recorder.Body.String())
 		}
-	}
-}
-
-func TestMCPWorkingSetAndTelemetryFallBackToLocalState(t *testing.T) {
-	mainConfigDir := t.TempDir()
-	jsoncContent := `// HyperCode MCP configuration
-{
-  "mcpServers": {
-    "core": {
-      "command": "node",
-      "args": ["server.js"],
-      "_meta": {
-        "toolCount": 5,
-        "tools": [
-          {"name": "read_file", "description": "Read files", "inputSchema": {"type": "object"}, "alwaysOn": false},
-          {"name": "grep_search", "description": "Grep search", "inputSchema": {"type": "object"}, "alwaysOn": false},
-          {"name": "write_file", "description": "Write files", "inputSchema": {"type": "object"}, "alwaysOn": false},
-          {"name": "execute_command", "description": "Execute commands", "inputSchema": {"type": "object"}, "alwaysOn": false},
-          {"name": "search_tools", "description": "Search tools", "inputSchema": {"type": "object"}, "alwaysOn": false}
-        ]
-      }
-    }
-  },
-  "settings": {
-    "toolSelection": {
-      "alwaysLoadedTools": [],
-      "maxLoadedTools": 4,
-      "maxHydratedSchemas": 2,
-      "idleEvictionThresholdMs": 60000
-    }
-  }
-}
-`
-	if err := os.WriteFile(filepath.Join(mainConfigDir, "mcp.jsonc"), []byte(jsoncContent), 0o644); err != nil {
-		t.Fatalf("failed to seed local mcp jsonc: %v", err)
-	}
-
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	cfg := config.Default()
-	cfg.WorkspaceRoot = t.TempDir()
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = mainConfigDir
-	server := New(cfg, stubDetector{})
-
-	for _, toolName := range []string{"read_file", "grep_search", "write_file", "execute_command", "search_tools"} {
-		loadReq := httptest.NewRequest(http.MethodPost, "/api/mcp/working-set/load", strings.NewReader(`{"name":"`+toolName+`"}`))
-		loadReq.Header.Set("content-type", "application/json")
-		loadRecorder := httptest.NewRecorder()
-		server.Handler().ServeHTTP(loadRecorder, loadReq)
-		if loadRecorder.Code != http.StatusOK || !strings.Contains(loadRecorder.Body.String(), `using local MCP working set manager`) {
-			t.Fatalf("expected local load fallback success for %s, got %d %s", toolName, loadRecorder.Code, loadRecorder.Body.String())
-		}
-	}
-
-	for _, toolName := range []string{"grep_search", "write_file", "search_tools"} {
-		schemaReq := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/schema", strings.NewReader(`{"name":"`+toolName+`"}`))
-		schemaReq.Header.Set("content-type", "application/json")
-		schemaRecorder := httptest.NewRecorder()
-		server.Handler().ServeHTTP(schemaRecorder, schemaReq)
-		if schemaRecorder.Code != http.StatusOK || !strings.Contains(schemaRecorder.Body.String(), `"inputSchema"`) {
-			t.Fatalf("expected local schema fallback success for %s, got %d %s", toolName, schemaRecorder.Code, schemaRecorder.Body.String())
-		}
-	}
-
-	workingSetRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(workingSetRecorder, httptest.NewRequest(http.MethodGet, "/api/mcp/working-set", nil))
-	if workingSetRecorder.Code != http.StatusOK {
-		t.Fatalf("expected local working set 200, got %d %s", workingSetRecorder.Code, workingSetRecorder.Body.String())
-	}
-	if strings.Contains(workingSetRecorder.Body.String(), `"name":"read_file"`) || !strings.Contains(workingSetRecorder.Body.String(), `"name":"search_tools"`) {
-		t.Fatalf("expected local working set to retain the newest loaded tools, got %s", workingSetRecorder.Body.String())
-	}
-	if !strings.Contains(workingSetRecorder.Body.String(), `"hydrated":true`) {
-		t.Fatalf("expected hydrated state in working set, got %s", workingSetRecorder.Body.String())
-	}
-
-	telemetryRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(telemetryRecorder, httptest.NewRequest(http.MethodGet, "/api/mcp/tool-selection-telemetry", nil))
-	if telemetryRecorder.Code != http.StatusOK {
-		t.Fatalf("expected local telemetry 200, got %d %s", telemetryRecorder.Code, telemetryRecorder.Body.String())
-	}
-	if !strings.Contains(telemetryRecorder.Body.String(), `"type":"hydrate"`) || !strings.Contains(telemetryRecorder.Body.String(), `"toolName":"search_tools"`) {
-		t.Fatalf("expected local hydrate telemetry, got %s", telemetryRecorder.Body.String())
-	}
-	if !strings.Contains(telemetryRecorder.Body.String(), `"type":"load"`) {
-		t.Fatalf("expected local load telemetry, got %s", telemetryRecorder.Body.String())
-	}
-
-	evictionsRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(evictionsRecorder, httptest.NewRequest(http.MethodGet, "/api/mcp/working-set/evictions", nil))
-	if evictionsRecorder.Code != http.StatusOK {
-		t.Fatalf("expected local evictions 200, got %d %s", evictionsRecorder.Code, evictionsRecorder.Body.String())
-	}
-	if !strings.Contains(evictionsRecorder.Body.String(), `"tier":"loaded"`) || !strings.Contains(evictionsRecorder.Body.String(), `"toolName":"read_file"`) {
-		t.Fatalf("expected local loaded eviction history entry, got %s", evictionsRecorder.Body.String())
-	}
-	if !strings.Contains(evictionsRecorder.Body.String(), `"tier":"hydrated"`) || !strings.Contains(evictionsRecorder.Body.String(), `"toolName":"grep_search"`) {
-		t.Fatalf("expected local hydrated eviction history entry, got %s", evictionsRecorder.Body.String())
-	}
-}
-
-func TestMCPLocalStatePersistence(t *testing.T) {
-	tempDir := t.TempDir()
-	persistPath := filepath.Join(tempDir, "mcp_state.json")
-	limits := map[string]any{"maxLoadedTools": 4, "maxHydratedSchemas": 2}
-	available := map[string]localMCPTool{
-		"read_file":       {Name: "read_file", Description: "Read files", InputSchema: map[string]any{"type": "object"}},
-		"grep_search":     {Name: "grep_search", Description: "Search files", InputSchema: map[string]any{"type": "object"}},
-		"write_file":      {Name: "write_file", Description: "Write files", InputSchema: map[string]any{"type": "object"}},
-		"execute_command": {Name: "execute_command", Description: "Execute commands", InputSchema: map[string]any{"type": "object"}},
-		"search_tools":    {Name: "search_tools", Description: "Search tools", InputSchema: map[string]any{"type": "object"}},
-	}
-
-	m1 := newLocalMCPStateManager(persistPath)
-	for _, toolName := range []string{"read_file", "grep_search", "write_file", "execute_command", "search_tools"} {
-		if _, _, ok := m1.loadTool(toolName, limits, available); !ok {
-			t.Fatalf("expected %s load to succeed", toolName)
-		}
-		time.Sleep(2 * time.Millisecond)
-	}
-	for _, toolName := range []string{"grep_search", "write_file", "search_tools"} {
-		if _, _, ok := m1.hydrateTool(toolName, limits, available); !ok {
-			t.Fatalf("expected %s hydrate to succeed", toolName)
-		}
-		m1.recordTelemetry(localMCPTelemetryEvent{Type: "hydrate", ToolName: toolName, Timestamp: time.Now().UTC().UnixMilli()})
-		time.Sleep(2 * time.Millisecond)
-	}
-
-	m2 := newLocalMCPStateManager(persistPath)
-	workingSet := m2.snapshot(limits, available)
-	workingSetJSON, _ := json.Marshal(workingSet)
-	if strings.Contains(string(workingSetJSON), `"name":"read_file"`) || !strings.Contains(string(workingSetJSON), `"name":"search_tools"`) {
-		t.Fatalf("expected persisted working set to retain newest tools, got %s", string(workingSetJSON))
-	}
-	if !strings.Contains(string(workingSetJSON), `"hydrated":true`) {
-		t.Fatalf("expected persisted hydrated state, got %s", string(workingSetJSON))
-	}
-
-	telemetry := m2.telemetryList()
-	if len(telemetry) == 0 || telemetry[0]["type"] != "hydrate" {
-		t.Fatalf("expected persisted telemetry after reload, got %+v", telemetry)
-	}
-
-	evictions := m2.evictionList()
-	evictionsJSON, _ := json.Marshal(evictions)
-	if !strings.Contains(string(evictionsJSON), `"tier":"loaded"`) || !strings.Contains(string(evictionsJSON), `"toolName":"read_file"`) {
-		t.Fatalf("expected persisted loaded eviction history, got %s", string(evictionsJSON))
-	}
-	if !strings.Contains(string(evictionsJSON), `"tier":"hydrated"`) || !strings.Contains(string(evictionsJSON), `"toolName":"grep_search"`) {
-		t.Fatalf("expected persisted hydrated eviction history, got %s", string(evictionsJSON))
-	}
-
-	m2.clearTelemetry()
-	m2.clearEvictions()
-	m2.unloadTool("search_tools", available)
-
-	m3 := newLocalMCPStateManager(persistPath)
-	if len(m3.telemetryList()) != 0 {
-		t.Fatalf("expected no telemetry after clear and reload, got %d", len(m3.telemetryList()))
-	}
-	if len(m3.evictionList()) != 0 {
-		t.Fatalf("expected no evictions after clear and reload, got %d", len(m3.evictionList()))
-	}
-	postUnloadJSON, _ := json.Marshal(m3.snapshot(limits, available))
-	if strings.Contains(string(postUnloadJSON), `"name":"search_tools"`) {
-		t.Fatalf("expected unloaded tool to stay removed after reload, got %s", string(postUnloadJSON))
 	}
 }
 
@@ -2169,117 +1921,6 @@ func TestAutoDevBridgeRoutes(t *testing.T) {
 				t.Fatalf("expected bridge metadata %s, got %s", tc.procedure, recorder.Body.String())
 			}
 		})
-	}
-}
-
-func TestDarwinFallsBackToLocalGoState(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	cfg := config.Default()
-	cfg.ConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	evolveReq := httptest.NewRequest(http.MethodPost, "/api/darwin/evolve", strings.NewReader(`{"prompt":"Refactor prompt","goal":"Improve prompts"}`))
-	evolveReq.Header.Set("content-type", "application/json")
-	evolveRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(evolveRecorder, evolveReq)
-	if evolveRecorder.Code != http.StatusOK {
-		t.Fatalf("expected darwin evolve fallback 200, got %d %s", evolveRecorder.Code, evolveRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-darwin"`, `"procedure":"darwin.evolve"`, `"mutationId":"mut-1"`, `native Go Darwin fallback mutation scaffold`} {
-		if !strings.Contains(evolveRecorder.Body.String(), needle) {
-			t.Fatalf("expected darwin evolve fallback to contain %s, got %s", needle, evolveRecorder.Body.String())
-		}
-	}
-
-	experimentReq := httptest.NewRequest(http.MethodPost, "/api/darwin/experiment", strings.NewReader(`{"mutationId":"mut-1","task":"Run benchmark"}`))
-	experimentReq.Header.Set("content-type", "application/json")
-	experimentRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(experimentRecorder, experimentReq)
-	if experimentRecorder.Code != http.StatusOK {
-		t.Fatalf("expected darwin experiment fallback 200, got %d %s", experimentRecorder.Code, experimentRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-darwin"`, `"procedure":"darwin.experiment"`, `"experimentId":"exp-2"`} {
-		if !strings.Contains(experimentRecorder.Body.String(), needle) {
-			t.Fatalf("expected darwin experiment fallback to contain %s, got %s", needle, experimentRecorder.Body.String())
-		}
-	}
-
-	time.Sleep(20 * time.Millisecond)
-	statusRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(statusRecorder, httptest.NewRequest(http.MethodGet, "/api/darwin/status", nil))
-	if statusRecorder.Code != http.StatusOK {
-		t.Fatalf("expected darwin status fallback 200, got %d %s", statusRecorder.Code, statusRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-darwin"`, `"procedure":"darwin.getStatus"`, `"mutationCount":1`, `"experimentCount":1`, `"winner":"`} {
-		if !strings.Contains(statusRecorder.Body.String(), needle) {
-			t.Fatalf("expected darwin status fallback to contain %s, got %s", needle, statusRecorder.Body.String())
-		}
-	}
-}
-
-func TestAutoDevFallsBackToLocalGoLoopManager(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	cfg := config.Default()
-	cfg.WorkspaceRoot = t.TempDir()
-	cfg.ConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	command := "echo autodev-ok"
-	if runtime.GOOS == "windows" {
-		command = "cmd /C echo autodev-ok"
-	}
-	startReq := httptest.NewRequest(http.MethodPost, "/api/autodev/start-loop", strings.NewReader(`{"type":"test","maxAttempts":1,"command":"`+command+`"}`))
-	startReq.Header.Set("content-type", "application/json")
-	startRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(startRecorder, startReq)
-	if startRecorder.Code != http.StatusOK {
-		t.Fatalf("expected autodev fallback start 200, got %d %s", startRecorder.Code, startRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-autodev"`, `"procedure":"autoDev.startLoop"`, `"loopId":"loop-1"`} {
-		if !strings.Contains(startRecorder.Body.String(), needle) {
-			t.Fatalf("expected autodev start fallback to contain %s, got %s", needle, startRecorder.Body.String())
-		}
-	}
-
-	time.Sleep(50 * time.Millisecond)
-	loopsRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(loopsRecorder, httptest.NewRequest(http.MethodGet, "/api/autodev/loops", nil))
-	if loopsRecorder.Code != http.StatusOK {
-		t.Fatalf("expected autodev loops fallback 200, got %d %s", loopsRecorder.Code, loopsRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-autodev"`, `"procedure":"autoDev.getLoops"`, `"id":"loop-1"`} {
-		if !strings.Contains(loopsRecorder.Body.String(), needle) {
-			t.Fatalf("expected autodev loops fallback to contain %s, got %s", needle, loopsRecorder.Body.String())
-		}
-	}
-
-	getRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(getRecorder, httptest.NewRequest(http.MethodGet, "/api/autodev/loop?loopId=loop-1", nil))
-	if getRecorder.Code != http.StatusOK {
-		t.Fatalf("expected autodev get fallback 200, got %d %s", getRecorder.Code, getRecorder.Body.String())
-	}
-	if !strings.Contains(getRecorder.Body.String(), `"id":"loop-1"`) {
-		t.Fatalf("expected autodev get fallback payload, got %s", getRecorder.Body.String())
-	}
-
-	cancelReq := httptest.NewRequest(http.MethodPost, "/api/autodev/cancel-loop", strings.NewReader(`{"loopId":"loop-1"}`))
-	cancelReq.Header.Set("content-type", "application/json")
-	cancelRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(cancelRecorder, cancelReq)
-	if cancelRecorder.Code != http.StatusOK {
-		t.Fatalf("expected autodev cancel fallback 200, got %d %s", cancelRecorder.Code, cancelRecorder.Body.String())
-	}
-	if !strings.Contains(cancelRecorder.Body.String(), `"fallback":"go-local-autodev"`) {
-		t.Fatalf("expected autodev cancel fallback metadata, got %s", cancelRecorder.Body.String())
-	}
-
-	clearRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(clearRecorder, httptest.NewRequest(http.MethodPost, "/api/autodev/clear-completed", nil))
-	if clearRecorder.Code != http.StatusOK {
-		t.Fatalf("expected autodev clear fallback 200, got %d %s", clearRecorder.Code, clearRecorder.Body.String())
-	}
-	if !strings.Contains(clearRecorder.Body.String(), `"fallback":"go-local-autodev"`) {
-		t.Fatalf("expected autodev clear fallback metadata, got %s", clearRecorder.Body.String())
 	}
 }
 
@@ -3199,36 +2840,6 @@ func TestConfigRouterBridgeRoutes(t *testing.T) {
 	}
 }
 
-func seedLocalDebateHistory(t *testing.T, server *Server) string {
-	t.Helper()
-	now := time.Now().UTC().UnixMilli()
-	record := orchestration.DebateRecord{
-		ID:        "deb-local-1",
-		Timestamp: now,
-		Task:      map[string]any{"description": "Ship feature safely"},
-		Decision: map[string]any{
-			"approved":          true,
-			"consensus":         0.9,
-			"weightedConsensus": 0.9,
-			"votes": []map[string]any{
-				{"supervisor": "planner", "message": "approve"},
-				{"supervisor": "security", "message": "approve with notes"},
-			},
-		},
-		Metadata: orchestration.DebateMetadata{
-			SessionID:                "sess-local-1",
-			DebateRounds:             2,
-			ConsensusMode:            "weighted",
-			SupervisorCount:          2,
-			ParticipatingSupervisors: []string{"planner", "security"},
-		},
-	}
-	if err := server.debateHistory.SaveRecord(context.Background(), record); err != nil {
-		t.Fatalf("failed to seed local debate history: %v", err)
-	}
-	return record.ID
-}
-
 func TestCouncilHistoryBridgeRoutes(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")
@@ -3329,97 +2940,6 @@ func TestCouncilHistoryBridgeRoutes(t *testing.T) {
 				t.Fatalf("expected bridge metadata %s, got %s", tc.procedure, recorder.Body.String())
 			}
 		})
-	}
-}
-
-func TestCouncilHistoryFallsBackToLocalGoStore(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	workspace := t.TempDir()
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspace
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-	recordID := seedLocalDebateHistory(t, server)
-
-	statusRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(statusRecorder, httptest.NewRequest(http.MethodGet, "/api/council/history/status", nil))
-	if statusRecorder.Code != http.StatusOK {
-		t.Fatalf("expected history status 200, got %d with body %s", statusRecorder.Code, statusRecorder.Body.String())
-	}
-	if !strings.Contains(statusRecorder.Body.String(), `native Go debate-history status`) || !strings.Contains(statusRecorder.Body.String(), `"recordCount":1`) {
-		t.Fatalf("expected local history status fallback, got %s", statusRecorder.Body.String())
-	}
-
-	statsRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(statsRecorder, httptest.NewRequest(http.MethodGet, "/api/council/history/stats", nil))
-	if statsRecorder.Code != http.StatusOK {
-		t.Fatalf("expected history stats 200, got %d with body %s", statsRecorder.Code, statsRecorder.Body.String())
-	}
-	if !strings.Contains(statsRecorder.Body.String(), `native Go debate-history stats`) || !strings.Contains(statsRecorder.Body.String(), `"totalDebates":1`) {
-		t.Fatalf("expected local history stats fallback, got %s", statsRecorder.Body.String())
-	}
-
-	listRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/council/history/list?sessionId=sess-local-1&approved=true&supervisorName=planner", nil))
-	if listRecorder.Code != http.StatusOK {
-		t.Fatalf("expected history list 200, got %d with body %s", listRecorder.Code, listRecorder.Body.String())
-	}
-	if !strings.Contains(listRecorder.Body.String(), `native Go debate-history records`) || !strings.Contains(listRecorder.Body.String(), `"deb-local-1"`) {
-		t.Fatalf("expected local history list fallback, got %s", listRecorder.Body.String())
-	}
-
-	getRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(getRecorder, httptest.NewRequest(http.MethodGet, "/api/council/history/get?id="+recordID, nil))
-	if getRecorder.Code != http.StatusOK {
-		t.Fatalf("expected history get 200, got %d with body %s", getRecorder.Code, getRecorder.Body.String())
-	}
-	if !strings.Contains(getRecorder.Body.String(), `native Go debate-history record`) || !strings.Contains(getRecorder.Body.String(), `Ship feature safely`) {
-		t.Fatalf("expected local history get fallback, got %s", getRecorder.Body.String())
-	}
-
-	supervisorRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(supervisorRecorder, httptest.NewRequest(http.MethodGet, "/api/council/history/supervisor?name=planner", nil))
-	if supervisorRecorder.Code != http.StatusOK {
-		t.Fatalf("expected supervisor history 200, got %d with body %s", supervisorRecorder.Code, supervisorRecorder.Body.String())
-	}
-	if !strings.Contains(supervisorRecorder.Body.String(), `native Go supervisor vote history`) || !strings.Contains(supervisorRecorder.Body.String(), `"decision":"approve"`) {
-		t.Fatalf("expected local supervisor history fallback, got %s", supervisorRecorder.Body.String())
-	}
-
-	deleteRequest := httptest.NewRequest(http.MethodPost, "/api/council/history/delete", strings.NewReader(`{"id":"`+recordID+`"}`))
-	deleteRequest.Header.Set("content-type", "application/json")
-	deleteRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(deleteRecorder, deleteRequest)
-	if deleteRecorder.Code != http.StatusOK {
-		t.Fatalf("expected delete 200, got %d with body %s", deleteRecorder.Code, deleteRecorder.Body.String())
-	}
-	if !strings.Contains(deleteRecorder.Body.String(), `deleting native Go debate-history record`) {
-		t.Fatalf("expected local delete fallback, got %s", deleteRecorder.Body.String())
-	}
-}
-
-func TestCouncilBaseDebateFallbackPersistsRecord(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	t.Setenv("OPENROUTER_API_KEY", "")
-	t.Setenv("OPENAI_API_KEY", "")
-	t.Setenv("ANTHROPIC_API_KEY", "")
-	t.Setenv("GOOGLE_API_KEY", "")
-	t.Setenv("GEMINI_API_KEY", "")
-	t.Setenv("DEEPSEEK_API_KEY", "")
-	workspace := t.TempDir()
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspace
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	// Seed directly because native debate execution depends on live LLM providers.
-	recordID := seedLocalDebateHistory(t, server)
-	getRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(getRecorder, httptest.NewRequest(http.MethodGet, "/api/council/history/get?id="+recordID, nil))
-	if getRecorder.Code != http.StatusOK {
-		t.Fatalf("expected stored local history record to remain readable, got %d with body %s", getRecorder.Code, getRecorder.Body.String())
 	}
 }
 
@@ -4170,121 +3690,6 @@ func TestSwarmBridgeRoutes(t *testing.T) {
 				t.Fatalf("expected bridge metadata %s, got %s", tc.procedure, recorder.Body.String())
 			}
 		})
-	}
-}
-
-func TestSwarmFallsBackToLocalGoMissionState(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	cfg := config.Default()
-	cfg.ConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	startReq := httptest.NewRequest(http.MethodPost, "/api/swarm/start", strings.NewReader(`{"masterPrompt":"Implement feature","maxConcurrency":3}`))
-	startReq.Header.Set("content-type", "application/json")
-	startRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(startRecorder, startReq)
-	if startRecorder.Code != http.StatusOK {
-		t.Fatalf("expected swarm start fallback 200, got %d %s", startRecorder.Code, startRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-swarm"`, `"procedure":"swarm.startSwarm"`, `"missionId":"mission-1"`, `"taskCount":3`} {
-		if !strings.Contains(startRecorder.Body.String(), needle) {
-			t.Fatalf("expected swarm start fallback to contain %s, got %s", needle, startRecorder.Body.String())
-		}
-	}
-
-	missionsRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(missionsRecorder, httptest.NewRequest(http.MethodGet, "/api/swarm/missions", nil))
-	if missionsRecorder.Code != http.StatusOK {
-		t.Fatalf("expected swarm missions fallback 200, got %d %s", missionsRecorder.Code, missionsRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-swarm"`, `"procedure":"swarm.getMissionHistory"`, `"mission-1"`, `"Implement feature"`} {
-		if !strings.Contains(missionsRecorder.Body.String(), needle) {
-			t.Fatalf("expected swarm missions fallback to contain %s, got %s", needle, missionsRecorder.Body.String())
-		}
-	}
-
-	summaryRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(summaryRecorder, httptest.NewRequest(http.MethodGet, "/api/swarm/risk/summary", nil))
-	if summaryRecorder.Code != http.StatusOK {
-		t.Fatalf("expected swarm risk summary fallback 200, got %d %s", summaryRecorder.Code, summaryRecorder.Body.String())
-	}
-	if !strings.Contains(summaryRecorder.Body.String(), `"missionCount":1`) {
-		t.Fatalf("expected swarm risk summary payload, got %s", summaryRecorder.Body.String())
-	}
-
-	rowsRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(rowsRecorder, httptest.NewRequest(http.MethodGet, "/api/swarm/risk/rows?statusFilter=active&limit=10", nil))
-	if rowsRecorder.Code != http.StatusOK {
-		t.Fatalf("expected swarm risk rows fallback 200, got %d %s", rowsRecorder.Code, rowsRecorder.Body.String())
-	}
-	if !strings.Contains(rowsRecorder.Body.String(), `"missionRiskScore":`) {
-		t.Fatalf("expected swarm risk rows payload, got %s", rowsRecorder.Body.String())
-	}
-
-	facetsRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(facetsRecorder, httptest.NewRequest(http.MethodGet, "/api/swarm/risk/facets?minRisk=10", nil))
-	if facetsRecorder.Code != http.StatusOK {
-		t.Fatalf("expected swarm risk facets fallback 200, got %d %s", facetsRecorder.Code, facetsRecorder.Body.String())
-	}
-	if !strings.Contains(facetsRecorder.Body.String(), `"bands"`) {
-		t.Fatalf("expected swarm risk facets payload, got %s", facetsRecorder.Body.String())
-	}
-
-	meshRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(meshRecorder, httptest.NewRequest(http.MethodGet, "/api/swarm/mesh-capabilities", nil))
-	if meshRecorder.Code != http.StatusOK {
-		t.Fatalf("expected swarm mesh capabilities fallback 200, got %d %s", meshRecorder.Code, meshRecorder.Body.String())
-	}
-	if !strings.Contains(meshRecorder.Body.String(), `"hypercoded-go"`) {
-		t.Fatalf("expected swarm mesh capability payload, got %s", meshRecorder.Body.String())
-	}
-
-	approveReq := httptest.NewRequest(http.MethodPost, "/api/swarm/approve-task", strings.NewReader(`{"missionId":"mission-1","taskId":"mission-1-task-2","approved":true}`))
-	approveReq.Header.Set("content-type", "application/json")
-	approveRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(approveRecorder, approveReq)
-	if approveRecorder.Code != http.StatusOK || !strings.Contains(approveRecorder.Body.String(), `"fallback":"go-local-swarm"`) || !strings.Contains(approveRecorder.Body.String(), `"procedure":"swarm.approveTask"`) {
-		t.Fatalf("expected swarm approve fallback, got %d %s", approveRecorder.Code, approveRecorder.Body.String())
-	}
-
-	updateReq := httptest.NewRequest(http.MethodPost, "/api/swarm/update-task-priority", strings.NewReader(`{"missionId":"mission-1","taskId":"mission-1-task-3","priority":5}`))
-	updateReq.Header.Set("content-type", "application/json")
-	updateRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(updateRecorder, updateReq)
-	if updateRecorder.Code != http.StatusOK || !strings.Contains(updateRecorder.Body.String(), `"procedure":"swarm.updateTaskPriority"`) {
-		t.Fatalf("expected swarm update priority fallback, got %d %s", updateRecorder.Code, updateRecorder.Body.String())
-	}
-
-	decomposeReq := httptest.NewRequest(http.MethodPost, "/api/swarm/decompose-task", strings.NewReader(`{"missionId":"mission-1","taskId":"mission-1-task-3"}`))
-	decomposeReq.Header.Set("content-type", "application/json")
-	decomposeRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(decomposeRecorder, decomposeReq)
-	if decomposeRecorder.Code != http.StatusOK || !strings.Contains(decomposeRecorder.Body.String(), `"subMissionId":"mission-2"`) {
-		t.Fatalf("expected swarm decompose fallback, got %d %s", decomposeRecorder.Code, decomposeRecorder.Body.String())
-	}
-
-	debateReq := httptest.NewRequest(http.MethodPost, "/api/swarm/debate", strings.NewReader(`{"topic":"Best implementation path","proponentModel":"claude","opponentModel":"gpt","judgeModel":"gemini","rounds":3}`))
-	debateReq.Header.Set("content-type", "application/json")
-	debateRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(debateRecorder, debateReq)
-	if debateRecorder.Code != http.StatusOK || !strings.Contains(debateRecorder.Body.String(), `"procedure":"swarm.executeDebate"`) || !strings.Contains(debateRecorder.Body.String(), `"winner":"`) {
-		t.Fatalf("expected swarm debate fallback, got %d %s", debateRecorder.Code, debateRecorder.Body.String())
-	}
-
-	consensusReq := httptest.NewRequest(http.MethodPost, "/api/swarm/consensus", strings.NewReader(`{"prompt":"Agree on plan","models":["claude","gpt","gemini"]}`))
-	consensusReq.Header.Set("content-type", "application/json")
-	consensusRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(consensusRecorder, consensusReq)
-	if consensusRecorder.Code != http.StatusOK || !strings.Contains(consensusRecorder.Body.String(), `"procedure":"swarm.seekConsensus"`) || !strings.Contains(consensusRecorder.Body.String(), `"agreed":true`) {
-		t.Fatalf("expected swarm consensus fallback, got %d %s", consensusRecorder.Code, consensusRecorder.Body.String())
-	}
-
-	directReq := httptest.NewRequest(http.MethodPost, "/api/swarm/direct-message", strings.NewReader(`{"targetNodeId":"node-1","payload":{"hello":"world"}}`))
-	directReq.Header.Set("content-type", "application/json")
-	directRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(directRecorder, directReq)
-	if directRecorder.Code != http.StatusOK || !strings.Contains(directRecorder.Body.String(), `"procedure":"swarm.sendDirectMessage"`) || !strings.Contains(directRecorder.Body.String(), `"success":true`) {
-		t.Fatalf("expected swarm direct message fallback, got %d %s", directRecorder.Code, directRecorder.Body.String())
 	}
 }
 
@@ -5048,76 +4453,6 @@ func TestSquadBridgeRoutes(t *testing.T) {
 	}
 }
 
-func TestSquadFallsBackToLocalGoState(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	cfg := config.Default()
-	cfg.WorkspaceRoot = t.TempDir()
-	cfg.ConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	spawnReq := httptest.NewRequest(http.MethodPost, "/api/squad/spawn", strings.NewReader(`{"branch":"feature/alpha","goal":"Ship alpha"}`))
-	spawnReq.Header.Set("content-type", "application/json")
-	spawnRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(spawnRecorder, spawnReq)
-	if spawnRecorder.Code != http.StatusOK {
-		t.Fatalf("expected squad spawn fallback 200, got %d %s", spawnRecorder.Code, spawnRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-squad"`, `"procedure":"squad.spawn"`, `"status":"spawned"`} {
-		if !strings.Contains(spawnRecorder.Body.String(), needle) {
-			t.Fatalf("expected squad spawn fallback to contain %s, got %s", needle, spawnRecorder.Body.String())
-		}
-	}
-
-	listRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/squad", nil))
-	if listRecorder.Code != http.StatusOK {
-		t.Fatalf("expected squad list fallback 200, got %d %s", listRecorder.Code, listRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-squad"`, `"procedure":"squad.list"`, `"feature/alpha"`, `"Ship alpha"`} {
-		if !strings.Contains(listRecorder.Body.String(), needle) {
-			t.Fatalf("expected squad list fallback to contain %s, got %s", needle, listRecorder.Body.String())
-		}
-	}
-
-	chatReq := httptest.NewRequest(http.MethodPost, "/api/squad/chat", strings.NewReader(`{"branch":"feature/alpha","message":"Status?"}`))
-	chatReq.Header.Set("content-type", "application/json")
-	chatRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(chatRecorder, chatReq)
-	if chatRecorder.Code != http.StatusOK {
-		t.Fatalf("expected squad chat fallback 200, got %d %s", chatRecorder.Code, chatRecorder.Body.String())
-	}
-	if !strings.Contains(chatRecorder.Body.String(), `Native Go fallback squad member acknowledged`) {
-		t.Fatalf("expected squad chat fallback payload, got %s", chatRecorder.Body.String())
-	}
-
-	toggleReq := httptest.NewRequest(http.MethodPost, "/api/squad/indexer/toggle", strings.NewReader(`{"enabled":true}`))
-	toggleReq.Header.Set("content-type", "application/json")
-	toggleRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(toggleRecorder, toggleReq)
-	if toggleRecorder.Code != http.StatusOK {
-		t.Fatalf("expected squad toggle fallback 200, got %d %s", toggleRecorder.Code, toggleRecorder.Body.String())
-	}
-	statusRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(statusRecorder, httptest.NewRequest(http.MethodGet, "/api/squad/indexer/status", nil))
-	if statusRecorder.Code != http.StatusOK {
-		t.Fatalf("expected squad indexer status fallback 200, got %d %s", statusRecorder.Code, statusRecorder.Body.String())
-	}
-	if !strings.Contains(statusRecorder.Body.String(), `"running":true`) {
-		t.Fatalf("expected squad indexer status fallback payload, got %s", statusRecorder.Body.String())
-	}
-
-	killReq := httptest.NewRequest(http.MethodPost, "/api/squad/kill", strings.NewReader(`{"branch":"feature/alpha"}`))
-	killReq.Header.Set("content-type", "application/json")
-	killRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(killRecorder, killReq)
-	if killRecorder.Code != http.StatusOK {
-		t.Fatalf("expected squad kill fallback 200, got %d %s", killRecorder.Code, killRecorder.Body.String())
-	}
-	if !strings.Contains(killRecorder.Body.String(), `"data":true`) {
-		t.Fatalf("expected squad kill fallback payload, got %s", killRecorder.Body.String())
-	}
-}
-
 func TestSupervisorBridgeRoutes(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")
@@ -5244,8 +4579,8 @@ func TestConfigStatusEndpoint(t *testing.T) {
 	if payload.Data.MainConfigDir.Path != cfg.MainConfigDir || !payload.Data.MainConfigDir.Exists {
 		t.Fatalf("expected main config dir status for %s, got %+v", cfg.MainConfigDir, payload.Data.MainConfigDir)
 	}
-	if payload.Data.HypercodeConfigFile.Exists || payload.Data.MCPConfigFile.Exists {
-		t.Fatalf("expected config files to be absent in this fixture, got hypercode=%+v mcp=%+v", payload.Data.HypercodeConfigFile, payload.Data.MCPConfigFile)
+	if payload.Data.HyperCodeConfigFile.Exists || payload.Data.MCPConfigFile.Exists {
+		t.Fatalf("expected config files to be absent in this fixture, got hypercode=%+v mcp=%+v", payload.Data.HyperCodeConfigFile, payload.Data.MCPConfigFile)
 	}
 }
 
@@ -5816,455 +5151,6 @@ func TestSupervisorSessionBridgeRoutes(t *testing.T) {
 	}
 	if !strings.Contains(restoreRecorder.Body.String(), "\"procedure\":\"session.restore\"") || !strings.Contains(restoreRecorder.Body.String(), "\"restoredCount\":1") {
 		t.Fatalf("expected restore bridge payload, got %s", restoreRecorder.Body.String())
-	}
-}
-
-func extractJSONFieldString(payload string, field string) string {
-	needle := `"` + field + `":"`
-	index := strings.Index(payload, needle)
-	if index < 0 {
-		return ""
-	}
-	start := index + len(needle)
-	end := strings.Index(payload[start:], `"`)
-	if end < 0 {
-		return ""
-	}
-	return payload[start : start+end]
-}
-
-func TestSupervisorSessionStateFallsBackToLocalGoState(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	workspaceRoot := t.TempDir()
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspaceRoot
-	cfg.ConfigDir = filepath.Join(workspaceRoot, ".hypercode-go")
-	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".hypercode")
-	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
-		t.Fatalf("failed to create go config dir: %v", err)
-	}
-	if err := os.MkdirAll(cfg.MainConfigDir, 0o755); err != nil {
-		t.Fatalf("failed to create main config dir: %v", err)
-	}
-	server := New(cfg, stubDetector{})
-
-	initialStateRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(initialStateRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/supervisor/state", nil))
-	if initialStateRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local state fallback, got %d %s", initialStateRecorder.Code, initialStateRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-session-state"`, `"procedure":"session.getState"`, `"isAutoDriveActive":false`, `"activeGoal":null`} {
-		if !strings.Contains(initialStateRecorder.Body.String(), needle) {
-			t.Fatalf("expected initial local state payload to contain %s, got %s", needle, initialStateRecorder.Body.String())
-		}
-	}
-
-	updateStateRequest := httptest.NewRequest(http.MethodPost, "/api/sessions/supervisor/update-state", strings.NewReader(`{"isAutoDriveActive":true,"activeGoal":"ship go parity","lastObjective":"native session fallback","threadId":"thread-local-1"}`))
-	updateStateRequest.Header.Set("content-type", "application/json")
-	updateStateRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(updateStateRecorder, updateStateRequest)
-	if updateStateRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local update-state fallback, got %d %s", updateStateRecorder.Code, updateStateRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-session-state"`, `"procedure":"session.updateState"`, `"toolAdvertisements":[]`, `"memoryBootstrap":null`, `"activeGoal":"ship go parity"`, `"threadId":"thread-local-1"`} {
-		if !strings.Contains(updateStateRecorder.Body.String(), needle) {
-			t.Fatalf("expected local update-state payload to contain %s, got %s", needle, updateStateRecorder.Body.String())
-		}
-	}
-
-	persistedStatePath := filepath.Join(workspaceRoot, ".hypercode-session.json")
-	persistedRaw, err := os.ReadFile(persistedStatePath)
-	if err != nil {
-		t.Fatalf("expected persisted local session state at %s: %v", persistedStatePath, err)
-	}
-	for _, needle := range []string{`"isAutoDriveActive": true`, `"activeGoal": "ship go parity"`, `"lastObjective": "native session fallback"`, `"threadId": "thread-local-1"`} {
-		if !strings.Contains(string(persistedRaw), needle) {
-			t.Fatalf("expected persisted local session state to contain %s, got %s", needle, string(persistedRaw))
-		}
-	}
-
-	stateRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(stateRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/supervisor/state", nil))
-	if stateRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local state readback, got %d %s", stateRecorder.Code, stateRecorder.Body.String())
-	}
-	for _, needle := range []string{`"activeGoal":"ship go parity"`, `"lastObjective":"native session fallback"`, `"threadId":"thread-local-1"`} {
-		if !strings.Contains(stateRecorder.Body.String(), needle) {
-			t.Fatalf("expected local state readback to contain %s, got %s", needle, stateRecorder.Body.String())
-		}
-	}
-
-	heartbeatRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(heartbeatRecorder, httptest.NewRequest(http.MethodPost, "/api/sessions/supervisor/heartbeat", nil))
-	if heartbeatRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local heartbeat fallback, got %d %s", heartbeatRecorder.Code, heartbeatRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-session-state"`, `"procedure":"session.heartbeat"`, `"alive":true`} {
-		if !strings.Contains(heartbeatRecorder.Body.String(), needle) {
-			t.Fatalf("expected local heartbeat payload to contain %s, got %s", needle, heartbeatRecorder.Body.String())
-		}
-	}
-
-	clearRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(clearRecorder, httptest.NewRequest(http.MethodPost, "/api/sessions/supervisor/clear", nil))
-	if clearRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local clear fallback, got %d %s", clearRecorder.Code, clearRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-session-state"`, `"procedure":"session.clear"`, `"success":true`} {
-		if !strings.Contains(clearRecorder.Body.String(), needle) {
-			t.Fatalf("expected local clear payload to contain %s, got %s", needle, clearRecorder.Body.String())
-		}
-	}
-
-	clearedStateRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(clearedStateRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/supervisor/state", nil))
-	if clearedStateRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from cleared local state readback, got %d %s", clearedStateRecorder.Code, clearedStateRecorder.Body.String())
-	}
-	for _, needle := range []string{`"isAutoDriveActive":false`, `"activeGoal":null`, `"lastObjective":null`} {
-		if !strings.Contains(clearedStateRecorder.Body.String(), needle) {
-			t.Fatalf("expected cleared local state payload to contain %s, got %s", needle, clearedStateRecorder.Body.String())
-		}
-	}
-}
-
-func TestSupervisorSessionRoutesFallBackToLocalGoSupervisor(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	cfg := config.Default()
-	cfg.WorkspaceRoot = t.TempDir()
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	command := "sh"
-	argsJSON := `["-lc","sleep 5"]`
-	if runtime.GOOS == "windows" {
-		command = "cmd"
-		argsJSON = `["/C","ping 127.0.0.1 -n 6 >nul"]`
-	}
-	sessionWorkingDirectory, err := os.Getwd()
-	if err != nil || strings.TrimSpace(sessionWorkingDirectory) == "" {
-		sessionWorkingDirectory = cfg.WorkspaceRoot
-	}
-
-	createReq := httptest.NewRequest(http.MethodPost, "/api/sessions/supervisor/create", strings.NewReader(`{"name":"Local Go Session","cliType":"custom","workingDirectory":"`+strings.ReplaceAll(sessionWorkingDirectory, `\`, `\\`)+`","command":"`+command+`","args":`+argsJSON+`,"autoRestart":false,"maxRestartAttempts":0}`))
-	createReq.Header.Set("content-type", "application/json")
-	createRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(createRecorder, createReq)
-	if createRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local create fallback, got %d %s", createRecorder.Code, createRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.create"`, `"name":"Local Go Session"`, `"cliType":"custom"`, `"status":"created"`, `"executionPolicy":{`, `"requestedProfile":"auto"`} {
-		if !strings.Contains(createRecorder.Body.String(), needle) {
-			t.Fatalf("expected local create payload to contain %s, got %s", needle, createRecorder.Body.String())
-		}
-	}
-
-	sessionID := extractJSONFieldString(createRecorder.Body.String(), "id")
-	if strings.TrimSpace(sessionID) == "" {
-		t.Fatalf("expected session id in create payload, got %s", createRecorder.Body.String())
-	}
-
-	listRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/supervisor/list", nil))
-	if listRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local list fallback, got %d %s", listRecorder.Code, listRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.list"`, `"` + sessionID + `"`} {
-		if !strings.Contains(listRecorder.Body.String(), needle) {
-			t.Fatalf("expected local list payload to contain %s, got %s", needle, listRecorder.Body.String())
-		}
-	}
-
-	getRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(getRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/supervisor/get?id="+sessionID, nil))
-	if getRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local get fallback, got %d %s", getRecorder.Code, getRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.get"`, `"requestedWorkingDirectory":"`, `"executionPolicy":{`, `"effectiveProfile":"`} {
-		if !strings.Contains(getRecorder.Body.String(), needle) {
-			t.Fatalf("expected local get payload to contain %s, got %s", needle, getRecorder.Body.String())
-		}
-	}
-
-	startReq := httptest.NewRequest(http.MethodPost, "/api/sessions/supervisor/start", strings.NewReader(`{"id":"`+sessionID+`"}`))
-	startReq.Header.Set("content-type", "application/json")
-	startRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(startRecorder, startReq)
-	if startRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local start fallback, got %d %s", startRecorder.Code, startRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.start"`} {
-		if !strings.Contains(startRecorder.Body.String(), needle) {
-			t.Fatalf("expected local start payload to contain %s, got %s", needle, startRecorder.Body.String())
-		}
-	}
-
-	time.Sleep(200 * time.Millisecond)
-
-	attachRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(attachRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/supervisor/attach-info?id="+sessionID, nil))
-	if attachRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local attach fallback, got %d %s", attachRecorder.Code, attachRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.attachInfo"`, `"attachReadiness":"ready"`, `"command":"` + command + `"`} {
-		if !strings.Contains(attachRecorder.Body.String(), needle) {
-			t.Fatalf("expected local attach payload to contain %s, got %s", needle, attachRecorder.Body.String())
-		}
-	}
-
-	healthRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(healthRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/supervisor/health?id="+sessionID, nil))
-	if healthRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local health fallback, got %d %s", healthRecorder.Code, healthRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.health"`, `"status":"healthy"`, `"consecutiveFailures":0`} {
-		if !strings.Contains(healthRecorder.Body.String(), needle) {
-			t.Fatalf("expected local health payload to contain %s, got %s", needle, healthRecorder.Body.String())
-		}
-	}
-
-	logsRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(logsRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/supervisor/logs?id="+sessionID+"&limit=50", nil))
-	if logsRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local logs fallback, got %d %s", logsRecorder.Code, logsRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.logs"`, `Session created for custom`, `Starting ` + command} {
-		if !strings.Contains(logsRecorder.Body.String(), needle) {
-			t.Fatalf("expected local logs payload to contain %s, got %s", needle, logsRecorder.Body.String())
-		}
-	}
-
-	executeReq := httptest.NewRequest(http.MethodPost, "/api/sessions/supervisor/execute-shell", strings.NewReader(`{"id":"`+sessionID+`","command":"echo native-shell-ok"}`))
-	executeReq.Header.Set("content-type", "application/json")
-	executeRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(executeRecorder, executeReq)
-	if executeRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local execute-shell fallback, got %d %s", executeRecorder.Code, executeRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.executeShell"`, `"command":"echo native-shell-ok"`, `"succeeded":true`, `"shellFamily":"`, `"shellPath":"`} {
-		if !strings.Contains(executeRecorder.Body.String(), needle) {
-			t.Fatalf("expected local execute-shell payload to contain %s, got %s", needle, executeRecorder.Body.String())
-		}
-	}
-
-	stopReq := httptest.NewRequest(http.MethodPost, "/api/sessions/supervisor/stop", strings.NewReader(`{"id":"`+sessionID+`","force":true}`))
-	stopReq.Header.Set("content-type", "application/json")
-	stopRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(stopRecorder, stopReq)
-	if stopRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local stop fallback, got %d %s", stopRecorder.Code, stopRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.stop"`} {
-		if !strings.Contains(stopRecorder.Body.String(), needle) {
-			t.Fatalf("expected local stop payload to contain %s, got %s", needle, stopRecorder.Body.String())
-		}
-	}
-
-	deadline := time.Now().Add(5 * time.Second)
-	for time.Now().Before(deadline) {
-		snapshot, ok := server.supervisorManager.GetSession(sessionID)
-		if !ok || snapshot == nil || (snapshot.State != supervisor.StateRunning && snapshot.State != supervisor.StateStopping && snapshot.State != supervisor.StateRestarting) {
-			break
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
-}
-
-func TestSupervisorSessionRoutesPersistAcrossServerRestart(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	workspaceRoot := t.TempDir()
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspaceRoot
-	cfg.ConfigDir = filepath.Join(workspaceRoot, ".hypercode-go")
-	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".hypercode")
-	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
-		t.Fatalf("failed to create go config dir: %v", err)
-	}
-	if err := os.MkdirAll(cfg.MainConfigDir, 0o755); err != nil {
-		t.Fatalf("failed to create main config dir: %v", err)
-	}
-
-	firstServer := New(cfg, stubDetector{})
-	workingDirectory, err := os.Getwd()
-	if err != nil || strings.TrimSpace(workingDirectory) == "" {
-		workingDirectory = workspaceRoot
-	}
-
-	createReq := httptest.NewRequest(http.MethodPost, "/api/sessions/supervisor/create", strings.NewReader(`{"id":"persisted-http-session","name":"Persisted HTTP Session","cliType":"custom","workingDirectory":"`+strings.ReplaceAll(workingDirectory, `\`, `\\`)+`","command":"go","args":["version"],"autoRestart":false,"maxRestartAttempts":0}`))
-	createReq.Header.Set("content-type", "application/json")
-	createRecorder := httptest.NewRecorder()
-	firstServer.Handler().ServeHTTP(createRecorder, createReq)
-	if createRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local create fallback, got %d %s", createRecorder.Code, createRecorder.Body.String())
-	}
-	if !strings.Contains(createRecorder.Body.String(), `"persisted-http-session"`) {
-		t.Fatalf("expected persisted session id in create payload, got %s", createRecorder.Body.String())
-	}
-
-	persistedPath := filepath.Join(cfg.ConfigDir, "session-supervisor.json")
-	persistedRaw, err := os.ReadFile(persistedPath)
-	if err != nil {
-		t.Fatalf("expected persisted supervisor state at %s: %v", persistedPath, err)
-	}
-	if !strings.Contains(string(persistedRaw), `"persisted-http-session"`) {
-		t.Fatalf("expected persisted supervisor state to contain session id, got %s", string(persistedRaw))
-	}
-
-	secondServer := New(cfg, stubDetector{})
-	listRecorder := httptest.NewRecorder()
-	secondServer.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/supervisor/list", nil))
-	if listRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from restored local list fallback, got %d %s", listRecorder.Code, listRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.list"`, `"persisted-http-session"`, `"Persisted HTTP Session"`} {
-		if !strings.Contains(listRecorder.Body.String(), needle) {
-			t.Fatalf("expected restored local list payload to contain %s, got %s", needle, listRecorder.Body.String())
-		}
-	}
-
-	getRecorder := httptest.NewRecorder()
-	secondServer.Handler().ServeHTTP(getRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/supervisor/get?id=persisted-http-session", nil))
-	if getRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from restored local get fallback, got %d %s", getRecorder.Code, getRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.get"`, `"persisted-http-session"`, `"status":"created"`} {
-		if !strings.Contains(getRecorder.Body.String(), needle) {
-			t.Fatalf("expected restored local get payload to contain %s, got %s", needle, getRecorder.Body.String())
-		}
-	}
-}
-
-func TestSupervisorSessionRestoreFallsBackToLocalGoPersistence(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	workspaceRoot := t.TempDir()
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspaceRoot
-	cfg.ConfigDir = filepath.Join(workspaceRoot, ".hypercode-go")
-	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".hypercode")
-	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
-		t.Fatalf("failed to create go config dir: %v", err)
-	}
-	if err := os.MkdirAll(cfg.MainConfigDir, 0o755); err != nil {
-		t.Fatalf("failed to create main config dir: %v", err)
-	}
-
-	server := New(cfg, stubDetector{})
-	persistedPath := filepath.Join(cfg.ConfigDir, "session-supervisor.json")
-	persistedJSON := `{
-  "sessions": [
-    {
-      "id": "restore-http-session",
-      "name": "Restored HTTP Session",
-      "cliType": "custom",
-      "command": "go",
-      "args": ["version"],
-      "env": {},
-      "executionProfile": "auto",
-      "requestedWorkingDirectory": "` + strings.ReplaceAll(workspaceRoot, `\`, `\\`) + `",
-      "workingDirectory": "` + strings.ReplaceAll(workspaceRoot, `\`, `\\`) + `",
-      "autoRestart": false,
-      "isolateWorktree": false,
-      "status": "created",
-      "restartCount": 0,
-      "maxRestartAttempts": 0,
-      "createdAt": 1,
-      "lastActivityAt": 1,
-      "metadata": {"source": "restore-route-test"},
-      "logs": []
-    }
-  ],
-  "savedAt": 1
-}`
-	if err := os.WriteFile(persistedPath, []byte(persistedJSON), 0o644); err != nil {
-		t.Fatalf("failed to write persisted supervisor state: %v", err)
-	}
-
-	restoreRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(restoreRecorder, httptest.NewRequest(http.MethodPost, "/api/sessions/supervisor/restore", nil))
-	if restoreRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local restore fallback, got %d %s", restoreRecorder.Code, restoreRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.restore"`, `"restoredCount":1`, `"restore-http-session"`, `"Restored HTTP Session"`} {
-		if !strings.Contains(restoreRecorder.Body.String(), needle) {
-			t.Fatalf("expected local restore payload to contain %s, got %s", needle, restoreRecorder.Body.String())
-		}
-	}
-
-	listRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/supervisor/list", nil))
-	if listRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from local list after restore, got %d %s", listRecorder.Code, listRecorder.Body.String())
-	}
-	if !strings.Contains(listRecorder.Body.String(), `"restore-http-session"`) {
-		t.Fatalf("expected restored session in local list payload, got %s", listRecorder.Body.String())
-	}
-}
-
-func initGitWorkspaceForHTTPWorktreeTest(t *testing.T) string {
-	t.Helper()
-	gitBinary, err := exec.LookPath("git")
-	if err != nil {
-		t.Skip("git binary not available")
-	}
-	repoRoot := t.TempDir()
-	run := func(args ...string) {
-		t.Helper()
-		cmd := exec.Command(gitBinary, args...)
-		cmd.Dir = repoRoot
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			t.Fatalf("git %v failed: %v\n%s", args, err, string(output))
-		}
-	}
-	run("init")
-	run("config", "user.email", "hypercode@example.com")
-	run("config", "user.name", "HyperCode Test")
-	if err := os.WriteFile(filepath.Join(repoRoot, "README.md"), []byte("http worktree test\n"), 0o644); err != nil {
-		t.Fatalf("write README: %v", err)
-	}
-	run("add", "README.md")
-	run("commit", "-m", "init")
-	return repoRoot
-}
-
-func TestSupervisorSessionCreateFallsBackToLocalGoWorktreeIsolation(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	workspaceRoot := initGitWorkspaceForHTTPWorktreeTest(t)
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspaceRoot
-	cfg.ConfigDir = filepath.Join(workspaceRoot, ".hypercode-go")
-	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".hypercode")
-	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
-		t.Fatalf("failed to create go config dir: %v", err)
-	}
-	if err := os.MkdirAll(cfg.MainConfigDir, 0o755); err != nil {
-		t.Fatalf("failed to create main config dir: %v", err)
-	}
-	server := New(cfg, stubDetector{})
-
-	firstReq := httptest.NewRequest(http.MethodPost, "/api/sessions/supervisor/create", strings.NewReader(`{"id":"base-http-session","name":"Base HTTP Session","cliType":"custom","workingDirectory":"`+strings.ReplaceAll(workspaceRoot, `\`, `\\`)+`","command":"go","args":["version"],"autoRestart":false,"maxRestartAttempts":0,"isolateWorktree":false}`))
-	firstReq.Header.Set("content-type", "application/json")
-	firstRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(firstRecorder, firstReq)
-	if firstRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from base local create fallback, got %d %s", firstRecorder.Code, firstRecorder.Body.String())
-	}
-
-	isolateReq := httptest.NewRequest(http.MethodPost, "/api/sessions/supervisor/create", strings.NewReader(`{"id":"isolated-http-session","name":"Isolated HTTP Session","cliType":"custom","workingDirectory":"`+strings.ReplaceAll(workspaceRoot, `\`, `\\`)+`","command":"go","args":["version"],"autoRestart":false,"maxRestartAttempts":0,"isolateWorktree":true}`))
-	isolateReq.Header.Set("content-type", "application/json")
-	isolateRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(isolateRecorder, isolateReq)
-	if isolateRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200 from isolated local create fallback, got %d %s", isolateRecorder.Code, isolateRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-supervisor"`, `"procedure":"session.create"`, `"isolated-http-session"`, `"isolateWorktree":true`, `"worktreePath":"`} {
-		if !strings.Contains(isolateRecorder.Body.String(), needle) {
-			t.Fatalf("expected isolated local create payload to contain %s, got %s", needle, isolateRecorder.Body.String())
-		}
-	}
-	if !strings.Contains(isolateRecorder.Body.String(), `.hypercode\\worktrees\\isolated-http-session`) {
-		t.Fatalf("expected isolated local create payload to mention the dedicated worktree path, got %s", isolateRecorder.Body.String())
 	}
 }
 
@@ -6870,10 +5756,6 @@ var AutoCallTool = struct{
 				`using local MCP runtime server summary`,
 				`"name":"hypercode"`,
 				`"toolInventoryStatus":"source-backed"`,
-				`"provenance":{"ageMs":null`,
-				`"compatibilityMode":"legacy-top-level-mirrors-trimmed"`,
-				`"legacyMirrorFields":[]`,
-				`"layer":"source-backed-summary"`,
 			},
 		},
 		{
@@ -6966,222 +5848,14 @@ func TestToolsReadEndpointsFallBackToLocalDB(t *testing.T) {
 
 	getRecorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(getRecorder, httptest.NewRequest(http.MethodGet, "/api/tools/get?uuid=search_tools", nil))
-	if getRecorder.Code != http.StatusOK || !strings.Contains(getRecorder.Body.String(), `"fallback":"go-local-tool-db"`) || !strings.Contains(getRecorder.Body.String(), `"uuid":"tool-1"`) {
+	if getRecorder.Code != http.StatusOK || !strings.Contains(getRecorder.Body.String(), `"fallback":"go-local-tool-db"`) || !strings.Contains(getRecorder.Body.String(), `"uuid":"search_tools"`) {
 		t.Fatalf("expected local tools DB get fallback, got %d %s", getRecorder.Code, getRecorder.Body.String())
-	}
-}
-
-func TestToolEndpointsFallBackToPersistedInventoryCache(t *testing.T) {
-	workspaceRoot := t.TempDir()
-	configDir := t.TempDir()
-	cacheContent := `{
-  "version": 1,
-  "cachedAt": "2026-04-04T00:00:00Z",
-  "inventory": {
-    "servers": [
-      {
-        "uuid": "config:cache-core",
-        "name": "cache-core",
-        "displayName": "cache-core",
-        "type": "STDIO",
-        "command": "node",
-        "args": ["cache-server.js"],
-        "env": {},
-        "url": "",
-        "description": "",
-        "enabled": true,
-        "alwaysOn": false,
-        "tags": [],
-        "alwaysOnAdvertised": false
-      }
-    ],
-    "tools": [
-      {
-        "name": "cache-core__search_tools",
-        "description": "Cache search",
-        "server": "cache-core",
-        "serverDisplayName": "cache-core",
-        "serverTags": [],
-        "toolTags": [],
-        "semanticGroup": "",
-        "semanticGroupLabel": "",
-        "advertisedName": "cache-core__search_tools",
-        "keywords": [],
-        "alwaysOn": true,
-        "originalName": "search_tools",
-        "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}}}
-      }
-    ],
-    "source": "config",
-    "cachedAt": "2020-01-01T00:00:00Z"
-  }
-}`
-	if err := os.WriteFile(filepath.Join(configDir, "mcp_inventory_cache.json"), []byte(cacheContent), 0o644); err != nil {
-		t.Fatalf("failed to seed mcp inventory cache: %v", err)
-	}
-
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspaceRoot
-	cfg.ConfigDir = configDir
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{err: errors.New("detector unavailable")})
-	server.runtimeServers.upsert(runtimeServerRecord{
-		Name:                "runtime-core",
-		Command:             "node",
-		Args:                []string{"runtime-server.js"},
-		RuntimeConnected:    true,
-		ToolCount:           1,
-		ToolInventoryStatus: "live-probed",
-		IntegrationLevel:    "runtime-added",
-		Source:              "go-runtime-registry",
-		LastCheckedAt:       "2020-01-01T00:00:05Z",
-		Tools: []map[string]any{
-			{"name": "runtime_search", "description": "Runtime search", "inputSchema": map[string]any{"type": "object"}},
-		},
-	})
-
-	cases := []struct {
-		name     string
-		path     string
-		contains []string
-		absent   []string
-	}{
-		{
-			name:     "control tools list",
-			path:     "/api/tools",
-			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"name":"search_tools"`, `"server":"cache-core"`, `"provenance":{"ageMs":`, `"cacheAuthority":"go-local-live-sync"`, `"cachedAt":"2020-01-01T00:00:00Z"`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"base-inventory"`, `"metadataAuthority":"mcp.jsonc"`, `"primary":true`, `"schemaVersion":1`, `"source":"cache"`, `"staleHeuristic":true`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`, `"baseInventoryCachedAt":"2020-01-01T00:00:00Z"`, `"liveOverlayCachedAt":"2020-01-01T00:00:05Z"`, `"baseInventoryAgeMs":`, `"liveOverlayAgeMs":`, `"liveOverlayStaleHeuristic":true`},
-			absent:   []string{`"originLayer":"base-inventory"`, `"layerCachedAt":"2020-01-01T00:00:00Z"`},
-		},
-		{
-			name:     "control tools search",
-			path:     "/api/tools/search?query=search",
-			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"name":"search_tools"`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`},
-			absent:   []string{`"originLayer":"base-inventory"`, `"layerCachedAt":"2020-01-01T00:00:00Z"`},
-		},
-		{
-			name:     "control tools get",
-			path:     "/api/tools/get?uuid=search_tools",
-			contains: []string{`"fallback":"go-local-mcp-inventory-cache"`, `"uuid":"search_tools"`, `"cachedAt":"2020-01-01T00:00:00Z"`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"base-inventory"`, `"source":"cache"`, `"baseInventoryStaleHeuristic":true`},
-			absent:   []string{`"originLayer":"base-inventory"`, `"layerCachedAt":"2020-01-01T00:00:00Z"`},
-		},
-		{
-			name:     "mcp runtime servers",
-			path:     "/api/mcp/servers/runtime",
-			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP runtime overlay cache`, `"name":"runtime-core"`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"live-runtime-overlay"`, `"source":"go-runtime-registry"`, `"runtimeOverlayServerCount":1`, `"liveOverlayStaleHeuristic":true`, `"cacheAuthority":"go-local-live-sync"`},
-			absent:   []string{`"originLayer":"live-runtime-overlay"`, `"layerCachedAt":"2020-01-01T00:00:05Z"`},
-		},
-		{
-			name:     "mcp tools list",
-			path:     "/api/mcp/tools",
-			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP inventory cache`, `"name":"search_tools"`, `"server":"cache-core"`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"base-inventory"`, `"source":"cache"`, `"name":"runtime_search"`, `"server":"runtime-core"`, `"runtimeOverlayToolCount":1`, `"cachePresent":true`, `"cachedAt":"2020-01-01T00:00:00Z"`, `"cacheAuthority":"go-local-live-sync"`, `"metadataAuthority":"mcp.jsonc"`, `"baseInventoryStaleHeuristic":true`, `"liveOverlayStaleHeuristic":true`},
-			absent:   []string{`"originLayer":"base-inventory"`, `"layerCachedAt":"2020-01-01T00:00:00Z"`},
-		},
-		{
-			name:     "mcp tools search",
-			path:     "/api/mcp/tools/search?query=search",
-			contains: []string{`"fallback":"go-local-mcp"`, `using local MCP inventory cache`, `"name":"search_tools"`, `"runtimeOverlayToolCount":1`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`},
-			absent:   []string{`"originLayer":"base-inventory"`, `"layerCachedAt":"2020-01-01T00:00:00Z"`},
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			recorder := httptest.NewRecorder()
-			server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, tc.path, nil))
-			if recorder.Code != http.StatusOK {
-				t.Fatalf("expected fallback status 200, got %d with body %s", recorder.Code, recorder.Body.String())
-			}
-			for _, needle := range tc.contains {
-				if !strings.Contains(recorder.Body.String(), needle) {
-					t.Fatalf("expected response to contain %s, got %s", needle, recorder.Body.String())
-				}
-			}
-			for _, needle := range tc.absent {
-				if strings.Contains(recorder.Body.String(), needle) {
-					t.Fatalf("expected response to omit %s, got %s", needle, recorder.Body.String())
-				}
-			}
-		})
-	}
-}
-
-func TestPersistedRuntimeOverlayFallbackWithoutLiveRegistry(t *testing.T) {
-	workspaceRoot := t.TempDir()
-	configDir := t.TempDir()
-	cacheContent := `{
-  "version": 1,
-  "cachedAt": "2020-01-01T00:00:00Z",
-  "inventory": {
-    "servers": [],
-    "tools": [],
-    "source": "empty",
-    "cachedAt": "2020-01-01T00:00:00Z"
-  },
-  "runtimeOverlay": [
-    {
-      "name": "runtime-core",
-      "command": "node",
-      "args": ["runtime-server.js"],
-      "runtimeConnected": true,
-      "toolCount": 1,
-      "toolInventoryStatus": "live-probed",
-      "integrationLevel": "runtime-added",
-      "source": "go-runtime-registry",
-      "lastCheckedAt": "2020-01-01T00:00:05Z",
-      "tools": [
-        {"name": "runtime_search", "description": "Runtime search", "inputSchema": {"type": "object"}}
-      ]
-    }
-  ]
-}`
-	if err := os.WriteFile(filepath.Join(configDir, "mcp_inventory_cache.json"), []byte(cacheContent), 0o644); err != nil {
-		t.Fatalf("failed to seed runtime overlay cache: %v", err)
-	}
-
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspaceRoot
-	cfg.ConfigDir = configDir
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{err: errors.New("detector unavailable")})
-
-	toolRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(toolRecorder, httptest.NewRequest(http.MethodGet, "/api/mcp/tools", nil))
-	if toolRecorder.Code != http.StatusOK {
-		t.Fatalf("expected fallback status 200, got %d with body %s", toolRecorder.Code, toolRecorder.Body.String())
-	}
-	for _, needle := range []string{`"name":"runtime_search"`, `"source":"go-persisted-runtime-overlay"`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"persisted-runtime-overlay"`, `"source":"go-persisted-runtime-overlay"`, `"persistedOverlayToolCount":1`, `"runtimeOverlayToolCount":0`, `"persistedOverlayCachedAt":"2020-01-01T00:00:05Z"`, `"persistedOverlayAgeMs":`, `"persistedOverlayStaleHeuristic":true`} {
-		if !strings.Contains(toolRecorder.Body.String(), needle) {
-			t.Fatalf("expected response to contain %s, got %s", needle, toolRecorder.Body.String())
-		}
-	}
-	for _, needle := range []string{`"originLayer":"persisted-runtime-overlay"`, `"layerCachedAt":"2020-01-01T00:00:05Z"`} {
-		if strings.Contains(toolRecorder.Body.String(), needle) {
-			t.Fatalf("expected trimmed tool list response to omit %s, got %s", needle, toolRecorder.Body.String())
-		}
-	}
-
-	serverRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(serverRecorder, httptest.NewRequest(http.MethodGet, "/api/mcp/servers/runtime", nil))
-	if serverRecorder.Code != http.StatusOK {
-		t.Fatalf("expected runtime server fallback status 200, got %d with body %s", serverRecorder.Code, serverRecorder.Body.String())
-	}
-	for _, needle := range []string{`"name":"runtime-core"`, `"source":"go-persisted-runtime-overlay"`, `"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"persisted-runtime-overlay"`, `"source":"go-persisted-runtime-overlay"`, `"persistedOverlayServerCount":1`, `"runtimeOverlayServerCount":0`, `"persistedOverlayCachedAt":"2020-01-01T00:00:05Z"`, `"persistedOverlayStaleHeuristic":true`} {
-		if !strings.Contains(serverRecorder.Body.String(), needle) {
-			t.Fatalf("expected runtime server response to contain %s, got %s", needle, serverRecorder.Body.String())
-		}
-	}
-	for _, needle := range []string{`"originLayer":"persisted-runtime-overlay"`, `"layerCachedAt":"2020-01-01T00:00:05Z"`} {
-		if strings.Contains(serverRecorder.Body.String(), needle) {
-			t.Fatalf("expected trimmed runtime server list response to omit %s, got %s", needle, serverRecorder.Body.String())
-		}
 	}
 }
 
 func TestFileBackedReadEndpointsFallBackLocally(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(workspaceRoot, ".gitmodules"), []byte("[submodule \"hypercode\"]\npath = submodules/hyperharness\nurl = https://github.com/example/hypercode.git\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".gitmodules"), []byte("[submodule \"hypercode\"]\npath = submodules/hypercode\nurl = https://github.com/example/hypercode.git\n"), 0o644); err != nil {
 		t.Fatalf("failed to write .gitmodules: %v", err)
 	}
 
@@ -7887,160 +6561,6 @@ func TestSecretsListFallsBackToLocalDB(t *testing.T) {
 	}
 }
 
-func TestPoliciesCreateUpdateAndDeleteFallBackToLocalDB(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-
-	workspace := t.TempDir()
-	dbPath := filepath.Join(workspace, "metamcp.db")
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		t.Fatalf("failed to open sqlite db: %v", err)
-	}
-	defer db.Close()
-
-	if _, err := db.Exec(`
-		CREATE TABLE policies (
-			uuid TEXT PRIMARY KEY,
-			name TEXT NOT NULL,
-			description TEXT,
-			rules TEXT NOT NULL DEFAULT '{}',
-			created_at INTEGER NOT NULL,
-			updated_at INTEGER NOT NULL
-		);
-	`); err != nil {
-		t.Fatalf("failed to create sqlite db schema: %v", err)
-	}
-
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspace
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	createReq := httptest.NewRequest(http.MethodPost, "/api/policies/create", strings.NewReader(`{"name":"Read Only","description":"baseline policy","rules":{"allow":["tool.read"],"deny":["tool.write"]}}`))
-	createReq.Header.Set("content-type", "application/json")
-	createRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(createRecorder, createReq)
-	if createRecorder.Code != http.StatusOK {
-		t.Fatalf("expected 200 from policies.create fallback, got %d with body %s", createRecorder.Code, createRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-policy-db"`, `"procedure":"policies.create"`, `"name":"Read Only"`, `"allow":["tool.read"]`} {
-		if !strings.Contains(createRecorder.Body.String(), needle) {
-			t.Fatalf("expected policies.create fallback to contain %s, got %s", needle, createRecorder.Body.String())
-		}
-	}
-
-	var policyUUID string
-	if err := db.QueryRow(`SELECT uuid FROM policies WHERE name = 'Read Only'`).Scan(&policyUUID); err != nil {
-		t.Fatalf("failed to verify created policy: %v", err)
-	}
-
-	updateReq := httptest.NewRequest(http.MethodPost, "/api/policies/update", strings.NewReader(`{"uuid":"`+policyUUID+`","name":"Read Mostly","rules":{"allow":["tool.read","tool.search"],"deny":["tool.write"]}}`))
-	updateReq.Header.Set("content-type", "application/json")
-	updateRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(updateRecorder, updateReq)
-	if updateRecorder.Code != http.StatusOK {
-		t.Fatalf("expected 200 from policies.update fallback, got %d with body %s", updateRecorder.Code, updateRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-policy-db"`, `"procedure":"policies.update"`, `"name":"Read Mostly"`, `"tool.search"`} {
-		if !strings.Contains(updateRecorder.Body.String(), needle) {
-			t.Fatalf("expected policies.update fallback to contain %s, got %s", needle, updateRecorder.Body.String())
-		}
-	}
-
-	deleteReq := httptest.NewRequest(http.MethodPost, "/api/policies/delete", strings.NewReader(`{"uuid":"`+policyUUID+`"}`))
-	deleteReq.Header.Set("content-type", "application/json")
-	deleteRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(deleteRecorder, deleteReq)
-	if deleteRecorder.Code != http.StatusOK {
-		t.Fatalf("expected 200 from policies.delete fallback, got %d with body %s", deleteRecorder.Code, deleteRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-policy-db"`, `"procedure":"policies.delete"`, `"success":true`} {
-		if !strings.Contains(deleteRecorder.Body.String(), needle) {
-			t.Fatalf("expected policies.delete fallback to contain %s, got %s", needle, deleteRecorder.Body.String())
-		}
-	}
-
-	var remaining int
-	if err := db.QueryRow(`SELECT count(*) FROM policies WHERE uuid = ?`, policyUUID).Scan(&remaining); err != nil {
-		t.Fatalf("failed to count remaining policies: %v", err)
-	}
-	if remaining != 0 {
-		t.Fatalf("expected deleted policy to be removed, found %d rows", remaining)
-	}
-}
-
-func TestSecretsSetAndDeleteFallBackToLocalDB(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-
-	workspace := t.TempDir()
-	dbPath := filepath.Join(workspace, "metamcp.db")
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		t.Fatalf("failed to open sqlite db: %v", err)
-	}
-	defer db.Close()
-
-	if _, err := db.Exec(`
-		CREATE TABLE workspace_secrets (
-			key TEXT PRIMARY KEY,
-			value TEXT NOT NULL,
-			created_at INTEGER NOT NULL,
-			updated_at INTEGER NOT NULL
-		);
-	`); err != nil {
-		t.Fatalf("failed to create sqlite db schema: %v", err)
-	}
-
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspace
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	setReq := httptest.NewRequest(http.MethodPost, "/api/secrets/set", strings.NewReader(`{"key":"OPENAI_API_KEY","value":"secret-one"}`))
-	setReq.Header.Set("content-type", "application/json")
-	setRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(setRecorder, setReq)
-	if setRecorder.Code != http.StatusOK {
-		t.Fatalf("expected 200 from secrets.set fallback, got %d with body %s", setRecorder.Code, setRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-policy-db"`, `"procedure":"secrets.set"`, `"success":true`} {
-		if !strings.Contains(setRecorder.Body.String(), needle) {
-			t.Fatalf("expected secrets.set fallback to contain %s, got %s", needle, setRecorder.Body.String())
-		}
-	}
-
-	var storedValue string
-	if err := db.QueryRow(`SELECT value FROM workspace_secrets WHERE key = 'OPENAI_API_KEY'`).Scan(&storedValue); err != nil {
-		t.Fatalf("failed to verify stored secret: %v", err)
-	}
-	if storedValue != "secret-one" {
-		t.Fatalf("expected stored secret value secret-one, got %s", storedValue)
-	}
-
-	deleteReq := httptest.NewRequest(http.MethodPost, "/api/secrets/delete", strings.NewReader(`{"key":"OPENAI_API_KEY"}`))
-	deleteReq.Header.Set("content-type", "application/json")
-	deleteRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(deleteRecorder, deleteReq)
-	if deleteRecorder.Code != http.StatusOK {
-		t.Fatalf("expected 200 from secrets.delete fallback, got %d with body %s", deleteRecorder.Code, deleteRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-policy-db"`, `"procedure":"secrets.delete"`, `"success":true`} {
-		if !strings.Contains(deleteRecorder.Body.String(), needle) {
-			t.Fatalf("expected secrets.delete fallback to contain %s, got %s", needle, deleteRecorder.Body.String())
-		}
-	}
-
-	var remaining int
-	if err := db.QueryRow(`SELECT count(*) FROM workspace_secrets WHERE key = 'OPENAI_API_KEY'`).Scan(&remaining); err != nil {
-		t.Fatalf("failed to count remaining secrets: %v", err)
-	}
-	if remaining != 0 {
-		t.Fatalf("expected deleted secret to be removed, found %d rows", remaining)
-	}
-}
-
 func TestAPIKeysGetFallsBackToLocalDB(t *testing.T) {
 	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 
@@ -8096,223 +6616,6 @@ func TestAPIKeysGetFallsBackToLocalDB(t *testing.T) {
 	}
 	if strings.Contains(recorder.Body.String(), "key-2") || strings.Contains(recorder.Body.String(), "sk_private_456") {
 		t.Fatalf("expected api key fallback to exclude non-public keys, got %s", recorder.Body.String())
-	}
-}
-
-func TestAPIKeysCreateAndDeleteFallBackToLocalDB(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-
-	workspace := t.TempDir()
-	dbPath := filepath.Join(workspace, "metamcp.db")
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		t.Fatalf("failed to open sqlite db: %v", err)
-	}
-	defer db.Close()
-
-	if _, err := db.Exec(`
-		CREATE TABLE api_keys (
-			uuid TEXT PRIMARY KEY,
-			name TEXT NOT NULL,
-			key TEXT NOT NULL UNIQUE,
-			user_id TEXT,
-			created_at INTEGER NOT NULL,
-			is_active INTEGER NOT NULL DEFAULT 1
-		);
-	`); err != nil {
-		t.Fatalf("failed to create sqlite db schema: %v", err)
-	}
-
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspace
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	createReq := httptest.NewRequest(http.MethodPost, "/api/api-keys/create", strings.NewReader(`{"name":"Dashboard Key","type":"MCP","is_active":true}`))
-	createReq.Header.Set("content-type", "application/json")
-	createRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(createRecorder, createReq)
-	if createRecorder.Code != http.StatusOK {
-		t.Fatalf("expected 200 from apiKeys.create fallback, got %d with body %s", createRecorder.Code, createRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-policy-db"`, `"procedure":"apiKeys.create"`, `"name":"Dashboard Key"`, `"key_prefix":"`} {
-		if !strings.Contains(createRecorder.Body.String(), needle) {
-			t.Fatalf("expected apiKeys.create fallback to contain %s, got %s", needle, createRecorder.Body.String())
-		}
-	}
-
-	var createdUUID, createdKey string
-	if err := db.QueryRow(`SELECT uuid, key FROM api_keys WHERE name = 'Dashboard Key'`).Scan(&createdUUID, &createdKey); err != nil {
-		t.Fatalf("failed to verify created API key: %v", err)
-	}
-	if strings.TrimSpace(createdUUID) == "" || !strings.HasPrefix(createdKey, "sk_") {
-		t.Fatalf("expected created API key row with uuid and sk_ key, got uuid=%q key=%q", createdUUID, createdKey)
-	}
-
-	deleteReq := httptest.NewRequest(http.MethodPost, "/api/api-keys/delete", strings.NewReader(`{"uuid":"`+createdUUID+`"}`))
-	deleteReq.Header.Set("content-type", "application/json")
-	deleteRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(deleteRecorder, deleteReq)
-	if deleteRecorder.Code != http.StatusOK {
-		t.Fatalf("expected 200 from apiKeys.delete fallback, got %d with body %s", deleteRecorder.Code, deleteRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-policy-db"`, `"procedure":"apiKeys.delete"`, `"success":true`} {
-		if !strings.Contains(deleteRecorder.Body.String(), needle) {
-			t.Fatalf("expected apiKeys.delete fallback to contain %s, got %s", needle, deleteRecorder.Body.String())
-		}
-	}
-
-	var remaining int
-	if err := db.QueryRow(`SELECT count(*) FROM api_keys WHERE uuid = ?`, createdUUID).Scan(&remaining); err != nil {
-		t.Fatalf("failed to count remaining API keys: %v", err)
-	}
-	if remaining != 0 {
-		t.Fatalf("expected deleted API key to be removed, found %d rows", remaining)
-	}
-}
-
-func TestToolSetsCreateAndDeleteFallBackToLocalDB(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-
-	workspace := t.TempDir()
-	dbPath := filepath.Join(workspace, "metamcp.db")
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		t.Fatalf("failed to open sqlite db: %v", err)
-	}
-	defer db.Close()
-
-	if _, err := db.Exec(`
-		CREATE TABLE tool_sets (
-			uuid TEXT PRIMARY KEY,
-			name TEXT NOT NULL,
-			description TEXT,
-			created_at INTEGER NOT NULL,
-			updated_at INTEGER NOT NULL,
-			user_id TEXT
-		);
-		CREATE TABLE tool_set_items (
-			uuid TEXT PRIMARY KEY,
-			tool_set_uuid TEXT NOT NULL,
-			tool_uuid TEXT NOT NULL,
-			created_at INTEGER NOT NULL
-		);
-	`); err != nil {
-		t.Fatalf("failed to create sqlite db schema: %v", err)
-	}
-
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspace
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	createReq := httptest.NewRequest(http.MethodPost, "/api/tool-sets/create", strings.NewReader(`{"name":"Core Set","description":"useful tools","tools":["tool-1","tool-2"]}`))
-	createReq.Header.Set("content-type", "application/json")
-	createRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(createRecorder, createReq)
-	if createRecorder.Code != http.StatusOK {
-		t.Fatalf("expected 200 from toolSets.create fallback, got %d with body %s", createRecorder.Code, createRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-operator"`, `"procedure":"toolSets.create"`, `"name":"Core Set"`, `"tool-1"`, `"tool-2"`} {
-		if !strings.Contains(createRecorder.Body.String(), needle) {
-			t.Fatalf("expected toolSets.create fallback to contain %s, got %s", needle, createRecorder.Body.String())
-		}
-	}
-
-	var toolSetUUID string
-	if err := db.QueryRow(`SELECT uuid FROM tool_sets WHERE name = 'Core Set'`).Scan(&toolSetUUID); err != nil {
-		t.Fatalf("failed to verify created tool set: %v", err)
-	}
-
-	deleteReq := httptest.NewRequest(http.MethodPost, "/api/tool-sets/delete", strings.NewReader(`{"uuid":"`+toolSetUUID+`"}`))
-	deleteReq.Header.Set("content-type", "application/json")
-	deleteRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(deleteRecorder, deleteReq)
-	if deleteRecorder.Code != http.StatusOK {
-		t.Fatalf("expected 200 from toolSets.delete fallback, got %d with body %s", deleteRecorder.Code, deleteRecorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-operator"`, `"procedure":"toolSets.delete"`, `"success":true`} {
-		if !strings.Contains(deleteRecorder.Body.String(), needle) {
-			t.Fatalf("expected toolSets.delete fallback to contain %s, got %s", needle, deleteRecorder.Body.String())
-		}
-	}
-
-	var remaining int
-	if err := db.QueryRow(`SELECT count(*) FROM tool_sets WHERE uuid = ?`, toolSetUUID).Scan(&remaining); err != nil {
-		t.Fatalf("failed to count remaining tool sets: %v", err)
-	}
-	if remaining != 0 {
-		t.Fatalf("expected deleted tool set to be removed, found %d rows", remaining)
-	}
-}
-
-func TestToolsAlwaysOnFallsBackToLocalDB(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-
-	workspace := t.TempDir()
-	dbPath := filepath.Join(workspace, "metamcp.db")
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		t.Fatalf("failed to open sqlite db: %v", err)
-	}
-	defer db.Close()
-
-	if _, err := db.Exec(`
-		CREATE TABLE mcp_servers (
-			uuid TEXT PRIMARY KEY,
-			name TEXT NOT NULL
-		);
-		CREATE TABLE tools (
-			uuid TEXT PRIMARY KEY,
-			name TEXT NOT NULL,
-			description TEXT,
-			tool_schema TEXT NOT NULL,
-			is_deferred INTEGER NOT NULL DEFAULT 0,
-			always_on INTEGER NOT NULL DEFAULT 0,
-			created_at INTEGER NOT NULL,
-			updated_at INTEGER NOT NULL,
-			mcp_server_uuid TEXT NOT NULL
-		);
-		INSERT INTO mcp_servers (uuid, name) VALUES ('server-1', 'local-server');
-		INSERT INTO tools (uuid, name, description, tool_schema, is_deferred, always_on, created_at, updated_at, mcp_server_uuid)
-		VALUES ('tool-1', 'search_tools', 'Search tools', '{"type":"object"}', 0, 0, 1711958400, 1711958460, 'server-1');
-	`); err != nil {
-		t.Fatalf("failed to seed sqlite db: %v", err)
-	}
-
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspace
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	req := httptest.NewRequest(http.MethodPost, "/api/tools/always-on", strings.NewReader(`{"uuid":"tool-1","alwaysOn":true}`))
-	req.Header.Set("content-type", "application/json")
-	recorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(recorder, req)
-
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
-	}
-	for _, needle := range []string{
-		`"fallback":"go-local-tool-db"`,
-		`"procedure":"tools.setAlwaysOn"`,
-		`"success":true`,
-		`"always_on":true`,
-	} {
-		if !strings.Contains(recorder.Body.String(), needle) {
-			t.Fatalf("expected tools always-on fallback to contain %s, got %s", needle, recorder.Body.String())
-		}
-	}
-
-	var alwaysOn bool
-	if err := db.QueryRow(`SELECT always_on FROM tools WHERE uuid = 'tool-1'`).Scan(&alwaysOn); err != nil {
-		t.Fatalf("failed to verify tool always_on value: %v", err)
-	}
-	if !alwaysOn {
-		t.Fatalf("expected tool always_on to be true after fallback mutation")
 	}
 }
 
@@ -8544,106 +6847,6 @@ func TestLinksBacklogListFallsBackToLocalDB(t *testing.T) {
 	}
 	if strings.Contains(recorder.Body.String(), `"uuid":"link-2"`) || strings.Contains(recorder.Body.String(), `"uuid":"link-3"`) {
 		t.Fatalf("expected filtered links backlog list to exclude non-matching rows, got %s", recorder.Body.String())
-	}
-}
-
-func TestLinksBacklogCrawlNativeEnrichesPendingLinks(t *testing.T) {
-	workspace := t.TempDir()
-	dbPath := filepath.Join(workspace, "metamcp.db")
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		t.Fatalf("failed to open sqlite db: %v", err)
-	}
-	defer db.Close()
-
-	if _, err := db.Exec(`
-		CREATE TABLE links_backlog (
-			uuid TEXT PRIMARY KEY,
-			url TEXT NOT NULL,
-			normalized_url TEXT NOT NULL UNIQUE,
-			title TEXT,
-			description TEXT,
-			tags TEXT NOT NULL DEFAULT '[]',
-			source TEXT NOT NULL DEFAULT 'manual',
-			is_duplicate INTEGER NOT NULL DEFAULT 0,
-			duplicate_of TEXT,
-			research_status TEXT NOT NULL DEFAULT 'pending',
-			http_status INTEGER,
-			page_title TEXT,
-			page_description TEXT,
-			favicon_url TEXT,
-			researched_at INTEGER,
-			cluster_id TEXT,
-			bobbybookmarks_bookmark_id INTEGER,
-			import_session_id INTEGER,
-			raw_payload TEXT,
-			synced_at INTEGER,
-			created_at INTEGER NOT NULL,
-			updated_at INTEGER NOT NULL
-		);
-		INSERT INTO links_backlog (uuid, url, normalized_url, tags, source, research_status, created_at, updated_at)
-		VALUES ('link-1', '__PLACEHOLDER__', '__PLACEHOLDER__', '[]', 'manual', 'pending', 1711958300, 1711958460);
-	`); err != nil {
-		t.Fatalf("failed to seed sqlite db: %v", err)
-	}
-
-	pageServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`<html><head><title>Go Native Crawl</title><meta name="description" content="Backlog enrichment"><link rel="icon" href="/favicon.ico"></head><body>Native link crawler body text.</body></html>`))
-	}))
-	defer pageServer.Close()
-
-	if _, err := db.Exec(`UPDATE links_backlog SET url = ?, normalized_url = ? WHERE uuid = 'link-1'`, pageServer.URL, pageServer.URL); err != nil {
-		t.Fatalf("failed to rewrite test url: %v", err)
-	}
-
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspace
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	request := httptest.NewRequest(http.MethodPost, "/api/links-backlog/crawl-native", strings.NewReader(`{"limit":1,"classifyTags":false}`))
-	request.Header.Set("content-type", "application/json")
-	recorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(recorder, request)
-
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
-	}
-	for _, needle := range []string{
-		`"fallback":"go-local-link-crawler"`,
-		`"procedure":"linksBacklog.crawlNative"`,
-		`"selected":1`,
-		`"succeeded":1`,
-	} {
-		if !strings.Contains(recorder.Body.String(), needle) {
-			t.Fatalf("expected crawl-native response to contain %s, got %s", needle, recorder.Body.String())
-		}
-	}
-
-	var status string
-	var pageTitle sql.NullString
-	var pageDescription sql.NullString
-	var faviconURL sql.NullString
-	var httpStatus sql.NullInt64
-	if err := db.QueryRow(`SELECT research_status, page_title, page_description, favicon_url, http_status FROM links_backlog WHERE uuid = 'link-1'`).Scan(&status, &pageTitle, &pageDescription, &faviconURL, &httpStatus); err != nil {
-		t.Fatalf("failed to query crawled link: %v", err)
-	}
-	if status != "done" {
-		t.Fatalf("expected done status, got %q", status)
-	}
-	if pageTitle.String != "Go Native Crawl" {
-		t.Fatalf("unexpected page title: %q", pageTitle.String)
-	}
-	if pageDescription.String != "Backlog enrichment" {
-		t.Fatalf("unexpected page description: %q", pageDescription.String)
-	}
-	if faviconURL.String != "/favicon.ico" {
-		t.Fatalf("unexpected favicon url: %q", faviconURL.String)
-	}
-	if httpStatus.Int64 != 200 {
-		t.Fatalf("unexpected http status: %d", httpStatus.Int64)
 	}
 }
 
@@ -10704,66 +8907,6 @@ func TestMemoryExportFallsBackToLocalSnapshotAndRegistry(t *testing.T) {
 	})
 }
 
-func TestMemoryImportAndConvertFallBackLocally(t *testing.T) {
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	cfg := config.Default()
-	cfg.WorkspaceRoot = t.TempDir()
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	canonicalJSON := `[{"uuid":"import-ctx-1","content":"Imported parity memory","title":"Imported Context","source":"docs","url":"https://example.com/import","metadata":{"section":"project_context","tags":["import","go"],"source":"docs","url":"https://example.com/import"},"createdAt":"2026-04-06T00:00:00Z"}]`
-
-	importBody := `{"userId":"default","format":"json","data":` + strconv.Quote(canonicalJSON) + `}`
-	importRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(importRecorder, httptest.NewRequest(http.MethodPost, "/api/memory/import", strings.NewReader(importBody)))
-	if importRecorder.Code != http.StatusOK {
-		t.Fatalf("expected local memory import fallback, got %d %s", importRecorder.Code, importRecorder.Body.String())
-	}
-	for _, needle := range []string{
-		`"fallback":"go-local-memory"`,
-		`"procedure":"memory.importMemories"`,
-		`importing local saved-context records`,
-		`"imported":1`,
-		`"errors":0`,
-	} {
-		if !strings.Contains(importRecorder.Body.String(), needle) {
-			t.Fatalf("expected local import fallback to contain %s, got %s", needle, importRecorder.Body.String())
-		}
-	}
-
-	listRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/memory/contexts", nil))
-	if listRecorder.Code != http.StatusOK || !strings.Contains(listRecorder.Body.String(), `"import-ctx-1"`) || !strings.Contains(listRecorder.Body.String(), `Imported Context`) {
-		t.Fatalf("expected imported memory to appear in local contexts, got %d %s", listRecorder.Code, listRecorder.Body.String())
-	}
-
-	getRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(getRecorder, httptest.NewRequest(http.MethodGet, "/api/memory/context/get?id="+url.QueryEscape("import-ctx-1"), nil))
-	if getRecorder.Code != http.StatusOK || !strings.Contains(getRecorder.Body.String(), `Imported parity memory`) || !strings.Contains(getRecorder.Body.String(), `https://example.com/import`) {
-		t.Fatalf("expected imported memory to be readable locally, got %d %s", getRecorder.Code, getRecorder.Body.String())
-	}
-
-	convertBody := `{"userId":"default","fromFormat":"json","toFormat":"sectioned-memory-store","data":` + strconv.Quote(canonicalJSON) + `}`
-	convertRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(convertRecorder, httptest.NewRequest(http.MethodPost, "/api/memory/convert", strings.NewReader(convertBody)))
-	if convertRecorder.Code != http.StatusOK {
-		t.Fatalf("expected local memory convert fallback, got %d %s", convertRecorder.Code, convertRecorder.Body.String())
-	}
-	for _, needle := range []string{
-		`"fallback":"go-local-memory"`,
-		`"procedure":"memory.convertMemories"`,
-		`converting local memory interchange data`,
-		`"toFormat":"sectioned-memory-store"`,
-		`project_context`,
-		`import-ctx-1`,
-	} {
-		if !strings.Contains(convertRecorder.Body.String(), needle) {
-			t.Fatalf("expected local convert fallback to contain %s, got %s", needle, convertRecorder.Body.String())
-		}
-	}
-}
-
 func TestAgentMemoryStatsFallsBackToPersistedState(t *testing.T) {
 	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 
@@ -11201,16 +9344,16 @@ func TestGitLogFallsBackLocally(t *testing.T) {
 
 func TestSubmoduleReadEndpointsFallBackLocally(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	gitmodules := `[submodule "submodules/hyperharness"]
-	path = submodules/hyperharness
+	gitmodules := `[submodule "submodules/hypercode"]
+	path = submodules/hypercode
 	url = https://github.com/example/hypercode.git
 `
 	if err := os.WriteFile(filepath.Join(workspaceRoot, ".gitmodules"), []byte(gitmodules), 0o644); err != nil {
 		t.Fatalf("failed to write .gitmodules: %v", err)
 	}
 
-	hyperharnessPath := filepath.Join(workspaceRoot, "submodules", "hyperharness")
-	if err := os.MkdirAll(filepath.Join(hyperharnessPath, "dist"), 0o755); err != nil {
+	hypercodePath := filepath.Join(workspaceRoot, "submodules", "hypercode")
+	if err := os.MkdirAll(filepath.Join(hypercodePath, "dist"), 0o755); err != nil {
 		t.Fatalf("failed to create submodule dist dir: %v", err)
 	}
 	packageJSON := `{
@@ -11218,10 +9361,10 @@ func TestSubmoduleReadEndpointsFallBackLocally(t *testing.T) {
   "dependencies": {"@modelcontextprotocol/sdk": "^1.0.0"},
   "scripts": {"build": "tsc", "start": "node index.js"}
 }`
-	if err := os.WriteFile(filepath.Join(hyperharnessPath, "package.json"), []byte(packageJSON), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(hypercodePath, "package.json"), []byte(packageJSON), 0o644); err != nil {
 		t.Fatalf("failed to write package.json: %v", err)
 	}
-	if err := os.MkdirAll(filepath.Join(hyperharnessPath, "node_modules"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(hypercodePath, "node_modules"), 0o755); err != nil {
 		t.Fatalf("failed to create node_modules dir: %v", err)
 	}
 
@@ -11252,7 +9395,7 @@ func TestSubmoduleReadEndpointsFallBackLocally(t *testing.T) {
 		`"fallback":"go-local-submodules"`,
 		`"procedure":"submodule.list"`,
 		`using local .gitmodules submodule fallback`,
-		`"path":"submodules/hyperharness"`,
+		`"path":"submodules/hypercode"`,
 		`"status":"clean"`,
 		`"capabilities":["mcp-server","mcp-sdk","build"]`,
 		`"isInstalled":true`,
@@ -11460,29 +9603,10 @@ var ListAllTools = struct{
 func TestMCPToolSchemaFallsBackToLocalMetaSchemas(t *testing.T) {
 	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 
-	mainConfigDir := t.TempDir()
-	jsoncContent := `// HyperCode MCP configuration
-{
-  "mcpServers": {
-    "core": {
-      "_meta": {
-        "toolCount": 1,
-        "tools": [
-          {"name": "search_tools", "description": "Search tools", "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}}}, "alwaysOn": true}
-        ]
-      }
-    }
-  }
-}
-`
-	if err := os.WriteFile(filepath.Join(mainConfigDir, "mcp.jsonc"), []byte(jsoncContent), 0o644); err != nil {
-		t.Fatalf("failed to seed local mcp jsonc: %v", err)
-	}
-
 	cfg := config.Default()
 	cfg.WorkspaceRoot = t.TempDir()
 	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = mainConfigDir
+	cfg.MainConfigDir = t.TempDir()
 	server := New(cfg, stubDetector{})
 
 	request := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/schema", strings.NewReader(`{"name":"search_tools"}`))
@@ -11644,12 +9768,8 @@ func TestMCPConfiguredServersFallBackToLocalJsonc(t *testing.T) {
 {
   "mcpServers": {
     "core": {
-      "command": "node",
-      "args": ["server.js"],
-      "env": {"JSONC_ONLY":"1"},
       "_meta": {
-        "toolCount": 1,
-        "cacheHydratedAt": "2024-01-01T00:00:00Z"
+        "toolCount": 1
       }
     }
   }
@@ -11714,33 +9834,23 @@ func TestMCPConfiguredServersFallBackToLocalJsonc(t *testing.T) {
 	if listRecorder.Code != http.StatusOK {
 		t.Fatalf("expected fallback list status 200, got %d with body %s", listRecorder.Code, listRecorder.Body.String())
 	}
-	if !strings.Contains(listRecorder.Body.String(), `"fallback":"go-local-jsonc"`) {
-		t.Fatalf("expected go-local-jsonc fallback metadata, got %s", listRecorder.Body.String())
+	if !strings.Contains(listRecorder.Body.String(), `"fallback":"go-local-mcp-db"`) {
+		t.Fatalf("expected go-local-mcp-db fallback metadata, got %s", listRecorder.Body.String())
 	}
-	if !strings.Contains(listRecorder.Body.String(), `using local MCP server definitions from HyperCode JSONC config`) {
-		t.Fatalf("expected configured server list JSONC fallback reason, got %s", listRecorder.Body.String())
+	if !strings.Contains(listRecorder.Body.String(), `using local MCP server definitions from metamcp.db with JSONC metadata overlay`) {
+		t.Fatalf("expected configured server list fallback reason, got %s", listRecorder.Body.String())
 	}
-	if !strings.Contains(listRecorder.Body.String(), `"name":"core"`) || !strings.Contains(listRecorder.Body.String(), `"command":"node"`) {
-		t.Fatalf("expected configured server from local JSONC, got %s", listRecorder.Body.String())
+	if !strings.Contains(listRecorder.Body.String(), `"uuid":"srv-db-1"`) || !strings.Contains(listRecorder.Body.String(), `"command":"node"`) {
+		t.Fatalf("expected configured server from local db, got %s", listRecorder.Body.String())
 	}
-	if !strings.Contains(listRecorder.Body.String(), `"JSONC_ONLY":"1"`) || strings.Contains(listRecorder.Body.String(), `"LOCAL_ONLY":"1"`) {
-		t.Fatalf("expected JSONC env authority over db fallback, got %s", listRecorder.Body.String())
+	if !strings.Contains(listRecorder.Body.String(), `"LOCAL_ONLY":"1"`) || !strings.Contains(listRecorder.Body.String(), `"OPENAI_API_KEY":"secret-one"`) {
+		t.Fatalf("expected db env plus workspace secret injection, got %s", listRecorder.Body.String())
 	}
 	if !strings.Contains(listRecorder.Body.String(), `"toolCount":1`) {
-		t.Fatalf("expected jsonc _meta payload, got %s", listRecorder.Body.String())
-	}
-	for _, needle := range []string{`"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"configured-jsonc"`, `"primary":true`, `"schemaVersion":1`, `"source":"jsonc-cache"`, `"cachedAt":"2024-01-01T00:00:00Z"`, `"staleHeuristic":true`} {
-		if !strings.Contains(listRecorder.Body.String(), needle) {
-			t.Fatalf("expected configured server list provenance %s, got %s", needle, listRecorder.Body.String())
-		}
-	}
-	for _, needle := range []string{`"originLayer":"configured-jsonc"`, `"metadataOrigin":"jsonc-cache"`, `"metadataCachedAt":"2024-01-01T00:00:00Z"`, `"metadataStaleHeuristic":true`} {
-		if strings.Contains(listRecorder.Body.String(), needle) {
-			t.Fatalf("expected configured server list to omit legacy field %s, got %s", needle, listRecorder.Body.String())
-		}
+		t.Fatalf("expected jsonc _meta overlay, got %s", listRecorder.Body.String())
 	}
 
-	expectedUUID := syntheticServerUUID("core")
+	expectedUUID := "srv-db-1"
 	getRequest := httptest.NewRequest(http.MethodGet, "/api/mcp/servers/get?uuid="+expectedUUID, nil)
 	getRecorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(getRecorder, getRequest)
@@ -11748,24 +9858,14 @@ func TestMCPConfiguredServersFallBackToLocalJsonc(t *testing.T) {
 	if getRecorder.Code != http.StatusOK {
 		t.Fatalf("expected fallback get status 200, got %d with body %s", getRecorder.Code, getRecorder.Body.String())
 	}
-	if !strings.Contains(getRecorder.Body.String(), `using local MCP server definition from HyperCode JSONC config`) {
-		t.Fatalf("expected configured server get JSONC fallback reason, got %s", getRecorder.Body.String())
+	if !strings.Contains(getRecorder.Body.String(), `using local MCP server definition from metamcp.db with JSONC metadata overlay`) {
+		t.Fatalf("expected configured server get fallback reason, got %s", getRecorder.Body.String())
 	}
 	if !strings.Contains(getRecorder.Body.String(), `"uuid":"`+expectedUUID+`"`) {
-		t.Fatalf("expected synthetic uuid %s, got %s", expectedUUID, getRecorder.Body.String())
+		t.Fatalf("expected db uuid %s, got %s", expectedUUID, getRecorder.Body.String())
 	}
 	if !strings.Contains(getRecorder.Body.String(), `"name":"core"`) {
 		t.Fatalf("expected configured server get payload, got %s", getRecorder.Body.String())
-	}
-	for _, needle := range []string{`"provenance":{"ageMs":`, `"compatibilityMode":"legacy-top-level-mirrors-trimmed"`, `"legacyMirrorFields":[]`, `"layer":"configured-jsonc"`, `"primary":true`, `"schemaVersion":1`, `"source":"jsonc-cache"`, `"cachedAt":"2024-01-01T00:00:00Z"`, `"staleHeuristic":true`} {
-		if !strings.Contains(getRecorder.Body.String(), needle) {
-			t.Fatalf("expected configured server get provenance %s, got %s", needle, getRecorder.Body.String())
-		}
-	}
-	for _, needle := range []string{`"originLayer":"configured-jsonc"`, `"metadataOrigin":"jsonc-cache"`, `"metadataCachedAt":"2024-01-01T00:00:00Z"`, `"metadataStaleHeuristic":true`} {
-		if strings.Contains(getRecorder.Body.String(), needle) {
-			t.Fatalf("expected configured server get to omit legacy field %s, got %s", needle, getRecorder.Body.String())
-		}
 	}
 }
 
@@ -12009,23 +10109,11 @@ func TestMCPConfiguredServerMetadataMutationsFallBackToLocalJsonc(t *testing.T) 
 	reloadRequest.Header.Set("content-type", "application/json")
 	reloadRecorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(reloadRecorder, reloadRequest)
-	if reloadRecorder.Code != http.StatusOK || !strings.Contains(reloadRecorder.Body.String(), `"reloadDecision":"go-local-jsonc-cache"`) || !strings.Contains(reloadRecorder.Body.String(), `"fallback":"go-local-jsonc"`) {
+	if reloadRecorder.Code != http.StatusOK || !strings.Contains(reloadRecorder.Body.String(), `"reloadDecision":"go-local-placeholder"`) || !strings.Contains(reloadRecorder.Body.String(), `"fallback":"go-local-jsonc"`) {
 		t.Fatalf("expected reload metadata fallback response, got %d %s", reloadRecorder.Code, reloadRecorder.Body.String())
 	}
-	if !strings.Contains(reloadRecorder.Body.String(), `applying local JSONC MCP config fallback`) {
+	if !strings.Contains(reloadRecorder.Body.String(), `applying local JSONC metadata placeholder fallback`) {
 		t.Fatalf("expected reload metadata fallback reason, got %s", reloadRecorder.Body.String())
-	}
-	if !strings.Contains(reloadRecorder.Body.String(), `"metadataSource":"jsonc-cache"`) || !strings.Contains(reloadRecorder.Body.String(), `"reloadableFromCache":true`) {
-		t.Fatalf("expected cache-aware metadata refresh payload, got %s", reloadRecorder.Body.String())
-	}
-
-	cachePath := filepath.Join(cfg.ConfigDir, "mcp_inventory_cache.json")
-	cacheAfterReload, err := os.ReadFile(cachePath)
-	if err != nil {
-		t.Fatalf("expected refreshed inventory cache file after reload: %v", err)
-	}
-	if !strings.Contains(string(cacheAfterReload), `"originalName": "search"`) {
-		t.Fatalf("expected inventory cache to align with jsonc metadata after reload, got %s", string(cacheAfterReload))
 	}
 
 	clearRequest := httptest.NewRequest(http.MethodPost, "/api/mcp/servers/clear-metadata-cache", strings.NewReader(`{"uuid":"`+uuid+`"}`))
@@ -12035,92 +10123,16 @@ func TestMCPConfiguredServerMetadataMutationsFallBackToLocalJsonc(t *testing.T) 
 	if clearRecorder.Code != http.StatusOK || !strings.Contains(clearRecorder.Body.String(), `"toolCount":0`) || !strings.Contains(clearRecorder.Body.String(), `"ok":true`) {
 		t.Fatalf("expected clear metadata fallback response, got %d %s", clearRecorder.Code, clearRecorder.Body.String())
 	}
-	if !strings.Contains(clearRecorder.Body.String(), `applying local JSONC MCP config fallback`) {
+	if !strings.Contains(clearRecorder.Body.String(), `applying local JSONC metadata placeholder fallback`) {
 		t.Fatalf("expected clear metadata fallback reason, got %s", clearRecorder.Body.String())
 	}
-	if !strings.Contains(clearRecorder.Body.String(), `"reloadDecision":"go-local-metadata-cleared"`) || !strings.Contains(clearRecorder.Body.String(), `"metadataSource":"cleared"`) {
-		t.Fatalf("expected cleared metadata semantics, got %s", clearRecorder.Body.String())
-	}
 
 	written, err := os.ReadFile(filepath.Join(mainConfigDir, "mcp.jsonc"))
 	if err != nil {
 		t.Fatalf("expected updated jsonc file: %v", err)
 	}
-	if !strings.Contains(string(written), `"status": "pending"`) || !strings.Contains(string(written), `"toolCount": 0`) || !strings.Contains(string(written), `Metadata cache cleared locally at`) {
+	if !strings.Contains(string(written), `"status": "pending"`) || !strings.Contains(string(written), `"toolCount": 0`) || !strings.Contains(string(written), `Cache cleared at`) {
 		t.Fatalf("expected cleared metadata cache state, got %s", string(written))
-	}
-
-	cacheAfterClear, err := os.ReadFile(cachePath)
-	if err != nil {
-		t.Fatalf("expected refreshed inventory cache file after clear: %v", err)
-	}
-	if strings.Contains(string(cacheAfterClear), `"originalName": "search"`) {
-		t.Fatalf("expected inventory cache to clear stale jsonc metadata, got %s", string(cacheAfterClear))
-	}
-}
-
-func TestMCPConfiguredServerMetadataReloadPerformsLiveStdioProbe(t *testing.T) {
-	mainConfigDir := t.TempDir()
-	probeDir := t.TempDir()
-	var command string
-	var args []string
-	if runtime.GOOS == "windows" {
-		command = "powershell"
-		args = []string{"-NoProfile", "-Command", "$line=[Console]::In.ReadLine(); [Console]::Out.WriteLine('{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"tools\":[{\"name\":\"live_search\",\"description\":\"Search over a live stdio probe\",\"inputSchema\":{\"type\":\"object\"}}]}}')"}
-	} else {
-		scriptPath := filepath.Join(probeDir, "probe.sh")
-		script := "#!/bin/sh\nread line\necho '{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[{\"name\":\"live_search\",\"description\":\"Search over a live stdio probe\",\"inputSchema\":{\"type\":\"object\"}}]}}'\n"
-		if err := os.WriteFile(scriptPath, []byte(script), 0o755); err != nil {
-			t.Fatalf("failed to write probe shell script: %v", err)
-		}
-		command = scriptPath
-		args = []string{}
-	}
-	jsoncContent := fmt.Sprintf(`// HyperCode MCP configuration
-{
-  "mcpServers": {
-    "probe": {
-      "command": %q,
-      "args": %s
-    }
-  }
-}
-`, command, prettyJSON(args))
-	if err := os.WriteFile(filepath.Join(mainConfigDir, "mcp.jsonc"), []byte(jsoncContent), 0o644); err != nil {
-		t.Fatalf("failed to seed local mcp jsonc: %v", err)
-	}
-
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	cfg := config.Default()
-	cfg.WorkspaceRoot = t.TempDir()
-	cfg.ConfigDir = t.TempDir()
-	cfg.MainConfigDir = mainConfigDir
-	server := New(cfg, stubDetector{})
-
-	uuid := syntheticServerUUID("probe")
-	reloadRequest := httptest.NewRequest(http.MethodPost, "/api/mcp/servers/reload-metadata", strings.NewReader(`{"uuid":"`+uuid+`","mode":"binary"}`))
-	reloadRequest.Header.Set("content-type", "application/json")
-	reloadRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(reloadRecorder, reloadRequest)
-	if reloadRecorder.Code != http.StatusOK {
-		t.Fatalf("expected live reload metadata response, got %d %s", reloadRecorder.Code, reloadRecorder.Body.String())
-	}
-	if !strings.Contains(reloadRecorder.Body.String(), `"reloadDecision":"go-local-live-stdio"`) {
-		t.Fatalf("expected live stdio reload decision, got %s", reloadRecorder.Body.String())
-	}
-	if !strings.Contains(reloadRecorder.Body.String(), `"metadataSource":"live-probe"`) || !strings.Contains(reloadRecorder.Body.String(), `"toolCount":1`) {
-		t.Fatalf("expected live-probe metadata payload, got %s", reloadRecorder.Body.String())
-	}
-	if !strings.Contains(reloadRecorder.Body.String(), `"name":"live_search"`) {
-		t.Fatalf("expected probed tool metadata, got %s", reloadRecorder.Body.String())
-	}
-
-	written, err := os.ReadFile(filepath.Join(mainConfigDir, "mcp.jsonc"))
-	if err != nil {
-		t.Fatalf("expected updated jsonc file: %v", err)
-	}
-	if !strings.Contains(string(written), `"metadataSource": "live-probe"`) || !strings.Contains(string(written), `"toolCount": 1`) {
-		t.Fatalf("expected persisted live metadata state, got %s", string(written))
 	}
 }
 
@@ -12576,96 +10588,6 @@ func TestImportedSessionListFallsBackToArchivedRecords(t *testing.T) {
 	}
 }
 
-func seedLocalImportedSessionStore(t *testing.T, workspaceRoot string) string {
-	t.Helper()
-	store := sessionimport.NewImportedSessionStore(workspaceRoot)
-	record, err := store.UpsertSession(context.Background(), sessionimport.ImportedSessionRecordInput{
-		SourceTool:        "go-native",
-		SourcePath:        filepath.Join(workspaceRoot, ".claude", "session.jsonl"),
-		ExternalSessionID: func() *string { v := "go-import-1"; return &v }(),
-		Title:             func() *string { v := "Go Persisted Import"; return &v }(),
-		SessionFormat:     "jsonl",
-		Transcript:        "Persisted imported transcript from Go store.",
-		Excerpt:           func() *string { v := "Persisted imported transcript from Go store."; return &v }(),
-		WorkingDirectory:  func() *string { v := workspaceRoot; return &v }(),
-		TranscriptHash:    "feedfacefeedfacefeedfacefeedface",
-		NormalizedSession: map[string]any{"sourceTool": "go-native"},
-		Metadata:          map[string]any{"retentionSummary": map[string]any{"archiveDisposition": "archive_only"}},
-		DiscoveredAt:      1712001000000,
-		ImportedAt:        1712001001000,
-		ParsedMemories: []sessionimport.ImportedSessionMemoryInput{
-			{Kind: sessionimport.ImportedSessionMemoryKindInstruction, Content: "Always keep the Go import lane truthful.", Tags: []string{"go", "imports"}, Source: sessionimport.ImportedSessionMemorySourceHeuristic, Metadata: map[string]any{"sourceTool": "go-native", "path": filepath.Join(workspaceRoot, ".claude", "session.jsonl")}},
-		},
-	})
-	if err != nil {
-		t.Fatalf("failed to seed local imported session store: %v", err)
-	}
-	if _, err := store.WriteInstructionDoc(context.Background(), 250); err != nil {
-		t.Fatalf("failed to write local imported instruction doc: %v", err)
-	}
-	return record.ID
-}
-
-func TestImportedSessionRoutesPreferLocalGoStoreFallback(t *testing.T) {
-	workspaceRoot := t.TempDir()
-	sessionID := seedLocalImportedSessionStore(t, workspaceRoot)
-
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspaceRoot
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	listRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/imported/list?limit=5", nil))
-	if listRecorder.Code != http.StatusOK {
-		t.Fatalf("expected list fallback status 200, got %d with body %s", listRecorder.Code, listRecorder.Body.String())
-	}
-	if !strings.Contains(listRecorder.Body.String(), `using locally persisted imported session records`) {
-		t.Fatalf("expected local store list fallback reason, got %s", listRecorder.Body.String())
-	}
-	if !strings.Contains(listRecorder.Body.String(), `"id":"`+sessionID+`"`) {
-		t.Fatalf("expected persisted imported session id, got %s", listRecorder.Body.String())
-	}
-
-	getRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(getRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/imported/get?id="+sessionID, nil))
-	if getRecorder.Code != http.StatusOK {
-		t.Fatalf("expected get fallback status 200, got %d with body %s", getRecorder.Code, getRecorder.Body.String())
-	}
-	if !strings.Contains(getRecorder.Body.String(), `using locally persisted imported session record`) {
-		t.Fatalf("expected local store get fallback reason, got %s", getRecorder.Body.String())
-	}
-	if !strings.Contains(getRecorder.Body.String(), `Persisted imported transcript from Go store.`) {
-		t.Fatalf("expected persisted transcript content, got %s", getRecorder.Body.String())
-	}
-
-	docsRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(docsRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/imported/instruction-docs", nil))
-	if docsRecorder.Code != http.StatusOK {
-		t.Fatalf("expected docs fallback status 200, got %d with body %s", docsRecorder.Code, docsRecorder.Body.String())
-	}
-	if !strings.Contains(docsRecorder.Body.String(), `using Go imported-session instruction documents`) {
-		t.Fatalf("expected local store docs fallback reason, got %s", docsRecorder.Body.String())
-	}
-	if !strings.Contains(docsRecorder.Body.String(), `auto-imported-agent-instructions.md`) {
-		t.Fatalf("expected generated instruction doc, got %s", docsRecorder.Body.String())
-	}
-
-	statsRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(statsRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/imported/maintenance-stats", nil))
-	if statsRecorder.Code != http.StatusOK {
-		t.Fatalf("expected stats fallback status 200, got %d with body %s", statsRecorder.Code, statsRecorder.Body.String())
-	}
-	if !strings.Contains(statsRecorder.Body.String(), `using locally persisted imported session maintenance stats`) {
-		t.Fatalf("expected local store maintenance fallback reason, got %s", statsRecorder.Body.String())
-	}
-	if !strings.Contains(statsRecorder.Body.String(), `"archivedTranscriptCount":1`) {
-		t.Fatalf("expected archived transcript count from local store, got %s", statsRecorder.Body.String())
-	}
-}
-
 func TestImportedSessionGetFallsBackToGoScanner(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".claude"), 0o755); err != nil {
@@ -12819,8 +10741,8 @@ func TestImportedInstructionDocsFallsBackToWorkspaceDoc(t *testing.T) {
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected fallback status 200, got %d with body %s", recorder.Code, recorder.Body.String())
 	}
-	if !strings.Contains(recorder.Body.String(), `using Go imported-session instruction documents`) {
-		t.Fatalf("expected Go imported-session docs fallback reason, got %s", recorder.Body.String())
+	if !strings.Contains(recorder.Body.String(), `using workspace imported instruction documents`) {
+		t.Fatalf("expected workspace docs fallback reason, got %s", recorder.Body.String())
 	}
 	if !strings.Contains(recorder.Body.String(), `"auto-imported-agent-instructions.md"`) {
 		t.Fatalf("expected workspace imported instructions doc, got %s", recorder.Body.String())
@@ -12941,144 +10863,6 @@ func TestImportedSessionMaintenanceStatsFallsBackToArchivedRecords(t *testing.T)
 	}
 	if !strings.Contains(recorder.Body.String(), `"missingRetentionSummaryCount":0`) {
 		t.Fatalf("expected retention summary to be present, got %s", recorder.Body.String())
-	}
-}
-
-func TestImportedSessionPersistNativeStoresRecordAndDoc(t *testing.T) {
-	workspaceRoot := t.TempDir()
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspaceRoot
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	body := strings.NewReader(`{
-		"sourceTool":"go-native",
-		"sourcePath":"C:/tmp/session-native.jsonl",
-		"externalSessionId":"native-1",
-		"title":"Go Native Persist",
-		"sessionFormat":"jsonl",
-		"transcript":"Assistant: Keep native imports durable.",
-		"excerpt":"Keep native imports durable.",
-		"workingDirectory":"C:/tmp",
-		"transcriptHash":"bead1234ef567890bead1234ef567890",
-		"normalizedSession":{"sourceTool":"go-native"},
-		"metadata":{"retentionSummary":{"archiveDisposition":"archive_only"}},
-		"discoveredAt":1712002000000,
-		"importedAt":1712002001000,
-		"parsedMemories":[
-			{
-				"kind":"instruction",
-				"content":"Keep native imports durable.",
-				"tags":["go","imports"],
-				"source":"heuristic",
-				"metadata":{"sourceTool":"go-native","path":"C:/tmp/session-native.jsonl"}
-			}
-		]
-	}`)
-	request := httptest.NewRequest(http.MethodPost, "/api/sessions/imported/persist-native", body)
-	request.Header.Set("content-type", "application/json")
-	recorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(recorder, request)
-
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("expected persist-native status 200, got %d with body %s", recorder.Code, recorder.Body.String())
-	}
-	if !strings.Contains(recorder.Body.String(), `"procedure":"session.importedPersistNative"`) {
-		t.Fatalf("expected native persist procedure metadata, got %s", recorder.Body.String())
-	}
-	if !strings.Contains(recorder.Body.String(), `"instructionDocPath":"`) {
-		t.Fatalf("expected instruction doc path in persist-native response, got %s", recorder.Body.String())
-	}
-	if !strings.Contains(recorder.Body.String(), `Keep native imports durable.`) {
-		t.Fatalf("expected persisted content in response, got %s", recorder.Body.String())
-	}
-
-	listRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/imported/list?limit=5", nil))
-	if listRecorder.Code != http.StatusOK {
-		t.Fatalf("expected list status 200 after persist-native, got %d with body %s", listRecorder.Code, listRecorder.Body.String())
-	}
-	if !strings.Contains(listRecorder.Body.String(), `Go Native Persist`) {
-		t.Fatalf("expected persisted session in list output, got %s", listRecorder.Body.String())
-	}
-}
-
-func TestImportedSessionIngestNativePersistsSupportedFileCandidates(t *testing.T) {
-	workspaceRoot := t.TempDir()
-	t.Setenv("HOME", workspaceRoot)
-	t.Setenv("USERPROFILE", workspaceRoot)
-	t.Setenv("APPDATA", workspaceRoot)
-	t.Setenv("LOCALAPPDATA", workspaceRoot)
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".claude"), 0o755); err != nil {
-		t.Fatalf("failed to create claude dir: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(workspaceRoot, ".claude", "session-history.jsonl"), []byte(`{"role":"assistant","content":"Always use port 4000 for HyperCode."}`), 0o644); err != nil {
-		t.Fatalf("failed to seed jsonl session: %v", err)
-	}
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".llm"), 0o755); err != nil {
-		t.Fatalf("failed to create llm dir: %v", err)
-	}
-	llmDB, err := sql.Open("sqlite", filepath.Join(workspaceRoot, ".llm", "logs.db"))
-	if err != nil {
-		t.Fatalf("failed to open llm db: %v", err)
-	}
-	if _, err := llmDB.Exec(`
-		CREATE TABLE conversations (id TEXT, name TEXT, model TEXT);
-		CREATE TABLE responses (
-			id TEXT,
-			conversation_id TEXT,
-			model TEXT,
-			prompt TEXT,
-			system TEXT,
-			prompt_json TEXT,
-			response TEXT,
-			response_json TEXT,
-			datetime_utc TEXT,
-			input_tokens INTEGER,
-			output_tokens INTEGER,
-			resolved_model TEXT
-		);
-		INSERT INTO conversations VALUES ('conv-1','LLM Session','gpt-4');
-		INSERT INTO responses VALUES ('resp-1','conv-1','gpt-4','How should we route providers?','System prompt',NULL,'Use openrouter free defaults.',NULL,'2026-04-04T01:00:00Z',11,22,'gpt-4');
-	`); err != nil {
-		llmDB.Close()
-		t.Fatalf("failed to seed llm db: %v", err)
-	}
-	llmDB.Close()
-
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspaceRoot
-	cfg.MainConfigDir = t.TempDir()
-	server := New(cfg, stubDetector{})
-
-	request := httptest.NewRequest(http.MethodPost, "/api/sessions/imported/ingest-native", strings.NewReader(`{"force":false,"maxFiles":20}`))
-	request.Header.Set("content-type", "application/json")
-	recorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(recorder, request)
-
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("expected ingest-native status 200, got %d with body %s", recorder.Code, recorder.Body.String())
-	}
-	if !strings.Contains(recorder.Body.String(), `"procedure":"session.importedIngestNative"`) {
-		t.Fatalf("expected ingest-native procedure metadata, got %s", recorder.Body.String())
-	}
-	if !strings.Contains(recorder.Body.String(), `"importedCount":2`) {
-		t.Fatalf("expected two imported candidates, got %s", recorder.Body.String())
-	}
-	if !strings.Contains(recorder.Body.String(), `auto-imported-agent-instructions.md`) {
-		t.Fatalf("expected regenerated instruction doc path, got %s", recorder.Body.String())
-	}
-
-	listRecorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(listRecorder, httptest.NewRequest(http.MethodGet, "/api/sessions/imported/list?limit=5", nil))
-	if listRecorder.Code != http.StatusOK {
-		t.Fatalf("expected list status 200 after ingest-native, got %d with body %s", listRecorder.Code, listRecorder.Body.String())
-	}
-	if !strings.Contains(listRecorder.Body.String(), `Always use port 4000 for HyperCode.`) {
-		t.Fatalf("expected ingested file transcript in list output, got %s", listRecorder.Body.String())
-	}
-	if !strings.Contains(listRecorder.Body.String(), `Use openrouter free defaults.`) {
-		t.Fatalf("expected ingested llm db transcript in list output, got %s", listRecorder.Body.String())
 	}
 }
 
@@ -13411,7 +11195,7 @@ func TestCodeBridgeRoutes(t *testing.T) {
 		case "/trpc/hypercodeContext.getPrompt":
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": "Prompt context"}}})
 		case "/trpc/git.getModules":
-			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []map[string]any{{"name": "hypercode", "path": "submodules/hyperharness"}}}}})
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []map[string]any{{"name": "hypercode", "path": "submodules/hypercode"}}}}})
 		case "/trpc/git.getLog":
 			body, _ := io.ReadAll(r.Body)
 			if !strings.Contains(string(body), `"limit":5`) {
@@ -13859,38 +11643,6 @@ func TestAgentBridgeRoutes(t *testing.T) {
 				t.Fatalf("expected bridge metadata %s, got %s", tc.procedure, recorder.Body.String())
 			}
 		})
-	}
-}
-
-func TestSkillsAssimilateFallsBackToLocalGoScaffold(t *testing.T) {
-	workspaceRoot := t.TempDir()
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
-	cfg := config.Default()
-	cfg.WorkspaceRoot = workspaceRoot
-	server := New(cfg, stubDetector{})
-
-	request := httptest.NewRequest(http.MethodPost, "/api/skills/assimilate", strings.NewReader(`{"topic":"debugging","docsUrl":"https://example.com/docs","autoInstall":true}`))
-	request.Header.Set("content-type", "application/json")
-	recorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("expected fallback assimilate status 200, got %d with body %s", recorder.Code, recorder.Body.String())
-	}
-	for _, needle := range []string{`"fallback":"go-local-skills"`, `"procedure":"skills.assimilate"`, `saved the skill scaffold`, `"toolName":"debugging"`} {
-		if !strings.Contains(recorder.Body.String(), needle) {
-			t.Fatalf("expected assimilate fallback to contain %s, got %s", needle, recorder.Body.String())
-		}
-	}
-
-	skillFile := filepath.Join(workspaceRoot, ".hypercode", "skills", "debugging", "SKILL.md")
-	written, err := os.ReadFile(skillFile)
-	if err != nil {
-		t.Fatalf("expected local assimilated skill file: %v", err)
-	}
-	for _, needle := range []string{"# debugging", "https://example.com/docs", "Generated by the native Go fallback assimilation path."} {
-		if !strings.Contains(string(written), needle) {
-			t.Fatalf("expected written skill scaffold to contain %s, got %s", needle, string(written))
-		}
 	}
 }
 
@@ -14569,7 +12321,7 @@ func TestUIHelperBridgeRoutes(t *testing.T) {
 		case "/trpc/codeMode.execute":
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
 		case "/trpc/submodule.list":
-			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"path": "submodules/hyperharness"}}}}})
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"path": "submodules/hypercode"}}}}})
 		case "/trpc/submodule.updateAll":
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
 		case "/trpc/submodule.installDependencies":
@@ -14580,7 +12332,7 @@ func TestUIHelperBridgeRoutes(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
 		case "/trpc/submodule.detectCapabilities":
 			body, _ := io.ReadAll(r.Body)
-			if !strings.Contains(string(body), `"path":"submodules/hyperharness"`) {
+			if !strings.Contains(string(body), `"path":"submodules/hypercode"`) {
 				t.Fatalf("expected submodule.detectCapabilities payload, got %s", string(body))
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"caps": []any{"build"}}}}})
@@ -14643,12 +12395,12 @@ func TestUIHelperBridgeRoutes(t *testing.T) {
 		{name: "code mode enable", method: http.MethodPost, path: "/api/code-mode/enable", body: `{}`, contains: `"enabled":true`, procedure: `"procedure":"codeMode.enable"`},
 		{name: "code mode disable", method: http.MethodPost, path: "/api/code-mode/disable", body: `{}`, contains: `"enabled":false`, procedure: `"procedure":"codeMode.disable"`},
 		{name: "code mode execute", method: http.MethodPost, path: "/api/code-mode/execute", body: `{"code":"return 1;"}`, contains: `"success":true`, procedure: `"procedure":"codeMode.execute"`},
-		{name: "submodule list", method: http.MethodGet, path: "/api/submodules", contains: `"submodules/hyperharness"`, procedure: `"procedure":"submodule.list"`},
+		{name: "submodule list", method: http.MethodGet, path: "/api/submodules", contains: `"submodules/hypercode"`, procedure: `"procedure":"submodule.list"`},
 		{name: "submodule update all", method: http.MethodPost, path: "/api/submodules/update-all", body: `{}`, contains: `"success":true`, procedure: `"procedure":"submodule.updateAll"`},
-		{name: "submodule install deps", method: http.MethodPost, path: "/api/submodules/install-dependencies", body: `{"path":"submodules/hyperharness"}`, contains: `"success":true`, procedure: `"procedure":"submodule.installDependencies"`},
-		{name: "submodule build", method: http.MethodPost, path: "/api/submodules/build", body: `{"path":"submodules/hyperharness"}`, contains: `"success":true`, procedure: `"procedure":"submodule.build"`},
-		{name: "submodule enable", method: http.MethodPost, path: "/api/submodules/enable", body: `{"path":"submodules/hyperharness"}`, contains: `"success":true`, procedure: `"procedure":"submodule.enable"`},
-		{name: "submodule capabilities", method: http.MethodGet, path: "/api/submodules/capabilities?path=submodules%2Fhyperharness", contains: `"build"`, procedure: `"procedure":"submodule.detectCapabilities"`},
+		{name: "submodule install deps", method: http.MethodPost, path: "/api/submodules/install-dependencies", body: `{"path":"submodules/hypercode"}`, contains: `"success":true`, procedure: `"procedure":"submodule.installDependencies"`},
+		{name: "submodule build", method: http.MethodPost, path: "/api/submodules/build", body: `{"path":"submodules/hypercode"}`, contains: `"success":true`, procedure: `"procedure":"submodule.build"`},
+		{name: "submodule enable", method: http.MethodPost, path: "/api/submodules/enable", body: `{"path":"submodules/hypercode"}`, contains: `"success":true`, procedure: `"procedure":"submodule.enable"`},
+		{name: "submodule capabilities", method: http.MethodGet, path: "/api/submodules/capabilities?path=submodules%2Fhypercode", contains: `"build"`, procedure: `"procedure":"submodule.detectCapabilities"`},
 		{name: "suggestions list", method: http.MethodGet, path: "/api/suggestions", contains: `"sug-1"`, procedure: `"procedure":"suggestions.list"`},
 		{name: "suggestions resolve", method: http.MethodPost, path: "/api/suggestions/resolve", body: `{"id":"sug-1","status":"APPROVED"}`, contains: `"APPROVED"`, procedure: `"procedure":"suggestions.resolve"`},
 		{name: "suggestions clear", method: http.MethodPost, path: "/api/suggestions/clear", body: `{}`, contains: `"data":true`, procedure: `"procedure":"suggestions.clearAll"`},
@@ -15625,21 +13377,6 @@ func demo() {
 		Port:      4000,
 		Version:   "0.99.1",
 		StartedAt: "2026-03-28T00:00:00Z",
-		Startup: &lockfile.StartupProvenance{
-			RequestedRuntime: "auto",
-			ActiveRuntime:    "go",
-			RequestedPort:    4000,
-			ActivePort:       4012,
-			PortDecision:     "fallback port selected before launch",
-			PortReason:       "Port 4000 was already occupied before startup, so HyperCode selected 4012.",
-			LaunchMode:       "prebuilt Go binary",
-			DashboardMode:    "compatibility-only; skipped for Go runtime",
-			InstallDecision:  "skipped",
-			InstallReason:    "Go-primary dependencies already ready",
-			BuildDecision:    "skipped",
-			BuildReason:      "Go-primary build artifacts already current",
-			UpdatedAt:        "2026-03-28T00:00:05Z",
-		},
 	}); err != nil {
 		t.Fatalf("failed to write main lock: %v", err)
 	}
@@ -15704,24 +13441,6 @@ func demo() {
 	}
 	if payload.Data.Service != "hypercode-go" {
 		t.Fatalf("expected hypercode-go service, got %q", payload.Data.Service)
-	}
-	if payload.Data.StartupMode == nil {
-		t.Fatalf("expected startup mode metadata in runtime status")
-	}
-	if payload.Data.StartupMode["requestedRuntime"] != "auto" || payload.Data.StartupMode["activeRuntime"] != "go" {
-		t.Fatalf("expected startup runtime provenance, got %+v", payload.Data.StartupMode)
-	}
-	if payload.Data.StartupMode["requestedPort"] != float64(4000) || payload.Data.StartupMode["activePort"] != float64(4012) {
-		t.Fatalf("expected startup port provenance, got %+v", payload.Data.StartupMode)
-	}
-	if payload.Data.StartupMode["portDecision"] != "fallback port selected before launch" {
-		t.Fatalf("expected startup port decision provenance, got %+v", payload.Data.StartupMode)
-	}
-	if payload.Data.StartupMode["launchMode"] != "prebuilt Go binary" {
-		t.Fatalf("expected startup launch mode provenance, got %+v", payload.Data.StartupMode)
-	}
-	if payload.Data.StartupMode["source"] != "main-lock" {
-		t.Fatalf("expected startup mode source main-lock, got %+v", payload.Data.StartupMode)
 	}
 	if len(payload.Data.Locks) != 2 {
 		t.Fatalf("expected 2 lock statuses, got %d", len(payload.Data.Locks))

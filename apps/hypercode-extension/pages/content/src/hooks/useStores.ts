@@ -53,7 +53,7 @@ export const useConnectionStatus = (profileId: string = 'default-sse') =>
     useShallow(state => {
       const pState = state.connections[profileId] || {
         status: 'disconnected',
-        serverConfig: { uri: 'http://localhost:4000/sse', connectionType: 'sse', retryAttempts: 3 },
+        serverConfig: { uri: 'http://localhost:3006/sse', connectionType: 'sse', retryAttempts: 3 },
         isReconnecting: false,
         error: null,
         lastConnectedAt: null,
@@ -76,7 +76,7 @@ export const useConnectionStatus = (profileId: string = 'default-sse') =>
 export const useServerConfig = (profileId: string = 'default-sse') =>
   useConnectionStore(
     useShallow(state => {
-      const config = state.connections[profileId]?.serverConfig || { uri: 'http://localhost:4000/sse', connectionType: 'sse' };
+      const config = state.connections[profileId]?.serverConfig || { uri: 'http://localhost:3006/sse', connectionType: 'sse' };
       return {
         config,
         setConfig: (newConfig: any) => state.setServerConfig(profileId, newConfig),

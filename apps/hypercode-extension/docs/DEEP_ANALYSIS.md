@@ -25,9 +25,9 @@ The project is a **Chrome/Edge/Firefox Extension** built with a **React** fronte
 ### Transport Layer
 
 The extension supports three transport protocols to communicate with MCP servers:
-1. **SSE** (Server-Sent Events) — default, `http://localhost:4000/sse`
-2. **WebSocket** — `ws://localhost:4000/message`
-3. **Streamable HTTP** — `http://localhost:4000/mcp`
+1. **SSE** (Server-Sent Events) — default, `http://localhost:3006/sse`
+2. **WebSocket** — `ws://localhost:3006/message`
+3. **Streamable HTTP** — `http://localhost:3006/mcp`
 
 ## 2. State Management (Zustand)
 

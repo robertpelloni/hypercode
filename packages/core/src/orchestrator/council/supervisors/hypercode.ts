@@ -1,7 +1,7 @@
 import { getLLMService } from '../../../lib/trpc-core.js';
 import type { Supervisor, SupervisorConfig, Message } from './types.js';
 
-export class HypercodeSupervisor implements Supervisor {
+export class HyperCodeSupervisor implements Supervisor {
   name: string;
   provider: string;
   config: SupervisorConfig;

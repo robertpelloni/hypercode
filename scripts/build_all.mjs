@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * Cross-platform Hypercode build orchestrator.
+ * Cross-platform Borg build orchestrator.
  *
  * Why this exists:
  * - Root Turbo builds only cover packages included in `pnpm-workspace.yaml`.
- * - Some extension deliverables live outside the root workspace (`apps/hypercode-extension`).
+ * - Some extension deliverables live outside the root workspace (`apps/borg-extension`).
  * - The JetBrains plugin uses Gradle, so it needs a native build step.
  * - The richer browser extension has separate Chromium and Firefox modes that would
  *   otherwise overwrite the same `dist/` directory.
@@ -267,7 +267,7 @@ function runWorkspaceBuild() {
 }
 
 function runBrowserExtensionBuilds() {
-  const extensionRoot = path.join(repoRoot, "apps", "hypercode-extension");
+  const extensionRoot = path.join(repoRoot, "apps", "borg-extension");
   const distDir = path.join(extensionRoot, "dist");
   const chromiumDistDir = path.join(extensionRoot, "dist-chromium");
   const firefoxDistDir = path.join(extensionRoot, "dist-firefox");
@@ -275,13 +275,13 @@ function runBrowserExtensionBuilds() {
   const chromiumSnapshotDir = path.join(snapshotRoot, "dist-chromium-snapshot");
 
   if (!existsSync(extensionRoot)) {
-    printStep("Skipping browser-extension aggregate build because `apps/hypercode-extension` is not present.");
+    printStep("Skipping browser-extension aggregate build because `apps/borg-extension` is not present.");
     return;
   }
 
   mkdirSync(snapshotRoot, { recursive: true });
 
-  printStep("Installing Hypercode browser-extension workspace dependencies...");
+  printStep("Installing Borg browser-extension workspace dependencies...");
   const installResult = runPnpm(["install", "--frozen-lockfile"], {
     cwd: extensionRoot,
     env: {
@@ -308,7 +308,7 @@ function runBrowserExtensionBuilds() {
     printStep("Browser-extension dependencies installed via --ignore-scripts fallback.");
   }
 
-  printStep("Building Hypercode browser extension for Chromium/Chrome/Edge...");
+  printStep("Building Borg browser extension for Chromium/Chrome/Edge...");
   const chromiumBuild = runPnpm(["run", "base-build"], {
     cwd: extensionRoot,
     env: {
@@ -329,7 +329,7 @@ function runBrowserExtensionBuilds() {
   copyDirectory(distDir, chromiumDistDir);
   copyDirectory(distDir, chromiumSnapshotDir);
 
-  printStep("Building Hypercode browser extension for Firefox...");
+  printStep("Building Borg browser extension for Firefox...");
   const firefoxBuild = runPnpm(["run", "base-build"], {
     cwd: extensionRoot,
     env: {
@@ -396,8 +396,8 @@ function runJetBrainsBuild() {
 
   const gradle = detectGradleCommand(jetbrainsRoot);
   if (!gradle) {
-    const strictJetBrainsBuild = process.env.HYPERCODE_REQUIRE_JETBRAINS_BUILD === "true";
-    const message = "Skipping JetBrains plugin build because Gradle is not available. Install Gradle or add a Gradle wrapper under `packages/jetbrains`, or set HYPERCODE_REQUIRE_JETBRAINS_BUILD=true to fail instead.";
+    const strictJetBrainsBuild = process.env.BORG_REQUIRE_JETBRAINS_BUILD === "true";
+    const message = "Skipping JetBrains plugin build because Gradle is not available. Install Gradle or add a Gradle wrapper under `packages/jetbrains`, or set BORG_REQUIRE_JETBRAINS_BUILD=true to fail instead.";
 
     if (strictJetBrainsBuild) {
       fail(message);

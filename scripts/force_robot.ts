@@ -4,7 +4,7 @@ const url = 'ws://localhost:3001';
 const ws = new WebSocket(url);
 
 ws.on('open', () => {
-    console.log("Connected to Hypercode Core. Triggering Auto-Drive...");
+    console.log("Connected to HyperCode Core. Triggering Auto-Drive...");
 
     // Determine a request ID
     const requestId = "force_robot_" + Date.now();

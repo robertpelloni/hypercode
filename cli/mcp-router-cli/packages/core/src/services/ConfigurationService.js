@@ -195,7 +195,7 @@ export class ConfigurationService extends EventEmitter {
                     break;
                 case 'hypercode':
                 case 'legacy':
-                    server = this.normalizeHypercodeServer(raw);
+                    server = this.normalizeHyperCodeServer(raw);
                     break;
             }
             if (server) {
@@ -270,7 +270,7 @@ export class ConfigurationService extends EventEmitter {
     /**
      * Normalize hypercode format server
      */
-    normalizeHypercodeServer(raw) {
+    normalizeHyperCodeServer(raw) {
         return {
             id: this.generateServerId(raw.name),
             name: raw.name,
@@ -289,7 +289,7 @@ export class ConfigurationService extends EventEmitter {
         };
     }
     normalizeLegacyServer(raw) {
-        return this.normalizeHypercodeServer(raw);
+        return this.normalizeHyperCodeServer(raw);
     }
     /**
      * Generate unique server ID

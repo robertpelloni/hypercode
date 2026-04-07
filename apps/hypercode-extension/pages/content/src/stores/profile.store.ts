@@ -31,13 +31,13 @@ export const useProfileStore = create<ProfileStore>()(
         {
           id: 'default-sse',
           name: 'Default (SSE)',
-          uri: 'http://localhost:4000/sse',
+          uri: 'http://localhost:3006/sse',
           connectionType: 'sse',
         },
         {
           id: 'default-ws',
           name: 'Default (WebSocket)',
-          uri: 'ws://localhost:4000/message',
+          uri: 'ws://localhost:3006/message',
           connectionType: 'websocket',
         },
       ],

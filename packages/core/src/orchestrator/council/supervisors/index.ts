@@ -3,14 +3,14 @@ import { MockSupervisor } from './mock.js';
 import { OpenAISupervisor } from './openai.js';
 import { AnthropicSupervisor } from './anthropic.js';
 import { GenericOpenAISupervisor } from './generic-openai.js';
-import { HypercodeSupervisor } from './hypercode.js';
+import { HyperCodeSupervisor } from './hypercode.js';
 
 export function createSupervisor(config: SupervisorConfig): Supervisor {
   const { provider } = config;
 
   // Prefer HyperCode-native supervisor if possible (it uses the shared LlmService)
-  if (['openai', 'anthropic', 'google', 'gemini', 'grok', 'xai', 'deepseek', 'qwen', 'moonshot', 'kimi', 'openrouter'].includes(provider)) {
-    return new HypercodeSupervisor(config);
+  if (['openai', 'anthropic', 'google', 'gemini', 'grok', 'xai', 'deepseek', 'qwen', 'moonshot', 'kimi'].includes(provider)) {
+    return new HyperCodeSupervisor(config);
   }
 
   switch (provider) {
@@ -19,13 +19,6 @@ export function createSupervisor(config: SupervisorConfig): Supervisor {
 
     case 'anthropic':
       return new AnthropicSupervisor(config);
-
-    case 'openrouter':
-      return new GenericOpenAISupervisor({
-        ...config,
-        baseURL: config.baseURL || 'https://openrouter.ai/api/v1',
-        apiKey: config.apiKey || process.env.OPENROUTER_API_KEY,
-      });
 
     case 'deepseek':
       return new GenericOpenAISupervisor({

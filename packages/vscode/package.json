@@ -95,14 +95,14 @@
         "viewsContainers": {
             "activitybar": [
                 {
-                    "id": "HypercodeSidebar",
+                    "id": "HyperCodeSidebar",
                     "title": "HyperCode",
                     "icon": "resources/hypercode.svg"
                 }
             ]
         },
         "views": {
-            "HypercodeSidebar": [
+            "HyperCodeSidebar": [
                 {
                     "type": "webview",
                     "id": "hypercode.dispatchView",

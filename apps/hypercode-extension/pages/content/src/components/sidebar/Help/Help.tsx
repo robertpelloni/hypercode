@@ -124,7 +124,7 @@ const Help: React.FC = () => {
                     Standard HTTP streaming. Best for stability and most use cases.
                   </Typography>
                   <code className="text-[10px] bg-slate-200 dark:bg-slate-900 px-1 py-0.5 rounded">
-                    http://localhost:4000/sse
+                    http://localhost:3006/sse
                   </code>
                 </div>
 
@@ -141,7 +141,7 @@ const Help: React.FC = () => {
                     Full-duplex communication. Lower latency for high-frequency updates.
                   </Typography>
                   <code className="text-[10px] bg-slate-200 dark:bg-slate-900 px-1 py-0.5 rounded">
-                    ws://localhost:4000/message
+                    ws://localhost:3006/message
                   </code>
                 </div>
 
@@ -153,7 +153,7 @@ const Help: React.FC = () => {
                     Alternative HTTP transport. Use if SSE is blocked by network policies.
                   </Typography>
                   <code className="text-[10px] bg-slate-200 dark:bg-slate-900 px-1 py-0.5 rounded">
-                    http://localhost:4000/mcp
+                    http://localhost:3006/mcp
                   </code>
                 </div>
               </div>
@@ -433,7 +433,7 @@ const Help: React.FC = () => {
                   Connection Refused / 404
                 </Typography>
                 <Typography variant="body" className="text-xs">
-                  Ensure your proxy server is running. Check if the port (default 4000) matches the URI in Server
+                  Ensure your proxy server is running. Check if the port (default 3006) matches the URI in Server
                   Status.
                 </Typography>
               </div>

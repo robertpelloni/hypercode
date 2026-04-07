@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	crand "crypto/rand"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
@@ -28,22 +27,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/hypercodehq/hypercode-go/internal/buildinfo"
 	"github.com/hypercodehq/hypercode-go/internal/config"
 	"github.com/hypercodehq/hypercode-go/internal/controlplane"
 	"github.com/hypercodehq/hypercode-go/internal/harnesses"
 	"github.com/hypercodehq/hypercode-go/internal/interop"
-	"github.com/hypercodehq/hypercode-go/internal/lockfile"
-	"github.com/hypercodehq/hypercode-go/internal/mcp"
 	"github.com/hypercodehq/hypercode-go/internal/memorystore"
 	"github.com/hypercodehq/hypercode-go/internal/mesh"
-	"github.com/hypercodehq/hypercode-go/internal/orchestration"
 	"github.com/hypercodehq/hypercode-go/internal/providers"
 	"github.com/hypercodehq/hypercode-go/internal/sessionimport"
-	"github.com/hypercodehq/hypercode-go/internal/supervisor"
-	bobbySync "github.com/hypercodehq/hypercode-go/internal/sync"
-	"github.com/hypercodehq/hypercode-go/internal/workflow"
+	"github.com/hypercodehq/hypercode-go/internal/mcp"
+	"github.com/hypercodehq/hypercode-go/internal/sync"
+	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )
 
@@ -59,25 +54,16 @@ var sessionExportKnownFormats = []map[string]any{
 }
 
 type Server struct {
-	cfg               config.Config
-	detector          controlplane.ToolProvider
-	mesh              *mesh.Service
-	aggregator        *mcp.Aggregator
-	startedAt         time.Time
-	mux               *http.ServeMux
-	lifecycleModes    map[string]any
-	fallbackBuffer    *providerFallbackBuffer
-	supervisorManager *supervisor.Manager
-	workflowEngine    *workflow.Engine
-	linkCrawler       *bobbySync.LinkCrawlerManager
-	debateHistory     *orchestration.DebateHistoryStore
-	runtimeServers    *runtimeServerRegistry
-	mcpState          *localMCPStateManager
-	sessionState      *localSessionStateManager
-	darwinState       *localDarwinStateManager
-	autoDevState      *localAutoDevManager
-	squadState        *localSquadManager
-	swarmState        *localSwarmStateManager
+	cfg            config.Config
+	detector       controlplane.ToolProvider
+	mesh           *mesh.Service
+	startedAt      time.Time
+	mux            *http.ServeMux
+	lifecycleModes map[string]any
+	fallbackBuffer *providerFallbackBuffer
+	autoDev        *localAutoDevManager
+	squad          *localSquadManager
+	swarm          *localSwarmManager
 }
 
 type providerFallbackEvent struct {
@@ -159,7 +145,6 @@ type RuntimeStatus struct {
 	Version              string                       `json:"version"`
 	BaseURL              string                       `json:"baseUrl"`
 	UptimeSec            int                          `json:"uptimeSec"`
-	StartupMode          map[string]any               `json:"startupMode,omitempty"`
 	Locks                []interop.ControlPlaneStatus `json:"locks"`
 	LockSummary          LockRuntimeSummary           `json:"lockSummary"`
 	Config               ConfigRuntimeSummary         `json:"config"`
@@ -369,48 +354,23 @@ type SummaryBucket struct {
 }
 
 func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
-	// Create supervisor manager
-	supMgr := supervisor.NewManager(supervisor.ManagerOptions{
-		PersistencePath:   filepath.Join(cfg.ConfigDir, "session-supervisor.json"),
-		AutoResumeOnStart: true,
-		WorktreeRoot:      cfg.WorkspaceRoot,
-	})
-
-	// Create workflow engine with built-in workflows
-	wfEngine := workflow.NewEngine()
-	wfEngine.Register(workflow.FullBuildWorkflow(cfg.WorkspaceRoot))
-	wfEngine.Register(workflow.SubmoduleSyncWorkflow(cfg.WorkspaceRoot))
-	wfEngine.Register(workflow.LintAndTestWorkflow(cfg.WorkspaceRoot))
-
 	server := &Server{
-		cfg:        cfg,
-		detector:   detector,
-		mesh:       mesh.New(cfg),
-		aggregator: mcp.NewAggregator(),
-		startedAt:  time.Now().UTC(),
-		mux:        http.NewServeMux(),
+		cfg:       cfg,
+		detector:  detector,
+		mesh:      mesh.New(cfg),
+		startedAt: time.Now().UTC(),
+		mux:       http.NewServeMux(),
 		lifecycleModes: map[string]any{
 			"lazySessionMode":        false,
 			"singleActiveServerMode": false,
 		},
-		fallbackBuffer:    newProviderFallbackBuffer(50),
-		supervisorManager: supMgr,
-		workflowEngine:    wfEngine,
-		linkCrawler: bobbySync.NewLinkCrawlerManager(
-			filepath.Join(cfg.WorkspaceRoot, "metamcp.db"),
-			resolveLinkCrawlerInterval(),
-			resolveLinkCrawlerClassifyTags(),
-		),
-		debateHistory:  orchestration.NewDebateHistoryStore(filepath.Join(cfg.WorkspaceRoot, "metamcp.db")),
-		runtimeServers: newRuntimeServerRegistry(),
-		mcpState:       newLocalMCPStateManager(filepath.Join(cfg.ConfigDir, "mcp_state.json")),
-		sessionState:   newLocalSessionStateManager(filepath.Join(cfg.WorkspaceRoot, ".hypercode-session.json")),
-		darwinState:    newLocalDarwinStateManager(filepath.Join(cfg.ConfigDir, "darwin_state.json")),
-		autoDevState:   newLocalAutoDevManager(cfg.WorkspaceRoot, filepath.Join(cfg.ConfigDir, "autodev_state.json")),
-		squadState:     newLocalSquadManager(cfg.WorkspaceRoot, filepath.Join(cfg.ConfigDir, "squad_state.json")),
-		swarmState:     newLocalSwarmStateManager(filepath.Join(cfg.ConfigDir, "swarm_state.json")),
+		fallbackBuffer: newProviderFallbackBuffer(50),
+		autoDev:        newLocalAutoDevManager(cfg.WorkspaceRoot),
+		squad:          newLocalSquadManager(cfg.WorkspaceRoot),
+		swarm:          newLocalSwarmManager(cfg.WorkspaceRoot),
 	}
-
+	server.squad.load()
+	server.swarm.load()
 	server.registerRoutes()
 	return server
 }
@@ -425,11 +385,6 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 		Handler:           s.mux,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-
-	if resolveLinkCrawlerAutoStart() {
-		s.linkCrawler.Start(ctx)
-	}
-	defer s.linkCrawler.Stop()
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -510,8 +465,6 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/sessions/imported/scan", s.handleImportedSessionScan)
 	s.mux.HandleFunc("/api/sessions/imported/instruction-docs", s.handleImportedSessionInstructionDocs)
 	s.mux.HandleFunc("/api/sessions/imported/maintenance-stats", s.handleImportedSessionMaintenanceStats)
-	s.mux.HandleFunc("/api/sessions/imported/persist-native", s.handleImportedSessionPersistNative)
-	s.mux.HandleFunc("/api/sessions/imported/ingest-native", s.handleImportedSessionIngestNative)
 	s.mux.HandleFunc("/api/billing/status", s.handleBillingStatus)
 	s.mux.HandleFunc("/api/billing/provider-quotas", s.handleBillingProviderQuotas)
 	s.mux.HandleFunc("/api/billing/cost-history", s.handleBillingCostHistory)
@@ -758,13 +711,7 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/clouddev/messages/get", s.handleCloudDevGetMessages)
 	s.mux.HandleFunc("/api/clouddev/logs", s.handleCloudDevGetLogs)
 	s.mux.HandleFunc("/api/clouddev/stats", s.handleCloudDevStats)
-	s.mux.HandleFunc("/api/jules/ping", s.handleCloudOrchestratorPing())
-	s.mux.HandleFunc("/api/jules/manifest", s.handleCloudOrchestratorManifest())
-	s.mux.HandleFunc("/api/jules/sessions", s.handleCloudOrchestratorSessions())
-	s.mux.HandleFunc("/api/system/submodules", s.handleCloudOrchestratorSubmodules())
 	s.mux.HandleFunc("/api/metrics/stats", s.handleMetricsStats)
-	s.mux.HandleFunc("/sse", s.handleSSE)
-	s.mux.HandleFunc("/message", s.handleSSEMessage)
 	s.mux.HandleFunc("/api/metrics/track", s.handleMetricsTrack)
 	s.mux.HandleFunc("/api/metrics/system-snapshot", s.handleMetricsSystemSnapshot)
 	s.mux.HandleFunc("/api/metrics/timeline", s.handleMetricsTimeline)
@@ -860,10 +807,6 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/links-backlog/stats", s.handleLinksBacklogStats)
 	s.mux.HandleFunc("/api/links-backlog/get", s.handleLinksBacklogGet)
 	s.mux.HandleFunc("/api/links-backlog/sync", s.handleLinksBacklogSync)
-	s.mux.HandleFunc("/api/links-backlog/crawl-native", s.handleLinksBacklogCrawlNative)
-	s.mux.HandleFunc("/api/links-backlog/crawler-native/status", s.handleLinksBacklogCrawlerStatus)
-	s.mux.HandleFunc("/api/links-backlog/crawler-native/start", s.handleLinksBacklogCrawlerStart)
-	s.mux.HandleFunc("/api/links-backlog/crawler-native/stop", s.handleLinksBacklogCrawlerStop)
 	s.mux.HandleFunc("/api/infrastructure", s.handleInfrastructureStatus)
 	s.mux.HandleFunc("/api/infrastructure/doctor", s.handleInfrastructureDoctor)
 	s.mux.HandleFunc("/api/infrastructure/apply", s.handleInfrastructureApply)
@@ -1008,22 +951,6 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/mesh/query-capabilities", s.handleMeshQueryCapabilities)
 	s.mux.HandleFunc("/api/mesh/find-peer", s.handleMeshFindPeer)
 	s.mux.HandleFunc("/api/mesh/broadcast", s.handleMeshBroadcast)
-
-	// Workflow Engine (Native Go DAG executor)
-	s.mux.HandleFunc("/api/workflows/native", s.handleNativeWorkflowList)
-	s.mux.HandleFunc("/api/workflows/native/get", s.handleNativeWorkflowGet)
-	s.mux.HandleFunc("/api/workflows/native/run", s.handleNativeWorkflowRun)
-	s.mux.HandleFunc("/api/workflows/native/create", s.handleNativeWorkflowCreate)
-
-	// Native Supervisor (Go-native process management)
-	s.mux.HandleFunc("/api/supervisor/native/list", s.handleNativeSupervisorList)
-	s.mux.HandleFunc("/api/supervisor/native/create", s.handleNativeSupervisorCreate)
-	s.mux.HandleFunc("/api/supervisor/native/start", s.handleNativeSupervisorStart)
-	s.mux.HandleFunc("/api/supervisor/native/stop", s.handleNativeSupervisorStop)
-	s.mux.HandleFunc("/api/supervisor/native/status", s.handleNativeSupervisorStatus)
-
-	// Session Export (Native Go)
-	s.mux.HandleFunc("/api/import/export-native", s.handleNativeSessionExport)
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
@@ -1086,28 +1013,26 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/sessions/summary", Category: "sessions", Description: "Compact summary of discovered sessions by tool, format, task, and model hint."},
 				{Path: "/api/sessions/context", Category: "sessions", Description: "Go-owned session context summary combining startup readiness, memory bootstrap, and tool advertisements."},
 				{Path: "/api/sessions/supervisor/catalog", Category: "sessions", Description: "Bridge to the TypeScript session harness catalog."},
-				{Path: "/api/sessions/supervisor/list", Category: "sessions", Description: "List supervised sessions through the TypeScript control plane when available, with native Go persisted supervisor fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/get", Category: "sessions", Description: "Read a supervised session snapshot through TypeScript when available, with native Go persisted supervisor fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/create", Category: "sessions", Description: "Create a supervised session through the TypeScript control plane when available, with native Go persisted supervisor fallback including conflict-aware worktree isolation when unavailable."},
-				{Path: "/api/sessions/supervisor/start", Category: "sessions", Description: "Start a supervised session through TypeScript when available, with native Go supervised runtime fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/stop", Category: "sessions", Description: "Stop a supervised session through TypeScript when available, with native Go supervised runtime fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/restart", Category: "sessions", Description: "Restart a supervised session through TypeScript when available, with native Go supervised runtime fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/logs", Category: "sessions", Description: "Read buffered logs for a supervised session through TypeScript when available, with native Go supervisor log-buffer fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/execute-shell", Category: "sessions", Description: "Execute a contextual shell command in a supervised session through TypeScript when available, with native Go one-shot shell fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/attach-info", Category: "sessions", Description: "Read supervised-session readiness and process metadata through TypeScript when available, with native Go attach-readiness fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/health", Category: "sessions", Description: "Read supervised-session health through TypeScript when available, with native Go supervisor health fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/state", Category: "sessions", Description: "Read the shared session-manager state through TypeScript when available, with native Go persisted session-state fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/update-state", Category: "sessions", Description: "Update the shared session-manager state through TypeScript when available, with native Go persisted session-state fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/clear", Category: "sessions", Description: "Clear the shared session-manager state through TypeScript when available, with native Go persisted session-state fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/heartbeat", Category: "sessions", Description: "Touch the shared session-manager heartbeat through TypeScript when available, with native Go persisted session-state fallback when unavailable."},
-				{Path: "/api/sessions/supervisor/restore", Category: "sessions", Description: "Restore supervised sessions through TypeScript when available, with native Go persisted supervisor restore fallback when unavailable."},
-				{Path: "/api/sessions/imported/list", Category: "sessions", Description: "Bridge to imported sessions already processed by the TypeScript control plane, with local Go persistence fallback."},
-				{Path: "/api/sessions/imported/get", Category: "sessions", Description: "Bridge to a specific imported session record from the TypeScript control plane, with local Go persistence fallback."},
+				{Path: "/api/sessions/supervisor/list", Category: "sessions", Description: "Bridge to the TypeScript supervised session list."},
+				{Path: "/api/sessions/supervisor/get", Category: "sessions", Description: "Bridge to a specific TypeScript supervised session snapshot."},
+				{Path: "/api/sessions/supervisor/create", Category: "sessions", Description: "Create a supervised session through the TypeScript control plane."},
+				{Path: "/api/sessions/supervisor/start", Category: "sessions", Description: "Start a supervised session through the TypeScript control plane."},
+				{Path: "/api/sessions/supervisor/stop", Category: "sessions", Description: "Stop a supervised session through the TypeScript control plane."},
+				{Path: "/api/sessions/supervisor/restart", Category: "sessions", Description: "Restart a supervised session through the TypeScript control plane."},
+				{Path: "/api/sessions/supervisor/logs", Category: "sessions", Description: "Bridge to buffered logs for a specific TypeScript supervised session."},
+				{Path: "/api/sessions/supervisor/execute-shell", Category: "sessions", Description: "Execute a contextual shell command in a TypeScript supervised session."},
+				{Path: "/api/sessions/supervisor/attach-info", Category: "sessions", Description: "Bridge to supervised-session readiness and process metadata."},
+				{Path: "/api/sessions/supervisor/health", Category: "sessions", Description: "Bridge to health details for a TypeScript supervised session."},
+				{Path: "/api/sessions/supervisor/state", Category: "sessions", Description: "Bridge to the shared TypeScript session-manager state."},
+				{Path: "/api/sessions/supervisor/update-state", Category: "sessions", Description: "Update the shared TypeScript session-manager state."},
+				{Path: "/api/sessions/supervisor/clear", Category: "sessions", Description: "Clear the shared TypeScript session-manager state."},
+				{Path: "/api/sessions/supervisor/heartbeat", Category: "sessions", Description: "Touch the shared TypeScript session-manager heartbeat."},
+				{Path: "/api/sessions/supervisor/restore", Category: "sessions", Description: "Restore supervised sessions through the TypeScript control plane."},
+				{Path: "/api/sessions/imported/list", Category: "sessions", Description: "Bridge to imported sessions already processed by the TypeScript control plane."},
+				{Path: "/api/sessions/imported/get", Category: "sessions", Description: "Bridge to a specific imported session record from the TypeScript control plane."},
 				{Path: "/api/sessions/imported/scan", Category: "sessions", Description: "Trigger TypeScript imported-session scanning, import, and memory extraction."},
-				{Path: "/api/sessions/imported/instruction-docs", Category: "sessions", Description: "Bridge to imported-session instruction documents generated by the TypeScript control plane, with local Go docs fallback."},
-				{Path: "/api/sessions/imported/maintenance-stats", Category: "sessions", Description: "Bridge to imported-session archive and retention maintenance counters, with local Go persistence fallback."},
-				{Path: "/api/sessions/imported/persist-native", Category: "sessions", Description: "Persist an imported session natively in Go with transcript-hash dedup, archived transcript storage, memory rows, and instruction-doc regeneration."},
-				{Path: "/api/sessions/imported/ingest-native", Category: "sessions", Description: "Scan and ingest supported file-based imported sessions natively in Go, persisting them into the Go imported-session store."},
+				{Path: "/api/sessions/imported/instruction-docs", Category: "sessions", Description: "Bridge to imported-session instruction documents generated by the TypeScript control plane."},
+				{Path: "/api/sessions/imported/maintenance-stats", Category: "sessions", Description: "Bridge to imported-session archive and retention maintenance counters."},
 				{Path: "/api/billing/status", Category: "providers", Description: "Read billing status, with a local Go preview when the TypeScript billing router is unavailable."},
 				{Path: "/api/billing/provider-quotas", Category: "providers", Description: "Read provider quota state, with a local Go environment-backed preview when the TypeScript billing router is unavailable."},
 				{Path: "/api/billing/cost-history", Category: "providers", Description: "Read billing cost history, with a local Go zero-state preview when the TypeScript billing router is unavailable."},
@@ -1153,15 +1078,11 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/mcp/working-set/evictions/clear", Category: "mcp", Description: "Clear MCP working-set eviction history, with a local no-op fallback when the TypeScript MCP router is unavailable."},
 				{Path: "/api/mcp/working-set/load", Category: "mcp", Description: "Load an MCP tool into the TypeScript working set."},
 				{Path: "/api/mcp/working-set/unload", Category: "mcp", Description: "Unload an MCP tool from the TypeScript working set."},
-				{Path: "/api/memory/search", Category: "memory", Description: "Bridge to TypeScript contextual memory search, with local persisted SQLite/context-registry fallback when upstream is unavailable."},
-				{Path: "/api/memory/contexts", Category: "memory", Description: "Bridge to TypeScript saved context listing, with local context-registry fallback when upstream is unavailable."},
-				{Path: "/api/memory/context/save", Category: "memory", Description: "Save a memory context through the TypeScript control plane, with local saved-context registry fallback when upstream is unavailable."},
-				{Path: "/api/memory/context/get", Category: "memory", Description: "Bridge to a specific saved memory context, with local inline-content fallback when upstream is unavailable."},
-				{Path: "/api/memory/context/delete", Category: "memory", Description: "Delete a saved memory context through the TypeScript control plane, with local registry-deletion fallback when upstream is unavailable."},
-				{Path: "/api/memory/interchange-formats", Category: "memory", Description: "Bridge to TypeScript memory interchange-format list, with truthful local format inventory fallback when upstream is unavailable."},
-				{Path: "/api/memory/export", Category: "memory", Description: "Bridge to TypeScript memory export, with a local export fallback from memory.json or the contexts registry when upstream is unavailable."},
-				{Path: "/api/memory/import", Category: "memory", Description: "Bridge to TypeScript memory import, with local saved-context registry import fallback when upstream is unavailable."},
-				{Path: "/api/memory/convert", Category: "memory", Description: "Bridge to TypeScript memory format conversion, with local canonical/provider format conversion fallback when upstream is unavailable."},
+				{Path: "/api/memory/search", Category: "memory", Description: "Bridge to TypeScript contextual memory search."},
+				{Path: "/api/memory/contexts", Category: "memory", Description: "Bridge to TypeScript saved context listing."},
+				{Path: "/api/memory/context/save", Category: "memory", Description: "Save a memory context through the TypeScript control plane."},
+				{Path: "/api/memory/context/get", Category: "memory", Description: "Bridge to a specific saved memory context."},
+				{Path: "/api/memory/context/delete", Category: "memory", Description: "Delete a saved memory context through the TypeScript control plane."},
 				{Path: "/api/memory/agent-stats", Category: "memory", Description: "Bridge to TypeScript agent-memory statistics."},
 				{Path: "/api/memory/agent-search", Category: "memory", Description: "Bridge to TypeScript agent-memory search."},
 				{Path: "/api/memory/facts/add", Category: "memory", Description: "Add a memory fact through the TypeScript control plane."},
@@ -1180,10 +1101,10 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/memory/session-summaries/recent", Category: "memory", Description: "Bridge to recent session-summary memories from the TypeScript control plane."},
 				{Path: "/api/memory/session-summaries/search", Category: "memory", Description: "Bridge to session-summary memory search from the TypeScript control plane."},
 				{Path: "/api/memory/sectioned-status", Category: "memory", Description: "Bridge to the TypeScript sectioned-memory status snapshot."},
-				{Path: "/api/memory/interchange-formats", Category: "memory", Description: "Bridge to the TypeScript memory interchange-format list, with truthful local format inventory fallback when upstream is unavailable."},
+				{Path: "/api/memory/interchange-formats", Category: "memory", Description: "Bridge to the TypeScript memory interchange-format list."},
 				{Path: "/api/memory/export", Category: "memory", Description: "Bridge to TypeScript memory export, with a local export fallback from memory.json or the contexts registry when upstream is unavailable."},
-				{Path: "/api/memory/import", Category: "memory", Description: "Bridge to TypeScript memory import, with local saved-context registry import fallback when upstream is unavailable."},
-				{Path: "/api/memory/convert", Category: "memory", Description: "Bridge to TypeScript memory format conversion, with local canonical/provider format conversion fallback when upstream is unavailable."},
+				{Path: "/api/memory/import", Category: "memory", Description: "Bridge to TypeScript memory import."},
+				{Path: "/api/memory/convert", Category: "memory", Description: "Bridge to TypeScript memory format conversion."},
 				{Path: "/api/agent-memory/search", Category: "memory", Description: "Bridge to TypeScript agent-memory search across namespaces and tiers, with an explicit empty-result fallback when agent memory is unavailable."},
 				{Path: "/api/agent-memory/add", Category: "memory", Description: "Add an agent-memory entry through the TypeScript control plane."},
 				{Path: "/api/agent-memory/recent", Category: "memory", Description: "Bridge to recent TypeScript agent-memory entries, with an explicit empty-result fallback when agent memory is unavailable."},
@@ -1270,7 +1191,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/tool-sets/update", Category: "control", Description: "Update a tool set through the TypeScript control plane."},
 				{Path: "/api/tool-sets/delete", Category: "control", Description: "Delete a tool set through the TypeScript control plane."},
 				{Path: "/api/project/context", Category: "control", Description: "Bridge to the TypeScript project context document, with a local .hypercode/project_context.md fallback when the TypeScript control plane is unavailable."},
-				{Path: "/api/project/context/update", Category: "control", Description: "Update the TypeScript project context document, with a local .hypercode/project_context.md write fallback when the TypeScript control plane is unavailable."},
+				{Path: "/api/project/context/update", Category: "control", Description: "Update the TypeScript project context document."},
 				{Path: "/api/project/handoffs", Category: "control", Description: "Bridge to TypeScript project handoff metadata, with a local .hypercode/handoffs listing fallback when the TypeScript control plane is unavailable."},
 				{Path: "/api/shell/log", Category: "control", Description: "Log a shell command through the TypeScript shell service."},
 				{Path: "/api/shell/history/query", Category: "control", Description: "Bridge to TypeScript shell history search, with a local .hypercode/shell_history.json fallback when unavailable."},
@@ -1329,10 +1250,6 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/links-backlog/stats", Category: "operator", Description: "Read BobbyBookmarks backlog stats through the TypeScript links backlog router."},
 				{Path: "/api/links-backlog/get", Category: "operator", Description: "Read a BobbyBookmarks backlog item through the TypeScript links backlog router."},
 				{Path: "/api/links-backlog/sync", Category: "operator", Description: "Sync BobbyBookmarks backlog data through the TypeScript links backlog router."},
-				{Path: "/api/links-backlog/crawl-native", Category: "operator", Description: "Run a single native Go crawl/enrichment pass over pending backlog links."},
-				{Path: "/api/links-backlog/crawler-native/status", Category: "operator", Description: "Read native Go links backlog crawler background-worker status."},
-				{Path: "/api/links-backlog/crawler-native/start", Category: "operator", Description: "Start the native Go links backlog crawler background worker."},
-				{Path: "/api/links-backlog/crawler-native/stop", Category: "operator", Description: "Stop the native Go links backlog crawler background worker."},
 				{Path: "/api/infrastructure", Category: "operator", Description: "Read infrastructure daemon status through the TypeScript infrastructure router, with a local binary/config fallback when the router is unavailable."},
 				{Path: "/api/infrastructure/doctor", Category: "operator", Description: "Run the infrastructure doctor command through the TypeScript infrastructure router."},
 				{Path: "/api/infrastructure/apply", Category: "operator", Description: "Apply infrastructure configuration through the TypeScript infrastructure router."},
@@ -1678,6 +1595,38 @@ func (s *Server) handleSupervisorSessionCatalog(w http.ResponseWriter, r *http.R
 	s.handleSessionBridgeCall(w, r, http.MethodGet, "session.catalog", nil)
 }
 
+func (s *Server) handleSupervisorSessionList(w http.ResponseWriter, r *http.Request) {
+	s.handleSessionBridgeCall(w, r, http.MethodGet, "session.list", nil)
+}
+
+func (s *Server) handleSupervisorSessionGet(w http.ResponseWriter, r *http.Request) {
+	sessionID := strings.TrimSpace(r.URL.Query().Get("id"))
+	if sessionID == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{
+			"success": false,
+			"error":   "missing id query parameter",
+		})
+		return
+	}
+	s.handleSessionBridgeCall(w, r, http.MethodGet, "session.get", map[string]any{"id": sessionID})
+}
+
+func (s *Server) handleSupervisorSessionCreate(w http.ResponseWriter, r *http.Request) {
+	s.handleSessionBridgeBodyCall(w, r, "session.create")
+}
+
+func (s *Server) handleSupervisorSessionStart(w http.ResponseWriter, r *http.Request) {
+	s.handleSessionBridgeBodyCall(w, r, "session.start")
+}
+
+func (s *Server) handleSupervisorSessionStop(w http.ResponseWriter, r *http.Request) {
+	s.handleSessionBridgeBodyCall(w, r, "session.stop")
+}
+
+func (s *Server) handleSupervisorSessionRestart(w http.ResponseWriter, r *http.Request) {
+	s.handleSessionBridgeBodyCall(w, r, "session.restart")
+}
+
 func (s *Server) handleImportedSessionList(w http.ResponseWriter, r *http.Request) {
 	limit := strings.TrimSpace(r.URL.Query().Get("limit"))
 	parsedLimit := 50
@@ -1709,19 +1658,6 @@ func (s *Server) handleImportedSessionList(w http.ResponseWriter, r *http.Reques
 			"bridge": map[string]any{
 				"upstreamBase": upstreamBase,
 				"procedure":    "session.importedList",
-			},
-		})
-		return
-	}
-
-	if localRecords, localErr := s.loadLocalImportedSessionRecords(r.Context(), parsedLimit); localErr == nil && len(localRecords) > 0 {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    localRecords,
-			"bridge": map[string]any{
-				"fallback":  "go-sessionimport-local-store",
-				"procedure": "session.importedList",
-				"reason":    "upstream unavailable; using locally persisted imported session records",
 			},
 		})
 		return
@@ -1786,19 +1722,6 @@ func (s *Server) handleImportedSessionGet(w http.ResponseWriter, r *http.Request
 			"bridge": map[string]any{
 				"upstreamBase": upstreamBase,
 				"procedure":    "session.importedGet",
-			},
-		})
-		return
-	}
-
-	if localRecord, localErr := s.loadLocalImportedSessionRecord(r.Context(), importedID); localErr == nil && localRecord != nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    localRecord,
-			"bridge": map[string]any{
-				"fallback":  "go-sessionimport-local-store",
-				"procedure": "session.importedGet",
-				"reason":    "upstream unavailable; using locally persisted imported session record",
 			},
 		})
 		return
@@ -1900,19 +1823,6 @@ func (s *Server) handleImportedSessionScan(w http.ResponseWriter, r *http.Reques
 
 	candidates, scanErr := s.scanValidatedImportSources()
 	if scanErr != nil {
-		if localRecords, localErr := s.loadLocalImportedSessionRecords(r.Context(), 10000); localErr == nil && len(localRecords) > 0 {
-			fallbackSummary := s.archivedImportedSessionScanSummary(localRecords)
-			writeJSON(w, http.StatusOK, map[string]any{
-				"success": true,
-				"data":    fallbackSummary,
-				"bridge": map[string]any{
-					"fallback":  "go-sessionimport-local-store",
-					"procedure": "session.importedScan",
-					"reason":    "upstream unavailable; using locally persisted imported sessions because validated scan fallback failed: " + scanErr.Error(),
-				},
-			})
-			return
-		}
 		if archivedRecords, archiveErr := s.loadArchivedImportedSessionRecords(); archiveErr == nil && len(archivedRecords) > 0 {
 			fallbackSummary := s.archivedImportedSessionScanSummary(archivedRecords)
 			writeJSON(w, http.StatusOK, map[string]any{
@@ -1930,20 +1840,6 @@ func (s *Server) handleImportedSessionScan(w http.ResponseWriter, r *http.Reques
 			"success": false,
 			"error":   scanErr.Error(),
 			"detail":  scanErr.Error(),
-		})
-		return
-	}
-
-	if localRecords, localErr := s.loadLocalImportedSessionRecords(r.Context(), 10000); localErr == nil && len(localRecords) > 0 {
-		fallbackSummary := s.mergedImportedSessionScanSummary(localRecords, candidates)
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    fallbackSummary,
-			"bridge": map[string]any{
-				"fallback":  "go-sessionimport-local-store",
-				"procedure": "session.importedScan",
-				"reason":    "upstream unavailable; merged locally persisted imported sessions with validated scan candidates",
-			},
 		})
 		return
 	}
@@ -2021,19 +1917,6 @@ func (s *Server) handleImportedSessionInstructionDocs(w http.ResponseWriter, r *
 		return
 	}
 
-	if docs, docsErr := s.localImportedSessionStore().ListInstructionDocs(); docsErr == nil && len(docs) > 0 {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    localImportedInstructionDocs(docs),
-			"bridge": map[string]any{
-				"fallback":  "go-sessionimport-local-store",
-				"procedure": "session.importedInstructionDocs",
-				"reason":    "upstream unavailable; using Go imported-session instruction documents",
-			},
-		})
-		return
-	}
-
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
 		"data": func() []map[string]any {
@@ -2081,19 +1964,6 @@ func (s *Server) handleImportedSessionMaintenanceStats(w http.ResponseWriter, r 
 		return
 	}
 
-	if localStats, localErr := s.localImportedSessionStore().GetMaintenanceStats(r.Context()); localErr == nil && localStats.TotalSessions > 0 {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    localImportedSessionMaintenanceStats(localStats),
-			"bridge": map[string]any{
-				"fallback":  "go-sessionimport-local-store",
-				"procedure": "session.importedMaintenanceStats",
-				"reason":    "upstream unavailable; using locally persisted imported session maintenance stats",
-			},
-		})
-		return
-	}
-
 	if archivedRecords, archiveErr := s.loadArchivedImportedSessionRecords(); archiveErr == nil && len(archivedRecords) > 0 {
 		fallbackStats := archivedImportedSessionMaintenanceStats(archivedRecords)
 		writeJSON(w, http.StatusOK, map[string]any{
@@ -2135,91 +2005,103 @@ func (s *Server) handleImportedSessionMaintenanceStats(w http.ResponseWriter, r 
 	})
 }
 
-func (s *Server) handleImportedSessionPersistNative(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
+func (s *Server) handleMCPStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
+			"success": false,
+			"error":   "method not allowed",
+		})
 		return
 	}
 
-	var body sessionimport.ImportedSessionRecordInput
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-	if strings.TrimSpace(body.SourceTool) == "" || strings.TrimSpace(body.SourcePath) == "" || strings.TrimSpace(body.SessionFormat) == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "sourceTool, sourcePath, and sessionFormat are required"})
-		return
-	}
-	if strings.TrimSpace(body.Transcript) == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "transcript is required"})
-		return
-	}
-
-	record, err := s.localImportedSessionStore().UpsertSession(r.Context(), body)
-	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": err.Error(), "detail": err.Error()})
-		return
-	}
-	doc, docErr := s.localImportedSessionStore().WriteInstructionDoc(r.Context(), 250)
-	if docErr != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": docErr.Error(), "detail": docErr.Error()})
+	var status map[string]any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.getStatus", nil, &status)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    status,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "mcp.getStatus",
+			},
+		})
 		return
 	}
 
+	tools, summary, fallbackErr := s.localMCPSummary(r.Context())
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	sourceBackedServers := sourceBackedInstalledHarnesses(summary.InstalledHarnesses)
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
 		"data": map[string]any{
-			"record": localImportedSessionRecord(*record),
-			"instructionDocPath": func() *string {
-				if doc == nil {
-					return nil
-				}
-				return &doc.Path
-			}(),
+			"connected":                false,
+			"serverCount":              len(sourceBackedServers),
+			"toolCount":                sourceBackedToolCount(summary.InstalledHarnesses),
+			"availableToolCount":       len(tools),
+			"harnessCount":             summary.HarnessCount,
+			"sourceBackedHarnessCount": summary.SourceBackedHarnessCount,
+			"lifecycle": map[string]any{
+				"lazySessionMode":        s.lifecycleModes["lazySessionMode"],
+				"singleActiveServerMode": s.lifecycleModes["singleActiveServerMode"],
+				"events":                 []map[string]any{},
+			},
 		},
 		"bridge": map[string]any{
-			"fallback":  "go-sessionimport-local-store",
-			"procedure": "session.importedPersistNative",
-			"reason":    "persisted imported session natively in Go",
+			"fallback":  "go-local-mcp",
+			"procedure": "mcp.getStatus",
+			"reason":    "upstream unavailable; using local MCP harness summary",
 		},
 	})
 }
 
-func (s *Server) handleImportedSessionIngestNative(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
+func (s *Server) handleMCPRuntimeServers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
+			"success": false,
+			"error":   "method not allowed",
+		})
 		return
 	}
 
-	var body struct {
-		Force    bool `json:"force"`
-		MaxFiles int  `json:"maxFiles"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil && !errors.Is(err, io.EOF) {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+	var servers []map[string]any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.listServers", nil, &servers)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    servers,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "mcp.listServers",
+			},
+		})
 		return
 	}
-	if body.MaxFiles <= 0 {
-		body.MaxFiles = 50
-	}
 
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		homeDir = s.cfg.MainConfigDir
-	}
-	summary, ingestErr := sessionimport.IngestDiscoveredSessions(r.Context(), s.cfg.WorkspaceRoot, homeDir, body.MaxFiles, body.Force)
-	if ingestErr != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": ingestErr.Error(), "detail": ingestErr.Error()})
+	_, summary, fallbackErr := s.localMCPSummary(r.Context())
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
 		return
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    summary,
+		"data":    fallbackRuntimeServers(summary.InstalledHarnesses),
 		"bridge": map[string]any{
-			"fallback":  "go-sessionimport-local-store",
-			"procedure": "session.importedIngestNative",
-			"reason":    "ingested supported imported sessions natively in Go",
+			"fallback":  "go-local-mcp",
+			"procedure": "mcp.listServers",
+			"reason":    "upstream unavailable; using local MCP runtime server summary",
 		},
 	})
 }
@@ -2247,25 +2129,7 @@ func (s *Server) handleMCPConfiguredServers(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	fallbackServers, fallbackErr := s.localConfiguredMCPServers()
-	if fallbackErr == nil && len(fallbackServers) > 0 {
-		trimmedServers := make([]map[string]any, 0, len(fallbackServers))
-		for _, server := range fallbackServers {
-			trimmedServers = append(trimmedServers, primaryConfiguredServerProvenanceOnly(server))
-		}
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    trimmedServers,
-			"bridge": map[string]any{
-				"fallback":  "go-local-jsonc",
-				"procedure": "mcpServers.list",
-				"reason":    "upstream unavailable; using local MCP server definitions from HyperCode JSONC config",
-			},
-		})
-		return
-	}
-
-	fallbackServers, fallbackErr = s.localConfiguredMCPServersFromDB()
+	fallbackServers, fallbackErr := s.localConfiguredMCPServersFromDB()
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
@@ -2275,13 +2139,9 @@ func (s *Server) handleMCPConfiguredServers(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	trimmedServers := make([]map[string]any, 0, len(fallbackServers))
-	for _, server := range fallbackServers {
-		trimmedServers = append(trimmedServers, primaryConfiguredServerProvenanceOnly(server))
-	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    trimmedServers,
+		"data":    fallbackServers,
 		"bridge": map[string]any{
 			"fallback":  "go-local-mcp-db",
 			"procedure": "mcpServers.list",
@@ -2314,21 +2174,7 @@ func (s *Server) handleMCPConfiguredServerGet(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	fallbackServer, fallbackErr := s.localConfiguredMCPServerByUUID(uuid)
-	if fallbackErr == nil && fallbackServer != nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    primaryConfiguredServerProvenanceOnly(fallbackServer),
-			"bridge": map[string]any{
-				"fallback":  "go-local-jsonc",
-				"procedure": "mcpServers.get",
-				"reason":    "upstream unavailable; using local MCP server definition from HyperCode JSONC config",
-			},
-		})
-		return
-	}
-
-	fallbackServer, fallbackErr = s.localConfiguredMCPServerFromDB(uuid)
+	fallbackServer, fallbackErr := s.localConfiguredMCPServerFromDB(uuid)
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
@@ -2340,7 +2186,7 @@ func (s *Server) handleMCPConfiguredServerGet(w http.ResponseWriter, r *http.Req
 	if fallbackServer != nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
-			"data":    primaryConfiguredServerProvenanceOnly(fallbackServer),
+			"data":    fallbackServer,
 			"bridge": map[string]any{
 				"fallback":  "go-local-mcp-db",
 				"procedure": "mcpServers.get",
@@ -2607,6 +2453,95 @@ func (s *Server) handleMCPSyncClientConfig(w http.ResponseWriter, r *http.Reques
 	})
 }
 
+func (s *Server) handleMCPTools(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
+			"success": false,
+			"error":   "method not allowed",
+		})
+		return
+	}
+
+	var tools []map[string]any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.listTools", nil, &tools)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    tools,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "mcp.listTools",
+			},
+		})
+		return
+	}
+
+	_, summary, fallbackErr := s.localMCPSummary(r.Context())
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    fallbackMCPTools(summary.InstalledHarnesses),
+		"bridge": map[string]any{
+			"fallback":  "go-local-mcp",
+			"procedure": "mcp.listTools",
+			"reason":    "upstream unavailable; using local MCP tool inventory",
+		},
+	})
+}
+
+func (s *Server) handleMCPSearchTools(w http.ResponseWriter, r *http.Request) {
+	query := strings.TrimSpace(r.URL.Query().Get("query"))
+	profile := strings.TrimSpace(r.URL.Query().Get("profile"))
+	payload := map[string]any{
+		"query": query,
+	}
+	if profile != "" {
+		payload["profile"] = profile
+	}
+
+	var results []map[string]any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.searchTools", payload, &results)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    results,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "mcp.searchTools",
+			},
+		})
+		return
+	}
+
+	_, summary, fallbackErr := s.localMCPSummary(r.Context())
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    fallbackSearchMCPTools(summary.InstalledHarnesses, query),
+		"bridge": map[string]any{
+			"fallback":  "go-local-mcp",
+			"procedure": "mcp.searchTools",
+			"reason":    "upstream unavailable; using local MCP tool search results",
+		},
+	})
+}
+
 func (s *Server) handleMCPCallTool(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{
@@ -2831,31 +2766,15 @@ func (s *Server) handleMCPToolSchema(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	name, _ := payload["name"].(string)
-	limits, limitsErr := s.localToolPreferences()
-	if limitsErr != nil {
-		limits = map[string]any{"maxLoadedTools": 16, "maxHydratedSchemas": 8, "idleEvictionThresholdMs": 5 * 60 * 1000}
-	}
-	available, availableErr := s.localAvailableMCPTools()
-	if availableErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": availableErr.Error(), "detail": availableErr.Error()})
-		return
-	}
-
-	fallbackResult, evicted, ok := s.mcpState.hydrateTool(name, limits, available)
-	if !ok {
+	fallbackResult, fallbackErr := localFallbackToolSchema(payload)
+	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
-			"error":   "MCP tool schema is unavailable: tool is not present in the local MCP inventory.",
-			"data":    map[string]any{"inputSchema": nil, "evictedHydratedTools": []string{}},
-			"bridge":  map[string]any{"fallback": "go-local-mcp", "procedure": "mcp.getToolSchema", "reason": "upstream unavailable; tool is not present in the local MCP inventory"},
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
 		})
 		return
 	}
-
-	snapshot := s.mcpState.snapshot(limits, available)
-	loadedCount, hydratedCount, loadedPct, hydratedPct := s.localWorkingSetPressure(limits, snapshot)
-	s.mcpState.recordTelemetry(localMCPTelemetryEvent{Type: "hydrate", ToolName: name, Source: "manual-action", Status: "success", Message: "schema hydrated", EvictedTools: evicted, LoadedToolCount: loadedCount, HydratedToolCount: hydratedCount, LoadedUtilizationPct: loadedPct, HydratedUtilizationPct: hydratedPct, Timestamp: time.Now().UTC().UnixMilli()})
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
@@ -2997,13 +2916,14 @@ func (s *Server) handleMCPToolSelectionTelemetry(w http.ResponseWriter, r *http.
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    s.mcpState.telemetryList(),
+	writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+		"success": false,
+		"error":   "Tool-selection telemetry is unavailable: upstream MCP router is unavailable and no local telemetry history is persisted.",
+		"data":    []map[string]any{},
 		"bridge": map[string]any{
 			"fallback":  "go-local-mcp",
 			"procedure": "mcp.getToolSelectionTelemetry",
-			"reason":    "upstream unavailable; using local MCP tool-selection telemetry",
+			"reason":    "upstream unavailable; using local empty tool-selection telemetry",
 		},
 	})
 }
@@ -3023,13 +2943,16 @@ func (s *Server) handleMCPClearToolSelectionTelemetry(w http.ResponseWriter, r *
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    s.mcpState.clearTelemetry(),
+	writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+		"success": false,
+		"error":   "Tool-selection telemetry clearing is unavailable: upstream MCP router is unavailable and no local telemetry history exists.",
+		"data": map[string]any{
+			"ok": true,
+		},
 		"bridge": map[string]any{
 			"fallback":  "go-local-mcp",
 			"procedure": "mcp.clearToolSelectionTelemetry",
-			"reason":    "upstream unavailable; clearing local MCP tool-selection telemetry",
+			"reason":    "upstream unavailable; clearing local empty tool-selection telemetry",
 		},
 	})
 }
@@ -3207,35 +3130,17 @@ func (s *Server) handleMCPAddServer(w http.ResponseWriter, r *http.Request) {
 			return nil, err
 		}
 		name, _ := payload["name"].(string)
-		command, _ := payload["command"].(string)
-		args := stringSlice(payload["args"])
-		env := stringMap(payload["env"])
-		record := probeRuntimeServer(context.Background(), name, command, args, env)
-		s.runtimeServers.upsert(record)
-		if err := s.syncRuntimeOverlayCache(); err != nil {
-			return nil, err
-		}
 		return map[string]any{
-			"success":       true,
-			"name":          name,
-			"server":        result,
-			"runtimeServer": record,
+			"success": true,
+			"name":    name,
+			"server":  result,
 		}, nil
 	})
 }
 
 func (s *Server) handleMCPRemoveServer(w http.ResponseWriter, r *http.Request) {
 	s.handleConfiguredServerMutation(w, r, "mcp.removeServer", func(payload map[string]any) (any, error) {
-		name, _ := payload["name"].(string)
-		if strings.TrimSpace(name) == "" {
-			return nil, errors.New("missing server name")
-		}
-		deletePayload := map[string]any{"uuid": syntheticServerUUID(name)}
-		if _, err := s.localDeleteConfiguredServer(deletePayload); err != nil {
-			return nil, err
-		}
-		s.runtimeServers.remove(name)
-		if err := s.syncRuntimeOverlayCache(); err != nil {
+		if _, err := s.localDeleteConfiguredServer(payload); err != nil {
 			return nil, err
 		}
 		return map[string]any{
@@ -3354,23 +3259,22 @@ func (s *Server) handleMCPWorkingSet(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	limits, limitsErr := s.localToolPreferences()
-	if limitsErr != nil {
-		limits = map[string]any{"maxLoadedTools": 16, "maxHydratedSchemas": 8, "idleEvictionThresholdMs": 5 * 60 * 1000}
-	}
-	available, availableErr := s.localAvailableMCPTools()
-	if availableErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": availableErr.Error(), "detail": availableErr.Error()})
-		return
-	}
-	snapshot := s.mcpState.snapshot(limits, available)
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    snapshot,
+
+	writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+		"success": false,
+		"error":   "MCP working set is unavailable: upstream MCP router is unavailable and no local working set manager is initialized.",
+		"data": map[string]any{
+			"limits": map[string]any{
+				"maxLoadedTools":          0,
+				"maxHydratedSchemas":      0,
+				"idleEvictionThresholdMs": 0,
+			},
+			"tools": []map[string]any{},
+		},
 		"bridge": map[string]any{
 			"fallback":  "go-local-mcp",
 			"procedure": "mcp.getWorkingSet",
-			"reason":    "upstream unavailable; using local MCP working set state",
+			"reason":    "upstream unavailable; using local empty MCP working set",
 		},
 	})
 }
@@ -3390,13 +3294,14 @@ func (s *Server) handleMCPWorkingSetEvictions(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    s.mcpState.evictionList(),
+	writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+		"success": false,
+		"error":   "MCP eviction history is unavailable: upstream MCP router is unavailable and no local eviction history is persisted.",
+		"data":    []map[string]any{},
 		"bridge": map[string]any{
 			"fallback":  "go-local-mcp",
 			"procedure": "mcp.getWorkingSetEvictionHistory",
-			"reason":    "upstream unavailable; using local MCP eviction history",
+			"reason":    "upstream unavailable; using local empty MCP eviction history",
 		},
 	})
 }
@@ -3416,13 +3321,17 @@ func (s *Server) handleMCPClearWorkingSetEvictions(w http.ResponseWriter, r *htt
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    s.mcpState.clearEvictions(),
+	writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+		"success": false,
+		"error":   "MCP eviction history clearing is unavailable: upstream MCP router is unavailable and no local eviction history exists.",
+		"data": map[string]any{
+			"ok":      true,
+			"message": "MCP server unavailable; eviction history already empty.",
+		},
 		"bridge": map[string]any{
 			"fallback":  "go-local-mcp",
 			"procedure": "mcp.clearWorkingSetEvictionHistory",
-			"reason":    "upstream unavailable; clearing local MCP eviction history",
+			"reason":    "upstream unavailable; clearing local empty MCP eviction history",
 		},
 	})
 }
@@ -3435,57 +3344,94 @@ func (s *Server) handleMCPUnloadTool(w http.ResponseWriter, r *http.Request) {
 	s.handleMCPManualToolMutation(w, r, "mcp.unloadTool")
 }
 
-func (s *Server) handleMemoryContextSave(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+func (s *Server) handleMemorySearch(w http.ResponseWriter, r *http.Request) {
+	query := strings.TrimSpace(r.URL.Query().Get("query"))
+	if query == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{
+			"success": false,
+			"error":   "missing query parameter",
+		})
 		return
 	}
-
+	payload := map[string]any{"query": query}
+	limit := 5
+	if limitParam := strings.TrimSpace(r.URL.Query().Get("limit")); limitParam != "" {
+		if parsed, err := strconv.Atoi(limitParam); err == nil {
+			payload["limit"] = parsed
+			if parsed > 0 {
+				limit = parsed
+			}
+		}
+	}
 	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.saveContext", payload, &result)
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.query", payload, &result)
 	if err == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"data":    result,
 			"bridge": map[string]any{
 				"upstreamBase": upstreamBase,
-				"procedure":    "memory.saveContext",
+				"procedure":    "memory.query",
 			},
 		})
 		return
 	}
 
-	if strings.TrimSpace(stringValue(payload["source"])) == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing source"})
-		return
-	}
-	if strings.TrimSpace(stringValue(payload["url"])) == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing url"})
-		return
-	}
-	if strings.TrimSpace(stringValue(payload["content"])) == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing content"})
-		return
-	}
-
-	record, localErr := s.localSaveMemoryContext(payload)
+	results, localErr := s.localMemoryQueryResults(query, limit)
 	if localErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
 		return
 	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data": map[string]any{
-			"success": true,
-			"id":      stringValue(record["id"]),
-		},
+		"data":    results,
 		"bridge": map[string]any{
 			"fallback":  "go-local-memory",
-			"procedure": "memory.saveContext",
-			"reason":    "upstream unavailable; saving local memory context registry entry",
+			"procedure": "memory.query",
+			"reason":    "upstream unavailable; using local persisted memory search",
 		},
 	})
+}
+
+func (s *Server) handleMemoryContexts(w http.ResponseWriter, r *http.Request) {
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.listContexts", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.listContexts",
+			},
+		})
+		return
+	}
+
+	contexts, fallbackErr := s.localMemoryContexts()
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    contexts,
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.listContexts",
+			"reason":    "upstream unavailable; using local memory context list",
+		},
+	})
+}
+
+func (s *Server) handleMemoryContextSave(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "memory.saveContext")
 }
 
 func (s *Server) handleMemoryContextGet(w http.ResponseWriter, r *http.Request) {
@@ -3519,9 +3465,8 @@ func (s *Server) handleMemoryContextGet(w http.ResponseWriter, r *http.Request) 
 	if found && strings.TrimSpace(stringValue(contextRecord["content"])) != "" {
 		metadata, _ := contextRecord["metadata"].(map[string]any)
 		responseMetadata := cloneMap(metadata)
-		responseMetadata["title"] = stringValue(firstNonEmptyString(contextRecord["title"], responseMetadata["title"]))
-		responseMetadata["source"] = stringValue(firstNonEmptyString(contextRecord["source"], responseMetadata["source"]))
-		responseMetadata["url"] = stringValue(firstNonEmptyString(contextRecord["url"], responseMetadata["url"]))
+		responseMetadata["title"] = stringValue(contextRecord["title"])
+		responseMetadata["source"] = stringValue(contextRecord["source"])
 		responseMetadata["createdAt"] = contextRecord["createdAt"]
 		responseMetadata["chunks"] = contextRecord["chunks"]
 		response := map[string]any{
@@ -4313,6 +4258,41 @@ func (s *Server) handleMemorySearchSessionSummaries(w http.ResponseWriter, r *ht
 	})
 }
 
+func (s *Server) handleMemorySectionedStatus(w http.ResponseWriter, r *http.Request) {
+	var result map[string]any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.getSectionedMemoryStatus", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "memory.getSectionedMemoryStatus",
+			},
+		})
+		return
+	}
+
+	status, fallbackErr := memorystore.ReadStatus(s.cfg.WorkspaceRoot)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"available": status.Exists,
+			"sections":  status.Sections,
+			"storePath": status.StorePath,
+		},
+		"bridge": map[string]any{
+			"fallback":  "go-local-memory",
+			"procedure": "memory.getSectionedMemoryStatus",
+			"reason":    "upstream unavailable; using local sectioned memory status",
+		},
+	})
+}
+
 func (s *Server) handleMemoryInterchangeFormats(w http.ResponseWriter, r *http.Request) {
 	var result any
 	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.listInterchangeFormats", nil, &result)
@@ -4330,7 +4310,7 @@ func (s *Server) handleMemoryInterchangeFormats(w http.ResponseWriter, r *http.R
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    localMemoryInterchangeFormats(),
+		"data":    []string{"json", "markdown"},
 		"bridge": map[string]any{
 			"fallback":  "go-local-memory",
 			"procedure": "memory.listInterchangeFormats",
@@ -4389,98 +4369,11 @@ func (s *Server) handleMemoryExport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleMemoryImport(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.importMemories", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "memory.importMemories",
-			},
-		})
-		return
-	}
-
-	data := stringValue(payload["data"])
-	if strings.TrimSpace(data) == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing data"})
-		return
-	}
-	format := stringValue(firstNonEmptyString(payload["format"], "json"))
-	userID := stringValue(firstNonEmptyString(payload["userId"], "default"))
-	imported, localErr := s.localImportMemories(data, format, userID)
-	if localErr != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    imported,
-		"bridge": map[string]any{
-			"fallback":  "go-local-memory",
-			"procedure": "memory.importMemories",
-			"reason":    "upstream unavailable; importing local saved-context records",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "memory.importMemories")
 }
 
 func (s *Server) handleMemoryConvert(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.convertMemories", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "memory.convertMemories",
-			},
-		})
-		return
-	}
-
-	data := stringValue(payload["data"])
-	if strings.TrimSpace(data) == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing data"})
-		return
-	}
-	fromFormat := stringValue(payload["fromFormat"])
-	toFormat := stringValue(payload["toFormat"])
-	if strings.TrimSpace(fromFormat) == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing fromFormat"})
-		return
-	}
-	if strings.TrimSpace(toFormat) == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing toFormat"})
-		return
-	}
-	userID := stringValue(firstNonEmptyString(payload["userId"], "default"))
-	converted, localErr := s.localConvertMemories(data, fromFormat, toFormat, userID)
-	if localErr != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    converted,
-		"bridge": map[string]any{
-			"fallback":  "go-local-memory",
-			"procedure": "memory.convertMemories",
-			"reason":    "upstream unavailable; converting local memory interchange data",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "memory.convertMemories")
 }
 
 func (s *Server) handleAgentMemorySearch(w http.ResponseWriter, r *http.Request) {
@@ -5980,47 +5873,11 @@ func (s *Server) handleToolsList(w http.ResponseWriter, r *http.Request) {
 
 	tools, fallbackErr := s.localDBTools()
 	if fallbackErr != nil {
-		view, invErr := s.localMCPInventoryView()
-		if invErr != nil || view == nil || len(view.Inventory.Tools) == 0 {
-			writeJSON(w, http.StatusInternalServerError, map[string]any{
-				"success": false,
-				"error":   fallbackErr.Error(),
-			})
-			return
-		}
-		bridge := map[string]any{
-			"fallback":  "go-local-mcp-inventory-cache",
-			"procedure": "tools.list",
-			"reason":    "upstream unavailable; using local MCP inventory cache because metamcp.db is unavailable",
-		}
-		for key, value := range inventoryBridgeMeta(view) {
-			bridge[key] = value
-		}
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    fallbackControlToolListFromInventory(view),
-			"bridge":  bridge,
+		writeJSON(w, http.StatusInternalServerError, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
 		})
 		return
-	}
-	if len(tools) == 0 {
-		view, invErr := s.localMCPInventoryView()
-		if invErr == nil && view != nil && len(view.Inventory.Tools) > 0 {
-			bridge := map[string]any{
-				"fallback":  "go-local-mcp-inventory-cache",
-				"procedure": "tools.list",
-				"reason":    "upstream unavailable; using local MCP inventory cache because metamcp.db returned no local tool rows",
-			}
-			for key, value := range inventoryBridgeMeta(view) {
-				bridge[key] = value
-			}
-			writeJSON(w, http.StatusOK, map[string]any{
-				"success": true,
-				"data":    fallbackControlToolListFromInventory(view),
-				"bridge":  bridge,
-			})
-			return
-		}
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -6057,61 +5914,11 @@ func (s *Server) handleToolsByServer(w http.ResponseWriter, r *http.Request) {
 
 	filtered, fallbackErr := s.localDBToolsByServer(serverID)
 	if fallbackErr != nil {
-		view, invErr := s.localMCPInventoryView()
-		if invErr != nil || view == nil || len(view.Inventory.Tools) == 0 {
-			writeJSON(w, http.StatusInternalServerError, map[string]any{
-				"success": false,
-				"error":   fallbackErr.Error(),
-			})
-			return
-		}
-		cacheTools := fallbackControlToolListFromInventory(view)
-		filteredCacheTools := make([]map[string]any, 0)
-		for _, tool := range cacheTools {
-			if stringValue(tool["mcpServerUuid"]) == serverID || stringValue(tool["server"]) == serverID {
-				filteredCacheTools = append(filteredCacheTools, tool)
-			}
-		}
-		bridge := map[string]any{
-			"fallback":  "go-local-mcp-inventory-cache",
-			"procedure": "tools.listByServer",
-			"reason":    "upstream unavailable; filtering local MCP inventory cache by server because metamcp.db is unavailable",
-		}
-		for key, value := range inventoryBridgeMeta(view) {
-			bridge[key] = value
-		}
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    filteredCacheTools,
-			"bridge":  bridge,
+		writeJSON(w, http.StatusInternalServerError, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
 		})
 		return
-	}
-	if len(filtered) == 0 {
-		view, invErr := s.localMCPInventoryView()
-		if invErr == nil && view != nil && len(view.Inventory.Tools) > 0 {
-			cacheTools := fallbackControlToolListFromInventory(view)
-			filteredCacheTools := make([]map[string]any, 0)
-			for _, tool := range cacheTools {
-				if stringValue(tool["mcpServerUuid"]) == serverID || stringValue(tool["server"]) == serverID {
-					filteredCacheTools = append(filteredCacheTools, tool)
-				}
-			}
-			bridge := map[string]any{
-				"fallback":  "go-local-mcp-inventory-cache",
-				"procedure": "tools.listByServer",
-				"reason":    "upstream unavailable; filtering local MCP inventory cache by server because metamcp.db returned no matching rows",
-			}
-			for key, value := range inventoryBridgeMeta(view) {
-				bridge[key] = value
-			}
-			writeJSON(w, http.StatusOK, map[string]any{
-				"success": true,
-				"data":    filteredCacheTools,
-				"bridge":  bridge,
-			})
-			return
-		}
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -6157,73 +5964,11 @@ func (s *Server) handleToolsSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	results, fallbackErr := s.localDBToolSearch(query, limit)
 	if fallbackErr != nil {
-		view, invErr := s.localMCPInventoryView()
-		if invErr != nil || view == nil || len(view.Inventory.Tools) == 0 {
-			writeJSON(w, http.StatusInternalServerError, map[string]any{
-				"success": false,
-				"error":   fallbackErr.Error(),
-			})
-			return
-		}
-		cacheResults := make([]map[string]any, 0)
-		queryLower := strings.ToLower(query)
-		for _, tool := range fallbackControlToolsFromInventory(view) {
-			name := strings.ToLower(stringValue(tool["name"]))
-			description := strings.ToLower(stringValue(tool["description"]))
-			server := strings.ToLower(stringValue(tool["server"]))
-			if strings.Contains(name, queryLower) || strings.Contains(description, queryLower) || strings.Contains(server, queryLower) {
-				cacheResults = append(cacheResults, primaryProvenanceOnly(tool))
-				if limit > 0 && len(cacheResults) >= limit {
-					break
-				}
-			}
-		}
-		bridge := map[string]any{
-			"fallback":  "go-local-mcp-inventory-cache",
-			"procedure": "tools.search",
-			"reason":    "upstream unavailable; searching local MCP inventory cache because metamcp.db is unavailable",
-		}
-		for key, value := range inventoryBridgeMeta(view) {
-			bridge[key] = value
-		}
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    cacheResults,
-			"bridge":  bridge,
+		writeJSON(w, http.StatusInternalServerError, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
 		})
 		return
-	}
-	if len(results) == 0 {
-		view, invErr := s.localMCPInventoryView()
-		if invErr == nil && view != nil && len(view.Inventory.Tools) > 0 {
-			cacheResults := make([]map[string]any, 0)
-			queryLower := strings.ToLower(query)
-			for _, tool := range fallbackControlToolsFromInventory(view) {
-				name := strings.ToLower(stringValue(tool["name"]))
-				description := strings.ToLower(stringValue(tool["description"]))
-				server := strings.ToLower(stringValue(tool["server"]))
-				if strings.Contains(name, queryLower) || strings.Contains(description, queryLower) || strings.Contains(server, queryLower) {
-					cacheResults = append(cacheResults, primaryProvenanceOnly(tool))
-					if limit > 0 && len(cacheResults) >= limit {
-						break
-					}
-				}
-			}
-			bridge := map[string]any{
-				"fallback":  "go-local-mcp-inventory-cache",
-				"procedure": "tools.search",
-				"reason":    "upstream unavailable; searching local MCP inventory cache because metamcp.db returned no matching rows",
-			}
-			for key, value := range inventoryBridgeMeta(view) {
-				bridge[key] = value
-			}
-			writeJSON(w, http.StatusOK, map[string]any{
-				"success": true,
-				"data":    cacheResults,
-				"bridge":  bridge,
-			})
-			return
-		}
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -6359,47 +6104,11 @@ func (s *Server) handleToolsGet(w http.ResponseWriter, r *http.Request) {
 
 	fallbackTool, fallbackErr := s.localDBTool(uuid)
 	if fallbackErr != nil {
-		view, invErr := s.localMCPInventoryView()
-		if invErr != nil || view == nil || len(view.Inventory.Tools) == 0 {
-			writeJSON(w, http.StatusInternalServerError, map[string]any{
-				"success": false,
-				"error":   fallbackErr.Error(),
-			})
-			return
-		}
-		bridge := map[string]any{
-			"fallback":  "go-local-mcp-inventory-cache",
-			"procedure": "tools.get",
-			"reason":    "upstream unavailable; using local MCP inventory cache because metamcp.db is unavailable",
-		}
-		for key, value := range inventoryBridgeMeta(view) {
-			bridge[key] = value
-		}
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    fallbackControlToolPrimaryProvenance(view, uuid),
-			"bridge":  bridge,
+		writeJSON(w, http.StatusInternalServerError, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
 		})
 		return
-	}
-	if fallbackTool == nil {
-		view, invErr := s.localMCPInventoryView()
-		if invErr == nil && view != nil && len(view.Inventory.Tools) > 0 {
-			bridge := map[string]any{
-				"fallback":  "go-local-mcp-inventory-cache",
-				"procedure": "tools.get",
-				"reason":    "upstream unavailable; using local MCP inventory cache because metamcp.db returned no matching row",
-			}
-			for key, value := range inventoryBridgeMeta(view) {
-				bridge[key] = value
-			}
-			writeJSON(w, http.StatusOK, map[string]any{
-				"success": true,
-				"data":    fallbackControlToolPrimaryProvenance(view, uuid),
-				"bridge":  bridge,
-			})
-			return
-		}
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -6426,64 +6135,7 @@ func (s *Server) handleToolsDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleToolsAlwaysOn(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := decodeJSONBody(r, &payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "tools.setAlwaysOn", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "tools.setAlwaysOn",
-			},
-		})
-		return
-	}
-
-	toolUUID := strings.TrimSpace(stringValue(payload["uuid"]))
-	alwaysOn, ok := payload["alwaysOn"].(bool)
-	if toolUUID == "" || !ok {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing uuid or alwaysOn"})
-		return
-	}
-
-	tool, fallbackErr := s.localSetToolAlwaysOn(toolUUID, alwaysOn)
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
-		return
-	}
-	if tool == nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-			"success": false,
-			"error":   "tool unavailable",
-			"detail":  "upstream unavailable; tool was not found in local metamcp tool catalog",
-			"bridge": map[string]any{
-				"fallback":  "go-local-tool-db",
-				"procedure": "tools.setAlwaysOn",
-				"reason":    "upstream unavailable; tool was not found in local metamcp tool catalog",
-			},
-		})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data": map[string]any{
-			"success": true,
-			"tool":    tool,
-		},
-		"bridge": map[string]any{
-			"fallback":  "go-local-tool-db",
-			"procedure": "tools.setAlwaysOn",
-			"reason":    "upstream unavailable; updated local metamcp tool always-on state",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "tools.setAlwaysOn")
 }
 
 func (s *Server) handleToolSetsList(w http.ResponseWriter, r *http.Request) {
@@ -6578,41 +6230,7 @@ func (s *Server) handleToolSetsGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleToolSetsCreate(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := decodeJSONBody(r, &payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "toolSets.create", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "toolSets.create",
-			},
-		})
-		return
-	}
-
-	toolSet, fallbackErr := s.localCreateToolSet(payload)
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    toolSet,
-		"bridge": map[string]any{
-			"fallback":  "go-local-operator",
-			"procedure": "toolSets.create",
-			"reason":    "upstream unavailable; created local metamcp tool set",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "toolSets.create")
 }
 
 func (s *Server) handleToolSetsUpdate(w http.ResponseWriter, r *http.Request) {
@@ -6620,41 +6238,7 @@ func (s *Server) handleToolSetsUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleToolSetsDelete(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := decodeJSONBody(r, &payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "toolSets.delete", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "toolSets.delete",
-			},
-		})
-		return
-	}
-
-	deleteResult, fallbackErr := s.localDeleteToolSet(strings.TrimSpace(stringValue(payload["uuid"])))
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    deleteResult,
-		"bridge": map[string]any{
-			"fallback":  "go-local-operator",
-			"procedure": "toolSets.delete",
-			"reason":    "upstream unavailable; deleted local metamcp tool set",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "toolSets.delete")
 }
 
 func (s *Server) handleProjectContext(w http.ResponseWriter, r *http.Request) {
@@ -6684,45 +6268,7 @@ func (s *Server) handleProjectContext(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleProjectContextUpdate(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "project.updateContext", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "project.updateContext",
-			},
-		})
-		return
-	}
-
-	content, ok := payload["content"].(string)
-	if !ok {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing content"})
-		return
-	}
-	if localErr := localWriteProjectContext(s.cfg.WorkspaceRoot, content); localErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": localErr.Error(), "detail": localErr.Error()})
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data": map[string]any{
-			"success": true,
-		},
-		"bridge": map[string]any{
-			"fallback":  "go-local-project",
-			"procedure": "project.updateContext",
-			"reason":    "upstream unavailable; writing local project context document",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "project.updateContext")
 }
 
 func (s *Server) handleProjectHandoffs(w http.ResponseWriter, r *http.Request) {
@@ -6852,6 +6398,10 @@ func (s *Server) handleShellSystemHistory(w http.ResponseWriter, r *http.Request
 
 func (s *Server) handleAgentRunTool(w http.ResponseWriter, r *http.Request) {
 	s.handleTRPCBridgeBodyCall(w, r, "agent.runTool")
+}
+
+func (s *Server) handleAgentChat(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "agent.chat")
 }
 
 func (s *Server) handleCommandsExecute(w http.ResponseWriter, r *http.Request) {
@@ -7034,9 +6584,7 @@ func (s *Server) handleSkillsSave(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleSkillsAssimilate(w http.ResponseWriter, r *http.Request) {
-	s.handleSkillMutation(w, r, "skills.assimilate", func(payload map[string]any) (any, error) {
-		return s.localAssimilateSkill(payload)
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "skills.assimilate")
 }
 
 func (s *Server) handleSkillMutation(w http.ResponseWriter, r *http.Request, procedure string, fallback func(map[string]any) (any, error)) {
@@ -7564,41 +7112,7 @@ func (s *Server) handleAPIKeysGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleAPIKeysCreate(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := decodeJSONBody(r, &payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "apiKeys.create", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "apiKeys.create",
-			},
-		})
-		return
-	}
-
-	apiKey, fallbackErr := s.localCreateAPIKey(payload)
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    apiKey,
-		"bridge": map[string]any{
-			"fallback":  "go-local-policy-db",
-			"procedure": "apiKeys.create",
-			"reason":    "upstream unavailable; created local metamcp API key record",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "apiKeys.create")
 }
 
 func (s *Server) handleAPIKeysUpdate(w http.ResponseWriter, r *http.Request) {
@@ -7606,41 +7120,7 @@ func (s *Server) handleAPIKeysUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleAPIKeysDelete(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := decodeJSONBody(r, &payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "apiKeys.delete", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "apiKeys.delete",
-			},
-		})
-		return
-	}
-
-	deleteResult, fallbackErr := s.localDeleteAPIKey(strings.TrimSpace(stringValue(payload["uuid"])))
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    deleteResult,
-		"bridge": map[string]any{
-			"fallback":  "go-local-policy-db",
-			"procedure": "apiKeys.delete",
-			"reason":    "upstream unavailable; deleted local metamcp API key record",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "apiKeys.delete")
 }
 
 func (s *Server) handleAPIKeysValidate(w http.ResponseWriter, r *http.Request) {
@@ -8154,30 +7634,8 @@ func (s *Server) handleLinksBacklogGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleLinksBacklogSync(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
-		return
-	}
-
-	var payload struct {
-		BaseURL           string `json:"baseUrl"`
-		PerPage           int    `json:"perPage"`
-		IncludeDuplicates bool   `json:"includeDuplicates"`
-		IncludeResearched bool   `json:"includeResearched"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-	if payload.BaseURL == "" {
-		payload.BaseURL = "https://robertpelloni.com"
-	}
-	if payload.PerPage <= 0 {
-		payload.PerPage = 100
-	}
-
 	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "linksBacklog.syncFromBobbyBookmarks", payload, &result)
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "linksBacklog.syncFromBobbyBookmarks", nil, &result)
 	if err == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -8190,7 +7648,14 @@ func (s *Server) handleLinksBacklogSync(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	report, fallbackErr := bobbySync.SyncBobbyBookmarks(r.Context(), s.localMetaMCPDBPath(), payload.BaseURL, payload.PerPage, payload.IncludeDuplicates, payload.IncludeResearched)
+	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": err.Error()})
+		return
+	}
+	defer db.Close()
+
+	res, fallbackErr := sync.SyncFromBobbyBookmarks(r.Context(), db)
 	if fallbackErr != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"success": false,
@@ -8202,99 +7667,11 @@ func (s *Server) handleLinksBacklogSync(w http.ResponseWriter, r *http.Request) 
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    report,
+		"data":    res,
 		"bridge": map[string]any{
-			"fallback":  "go-local-bobbybookmarks-sync",
+			"fallback":  "go-local-links-sync",
 			"procedure": "linksBacklog.syncFromBobbyBookmarks",
-			"reason":    "upstream unavailable; using native Go bobbybookmarks sync",
-		},
-	})
-}
-
-func (s *Server) handleLinksBacklogCrawlNative(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
-		return
-	}
-
-	statusBefore := s.linkCrawler.Status()
-	if r.Body != nil {
-		defer r.Body.Close()
-		var payload struct {
-			ClassifyTags *bool `json:"classifyTags"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil && !errors.Is(err, io.EOF) {
-			writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-			return
-		}
-		if payload.ClassifyTags != nil && *payload.ClassifyTags != statusBefore.ClassifyTags {
-			writeJSON(w, http.StatusBadRequest, map[string]any{
-				"success": false,
-				"error":   "classifyTags override is not supported on the running native crawler; restart the worker with updated settings instead",
-			})
-			return
-		}
-	}
-
-	report, err := s.linkCrawler.RunOnce(r.Context())
-	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-			"success": false,
-			"error":   err.Error(),
-			"detail":  err.Error(),
-		})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    report,
-		"status":  s.linkCrawler.Status(),
-		"bridge": map[string]any{
-			"fallback":  "go-local-link-crawler",
-			"procedure": "linksBacklog.crawlNative",
-			"reason":    "using native Go links backlog crawler",
-		},
-	})
-}
-
-func (s *Server) handleLinksBacklogCrawlerStatus(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    s.linkCrawler.Status(),
-	})
-}
-
-func (s *Server) handleLinksBacklogCrawlerStart(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
-		return
-	}
-	started := s.linkCrawler.Start(context.WithoutCancel(r.Context()))
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data": map[string]any{
-			"started": started,
-			"status":  s.linkCrawler.Status(),
-		},
-	})
-}
-
-func (s *Server) handleLinksBacklogCrawlerStop(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
-		return
-	}
-	stopped := s.linkCrawler.Stop()
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data": map[string]any{
-			"stopped": stopped,
-			"status":  s.linkCrawler.Status(),
+			"reason":    "upstream unavailable; executing native Go links backlog sync",
 		},
 	})
 }
@@ -8326,19 +7703,163 @@ func (s *Server) handleInfrastructureStatus(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *Server) handleInfrastructureDoctor(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "infrastructure.runDoctor")
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "infrastructure.runDoctor", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "infrastructure.runDoctor",
+			},
+		})
+		return
+	}
+
+	res, fallbackErr := sync.RunInfrastructureDoctor(s.cfg.WorkspaceRoot)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    res,
+		"bridge": map[string]any{
+			"fallback":  "go-local-infrastructure",
+			"procedure": "infrastructure.runDoctor",
+			"reason":    "upstream unavailable; executing native Go infrastructure doctor",
+		},
+	})
 }
 
 func (s *Server) handleInfrastructureApply(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "infrastructure.applyConfigurations")
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "infrastructure.applyConfigurations", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "infrastructure.applyConfigurations",
+			},
+		})
+		return
+	}
+
+	res, fallbackErr := sync.ApplyInfrastructureConfigurations(s.cfg.WorkspaceRoot)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    res,
+		"bridge": map[string]any{
+			"fallback":  "go-local-infrastructure",
+			"procedure": "infrastructure.applyConfigurations",
+			"reason":    "upstream unavailable; executing native Go infrastructure apply",
+		},
+	})
 }
 
 func (s *Server) handleExpertResearch(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "expert.research")
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "expert.research", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "expert.research",
+			},
+		})
+		return
+	}
+
+	var payload struct {
+		Topic string `json:"topic"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid request body"})
+		return
+	}
+
+	res, fallbackErr := sync.ExpertResearch(payload.Topic)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    res,
+		"bridge": map[string]any{
+			"fallback":  "go-local-expert",
+			"procedure": "expert.research",
+			"reason":    "upstream unavailable; executing native Go expert research",
+		},
+	})
 }
 
 func (s *Server) handleExpertCode(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "expert.code")
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "expert.code", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "expert.code",
+			},
+		})
+		return
+	}
+
+	var payload struct {
+		Instruction string `json:"instruction"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid request body"})
+		return
+	}
+
+	res, fallbackErr := sync.ExpertCode(payload.Instruction)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    res,
+		"bridge": map[string]any{
+			"fallback":  "go-local-expert",
+			"procedure": "expert.code",
+			"reason":    "upstream unavailable; executing native Go expert coding",
+		},
+	})
 }
 
 func (s *Server) handleExpertStatus(w http.ResponseWriter, r *http.Request) {
@@ -8448,130 +7969,15 @@ func (s *Server) handlePoliciesGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePoliciesCreate(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := decodeJSONBody(r, &payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "policies.create", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "policies.create",
-			},
-		})
-		return
-	}
-
-	policy, fallbackErr := s.localCreatePolicy(payload)
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    policy,
-		"bridge": map[string]any{
-			"fallback":  "go-local-policy-db",
-			"procedure": "policies.create",
-			"reason":    "upstream unavailable; created local metamcp policy record",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "policies.create")
 }
 
 func (s *Server) handlePoliciesUpdate(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := decodeJSONBody(r, &payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "policies.update", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "policies.update",
-			},
-		})
-		return
-	}
-
-	policy, fallbackErr := s.localUpdatePolicy(payload)
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
-		return
-	}
-	if policy == nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-			"success": false,
-			"error":   "policy unavailable",
-			"detail":  "upstream unavailable; policy was not found in local metamcp policy records",
-			"bridge": map[string]any{
-				"fallback":  "go-local-policy-db",
-				"procedure": "policies.update",
-				"reason":    "upstream unavailable; policy was not found in local metamcp policy records",
-			},
-		})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    policy,
-		"bridge": map[string]any{
-			"fallback":  "go-local-policy-db",
-			"procedure": "policies.update",
-			"reason":    "upstream unavailable; updated local metamcp policy record",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "policies.update")
 }
 
 func (s *Server) handlePoliciesDelete(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := decodeJSONBody(r, &payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "policies.delete", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "policies.delete",
-			},
-		})
-		return
-	}
-
-	deleteResult, fallbackErr := s.localDeletePolicy(strings.TrimSpace(stringValue(payload["uuid"])))
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    deleteResult,
-		"bridge": map[string]any{
-			"fallback":  "go-local-policy-db",
-			"procedure": "policies.delete",
-			"reason":    "upstream unavailable; deleted local metamcp policy record",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "policies.delete")
 }
 
 func (s *Server) handleSecretsList(w http.ResponseWriter, r *http.Request) {
@@ -8611,79 +8017,11 @@ func (s *Server) handleSecretsList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleSecretsSet(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := decodeJSONBody(r, &payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "secrets.set", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "secrets.set",
-			},
-		})
-		return
-	}
-
-	setResult, fallbackErr := s.localSetSecret(strings.TrimSpace(stringValue(payload["key"])), stringValue(payload["value"]))
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    setResult,
-		"bridge": map[string]any{
-			"fallback":  "go-local-policy-db",
-			"procedure": "secrets.set",
-			"reason":    "upstream unavailable; saved local metamcp workspace secret",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "secrets.set")
 }
 
 func (s *Server) handleSecretsDelete(w http.ResponseWriter, r *http.Request) {
-	var payload map[string]any
-	if err := decodeJSONBody(r, &payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "secrets.delete", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "secrets.delete",
-			},
-		})
-		return
-	}
-
-	deleteResult, fallbackErr := s.localDeleteSecret(strings.TrimSpace(stringValue(payload["key"])))
-	if fallbackErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": fallbackErr.Error(), "detail": fallbackErr.Error()})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    deleteResult,
-		"bridge": map[string]any{
-			"fallback":  "go-local-policy-db",
-			"procedure": "secrets.delete",
-			"reason":    "upstream unavailable; deleted local metamcp workspace secret",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "secrets.delete")
 }
 
 func (s *Server) handleMarketplaceList(w http.ResponseWriter, r *http.Request) {
@@ -8729,33 +8067,51 @@ func (s *Server) handleMarketplaceList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleMarketplaceInstall(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "marketplace.install")
-}
-
-func (s *Server) handleMarketplacePublish(w http.ResponseWriter, r *http.Request) {
 	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "marketplace.publish", nil, &result)
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "marketplace.install", nil, &result)
 	if err == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"data":    result,
 			"bridge": map[string]any{
 				"upstreamBase": upstreamBase,
-				"procedure":    "marketplace.publish",
+				"procedure":    "marketplace.install",
 			},
+		})
+		return
+	}
+
+	var payload struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid request body"})
+		return
+	}
+
+	message, fallbackErr := mcp.InstallMarketplaceEntry(payload.ID)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
 		})
 		return
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    "Successfully published to Mesh network (Go local fallback)",
+		"data":    message,
 		"bridge": map[string]any{
 			"fallback":  "go-local-marketplace",
-			"procedure": "marketplace.publish",
-			"reason":    "upstream unavailable; executing native Go marketplace publish",
+			"procedure": "marketplace.install",
+			"reason":    "upstream unavailable; executing native Go marketplace install",
 		},
 	})
+}
+
+func (s *Server) handleMarketplacePublish(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "marketplace.publish")
 }
 
 func (s *Server) handleCatalogList(w http.ResponseWriter, r *http.Request) {
@@ -8933,46 +8289,7 @@ func (s *Server) handleCatalogRuns(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleCatalogIngest(w http.ResponseWriter, r *http.Request) {
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "catalog.triggerIngestion", nil, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "catalog.triggerIngestion",
-			},
-		})
-		return
-	}
-
-	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
-	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": err.Error()})
-		return
-	}
-	defer db.Close()
-
-	report, err := mcp.IngestPublishedCatalog(r.Context(), db)
-	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-			"success": false,
-			"error":   err.Error(),
-			"detail":  err.Error(),
-		})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    report,
-		"bridge": map[string]any{
-			"fallback":  "go-local-published-catalog-ingest",
-			"procedure": "catalog.triggerIngestion",
-			"reason":    "upstream unavailable; executing native Go catalog ingestion",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "catalog.triggerIngestion")
 }
 
 func (s *Server) handleCatalogValidate(w http.ResponseWriter, r *http.Request) {
@@ -9724,6 +9041,10 @@ func (s *Server) handleSubmoduleList(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (s *Server) handleSubmoduleUpdateAll(w http.ResponseWriter, r *http.Request) {
+	s.handleTRPCBridgeBodyCall(w, r, "submodule.updateAll")
+}
+
 func (s *Server) handleSubmoduleInstallDependencies(w http.ResponseWriter, r *http.Request) {
 	s.handleTRPCBridgeBodyCall(w, r, "submodule.installDependencies")
 }
@@ -9795,11 +9116,84 @@ func (s *Server) handleSuggestionsList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleSuggestionsResolve(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "suggestions.resolve")
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "suggestions.resolve", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "suggestions.resolve",
+			},
+		})
+		return
+	}
+
+	var payload struct {
+		ID     string `json:"id"`
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid request body"})
+		return
+	}
+
+	res, fallbackErr := sync.ResolveSuggestion(payload.ID, payload.Status)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    res,
+		"bridge": map[string]any{
+			"fallback":  "go-local-suggestions",
+			"procedure": "suggestions.resolve",
+			"reason":    "upstream unavailable; executing native Go suggestion resolution",
+		},
+	})
 }
 
 func (s *Server) handleSuggestionsClear(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "suggestions.clearAll")
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "suggestions.clearAll", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "suggestions.clearAll",
+			},
+		})
+		return
+	}
+
+	res, fallbackErr := sync.ClearAllSuggestions()
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+			"detail":  fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    res,
+		"bridge": map[string]any{
+			"fallback":  "go-local-suggestions",
+			"procedure": "suggestions.clearAll",
+			"reason":    "upstream unavailable; executing native Go suggestion clear",
+		},
+	})
 }
 
 func (s *Server) handlePlanMode(w http.ResponseWriter, r *http.Request) {
@@ -10811,65 +10205,9 @@ func (s *Server) handleConfiguredServerMutation(w http.ResponseWriter, r *http.R
 		"bridge": map[string]any{
 			"fallback":  "go-local-jsonc",
 			"procedure": procedure,
-			"reason":    "upstream unavailable; applying local JSONC MCP config fallback",
+			"reason":    "upstream unavailable; applying local JSONC metadata placeholder fallback",
 		},
 	})
-}
-
-func readStartupProvenance(mainLockPath, goLockPath string) map[string]any {
-	candidates := []struct {
-		path   string
-		source string
-	}{
-		{path: mainLockPath, source: "main-lock"},
-		{path: goLockPath, source: "go-lock"},
-	}
-
-	for _, candidate := range candidates {
-		record, err := lockfile.Read(candidate.path)
-		if err != nil {
-			continue
-		}
-		if record.Startup == nil {
-			if candidate.source == "go-lock" {
-				return map[string]any{
-					"requestedPort": record.Port,
-					"activePort":    record.Port,
-					"activeRuntime": "go",
-					"launchMode":    "direct Go runtime",
-					"updatedAt":     record.StartedAt,
-					"source":        candidate.source,
-				}
-			}
-			continue
-		}
-		requestedPort := record.Startup.RequestedPort
-		if requestedPort <= 0 {
-			requestedPort = record.Port
-		}
-		activePort := record.Startup.ActivePort
-		if activePort <= 0 {
-			activePort = record.Port
-		}
-		return map[string]any{
-			"requestedRuntime": record.Startup.RequestedRuntime,
-			"activeRuntime":    record.Startup.ActiveRuntime,
-			"requestedPort":    requestedPort,
-			"activePort":       activePort,
-			"portDecision":     record.Startup.PortDecision,
-			"portReason":       record.Startup.PortReason,
-			"launchMode":       record.Startup.LaunchMode,
-			"dashboardMode":    record.Startup.DashboardMode,
-			"installDecision":  record.Startup.InstallDecision,
-			"installReason":    record.Startup.InstallReason,
-			"buildDecision":    record.Startup.BuildDecision,
-			"buildReason":      record.Startup.BuildReason,
-			"updatedAt":        record.Startup.UpdatedAt,
-			"source":           candidate.source,
-		}
-	}
-
-	return nil
 }
 
 func (s *Server) handleRuntimeStatus(w http.ResponseWriter, r *http.Request) {
@@ -10960,7 +10298,6 @@ func (s *Server) handleRuntimeStatus(w http.ResponseWriter, r *http.Request) {
 	importSummary := sessionimport.BuildSummary(validatedCandidates)
 
 	lockStatuses := interop.DiscoverControlPlanes(s.cfg.MainLockPath(), s.cfg.LockPath())
-	startupMode := readStartupProvenance(s.cfg.MainLockPath(), s.cfg.LockPath())
 	runningLocks := 0
 	for _, status := range lockStatuses {
 		if status.Running {
@@ -10971,12 +10308,11 @@ func (s *Server) handleRuntimeStatus(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
 		"data": RuntimeStatus{
-			Service:     "hypercode-go",
-			Version:     buildinfo.Version,
-			BaseURL:     s.cfg.BaseURL(),
-			UptimeSec:   int(time.Since(s.startedAt).Seconds()),
-			StartupMode: startupMode,
-			Locks:       lockStatuses,
+			Service:   "hypercode-go",
+			Version:   buildinfo.Version,
+			BaseURL:   s.cfg.BaseURL(),
+			UptimeSec: int(time.Since(s.startedAt).Seconds()),
+			Locks:     lockStatuses,
 			LockSummary: LockRuntimeSummary{
 				VisibleCount: len(lockStatuses),
 				RunningCount: runningLocks,
@@ -10985,7 +10321,7 @@ func (s *Server) handleRuntimeStatus(w http.ResponseWriter, r *http.Request) {
 				WorkspaceRootAvailable:      configStatus.WorkspaceRoot.Exists,
 				ConfigDirAvailable:          configStatus.ConfigDir.Exists,
 				MainConfigDirAvailable:      configStatus.MainConfigDir.Exists,
-				RepoConfigAvailable:         configStatus.HypercodeConfigFile.Exists,
+				RepoConfigAvailable:         configStatus.HyperCodeConfigFile.Exists,
 				MCPConfigAvailable:          configStatus.MCPConfigFile.Exists,
 				HypercodeSubmoduleAvailable: configStatus.HypercodeSubmodule.Exists,
 			},
@@ -11361,34 +10697,6 @@ func (s *Server) localMetaMCPDBPath() string {
 	return filepath.Join(s.cfg.WorkspaceRoot, "metamcp.db")
 }
 
-func resolveLinkCrawlerAutoStart() bool {
-	value := strings.TrimSpace(os.Getenv("HYPERCODE_NATIVE_LINK_CRAWLER_AUTOSTART"))
-	if value == "" {
-		return true
-	}
-	return !(strings.EqualFold(value, "0") || strings.EqualFold(value, "false") || strings.EqualFold(value, "no"))
-}
-
-func resolveLinkCrawlerClassifyTags() bool {
-	value := strings.TrimSpace(os.Getenv("HYPERCODE_NATIVE_LINK_CRAWLER_CLASSIFY_TAGS"))
-	if value == "" {
-		return false
-	}
-	return strings.EqualFold(value, "1") || strings.EqualFold(value, "true") || strings.EqualFold(value, "yes")
-}
-
-func resolveLinkCrawlerInterval() time.Duration {
-	value := strings.TrimSpace(os.Getenv("HYPERCODE_NATIVE_LINK_CRAWLER_INTERVAL_MS"))
-	if value == "" {
-		return time.Minute
-	}
-	ms, err := strconv.Atoi(value)
-	if err != nil || ms <= 0 {
-		return time.Minute
-	}
-	return time.Duration(ms) * time.Millisecond
-}
-
 func (s *Server) localPolicy(uuid string) (any, error) {
 	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
 	if err != nil {
@@ -11485,101 +10793,6 @@ func (s *Server) localPolicies() ([]map[string]any, error) {
 	return results, nil
 }
 
-func (s *Server) localCreatePolicy(payload map[string]any) (any, error) {
-	name := strings.TrimSpace(stringValue(payload["name"]))
-	if name == "" {
-		return nil, fmt.Errorf("missing policy name")
-	}
-	description := nullableString(payload["description"])
-	rulesJSON, err := json.Marshal(payload["rules"])
-	if err != nil || strings.TrimSpace(string(rulesJSON)) == "" || string(rulesJSON) == "null" {
-		rulesJSON = []byte(`{}`)
-	}
-
-	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	policyUUID := uuid.NewString()
-	now := time.Now().UTC().Unix()
-	if _, err := db.Exec(`
-		INSERT INTO policies (uuid, name, description, rules, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?)
-	`, policyUUID, name, description, string(rulesJSON), now, now); err != nil {
-		return nil, err
-	}
-	return s.localPolicy(policyUUID)
-}
-
-func (s *Server) localUpdatePolicy(payload map[string]any) (any, error) {
-	policyUUID := strings.TrimSpace(stringValue(payload["uuid"]))
-	if policyUUID == "" {
-		return nil, fmt.Errorf("missing policy uuid")
-	}
-	existing, err := s.localPolicy(policyUUID)
-	if err != nil || existing == nil {
-		return existing, err
-	}
-	existingMap, _ := existing.(map[string]any)
-	name := strings.TrimSpace(stringValue(payload["name"]))
-	if name == "" {
-		name = stringValue(existingMap["name"])
-	}
-	description := nullableString(payload["description"])
-	if description == nil {
-		description = nullableString(existingMap["description"])
-	}
-	rulesValue, hasRules := payload["rules"]
-	if !hasRules {
-		rulesValue = existingMap["rules"]
-	}
-	rulesJSON, err := json.Marshal(rulesValue)
-	if err != nil || strings.TrimSpace(string(rulesJSON)) == "" || string(rulesJSON) == "null" {
-		rulesJSON = []byte(`{}`)
-	}
-
-	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	result, err := db.Exec(`
-		UPDATE policies
-		SET name = ?, description = ?, rules = ?, updated_at = ?
-		WHERE uuid = ?
-	`, name, description, string(rulesJSON), time.Now().UTC().Unix(), policyUUID)
-	if err != nil {
-		return nil, err
-	}
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
-		return nil, nil
-	}
-	return s.localPolicy(policyUUID)
-}
-
-func (s *Server) localDeletePolicy(policyUUID string) (any, error) {
-	if strings.TrimSpace(policyUUID) == "" {
-		return nil, fmt.Errorf("missing policy uuid")
-	}
-
-	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	result, err := db.Exec(`DELETE FROM policies WHERE uuid = ?`, policyUUID)
-	if err != nil {
-		return nil, err
-	}
-	rowsAffected, _ := result.RowsAffected()
-	return map[string]any{"success": rowsAffected > 0}, nil
-}
-
 func (s *Server) localSecrets() ([]map[string]any, error) {
 	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
 	if err != nil {
@@ -11658,7 +10871,6 @@ func (s *Server) localAPIKeys() ([]map[string]any, error) {
 			"uuid":       keyUUID,
 			"name":       name,
 			"key":        keyValue,
-			"key_prefix": apiKeyPrefix(keyValue),
 			"created_at": unixTimestampToRFC3339(createdAtRaw),
 			"is_active":  isActive,
 			"user_id":    nullStringToAny(userID),
@@ -11704,166 +10916,10 @@ func (s *Server) localAPIKey(uuid string) (any, error) {
 		"uuid":       keyUUID,
 		"name":       name,
 		"key":        keyValue,
-		"key_prefix": apiKeyPrefix(keyValue),
 		"created_at": unixTimestampToRFC3339(createdAtRaw),
 		"is_active":  isActive,
 		"user_id":    nullStringToAny(userID),
 	}, nil
-}
-
-func (s *Server) ensureLocalOperatorTables(db *sql.DB) error {
-	_, err := db.Exec(`
-		CREATE TABLE IF NOT EXISTS api_keys (
-			uuid TEXT PRIMARY KEY,
-			name TEXT NOT NULL,
-			key TEXT NOT NULL UNIQUE,
-			user_id TEXT,
-			created_at INTEGER NOT NULL,
-			is_active INTEGER NOT NULL DEFAULT 1
-		);
-		CREATE TABLE IF NOT EXISTS workspace_secrets (
-			key TEXT PRIMARY KEY,
-			value TEXT NOT NULL,
-			created_at INTEGER NOT NULL,
-			updated_at INTEGER NOT NULL
-		);
-	`)
-	return err
-}
-
-func apiKeyPrefix(keyValue string) string {
-	trimmed := strings.TrimSpace(keyValue)
-	if trimmed == "" {
-		return "sk-..."
-	}
-	if len(trimmed) <= 8 {
-		return trimmed
-	}
-	return trimmed[:8]
-}
-
-func generateLocalAPIKeyValue() (string, error) {
-	randomBytes := make([]byte, 18)
-	if _, err := crand.Read(randomBytes); err != nil {
-		return "", err
-	}
-	return "sk_" + hex.EncodeToString(randomBytes), nil
-}
-
-func (s *Server) localCreateAPIKey(payload map[string]any) (any, error) {
-	name := strings.TrimSpace(stringValue(payload["name"]))
-	if name == "" {
-		return nil, fmt.Errorf("missing API key name")
-	}
-	isActive := true
-	if raw, ok := payload["is_active"].(bool); ok {
-		isActive = raw
-	}
-
-	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-	if err := s.ensureLocalOperatorTables(db); err != nil {
-		return nil, err
-	}
-
-	keyUUID := uuid.NewString()
-	keyValue, err := generateLocalAPIKeyValue()
-	if err != nil {
-		return nil, err
-	}
-	createdAt := time.Now().UTC().Unix()
-	if _, err := db.Exec(`
-		INSERT INTO api_keys (uuid, name, key, user_id, created_at, is_active)
-		VALUES (?, ?, ?, NULL, ?, ?)
-	`, keyUUID, name, keyValue, createdAt, isActive); err != nil {
-		return nil, err
-	}
-
-	return map[string]any{
-		"uuid":       keyUUID,
-		"name":       name,
-		"key":        keyValue,
-		"key_prefix": apiKeyPrefix(keyValue),
-		"created_at": unixTimestampToRFC3339(createdAt),
-		"is_active":  isActive,
-		"user_id":    nil,
-	}, nil
-}
-
-func (s *Server) localDeleteAPIKey(keyUUID string) (any, error) {
-	if strings.TrimSpace(keyUUID) == "" {
-		return nil, fmt.Errorf("missing API key uuid")
-	}
-
-	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-	if err := s.ensureLocalOperatorTables(db); err != nil {
-		return nil, err
-	}
-
-	result, err := db.Exec(`DELETE FROM api_keys WHERE uuid = ? AND user_id IS NULL`, keyUUID)
-	if err != nil {
-		return nil, err
-	}
-	deleted, _ := result.RowsAffected()
-	return map[string]any{
-		"success": deleted > 0,
-	}, nil
-}
-
-func (s *Server) localSetSecret(key string, value string) (any, error) {
-	key = strings.TrimSpace(key)
-	if key == "" {
-		return nil, fmt.Errorf("missing secret key")
-	}
-
-	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-	if err := s.ensureLocalOperatorTables(db); err != nil {
-		return nil, err
-	}
-
-	now := time.Now().UTC().Unix()
-	if _, err := db.Exec(`
-		INSERT INTO workspace_secrets (key, value, created_at, updated_at)
-		VALUES (?, ?, ?, ?)
-		ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-	`, key, value, now, now); err != nil {
-		return nil, err
-	}
-
-	return map[string]any{"success": true}, nil
-}
-
-func (s *Server) localDeleteSecret(key string) (any, error) {
-	key = strings.TrimSpace(key)
-	if key == "" {
-		return nil, fmt.Errorf("missing secret key")
-	}
-
-	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-	if err := s.ensureLocalOperatorTables(db); err != nil {
-		return nil, err
-	}
-
-	if _, err := db.Exec(`DELETE FROM workspace_secrets WHERE key = ?`, key); err != nil {
-		return nil, err
-	}
-
-	return map[string]any{"success": true}, nil
 }
 
 func (s *Server) localLinksBacklogItem(uuid string) (any, error) {
@@ -14252,7 +13308,6 @@ func (s *Server) localExecuteSavedScript(targetUUID string) (any, error) {
 	code := stringValue(script["code"])
 	startedAt := time.Now().UTC()
 	wrapper := "(async () => {\n" + code + "\n})().catch((error) => {\n  console.error(error instanceof Error ? error.stack || error.message : String(error));\n  process.exitCode = 1;\n});\n"
-
 	cmd := exec.Command("node", "-e", wrapper)
 	cmd.Dir = s.cfg.WorkspaceRoot
 	output, runErr := cmd.CombinedOutput()
@@ -14342,103 +13397,6 @@ func (s *Server) localToolSets() ([]map[string]any, error) {
 	}
 
 	return toolSets, nil
-}
-
-func (s *Server) localCreateToolSet(payload map[string]any) (any, error) {
-	name := strings.TrimSpace(stringValue(payload["name"]))
-	if name == "" {
-		return nil, fmt.Errorf("missing tool set name")
-	}
-	description := nullableString(payload["description"])
-	toolUUIDs := stringSlice(payload["tools"])
-
-	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	now := time.Now().UTC().Unix()
-	toolSetUUID := uuid.NewString()
-	tx, err := db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if tx != nil {
-			_ = tx.Rollback()
-		}
-	}()
-
-	if _, err := tx.Exec(`
-		INSERT INTO tool_sets (uuid, name, description, created_at, updated_at, user_id)
-		VALUES (?, ?, ?, ?, ?, NULL)
-	`, toolSetUUID, name, description, now, now); err != nil {
-		return nil, err
-	}
-	for _, toolUUID := range toolUUIDs {
-		trimmed := strings.TrimSpace(toolUUID)
-		if trimmed == "" {
-			continue
-		}
-		if _, err := tx.Exec(`
-			INSERT INTO tool_set_items (uuid, tool_set_uuid, tool_uuid, created_at)
-			VALUES (?, ?, ?, ?)
-		`, uuid.NewString(), toolSetUUID, trimmed, now); err != nil {
-			return nil, err
-		}
-	}
-	if err := tx.Commit(); err != nil {
-		return nil, err
-	}
-	tx = nil
-
-	toolSets, err := s.localToolSets()
-	if err != nil {
-		return nil, err
-	}
-	for _, toolSet := range toolSets {
-		if stringValue(toolSet["uuid"]) == toolSetUUID {
-			return toolSet, nil
-		}
-	}
-	return nil, nil
-}
-
-func (s *Server) localDeleteToolSet(toolSetUUID string) (any, error) {
-	if strings.TrimSpace(toolSetUUID) == "" {
-		return nil, fmt.Errorf("missing tool set uuid")
-	}
-
-	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	tx, err := db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if tx != nil {
-			_ = tx.Rollback()
-		}
-	}()
-
-	if _, err := tx.Exec(`DELETE FROM tool_set_items WHERE tool_set_uuid = ?`, toolSetUUID); err != nil {
-		return nil, err
-	}
-	result, err := tx.Exec(`DELETE FROM tool_sets WHERE uuid = ?`, toolSetUUID)
-	if err != nil {
-		return nil, err
-	}
-	if err := tx.Commit(); err != nil {
-		return nil, err
-	}
-	tx = nil
-	rowsAffected, _ := result.RowsAffected()
-	return map[string]any{"success": rowsAffected > 0}, nil
 }
 
 func (s *Server) localToolChains() ([]map[string]any, error) {
@@ -14705,7 +13663,7 @@ func scanLocalDBTool(scanner localDBToolScanner) (map[string]any, error) {
 	}
 
 	return map[string]any{
-		"uuid":             uuid,
+		"uuid":             name,
 		"name":             name,
 		"description":      nullStringToAny(description),
 		"server":           server,
@@ -14798,28 +13756,6 @@ func (s *Server) localDBTool(uuid string) (any, error) {
 		}
 	}
 	return nil, nil
-}
-
-func (s *Server) localSetToolAlwaysOn(toolUUID string, alwaysOn bool) (any, error) {
-	db, err := sql.Open("sqlite", s.localMetaMCPDBPath())
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	result, err := db.Exec(`
-		UPDATE tools
-		SET always_on = ?, updated_at = ?
-		WHERE uuid = ?
-	`, alwaysOn, time.Now().UTC().Unix(), toolUUID)
-	if err != nil {
-		return nil, err
-	}
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
-		return nil, nil
-	}
-	return s.localDBTool(toolUUID)
 }
 
 func (s *Server) localShellQueryHistory(query string, limit int) ([]map[string]any, error) {
@@ -15447,7 +14383,7 @@ func harnessDocsURL(id string) string {
 func harnessInstallHint(id string) string {
 	switch id {
 	case "hypercode":
-		return "Use HyperCode's tracked `submodules/hyperharness` checkout or install HyperCode and ensure `hypercode` is on PATH."
+		return "Use HyperCode's tracked `submodules/hypercode` checkout or install HyperCode and ensure `hypercode` is on PATH."
 	case "aider":
 		return "pip install aider-chat"
 	case "antigravity":
@@ -16175,14 +15111,7 @@ func (s *Server) saveLocalMCPJsonc(content string) error {
 		}
 		compatibility[key] = value
 	}
-	if err := os.WriteFile(jsonPath, []byte(prettyJSON(compatibility)+"\n"), 0o644); err != nil {
-		return err
-	}
-	if err := os.MkdirAll(s.cfg.ConfigDir, 0o755); err != nil {
-		return err
-	}
-	_, err := mcp.SyncInventoryCacheFromLiveSources(s.cfg.WorkspaceRoot, s.cfg.MainConfigDir, filepath.Join(s.cfg.ConfigDir, "mcp_inventory_cache.json"))
-	return err
+	return os.WriteFile(jsonPath, []byte(prettyJSON(compatibility)+"\n"), 0o644)
 }
 
 func (s *Server) localMemoryContexts() ([]map[string]any, error) {
@@ -17033,9 +15962,6 @@ func (s *Server) localMemoryExportRecords(userID string) ([]map[string]any, erro
 		memories = append(memories, map[string]any{
 			"uuid":      uuid,
 			"content":   stringValue(context["content"]),
-			"title":     stringValue(firstNonEmptyString(context["title"], metadata["title"])),
-			"source":    stringValue(firstNonEmptyString(context["source"], metadata["source"])),
-			"url":       stringValue(firstNonEmptyString(context["url"], metadata["url"])),
 			"metadata":  metadata,
 			"userId":    userID,
 			"createdAt": createdAt,
@@ -17245,55 +16171,17 @@ func (s *Server) handleMCPManualToolMutation(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	name, _ := payload["name"].(string)
-	limits, limitsErr := s.localToolPreferences()
-	if limitsErr != nil {
-		limits = map[string]any{"maxLoadedTools": 16, "maxHydratedSchemas": 8, "idleEvictionThresholdMs": 5 * 60 * 1000}
-	}
-	available, availableErr := s.localAvailableMCPTools()
-	if availableErr != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": availableErr.Error(), "detail": availableErr.Error()})
-		return
-	}
-	var (
-		message string
-		evicted []string
-		ok      bool
-	)
-	switch procedure {
-	case "mcp.loadTool":
-		message, evicted, ok = s.mcpState.loadTool(name, limits, available)
-	case "mcp.unloadTool":
-		message, ok = s.mcpState.unloadTool(name, available)
-	default:
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": "unsupported local MCP working-set mutation", "detail": "unsupported local MCP working-set mutation"})
-		return
-	}
-	if !ok {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-			"success": false,
-			"error":   "MCP working-set mutation is unavailable: tool is not present in the local MCP inventory.",
-			"data":    map[string]any{"ok": false, "message": "Tool not present in local MCP inventory"},
-			"bridge":  map[string]any{"fallback": "go-local-mcp", "procedure": procedure, "reason": "upstream unavailable; tool is not present in the local MCP inventory"},
-		})
-		return
-	}
-
-	snapshot := s.mcpState.snapshot(limits, available)
-	loadedCount, hydratedCount, loadedPct, hydratedPct := s.localWorkingSetPressure(limits, snapshot)
-	eventType := "load"
-	if procedure == "mcp.unloadTool" {
-		eventType = "unload"
-	}
-	s.mcpState.recordTelemetry(localMCPTelemetryEvent{Type: eventType, ToolName: name, Source: "manual-action", Status: "success", Message: message, EvictedTools: evicted, LoadedToolCount: loadedCount, HydratedToolCount: hydratedCount, LoadedUtilizationPct: loadedPct, HydratedUtilizationPct: hydratedPct, Timestamp: time.Now().UTC().UnixMilli()})
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    map[string]any{"ok": true, "message": message},
+	writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+		"success": false,
+		"error":   "MCP working-set mutation is unavailable: upstream MCP router is unavailable and the local MCP working set manager is not initialized.",
+		"data": map[string]any{
+			"ok":      false,
+			"message": "MCP Server not initialized",
+		},
 		"bridge": map[string]any{
 			"fallback":  "go-local-mcp",
 			"procedure": procedure,
-			"reason":    "upstream unavailable; using local MCP working set manager",
+			"reason":    "upstream unavailable; local MCP working set manager is not initialized",
 		},
 	})
 }
@@ -17337,7 +16225,7 @@ func (s *Server) localConfiguredMCPServers() ([]map[string]any, error) {
 			}
 		}
 
-		item := map[string]any{
+		results = append(results, map[string]any{
 			"uuid":                         syntheticServerUUID(name),
 			"name":                         name,
 			"description":                  description,
@@ -17354,11 +16242,7 @@ func (s *Server) localConfiguredMCPServers() ([]map[string]any, error) {
 			"user_id":                      nil,
 			"source_published_server_uuid": nullableString(serverMap["source_published_server_uuid"]),
 			"_meta":                        serverMap["_meta"],
-		}
-		for key, value := range configuredServerProvenance(item, "configured-jsonc") {
-			item[key] = value
-		}
-		results = append(results, item)
+		})
 	}
 
 	sort.Slice(results, func(i, j int) bool {
@@ -17416,9 +16300,6 @@ func (s *Server) localConfiguredMCPServersFromDB() ([]map[string]any, error) {
 		if name, _ := server["name"].(string); strings.TrimSpace(name) != "" {
 			server["_meta"] = metaByName[name]
 		}
-		for key, value := range configuredServerProvenance(server, "configured-db-overlay") {
-			server[key] = value
-		}
 	}
 
 	return servers, nil
@@ -17459,39 +16340,8 @@ func (s *Server) localConfiguredMCPServerFromDB(uuid string) (map[string]any, er
 	if name, _ := server["name"].(string); strings.TrimSpace(name) != "" {
 		server["_meta"] = metaByName[name]
 	}
-	for key, value := range configuredServerProvenance(server, "configured-db-overlay") {
-		server[key] = value
-	}
 
 	return server, nil
-}
-
-func configuredServerProvenance(server map[string]any, originLayer string) map[string]any {
-	metaMap, _ := server["_meta"].(map[string]any)
-	metadataOrigin := "metadata-unavailable"
-	metadataCachedAt := ""
-	if metaMap != nil {
-		if source := strings.TrimSpace(stringValue(metaMap["metadataSource"])); source != "" {
-			metadataOrigin = source
-		} else if intNumber(metaMap["toolCount"]) > 0 || len(mcp.MetadataToolsFromAny(metaMap["tools"])) > 0 {
-			metadataOrigin = "jsonc-cache"
-		} else {
-			metadataOrigin = "jsonc-inline"
-		}
-		metadataCachedAt = strings.TrimSpace(stringValue(metaMap["cacheHydratedAt"]))
-		if metadataCachedAt == "" {
-			metadataCachedAt = strings.TrimSpace(stringValue(metaMap["discoveredAt"]))
-		}
-	}
-	result := map[string]any{
-		"originLayer":    originLayer,
-		"metadataOrigin": metadataOrigin,
-	}
-	for key, value := range freshnessBridgeMeta("metadata", metadataCachedAt, 24*time.Hour) {
-		result[key] = value
-	}
-	result["provenance"] = newRecordProvenanceObject(originLayer, metadataOrigin, nullableString(metadataCachedAt), result["metadataAgeMs"], result["metadataStaleHeuristic"], []string{"originLayer", "metadataOrigin", "metadataCachedAt", "metadataAgeMs", "metadataStaleHeuristic"})
-	return result
 }
 
 func (s *Server) localConfiguredMCPServerMetaByName() (map[string]any, error) {
@@ -17711,97 +16561,6 @@ func (s *Server) localSaveSkill(payload map[string]any) (map[string]any, error) 
 	}, nil
 }
 
-func (s *Server) localAssimilateSkill(payload map[string]any) (map[string]any, error) {
-	topic, _ := payload["topic"].(string)
-	docsURL, _ := payload["docsUrl"].(string)
-	autoInstall, _ := payload["autoInstall"].(bool)
-	if strings.TrimSpace(topic) == "" {
-		return nil, errors.New("missing topic")
-	}
-
-	safeID := strings.ToLower(topic)
-	safeID = strings.Map(func(r rune) rune {
-		switch {
-		case r >= 'a' && r <= 'z':
-			return r
-		case r >= '0' && r <= '9':
-			return r
-		default:
-			return '_'
-		}
-	}, safeID)
-	safeID = strings.Trim(safeID, "_")
-	for strings.Contains(safeID, "__") {
-		safeID = strings.ReplaceAll(safeID, "__", "_")
-	}
-	if safeID == "" {
-		safeID = "assimilated_skill"
-	}
-
-	skillDir := filepath.Join(s.localSkillRoots()[1], safeID)
-	if err := os.MkdirAll(skillDir, 0o755); err != nil {
-		return nil, err
-	}
-	skillFile := filepath.Join(skillDir, "SKILL.md")
-
-	logs := []string{
-		"Starting assimilation for: " + topic,
-		"Phase 1: Using local Go fallback instead of the TypeScript research/LLM assimilation pipeline.",
-	}
-	if strings.TrimSpace(docsURL) != "" {
-		logs = append(logs, "Phase 2: Recorded documentation source: "+docsURL)
-	} else {
-		logs = append(logs, "Phase 2: No docs URL supplied; created a local starter skill scaffold from the topic only.")
-	}
-	if autoInstall {
-		logs = append(logs, "Phase 3: Auto-install requested; local Go fallback saved the skill scaffold but did not execute any TS-only hot-reload/install pipeline.")
-	} else {
-		logs = append(logs, "Phase 3: Saved a local starter skill scaffold for later refinement.")
-	}
-
-	bodyLines := []string{
-		"---",
-		"name: " + topic,
-		"description: Locally assimilated starter skill for " + topic,
-		"---",
-		"",
-		"# " + topic,
-		"",
-		"> Generated by the native Go fallback assimilation path.",
-		"",
-		"## Topic",
-		topic,
-		"",
-	}
-	if strings.TrimSpace(docsURL) != "" {
-		bodyLines = append(bodyLines,
-			"## Documentation Source",
-			docsURL,
-			"",
-		)
-	}
-	bodyLines = append(bodyLines,
-		"## Current Status",
-		"This is a locally generated starter skill scaffold. It preserves the requested topic and optional documentation URL, but it does not claim to be a fully researched or LLM-authored assimilation output.",
-		"",
-		"## Suggested Instructions",
-		"1. Review the topic and documentation source.",
-		"2. Replace this scaffold with task-specific instructions, commands, and examples.",
-		"3. Re-run assimilation through a richer pipeline later if needed.",
-		"",
-	)
-	if err := os.WriteFile(skillFile, []byte(strings.Join(bodyLines, "\n")), 0o644); err != nil {
-		return nil, err
-	}
-
-	logs = append(logs, "Phase 4: Wrote local starter skill to "+skillFile)
-	return map[string]any{
-		"success":  true,
-		"toolName": safeID,
-		"logs":     logs,
-	}, nil
-}
-
 func (s *Server) localSkillRoots() []string {
 	return []string{
 		filepath.Join(s.cfg.WorkspaceRoot, "packages", "core", "src", "skills"),
@@ -18002,16 +16761,24 @@ func (s *Server) localReloadConfiguredServerMetadata(payload map[string]any) (an
 	if entry == nil {
 		entry = map[string]any{}
 	}
-	meta, reloadDecision := inspectConfiguredServerMetadata(entry, mode)
-	if liveMeta, liveDecision, liveErr := s.tryProbeConfiguredServerMetadata(entry, mode); liveMeta != nil {
-		meta = liveMeta
-		reloadDecision = liveDecision
-	} else if liveErr != nil {
-		if intNumber(meta["toolCount"]) > 0 {
-			meta["status"] = "degraded"
-		}
-		meta["error"] = liveErr.Error()
+	now := time.Now().UTC().Format(time.RFC3339)
+	meta, _ := entry["_meta"].(map[string]any)
+	if meta == nil {
+		meta = map[string]any{}
 	}
+	meta["status"] = "pending"
+	meta["metadataVersion"] = 2
+	meta["metadataSource"] = "derived"
+	meta["cacheHydratedAt"] = now
+	meta["lastAttemptedBinaryLoadAt"] = now
+	meta["reloadableFromCache"] = false
+	if _, ok := meta["toolCount"]; !ok {
+		meta["toolCount"] = 0
+	}
+	if _, ok := meta["tools"]; !ok {
+		meta["tools"] = []any{}
+	}
+	meta["error"] = "Go fallback refreshed metadata cache placeholder using local configuration only (" + mode + ")."
 	entry["_meta"] = meta
 	servers[targetName] = entry
 	config["mcpServers"] = servers
@@ -18026,7 +16793,7 @@ func (s *Server) localReloadConfiguredServerMetadata(payload map[string]any) (an
 		"server":         server,
 		"metadata":       meta,
 		"toolCount":      meta["toolCount"],
-		"reloadDecision": reloadDecision,
+		"reloadDecision": "go-local-placeholder",
 		"ok":             true,
 	}, nil
 }
@@ -18053,17 +16820,15 @@ func (s *Server) localClearConfiguredServerMetadata(payload map[string]any) (any
 	meta := map[string]any{
 		"status":                     "pending",
 		"metadataVersion":            2,
-		"metadataSource":             "cleared",
+		"metadataSource":             "derived",
 		"reloadableFromCache":        false,
 		"toolCount":                  0,
 		"tools":                      []any{},
-		"error":                      "Metadata cache cleared locally at " + clearedAt,
+		"error":                      "Cache cleared at " + clearedAt,
 		"cacheHydratedAt":            nil,
-		"discoveredAt":               clearedAt,
+		"discoveredAt":               nil,
 		"lastAttemptedBinaryLoadAt":  nil,
 		"lastSuccessfulBinaryLoadAt": nil,
-		"lastRefreshMode":            nil,
-		"transportHint":              configuredServerTransportHint(entry),
 	}
 	entry["_meta"] = meta
 	servers[targetName] = entry
@@ -18076,11 +16841,10 @@ func (s *Server) localClearConfiguredServerMetadata(payload map[string]any) (any
 		return nil, err
 	}
 	return map[string]any{
-		"server":         server,
-		"metadata":       meta,
-		"toolCount":      0,
-		"reloadDecision": "go-local-metadata-cleared",
-		"ok":             true,
+		"server":    server,
+		"metadata":  meta,
+		"toolCount": 0,
+		"ok":        true,
 	}, nil
 }
 
@@ -18137,99 +16901,6 @@ func (s *Server) localConfiguredServerByName(name string) (map[string]any, error
 	return nil, errors.New("configured server not found")
 }
 
-func (s *Server) localConfiguredMCPServerByUUID(uuid string) (map[string]any, error) {
-	servers, err := s.localConfiguredMCPServers()
-	if err != nil {
-		return nil, err
-	}
-	for _, server := range servers {
-		serverUUID, _ := server["uuid"].(string)
-		if strings.TrimSpace(serverUUID) == strings.TrimSpace(uuid) {
-			return server, nil
-		}
-	}
-	return nil, nil
-}
-
-func (s *Server) localAvailableMCPTools() (map[string]localMCPTool, error) {
-	servers, err := s.localConfiguredMCPServers()
-	if err != nil {
-		return nil, err
-	}
-	available := map[string]localMCPTool{}
-	for _, server := range servers {
-		serverName := stringValue(server["name"])
-		meta, _ := server["_meta"].(map[string]any)
-		for _, tool := range mcp.MetadataToolsFromAny(meta["tools"]) {
-			name := strings.TrimSpace(tool.Name)
-			if name == "" {
-				continue
-			}
-			available[name] = localMCPTool{
-				Name:        name,
-				Description: tool.Description,
-				InputSchema: tool.InputSchema,
-				AlwaysOn:    tool.AlwaysOn || boolValue(server["always_on"]),
-				ServerName:  serverName,
-				Source:      "jsonc-metadata",
-			}
-		}
-	}
-	for _, record := range s.runtimeServers.list() {
-		for _, rawTool := range record.Tools {
-			name := strings.TrimSpace(stringValue(rawTool["name"]))
-			if name == "" {
-				continue
-			}
-			available[name] = localMCPTool{
-				Name:        name,
-				Description: stringValue(rawTool["description"]),
-				InputSchema: rawTool["inputSchema"],
-				AlwaysOn:    false,
-				ServerName:  record.Name,
-				Source:      record.Source,
-			}
-		}
-	}
-	return available, nil
-}
-
-func (s *Server) localWorkingSetPressure(limits map[string]any, snapshot map[string]any) (int, int, float64, float64) {
-	tools, _ := snapshot["tools"].([]map[string]any)
-	loadedCount := len(tools)
-	if genericTools, ok := snapshot["tools"].([]any); ok {
-		loadedCount = len(genericTools)
-	}
-	hydratedCount := 0
-	for _, raw := range genericSlice(snapshot["tools"]) {
-		toolMap, _ := raw.(map[string]any)
-		if boolValue(toolMap["hydrated"]) {
-			hydratedCount++
-		}
-	}
-	maxLoaded := intNumber(limits["maxLoadedTools"])
-	maxHydrated := intNumber(limits["maxHydratedSchemas"])
-	loadedPct := 0.0
-	if maxLoaded > 0 {
-		loadedPct = float64(loadedCount) / float64(maxLoaded)
-	}
-	hydratedPct := 0.0
-	if maxHydrated > 0 {
-		hydratedPct = float64(hydratedCount) / float64(maxHydrated)
-	}
-	return loadedCount, hydratedCount, loadedPct, hydratedPct
-}
-
-func genericSlice(value any) []any {
-	items, _ := value.([]any)
-	return items
-}
-
-func boolValue(value any) bool {
-	boolVal, _ := value.(bool)
-	return boolVal
-}
-
 func (s *Server) readLocalMCPConfigObject() (map[string]any, error) {
 	editor, err := s.localMCPJsoncEditor()
 	if err != nil {
@@ -18248,146 +16919,6 @@ func (s *Server) readLocalMCPConfigObject() (map[string]any, error) {
 
 func (s *Server) writeLocalMCPConfigObject(config map[string]any) error {
 	return s.saveLocalMCPJsonc(prettyJSON(config))
-}
-
-func (s *Server) tryProbeConfiguredServerMetadata(entry map[string]any, mode string) (map[string]any, string, error) {
-	if strings.EqualFold(mode, "cache") {
-		return nil, "", nil
-	}
-	if configuredServerTransportHint(entry) != "STDIO" {
-		return nil, "", nil
-	}
-	command, _ := entry["command"].(string)
-	if strings.TrimSpace(command) == "" {
-		return nil, "", nil
-	}
-	args := stringSlice(entry["args"])
-	env := stringMap(entry["env"])
-	secretEnv, err := s.localWorkspaceSecretEnv()
-	if err != nil {
-		return nil, "", err
-	}
-	for key, value := range secretEnv {
-		if _, ok := env[key]; !ok {
-			env[key] = value
-		}
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
-	defer cancel()
-	client := mcp.NewStdioClient("metadata-probe", command, args, env)
-	if err := client.Start(); err != nil {
-		return nil, "", fmt.Errorf("native stdio metadata probe failed to start: %w", err)
-	}
-	defer client.Stop()
-	resp, err := client.Call(ctx, "tools/list", nil)
-	if err != nil {
-		return nil, "", fmt.Errorf("native stdio metadata probe failed during tools/list: %w", err)
-	}
-	if resp.Error != nil {
-		return nil, "", fmt.Errorf("native stdio metadata probe returned an MCP error")
-	}
-	resultBytes, err := json.Marshal(resp.Result)
-	if err != nil {
-		return nil, "", err
-	}
-	var listResult struct {
-		Tools []struct {
-			Name        string      `json:"name"`
-			Description string      `json:"description"`
-			InputSchema interface{} `json:"inputSchema"`
-		} `json:"tools"`
-	}
-	if err := json.Unmarshal(resultBytes, &listResult); err != nil {
-		return nil, "", err
-	}
-	now := time.Now().UTC().Format(time.RFC3339)
-	metadataTools := make([]mcp.MetadataTool, 0, len(listResult.Tools))
-	for _, tool := range listResult.Tools {
-		metadataTools = append(metadataTools, mcp.MetadataTool{
-			Name:        tool.Name,
-			Description: tool.Description,
-			InputSchema: tool.InputSchema,
-		})
-	}
-	tools := mcp.MetadataToolsToAny(metadataTools)
-	meta := map[string]any{
-		"status":                     "ready",
-		"metadataVersion":            2,
-		"metadataSource":             "live-probe",
-		"cacheHydratedAt":            now,
-		"discoveredAt":               now,
-		"lastRefreshMode":            mode,
-		"transportHint":              configuredServerTransportHint(entry),
-		"reloadableFromCache":        true,
-		"toolCount":                  len(tools),
-		"tools":                      tools,
-		"lastAttemptedBinaryLoadAt":  now,
-		"lastSuccessfulBinaryLoadAt": now,
-		"error":                      nil,
-	}
-	return meta, "go-local-live-stdio", nil
-}
-
-func inspectConfiguredServerMetadata(entry map[string]any, mode string) (map[string]any, string) {
-	now := time.Now().UTC().Format(time.RFC3339)
-	existingMeta, _ := entry["_meta"].(map[string]any)
-	meta := map[string]any{}
-	for key, value := range existingMeta {
-		meta[key] = value
-	}
-	metadataTools := mcp.MetadataToolsFromAny(meta["tools"])
-	tools := mcp.MetadataToolsToAny(metadataTools)
-	toolCount := intNumber(meta["toolCount"])
-	if len(metadataTools) > 0 {
-		toolCount = len(metadataTools)
-	}
-	reloadableFromCache := toolCount > 0
-	status := "configured"
-	metadataSource := "jsonc-derived"
-	reloadDecision := "go-local-jsonc-inspection"
-	errorMessage := any(nil)
-	if reloadableFromCache {
-		status = "ready"
-		metadataSource = "jsonc-cache"
-		reloadDecision = "go-local-jsonc-cache"
-		if existing, ok := meta["lastSuccessfulBinaryLoadAt"]; ok && existing != nil {
-			meta["lastSuccessfulBinaryLoadAt"] = existing
-		}
-	} else if strings.EqualFold(mode, "cache") {
-		status = "pending"
-		errorMessage = "No cached tool metadata is available locally; native Go refresh inspected JSONC configuration only."
-	}
-	meta["status"] = status
-	meta["metadataVersion"] = 2
-	meta["metadataSource"] = metadataSource
-	meta["cacheHydratedAt"] = now
-	meta["discoveredAt"] = now
-	meta["lastRefreshMode"] = mode
-	meta["transportHint"] = configuredServerTransportHint(entry)
-	meta["reloadableFromCache"] = reloadableFromCache
-	meta["toolCount"] = toolCount
-	meta["tools"] = tools
-	if strings.EqualFold(mode, "binary") {
-		meta["lastAttemptedBinaryLoadAt"] = now
-		if !reloadableFromCache {
-			errorMessage = "Native Go metadata refresh currently inspects local JSONC configuration and cached metadata only; direct binary probing is not implemented yet."
-		}
-	}
-	meta["error"] = errorMessage
-	return meta, reloadDecision
-}
-
-func configuredServerTransportHint(entry map[string]any) string {
-	if serverType, ok := entry["type"].(string); ok && strings.TrimSpace(serverType) != "" {
-		return serverType
-	}
-	if url, ok := entry["url"].(string); ok && strings.TrimSpace(url) != "" {
-		return "STREAMABLE_HTTP"
-	}
-	if command, ok := entry["command"].(string); ok && strings.TrimSpace(command) != "" {
-		return "STDIO"
-	}
-	return "unknown"
 }
 
 func configuredServerEntryFromPayload(payload map[string]any) map[string]any {
@@ -18944,93 +17475,6 @@ func (s *Server) scanValidatedImportSources() ([]sessionimport.ValidationResult,
 
 	scanner := sessionimport.NewScanner(s.cfg.WorkspaceRoot, homeDir, 50)
 	return scanner.ScanValidated()
-}
-
-func (s *Server) localImportedSessionStore() *sessionimport.ImportedSessionStore {
-	return sessionimport.NewImportedSessionStore(s.cfg.WorkspaceRoot)
-}
-
-func localImportedSessionMemoryRecord(memory sessionimport.ImportedSessionMemoryRecord) ImportedSessionMemory {
-	return ImportedSessionMemory{
-		ID:                memory.ID,
-		ImportedSessionID: memory.ImportedSessionID,
-		Kind:              string(memory.Kind),
-		Content:           memory.Content,
-		Tags:              append([]string(nil), memory.Tags...),
-		Source:            string(memory.Source),
-		Metadata:          memory.Metadata,
-		CreatedAt:         memory.CreatedAt,
-	}
-}
-
-func localImportedSessionRecord(record sessionimport.ImportedSessionRecord) ImportedSessionRecord {
-	parsedMemories := make([]ImportedSessionMemory, 0, len(record.ParsedMemories))
-	for _, memory := range record.ParsedMemories {
-		parsedMemories = append(parsedMemories, localImportedSessionMemoryRecord(memory))
-	}
-	return ImportedSessionRecord{
-		ID:                record.ID,
-		SourceTool:        record.SourceTool,
-		SourcePath:        record.SourcePath,
-		ExternalSessionID: record.ExternalSessionID,
-		Title:             record.Title,
-		SessionFormat:     record.SessionFormat,
-		Transcript:        record.Transcript,
-		Excerpt:           record.Excerpt,
-		WorkingDirectory:  record.WorkingDirectory,
-		TranscriptHash:    record.TranscriptHash,
-		NormalizedSession: record.NormalizedSession,
-		Metadata:          record.Metadata,
-		DiscoveredAt:      record.DiscoveredAt,
-		ImportedAt:        record.ImportedAt,
-		LastModifiedAt:    record.LastModifiedAt,
-		CreatedAt:         record.CreatedAt,
-		UpdatedAt:         record.UpdatedAt,
-		ParsedMemories:    parsedMemories,
-	}
-}
-
-func localImportedSessionMaintenanceStats(stats sessionimport.ImportedSessionMaintenanceStats) ImportedSessionMaintenanceStats {
-	return ImportedSessionMaintenanceStats{
-		TotalSessions:                stats.TotalSessions,
-		InlineTranscriptCount:        stats.InlineTranscriptCount,
-		ArchivedTranscriptCount:      stats.ArchivedTranscriptCount,
-		MissingRetentionSummaryCount: stats.MissingRetentionSummaryCount,
-	}
-}
-
-func localImportedInstructionDocs(docs []sessionimport.ImportedInstructionDoc) []map[string]any {
-	result := make([]map[string]any, 0, len(docs))
-	for _, doc := range docs {
-		result = append(result, map[string]any{
-			"path":      doc.Path,
-			"name":      filepath.Base(doc.Path),
-			"updatedAt": doc.UpdatedAt,
-			"size":      doc.Size,
-		})
-	}
-	return result
-}
-
-func (s *Server) loadLocalImportedSessionRecords(ctx context.Context, limit int) ([]ImportedSessionRecord, error) {
-	records, err := s.localImportedSessionStore().ListImportedSessions(ctx, limit)
-	if err != nil {
-		return nil, err
-	}
-	result := make([]ImportedSessionRecord, 0, len(records))
-	for _, record := range records {
-		result = append(result, localImportedSessionRecord(record))
-	}
-	return result, nil
-}
-
-func (s *Server) loadLocalImportedSessionRecord(ctx context.Context, id string) (*ImportedSessionRecord, error) {
-	record, err := s.localImportedSessionStore().GetImportedSession(ctx, id)
-	if err != nil || record == nil {
-		return nil, err
-	}
-	converted := localImportedSessionRecord(*record)
-	return &converted, nil
 }
 
 func (s *Server) importedSessionsArchiveRoot() string {

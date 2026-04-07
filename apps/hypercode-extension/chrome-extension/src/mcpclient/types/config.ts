@@ -51,7 +51,7 @@ export interface ConnectionRequest {
 
 export const DEFAULT_CLIENT_CONFIG: ClientConfig = {
   defaultTransport: 'sse',
-  defaultUri: 'http://localhost:4000/sse',
+  defaultUri: 'http://localhost:3006/sse',
   plugins: {
     sse: {
       keepAlive: true,

@@ -1,4 +1,4 @@
-console.log("[HypercodeLink] Content Script Loaded");
+console.log("[HyperCodeLink] Content Script Loaded");
 
 // Listen for messages from background (if we switch to message passing architecture)
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

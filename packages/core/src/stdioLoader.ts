@@ -14,7 +14,7 @@ import {
     type BackgroundCoreBootstrapResult,
 } from './backgroundCoreBootstrap.js';
 import { getBridgeHealthUrl, getBridgeToolExecuteUrl } from './bridge/bridgePort.js';
-import { type HypercodeMcpJsonConfig, loadHypercodeMcpConfig, loadToolCache, type HypercodeMcpToolMetadata } from './mcp/mcpJsonConfig.js';
+import { type HyperCodeMcpJsonConfig, loadHyperCodeMcpConfig, loadToolCache, type HyperCodeMcpToolMetadata } from './mcp/mcpJsonConfig.js';
 import { namespaceToolName } from './mcp/namespaces.js';
 
 const CORE_HEALTH_URL = getBridgeHealthUrl();
@@ -97,7 +97,7 @@ function normalizeInputSchema(inputSchema: unknown): LoaderToolInputSchema {
     return { type: 'object', properties: {} };
 }
 
-function toToolDefinition(serverName: string, tool: HypercodeMcpToolMetadata): Tool {
+function toToolDefinition(serverName: string, tool: HyperCodeMcpToolMetadata): Tool {
     return {
         name: namespaceToolName(serverName, tool.name),
         description: tool.description ?? `Cached tool discovered for downstream server '${serverName}'.`,
@@ -131,7 +131,7 @@ export function createEmptyLoaderRuntimeState(): LoaderRuntimeState {
     };
 }
 
-export function buildCachedLoaderCatalog(config: HypercodeMcpJsonConfig): CachedLoaderCatalog {
+export function buildCachedLoaderCatalog(config: HyperCodeMcpJsonConfig): CachedLoaderCatalog {
     const toolMap = new Map<string, Tool>();
     let snapshotUpdatedAt: string | null = null;
     let enabledServerCount = 0;
@@ -179,13 +179,13 @@ export function buildCachedLoaderCatalog(config: HypercodeMcpJsonConfig): Cached
 }
 
 export async function loadCachedLoaderCatalog(
-    loadConfigImpl: typeof loadHypercodeMcpConfig = loadHypercodeMcpConfig,
+    loadConfigImpl: typeof loadHyperCodeMcpConfig = loadHyperCodeMcpConfig,
 ): Promise<CachedLoaderCatalog> {
     const cache = await loadToolCache();
     if (cache) {
         return buildCachedLoaderCatalog(cache);
     }
-    const config = await loadConfigImpl().catch(() => ({ mcpServers: {} } satisfies HypercodeMcpJsonConfig));
+    const config = await loadConfigImpl().catch(() => ({ mcpServers: {} } satisfies HyperCodeMcpJsonConfig));
     return buildCachedLoaderCatalog(config);
 }
 

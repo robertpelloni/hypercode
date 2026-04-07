@@ -120,16 +120,6 @@ const DEFAULT_CONFIG: AutopilotConfig = {
 function loadSupervisorsFromEnv(): SupervisorConfig[] {
   const supervisors: SupervisorConfig[] = [];
 
-  if (process.env.OPENROUTER_API_KEY) {
-    supervisors.push({
-      name: 'OpenRouter Free',
-      provider: 'openrouter',
-      model: process.env.OPENROUTER_MODEL || 'xiaomi/mimo-v2-flash:free',
-      apiKey: process.env.OPENROUTER_API_KEY,
-      baseURL: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
-    });
-  }
-
   if (process.env.OPENAI_API_KEY) {
     supervisors.push({
       name: 'GPT-4o',

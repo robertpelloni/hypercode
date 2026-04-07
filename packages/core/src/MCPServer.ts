@@ -97,7 +97,7 @@ import { ProjectTracker } from "./services/ProjectTracker.js";
 import { MissionService } from "./services/MissionService.js";
 import { buildToolObservationInput } from './services/toolObservationMemory.js';
 import { detectLocalExecutionEnvironment } from './services/execution-environment.js';
-import { loadHypercodeMcpConfig } from './mcp/mcpJsonConfig.js';
+import { loadHyperCodeMcpConfig } from './mcp/mcpJsonConfig.js';
 import {
     buildAutomaticToolContextFingerprint,
     buildAutomaticToolContextMemory,
@@ -481,7 +481,7 @@ export class MCPServer {
 
     private async syncNativeToolPreferences(): Promise<void> {
         try {
-            const config = await loadHypercodeMcpConfig();
+            const config = await loadHyperCodeMcpConfig();
             const settings = config.settings as { toolSelection?: { importantTools?: unknown; alwaysLoadedTools?: unknown } } | undefined;
             const preferences = readToolPreferencesFromSettings(settings?.toolSelection);
             this.nativeSessionMetaTools.setAlwaysLoadedTools(preferences.alwaysLoadedTools);

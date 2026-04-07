@@ -1,4 +1,4 @@
-import { resolveLockedHypercodeBase } from './hypercode-runtime';
+import { resolveLockedHyperCodeBase } from './hypercode-runtime';
 
 const DEFAULT_UPSTREAM_TRPC_URLS: string[] = [
   'http://127.0.0.1:3100/trpc',
@@ -9,8 +9,8 @@ const DEFAULT_UPSTREAM_TRPC_URLS: string[] = [
 ];
 
 export function resolveUpstreamBases(): string[] {
-  const configured = process.env.HYPERCODE_TRPC_UPSTREAM?.trim();
-  const lockedBase = resolveLockedHypercodeBase();
+  const configured = process.env.HYPERCODE_TRPC_UPSTREAM?.trim() || process.env.HYPERCODE_TRPC_UPSTREAM?.trim();
+  const lockedBase = resolveLockedHyperCodeBase();
   const allBases = [
     ...(lockedBase ? [`${lockedBase}/trpc`] : []),
     ...(configured ? [configured] : []),

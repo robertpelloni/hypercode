@@ -8,7 +8,7 @@ import {
     McpServerCreateInputSchema,
     McpServerUpdateInputSchema
 } from '../types/mcp-admin/index.js';
-import { loadHypercodeMcpConfig } from '../mcp/mcpJsonConfig.js';
+import { loadHyperCodeMcpConfig } from '../mcp/mcpJsonConfig.js';
 import { clientConfigSyncService, SUPPORTED_MCP_CLIENTS } from '../mcp/clientConfigSync.js';
 import { rethrowSqliteUnavailableAsTrpc } from './sqliteTrpc.js';
 
@@ -44,7 +44,7 @@ export const mcpServersRouter = t.router({
             const userId = getContextUserId(ctx);
             const [servers, config] = await Promise.all([
                 mcpServersRepository.findAll(userId),
-                loadHypercodeMcpConfig(),
+                loadHyperCodeMcpConfig(),
             ]);
 
             return servers.map((server) => ({
@@ -62,7 +62,7 @@ export const mcpServersRouter = t.router({
             try {
                 const [server, config] = await Promise.all([
                     mcpServersRepository.findByUuid(input.uuid),
-                    loadHypercodeMcpConfig(),
+                    loadHyperCodeMcpConfig(),
                 ]);
 
                 if (!server) {

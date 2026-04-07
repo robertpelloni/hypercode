@@ -3,7 +3,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 async function main() {
-    console.log("Connecting to Hypercode Core Stdio...");
+    console.log("Connecting to HyperCode Core Stdio...");
     const transport = new StdioClientTransport({
         command: "node",
         args: ["c:/Users/hyper/workspace/hypercode/packages/core/dist/server-stdio.js"]

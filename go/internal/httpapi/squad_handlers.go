@@ -1,10 +1,6 @@
 package httpapi
 
-import (
-	"encoding/json"
-	"net/http"
-	"strings"
-)
+import "net/http"
 
 func (s *Server) handleSquadList(w http.ResponseWriter, r *http.Request) {
 	var result any
@@ -20,29 +16,22 @@ func (s *Server) handleSquadList(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+
+	members := s.squad.List()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    s.squadState.listMembers(),
+		"data":    members,
 		"bridge": map[string]any{
 			"fallback":  "go-local-squad",
 			"procedure": "squad.list",
-			"reason":    "upstream unavailable; using native Go squad state",
+			"reason":    "upstream unavailable; listing native Go squad members",
 		},
 	})
 }
 
 func (s *Server) handleSquadSpawn(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
-		return
-	}
-	var payload map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
 	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "squad.spawn", payload, &result)
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "squad.spawn", nil, &result)
 	if err == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -54,35 +43,32 @@ func (s *Server) handleSquadSpawn(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	branch := strings.TrimSpace(stringValue(payload["branch"]))
-	goal := strings.TrimSpace(stringValue(payload["goal"]))
-	if branch == "" || goal == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing branch or goal"})
+
+	var payload struct {
+		Role string `json:"role"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid request body"})
 		return
 	}
+
+	memberId := s.squad.Spawn(payload.Role)
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    s.squadState.spawnMember(branch, goal),
+		"data": map[string]any{
+			"memberId": memberId,
+		},
 		"bridge": map[string]any{
 			"fallback":  "go-local-squad",
 			"procedure": "squad.spawn",
-			"reason":    "upstream unavailable; using native Go squad state",
+			"reason":    "upstream unavailable; spawning native Go squad member",
 		},
 	})
 }
 
 func (s *Server) handleSquadKill(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
-		return
-	}
-	var payload map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
 	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "squad.kill", payload, &result)
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "squad.kill", nil, &result)
 	if err == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -94,74 +80,34 @@ func (s *Server) handleSquadKill(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	branch := strings.TrimSpace(stringValue(payload["branch"]))
-	if branch == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing branch"})
+
+	var payload struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid request body"})
 		return
 	}
+
+	success := s.squad.Kill(payload.ID)
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    s.squadState.killMember(branch),
+		"data":    success,
 		"bridge": map[string]any{
 			"fallback":  "go-local-squad",
 			"procedure": "squad.kill",
-			"reason":    "upstream unavailable; using native Go squad state",
+			"reason":    "upstream unavailable; killing native Go squad member",
 		},
 	})
 }
 
 func (s *Server) handleSquadChat(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
-		return
-	}
-	var payload map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "squad.chat", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "squad.chat",
-			},
-		})
-		return
-	}
-	branch := strings.TrimSpace(stringValue(payload["branch"]))
-	message := strings.TrimSpace(stringValue(payload["message"]))
-	if branch == "" || message == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "missing branch or message"})
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
-		"data":    s.squadState.chat(branch, message),
-		"bridge": map[string]any{
-			"fallback":  "go-local-squad",
-			"procedure": "squad.chat",
-			"reason":    "upstream unavailable; using native Go squad state",
-		},
-	})
+	s.handleTRPCBridgeBodyCall(w, r, "squad.chat")
 }
 
 func (s *Server) handleSquadToggleIndexer(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
-		return
-	}
-	var payload map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
 	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "squad.toggleIndexer", payload, &result)
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "squad.toggleIndexer", nil, &result)
 	if err == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -173,14 +119,23 @@ func (s *Server) handleSquadToggleIndexer(w http.ResponseWriter, r *http.Request
 		})
 		return
 	}
-	enabled, _ := payload["enabled"].(bool)
+
+	var payload struct {
+		Active bool `json:"active"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid request body"})
+		return
+	}
+
+	s.squad.ToggleIndexer(payload.Active)
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    s.squadState.toggleIndexer(enabled),
+		"data":    true,
 		"bridge": map[string]any{
 			"fallback":  "go-local-squad",
 			"procedure": "squad.toggleIndexer",
-			"reason":    "upstream unavailable; using native Go squad state",
+			"reason":    "upstream unavailable; toggling native Go squad indexer",
 		},
 	})
 }
@@ -199,13 +154,17 @@ func (s *Server) handleSquadIndexerStatus(w http.ResponseWriter, r *http.Request
 		})
 		return
 	}
+
+	active := s.squad.GetIndexerStatus()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
-		"data":    s.squadState.indexerStatus(),
+		"data": map[string]any{
+			"active": active,
+		},
 		"bridge": map[string]any{
 			"fallback":  "go-local-squad",
 			"procedure": "squad.getIndexerStatus",
-			"reason":    "upstream unavailable; using native Go squad indexer state",
+			"reason":    "upstream unavailable; reading native Go squad indexer status",
 		},
 	})
 }

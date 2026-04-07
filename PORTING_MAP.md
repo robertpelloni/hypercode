@@ -5,7 +5,7 @@ This document outlines the strategic migration of logic from reference submodule
 ## 🧬 Core Strategy
 Move from "integration" (wrapping external tools) to "assimilation" (native implementation). This enables:
 1. **Total Autonomy**: No reliance on external repository states or drift.
-2. **Infinite Context**: Direct integration with Hypercode's internal session and memory managers.
+2. **Infinite Context**: Direct integration with HyperCode's internal session and memory managers.
 3. **Unified Performance**: Single-process orchestration without IPC bottlenecks.
 
 ---
@@ -15,7 +15,7 @@ Move from "integration" (wrapping external tools) to "assimilation" (native impl
 | Logic Component | Source File | Target Location | Rationale |
 | :--- | :--- | :--- | :--- |
 | **Risk Scoring** | `packages/shared/src/orchestration/supervisor.ts` | `packages/agents/src/orchestration/RiskEvaluator.ts` | Native safety gating for autonomous changes. |
-| **Multi-Agent Debate** | `packages/shared/src/orchestration/debate.ts` | `packages/agents/src/orchestration/DebateEngine.ts` | High-fidelity consensus mechanism for the Hypercode Council. |
+| **Multi-Agent Debate** | `packages/shared/src/orchestration/debate.ts` | `packages/agents/src/orchestration/DebateEngine.ts` | High-fidelity consensus mechanism for the HyperCode Council. |
 | **Conference Logic** | `packages/shared/src/orchestration/debate.ts` | `packages/agents/src/orchestration/ConferenceManager.ts` | Team-wide sync points for complex plan validation. |
 | **Provider Wrappers** | `packages/shared/src/orchestration/providers/*` | `packages/ai/src/providers/*` | Unify AI provider logic (Gemini, Anthropic, OpenAI). |
 
@@ -28,7 +28,7 @@ Move from "integration" (wrapping external tools) to "assimilation" (native impl
 | **Research Worker** | `research.py` (Port to TS) | `packages/core/src/services/Memory/ResearchWorker.ts` | Background enrichment of session memories and links. |
 | **Metadata Extraction** | `research.py` (BeautifulSoup -> linkedom) | `packages/core/src/utils/MetadataExtractor.ts` | Automated title/desc/favicon harvesting for RAG. |
 | **LLM Tagger** | `tagger.py` (Port to TS) | `packages/core/src/services/Memory/AutoTagger.ts` | Semantic classification of all ingested knowledge. |
-| **DB Sync Logic** | `sync_dbs.py` | `packages/core/src/services/Memory/PeerSync.ts` | Distributed memory synchronization across Hypercode nodes. |
+| **DB Sync Logic** | `sync_dbs.py` | `packages/core/src/services/Memory/PeerSync.ts` | Distributed memory synchronization across HyperCode nodes. |
 
 ---
 

@@ -40,7 +40,7 @@ export interface ConnectionState {
 }
 
 const defaultServerConfig: ServerConfig = {
-  uri: 'http://localhost:4000/sse', // Default from migration guide, should be configurable
+  uri: 'http://localhost:3006/sse', // Default from migration guide, should be configurable
   connectionType: 'sse',
   timeout: 5000, // ms
   retryAttempts: 3,

@@ -45,7 +45,7 @@ HyperCode exists to reduce that fragmentation without requiring a hosted backend
 - Browser and IDE bridge integration surfaces
 
 ### Experimental
-- HyperCode assimilation via `submodules/hyperharness` plus primary HyperCode CLI harness registration
+- HyperCode assimilation via `submodules/hypercode` plus primary HyperCode CLI harness registration
 - Council or debate workflows
 - Broader autonomous workflow layers
 - Mobile and desktop parity layers
@@ -106,7 +106,7 @@ hypercode session start ./my-app --harness hypercode
 hypercode mesh status
 ```
 
-`hypercode` is now HyperCode's primary CLI harness identity, backed by the `submodules/hyperharness` upstream. The upstream now exposes a Go/Cobra CLI with a default TUI REPL plus a `pipe` command, and HyperCode now surfaces HyperCode's source-backed tool inventory from `submodules/hyperharness/tools/*.go` via `hypercode session harnesses` and the Go sidecar harness registry. HyperCode's harness catalogs now also track the broader known external identities it already references elsewhere in the repo, including `aider`, `cursor`, `copilot`, `qwen`, `superai-cli`, `codebuff`, `codemachine`, and `factory-droid`, but those still expose install/runtime metadata only until HyperCode has equally source-backed bridge contracts for them. HyperCode's maturity remains **Experimental** while the cross-runtime adapter contract is still shallow.
+`hypercode` is now HyperCode's primary CLI harness identity, backed by the `submodules/hypercode` upstream. The upstream now exposes a Go/Cobra CLI with a default TUI REPL plus a `pipe` command, and HyperCode now surfaces HyperCode's source-backed tool inventory from `submodules/hypercode/tools/*.go` via `hypercode session harnesses` and the Go sidecar harness registry. HyperCode's harness catalogs now also track the broader known external identities it already references elsewhere in the repo, including `aider`, `cursor`, `copilot`, `qwen`, `superai-cli`, `codebuff`, `codemachine`, and `factory-droid`, but those still expose install/runtime metadata only until HyperCode has equally source-backed bridge contracts for them. HyperCode's maturity remains **Experimental** while the cross-runtime adapter contract is still shallow.
 
 The CLI mesh surface is now operator-visible through `hypercode mesh status`, `hypercode mesh peers`, `hypercode mesh capabilities [nodeId]`, and `hypercode mesh find --capability <name>`. These commands query the live local control plane through `HYPERCODE_TRPC_UPSTREAM` or the HyperCode startup lock, so they report real mesh visibility instead of placeholder CLI output.
 

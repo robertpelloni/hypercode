@@ -43,9 +43,9 @@ import { onMessage } from 'webext-bridge/background';
 
 const logger = createLogger('BACKGROUND');
 
-const DEFAULT_SSE_URL = 'http://localhost:4000/sse';
-const DEFAULT_WEBSOCKET_URL = 'ws://localhost:4000/message';
-const DEFAULT_STREAMABLE_HTTP_URL = 'http://localhost:4000';
+const DEFAULT_SSE_URL = 'http://localhost:3006/sse';
+const DEFAULT_WEBSOCKET_URL = 'ws://localhost:3006/message';
+const DEFAULT_STREAMABLE_HTTP_URL = 'http://localhost:3006';
 
 // Connection type management
 type ConnectionType = TransportType;

@@ -39,14 +39,14 @@ vi.mock('../services/config/JsonConfigProvider.js', () => ({
 }));
 
 vi.mock('../mcp/mcpJsonConfig.js', () => ({
-    getHypercodeConfigDir: vi.fn(() => 'C:\\Users\\hyper\\.hypercode'),
-    writeHypercodeMcpConfig: vi.fn(),
+    getHyperCodeConfigDir: vi.fn(() => 'C:\\Users\\hyper\\.hypercode'),
+    writeHyperCodeMcpConfig: vi.fn(),
 }));
 
 const { configRouter } = await import('./configRouter.js');
 const { configRepo } = await import('../db/repositories/index.js');
 const { configService } = await import('../services/config.service.js');
-const { writeHypercodeMcpConfig } = await import('../mcp/mcpJsonConfig.js');
+const { writeHyperCodeMcpConfig } = await import('../mcp/mcpJsonConfig.js');
 
 function createCaller() {
     return configRouter.createCaller({} as never);
@@ -55,7 +55,7 @@ function createCaller() {
 describe('configRouter degraded SQLite handling', () => {
     const repoMocks = vi.mocked(configRepo);
     const serviceMocks = vi.mocked(configService);
-    const writeConfigMock = vi.mocked(writeHypercodeMcpConfig);
+    const writeConfigMock = vi.mocked(writeHyperCodeMcpConfig);
 
     beforeEach(() => {
         vi.clearAllMocks();

@@ -32,11 +32,11 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { StdioClient } from "../../mcp/StdioClient.js";
 import { getDiscoveryPreflightFailure } from "../../mcp/discoveryPreflight.js";
 import {
-    HypercodeMcpServerDiscoveryMetadata,
-    HypercodeMcpJsonConfig,
-    HypercodeMcpToolMetadata,
-    loadHypercodeMcpConfig,
-    writeHypercodeMcpConfig,
+    HyperCodeMcpServerDiscoveryMetadata,
+    HyperCodeMcpJsonConfig,
+    HyperCodeMcpToolMetadata,
+    loadHyperCodeMcpConfig,
+    writeHyperCodeMcpConfig,
 } from "../../mcp/mcpJsonConfig.js";
 import {
     buildBaseServerMetadata,
@@ -77,8 +77,8 @@ type McpServerRow = typeof mcpServersTable.$inferSelect;
 type McpServerInsert = typeof mcpServersTable.$inferInsert;
 
 type DiscoveryResult = {
-    metadata: HypercodeMcpServerDiscoveryMetadata;
-    tools: HypercodeMcpToolMetadata[];
+    metadata: HyperCodeMcpServerDiscoveryMetadata;
+    tools: HyperCodeMcpToolMetadata[];
     decision: 'cache-forced' | 'cache-reusable' | 'cache-cooldown' | 'binary-fresh' | 'binary-coalesced';
 };
 
@@ -357,7 +357,7 @@ export class McpServersRepository {
         strategy: Exclude<MetadataReloadStrategy, 'skip'> = 'binary',
     ): Promise<{
         server: DatabaseMcpServer;
-        metadata: HypercodeMcpServerDiscoveryMetadata;
+        metadata: HyperCodeMcpServerDiscoveryMetadata;
         toolCount: number;
         reloadDecision: DiscoveryResult['decision'];
     }> {
@@ -387,7 +387,7 @@ export class McpServersRepository {
 
     async clearMetadataCache(
         serverUuid: string,
-    ): Promise<{ server: DatabaseMcpServer; metadata: HypercodeMcpServerDiscoveryMetadata; toolCount: number }> {
+    ): Promise<{ server: DatabaseMcpServer; metadata: HyperCodeMcpServerDiscoveryMetadata; toolCount: number }> {
         const server = await this.findByUuid(serverUuid);
         if (!server) {
             throw new Error(`MCP Server with UUID ${serverUuid} not found.`);
@@ -396,7 +396,7 @@ export class McpServersRepository {
         await toolsRepository.deleteObsoleteTools(server.uuid, []);
 
         const clearedAt = new Date().toISOString();
-        const metadata: HypercodeMcpServerDiscoveryMetadata = {
+        const metadata: HyperCodeMcpServerDiscoveryMetadata = {
             ...buildBaseServerMetadata(server),
             status: 'pending',
             metadataVersion: 2,
@@ -465,21 +465,21 @@ export class McpServersRepository {
         return updatedServer;
     }
 
-    public async exportToolCache(metadataOverrides: Record<string, HypercodeMcpServerDiscoveryMetadata> = {}): Promise<void> {
+    public async exportToolCache(metadataOverrides: Record<string, HyperCodeMcpServerDiscoveryMetadata> = {}): Promise<void> {
         try {
             const [allServers, allTools, existingConfig] = await Promise.all([
                 this.findAll(),
                 toolsRepository.findAll(),
-                loadHypercodeMcpConfig(),
+                loadHyperCodeMcpConfig(),
             ]);
 
             // Create a unified cache of both manual (mcp.jsonc) and DB servers
-            const jsonOutput: HypercodeMcpJsonConfig = {
+            const jsonOutput: HyperCodeMcpJsonConfig = {
                 ...existingConfig,
                 mcpServers: { ...existingConfig.mcpServers },
             };
 
-            const toolsByServerUuid = new Map<string, HypercodeMcpToolMetadata[]>();
+            const toolsByServerUuid = new Map<string, HyperCodeMcpToolMetadata[]>();
             for (const tool of allTools) {
                 const toolList = toolsByServerUuid.get(tool.mcp_server_uuid) ?? [];
                 toolList.push({
@@ -559,7 +559,7 @@ export class McpServersRepository {
         }
     }
 
-    private async persistDiscoveredTools(serverUuid: string, tools: HypercodeMcpToolMetadata[]): Promise<void> {
+    private async persistDiscoveredTools(serverUuid: string, tools: HyperCodeMcpToolMetadata[]): Promise<void> {
         await toolsRepository.syncTools({
             mcpServerUuid: serverUuid,
             tools: tools.map((tool) => ({
@@ -585,7 +585,7 @@ export class McpServersRepository {
         return options?.skipDiscovery ? 'skip' : 'auto';
     }
 
-    private shouldPersistDiscoveredTools(metadata: HypercodeMcpServerDiscoveryMetadata): boolean {
+    private shouldPersistDiscoveredTools(metadata: HyperCodeMcpServerDiscoveryMetadata): boolean {
         return metadata.status === 'ready';
     }
 
@@ -598,7 +598,7 @@ export class McpServersRepository {
             return undefined;
         }
 
-        const config = await loadHypercodeMcpConfig();
+        const config = await loadHyperCodeMcpConfig();
         const cachedMetadata = config.mcpServers?.[server.name]?._meta;
 
         if (strategy === 'cache') {
@@ -647,7 +647,7 @@ export class McpServersRepository {
 
     private shouldThrottleBinaryReload(
         strategy: MetadataReloadStrategy,
-        cachedMetadata: HypercodeMcpServerDiscoveryMetadata | undefined,
+        cachedMetadata: HyperCodeMcpServerDiscoveryMetadata | undefined,
         server: DatabaseMcpServer,
     ): boolean {
         if (strategy !== 'auto' && strategy !== 'binary') {

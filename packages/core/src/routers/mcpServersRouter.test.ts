@@ -15,7 +15,7 @@ vi.mock('../db/repositories/index.js', () => ({
 }));
 
 vi.mock('../mcp/mcpJsonConfig.js', () => ({
-    loadHypercodeMcpConfig: vi.fn(async () => ({ mcpServers: {} })),
+    loadHyperCodeMcpConfig: vi.fn(async () => ({ mcpServers: {} })),
 }));
 
 vi.mock('../mcp/clientConfigSync.js', () => ({

@@ -4,7 +4,7 @@ import WebSocket from 'ws';
 let socket: WebSocket | null = null;
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
-let sidebarProvider: HypercodeSidebarProvider | null = null;
+let sidebarProvider: HyperCodeSidebarProvider | null = null;
 let reconnectTimer: NodeJS.Timeout | null = null;
 let lastActivityTime = Date.now();
 let debounceTimer: NodeJS.Timeout | null = null;
@@ -170,7 +170,7 @@ function summarizeText(value: string, maxLength = 600): string {
         return normalized;
     }
 
-    return `${normalized.slice(0, maxLength)}...`;
+    return `${normalized.slice(0, maxLength)}â€¦`;
 }
 
 function getVisibleChatEditorSnapshots(): ChatHistoryEntry[] {
@@ -301,7 +301,7 @@ async function createSidebarSnapshot(): Promise<SidebarSnapshot> {
     };
 }
 
-class HypercodeSidebarProvider implements vscode.WebviewViewProvider {
+class HyperCodeSidebarProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'hypercode.dispatchView';
     private view?: vscode.WebviewView;
 
@@ -573,7 +573,7 @@ class HypercodeSidebarProvider implements vscode.WebviewViewProvider {
 
     <div class="card">
         <h3>Coder Agent</h3>
-        <textarea id="codeTask" placeholder="Describe a coding task for Hypercodeâ€¦"></textarea>
+        <textarea id="codeTask" placeholder="Describe a coding task for HyperCodeâ€¦"></textarea>
         <div class="row">
             <button id="codeBtn">Run Coder</button>
         </div>
@@ -673,8 +673,8 @@ class HypercodeSidebarProvider implements vscode.WebviewViewProvider {
 
 export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('HyperCode Bridge');
-    sidebarProvider = new HypercodeSidebarProvider();
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider(HypercodeSidebarProvider.viewType, sidebarProvider));
+    sidebarProvider = new HyperCodeSidebarProvider();
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(HyperCodeSidebarProvider.viewType, sidebarProvider));
 
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'hypercode.connect';

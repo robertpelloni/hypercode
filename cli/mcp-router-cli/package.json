@@ -1,7 +1,7 @@
 {
   "name": "@hypercode/mcp-router-cli",
   "version": "1.0.0",
-  "description": "Hypercode MCP Router CLI - Manage MCP servers, configurations, and sessions",
+  "description": "HyperCode MCP Router CLI - Manage MCP servers, configurations, and sessions",
   "type": "module",
   "bin": {
     "mcp-router": "./dist/mcp-router-cli.js"

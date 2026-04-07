@@ -148,7 +148,7 @@ export const WEBSITE_CONFIGS: Array<{
       config: {
         targetSelectors: ['pre', 'code'],
         streamingContainerSelectors: ['pre', 'code'],
-        function_result_selector: ['div._9664000'],
+        function_result_selector: ['div._9663006'],
       },
     },
     {

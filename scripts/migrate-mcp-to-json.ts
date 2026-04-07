@@ -20,8 +20,8 @@ async function migrate() {
 
     console.log('[Migration] Exporting configurations...');
     try {
-        // Export in 'Hypercode' format (native hypercode format)
-        const jsonContent = await configService.exportConfigs('Hypercode');
+        // Export in 'HyperCode' format (native hypercode format)
+        const jsonContent = await configService.exportConfigs('HyperCode');
 
         // Config file path - creating it in the root
         const configPath = path.resolve('mcp.json');

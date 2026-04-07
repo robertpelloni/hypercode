@@ -37,7 +37,7 @@ The proxy bridges the browser (extension) to your local MCP servers.
     npx -y @srbhptl39/hypercode-extension-proxy@latest --config ./config.json
     ```
 
-    By default, this starts an SSE server on port 4000. You can change the port using environment variables: `PORT=3007 npx ...`
+    By default, this starts an SSE server on port 3006. You can change the port using environment variables: `PORT=3007 npx ...`
 
 ## Connection Configuration
 
@@ -46,11 +46,11 @@ Open the extension sidebar and navigate to the **Settings** tab.
 ### Connection Types
 
 *   **SSE (Server-Sent Events)**: The default connection type. Standard HTTP streaming.
-    *   URI: `http://localhost:4000/sse`
+    *   URI: `http://localhost:3006/sse`
 *   **WebSocket**: Faster, full-duplex communication. Requires running the proxy with WebSocket support or using a WebSocket-enabled MCP server.
-    *   URI: `ws://localhost:4000/message`
+    *   URI: `ws://localhost:3006/message`
 *   **Streamable HTTP**: Standard MCP transport over HTTP.
-    *   URI: `http://localhost:4000/mcp`
+    *   URI: `http://localhost:3006/mcp`
 
 ### Server URI
 
@@ -128,7 +128,7 @@ Once built, simply add it to your `config.json` and restart the proxy.
 
 ### Connection Refused / 404
 *   Ensure your proxy server is running.
-*   Check if the port (default 4000) matches the URI in Server Status.
+*   Check if the port (default 3006) matches the URI in Server Status.
 *   Verify `config.json` syntax.
 
 ### Tools Not Showing

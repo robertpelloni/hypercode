@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Starting Hypercode..."
+echo "Starting HyperCode..."
 
 # Check for pnpm
 if ! command -v pnpm &> /dev/null
