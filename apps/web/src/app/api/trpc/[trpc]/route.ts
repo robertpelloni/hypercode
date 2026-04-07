@@ -216,6 +216,40 @@ const LOCAL_COMPAT_RESPONSE_KEYS = {
   'director.chat': 'director.chat',
   'directorConfig.get': 'directorConfig.get',
   'directorConfig.update': 'directorConfig.update',
+  'suggestions.list': 'suggestions.list',
+  'suggestions.resolve': 'suggestions.resolve',
+  'suggestions.clearAll': 'suggestions.clearAll',
+  'squad.list': 'squad.list',
+  'squad.spawn': 'squad.spawn',
+  'squad.kill': 'squad.kill',
+  'expert.research': 'expert.research',
+  'expert.code': 'expert.code',
+  'marketplace.list': 'marketplace.list',
+  'marketplace.get': 'marketplace.get',
+  'marketplace.install': 'marketplace.install',
+  'marketplace.publish': 'marketplace.publish',
+  'swarm.startSwarm': 'swarm.startSwarm',
+  'swarm.resumeMission': 'swarm.resumeMission',
+  'swarm.listMissions': 'swarm.listMissions',
+  'swarm.getMission': 'swarm.getMission',
+  'swarm.stopMission': 'swarm.stopMission',
+  'swarm.deleteMission': 'swarm.deleteMission',
+  'swarm.getLogs': 'swarm.getLogs',
+  'swarm.getAnalytics': 'swarm.getAnalytics',
+  'swarm.decomposeTask': 'swarm.decomposeTask',
+  'swarm.approveTask': 'swarm.approveTask',
+  'swarm.updateTaskPriority': 'swarm.updateTaskPriority',
+  'swarm.seekConsensus': 'swarm.consensus',
+  'swarm.executeDebate': 'swarm.debate',
+  'swarm.sendDirectMessage': 'swarm.sendDirectMessage',
+  'infrastructure.runDoctor': 'infrastructure.runDoctor',
+  'infrastructure.applyConfigurations': 'infrastructure.applyConfigurations',
+  'linksBacklog.stats': 'linksBacklog.stats',
+  'linksBacklog.list': 'linksBacklog.list',
+  'linksBacklog.syncFromBobbyBookmarks': 'linksBacklog.syncFromBobbyBookmarks',
+  'unifiedDirectory.stats': 'unifiedDirectory.stats',
+  'unifiedDirectory.list': 'unifiedDirectory.list',
+  'workspace.list': 'workspace.list',
 } as const;
 
 type LocalCompatProcedure = keyof typeof LOCAL_COMPAT_RESPONSE_KEYS;
@@ -303,6 +337,41 @@ const LOCAL_PROJECT_MUTATION_PROCEDURES = new Set([
 const LOCAL_SKILL_MUTATION_PROCEDURES = new Set([
   'skills.assimilate',
 ]);
+const LOCAL_SUGGESTIONS_MUTATION_PROCEDURES = new Set([
+  'suggestions.resolve',
+  'suggestions.clearAll',
+]);
+const LOCAL_SQUAD_MUTATION_PROCEDURES = new Set([
+  'squad.spawn',
+  'squad.kill',
+]);
+const LOCAL_EXPERT_MUTATION_PROCEDURES = new Set([
+  'expert.research',
+  'expert.code',
+]);
+const LOCAL_MARKETPLACE_MUTATION_PROCEDURES = new Set([
+  'marketplace.install',
+  'marketplace.publish',
+]);
+const LOCAL_SWARM_MUTATION_PROCEDURES = new Set([
+  'swarm.startSwarm',
+  'swarm.resumeMission',
+  'swarm.stopMission',
+  'swarm.deleteMission',
+  'swarm.decomposeTask',
+  'swarm.approveTask',
+  'swarm.updateTaskPriority',
+  'swarm.seekConsensus',
+  'swarm.executeDebate',
+  'swarm.sendDirectMessage',
+]);
+const LOCAL_INFRASTRUCTURE_MUTATION_PROCEDURES = new Set([
+  'infrastructure.runDoctor',
+  'infrastructure.applyConfigurations',
+]);
+const LOCAL_LINKS_BACKLOG_MUTATION_PROCEDURES = new Set([
+  'linksBacklog.syncFromBobbyBookmarks',
+]);
 const LOCAL_SUBMODULE_MUTATION_PROCEDURES = new Set([
   'submodule.updateAll',
   'submodule.installDependencies',
@@ -327,6 +396,13 @@ const LOCAL_COMPAT_MUTATION_PROCEDURES = new Set([
   ...LOCAL_SESSION_MUTATION_PROCEDURES,
   ...LOCAL_PROJECT_MUTATION_PROCEDURES,
   ...LOCAL_SKILL_MUTATION_PROCEDURES,
+  ...LOCAL_SUGGESTIONS_MUTATION_PROCEDURES,
+  ...LOCAL_SQUAD_MUTATION_PROCEDURES,
+  ...LOCAL_EXPERT_MUTATION_PROCEDURES,
+  ...LOCAL_MARKETPLACE_MUTATION_PROCEDURES,
+  ...LOCAL_SWARM_MUTATION_PROCEDURES,
+  ...LOCAL_INFRASTRUCTURE_MUTATION_PROCEDURES,
+  ...LOCAL_LINKS_BACKLOG_MUTATION_PROCEDURES,
   ...LOCAL_SUBMODULE_MUTATION_PROCEDURES,
   ...LOCAL_CATALOG_MUTATION_PROCEDURES,
 ]);
@@ -2509,6 +2585,40 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
     'project.getHandoffs': [],
     'skills.list': [],
     'skills.read': { content: [] },
+    'suggestions.list': [],
+    'suggestions.resolve': { success: true },
+    'suggestions.clearAll': { success: true },
+    'squad.list': [],
+    'squad.spawn': { success: true, memberId: '' },
+    'squad.kill': { success: true },
+    'expert.research': { success: true, taskId: '' },
+    'expert.code': { success: true, taskId: '' },
+    'marketplace.list': [],
+    'marketplace.get': null,
+    'marketplace.install': { installed: true },
+    'marketplace.publish': { entry: null },
+    'swarm.startSwarm': { missionId: '', status: 'started' },
+    'swarm.resumeMission': { success: true },
+    'swarm.listMissions': [],
+    'swarm.getMission': null,
+    'swarm.stopMission': { success: true },
+    'swarm.deleteMission': { success: true },
+    'swarm.getLogs': [],
+    'swarm.getAnalytics': {},
+    'swarm.decomposeTask': { success: true, tasks: [] },
+    'swarm.approveTask': { success: true },
+    'swarm.updateTaskPriority': { success: true },
+    'swarm.consensus': { success: true, consensus: null },
+    'swarm.debate': { success: true, result: null },
+    'swarm.sendDirectMessage': { success: true },
+    'infrastructure.runDoctor': { success: true, output: '' },
+    'infrastructure.applyConfigurations': { success: true, output: '' },
+    'linksBacklog.stats': { total: 0, pending: 0, completed: 0 },
+    'linksBacklog.list': [],
+    'linksBacklog.syncFromBobbyBookmarks': { success: true, upserted: 0 },
+    'unifiedDirectory.stats': { total: 0, tools: 0, servers: 0 },
+    'unifiedDirectory.list': [],
+    'workspace.list': [],
     'submodule.list': [],
     'submodule.detectCapabilities': [],
     'git.getModules': [],
@@ -2797,6 +2907,116 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
       data = name ? await fetchNativeControlPlaneData<unknown>(`/api/skills/read${buildMemoryQueryString({ name })}`) : null;
       if (data === null) {
         data = { content: [] };
+      }
+    }
+
+    if (responseKey === 'suggestions.list') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/suggestions');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'squad.list') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/squad');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'expert.getStatus') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/expert/status');
+      if (data === null) {
+        data = { status: 'offline' };
+      }
+    }
+
+    if (responseKey === 'marketplace.list') {
+      const input = procedureInputs[index];
+      const filter = input && typeof input === 'object' ? readString((input as { filter?: unknown }).filter) : null;
+      data = await fetchNativeControlPlaneData<unknown>(`/api/marketplace${buildMemoryQueryString({ filter })}`);
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'marketplace.get') {
+      const input = procedureInputs[index];
+      const id = input && typeof input === 'object' ? readString((input as { id?: unknown }).id) : null;
+      data = id ? await fetchNativeControlPlaneData<unknown>(`/api/marketplace/get${buildMemoryQueryString({ id })}`) : null;
+    }
+
+    if (responseKey === 'swarm.listMissions') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/swarm/missions');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'swarm.getMission') {
+      const input = procedureInputs[index];
+      const missionId = input && typeof input === 'object' ? readString((input as { missionId?: unknown }).missionId) : null;
+      data = missionId ? await fetchNativeControlPlaneData<unknown>(`/api/swarm/mission${buildMemoryQueryString({ missionId })}`) : null;
+    }
+
+    if (responseKey === 'swarm.getLogs') {
+      const input = procedureInputs[index];
+      const missionId = input && typeof input === 'object' ? readString((input as { missionId?: unknown }).missionId) : null;
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      data = missionId ? await fetchNativeControlPlaneData<unknown>(`/api/swarm/logs${buildMemoryQueryString({ missionId, limit })}`) : null;
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'swarm.getAnalytics') {
+      const input = procedureInputs[index];
+      const missionId = input && typeof input === 'object' ? readString((input as { missionId?: unknown }).missionId) : null;
+      data = missionId ? await fetchNativeControlPlaneData<unknown>(`/api/swarm/analytics${buildMemoryQueryString({ missionId })}`) : null;
+      if (data === null) {
+        data = {};
+      }
+    }
+
+    if (responseKey === 'linksBacklog.stats') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/links-backlog/stats');
+      if (data === null) {
+        data = { total: 0, pending: 0, completed: 0 };
+      }
+    }
+
+    if (responseKey === 'linksBacklog.list') {
+      const input = procedureInputs[index];
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      const offset = input && typeof input === 'object' ? readNumber((input as { offset?: unknown }).offset) : null;
+      data = await fetchNativeControlPlaneData<unknown>(`/api/links-backlog${buildMemoryQueryString({ limit, offset })}`);
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'unifiedDirectory.stats') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/directory/stats');
+      if (data === null) {
+        data = { total: 0, tools: 0, servers: 0 };
+      }
+    }
+
+    if (responseKey === 'unifiedDirectory.list') {
+      const input = procedureInputs[index];
+      const search = input && typeof input === 'object' ? readString((input as { search?: unknown }).search) : null;
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      const offset = input && typeof input === 'object' ? readNumber((input as { offset?: unknown }).offset) : null;
+      data = await fetchNativeControlPlaneData<unknown>(`/api/directory${buildMemoryQueryString({ search, limit, offset })}`);
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'workspace.list') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/workspace/list');
+      if (data === null) {
+        data = [];
       }
     }
 
@@ -3653,6 +3873,202 @@ async function tryLocalSkillMutation(req: Request, body: string | undefined): Pr
   });
 }
 
+async function tryLocalSuggestionsMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_SUGGESTIONS_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'suggestions.resolve') endpointPath = '/api/suggestions/resolve';
+  else if (procedureName === 'suggestions.clearAll') endpointPath = '/api/suggestions/clear-all';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-suggestions-action' },
+  });
+}
+
+async function tryLocalSquadMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_SQUAD_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'squad.spawn') endpointPath = '/api/squad/spawn';
+  else if (procedureName === 'squad.kill') endpointPath = '/api/squad/kill';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-squad-action' },
+  });
+}
+
+async function tryLocalExpertMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_EXPERT_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'expert.research') endpointPath = '/api/expert/research';
+  else if (procedureName === 'expert.code') endpointPath = '/api/expert/code';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-expert-action' },
+  });
+}
+
+async function tryLocalMarketplaceMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_MARKETPLACE_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'marketplace.install') endpointPath = '/api/marketplace/install';
+  else if (procedureName === 'marketplace.publish') endpointPath = '/api/marketplace/publish';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-marketplace-action' },
+  });
+}
+
+async function tryLocalSwarmMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_SWARM_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'swarm.startSwarm') endpointPath = '/api/swarm/start';
+  else if (procedureName === 'swarm.resumeMission') endpointPath = '/api/swarm/resume';
+  else if (procedureName === 'swarm.stopMission') endpointPath = '/api/swarm/stop';
+  else if (procedureName === 'swarm.deleteMission') endpointPath = '/api/swarm/delete';
+  else if (procedureName === 'swarm.decomposeTask') endpointPath = '/api/swarm/decompose-task';
+  else if (procedureName === 'swarm.approveTask') endpointPath = '/api/swarm/approve-task';
+  else if (procedureName === 'swarm.updateTaskPriority') endpointPath = '/api/swarm/update-task-priority';
+  else if (procedureName === 'swarm.seekConsensus') endpointPath = '/api/swarm/consensus';
+  else if (procedureName === 'swarm.executeDebate') endpointPath = '/api/swarm/debate';
+  else if (procedureName === 'swarm.sendDirectMessage') endpointPath = '/api/swarm/send-direct-message';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-swarm-action' },
+  });
+}
+
+async function tryLocalInfrastructureMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_INFRASTRUCTURE_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'infrastructure.runDoctor') endpointPath = '/api/infrastructure/run-doctor';
+  else if (procedureName === 'infrastructure.applyConfigurations') endpointPath = '/api/infrastructure/apply-configurations';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-infrastructure-action' },
+  });
+}
+
+async function tryLocalLinksBacklogMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_LINKS_BACKLOG_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'linksBacklog.syncFromBobbyBookmarks') endpointPath = '/api/links-backlog/sync';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-links-backlog-action' },
+  });
+}
+
 async function tryLocalSubmoduleMutation(req: Request, body: string | undefined): Promise<Response | null> {
   const procedures = getProcedureNames(req);
   const procedureName = procedures[0] ?? '';
@@ -4108,6 +4524,41 @@ async function handler(req: Request): Promise<Response> {
     const localSkillMutationResponse = await tryLocalSkillMutation(req, body);
     if (localSkillMutationResponse) {
       return localSkillMutationResponse;
+    }
+
+    const localSuggestionsMutationResponse = await tryLocalSuggestionsMutation(req, body);
+    if (localSuggestionsMutationResponse) {
+      return localSuggestionsMutationResponse;
+    }
+
+    const localSquadMutationResponse = await tryLocalSquadMutation(req, body);
+    if (localSquadMutationResponse) {
+      return localSquadMutationResponse;
+    }
+
+    const localExpertMutationResponse = await tryLocalExpertMutation(req, body);
+    if (localExpertMutationResponse) {
+      return localExpertMutationResponse;
+    }
+
+    const localMarketplaceMutationResponse = await tryLocalMarketplaceMutation(req, body);
+    if (localMarketplaceMutationResponse) {
+      return localMarketplaceMutationResponse;
+    }
+
+    const localSwarmMutationResponse = await tryLocalSwarmMutation(req, body);
+    if (localSwarmMutationResponse) {
+      return localSwarmMutationResponse;
+    }
+
+    const localInfrastructureMutationResponse = await tryLocalInfrastructureMutation(req, body);
+    if (localInfrastructureMutationResponse) {
+      return localInfrastructureMutationResponse;
+    }
+
+    const localLinksBacklogMutationResponse = await tryLocalLinksBacklogMutation(req, body);
+    if (localLinksBacklogMutationResponse) {
+      return localLinksBacklogMutationResponse;
     }
 
     const localSubmoduleMutationResponse = await tryLocalSubmoduleMutation(req, body);

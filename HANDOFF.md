@@ -3,6 +3,26 @@
 ## Current status
 **Version:** `1.0.0-alpha.1`
 
+### Latest incremental pass — Near-total dashboard compat routed to Go fallback
+This major follow-up completed the shared web compat mission for almost all remaining high-value clusters, wiring them to their Go-native counterparts.
+
+#### What changed
+- Updated `apps/web/src/app/api/trpc/[trpc]/route.ts` to support:
+  - `swarm.*`, `squad.*`
+  - `marketplace.*`, `unifiedDirectory.*`
+  - `linksBacklog.*`, `infrastructure.*`
+  - `expert.*`, `suggestions.*`
+  - `workspace.list`
+- Added mutation support for all clusters with dedicated `x-hypercode-trpc-compat` headers.
+- Added a comprehensive test case in `route.test.ts` covering the new fallbacks.
+
+#### Validation performed
+- `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+- result: `34/34` tests passed
+
+#### Recommended next step after this pass
+The dashboard truth pass is now essentially complete. The remaining gaps are **Maestro (Visual Orchestrator)** and **Browser Automation**. I recommend beginning the refinement of the **Maestro Go/Wails** port to bring the visual layer into the Go-primary fold.
+
 ### Latest incremental pass — council and director compat routed to Go fallback
 This follow-up continued the shared web compat lane and wired the core orchestrator surfaces (Council and Director) to the Go backend.
 

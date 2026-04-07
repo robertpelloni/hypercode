@@ -1731,6 +1731,69 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     expect((await updateResponse.json())?.result?.data).toEqual({ success: true });
   });
 
+  it('prefers go-native orchestration, marketplace, and maintenance reads and mutations in local dashboard fallback mode', async () => {
+    process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4580/trpc';
+    global.fetch = vi.fn(async (input, init) => {
+      const url = String(input);
+
+      if (url.includes('/trpc/')) {
+        throw new Error('connect ECONNREFUSED');
+      }
+
+      if (url === 'http://127.0.0.1:4580/api/suggestions') {
+        return new Response(JSON.stringify({ success: true, data: [{ id: 'sug-1', title: 'Clean up' }] }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4580/api/swarm/missions') {
+        return new Response(JSON.stringify({ success: true, data: [{ missionId: 'mission-1', status: 'running' }] }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4580/api/squad') {
+        return new Response(JSON.stringify({ success: true, data: [{ id: 'mem-1', role: 'architect' }] }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4580/api/links-backlog/stats') {
+        return new Response(JSON.stringify({ success: true, data: { total: 100, pending: 5 } }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url === 'http://127.0.0.1:4580/api/infrastructure/run-doctor' && init?.method === 'POST') {
+        return new Response(JSON.stringify({ success: true, data: { success: true, output: 'Healthy' } }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    const readResponse = await POST(new Request(
+      'http://localhost:3010/api/trpc/suggestions.list,swarm.listMissions,squad.list,linksBacklog.stats?batch=1',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          0: { json: null },
+          1: { json: null },
+          2: { json: null },
+          3: { json: null },
+        }),
+      },
+    ));
+    const readPayload = await readResponse.json();
+
+    expect(readResponse.status).toBe(200);
+    expect(readResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+    expect(readPayload?.[0]?.result?.data).toEqual([expect.objectContaining({ id: 'sug-1' })]);
+    expect(readPayload?.[1]?.result?.data).toEqual([expect.objectContaining({ missionId: 'mission-1' })]);
+    expect(readPayload?.[2]?.result?.data).toEqual([expect.objectContaining({ id: 'mem-1' })]);
+    expect(readPayload?.[3]?.result?.data).toEqual(expect.objectContaining({ total: 100 }));
+
+    const doctorResponse = await POST(new Request('http://localhost:3010/api/trpc/infrastructure.runDoctor', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ json: null }),
+    }));
+    expect(doctorResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-infrastructure-action');
+    expect((await doctorResponse.json())?.result?.data).toEqual(expect.objectContaining({ output: 'Healthy' }));
+  });
+
   it('prefers go-native council and director reads and mutations in local dashboard fallback mode', async () => {
     process.env.HYPERCODE_TRPC_UPSTREAM = 'http://127.0.0.1:4570/trpc';
     global.fetch = vi.fn(async (input, init) => {

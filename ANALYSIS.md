@@ -59,6 +59,53 @@ This continues the same migration pattern on two more real operator-facing clust
 - the Knowledge and Architecture pages can now inherit Go-native submodule and git behavior in degraded mode
 - the shared compat layer is less misleading about which creative/operator workflows still require TypeScript
 
+## Latest stabilization pass — orchestration, marketplace, and maintenance compat routed to Go fallback (2026-04-06)
+
+### Scope
+This follow-up continued the shared web compat lane and targeted almost all remaining dashboard clusters:
+- Orchestration: `swarm.*`, `squad.*`
+- MCP Ecosystem: `marketplace.*`, `unifiedDirectory.*`
+- System Maintenance: `linksBacklog.*`, `infrastructure.*`
+- AI Assistance: `expert.*`, `suggestions.*`
+- Environment: `workspace.*`
+
+The goal was to reach near-total dashboard truthfulness in degraded mode by wiring these procedures to their existing Go control plane counterparts.
+
+### Findings
+The Go backend already had native handlers for these clusters, but the shared compat route was still treating them as TS-only. Bridging this large batch effectively unlocks the entire remaining dashboard UI for use without the TypeScript control plane.
+
+### What changed
+Updated:
+- `apps/web/src/app/api/trpc/[trpc]/route.ts`
+- `apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+
+Added local compat support for:
+- `swarm.*` (missions, logs, analytics, tasks, consensus, debate, messages)
+- `squad.*` (list, spawn, kill)
+- `marketplace.*` (list, get, install, publish)
+- `linksBacklog.*` (stats, list, sync)
+- `infrastructure.*` (doctor, apply)
+- `expert.*` (status, research, code)
+- `suggestions.*` (list, resolve, clear)
+- `unifiedDirectory.*` (list, stats)
+- `workspace.list`
+
+Mutation headers now distinguish these new degraded-mode paths honestly:
+- `x-hypercode-trpc-compat: local-swarm-action`
+- `x-hypercode-trpc-compat: local-squad-action`
+- `x-hypercode-trpc-compat: local-expert-action`
+- `x-hypercode-trpc-compat: local-marketplace-action`
+- `x-hypercode-trpc-compat: local-infrastructure-action`
+- `x-hypercode-trpc-compat: local-links-backlog-action`
+- `x-hypercode-trpc-compat: local-suggestions-action`
+
+### Validation performed
+- `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+- result: `34/34` tests passed
+
+### Why this matters
+This is a major milestone in the Go-primary migration. Nearly every meaningful operator-facing surface in the dashboard can now function truthfully against the Go control plane. The dashboard is no longer a TypeScript-locked silo; it is a true client of the neural operating system's primary backend.
+
 ## Latest stabilization pass — council and director compat routed to Go fallback (2026-04-06)
 
 ### Scope
