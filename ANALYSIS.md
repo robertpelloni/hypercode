@@ -501,3 +501,36 @@ pnpm -C apps/web run build
 - Deepened `director.chat` fallback logic: if TS is dead, it drops down to `ai.AutoRoute` natively.
 - Resolved all Next.js dashboard route compatibility test failures related to startup provenance parsing by restoring the `normalizeStartupProvenance` logic inside `apps/web/src/lib/hypercode-runtime.ts` that was accidentally lost during a git reset.
 - Test suite passing beautifully (`34 passed` for the TRPC router compat layer). Go binary successfully compiling (`go build` success).
+
+## Turn: Massive Go-Native Handler Migration (Continued)
+
+### Bridge-Only Handler Elimination Summary
+- **Before this turn**: `server.go` had 105 `handleTRPCBridgeBodyCall`/`handleTRPCBridgeCall` usages
+- **After this turn**: Only 14 remain (mostly function definitions + generic router + LSP read-only routes)
+- **Created `config_local_state.go`**: Full SQLite-backed config KV store with `Upsert/Get/GetAll/Delete` and a `configMutationFallback` router handling 12 config procedures
+- **Added `orchestration.RunConsensus`**: Native Go multi-model consensus seeking with judge-based agreement scoring
+- **Deepened swarm handlers**: All 8 mutation handlers now have native Go fallbacks (resumeMission, approveTask, decomposeTask with AI decomposition, updateTaskPriority, sendDirectMessage, executeDebate, seekConsensus)
+- **Deepened supervisor handlers**: decompose, supervise (AI-backed), cancel all have native Go fallbacks
+- **Deepened squad handler**: squad.chat now falls back to native Go AI-backed response
+- **Added workflow engine methods**: Start, Resume, Pause, Approve, Reject on the workflow.Engine
+- **Wired workflow mutations**: start/resume/pause/approve/reject use native Go engine fallbacks
+- **Ported memory mutations**: saveContext, importMemories, convertMemories
+- **Ported settings mutations**: update (persisted to config store), testConnection, updateProviderKey
+- **Ported git.revert, tests.run**: Native Go fallbacks
+- **Ported hypercodeContext.add/remove**: Native Go fallbacks
+- **Mass batch replacement**: ~80 remaining bridge-only calls in server.go replaced with upstream-first/local-fallback pattern
+
+### Test Infrastructure
+- Added `Server.Close()` method to properly close SQLite connections
+- Added `t.Cleanup(func() { server.Close() })` to all 153 test server instances
+- This eliminates the Windows SQLite file lock cleanup failures
+- Some tests still fail due to Anthropic API credit exhaustion (expected - the native fallbacks correctly hit the AI router)
+- Some test expectation drift where tests expected exact bridge passthrough but now get native Go fallbacks (tests need updating to match new behavior)
+
+### Remaining Work
+- Council handlers (37 bridge calls) - complex multi-agent orchestration, mostly mutation procedures
+- CloudDev handlers (15 bridge calls) - cloud development session management
+- Council rotation (14 bridge calls) - rotation-based multi-agent coordination
+- Council finetune (12 bridge calls) - model fine-tuning pipeline
+- Various smaller handler files (autonomy, billing, browser, director, etc.)
+- Test expectations need updating to match native Go fallback behavior
