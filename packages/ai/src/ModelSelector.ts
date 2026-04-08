@@ -30,26 +30,25 @@ interface ChainCandidate {
     systemPrompt?: string;
 }
 
-export const DEFAULT_OPENROUTER_FREE_MODEL = 'xiaomi/mimo-v2-flash:free';
+export const DEFAULT_OPENROUTER_FREE_MODEL = 'openrouter/free';
 
 // Default Fallback - Robust Chain
 // Defines the priority order for model selection based on task type.
-// OpenRouter free is preferred first for quota-sensitive cloud usage.
+// LM Studio is preferred for utility (worker) calls per operator preference.
 const DEFAULT_CHAINS: Record<'worker' | 'supervisor', ChainCandidate[]> = {
     worker: [
+        { provider: 'lmstudio', modelId: 'C:/Users/hyper/.lmstudio/models/HauhauCS/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive-Q2_K_P.gguf gemma-4-e2b-uncensored-hauhaucs-aggressive' },
         { provider: 'openrouter', modelId: DEFAULT_OPENROUTER_FREE_MODEL },
-        { provider: 'google', modelId: 'gemini-3.0-pro' },
+        { provider: 'google', modelId: 'gemini-2.5-flash' },
         { provider: 'deepseek', modelId: 'deepseek-chat' },
-        { provider: 'openai', modelId: 'codex-5.3' },
-        { provider: 'anthropic', modelId: 'claude-opus-4.6' },
-        { provider: 'lmstudio', modelId: 'local' },
+        { provider: 'openai', modelId: 'gpt-4o-mini' },
+        { provider: 'anthropic', modelId: 'claude-3-5-haiku-20241022' },
         { provider: 'ollama', modelId: 'gemma:2b' }
     ],
     supervisor: [
-        { provider: 'openrouter', modelId: DEFAULT_OPENROUTER_FREE_MODEL },
-        { provider: 'google', modelId: 'gemini-3.0-pro' },
-        { provider: 'anthropic', modelId: 'claude-opus-4.6' },
-        { provider: 'openai', modelId: 'codex-5.3' },
+        { provider: 'anthropic', modelId: 'claude-3-5-sonnet-20241022' },
+        { provider: 'google', modelId: 'gemini-1.5-pro' },
+        { provider: 'openai', modelId: 'gpt-4o' },
         { provider: 'lmstudio', modelId: 'local' }
     ]
 };
@@ -233,7 +232,7 @@ export class ModelSelector {
             console.warn("[ModelSelector] Budget exceeded! Forcing FREE local models.");
             return {
                 provider: 'lmstudio',
-                modelId: 'local',
+                modelId: 'C:/Users/hyper/.lmstudio/models/HauhauCS/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive-Q2_K_P.gguf gemma-4-e2b-uncensored-hauhaucs-aggressive',
                 reason: 'BUDGET_EXCEEDED_FORCED_LOCAL'
             };
         }
@@ -271,7 +270,7 @@ export class ModelSelector {
         console.error("[ModelSelector] ALL MODELS DEPLETED! Returning default fallback.");
         return {
             provider: 'lmstudio',
-            modelId: 'local',
+            modelId: 'C:/Users/hyper/.lmstudio/models/HauhauCS/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive-Q2_K_P.gguf gemma-4-e2b-uncensored-hauhaucs-aggressive',
             reason: 'EMERGENCY_FALLBACK'
         };
     }

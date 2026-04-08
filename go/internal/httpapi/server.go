@@ -966,6 +966,11 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/mesh/query-capabilities", s.handleMeshQueryCapabilities)
 	s.mux.HandleFunc("/api/mesh/find-peer", s.handleMeshFindPeer)
 	s.mux.HandleFunc("/api/mesh/broadcast", s.handleMeshBroadcast)
+
+	// --- New Go-native handlers (alpha.11+) ---
+	s.registerSavedScriptRoutes()
+	s.registerServerHealthRoutes()
+	s.registerUnifiedDirectoryRoutes()
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {

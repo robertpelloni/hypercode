@@ -16,7 +16,7 @@ const DEFAULT_TASK_STRATEGIES: Record<ProviderTaskType, ProviderRoutingStrategy>
     planning: 'best',
     research: 'best',
     general: 'round-robin',
-    worker: 'cheapest',
+    worker: 'best',
     supervisor: 'best',
 };
 
@@ -177,9 +177,10 @@ export class CoreModelSelector extends ModelSelector {
         const selected = candidates[0];
 
         if (!selected) {
+            const fallbackModelId = this.registry.getProvider('lmstudio')?.defaultModel || 'local';
             const result: SelectedModel = {
                 provider: 'lmstudio',
-                modelId: 'local',
+                modelId: fallbackModelId,
                 reason: 'EMERGENCY_FALLBACK',
             };
             this.recordFallbackEvent(result, taskType, strategy, request.provider, 'emergency_fallback');
