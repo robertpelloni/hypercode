@@ -1,6 +1,6 @@
 # TODO
 
-_Last updated: 2026-04-08, version 1.0.0-alpha.4_
+_Last updated: 2026-04-08, version 1.0.0-alpha.9_
 
 ## P0 — Must do now
 
@@ -8,20 +8,21 @@ _Last updated: 2026-04-08, version 1.0.0-alpha.4_
 - [x] Rebuild better-sqlite3 native bindings for Node 24
 - [x] Update deprecated Gemini model (2.0-flash → 2.5-flash)
 - [x] Add `/api/scripts` REST bridge to fix dashboard 404s
-- [ ] Restart server and verify SQLite-dependent features work (BobbyBookmarks, catalog, session import)
-- [ ] Fix catalog ingestion — glama.ai returns HTML now, mcp.run returns 404
-- [ ] Verify all dashboard pages show real state after SQLite fix
-- [ ] Add `pnpm rebuild better-sqlite3` to startup script for Node 24 safety
-- [ ] Test `/api/scripts` endpoints actually return saved script data
+- [x] Restart server and verify SQLite-dependent features work (BobbyBookmarks, catalog, session import)
+- [x] Fix catalog ingestion — glama.ai returns HTML now, mcp.run returns 404
+- [ ] Verify all dashboard pages show real state after SQLite fix (in progress)
+- [x] Add `pnpm rebuild better-sqlite3` to startup script for Node 24 safety
+- [x] Test `/api/scripts` endpoints actually return saved script data
 
 ## P1 — Should do next
 
-- [ ] Implement MCP meta-tool decision system (search_tools, load_tool with ranking/auto-load)
-- [ ] Add progressive tool disclosure — only expose 5-6 permanent meta-tools to models
-- [ ] Add tool semantic search / tool RAG for the meta-tool discovery layer
+- [x] Implement MCP meta-tool decision system (search_tools, load_tool with ranking/auto-load)
+- [x] Add progressive tool disclosure — only expose 5-6 permanent meta-tools to models
+- [x] Add tool semantic search / tool RAG for the meta-tool discovery layer
 - [ ] Dashboard polish: verify all 50+ dashboard sub-pages show real data
 - [ ] Session import: ensure Gemini CLI sessions are detected and LLM-extracted
 - [ ] Add remaining free-tier providers to fallback chain (OpenRouter free, Google AI Studio)
+- [x] Update all submodules to latest upstream
 - [ ] Deepen `hyperharness` integration for multi-model orchestration
 - [ ] Continue Go parity per PORTING_MAP.md
 
