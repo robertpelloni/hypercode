@@ -167,6 +167,17 @@ export class SkillRegistry {
                 }
             },
             {
+                name: "search_skills",
+                description: "Search for skills (runbooks) by name or description",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        query: { type: "string" }
+                    },
+                    required: ["query"]
+                }
+            },
+            {
                 name: "update_skill",
                 description: "Update content of an existing skill",
                 inputSchema: {
@@ -179,6 +190,28 @@ export class SkillRegistry {
                 }
             }
         ];
+    }
+
+    async searchSkills(query: string) {
+        const queryLower = query.toLowerCase();
+        const matches = Array.from(this.skills.values())
+            .filter(s => 
+                s.id.toLowerCase().includes(queryLower) || 
+                s.name.toLowerCase().includes(queryLower) || 
+                s.description.toLowerCase().includes(queryLower)
+            )
+            .map(s => ({
+                id: s.id,
+                name: s.name,
+                description: s.description
+            }));
+
+        return {
+            content: [{
+                type: "text",
+                text: JSON.stringify({ matches }, null, 2)
+            }]
+        };
     }
 
     async listSkills() {

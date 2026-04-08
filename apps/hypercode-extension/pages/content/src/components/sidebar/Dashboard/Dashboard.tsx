@@ -1,9 +1,11 @@
 import type React from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useActivityStore } from '@src/stores';
 import { Card, CardContent, CardHeader, CardTitle } from '@src/components/ui/card';
-import { Typography, Icon } from '../ui';
+import { Typography, Icon, Button } from '../ui';
 import { cn } from '@src/lib/utils';
+import { sendMessage } from 'webext-bridge/content-script';
+import { memoryCaptureService } from '../../../services/memory-capture.service';
 
 const APP_VERSION = '0.7.0';
 
@@ -16,6 +18,37 @@ const SHORTCUTS = [
 
 const Dashboard: React.FC = () => {
   const { logs } = useActivityStore();
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    try {
+      // @ts-ignore
+      await memoryCaptureService.captureCurrentPage();
+      // Wait a bit for feedback
+      await new Promise(r => setTimeout(r, 1000));
+    } catch (e) {
+      console.error('Manual sync failed', e);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleExportSession = async () => {
+    try {
+      // @ts-ignore
+      const content = memoryCaptureService.extractPageContent();
+      const blob = new Blob([content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `hypercode-session-${new Date().toISOString().split('T')[0]}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Export failed', e);
+    }
+  };
 
   const stats = useMemo(() => {
     const totalExecutions = logs.filter(l => l.type === 'tool_execution').length;
@@ -58,6 +91,24 @@ const Dashboard: React.FC = () => {
             v{APP_VERSION}
           </Typography>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Button
+          onClick={handleManualSync}
+          disabled={isSyncing}
+          variant="outline"
+          className="flex items-center justify-center gap-2 h-10 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+          <Icon name="refresh" size="sm" className={cn(isSyncing ? 'animate-spin' : '')} />
+          {isSyncing ? 'Syncing...' : 'Sync to Memory'}
+        </Button>
+        <Button
+          onClick={handleExportSession}
+          variant="outline"
+          className="flex items-center justify-center gap-2 h-10 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+          <Icon name="download" size="sm" />
+          Export Session
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

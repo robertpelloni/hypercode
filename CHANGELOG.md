@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.13] - 2026-04-08
+
+### Added
+- **Multi-Model Pair Programming**: Implemented `PairOrchestrator` to coordinate Claude, GPT, and Gemini in a shared context with rotating roles (Planner, Implementer, Tester). Added `run_pair_session` MCP tool.
+- **Autonomous Tool Prediction**: Created `ToolPredictor` service that analyzes conversation history and preemptively preloads/hydrates relevant tools. Integrated into `Director` loop.
+- **Skill Discovery**: Added `search_skills` tool and improved `list_skills` for progressive skill disclosure.
+- **Browser Extension Improvements**: Added manual "Sync to Memory" and "Export Session" buttons to the extension dashboard for on-demand context capture.
+
+### Changed
+- **Go Parity Expansion**: Updated Go sidecar with comprehensive session discovery rules (Cursor, Windsurf, OpenCode, Gemini, etc.), native provider routing defaults, and registration for new native handlers.
+- **Version Sync**: Upgraded all 57 package.json files to v1.0.0-alpha.13.
+
 ## [1.0.0-alpha.12] - 2026-04-08
 
 ### Changed

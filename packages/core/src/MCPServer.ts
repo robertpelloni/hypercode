@@ -33,7 +33,7 @@ import http from 'http';
 mcpServerDebugLog('[MCPServer] ✓ ws/http');
 
 import { McpmInstaller } from "./skills/McpmInstaller.js";
-import { Director } from "@hypercode/agents";
+import { Director, ToolPredictor, PairOrchestrator } from "@hypercode/agents";
 import { Council, CouncilRole } from "@hypercode/agents";
 import { GeminiAgent } from "./agents/GeminiAgent.js";
 import { ClaudeAgent } from "./agents/ClaudeAgent.js";
@@ -287,6 +287,7 @@ export class MCPServer {
     public sessionManager: SessionManager; // Phase 57: State Persistence
     public sessionSupervisor: SessionSupervisor;
     public ptySupervisor: PtySupervisor;
+    private pairOrchestrator: PairOrchestrator;
 
     public projectTracker: ProjectTracker; // Phase 59: Autonomous Loop
     public missionService: MissionService; // Phase 80: Swarm Persistence
@@ -528,6 +529,8 @@ export class MCPServer {
             rootDir: process.cwd(),
             worktreeManager: this.gitWorktreeManager,
         });
+        this.pairOrchestrator = new PairOrchestrator(this, this.llmService);
+        this.pairOrchestrator.setupFrontierSquad();
         this.metricsService = new MetricsService(); // Phase 31
         this.metricsService.startMonitoring();
         this.policyService = new PolicyService(process.cwd()); // Phase 32
@@ -1289,6 +1292,18 @@ export class MCPServer {
                 const res = await this.memoryManager.search(query, limit);
                 result = { content: [{ type: "text", text: JSON.stringify(res, null, 2) }] };
             }
+            else if (name === "run_pair_session") {
+                const task = args?.task as string;
+                const pairResult = await this.pairOrchestrator.runTask(task);
+                this.pairOrchestrator.rotateRoles(); // Rotate for next call
+                result = { 
+                    content: [
+                        { type: "text", text: `--- Final Implementation ---\n${pairResult.finalOutput}` },
+                        { type: "text", text: `--- Collaboration History ---\n${pairResult.history.join('\n\n')}` }
+                    ],
+                    isError: !pairResult.success
+                };
+            }
             // --- DEEP RESEARCH (Phase 31) ---
             else if (name === "research_topic") {
                 const topic = args?.topic as string;
@@ -1776,10 +1791,13 @@ export class MCPServer {
                 };
             }
             else if (name === "list_skills") {
-                result = this.skillRegistry.listSkills();
+                result = await this.skillRegistry.listSkills();
+            }
+            else if (name === "search_skills") {
+                result = await this.skillRegistry.searchSkills(args?.query as string);
             }
             else if (name === "read_skill") {
-                result = this.skillRegistry.readSkill(args?.skillName as string);
+                result = await this.skillRegistry.readSkill(args?.skillName as string);
             }
             else if (name === "mcpm_search") {
                 result = {
@@ -2526,6 +2544,17 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
                         limit: { type: "number" }
                     },
                     required: ["query"]
+                }
+            },
+            {
+                name: "run_pair_session",
+                description: "Orchestrate a shared task with a squad of frontier models (Claude, GPT, Gemini) rotating roles.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        task: { type: "string", description: "The high-level task to solve via multi-model collaboration." }
+                    },
+                    required: ["task"]
                 }
             },
             {

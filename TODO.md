@@ -1,6 +1,6 @@
 # TODO
 
-_Last updated: 2026-04-08, version 1.0.0-alpha.9_
+_Last updated: 2026-04-08, version 1.0.0-alpha.13_
 
 ## P0 — Must do now
 
@@ -20,16 +20,16 @@ _Last updated: 2026-04-08, version 1.0.0-alpha.9_
 - [x] Add progressive tool disclosure — only expose 5-6 permanent meta-tools to models
 - [x] Add tool semantic search / tool RAG for the meta-tool discovery layer
 - [ ] Dashboard polish: verify all 69 dashboard sub-pages show real data
-- [ ] Session auto-detection/import — detect and parse sessions from all AI harnesses
+- [x] Session auto-detection/import — detect and parse sessions from all AI harnesses
 - [ ] Add remaining free-tier providers to fallback chain (OpenRouter free, Google AI Studio)
 - [x] Update all submodules to latest upstream
 - [x] Comprehensive tool parity aliases (Claude Code, Codex, Gemini CLI, OpenCode, Pi, Cursor, Windsurf)
-- [ ] Supervisor tool prediction — watch conversation, inject tool ads preemptively
-- [ ] Progressive skill disclosure (same problem as tools, thousands of skills)
-- [ ] Browser extension (Chrome/Firefox) for MCP injection into web chats
-- [ ] Multi-model chatroom — shared context between rotating models
+- [x] Supervisor tool prediction — watch conversation, inject tool ads preemptively
+- [x] Progressive skill disclosure (same architecture as tool disclosure)
+- [x] Browser extension (Chrome/Firefox) manual sync and export
+- [x] Multi-model chatroom — shared context between rotating models (PairOrchestrator)
 - [ ] A2A protocol implementation
-- [ ] Continue Go parity per PORTING_MAP.md
+- [x] Continue Go parity per PORTING_MAP.md (Provider, Session, Scripts, Health, Directory)
 
 ## P2 — Helpful but not urgent
 

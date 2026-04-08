@@ -1,6 +1,6 @@
 {
   "name": "@hypercode/supervisor-plugin",
-  "version": "1.0.0-alpha.12",
+  "version": "1.0.0-alpha.13",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
