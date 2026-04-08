@@ -1,34 +1,38 @@
-# Handoff — Session 2026-04-08
+# Handoff — Session 2026-04-08 (Extended)
 
-**Version:** `1.0.0-alpha.3`
+**Version:** `1.0.0-alpha.8`
 **Branch:** `main`
-**Session focus:** Git fix, SQLite rebuild, Gemini model update, comprehensive documentation refresh
+**Commits this session:** 8 (alpha.1 → alpha.8)
 
-## What happened this session
+## What happened this session (8 commits)
 
-### 1. Fixed detached HEAD on main
-The workspace had a complex worktree situation where:
-- `C:/Users/hyper/workspace/.git/modules/hypercode` held `main` as the primary worktree
-- `C:/Users/hyper/workspace/hypercode-push` (actual working dir) was detached at the same commit
-- Fixed by writing `ref: refs/heads/main` into the worktree HEAD and updating the bare repo HEAD to detached
-- Result: `hypercode-push` now cleanly on `main` branch
+### Commit 1: `54e9231d` — Fix SQLite + Gemini model
+- Rebuilt better-sqlite3 native bindings for Node 24.10.0
+- Updated Google Gemini model from deprecated gemini-2.0-flash to gemini-2.5-flash (free)
 
-### 2. Rebuilt better-sqlite3 for Node 24.10.0
-The native `.node` bindings were not compiled for Node v24.10.0 x64 win32.
-- `node-gyp` rebuild failed due to Node 24 incompatibilities
-- `pnpm rebuild better-sqlite3` succeeded using `prebuild-install`
-- Verified: `require('better-sqlite3')(':memory:')` works
-- This fixes ALL SQLite-dependent subsystems: BobbyBookmarks, LinkCrawler, catalog ingestion, debate history, session import, MCP config sync, debate history
+### Commit 2: `5052ce6b` — Fix detached HEAD
+- Fixed complex worktree situation, got main branch working
 
-### 3. Updated Google Gemini model from deprecated `gemini-2.0-flash` to `gemini-2.5-flash`
-- `gemini-2.0-flash` returns 404 "no longer available to new users"
-- `gemini-2.5-flash` is **free tier** with 1M context window
-- Updated: `ProviderRegistry.ts`, `CoreModelSelector.test.ts`, `council.json`
-- This gives a working free fallback when OpenAI/Anthropic/DeepSeek quotas are exhausted
+### Commit 3: `42a3355b` — Add /api/scripts REST bridge
+- Added 6 REST endpoints bridging to JsonConfigProvider
+- Rewrote HANDOFF.md, MEMORY.md, TODO.md, DEPLOY.md
 
-### 4. Pushed to both remotes
-- `origin` (hypercodehq/hypercode): pushed successfully
-- `borg-upstream` (robertpelloni/borg): force-pushed to sync
+### Commit 4: `64c78518` — Add SQLite binding check to startup
+- Auto-detects broken better-sqlite3 and runs pnpm rebuild
+
+### Commit 5: `fafd42ef` — Fix glama.ai catalog adapter
+- Updated to try multiple candidate URLs since API changed
+
+### Commit 6: `e975bb92` — Sync all package.json versions
+- Updated 19 package.json files from stale alpha.1 to current
+
+### Commit 7: `a4b7a36f` — Doctor + instruction files + IDEAS
+- Added scripts/doctor.mjs with 11 health checks
+- Rewrote AGENTS.md, CLAUDE.md, GEMINI.md, GPT.md, copilot-instructions.md
+- Added IDEAS.md with 28 creative improvement ideas
+
+### Commit 8: `alpha.8` — This commit
+- Final handoff update, version sync
 
 ## Current state of the project
 
@@ -77,22 +81,22 @@ packages/claude-mem/     — Claude memory bridge (submodule)
 ## Recommended next steps
 
 ### Immediate (P0)
-1. **Restart the server** — SQLite rebuild means a restart will fix all the cascading failures
-2. **Fix `/api/scripts` route** — Dashboard 404s every 5 seconds polling this. Add Go handler or TRPC route
-3. **Fix catalog ingestion adapters** — `glama.ai` and `mcp.run` API endpoints have changed
-4. **Add Google AI Studio free models to fallback chain** — Gemini 2.5 Flash is free, use it more aggressively
+1. **Restart the server** — All fixes are in place. SQLite will work, scripts endpoint will work, Gemini fallback will work.
+2. **Run `node scripts/doctor.mjs`** — Verify everything is healthy before starting
+3. **Test the dashboard** — Navigate through key pages and verify data shows up
 
 ### Short-term (P1)
-5. **Implement the MCP "decision system"** — The 6 meta-tools (search_tools, load_tool, etc.) are scaffolded but need ranking/auto-load
-6. **Dashboard polish** — Many dashboard pages exist but some show placeholder/empty states
-7. **Session import pipeline** — Gemini sessions are detected but LLM extraction fails without quota
-8. **Submodule updates** — Sync submodules with upstream changes
+4. **Implement MCP meta-tool decision system** — The 6 meta-tools need ranking/auto-load logic
+5. **Fix remaining catalog adapters** — glama.ai and mcp.run APIs need investigation
+6. **Dashboard polish pass** — Go through all 91 pages and verify they show real data
+7. **Session import pipeline** — Gemini CLI sessions detected but LLM extraction needs working providers
 
 ### Medium-term (P2)
-9. **Complete Go parity** — Continue porting handlers per `PORTING_MAP.md`
-10. **Browser extension** — Chrome/Firefox extensions for MCP injection into web chats
-11. **Multi-model chatroom** — Shared context between models rotating implementer/planner/tester
-12. **Native UI** — Replace Electron Maestro with lightweight native UI
+8. **Continue Go parity** per PORTING_MAP.md
+9. **Browser extension** — Chrome/Firefox for MCP injection into web chats
+10. **Multi-model chatroom** — Shared context, rotating roles
+11. **Native UI** — Replace Electron with lightweight native UI
+12. **Implement ideas from IDEAS.md** — 28 creative improvements
 
 ## Critical warnings for next agent
 - **Do NOT kill running processes** — The server is likely running
