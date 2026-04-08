@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.9] - 2026-04-08
+
+### Changed
+- **Submodule Sync**: Updated all submodules to latest upstream (cloud-orchestrator, hyperharness, prism-mcp, litellm, OmniRoute, maestro, mcpproxy, claude-mem). Resolved merge conflicts in cloud-orchestrator and hyperharness.
+- **Version Sync**: All 57 package.json files now synchronized to VERSION file.
+
+## [1.0.0-alpha.8] - 2026-04-07
+
+### Changed
+- **Gemini Model Update**: Updated default model from deprecated `gemini-2.0-flash` to `gemini-2.5-flash` (free tier, 1M context) in ProviderRegistry, CoreModelSelector tests, and council.json.
+- **REST Bridge**: Added 6 REST endpoints (`/api/scripts`, `/api/scripts/get`, `/create`, `/update`, `/delete`, `/execute`) in orchestrator.ts for dashboard-script integration.
+- **Build Hardening**: Added better-sqlite3 native binding auto-check to build_startup.mjs.
+- **Catalog Ingestor**: Updated glama.ai adapter to try multiple candidate URLs.
+- **Doctor Script**: Created `scripts/doctor.mjs` with 11 diagnostic checks (Node, Go, SQLite, ports, env, config, build artifacts).
+- **Documentation Overhaul**: Rewrote AGENTS.md, CLAUDE.md, GEMINI.md, GPT.md, copilot-instructions.md.
+- **New Docs**: Created IDEAS.md with 28 improvement ideas; rewrote HANDOFF.md, MEMORY.md, TODO.md, DEPLOY.md.
+- **Version Bump**: Synced all package.json files from stale `1.0.0-alpha.1` to VERSION file.
+
 ## [1.0.0-alpha.1] - 2026-04-02
 
 ### Added
