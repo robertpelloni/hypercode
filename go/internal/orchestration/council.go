@@ -105,3 +105,70 @@ Synthesize the final, actionable implementation plan incorporating the critique.
 		Contributions: contributions,
 	}, nil
 }
+
+type ConsensusResult struct {
+	Reached   bool     `json:"reached"`
+	Decision  string   `json:"decision"`
+	Agreement float64  `json:"agreement"`
+	Opinions  []string `json:"opinions"`
+}
+
+// RunConsensus seeks consensus from multiple models (or simulated agents)
+func RunConsensus(ctx context.Context, prompt string, models []string, required float64) (*ConsensusResult, error) {
+	if len(models) == 0 {
+		models = []string{"default", "default"} // Simulate at least 2
+	}
+	
+	opinions := make([]string, 0, len(models))
+	
+	for _ = range models {
+		resp, err := autoRoute(ctx, []ai.Message{
+			{Role: "system", Content: "You are an independent council member. Provide your direct opinion on the prompt."},
+			{Role: "user", Content: prompt},
+		})
+		if err != nil {
+			opinions = append(opinions, fmt.Sprintf("Error: %v", err))
+		} else {
+			opinions = append(opinions, resp.Content)
+		}
+	}
+	
+	// Judge consensus
+	judgePrompt := fmt.Sprintf("Here are %d opinions on the prompt '%s':\n\n", len(opinions), prompt)
+	for i, op := range opinions {
+		judgePrompt += fmt.Sprintf("Opinion %d: %s\n\n", i+1, op)
+	}
+	judgePrompt += "Do these opinions agree? Calculate the agreement percentage (0 to 100). If they agree generally, summarize the decision. Format your response exactly as: \nAGREEMENT: [number]\nDECISION: [summary]"
+
+	judgeResp, err := autoRoute(ctx, []ai.Message{
+		{Role: "user", Content: judgePrompt},
+	})
+	
+	decision := "Could not determine consensus"
+	agreement := 50.0
+	
+	if err == nil {
+		lines := strings.Split(judgeResp.Content, "\n")
+		for _, line := range lines {
+			if strings.HasPrefix(strings.ToUpper(line), "AGREEMENT:") {
+				fmt.Sscanf(strings.TrimSpace(strings.TrimPrefix(strings.ToUpper(line), "AGREEMENT:")), "%f", &agreement)
+			}
+			if strings.HasPrefix(strings.ToUpper(line), "DECISION:") {
+				decision = strings.TrimSpace(strings.TrimPrefix(line, "DECISION:"))
+				decision = strings.TrimPrefix(decision, "DECISION: ")
+			}
+		}
+	}
+	
+	reqAgreement := required
+	if reqAgreement <= 0 {
+		reqAgreement = 70.0 // Default 70%
+	}
+	
+	return &ConsensusResult{
+		Reached:   agreement >= reqAgreement,
+		Decision:  decision,
+		Agreement: agreement,
+		Opinions:  opinions,
+	}, nil
+}

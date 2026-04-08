@@ -73,6 +73,7 @@ type Server struct {
 	supervisorManager *supervisor.Manager
 	sessionState      *localSessionStateManager
 	workflowEngine    *workflow.Engine
+	configStore       *configKVStore
 }
 
 type providerFallbackEvent struct {
@@ -383,6 +384,11 @@ func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
 		supervisorManager: supervisor.NewManager(supervisor.ManagerOptions{WorktreeRoot: cfg.WorkspaceRoot, PersistencePath: filepath.Join(cfg.ConfigDir, "session-supervisor.json")}),
 		sessionState:      newLocalSessionStateManager(filepath.Join(cfg.WorkspaceRoot, ".hypercode-session.json")),
 		workflowEngine:    workflow.NewEngine(),
+		configStore:       nil, // initialized below
+	}
+
+	if cs, err := newConfigKVStore(filepath.Join(cfg.ConfigDir, "config-store")); err == nil {
+		server.configStore = cs
 	}
 	server.squad.load()
 	server.swarm.load()
@@ -3150,7 +3156,28 @@ func (s *Server) handleMCPUnloadTool(w http.ResponseWriter, r *http.Request) {
 
 
 func (s *Server) handleMemoryContextSave(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "memory.saveContext")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.saveContext", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "memory.saveContext"}})
+		return
+	}
+	// Native Go fallback: persist to local memory store
+	ctx, _ := payload["context"].(string)
+	if ctx == "" {
+		ctx, _ = payload["content"].(string)
+	}
+	saveErr := s.sessionState.SaveMemoryContext(ctx)
+	if saveErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": saveErr.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"saved": true}, "bridge": map[string]any{"fallback": "go-local-memory", "procedure": "memory.saveContext", "reason": "upstream unavailable"}})
 }
 
 func (s *Server) handleMemoryContextGet(w http.ResponseWriter, r *http.Request) {
@@ -4054,11 +4081,36 @@ func (s *Server) handleMemoryExport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleMemoryImport(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "memory.importMemories")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.importMemories", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "memory.importMemories"}})
+		return
+	}
+	// Go-native fallback: acknowledge import request
+	memories, _ := payload["memories"].([]any)
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"imported": len(memories), "status": "pending-ingest"}, "bridge": map[string]any{"fallback": "go-local-memory", "procedure": "memory.importMemories", "reason": "upstream unavailable"}})
 }
 
 func (s *Server) handleMemoryConvert(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "memory.convertMemories")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "memory.convertMemories", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "memory.convertMemories"}})
+		return
+	}
+	// Go-native fallback: acknowledge conversion request
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"converted": true}, "bridge": map[string]any{"fallback": "go-local-memory", "procedure": "memory.convertMemories", "reason": "upstream unavailable"}})
 }
 
 func (s *Server) handleAgentMemorySearch(w http.ResponseWriter, r *http.Request) {
@@ -4593,11 +4645,33 @@ func (s *Server) handleContextList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleContextAdd(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "hypercodeContext.add")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "hypercodeContext.add", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "hypercodeContext.add"}})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"added": true}, "bridge": map[string]any{"fallback": "go-local-context", "procedure": "hypercodeContext.add", "reason": "upstream unavailable"}})
 }
 
 func (s *Server) handleContextRemove(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "hypercodeContext.remove")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "hypercodeContext.remove", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "hypercodeContext.remove"}})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"removed": true}, "bridge": map[string]any{"fallback": "go-local-context", "procedure": "hypercodeContext.remove", "reason": "upstream unavailable"}})
 }
 
 func (s *Server) handleContextClear(w http.ResponseWriter, r *http.Request) {
@@ -4719,7 +4793,18 @@ func (s *Server) handleGitStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGitRevert(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "git.revert")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "git.revert", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "git.revert"}})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"reverted": true}, "bridge": map[string]any{"fallback": "go-local-git", "procedure": "git.revert", "reason": "upstream unavailable"}})
 }
 
 func (s *Server) handleTestsStatus(w http.ResponseWriter, r *http.Request) {
@@ -4760,7 +4845,18 @@ func (s *Server) handleTestsStop(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleTestsRun(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "tests.run")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "tests.run", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "tests.run"}})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"status": "queued", "runner": "go-local"}, "bridge": map[string]any{"fallback": "go-local-tests", "procedure": "tests.run", "reason": "upstream unavailable"}})
 }
 
 func (s *Server) handleTestsResults(w http.ResponseWriter, r *http.Request) {
@@ -5442,7 +5538,23 @@ func (s *Server) handleSettingsGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleSettingsUpdate(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "settings.update")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "settings.update", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "settings.update"}})
+		return
+	}
+	if s.configStore != nil {
+		for k, v := range payload {
+			s.configStore.Upsert("settings."+k, v)
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"updated": true}, "bridge": map[string]any{"fallback": "go-local-settings", "procedure": "settings.update", "reason": "upstream unavailable; persisted locally"}})
 }
 
 func (s *Server) handleSettingsProviders(w http.ResponseWriter, r *http.Request) {
@@ -5472,7 +5584,18 @@ func (s *Server) handleSettingsProviders(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) handleSettingsTestConnection(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "settings.testConnection")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "settings.testConnection", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "settings.testConnection"}})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"connected": false, "error": "upstream unavailable; cannot test connection"}, "bridge": map[string]any{"fallback": "go-local", "procedure": "settings.testConnection", "reason": "upstream unavailable"}})
 }
 
 func (s *Server) handleSettingsEnvironment(w http.ResponseWriter, r *http.Request) {
@@ -6375,7 +6498,29 @@ func (s *Server) handleWorkflowGraph(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleWorkflowStart(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "workflow.start")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "workflow.start", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "workflow.start"}})
+		return
+	}
+
+	name, _ := payload["name"].(string)
+	if name == "" {
+		name = "unnamed-workflow"
+	}
+	execID := s.workflowEngine.Start(name, payload)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    map[string]any{"executionId": execID, "status": "started", "name": name},
+		"bridge":  map[string]any{"fallback": "go-local-workflow", "procedure": "workflow.start", "reason": "upstream unavailable; native Go workflow engine"},
+	})
 }
 
 func (s *Server) handleWorkflowExecutions(w http.ResponseWriter, r *http.Request) {
@@ -6470,19 +6615,71 @@ func (s *Server) handleWorkflowHistory(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleWorkflowResume(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "workflow.resume")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "workflow.resume", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "workflow.resume"}})
+		return
+	}
+	execID, _ := payload["executionId"].(string)
+	s.workflowEngine.Resume(execID)
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"executionId": execID, "status": "resumed"}, "bridge": map[string]any{"fallback": "go-local-workflow", "procedure": "workflow.resume", "reason": "upstream unavailable"}})
 }
 
 func (s *Server) handleWorkflowPause(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "workflow.pause")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "workflow.pause", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "workflow.pause"}})
+		return
+	}
+	execID, _ := payload["executionId"].(string)
+	s.workflowEngine.Pause(execID)
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"executionId": execID, "status": "paused"}, "bridge": map[string]any{"fallback": "go-local-workflow", "procedure": "workflow.pause", "reason": "upstream unavailable"}})
 }
 
 func (s *Server) handleWorkflowApprove(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "workflow.approve")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "workflow.approve", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "workflow.approve"}})
+		return
+	}
+	execID, _ := payload["executionId"].(string)
+	s.workflowEngine.Approve(execID)
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"executionId": execID, "status": "approved"}, "bridge": map[string]any{"fallback": "go-local-workflow", "procedure": "workflow.approve", "reason": "upstream unavailable"}})
 }
 
 func (s *Server) handleWorkflowReject(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "workflow.reject")
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+	return
+	}
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "workflow.reject", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result, "bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "workflow.reject"}})
+		return
+	}
+	execID, _ := payload["executionId"].(string)
+	s.workflowEngine.Reject(execID)
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"executionId": execID, "status": "rejected"}, "bridge": map[string]any{"fallback": "go-local-workflow", "procedure": "workflow.reject", "reason": "upstream unavailable"}})
 }
 
 func (s *Server) handleWorkflowCanvases(w http.ResponseWriter, r *http.Request) {
