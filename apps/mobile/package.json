@@ -1,6 +1,6 @@
 {
   "name": "@hypercode/mobile",
-  "version": "1.0.0-alpha.15",
+  "version": "1.0.0-alpha.16",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",

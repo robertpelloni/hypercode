@@ -33,7 +33,7 @@ import http from 'http';
 mcpServerDebugLog('[MCPServer] ✓ ws/http');
 
 import { McpmInstaller } from "./skills/McpmInstaller.js";
-import { Director, ToolPredictor, PairOrchestrator } from "@hypercode/agents";
+import { Director, ToolPredictor, PairOrchestrator, SwarmController, SwarmRole } from "@hypercode/agents";
 import { Council, CouncilRole } from "@hypercode/agents";
 import { GeminiAgent } from "./agents/GeminiAgent.js";
 import { ClaudeAgent } from "./agents/ClaudeAgent.js";
@@ -289,6 +289,7 @@ export class MCPServer {
     public sessionSupervisor: SessionSupervisor;
     public ptySupervisor: PtySupervisor;
     private pairOrchestrator: PairOrchestrator;
+    private swarmController: SwarmController;
 
     public projectTracker: ProjectTracker; // Phase 59: Autonomous Loop
     public missionService: MissionService; // Phase 80: Swarm Persistence
@@ -532,6 +533,7 @@ export class MCPServer {
         });
         this.pairOrchestrator = new PairOrchestrator(this, this.llmService);
         this.pairOrchestrator.setupFrontierSquad();
+        this.swarmController = new SwarmController(this, this.llmService);
         this.metricsService = new MetricsService(); // Phase 31
         this.metricsService.startMonitoring();
         this.policyService = new PolicyService(process.cwd()); // Phase 32
@@ -1320,6 +1322,29 @@ export class MCPServer {
             else if (name === "a2a_list_agents") {
                 const agents = a2aBroker.listAgents();
                 result = { content: [{ type: "text", text: JSON.stringify({ agents }, null, 2) }] };
+            }
+            else if (name === "swarm_start_session") {
+                const goal = args?.goal as string;
+                const maxTurns = args?.maxTurns as number || 5;
+
+                // Setup default swarm if none configured
+                this.swarmController.addMember({ id: 'claude', name: 'Claude', role: SwarmRole.PLANNER, provider: 'anthropic', modelId: 'claude-3-5-sonnet-20241022', status: 'idle' });
+                this.swarmController.addMember({ id: 'gpt', name: 'GPT', role: SwarmRole.IMPLEMENTER, provider: 'openai', modelId: 'gpt-4o', status: 'idle' });
+                this.swarmController.addMember({ id: 'gemini', name: 'Gemini', role: SwarmRole.TESTER, provider: 'google', modelId: 'gemini-1.5-pro', status: 'idle' });
+                this.swarmController.addMember({ id: 'qwen', name: 'Qwen', role: SwarmRole.CRITIC, provider: 'google', modelId: 'gemini-2.5-flash', status: 'idle' });
+
+                const swarmResult = await this.swarmController.startSession(goal, {
+                    maxTurns,
+                    completionThreshold: 0.8,
+                    autoRotate: true
+                });
+
+                result = {
+                    content: [
+                        { type: "text", text: `Swarm session complete. Success: ${swarmResult.success}` },
+                        { type: "text", text: `Transcript:\n${swarmResult.transcript.join('\n\n')}` }
+                    ]
+                };
             }
             // --- DEEP RESEARCH (Phase 31) ---
             else if (name === "research_topic") {
@@ -2591,6 +2616,18 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
                 name: "a2a_list_agents",
                 description: "List all currently active and registered A2A-capable agents.",
                 inputSchema: { type: "object", properties: {} }
+            },
+            {
+                name: "swarm_start_session",
+                description: "Start a multi-model swarm collaboration session for a specific goal.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        goal: { type: "string" },
+                        maxTurns: { type: "number", default: 5 }
+                    },
+                    required: ["goal"]
+                }
             },
             {
                 name: "browser_get_history",

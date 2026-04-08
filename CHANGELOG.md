@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.16] - 2026-04-08
+
+### Added
+- **Multi-Model Swarm Orchestration**: Implemented `SwarmController` to manage a team of models (Claude, GPT, Gemini, Qwen) with specific roles and a shared neural transcript.
+- **Swarm Completion Evaluation**: Added a "Critic" role to the swarm to evaluate task completion and provide feedback for iterative cycles.
+- **Swarm Tools**: Added `swarm_start_session` tool for one-shot autonomous task execution by a model team.
+
+### Changed
+- **Renaming Cleanup**: Renamed `borg.config.json` to `hypercode.config.json`.
+- **Submodule Renaming**: Completed the rename of `borg` adapter to `hypercode` adapter in the `hyperharness` submodule and cleaned up redundant files.
+
 ## [1.0.0-alpha.15] - 2026-04-08
 
 ### Changed
