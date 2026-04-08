@@ -103,4 +103,23 @@ export const agentRouter = t.router({
     getA2AMessages: publicProcedure.query(() => {
         return a2aBroker.getHistory();
     }),
+
+    /**
+     * Broadcast an A2A message from the dashboard.
+     */
+    a2aBroadcast: publicProcedure
+        .input(z.object({
+            type: z.string(),
+            payload: z.any().optional(),
+        }))
+        .mutation(async ({ input }) => {
+            await a2aBroker.routeMessage({
+                id: `a2a-dash-${Date.now()}`,
+                timestamp: Date.now(),
+                sender: 'DASHBOARD',
+                type: input.type as any,
+                payload: input.payload || {},
+            });
+            return { success: true };
+        }),
 });

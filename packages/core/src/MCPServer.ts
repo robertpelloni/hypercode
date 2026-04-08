@@ -73,6 +73,7 @@ import { SessionImportService } from "./services/SessionImportService.js";
 import { MemoryManager } from "./services/MemoryManager.js"; // Use legacy MemoryManager
 import { BobbyBookmarksSyncWorker } from "./daemons/hyperingest/BobbyBookmarksSyncWorker.js";
 import { LinkCrawlerWorker } from "./daemons/hyperingest/LinkCrawlerWorker.js";
+import { MemoryArchiver } from "./services/MemoryArchiver.js";
 import { a2aBroker } from "./services/A2ABroker.js";
 import { workspaceTracker } from "./services/WorkspaceTracker.js";
 mcpServerDebugLog('[MCPServer] ✓ Phase 51/53 Infrastructure');
@@ -290,6 +291,7 @@ export class MCPServer {
     public ptySupervisor: PtySupervisor;
     private pairOrchestrator: PairOrchestrator;
     private swarmController: SwarmController;
+    private memoryArchiver: MemoryArchiver;
 
     public projectTracker: ProjectTracker; // Phase 59: Autonomous Loop
     public missionService: MissionService; // Phase 80: Swarm Persistence
@@ -534,6 +536,7 @@ export class MCPServer {
         this.pairOrchestrator = new PairOrchestrator(this, this.llmService);
         this.pairOrchestrator.setupFrontierSquad();
         this.swarmController = new SwarmController(this, this.llmService);
+        this.memoryArchiver = new MemoryArchiver(process.cwd(), this.llmService, this.agentMemoryService);
         this.metricsService = new MetricsService(); // Phase 31
         this.metricsService.startMonitoring();
         this.policyService = new PolicyService(process.cwd()); // Phase 32
@@ -1345,6 +1348,15 @@ export class MCPServer {
                         { type: "text", text: `Transcript:\n${swarmResult.transcript.join('\n\n')}` }
                     ]
                 };
+            }
+            else if (name === "archive_session") {
+                const sessionData = args?.sessionData as any;
+                const archiveResult = await this.memoryArchiver.archiveAndExtract(sessionData);
+                if (archiveResult) {
+                    result = { content: [{ type: "text", text: `Successfully archived session "${archiveResult.title}" (${archiveResult.compressedSize} bytes compressed). Memories extracted and stored.` }] };
+                } else {
+                    result = { content: [{ type: "text", text: "Failed to archive session. Format not recognized." }], isError: true };
+                }
             }
             // --- DEEP RESEARCH (Phase 31) ---
             else if (name === "research_topic") {
@@ -2627,6 +2639,17 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
                         maxTurns: { type: "number", default: 5 }
                     },
                     required: ["goal"]
+                }
+            },
+            {
+                name: "archive_session",
+                description: "Archive a session JSON into compressed plaintext and extract valuable memories.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        sessionData: { type: "object", description: "The raw session JSON object to archive." }
+                    },
+                    required: ["sessionData"]
                 }
             },
             {
@@ -3923,6 +3946,21 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
             });
             const wss = new WebSocketServer({ server: httpServer });
             this.wssInstance = wss;
+
+            // Neural Pulse & A2A Bridge
+            wss.on('connection', (ws) => {
+                ws.on('message', async (data) => {
+                    try {
+                        const str = data.toString();
+                        const message = JSON.parse(str);
+                        if (message.type === 'A2A_SIGNAL') {
+                            await a2aBroker.routeMessage(message.payload);
+                        }
+                    } catch (e) {
+                        // Ignore non-JSON or malformed pulse signals
+                    }
+                });
+            });
 
             let bridgePortConflictHandled = false;
             const handleBridgePortConflict = () => {

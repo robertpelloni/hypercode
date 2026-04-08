@@ -78,4 +78,14 @@
 **Resolution**: Run `pnpm build` in the affected sub-packages before building the consumer.
 **Implication**: Automated build scripts should handle package topological sorting or ensure all dependencies are built.
 
+### 17. Multi-Model Swarm Pattern (Added 2026-04-08)
+**Observation**: For complex, multi-stage projects, a fixed implementation loop (PairOrchestrator) is sometimes too rigid. A swarm of models with specialized roles (Planner, Implementer, Tester, Critic) and a shared neural transcript provides more flexibility.
+**Resolution**: Implemented `SwarmController` which manages a team of models and evaluates progress using a "Critic" model turn. The transcript acts as the shared working memory for the entire swarm.
+**Implication**: Use `swarm_start_session` for goals that require multiple iterative cycles of planning and verification.
+
+### 18. A2A Communication Broker (Added 2026-04-08)
+**Observation**: Decentralized agents need a structured way to hand off tasks and share state without creating tight coupling between classes.
+**Resolution**: Implemented `A2ABroker` (TS and Go) that routes typed messages (TASK_REQUEST, STATE_UPDATE, etc.) based on agent IDs. The broker includes history tracking for dashboard visibility.
+**Implication**: All new autonomous agents should register with the `A2ABroker` to enable full orchestration and observability.
+
 *Update this file whenever a major systemic pattern, recurring bug, or deep architectural quirk is discovered.*

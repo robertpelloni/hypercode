@@ -78,6 +78,7 @@ type Server struct {
 	mcpAggregator     *mcp.Aggregator
 	mcpPredictor      *mcp.ToolPredictor
 	a2aBroker         *orchestration.A2ABroker
+	swarmController   *orchestration.SwarmController
 }
 
 type providerFallbackEvent struct {
@@ -392,6 +393,7 @@ func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
 		mcpAggregator:     mcp.NewAggregator(),
 		a2aBroker:         orchestration.NewA2ABroker(),
 	}
+	server.swarmController = orchestration.NewSwarmController(server.a2aBroker)
 	server.mcpPredictor = mcp.NewToolPredictor(server.mcpAggregator)
 	server.supervisorManager.SetPredictor(server.mcpPredictor)
 	server.squad.load()
@@ -784,6 +786,7 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/agent/a2a/agents", s.handleA2AListAgents)
 	s.mux.HandleFunc("/api/agent/a2a/messages", s.handleA2AGetMessages)
 	s.mux.HandleFunc("/api/agent/a2a/broadcast", s.handleA2ABroadcast)
+	s.mux.HandleFunc("/api/agent/swarm/start", s.handleAgentSwarmStart)
 	s.mux.HandleFunc("/api/commands/execute", s.handleCommandsExecute)
 	s.mux.HandleFunc("/api/commands", s.handleCommandsList)
 	s.mux.HandleFunc("/api/skills", s.handleSkillsList)

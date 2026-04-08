@@ -9,14 +9,17 @@ export function A2AMessageCenter() {
     const { data: agents, refetch: refetchAgents } = trpc.agent.listA2AAgents.useQuery(undefined, { refetchInterval: 5000 });
     const { data: messages, refetch: refetchMessages } = trpc.agent.getA2AMessages.useQuery(undefined, { refetchInterval: 2000 });
 
+    const broadcastMutation = trpc.agent.a2aBroadcast.useMutation();
+
     const [isBroadcasting, setIsBroadcasting] = useState(false);
 
     const handleBroadcast = async () => {
         setIsBroadcasting(true);
         try {
-            // Mock broadcast via tool call or tRPC if implemented
-            // For now, we just show the state
-            await new Promise(r => setTimeout(r, 1000));
+            await broadcastMutation.mutateAsync({
+                type: 'PING',
+                payload: { message: 'Hello from Dashboard' }
+            });
         } finally {
             setIsBroadcasting(false);
         }
