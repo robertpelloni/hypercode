@@ -24,7 +24,7 @@ var taskStrategies = map[string]string{
 	"planning":   "best",
 	"research":   "best",
 	"general":    "round-robin",
-	"worker":     "best",
+	"worker":     "cheapest",
 	"supervisor": "best",
 }
 
@@ -33,8 +33,8 @@ var taskProviderOrder = map[string][]string{
 	"planning":   {"anthropic", "openai", "google", "openrouter", "github-copilot", "deepseek"},
 	"research":   {"anthropic", "google", "openai", "openrouter", "deepseek", "github-copilot"},
 	"general":    {"google", "openai", "anthropic", "deepseek", "openrouter", "github-copilot"},
-	"worker":     {"lmstudio", "openrouter", "google", "openai", "deepseek", "anthropic", "github-copilot"},
-	"supervisor": {"anthropic", "google", "openai", "openrouter", "github-copilot", "deepseek"},
+	"worker":     {"google", "openai", "deepseek", "anthropic", "openrouter", "github-copilot"},
+	"supervisor": {"anthropic", "openai", "google", "openrouter", "github-copilot", "deepseek"},
 }
 
 func BuildRoutingSummary(statuses []Status) RoutingSummary {

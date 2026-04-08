@@ -1,6 +1,6 @@
 # Roadmap
 
-_Last updated: 2026-04-08, version 1.0.0-alpha.11_
+_Last updated: 2026-04-02_
 
 ## Status legend
 
@@ -46,75 +46,8 @@ Deliverables officially achieved and stabilized in the `1.0.0-alpha.1` milestone
 
 ## Next
 
-### A. MCP operator improvements (BETA)
-- ✅ Tool grouping and ranked search (multi-signal scoring)
-- ✅ Progressive tool disclosure (6 permanent meta-tools)
-- ✅ Auto-load with confidence thresholds
-- ✅ Working set with LRU + idle-first eviction
-- ✅ Profile-based tool boosting (web-research, repo-coding, etc.)
-- ✅ Tool semantic search / Tool RAG via search_tools meta-tool
-- ✅ Search-and-use in one shot (auto_call_tool)
-- ✅ Eviction history and telemetry tracking
-- ✅ Observability dashboard (inspector page)
-- ✅ Catalog ingestion (5 adapters: Glama, Smithery, MCP.run, npm, GitHub Topics)
-- [ ] Supervisor tool prediction — preemptively inject tool ads based on conversation context
-- [ ] Progressive skill disclosure (same architecture as tool disclosure)
-
-### B. Tool parity with CLI harnesses (BETA)
-- ✅ Claude Code parity: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, LS, WebFetch
-- ✅ Codex CLI parity: shell, apply_diff, create_file, view_file, list_directory, search_files
-- ✅ Gemini CLI parity: read_file, write_file, edit_file, list_directory, search
-- ✅ OpenCode/Pi parity: read, write, edit, bash, glob, grep, ls, web_fetch
-- [ ] Cursor/Windsurf/Kiro-specific tool signatures
-- [ ] Goose/Crush/Codebuff/Amp-specific tool signatures
-- [ ] Wire tool parity aliases into MCP server tool surface
-- [ ] Go-native parity tools (port ToolParityAliases to Go)
-
-### C. Dashboard completeness (BETA)
-- ✅ Health page with real server health and crash tracking
-- ✅ Tools/Catalog page with real tool inventory and Always On toggling
-- ✅ Submodules page with git status and heal action
-- ✅ Observability page with real metrics (calls, error rate, latency)
-- ✅ Inspector page with working set, telemetry, eviction history
-- ✅ Session management and workspace tracking
-- [ ] Verify all 69 sub-pages show real data (in progress)
-- [ ] Polish empty states and loading indicators
-- [ ] Mobile-responsive layout
-
-### D. Session and memory continuity (EXPERIMENTAL)
-- [ ] Auto-detect sessions from all AI harnesses (Claude Code, Codex, Gemini CLI, etc.)
-- [ ] Session import with LLM extraction of valuable memories
-- [ ] Memory subsystem plugin architecture
-- [ ] Context harvesting from file changes
-- [ ] Memory browser extension integration
-
-### E. Provider and model management (STABLE)
-- ✅ Provider fallback chains with automatic model switching
-- ✅ Gemini 2.5 Flash free-tier fallback
-- ✅ Billing/cost dashboard
-- [ ] Free-tier provider chain (OpenRouter, Google AI Studio)
-- [ ] OAuth login for Claude Max/Pro, Copilot Premium, ChatGPT Plus
-- [ ] Intelligent model selection based on credits/quotas/budgets
-
-### F. Multi-model orchestration (VISION)
-- [ ] Multi-model chatroom with shared context
-- [ ] Rotating implementer/tester/planner roles
-- [ ] Council debate and consensus protocols
-- [ ] Autonomous supervisor until completion criteria met
-
-### G. Browser extension (VISION)
-- [ ] Chrome/Firefox extension for MCP injection into web chats
-- [ ] Session/memory export from web interfaces
-- [ ] Browser debug console integration
-- [ ] Browser history ingestion into memory
-
-### H. Go parity (BETA)
-- ✅ Go sidecar with 543 API routes
-- ✅ Go version sync via ldflags
-- ✅ Go-native handlers for council, billing, catalog, tools, etc.
-- [ ] Port remaining TypeScript handlers to Go
-- [ ] Go-native MCP router
-- [ ] Make Go the default runtime
+### A. MCP operator improvements
+- better tool grouping and search
 - stronger import/export clarity
 - better working-set management
 - groundwork for benchmarking, ranking, and operator review loops across discovered MCP servers

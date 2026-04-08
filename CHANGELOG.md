@@ -4,99 +4,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0-alpha.16] - 2026-04-08
-
-### Added
-- **Multi-Model Swarm Orchestration**: Implemented `SwarmController` to manage a team of models (Claude, GPT, Gemini, Qwen) with specific roles and a shared neural transcript.
-- **Swarm Completion Evaluation**: Added a "Critic" role to the swarm to evaluate task completion and provide feedback for iterative cycles.
-- **Swarm Tools**: Added `swarm_start_session` tool for one-shot autonomous task execution by a model team.
-
-### Changed
-- **Renaming Cleanup**: Renamed `borg.config.json` to `hypercode.config.json`.
-- **Submodule Renaming**: Completed the rename of `borg` adapter to `hypercode` adapter in the `hyperharness` submodule and cleaned up redundant files.
-
-## [1.0.0-alpha.15] - 2026-04-08
-
-### Changed
-- **Consolidated Renaming**: Renamed remaining `borg` references to `HyperCode` across `AGENTS.md`, `DEPLOY.md`, and other root documentation. Renamed `borg.config.json` to `hypercode.config.json`.
-- **Submodule Cleanup**: Renamed `borg` adapter to `hypercode` adapter in `submodules/hyperharness` and removed redundant `borg` folder. Updated system prompts to refer to `HyperCode`.
-- **Go Sidecar Monitoring**: Implemented a native `ConversationMonitor` loop in the Go sidecar that runs the `ToolPredictor` autonomously for active sessions.
-- **BobbyBookmarks Expansion**: Updated `BobbyBookmarksSyncWorker` to ingest bookmarks from `data/bobbybookmarks/bookmarks.txt` in addition to the SQLite DB, with automatic deduplication.
-
-### Added
-- **Agent-to-Agent (A2A) Protocol**: Defined the A2A communication protocol in `@hypercode/adk` and implemented the `A2ABroker` in both TypeScript and Go.
-- **A2A Dashboard Integration**: Added an A2A Message Broker view to the Agent Command Center dashboard, showing live message traffic between agents.
-- **A2A Tooling**: Added `a2a_broadcast` and `a2a_list_agents` MCP tools.
-
-## [1.0.0-alpha.14] - 2026-04-08
-
-### Fixed
-- **Build Stabilization**: Fixed `tsc` errors in `MCPServer.ts` and `Director.ts` caused by missing type casts and null/undefined mismatches.
-- **Package Integrity**: Successfully built `@hypercode/tools` and `@hypercode/agents` packages, ensuring new exports are available workspace-wide.
-
-### Changed
-- **Go Parity expansion**: Added native Go tool handlers for the core parity tools (Claude Code, Codex, OpenCode/Pi). The Go sidecar now executes these tools natively when the Node control plane is unreachable.
-- **Go Routing**: Implemented `handleAgentRunTool` in the Go sidecar with a "Native First, Bridge Second" strategy.
-- **Skill Search (Go)**: Added `/api/skills/search` endpoint to the Go sidecar to support progressive skill disclosure.
-
-## [1.0.0-alpha.13] - 2026-04-08
-
-### Added
-- **Multi-Model Pair Programming**: Implemented `PairOrchestrator` to coordinate Claude, GPT, and Gemini in a shared context with rotating roles (Planner, Implementer, Tester). Added `run_pair_session` MCP tool.
-- **Autonomous Tool Prediction**: Created `ToolPredictor` service that analyzes conversation history and preemptively preloads/hydrates relevant tools. Integrated into `Director` loop.
-- **Skill Discovery**: Added `search_skills` tool and improved `list_skills` for progressive skill disclosure.
-- **Browser Extension Improvements**: Added manual "Sync to Memory" and "Export Session" buttons to the extension dashboard for on-demand context capture.
-
-### Changed
-- **Go Parity Expansion**: Updated Go sidecar with comprehensive session discovery rules (Cursor, Windsurf, OpenCode, Gemini, etc.), native provider routing defaults, and registration for new native handlers.
-- **Version Sync**: Upgraded all 57 package.json files to v1.0.0-alpha.13.
-
-## [1.0.0-alpha.12] - 2026-04-08
-
-### Changed
-- **Local LLM Prioritization**: Reconfigured utility calls (worker tasks) to prioritize local LM Studio (`http://localhost:1234/v1`) using a specific aggressive Gemma-4 model.
-- **Provider Fallback Chain**: Updated `DEFAULT_CHAINS` and `CoreModelSelector` to use `openrouter/free` as the immediate fallback for local utility calls.
-- **Provider Registry**: Updated `openrouter` and `lmstudio` quality scores and recommendations to support the new routing strategy.
-- **Council Updates**: Switched "Local Assistant" in `council.json` to use LM Studio.
-- **Version Bump**: Synced all 57 package.json files to v1.0.0-alpha.12.
-
-## [1.0.0-alpha.11] - 2026-04-08
-
-### Added
-- **Tool Parity Aliases**: Comprehensive clean-room implementations of tool signatures from Claude Code, Codex CLI, Gemini CLI, OpenCode, Pi, Cursor, and Windsurf. 40+ tool aliases across 4 harness-specific sets:
-  - Claude Code: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, LS, WebFetch
-  - Codex CLI: shell, apply_diff, create_file, view_file, list_directory, search_files
-  - Gemini CLI: read_file, write_file, edit_file, list_directory, search
-  - OpenCode/Pi: read, write, edit, bash, glob, grep, ls, web_fetch
-  - Shared handlers for all tools with proper error handling, truncation, and edge cases
-  - Deduplication system that prefers first occurrence of each tool name
-
-## [1.0.0-alpha.10] - 2026-04-08
-
-### Changed
-- **Go Sidecar Version Sync**: `go/internal/buildinfo/buildinfo.go` now injects version from VERSION file at build time via `-ldflags`. Created `scripts/build-go.sh` for consistent builds.
-- **Submodule Pushes**: Pushed cloud-orchestrator, hyperharness, and claude-mem to their remotes. Merged hyperharness stash (borg→hypercode renames, foundation adapters).
-- **Documentation**: Updated HANDOFF.md, MEMORY.md (4 new observations), TODO.md. Verified meta-tool decision system is fully implemented (not just scaffolded).
-- **Build Verification**: Go binary compiles cleanly (18MB, 543 routes). TypeScript compiles cleanly. Doctor 11/11 checks pass.
-
-## [1.0.0-alpha.9] - 2026-04-08
-
-### Changed
-- **Submodule Sync**: Updated all submodules to latest upstream (cloud-orchestrator, hyperharness, prism-mcp, litellm, OmniRoute, maestro, mcpproxy, claude-mem). Resolved merge conflicts in cloud-orchestrator and hyperharness.
-- **Version Sync**: All 57 package.json files now synchronized to VERSION file.
-
-## [1.0.0-alpha.8] - 2026-04-07
-
-### Changed
-- **Gemini Model Update**: Updated default model from deprecated `gemini-2.0-flash` to `gemini-2.5-flash` (free tier, 1M context) in ProviderRegistry, CoreModelSelector tests, and council.json.
-- **REST Bridge**: Added 6 REST endpoints (`/api/scripts`, `/api/scripts/get`, `/create`, `/update`, `/delete`, `/execute`) in orchestrator.ts for dashboard-script integration.
-- **Build Hardening**: Added better-sqlite3 native binding auto-check to build_startup.mjs.
-- **Catalog Ingestor**: Updated glama.ai adapter to try multiple candidate URLs.
-- **Doctor Script**: Created `scripts/doctor.mjs` with 11 diagnostic checks (Node, Go, SQLite, ports, env, config, build artifacts).
-- **Documentation Overhaul**: Rewrote AGENTS.md, CLAUDE.md, GEMINI.md, GPT.md, copilot-instructions.md.
-- **New Docs**: Created IDEAS.md with 28 improvement ideas; rewrote HANDOFF.md, MEMORY.md, TODO.md, DEPLOY.md.
-- **Version Bump**: Synced all package.json files from stale `1.0.0-alpha.1` to VERSION file.
-
 ## [1.0.0-alpha.1] - 2026-04-02
 
 ### Added
@@ -143,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Native Go Browser Automation**: Deepened Go-native ownership of browser tools by implementing headless Chrome navigation, DOM extraction, and base64 screenshots natively in Go using `github.com/chromedp/chromedp`. The dashboard `browser.scrapePage` and `browser.screenshot` endpoints now delegate to real native Go automation instead of a stub fallback.
+- **Maestro Go/Wails Port Alignment**: Refactored the Wails-based Visual Orchestrator (`apps/maestro-go`) to act as a lightweight HTTP client for the Go-native `hypercode` control plane, replacing its broken monolithic internal supervisor with the `/api/sessions/supervisor/*` endpoints.
 - **Repo-wide HyperCode Rename**: Executed the broad "borg" → "hypercode" rename across the entire repository (200+ files), including Go module name, imports, environment variables, directories, and documentation.
 - **Go-Native Catalog Ingestion**: Ported the MCP catalog ingestion core and Glama adapter to Go, enabling native listing from external registries.
 - **Go-Native AutoDev Manager**: Ported the test/lint retry loop logic to Go, allowing native shell execution with retries in degraded mode.

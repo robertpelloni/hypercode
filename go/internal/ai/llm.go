@@ -306,82 +306,6 @@ func (p *OpenRouterProvider) GenerateText(ctx context.Context, model string, mes
 	return resp, nil
 }
 
-// LMStudioProvider uses local OpenAI-compatible API at localhost:1234
-type LMStudioProvider struct {
-	BaseURL string
-}
-
-func (p *LMStudioProvider) GenerateText(ctx context.Context, model string, messages []Message) (*LLMResponse, error) {
-	if p.BaseURL == "" {
-		p.BaseURL = "http://localhost:1234/v1/chat/completions"
-	}
-	oai := &OpenAIProvider{
-		APIKey:  "lm-studio",
-		BaseURL: p.BaseURL,
-	}
-	resp, err := oai.GenerateText(ctx, model, messages)
-	if err != nil {
-		return nil, err
-	}
-	resp.Provider = "lmstudio"
-	return resp, nil
-}
-
-// OllamaProvider uses local API at localhost:11434
-type OllamaProvider struct {
-	BaseURL string
-}
-
-func (p *OllamaProvider) GenerateText(ctx context.Context, model string, messages []Message) (*LLMResponse, error) {
-	if p.BaseURL == "" {
-		p.BaseURL = "http://localhost:11434/api/chat"
-	}
-
-	body := map[string]interface{}{
-		"model":    model,
-		"messages": messages,
-		"stream":   false,
-	}
-	reqBody, _ := json.Marshal(body)
-
-	req, err := http.NewRequestWithContext(ctx, "POST", p.BaseURL, bytes.NewBuffer(reqBody))
-	if err != nil {
-		return nil, err
-	}
-
-	client := &http.Client{Timeout: 60 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var payload struct {
-		Message struct {
-			Content string `json:"content"`
-		} `json:"message"`
-		PromptEvalCount int `json:"prompt_eval_count"`
-		EvalCount       int `json:"eval_count"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
-		return nil, err
-	}
-
-	return &LLMResponse{
-		Content:  payload.Message.Content,
-		Provider: "ollama",
-		Model:    model,
-		Usage: struct {
-			InputTokens  int
-			OutputTokens int
-		}{
-			InputTokens:  payload.PromptEvalCount,
-			OutputTokens: payload.EvalCount,
-		},
-	}, nil
-}
-
 // ProviderPriority defines the order for auto-routing
 var ProviderPriority = []struct {
 	EnvVar       string
@@ -394,9 +318,7 @@ var ProviderPriority = []struct {
 	{"GEMINI_API_KEY", "google", "gemini-2.5-flash", func(k string) Provider { return &GeminiProvider{APIKey: k} }},
 	{"OPENAI_API_KEY", "openai", "gpt-4o", func(k string) Provider { return &OpenAIProvider{APIKey: k} }},
 	{"DEEPSEEK_API_KEY", "deepseek", "deepseek-chat", func(k string) Provider { return &DeepSeekProvider{APIKey: k} }},
-	{"OPENROUTER_API_KEY", "openrouter", "openrouter/free", func(k string) Provider { return &OpenRouterProvider{APIKey: k} }},
-	{"", "lmstudio", "local-model", func(k string) Provider { return &LMStudioProvider{} }},
-	{"", "ollama", "gemma:2b", func(k string) Provider { return &OllamaProvider{} }},
+	{"OPENROUTER_API_KEY", "openrouter", "openrouter/auto", func(k string) Provider { return &OpenRouterProvider{APIKey: k} }},
 }
 
 type providerSelection struct {

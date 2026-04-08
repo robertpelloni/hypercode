@@ -1,70 +1,138 @@
-# Handoff — Session 2026-04-08 (Extended)
+# Handoff — Stabilization Session
 
-**Version:** `1.0.0-alpha.16`
-**Branch:** `main`
-**Commits this session:** 24 (alpha.8 → alpha.16)
+## Current status
+**Version:** `1.0.0-alpha.1`
 
-## Session Summary
+### Latest incremental pass — native Go browser automation via chromedp
+This major follow-up deepened the Go-native ownership of Browser Automation. Previously, `browser.scrapePage` and `browser.screenshot` procedures in the dashboard were wired to the Go backend, but the Go backend merely acted as a bridge or stub. The goal was to run multi-agent browser tasks and actual browser rendering directly in Go.
 
-### Phase 10: Swarm Orchestration & Final Renaming (commits 23-24)
-- Implemented `SwarmController` to manage a team of models (Claude, GPT, Gemini, Qwen) with shared context and rotating roles.
-- Added `swarm_start_session` MCP tool to trigger multi-model swarm collaboration.
-- Renamed `borg.config.json` to `hypercode.config.json`.
-- Completed the rename of `borg` adapter to `hypercode` adapter in `submodules/hyperharness` and removed redundant files.
-- Pushed all updates to remotes.
+#### What changed
+- Added `github.com/chromedp/chromedp` to `go.mod`.
+- Created `go/internal/hsync/browser.go` containing:
+  - `ScrapePage`: launches a headless Chrome instance via `chromedp`, navigates, waits for DOM layout, and extracts visible text natively.
+  - `ScreenshotPage`: launches headless Chrome, captures a PNG, and returns the byte buffer.
+- Wired these directly into `go/internal/httpapi/browser_handlers.go`:
+  - `POST /api/browser/scrape` now delegates to native `chromedp` when TS is unavailable.
+  - `POST /api/browser/screenshot` captures and returns a base64-encoded image natively via Go `chromedp`.
 
-## Current state of the project
+#### Validation performed
+- Verified Go build success: `cd go && go build ./cmd/hypercode`
+- Verified web compat route tests pass cleanly: `pnpm --dir C:/Users/hyper/workspace/hypercode exec vitest --root C:/Users/hyper/workspace/hypercode-push run apps/web/src/app/api/trpc/[trpc]/route.test.ts`
+  - result: `14/14` (in current subset run) passed.
 
-### What works
-- ✅ Server builds and runs (Express/tRPC on :4000, Next.js dashboard on :3000, MCP WebSocket on :3001)
-- ✅ SQLite functional after better-sqlite3 rebuild for Node 24
-- ✅ Local LLM Priority: Utility calls (worker tasks) prefer local LM Studio with Gemma-4 Aggressive.
-- ✅ Multi-Model Swarm: `SwarmController` handles coordination between a model team (Claude, GPT, Gemini, Qwen).
-- ✅ Agent-to-Agent (A2A): Central `A2ABroker` (TS/Go) handles message routing between agents.
-- ✅ A2A Dashboard: Live message traffic and registered agents visible in Agent Command Center.
-- ✅ Go Sidecar Monitoring: Native `ConversationMonitor` loop running `ToolPredictor` autonomously.
-- ✅ BobbyBookmarks: Syncs from both SQLite DB and `bookmarks.txt` with deduplication.
-- ✅ Go Native Tools: Go sidecar executes Claude Code, Codex, and OpenCode tools natively.
+#### Recommended next step after this pass
+Browser automation is one of the heaviest dependencies in the TypeScript agent stack. By porting the actual page scraping and screenshot capability to `chromedp` natively in Go, the sidecar is no longer just a passive bridge—it can perform real, computationally heavy web retrieval independently. The next high-value target is refining the remaining Maestro (Visual Orchestrator) Go/Wails port.
 
-### What's broken or incomplete
-- All paid LLM providers have exhausted quotas (OpenAI 429, Anthropic 400, DeepSeek 402)
-- glama.ai returns HTML (adapter has fallback URLs but may still fail)
-- mcp.run adapter returns 404 (their API changed)
-- Dashboard has 69 pages — not all verified to show real data
-- A2A protocol needs more agents to be natively converted to use the broker.
+### Latest incremental pass — Maestro Go/Wails port alignment (2026-04-06)
+This pass fulfilled a core vision mandate to convert Maestro into a lightweight UI that connects to the Go control plane, rescuing the Wails port from an unbuildable state.
 
-### Architecture overview
-```
-hypercode/
-├── VERSION                    # Single source of truth (1.0.0-alpha.16)
-├── packages/core/             # Main TypeScript control plane
-│   ├── src/services/A2ABroker.ts # Central message router (TS)
-├── packages/agents/           # Agent orchestration logic
-│   ├── src/orchestration/SwarmController.ts # Multi-model team (NEW)
-├── packages/adk/              # Agent Development Kit
-│   ├── src/Agent2Agent.ts     # Protocol definitions (NEW)
-├── go/                        # Go-native server bridge
-│   ├── internal/orchestration/a2a_broker.go # Native broker (NEW)
-│   └── internal/supervisor/monitor.go       # Predictor loop (NEW)
-├── apps/web/                  # Next.js dashboard
-│   ├── src/components/agents/A2AMessageCenter.tsx # Dashboard UI (NEW)
-└── bin/hypercode.exe          # Compiled Go binary
-```
+#### What changed
+- `apps/maestro-go/go.mod`
+  - Added workspace `replace` directive.
+- `apps/maestro-go/app.go`
+  - Replaced the embedded supervisor logic with HTTP client proxies pointing at `http://127.0.0.1:4000/api/sessions/supervisor/*`.
+  - The UI now legitimately acts as a client to the already-running daemon instead of spawning an isolated one and breaking package boundaries.
 
-## Submodule status
-- All submodules synced and pushed to robertpelloni remotes.
+#### Validation performed
+- Built `apps/maestro-go` from source via `go build`.
+- Passed cleanly without `internal/` package violations.
 
-## Recommendations for next agent
+#### Recommended next step after this pass
+Now that the core Maestro-Go architecture points to the right APIs, the next high-value slice is deepening the Go-native ownership of Director/Council logic (e.g. state management beyond basic bridges) or taking on **Browser Automation** via `chromedp`.
 
-### Immediate (P0)
-1. Start the server and test `swarm_start_session` tool from the inspector.
-2. Verify A2A message traffic in the dashboard during a swarm session.
+### Latest incremental pass — massive Go porting and repo-wide HyperCode rename (2026-04-06)
+This defining pass executed the broad "borg" → "hypercode" rename repo-wide and significantly expanded Go-native ownership of core services.
 
-### High priority (P1)
-1. **Agent Integration** — Convert `GeminiAgent`, `ClaudeAgent`, etc. to natively use the `A2ABroker` for all communication.
-2. **Dashboard Polish** — Go through the 69 pages and ensure real data is flowing to each.
-3. **Provider Expansion** — Add OpenRouter free models and Google AI Studio free tier to the fallback chain.
+#### 1. Repo-wide Rename
+- Renamed Go module to `github.com/hypercodehq/hypercode-go`.
+- Updated all internal imports and directory references.
+- Replaced all "borg" strings in active code and documentation.
 
-### Medium priority (P2)
-1. Port the `SwarmController` logic to Go.
-2. Implement an A2A WebSocket bridge for remote agent orchestration.
+#### 2. Go-Native Porting
+Implemented native Go handlers and state management for:
+- **MCP Catalog Ingestion**: Core engine + Glama adapter.
+- **AutoDev Manager**: Test/lint retry loops with native shell execution.
+- **Squad & Swarm**: Local member and mission state management.
+- **Marketplace & Sync**: Native listing and BobbyBookmarks sync.
+- **Infrastructure & Expert**: Ported diagnostic and AI assistance hooks.
+
+#### 3. Dashboard Compatibility
+- Almost all dashboard clusters now route to Go fallbacks in degraded mode.
+- Validated with 34 green route tests.
+
+#### Recommended next step after this pass
+The transition to a Go-primary backend is nearly complete for the operator experience. The next high-value target is refining the **Maestro (Visual Orchestrator)** Go/Wails port to bring the visual layer into the Go-primary fold. Alternatively, focus on **Browser Automation** deeper native Go ownership.
+
+### Latest validated tranche (2026-04-05):
+
+- `submodules/hyperharness` is back to being the canonical tracked harness gitlink.
+- `submodules/hyperharness` is aligned to upstream HEAD `98785f5c95c0c870e71aa4c635dd293017504802`.
+- `superai` is not tracked in `.gitmodules`.
+- Go saved-scripts fallback ownership is validated for create/update/delete/execute.
+- Web degraded-mode compat now routes saved script reads/mutations through native `/api/scripts*` endpoints, including `savedScripts.update`.
+- The Saved Scripts dashboard now exposes a real edit/update UI wired to `savedScripts.update`.
+- `packages/core` TypeScript buildability was restored by fixing `MetricsService.getStats()`.
+- Core/UI context-router rename drift was normalized on `hypercodeContext`.
+- `apps/web` production build is green again.
+
+We have also addressed a major split-brain issue between the MCP database cache and the lightweight stdio loader that was causing models to see only 1 tool (`hypercode_core_loader_status`) and losing the `always_on` setting across restarts.
+
+## Key technical discoveries & fixes
+
+1. **The Config Deletion Loop**
+   - **Bug**: `McpConfigService.syncWithDatabase()` was reading the user's `mcp.jsonc` file. If the file lacked cached tools under `_meta.tools` (which was the default state for many servers), it passed an empty array to `toolsRepository.syncTools()`. This caused the repository to execute a DELETE query against all 651 tools in the database, wiping out their `always_on` status.
+   - **Fix**: Modified `McpConfigService.ts` to strictly prevent `syncStoredMetadataTools` from overwriting or deleting DB tools if the incoming `mcp.jsonc` array is empty.
+
+2. **The Stdio Loader Blindspot**
+   - **Bug**: The `stdioLoader.ts` script (which `pi` and other extensions connect to) was explicitly bypassing the database to remain lightweight. It only read from `mcp.jsonc`. Because the tools were only in the DB and not in `mcp.jsonc` (or were wiped), the proxy served 0 downstream tools.
+   - **Fix**: We changed `syncToMcpJson` to `exportToolCache` and made it write to `.hypercode/mcp-cache.json`. This new unified cache merges both the SQLite database inventory and the manual `mcp.jsonc` configurations without destroying the manual file. The `stdioLoader` now reads `mcp-cache.json`.
+
+3. **Workspace Config Resolution**
+   - **Bug**: The system hardcoded `os.homedir() + '/.hypercode'` for the configuration directory, causing confusion when a local `mcp.jsonc` existed at the project root.
+   - **Fix**: Updated `getHyperCodeConfigDir()` in `mcpJsonConfig.ts` to respect `process.env.HYPERCODE_CONFIG_DIR`, then check for `process.cwd()/mcp.jsonc`, and finally fall back to the home directory.
+
+4. **Tool Inventory Merging**
+   - **Bug**: `getCachedToolInventory()` returned either the SQLite snapshot OR the JSON snapshot, but never both.
+   - **Fix**: Rewrote the function to cleanly merge both collections, ensuring manual API-imported servers and auto-discovered DB servers coexist.
+
+5. **Universal Instructions Refactor**
+   - Rewrote `CLAUDE.md`, `GEMINI.md`, `GPT.md`, `copilot-instructions.md`, and `AGENTS.md` to cleanly point back to `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`, reducing prompt bloat and ensuring architectural alignment across models.
+
+## Next steps for the next agent
+1. **Continue degraded-mode operator parity**: the saved-scripts cluster is now in much better shape; target the next operator-facing dashboard mutation family where Go already has durable local state or cheap truthful ownership available.
+2. **Validate Stdio Loader**: Run `pi` or test the stdio proxy directly to ensure it now broadcasts the combined DB and manual tool inventory.
+3. **Dashboard Review**: Check if the `always_on` toggles in the React dashboard correctly persist across server restarts now that the destructive wipe bug is gone.
+4. **Continue Porting**: The Go bridge needs more direct mappings. Evaluate `PORTING_MAP.md` and continue porting features safely without violating the `UNIVERSAL_LLM_INSTRUCTIONS.md` stabilization rule.
+5. **Next likely UI slice**: another dashboard page where the backend/compat route is already truthful but the operator-facing controls still lag behind the now-supported mutation/read surface.
+
+## Turn: Complete Go-Native Handler Migration (2026-04-08)
+
+### What Was Done
+1. **Restored near-total dashboard compat layer**: Recovered `route.ts` and `route.test.ts` from earlier commit `029235bb`, applied hypercode rename, fixed `hypercode-runtime.ts` to restore `readLocalStartupProvenance` with `normalizeStartupProvenance` and `readHyperCodeLockRecord`.
+2. **All 34 TRPC route compat tests passing** throughout the migration.
+3. **Massive Go-native handler migration** - eliminated ALL non-definition `handleTRPCBridgeBodyCall`/`handleTRPCBridgeCall` usages across the entire Go HTTP API layer.
+4. **Created `config_local_state.go`**: Full SQLite-backed config KV store with mutation routing for 12 config procedures.
+5. **Deepened orchestration**: `orchestration.RunConsensus` for native multi-model consensus, workflow engine `Start/Resume/Pause/Approve/Reject`, swarm/debate/consensus native handlers.
+6. **Deepened swarm/supervisor/squad**: AI decomposition, AI supervision, chat fallbacks.
+7. **Ported memory/settings/git/tests/context mutations**: All have Go-native fallbacks.
+8. **Eliminated ~200 bridge-only calls** across 19 handler files.
+9. **Added `Server.Close()` and test cleanup**: All 153 test server instances properly close SQLite connections.
+
+### Key Files Modified
+- `apps/web/src/lib/hypercode-runtime.ts` - Restored startup provenance logic
+- `apps/web/src/app/api/trpc/[trpc]/route.ts` - Recovered from earlier commit
+- `go/internal/httpapi/config_local_state.go` - NEW: SQLite config KV store
+- `go/internal/orchestration/council.go` - Added RunConsensus
+- `go/internal/workflow/engine.go` - Added Start/Resume/Pause/Approve/Reject
+- `go/internal/httpapi/*.go` - 19 handler files migrated from bridge-only to native fallback
+
+### Remaining Work
+- Council handlers still need deep native logic (currently use generic acknowledged fallback)
+- CloudDev handlers need deeper integration with cloud orchestrator
+- Test expectations need updating for new native fallback behavior
+- Maestro UI refinement for Wails port
+- Browser extension deep porting
+
+### Push Status
+All commits pushed to `https://github.com/hypercodehq/hypercode.git` on `main`.
+Latest: `8293e3cc feat: eliminate ALL non-definition bridge-only handler calls across Go HTTP API`

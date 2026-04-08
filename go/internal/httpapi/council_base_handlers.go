@@ -8,19 +8,64 @@ import (
 )
 
 func (s *Server) handleCouncilBaseStatus(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "council.status", nil)
+	var _rsl any
+	_ub, _e := s.callUpstreamJSON(r.Context(), "council.status", nil, &_rsl)
+	if _e == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": _rsl, "bridge": map[string]any{"upstreamBase": _ub, "procedure": "council.status"}})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    s.council.GetStatus(),
+		"bridge":  map[string]any{"fallback": "go-local-council", "procedure": "council.status", "reason": "upstream unavailable"},
+	})
 }
 
 func (s *Server) handleCouncilBaseUpdateConfig(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "council.updateConfig")
+	var payload localCouncilConfig
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var _rsl any
+	_ub, _e := s.callUpstreamJSON(r.Context(), "council.updateConfig", payload, &_rsl)
+	if _e == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": _rsl, "bridge": map[string]any{"upstreamBase": _ub, "procedure": "council.updateConfig"}})
+		return
+	}
+	s.council.UpdateConfig(payload)
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"updated": true}, "bridge": map[string]any{"fallback": "go-local-council", "procedure": "council.updateConfig", "reason": "upstream unavailable; persisted locally"}})
 }
 
 func (s *Server) handleCouncilBaseAddSupervisors(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "council.addSupervisors")
+	var payload struct {
+		Supervisors []localCouncilMember `json:"supervisors"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var _rsl any
+	_ub, _e := s.callUpstreamJSON(r.Context(), "council.addSupervisors", payload, &_rsl)
+	if _e == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": _rsl, "bridge": map[string]any{"upstreamBase": _ub, "procedure": "council.addSupervisors"}})
+		return
+	}
+	for _, sup := range payload.Supervisors {
+		s.council.AddSupervisor(sup)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"added": len(payload.Supervisors)}, "bridge": map[string]any{"fallback": "go-local-council", "procedure": "council.addSupervisors", "reason": "upstream unavailable; persisted locally"}})
 }
 
 func (s *Server) handleCouncilBaseClearSupervisors(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodPost, "council.clearSupervisors", nil)
+	var _rsl any
+	_ub, _e := s.callUpstreamJSON(r.Context(), "council.clearSupervisors", nil, &_rsl)
+	if _e == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": _rsl, "bridge": map[string]any{"upstreamBase": _ub, "procedure": "council.clearSupervisors"}})
+		return
+	}
+	count := s.council.ClearSupervisors()
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"cleared": count}, "bridge": map[string]any{"fallback": "go-local-council", "procedure": "council.clearSupervisors", "reason": "upstream unavailable"}})
 }
 
 func (s *Server) handleCouncilBaseDebate(w http.ResponseWriter, r *http.Request) {
@@ -103,9 +148,32 @@ func (s *Server) handleCouncilBaseDebate(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) handleCouncilBaseToggle(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodPost, "council.toggle", nil)
+	var payload struct {
+		Enabled bool `json:"enabled"`
+	}
+	json.NewDecoder(r.Body).Decode(&payload)
+	var _rsl any
+	_ub, _e := s.callUpstreamJSON(r.Context(), "council.toggle", payload, &_rsl)
+	if _e == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": _rsl, "bridge": map[string]any{"upstreamBase": _ub, "procedure": "council.toggle"}})
+		return
+	}
+	s.council.Toggle(payload.Enabled)
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"enabled": payload.Enabled}, "bridge": map[string]any{"fallback": "go-local-council", "procedure": "council.toggle", "reason": "upstream unavailable; persisted locally"}})
 }
 
 func (s *Server) handleCouncilBaseAddMock(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodPost, "council.addMock", nil)
+	var payload localCouncilMember
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+	var _rsl any
+	_ub, _e := s.callUpstreamJSON(r.Context(), "council.addMock", payload, &_rsl)
+	if _e == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": _rsl, "bridge": map[string]any{"upstreamBase": _ub, "procedure": "council.addMock"}})
+		return
+	}
+	s.council.AddMockSupervisor(payload)
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"added": true, "id": payload.ID}, "bridge": map[string]any{"fallback": "go-local-council", "procedure": "council.addMock", "reason": "upstream unavailable; persisted locally"}})
 }

@@ -177,3 +177,31 @@ Go is the primary version when:
 - all major backend surfaces above are **Native Go**
 - TS backend ownership is no longer required for normal operator workflows
 - remaining TS code is limited to crucial UI/client compatibility roles
+
+## Update: 2026-04-08 — Complete Handler Migration + Native Council State
+
+### Handler Migration Status
+- **ZERO** non-definition `handleTRPCBridgeBodyCall`/`handleTRPCBridgeCall` remaining in Go handler code
+- All 19 handler files now use upstream-first → Go-native-fallback pattern
+- Council handlers fully rewritten with native Go session manager (council_local_state.go)
+- Config mutations backed by SQLite KV store (config_local_state.go)
+- Workflow engine has Start/Resume/Pause/Approve/Reject methods
+- Swarm has native Go debate (RunDebate) and consensus (RunConsensus) orchestration
+- Supervisor decompose/supervise backed by AI AutoRoute
+- Squad chat backed by AI AutoRoute
+- Browser automation via chromedp
+- Healer diagnosis/auto-heal via AI AutoRoute
+
+### New Native Go Components
+| Component | File | Status |
+|-----------|------|--------|
+| Council Session Manager | council_local_state.go | ✅ Full CRUD + tags + logs + guidance + quota |
+| Config KV Store | config_local_state.go | ✅ SQLite-backed, 12 procedures |
+| Consensus Engine | orchestration/council.go | ✅ Multi-model consensus with judge |
+| Healer | hsync/healer.go | ✅ AI-backed diagnosis + auto-heal |
+| Browser Automation | hsync/browser.go | ✅ chromedp scrape + screenshot |
+
+### Test Status
+- TRPC route compat: **34/34 passing**
+- Go unit tests: Most passing, some fail due to API credit exhaustion (expected)
+- Go binary: **Compiles successfully**

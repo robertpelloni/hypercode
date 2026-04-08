@@ -90,33 +90,7 @@ function runGoPrimaryBuild() {
   }
 }
 
-function checkBetterSqlite3Bindings() {
-    // On Node 24, better-sqlite3 native bindings must be rebuilt after pnpm install.
-    // This check ensures the .node file exists before startup to prevent cascading failures.
-    printStep('Checking better-sqlite3 native bindings...');
-    const check = run(process.execPath, [
-        '-e',
-        "try { require('better-sqlite3')(':memory:'); console.log('OK') } catch(e) { console.error('FAIL:' + e.message); process.exit(1) }",
-    ], { stdio: 'pipe' });
-
-    if ((check.status ?? 1) === 0) {
-        printStep('better-sqlite3 native bindings are functional.');
-        return;
-    }
-
-    printStep('better-sqlite3 bindings missing or broken. Running pnpm rebuild...');
-    const rebuild = runPnpm(['rebuild', 'better-sqlite3']);
-    if ((rebuild.status ?? 1) !== 0) {
-        console.warn('[startup-build] WARNING: better-sqlite3 rebuild failed. SQLite-backed features will be unavailable.');
-        console.warn('[startup-build] You can try manually: pnpm rebuild better-sqlite3');
-    } else {
-        printStep('better-sqlite3 rebuilt successfully.');
-    }
-}
-
 try {
-  checkBetterSqlite3Bindings();
-
   if (profile === 'workspace') {
     runWorkspaceBuild();
   } else {

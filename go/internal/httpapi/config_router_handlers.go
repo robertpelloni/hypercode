@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"os"
 	"strconv"
@@ -80,15 +81,15 @@ func (s *Server) handleConfigGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleConfigUpsert(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "config.upsert")
+	s.configMutationWithFallback(w, r, "config.upsert")
 }
 
 func (s *Server) handleConfigDelete(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "config.delete")
+	s.configMutationWithFallback(w, r, "config.delete")
 }
 
 func (s *Server) handleConfigUpdate(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "config.update")
+	s.configMutationWithFallback(w, r, "config.update")
 }
 
 func (s *Server) handleConfigGetMCPTimeout(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +97,7 @@ func (s *Server) handleConfigGetMCPTimeout(w http.ResponseWriter, r *http.Reques
 }
 
 func (s *Server) handleConfigSetMCPTimeout(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "config.setMcpTimeout")
+	s.configMutationWithFallback(w, r, "config.setMcpTimeout")
 }
 
 func (s *Server) handleConfigGetMCPMaxAttempts(w http.ResponseWriter, r *http.Request) {
@@ -104,7 +105,7 @@ func (s *Server) handleConfigGetMCPMaxAttempts(w http.ResponseWriter, r *http.Re
 }
 
 func (s *Server) handleConfigSetMCPMaxAttempts(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "config.setMcpMaxAttempts")
+	s.configMutationWithFallback(w, r, "config.setMcpMaxAttempts")
 }
 
 func (s *Server) handleConfigGetMCPMaxTotalTimeout(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +113,7 @@ func (s *Server) handleConfigGetMCPMaxTotalTimeout(w http.ResponseWriter, r *htt
 }
 
 func (s *Server) handleConfigSetMCPMaxTotalTimeout(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "config.setMcpMaxTotalTimeout")
+	s.configMutationWithFallback(w, r, "config.setMcpMaxTotalTimeout")
 }
 
 func (s *Server) handleConfigGetMCPResetTimeoutOnProgress(w http.ResponseWriter, r *http.Request) {
@@ -143,7 +144,7 @@ func (s *Server) handleConfigGetMCPResetTimeoutOnProgress(w http.ResponseWriter,
 }
 
 func (s *Server) handleConfigSetMCPResetTimeoutOnProgress(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "config.setMcpResetTimeoutOnProgress")
+	s.configMutationWithFallback(w, r, "config.setMcpResetTimeoutOnProgress")
 }
 
 func (s *Server) handleConfigGetSessionLifetime(w http.ResponseWriter, r *http.Request) {
@@ -192,7 +193,7 @@ func (s *Server) handleConfigGetSessionLifetime(w http.ResponseWriter, r *http.R
 }
 
 func (s *Server) handleConfigSetSessionLifetime(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "config.setSessionLifetime")
+	s.configMutationWithFallback(w, r, "config.setSessionLifetime")
 }
 
 func (s *Server) handleConfigGetSignupDisabled(w http.ResponseWriter, r *http.Request) {
@@ -200,7 +201,7 @@ func (s *Server) handleConfigGetSignupDisabled(w http.ResponseWriter, r *http.Re
 }
 
 func (s *Server) handleConfigSetSignupDisabled(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "config.setSignupDisabled")
+	s.configMutationWithFallback(w, r, "config.setSignupDisabled")
 }
 
 func (s *Server) handleConfigGetSSOSignupDisabled(w http.ResponseWriter, r *http.Request) {
@@ -208,7 +209,7 @@ func (s *Server) handleConfigGetSSOSignupDisabled(w http.ResponseWriter, r *http
 }
 
 func (s *Server) handleConfigSetSSOSignupDisabled(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "config.setSsoSignupDisabled")
+	s.configMutationWithFallback(w, r, "config.setSsoSignupDisabled")
 }
 
 func (s *Server) handleConfigGetBasicAuthDisabled(w http.ResponseWriter, r *http.Request) {
@@ -216,7 +217,7 @@ func (s *Server) handleConfigGetBasicAuthDisabled(w http.ResponseWriter, r *http
 }
 
 func (s *Server) handleConfigSetBasicAuthDisabled(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "config.setBasicAuthDisabled")
+	s.configMutationWithFallback(w, r, "config.setBasicAuthDisabled")
 }
 
 func (s *Server) handleConfigGetAuthProviders(w http.ResponseWriter, r *http.Request) {
@@ -299,7 +300,7 @@ func (s *Server) handleConfigGetAlwaysVisibleTools(w http.ResponseWriter, r *htt
 }
 
 func (s *Server) handleConfigSetAlwaysVisibleTools(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "config.setAlwaysVisibleTools")
+	s.configMutationWithFallback(w, r, "config.setAlwaysVisibleTools")
 }
 
 func (s *Server) handleConfigBooleanFallback(w http.ResponseWriter, r *http.Request, procedure, key string, defaultValue bool) {
@@ -413,4 +414,46 @@ func (s *Server) localConfigInt(key string, defaultValue int) (int, error) {
 		return defaultValue, nil
 	}
 	return parsed, nil
+}
+
+func (s *Server) configMutationWithFallback(w http.ResponseWriter, r *http.Request, procedure string) {
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), procedure, payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge":  map[string]any{"upstreamBase": upstreamBase, "procedure": procedure},
+		})
+		return
+	}
+
+	if s.configStore == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   "config store not initialized",
+		})
+		return
+	}
+
+	res, fallbackErr := configMutationFallback(r.Context(), s.configStore, procedure, payload)
+	if fallbackErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"success": false,
+			"error":   fallbackErr.Error(),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    res,
+		"bridge":  map[string]any{"fallback": "go-local-config-kv", "procedure": procedure, "reason": "upstream unavailable; persisted via native Go config store"},
+	})
 }

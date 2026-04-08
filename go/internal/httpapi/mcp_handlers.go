@@ -1,7 +1,6 @@
 package httpapi
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 )
@@ -235,57 +234,5 @@ func (s *Server) handleMCPRuntimeServers(w http.ResponseWriter, r *http.Request)
 		"success": true,
 		"data":    baseServers,
 		"bridge":  bridge,
-	})
-}
-
-func (s *Server) handleMCPPredictTools(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
-		return
-	}
-
-	var payload struct {
-		ChatHistory string `json:"chatHistory"`
-		ActiveGoal  string `json:"activeGoal"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid JSON body"})
-		return
-	}
-
-	// Try native Go prediction first
-	predicted, err := s.mcpPredictor.PredictAndPreload(r.Context(), payload.ChatHistory, payload.ActiveGoal)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data": map[string]any{
-				"predictedTools": predicted,
-				"reasoning":      "Predicted via Go native predictor",
-			},
-			"bridge": map[string]any{
-				"source": "go-native-prediction",
-			},
-		})
-		return
-	}
-
-	// Fallback to upstream
-	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "mcp.predictTools", payload, &result)
-	if err == nil {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"success": true,
-			"data":    result,
-			"bridge": map[string]any{
-				"upstreamBase": upstreamBase,
-				"procedure":    "mcp.predictTools",
-			},
-		})
-		return
-	}
-
-	writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-		"success": false,
-		"error":   err.Error(),
 	})
 }

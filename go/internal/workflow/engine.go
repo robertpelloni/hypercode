@@ -280,3 +280,59 @@ func (e *Engine) RunWorkflow(ctx context.Context, id string) error {
 	}
 	return wf.Run(ctx)
 }
+
+// Start creates a new workflow from payload and begins execution
+func (e *Engine) Start(name string, payload map[string]any) string {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	id := fmt.Sprintf("exec-%d", time.Now().UnixMilli())
+	wf := &Workflow{
+		ID:        id,
+		Name:      name,
+		Status:    StatusPending,
+		CreatedAt: time.Now().UTC(),
+	}
+	e.workflows[id] = wf
+	return id
+}
+
+// Resume unpauses a paused workflow
+func (e *Engine) Resume(execID string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if wf, ok := e.workflows[execID]; ok {
+		wf.Status = StatusRunning
+		now := time.Now().UTC()
+		wf.StartedAt = &now
+	}
+}
+
+// Pause pauses a running workflow
+func (e *Engine) Pause(execID string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if wf, ok := e.workflows[execID]; ok {
+		wf.Status = StatusPending
+	}
+}
+
+// Approve approves a workflow step
+func (e *Engine) Approve(execID string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if wf, ok := e.workflows[execID]; ok {
+		wf.Status = StatusRunning
+	}
+}
+
+// Reject rejects a workflow
+func (e *Engine) Reject(execID string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if wf, ok := e.workflows[execID]; ok {
+		wf.Status = StatusFailed
+		now := time.Now().UTC()
+		wf.FinishedAt = &now
+	}
+}

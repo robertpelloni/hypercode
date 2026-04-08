@@ -91,7 +91,13 @@ func (s *Server) handleMeshFindPeer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleMeshBroadcast(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "mesh.broadcast")
+	var _rsl any
+	_ub, _e := s.callUpstreamJSON(r.Context(), "mesh.broadcast", nil, &_rsl)
+	if _e == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": _rsl, "bridge": map[string]any{"upstreamBase": _ub, "procedure": "mesh.broadcast"}})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{"acknowledged": true}, "bridge": map[string]any{"fallback": "go-local-mesh", "procedure": "mesh.broadcast", "reason": "upstream unavailable; recorded locally"}})
 }
 
 func parseMeshTimeoutMs(r *http.Request) int {

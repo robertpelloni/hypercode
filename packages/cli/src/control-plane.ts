@@ -1,6 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { homedir } from 'node:os';
+import { join } from 'node:path';
 
 import { resolveDataDir } from './commands/start.js';
 
@@ -66,37 +65,6 @@ function readStartLockRecord(dataDir: string): HyperCodeStartLockRecord | null {
     }
 
     return parsed as HyperCodeStartLockRecord;
-  } catch {
-    return null;
-  }
-}
-
-// === readLocalStartupProvenance ===
-
-export interface LocalStartupProvenance {
-  requestedPort: number;
-  activePort: number;
-  portDecision: string;
-  portReason: string;
-  updatedAt?: string;
-}
-
-export function readLocalStartupProvenance(dataDir: string): LocalStartupProvenance | null {
-  const resolvedDir = dataDir.startsWith('~')
-    ? resolve(dataDir.replace('~', homedir()))
-    : resolve(dataDir);
-  const lockPath = join(resolvedDir, 'lock');
-  try {
-    const raw = readFileSync(lockPath, 'utf8');
-    const lock = JSON.parse(raw) as { port?: number; createdAt?: string; [key: string]: unknown };
-    const port = lock.port ?? DEFAULT_TRPC_PORT;
-    return {
-      requestedPort: port,
-      activePort: port,
-      portDecision: 'derived from lock record',
-      portReason: 'Detailed startup port provenance was unavailable; using the current control-plane lock port.',
-      updatedAt: lock.createdAt,
-    };
   } catch {
     return null;
   }

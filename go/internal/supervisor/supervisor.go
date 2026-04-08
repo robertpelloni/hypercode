@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hypercodehq/hypercode-go/internal/mcp"
 	worktreegit "github.com/hypercodehq/hypercode-go/internal/git"
 )
 
@@ -160,7 +159,6 @@ type Manager struct {
 	restartDelay      time.Duration
 	restoreStatus     RestoreStatus
 	worktreeManager   *worktreegit.WorktreeManager
-	monitor           *ConversationMonitor
 }
 
 func NewManager(options ...ManagerOptions) *Manager {
@@ -194,13 +192,6 @@ func NewManager(options ...ManagerOptions) *Manager {
 	}
 	manager.restoreSessions()
 	return manager
-}
-
-func (m *Manager) SetPredictor(predictor *mcp.ToolPredictor) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.monitor = NewConversationMonitor(m, predictor)
-	m.monitor.Start(context.Background())
 }
 
 func (m *Manager) CreateSession(id, command string, args []string, env map[string]string, cwd string, maxRestarts int) (*SupervisedSession, error) {

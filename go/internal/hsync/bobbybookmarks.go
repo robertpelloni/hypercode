@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -50,214 +48,9 @@ func coerceTags(tags interface{}) string {
 	if tags == nil {
 		return "[]"
 	}
-	switch v := tags.(type) {
-	case string:
-		if v == "" {
-			return "[]"
-		}
-		parts := strings.Split(v, ",")
-		var result []string
-		for _, p := range parts {
-			trimmed := strings.TrimSpace(p)
-			if trimmed != "" {
-				result = append(result, trimmed)
-			}
-		}
-		b, _ := json.Marshal(result)
-		return string(b)
-	case []interface{}:
-		var result []string
-		for _, item := range v {
-			if s, ok := item.(string); ok {
-				trimmed := strings.TrimSpace(s)
-				if trimmed != "" {
-					result = append(result, trimmed)
-				}
-			}
-		}
-		b, _ := json.Marshal(result)
-		return string(b)
-	case []string:
-		b, _ := json.Marshal(v)
-		return string(b)
-	default:
-		b, _ := json.Marshal(v)
-		return string(b)
-	}
-}
-
-func NormalizeBookmarkURL(rawURL string) string {
-	trimmed := strings.TrimSpace(rawURL)
-	if trimmed == "" {
-		return ""
-	}
-
-	candidate := trimmed
-	if !strings.Contains(trimmed, "://") {
-		candidate = "https://" + trimmed
-	}
-
-	u, err := url.Parse(candidate)
-	if err != nil {
-		return strings.ToLower(trimmed)
-	}
-
-	blockedParams := map[string]bool{
-		"utm_source":   true,
-		"utm_medium":   true,
-		"utm_campaign": true,
-		"utm_term":     true,
-		"utm_content":  true,
-		"utm_id":       true,
-		"utm_reader":   true,
-		"utm_name":     true,
-		"utm_cid":      true,
-		"fbclid":       true,
-		"gclid":        true,
-		"gclsrc":       true,
-		"dclid":        true,
-		"msclkid":      true,
-		"adrefer":      true,
-		"ref":          true,
-		"source":       true,
-		"mc_cid":       true,
-		"mc_eid":       true,
-		"zanpid":       true,
-		"openid":       true,
-		"_ga":          true,
-		"_gid":         true,
-		"igshid":       true,
-		"yclid":        true,
-		"twclid":       true,
-		"li_fat_id":    true,
-		"epik":         true,
-		"rdid":         true,
-		"ttclid":       true,
-		"wbraid":       true,
-		"gbraid":       true,
-		"srsltid":      true,
-	}
-
-	defaultPorts := map[string]string{
-		"http:":  "80",
-		"https:": "443",
-		"ftp:":   "21",
-	}
-
-	u.Scheme = strings.ToLower(u.Scheme)
-	u.Host = strings.ToLower(u.Host)
-	if port := u.Port(); port != "" {
-		if defaultPort, ok := defaultPorts[u.Scheme+":"]; ok && port == defaultPort {
-			u.Host = strings.Split(u.Host, ":")[0]
-		}
-	}
-
-	u.Path = strings.ToLower(u.Path)
-	if u.Path != "/" && strings.HasSuffix(u.Path, "/") {
-		u.Path = strings.TrimRight(u.Path, "/")
-	}
-	if u.Path == "" {
-		u.Path = "/"
-	}
-
-	q := u.Query()
-	var keys []string
-	for k := range q {
-		lowerK := strings.ToLower(k)
-		if blockedParams[lowerK] || strings.HasPrefix(lowerK, "utm_") {
-			q.Del(k)
-			continue
-		}
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	newQ := url.Values{}
-	for _, k := range keys {
-		vals := q[k]
-		for _, v := range vals {
-			newQ.Add(strings.ToLower(k), v)
-		}
-	}
-	u.RawQuery = newQ.Encode()
-	u.Fragment = ""
-
-	return u.String()
-}
-
-func upsertBookmarks(tx *sql.Tx, bookmarks []Bookmark) (int, error) {
-	stmt, err := tx.Prepare(`
-		INSERT INTO links_backlog (
-			uuid, url, normalized_url, title, description, tags, source, 
-			is_duplicate, duplicate_of, research_status, http_status, 
-			page_title, page_description, favicon_url, cluster_id, 
-			bobbybookmarks_bookmark_id, import_session_id, synced_at, created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT(url) DO UPDATE SET
-			normalized_url = excluded.normalized_url,
-			title = coalesce(excluded.title, links_backlog.title),
-			description = coalesce(excluded.description, links_backlog.description),
-			tags = excluded.tags,
-			is_duplicate = excluded.is_duplicate,
-			duplicate_of = excluded.duplicate_of,
-			research_status = excluded.research_status,
-			http_status = coalesce(excluded.http_status, links_backlog.http_status),
-			page_title = coalesce(excluded.page_title, links_backlog.page_title),
-			page_description = coalesce(excluded.page_description, links_backlog.page_description),
-			favicon_url = coalesce(excluded.favicon_url, links_backlog.favicon_url),
-			cluster_id = excluded.cluster_id,
-			bobbybookmarks_bookmark_id = excluded.bobbybookmarks_bookmark_id,
-			import_session_id = excluded.import_session_id,
-			synced_at = excluded.synced_at,
-			updated_at = excluded.updated_at
-	`)
-	if err != nil {
-		return 0, err
-	}
-	defer stmt.Close()
-
-	now := time.Now().UnixMilli()
-	upserted := 0
-
-	for _, bm := range bookmarks {
-		if strings.TrimSpace(bm.URL) == "" {
-			continue
-		}
-
-		normURL := bm.NormalizedURL
-		if normURL == "" {
-			normURL = NormalizeBookmarkURL(bm.URL)
-		}
-
-		dupOf := ""
-		if bm.DuplicateOf != nil {
-			dupOf = fmt.Sprintf("%v", bm.DuplicateOf)
-		}
-
-		clusterID := ""
-		if bm.ClusterID != nil {
-			clusterID = fmt.Sprintf("%v", bm.ClusterID)
-		}
-
-		rStatus := "pending"
-		if bm.ResearchStatus != nil {
-			rStatus = *bm.ResearchStatus
-		}
-
-		uid := uuid.New().String()
-
-		_, err = stmt.Exec(
-			uid, bm.URL, normURL, bm.Title, bm.Description, coerceTags(bm.Tags), "bobbybookmarks",
-			bm.IsDuplicate, dupOf, rStatus, bm.HTTPStatus,
-			bm.PageTitle, bm.PageDescription, bm.FaviconURL, clusterID,
-			bm.ID, bm.ImportSessionID, now, now, now,
-		)
-		if err == nil {
-			upserted++
-		}
-	}
-
-	return upserted, nil
+	// Simplified coercion for now: just marshal back to JSON or parse slice
+	b, _ := json.Marshal(tags)
+	return string(b)
 }
 
 func SyncBobbyBookmarks(ctx context.Context, dbPath string, baseURL string, perPage int, includeDuplicates bool, includeResearched bool) (*SyncReport, error) {
@@ -314,7 +107,7 @@ func SyncBobbyBookmarks(ctx context.Context, dbPath string, baseURL string, perP
 			// Handle fallback structure
 			Items []Bookmark `json:"items"`
 		}
-
+		
 		decodeErr := json.NewDecoder(resp.Body).Decode(&payload)
 		resp.Body.Close()
 		if decodeErr != nil {
@@ -341,14 +134,83 @@ func SyncBobbyBookmarks(ctx context.Context, dbPath string, baseURL string, perP
 			break
 		}
 
-		upserted, err := upsertBookmarks(tx, bookmarks)
+		stmt, err := tx.Prepare(`
+			INSERT INTO links_backlog (
+				uuid, url, normalized_url, title, description, tags, source, 
+				is_duplicate, duplicate_of, research_status, http_status, 
+				page_title, page_description, favicon_url, cluster_id, 
+				bobbybookmarks_bookmark_id, import_session_id, synced_at, created_at, updated_at
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT(url) DO UPDATE SET
+				normalized_url = excluded.normalized_url,
+				title = coalesce(excluded.title, links_backlog.title),
+				description = coalesce(excluded.description, links_backlog.description),
+				tags = excluded.tags,
+				is_duplicate = excluded.is_duplicate,
+				duplicate_of = excluded.duplicate_of,
+				research_status = excluded.research_status,
+				http_status = coalesce(excluded.http_status, links_backlog.http_status),
+				page_title = coalesce(excluded.page_title, links_backlog.page_title),
+				page_description = coalesce(excluded.page_description, links_backlog.page_description),
+				favicon_url = coalesce(excluded.favicon_url, links_backlog.favicon_url),
+				cluster_id = excluded.cluster_id,
+				bobbybookmarks_bookmark_id = excluded.bobbybookmarks_bookmark_id,
+				import_session_id = excluded.import_session_id,
+				synced_at = excluded.synced_at,
+				updated_at = excluded.updated_at
+		`)
+
 		if err != nil {
 			tx.Rollback()
-			report.Errors = append(report.Errors, "upsert error: "+err.Error())
+			report.Errors = append(report.Errors, "stmt prepare error: "+err.Error())
 			break
 		}
-		report.Upserted += upserted
 
+		now := time.Now().UnixMilli()
+
+		for _, bm := range bookmarks {
+			if strings.TrimSpace(bm.URL) == "" {
+				continue
+			}
+
+			normURL := bm.NormalizedURL
+			if normURL == "" {
+				normURL = bm.URL
+			}
+
+			dupOf := ""
+			if bm.DuplicateOf != nil {
+				dupOf = fmt.Sprintf("%v", bm.DuplicateOf)
+			}
+			
+			clusterID := ""
+			if bm.ClusterID != nil {
+				clusterID = fmt.Sprintf("%v", bm.ClusterID)
+			}
+
+			rStatus := "pending"
+			if bm.ResearchStatus != nil {
+				rStatus = *bm.ResearchStatus
+			}
+
+			uid := uuid.New().String()
+
+			_, err = stmt.Exec(
+				uid, bm.URL, normURL, bm.Title, bm.Description, coerceTags(bm.Tags), "bobbybookmarks",
+				bm.IsDuplicate, dupOf, rStatus, bm.HTTPStatus,
+				bm.PageTitle, bm.PageDescription, bm.FaviconURL, clusterID,
+				bm.ID, bm.ImportSessionID, now, now, now,
+			)
+			if err == nil {
+				report.Upserted++
+			}
+		}
+
+		if err := stmt.Close(); err != nil {
+			tx.Rollback()
+			report.Errors = append(report.Errors, "stmt close error: "+err.Error())
+			break
+		}
 		if err := tx.Commit(); err != nil {
 			report.Errors = append(report.Errors, "tx commit error: "+err.Error())
 			break
@@ -357,88 +219,6 @@ func SyncBobbyBookmarks(ctx context.Context, dbPath string, baseURL string, perP
 		if len(bookmarks) < perPage {
 			break
 		}
-	}
-
-	return report, nil
-}
-
-func SyncBobbyBookmarksLocal(ctx context.Context, destDbPath string, sourceDbPath string) (*SyncReport, error) {
-	report := &SyncReport{
-		Source:  "bobbybookmarks-local",
-		BaseURL: "local://" + sourceDbPath,
-		Errors:  []string{},
-	}
-
-	if _, err := os.Stat(sourceDbPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("source database not found: %s", sourceDbPath)
-	}
-
-	sourceDb, err := sql.Open("sqlite", sourceDbPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open source database: %w", err)
-	}
-	defer sourceDb.Close()
-
-	destDb, err := sql.Open("sqlite", destDbPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open destination database: %w", err)
-	}
-	defer destDb.Close()
-
-	rows, err := sourceDb.QueryContext(ctx, "SELECT id, url, short_description, long_description, tags, research_level FROM bookmarks")
-	if err != nil {
-		return nil, fmt.Errorf("failed to query bookmarks: %w", err)
-	}
-	defer rows.Close()
-
-	var bookmarks []Bookmark
-	for rows.Next() {
-		var b Bookmark
-		var shortDesc, longDesc, tags sql.NullString
-		var researchLevel sql.NullString
-		if err := rows.Scan(&b.ID, &b.URL, &shortDesc, &longDesc, &tags, &researchLevel); err != nil {
-			report.Errors = append(report.Errors, "scan error: "+err.Error())
-			continue
-		}
-
-		if shortDesc.Valid {
-			b.Title = &shortDesc.String
-		}
-		if longDesc.Valid {
-			b.Description = &longDesc.String
-		}
-		if tags.Valid {
-			b.Tags = tags.String
-		}
-		if researchLevel.Valid {
-			rl := researchLevel.String
-			if rl == "done" {
-				rl = "done"
-			} else {
-				rl = "pending"
-			}
-			b.ResearchStatus = &rl
-		}
-
-		bookmarks = append(bookmarks, b)
-	}
-
-	report.Fetched = len(bookmarks)
-
-	tx, err := destDb.Begin()
-	if err != nil {
-		return nil, fmt.Errorf("tx begin error: %w", err)
-	}
-
-	upserted, err := upsertBookmarks(tx, bookmarks)
-	if err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("upsert error: %w", err)
-	}
-	report.Upserted = upserted
-
-	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("tx commit error: %w", err)
 	}
 
 	return report, nil

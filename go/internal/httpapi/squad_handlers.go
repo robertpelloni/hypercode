@@ -3,6 +3,8 @@ package httpapi
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/hypercodehq/hypercode-go/internal/ai"
 )
 
 func (s *Server) handleSquadList(w http.ResponseWriter, r *http.Request) {
@@ -105,7 +107,40 @@ func (s *Server) handleSquadKill(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleSquadChat(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "squad.chat")
+	var payload struct {
+		Message string `json:"message"`
+		Role    string `json:"role"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"success": false, "error": "invalid request body"})
+		return
+	}
+
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "squad.chat", payload, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{"upstreamBase": upstreamBase, "procedure": "squad.chat"},
+		})
+		return
+	}
+
+	resp, aiErr := ai.AutoRoute(r.Context(), []ai.Message{
+		{Role: "system", Content: "You are a squad " + payload.Role + " agent. Respond concisely and helpfully."},
+		{Role: "user", Content: payload.Message},
+	})
+	if aiErr != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"success": false, "error": aiErr.Error()})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data":    map[string]any{"response": resp.Content, "role": payload.Role},
+		"bridge": map[string]any{"fallback": "go-local-squad", "procedure": "squad.chat", "reason": "upstream unavailable; native Go AI squad chat"},
+	})
 }
 
 func (s *Server) handleSquadToggleIndexer(w http.ResponseWriter, r *http.Request) {

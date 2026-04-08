@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
+import { readLocalStartupProvenance } from '../../../../lib/hypercode-runtime';
 import { normalizeImportedServerType } from '../../../../lib/mcp-import';
 import { resolveUpstreamBases } from '../../../../lib/trpc-upstream';
 
@@ -36,7 +37,7 @@ const LEGACY_MCP_JSONC_PATH = path.join(LEGACY_REPO_ROOT, 'mcp.jsonc');
 const LEGACY_MCP_JSON_PATH = path.join(LEGACY_REPO_ROOT, 'mcp.json');
 const JSONC_HEADER = `// HyperCode MCP configuration\n// This file is HyperCode-owned and may include cached server metadata under mcpServers.<name>._meta.\n`;
 
-function resolveHyperCodeConfigDir(): string {
+function resolveHypercodeConfigDir(): string {
   const configuredDir = process.env.HYPERCODE_CONFIG_DIR?.trim();
   if (configuredDir) {
     return configuredDir;
@@ -46,7 +47,7 @@ function resolveHyperCodeConfigDir(): string {
 }
 
 function resolvePrimaryMcpPaths(): { jsoncPath: string; jsonPath: string } {
-  const configDir = resolveHyperCodeConfigDir();
+  const configDir = resolveHypercodeConfigDir();
   return {
     jsoncPath: path.join(configDir, 'mcp.jsonc'),
     jsonPath: path.join(configDir, 'mcp.json'),
@@ -136,16 +137,119 @@ const LOCAL_COMPAT_RESPONSE_KEYS = {
   'mcp.getToolPreferences': 'mcp.getToolPreferences',
   'mcp.getJsoncEditor': 'mcp.getJsoncEditor',
   'mcpServers.get': 'mcpServers.get',
+  'mcpServers.syncTargets': 'mcpServers.syncTargets',
+  'mcpServers.exportClientConfig': 'mcpServers.exportClientConfig',
   'apiKeys.list': 'apiKeys.list',
+  'secrets.list': 'secrets.list',
+  'policies.list': 'policies.list',
   'savedScripts.list': 'savedScripts.list',
+  'config.list': 'config.list',
   'tools.detectCliHarnesses': 'tools.detectCliHarnesses',
   'tools.detectExecutionEnvironment': 'tools.detectExecutionEnvironment',
   'tools.detectInstallSurfaces': 'tools.detectInstallSurfaces',
   'expert.getStatus': 'expert.getStatus',
+  'session.catalog': 'session.catalog',
+  'session.importedMaintenanceStats': 'session.importedMaintenanceStats',
   'session.getState': 'session.getState',
+  'session.get': 'session.get',
+  'session.logs': 'session.logs',
+  'session.attachInfo': 'session.attachInfo',
+  'session.health': 'session.health',
+  'toolSets.list': 'toolSets.list',
+  'agentMemory.search': 'agentMemory.search',
+  'agentMemory.add': 'agentMemory.add',
+  'agentMemory.getRecent': 'agentMemory.getRecent',
+  'agentMemory.getByType': 'agentMemory.getByType',
+  'agentMemory.getByNamespace': 'agentMemory.getByNamespace',
+  'agentMemory.delete': 'agentMemory.delete',
+  'agentMemory.clearSession': 'agentMemory.clearSession',
+  'agentMemory.export': 'agentMemory.export',
+  'agentMemory.handoff': 'agentMemory.handoff',
+  'agentMemory.pickup': 'agentMemory.pickup',
   'agentMemory.stats': 'agentMemory.stats',
+  'memory.getAgentStats': 'memory.getAgentStats',
+  'memory.getRecentObservations': 'memory.getRecentObservations',
+  'memory.searchObservations': 'memory.searchObservations',
+  'memory.getRecentUserPrompts': 'memory.getRecentUserPrompts',
+  'memory.searchUserPrompts': 'memory.searchUserPrompts',
+  'memory.getRecentSessionSummaries': 'memory.getRecentSessionSummaries',
+  'memory.searchSessionSummaries': 'memory.searchSessionSummaries',
+  'memory.searchAgentMemory': 'memory.searchAgentMemory',
+  'memory.searchMemoryPivot': 'memory.searchMemoryPivot',
+  'memory.getMemoryTimelineWindow': 'memory.getMemoryTimelineWindow',
+  'memory.getCrossSessionMemoryLinks': 'memory.getCrossSessionMemoryLinks',
+  'memory.listInterchangeFormats': 'memory.listInterchangeFormats',
+  'memory.exportMemories': 'memory.exportMemories',
   'shell.getSystemHistory': 'shell.getSystemHistory',
   'serverHealth.check': 'serverHealth.check',
+  'project.getContext': 'project.getContext',
+  'project.getHandoffs': 'project.getHandoffs',
+  'skills.list': 'skills.list',
+  'skills.read': 'skills.read',
+  'submodule.list': 'submodule.list',
+  'submodule.detectCapabilities': 'submodule.detectCapabilities',
+  'git.getModules': 'git.getModules',
+  'git.getLog': 'git.getLog',
+  'git.getStatus': 'git.getStatus',
+  'catalog.list': 'catalog.list',
+  'catalog.get': 'catalog.get',
+  'catalog.listRuns': 'catalog.listRuns',
+  'catalog.stats': 'catalog.stats',
+  'catalog.listLinkedServers': 'catalog.listLinkedServers',
+  'browser.status': 'browser.status',
+  'browser.searchHistory': 'browser.searchHistory',
+  'browser.scrapePage': 'browser.scrapePage',
+  'browser.proxyFetch': 'browser.proxyFetch',
+  'browser.screenshot': 'browser.screenshot',
+  'browser.debug': 'browser.debug',
+  'browser.closePage': 'browser.closePage',
+  'browser.closeAll': 'browser.closeAll',
+  'council.base.status': 'council.base.status',
+  'council.members': 'council.members',
+  'council.updateMembers': 'council.updateMembers',
+  'council.sessions.list': 'council.sessions.list',
+  'council.sessions.stats': 'council.sessions.stats',
+  'council.history.list': 'council.history.list',
+  'council.quota.allStats': 'council.quota.allStats',
+  'council.smartPilot.status': 'council.smartPilot.status',
+  'council.visual.systemDiagram': 'council.visual.systemDiagram',
+  'director.chat': 'director.chat',
+  'directorConfig.get': 'directorConfig.get',
+  'directorConfig.update': 'directorConfig.update',
+  'suggestions.list': 'suggestions.list',
+  'suggestions.resolve': 'suggestions.resolve',
+  'suggestions.clearAll': 'suggestions.clearAll',
+  'squad.list': 'squad.list',
+  'squad.spawn': 'squad.spawn',
+  'squad.kill': 'squad.kill',
+  'expert.research': 'expert.research',
+  'expert.code': 'expert.code',
+  'marketplace.list': 'marketplace.list',
+  'marketplace.get': 'marketplace.get',
+  'marketplace.install': 'marketplace.install',
+  'marketplace.publish': 'marketplace.publish',
+  'swarm.startSwarm': 'swarm.startSwarm',
+  'swarm.resumeMission': 'swarm.resumeMission',
+  'swarm.listMissions': 'swarm.listMissions',
+  'swarm.getMission': 'swarm.getMission',
+  'swarm.stopMission': 'swarm.stopMission',
+  'swarm.deleteMission': 'swarm.deleteMission',
+  'swarm.getLogs': 'swarm.getLogs',
+  'swarm.getAnalytics': 'swarm.getAnalytics',
+  'swarm.decomposeTask': 'swarm.decomposeTask',
+  'swarm.approveTask': 'swarm.approveTask',
+  'swarm.updateTaskPriority': 'swarm.updateTaskPriority',
+  'swarm.seekConsensus': 'swarm.consensus',
+  'swarm.executeDebate': 'swarm.debate',
+  'swarm.sendDirectMessage': 'swarm.sendDirectMessage',
+  'infrastructure.runDoctor': 'infrastructure.runDoctor',
+  'infrastructure.applyConfigurations': 'infrastructure.applyConfigurations',
+  'linksBacklog.stats': 'linksBacklog.stats',
+  'linksBacklog.list': 'linksBacklog.list',
+  'linksBacklog.syncFromBobbyBookmarks': 'linksBacklog.syncFromBobbyBookmarks',
+  'unifiedDirectory.stats': 'unifiedDirectory.stats',
+  'unifiedDirectory.list': 'unifiedDirectory.list',
+  'workspace.list': 'workspace.list',
 } as const;
 
 type LocalCompatProcedure = keyof typeof LOCAL_COMPAT_RESPONSE_KEYS;
@@ -169,22 +273,138 @@ const LEGACY_COMPAT_RESPONSES: Record<LegacyCompatResponseKey, unknown> = {
 const LEGACY_MCP_PROCEDURES = new Set(Object.keys(LEGACY_COMPAT_RESPONSE_KEYS));
 const LOCAL_COMPAT_PROCEDURES = new Set(Object.keys(LOCAL_COMPAT_RESPONSE_KEYS));
 const LOCAL_OPERATOR_MUTATION_PROCEDURES = new Set([
+  'apiKeys.create',
+  'apiKeys.delete',
+  'secrets.set',
+  'secrets.delete',
+  'policies.create',
+  'policies.update',
+  'policies.delete',
+  'toolSets.create',
+  'toolSets.delete',
   'savedScripts.create',
   'savedScripts.update',
   'savedScripts.delete',
   'savedScripts.execute',
 ]);
-const LOCAL_MCP_MUTATION_PROCEDURES = new Set([
+const LOCAL_CONFIG_MUTATION_PROCEDURES = new Set([
+  'config.update',
+]);
+const LOCAL_TOOL_MUTATION_PROCEDURES = new Set([
+  'tools.setAlwaysOn',
+]);
+const LOCAL_MEMORY_MUTATION_PROCEDURES = new Set([
+  'memory.addFact',
+  'memory.importMemories',
+  'memory.convertMemories',
+]);
+const LOCAL_AGENT_MEMORY_MUTATION_PROCEDURES = new Set([
+  'agentMemory.add',
+  'agentMemory.delete',
+  'agentMemory.clearSession',
+  'agentMemory.handoff',
+  'agentMemory.pickup',
+]);
+const LOCAL_MCP_CONFIG_MUTATION_PROCEDURES = new Set([
   'mcpServers.create',
   'mcpServers.update',
   'mcpServers.delete',
   'mcpServers.reloadMetadata',
   'mcpServers.clearMetadataCache',
+  'mcpServers.syncClientConfig',
   'serverHealth.reset',
 ]);
+const LOCAL_MCP_RUNTIME_MUTATION_PROCEDURES = new Set([
+  'mcp.setToolPreferences',
+  'mcp.loadTool',
+  'mcp.unloadTool',
+  'mcp.clearToolSelectionTelemetry',
+  'mcp.clearWorkingSetEvictionHistory',
+  'mcp.setLifecycleModes',
+]);
+const LOCAL_SESSION_MUTATION_PROCEDURES = new Set([
+  'session.create',
+  'session.start',
+  'session.stop',
+  'session.restart',
+  'session.executeShell',
+  'session.updateState',
+  'session.clear',
+]);
+const LOCAL_PROJECT_MUTATION_PROCEDURES = new Set([
+  'project.updateContext',
+]);
+const LOCAL_SKILL_MUTATION_PROCEDURES = new Set([
+  'skills.assimilate',
+]);
+const LOCAL_SUGGESTIONS_MUTATION_PROCEDURES = new Set([
+  'suggestions.resolve',
+  'suggestions.clearAll',
+]);
+const LOCAL_SQUAD_MUTATION_PROCEDURES = new Set([
+  'squad.spawn',
+  'squad.kill',
+]);
+const LOCAL_EXPERT_MUTATION_PROCEDURES = new Set([
+  'expert.research',
+  'expert.code',
+]);
+const LOCAL_MARKETPLACE_MUTATION_PROCEDURES = new Set([
+  'marketplace.install',
+  'marketplace.publish',
+]);
+const LOCAL_SWARM_MUTATION_PROCEDURES = new Set([
+  'swarm.startSwarm',
+  'swarm.resumeMission',
+  'swarm.stopMission',
+  'swarm.deleteMission',
+  'swarm.decomposeTask',
+  'swarm.approveTask',
+  'swarm.updateTaskPriority',
+  'swarm.seekConsensus',
+  'swarm.executeDebate',
+  'swarm.sendDirectMessage',
+]);
+const LOCAL_INFRASTRUCTURE_MUTATION_PROCEDURES = new Set([
+  'infrastructure.runDoctor',
+  'infrastructure.applyConfigurations',
+]);
+const LOCAL_LINKS_BACKLOG_MUTATION_PROCEDURES = new Set([
+  'linksBacklog.syncFromBobbyBookmarks',
+]);
+const LOCAL_SUBMODULE_MUTATION_PROCEDURES = new Set([
+  'submodule.updateAll',
+  'submodule.installDependencies',
+  'submodule.build',
+  'submodule.enable',
+  'git.revert',
+]);
+const LOCAL_CATALOG_MUTATION_PROCEDURES = new Set([
+  'catalog.triggerIngestion',
+  'catalog.triggerValidation',
+  'catalog.installFromRecipe',
+  'catalog.triggerBatchValidation',
+]);
 const LOCAL_COMPAT_MUTATION_PROCEDURES = new Set([
-  ...LOCAL_MCP_MUTATION_PROCEDURES,
   ...LOCAL_OPERATOR_MUTATION_PROCEDURES,
+  ...LOCAL_CONFIG_MUTATION_PROCEDURES,
+  ...LOCAL_TOOL_MUTATION_PROCEDURES,
+  ...LOCAL_MEMORY_MUTATION_PROCEDURES,
+  ...LOCAL_AGENT_MEMORY_MUTATION_PROCEDURES,
+  ...LOCAL_MCP_CONFIG_MUTATION_PROCEDURES,
+  ...LOCAL_MCP_RUNTIME_MUTATION_PROCEDURES,
+  ...LOCAL_SESSION_MUTATION_PROCEDURES,
+  ...LOCAL_PROJECT_MUTATION_PROCEDURES,
+  ...LOCAL_SKILL_MUTATION_PROCEDURES,
+  ...LOCAL_SUGGESTIONS_MUTATION_PROCEDURES,
+  ...LOCAL_SQUAD_MUTATION_PROCEDURES,
+  ...LOCAL_EXPERT_MUTATION_PROCEDURES,
+  ...LOCAL_MARKETPLACE_MUTATION_PROCEDURES,
+  ...LOCAL_SWARM_MUTATION_PROCEDURES,
+  ...LOCAL_INFRASTRUCTURE_MUTATION_PROCEDURES,
+  ...LOCAL_LINKS_BACKLOG_MUTATION_PROCEDURES,
+  ...LOCAL_SUBMODULE_MUTATION_PROCEDURES,
+  ...LOCAL_CATALOG_MUTATION_PROCEDURES,
 ]);
 
 const LEGACY_MCP_SERVERS_LIST_PROCEDURES = [
@@ -546,86 +766,25 @@ function mapConfigToServerList(config: LocalMcpConfig): unknown[] {
   });
 }
 
-function buildLocalStartupStatus(servers: unknown[]): {
-  status: 'starting' | 'degraded';
-  ready: false;
-  summary: string;
-  checks: {
-    mcpAggregator: {
-      ready: boolean;
-      initialization: 'compat-fallback';
-      serverCount: number;
-      connectedCount: number;
-      persistedServerCount: number;
-      persistedToolCount: number;
-      configuredServerCount: number;
-      liveReady: boolean;
-      advertisedServerCount: number;
-      advertisedToolCount: number;
-      advertisedAlwaysOnServerCount: number;
-      advertisedAlwaysOnToolCount: number;
-      inventoryReady: false;
-      warmupInProgress: true;
-    };
-    configSync: {
-      ready: boolean;
-      status: {
-        inProgress: false;
-        lastCompletedAt: null;
-        lastServerCount: number;
-        lastToolCount: number;
-      };
-    };
-    sessionSupervisor: {
-      ready: false;
-      sessionCount: number;
-      restore: null;
-    };
-    browser: {
-      ready: false;
-      active: false;
-      pageCount: number;
-    };
-    memory: {
-      ready: false;
-      initialized: false;
-      agentMemory: false;
-    };
-    extensionBridge: {
-      ready: false;
-      acceptingConnections: false;
-      clientCount: number;
-      hasConnectedClients: false;
-      clients: never[];
-      supportedCapabilities: never[];
-      supportedHookPhases: never[];
-    };
-    executionEnvironment: {
-      ready: false;
-      preferredShellId: null;
-      preferredShellLabel: null;
-      shellCount: number;
-      verifiedShellCount: number;
-      toolCount: number;
-      verifiedToolCount: number;
-      harnessCount: number;
-      verifiedHarnessCount: number;
-      supportsPowerShell: false;
-      supportsPosixShell: false;
-      notes: never[];
-    };
-  };
-} {
+function buildLocalCompatStartupStatusBase(servers: unknown[]) {
   const status = buildStatusFromServers(servers);
   const serverCount = status.serverCount;
   const connectedCount = status.connectedCount;
+  const startupMode = readLocalStartupProvenance();
 
   return {
     status: serverCount > 0 ? 'degraded' : 'starting',
     ready: false,
+    uptime: 0,
     summary: serverCount > 0
       ? `Using local MCP config fallback for ${serverCount} configured server(s); live startup telemetry is unavailable.`
       : 'No live HyperCode core upstream is available yet; showing local compatibility fallback.',
+    startupMode,
+    runtime: {
+      nodeEnv: process.env.NODE_ENV ?? null,
+      platform: process.platform,
+      version: null,
+    },
     checks: {
       mcpAggregator: {
         ready: serverCount > 0,
@@ -694,6 +853,141 @@ function buildLocalStartupStatus(servers: unknown[]): {
   };
 }
 
+type LocalCompatStartupStatus = Omit<ReturnType<typeof buildLocalCompatStartupStatusBase>, 'checks'> & {
+  blockingReasons?: Array<{ code: string; detail: string }>;
+  checks: ReturnType<typeof buildLocalCompatStartupStatusBase>['checks'] & {
+    memory: ReturnType<typeof buildLocalCompatStartupStatusBase>['checks']['memory'] & {
+      sectionedMemory?: {
+        ready?: boolean;
+        enabled?: boolean;
+        storeExists?: boolean;
+        storePath?: string | null;
+        totalEntries?: number;
+        defaultSectionCount?: number;
+        presentDefaultSectionCount?: number;
+        missingSections?: string[];
+      };
+    };
+    importedSessions?: {
+      totalSessions: number;
+      inlineTranscriptCount: number;
+      archivedTranscriptCount: number;
+      missingRetentionSummaryCount: number;
+    };
+    mainControlPlane?: {
+      ready: boolean;
+      baseUrl: string | null;
+    };
+    config?: {
+      workspaceRootAvailable: boolean;
+      goConfigDirAvailable: boolean;
+      mainConfigDirAvailable: boolean;
+      repoConfigAvailable: boolean;
+      mcpConfigAvailable: boolean;
+    };
+    mesh?: {
+      nodeId: string | null;
+      peersCount: number;
+    };
+  } & Record<string, unknown>;
+};
+
+type NativeStartupStatusPayload = {
+  status?: unknown;
+  ready?: unknown;
+  summary?: unknown;
+  blockingReasons?: unknown;
+  checks?: unknown;
+};
+
+type NativeRuntimeStatusPayload = {
+  uptimeSec?: unknown;
+  version?: unknown;
+  startupMode?: unknown;
+};
+
+type NativeMcpStatusPayload = {
+  initialized?: unknown;
+  connected?: unknown;
+  toolCount?: unknown;
+  serverCount?: unknown;
+  connectedCount?: unknown;
+  sourceBackedHarnessCount?: unknown;
+  source?: unknown;
+  lazySessionMode?: unknown;
+  singleActiveServerMode?: unknown;
+  lifecycle?: unknown;
+  pool?: unknown;
+  aggregatorStatus?: unknown;
+};
+
+type NativeProviderQuotaPayload = {
+  provider?: unknown;
+  name?: unknown;
+  configured?: unknown;
+  authenticated?: unknown;
+  authMethod?: unknown;
+  tier?: unknown;
+  limit?: unknown;
+  used?: unknown;
+  remaining?: unknown;
+  resetDate?: unknown;
+  rateLimitRpm?: unknown;
+  availability?: unknown;
+  lastError?: unknown;
+};
+
+type NativeFallbackChainPayload = {
+  selectedTaskType?: unknown;
+  chain?: unknown;
+};
+
+type NativeHarnessPayload = {
+  id?: unknown;
+  description?: unknown;
+  runtime?: unknown;
+  launchCommand?: unknown;
+  parityNotes?: unknown;
+  installed?: unknown;
+  maturity?: unknown;
+  primary?: unknown;
+  upstream?: unknown;
+};
+
+type NativeSessionPayload = {
+  id?: unknown;
+  cliType?: unknown;
+  status?: unknown;
+  task?: unknown;
+  startedAt?: unknown;
+  sourcePath?: unknown;
+  sessionFormat?: unknown;
+  valid?: unknown;
+  detectedModels?: unknown;
+};
+
+function asObjectRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function readString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value : null;
+}
+
+function readBoolean(value: unknown): boolean | null {
+  return typeof value === 'boolean' ? value : null;
+}
+
+function readNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function readStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0) : [];
+}
+
 function resolveNativeStatusBases(): string[] {
   return Array.from(new Set(
     resolveUpstreamBases()
@@ -702,7 +996,35 @@ function resolveNativeStatusBases(): string[] {
   ));
 }
 
-async function fetchNativeControlPlaneData<T>(endpointPath: string, init?: RequestInit): Promise<T | null> {
+async function fetchNativeStatusPayload<T extends Record<string, unknown>>(endpointPath: string): Promise<T | null> {
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const response = await fetch(`${base}${endpointPath}`, { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      if (payload.success !== true) {
+        continue;
+      }
+
+      const data = asObjectRecord(payload.data);
+      if (data) {
+        return data as T;
+      }
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  return null;
+}
+
+async function fetchNativeControlPlaneData<T>(
+  endpointPath: string,
+  init?: RequestInit,
+): Promise<T | null> {
   for (const base of resolveNativeStatusBases()) {
     try {
       const response = await fetch(`${base}${endpointPath}`, {
@@ -725,6 +1047,1340 @@ async function fetchNativeControlPlaneData<T>(endpointPath: string, init?: Reque
   }
 
   return null;
+}
+
+function readTimestamp(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function normalizeNativeSessionStatus(value: unknown): string {
+  const normalized = readString(value)?.toLowerCase();
+  if (normalized === 'running' || normalized === 'starting' || normalized === 'stopping' || normalized === 'stopped' || normalized === 'restarting' || normalized === 'error' || normalized === 'created') {
+    return normalized;
+  }
+  if (normalized === 'active') {
+    return 'running';
+  }
+  if (normalized === 'idle' || normalized === 'ready') {
+    return 'stopped';
+  }
+  return 'created';
+}
+
+function normalizeCliHarnessDetection(entry: unknown): Record<string, unknown> | null {
+  const record = asObjectRecord(entry);
+  if (!record) {
+    return null;
+  }
+
+  const id = readString(record.id);
+  if (!id) {
+    return null;
+  }
+
+  const runtime = readString(record.runtime);
+  const launchCommand = readString(record.launchCommand);
+  const description = readString(record.description);
+  const parityNotes = readString(record.parityNotes);
+  const maturity = readString(record.maturity);
+  const upstream = readString(record.upstream);
+  const installed = readBoolean(record.installed);
+  const primary = readBoolean(record.primary) === true;
+
+  return {
+    id,
+    name: id,
+    command: launchCommand ?? '',
+    homepage: upstream ?? '#',
+    docsUrl: upstream ?? '#',
+    installHint: parityNotes ?? description ?? runtime ?? 'CLI harness metadata available from native Go inventory.',
+    sessionCapable: true,
+    installed: installed ?? false,
+    resolvedPath: installed ? (launchCommand ?? null) : null,
+    version: maturity,
+    detectionError: installed ? null : 'Not detected in current environment',
+    primary,
+  };
+}
+
+async function buildPreferredCliHarnessDetections(): Promise<unknown[]> {
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const response = await fetch(`${base}/api/cli/harnesses`, { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      if (payload.success !== true || !Array.isArray(payload.data)) {
+        continue;
+      }
+
+      return payload.data
+        .map((entry) => normalizeCliHarnessDetection(entry))
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  return [];
+}
+
+function buildFallbackExecutionEnvironment(cliHarnessDetections: unknown[]): Record<string, unknown> {
+  const harnesses = (Array.isArray(cliHarnessDetections) ? cliHarnessDetections : [])
+    .map((entry) => asObjectRecord(entry))
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+
+  const verifiedHarnessCount = harnesses.filter((entry) => readBoolean(entry.installed) === true && !readString(entry.detectionError)).length;
+
+  return {
+    os: 'unknown',
+    summary: {
+      ready: false,
+      preferredShellId: null,
+      preferredShellLabel: null,
+      shellCount: 0,
+      verifiedShellCount: 0,
+      toolCount: 0,
+      verifiedToolCount: 0,
+      harnessCount: harnesses.length,
+      verifiedHarnessCount,
+      supportsPowerShell: false,
+      supportsPosixShell: false,
+      notes: [],
+    },
+    shells: [],
+    tools: [],
+    harnesses,
+  };
+}
+
+async function buildPreferredExecutionEnvironment(cliHarnessDetections: unknown[]): Promise<Record<string, unknown>> {
+  const nativeExecutionEnvironment = await fetchNativeStatusPayload<Record<string, unknown>>('/api/tools/detect-execution-environment');
+  if (!nativeExecutionEnvironment) {
+    return buildFallbackExecutionEnvironment(cliHarnessDetections);
+  }
+
+  const nativeSummary = asObjectRecord(nativeExecutionEnvironment.summary);
+  const normalizedShells = Array.isArray(nativeExecutionEnvironment.shells)
+    ? nativeExecutionEnvironment.shells
+      .map((entry, index) => {
+        const record = asObjectRecord(entry);
+        if (!record) {
+          return null;
+        }
+
+        return {
+          id: readString(record.id) ?? `shell-${index}`,
+          name: readString(record.name) ?? 'Unknown shell',
+          installed: readBoolean(record.installed) ?? false,
+          verified: readBoolean(record.verified) ?? false,
+          preferred: readBoolean(record.preferred) ?? false,
+          resolvedPath: readString(record.resolvedPath),
+          family: readString(record.family) ?? 'unknown',
+          version: readString(record.version),
+          notes: readStringArray(record.notes),
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+    : [];
+  const normalizedTools = Array.isArray(nativeExecutionEnvironment.tools)
+    ? nativeExecutionEnvironment.tools
+      .map((entry, index) => {
+        const record = asObjectRecord(entry);
+        if (!record) {
+          return null;
+        }
+
+        return {
+          id: readString(record.id) ?? `tool-${index}`,
+          name: readString(record.name) ?? 'Unknown tool',
+          installed: readBoolean(record.installed) ?? false,
+          verified: readBoolean(record.verified) ?? false,
+          resolvedPath: readString(record.resolvedPath),
+          version: readString(record.version),
+          capabilities: readStringArray(record.capabilities),
+          notes: readStringArray(record.notes),
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+    : [];
+  const normalizedHarnesses = Array.isArray(nativeExecutionEnvironment.harnesses)
+    ? nativeExecutionEnvironment.harnesses
+      .map((entry) => normalizeCliHarnessDetection(entry))
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+    : [];
+  const effectiveHarnesses = normalizedHarnesses.length > 0
+    ? normalizedHarnesses
+    : (Array.isArray(cliHarnessDetections) ? cliHarnessDetections : []).filter((entry): entry is Record<string, unknown> => asObjectRecord(entry) !== null);
+
+  const verifiedShellCount = normalizedShells.filter((entry) => entry.verified).length;
+  const verifiedToolCount = normalizedTools.filter((entry) => entry.verified).length;
+  const verifiedHarnessCount = effectiveHarnesses.filter((entry) => readBoolean(entry.installed) === true && !readString(entry.detectionError)).length;
+
+  return {
+    os: readString(nativeExecutionEnvironment.os) ?? 'unknown',
+    summary: {
+      ready: readBoolean(nativeSummary?.ready) ?? (verifiedShellCount > 0),
+      preferredShellId: readString(nativeSummary?.preferredShellId),
+      preferredShellLabel: readString(nativeSummary?.preferredShellLabel),
+      shellCount: readNumber(nativeSummary?.shellCount) ?? normalizedShells.length,
+      verifiedShellCount: readNumber(nativeSummary?.verifiedShellCount) ?? verifiedShellCount,
+      toolCount: readNumber(nativeSummary?.toolCount) ?? normalizedTools.length,
+      verifiedToolCount: readNumber(nativeSummary?.verifiedToolCount) ?? verifiedToolCount,
+      harnessCount: readNumber(nativeSummary?.harnessCount) ?? effectiveHarnesses.length,
+      verifiedHarnessCount: readNumber(nativeSummary?.verifiedHarnessCount) ?? verifiedHarnessCount,
+      supportsPowerShell: readBoolean(nativeSummary?.supportsPowerShell) ?? false,
+      supportsPosixShell: readBoolean(nativeSummary?.supportsPosixShell) ?? false,
+      notes: readStringArray(nativeSummary?.notes),
+    },
+    shells: normalizedShells,
+    tools: normalizedTools,
+    harnesses: effectiveHarnesses,
+  };
+}
+
+async function buildPreferredToolsList(): Promise<unknown[]> {
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const response = await fetch(`${base}/api/tools`, { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      if (payload.success !== true || !Array.isArray(payload.data)) {
+        continue;
+      }
+
+      return payload.data
+        .map((entry) => {
+          const record = asObjectRecord(entry);
+          const uuid = readString(record?.uuid);
+          const name = readString(record?.name);
+          const server = readString(record?.server);
+          if (!uuid || !name || !server) {
+            return null;
+          }
+
+          return {
+            uuid,
+            name,
+            description: readString(record?.description) ?? '',
+            server,
+            inputSchema: asObjectRecord(record?.inputSchema),
+            isDeferred: readBoolean(record?.isDeferred) ?? false,
+            schemaParamCount: readNumber(record?.schemaParamCount) ?? 0,
+            mcpServerUuid: readString(record?.mcpServerUuid) ?? server,
+            always_on: readBoolean(record?.always_on) ?? false,
+          };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  return LEGACY_COMPAT_RESPONSES['tools.list'] as unknown[];
+}
+
+async function buildPreferredMcpTraffic(): Promise<unknown[]> {
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const response = await fetch(`${base}/api/mcp/traffic`, { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      if (!Array.isArray(payload.data)) {
+        continue;
+      }
+
+      return payload.data
+        .map((entry) => {
+          const record = asObjectRecord(entry);
+          const server = readString(record?.server);
+          const method = readString(record?.method);
+          const paramsSummary = readString(record?.paramsSummary);
+          const latencyMs = readNumber(record?.latencyMs);
+          const success = readBoolean(record?.success);
+          const timestamp = readNumber(record?.timestamp);
+          if (!server || !method || !paramsSummary || latencyMs === null || success === null || timestamp === null) {
+            return null;
+          }
+
+          return {
+            server,
+            method,
+            paramsSummary,
+            latencyMs,
+            success,
+            timestamp,
+            ...(readString(record?.toolName) ? { toolName: readString(record?.toolName) } : {}),
+            ...(readString(record?.error) ? { error: readString(record?.error) } : {}),
+          };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  return LEGACY_COMPAT_RESPONSES['mcp.traffic'] as unknown[];
+}
+
+async function buildPreferredToolSearch(query?: string | null, limit?: number | null): Promise<unknown[]> {
+  const normalizedQuery = query?.trim();
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const endpoint = new URL(`${base}/api/tools/search`);
+      endpoint.searchParams.set('query', normalizedQuery);
+      if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
+        endpoint.searchParams.set('limit', String(limit));
+      }
+
+      const response = await fetch(endpoint.toString(), { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      if (payload.success !== true || !Array.isArray(payload.data)) {
+        continue;
+      }
+
+      return payload.data
+        .map((entry) => {
+          const record = asObjectRecord(entry);
+          const name = readString(record?.name);
+          const server = readString(record?.server);
+          if (!name || !server) {
+            return null;
+          }
+
+          return {
+            name,
+            description: readString(record?.description) ?? '',
+            server,
+            inputSchema: asObjectRecord(record?.inputSchema),
+            ...(readString(record?.serverDisplayName) ? { serverDisplayName: readString(record?.serverDisplayName) } : {}),
+            ...(readStringArray(record?.serverTags).length > 0 ? { serverTags: readStringArray(record?.serverTags) } : {}),
+            ...(readStringArray(record?.toolTags).length > 0 ? { toolTags: readStringArray(record?.toolTags) } : {}),
+            ...(readString(record?.semanticGroup) ? { semanticGroup: readString(record?.semanticGroup) } : {}),
+            ...(readString(record?.semanticGroupLabel) ? { semanticGroupLabel: readString(record?.semanticGroupLabel) } : {}),
+            ...(readString(record?.advertisedName) ? { advertisedName: readString(record?.advertisedName) } : {}),
+            ...(readStringArray(record?.keywords).length > 0 ? { keywords: readStringArray(record?.keywords) } : {}),
+            ...(readBoolean(record?.alwaysOn) !== null ? { alwaysOn: readBoolean(record?.alwaysOn) } : {}),
+            ...(readString(record?.originalName) ? { originalName: readString(record?.originalName) } : {}),
+            ...(readBoolean(record?.loaded) !== null ? { loaded: readBoolean(record?.loaded) } : {}),
+            ...(readBoolean(record?.hydrated) !== null ? { hydrated: readBoolean(record?.hydrated) } : {}),
+            ...(readBoolean(record?.deferred) !== null ? { deferred: readBoolean(record?.deferred) } : {}),
+            ...(readBoolean(record?.requiresSchemaHydration) !== null ? { requiresSchemaHydration: readBoolean(record?.requiresSchemaHydration) } : {}),
+            ...(readString(record?.matchReason) ? { matchReason: readString(record?.matchReason) } : {}),
+            ...(readNumber(record?.score) !== null ? { score: readNumber(record?.score) } : {}),
+            ...(readNumber(record?.rank) !== null ? { rank: readNumber(record?.rank) } : {}),
+            ...(readBoolean(record?.important) !== null ? { important: readBoolean(record?.important) } : {}),
+            ...(readBoolean(record?.alwaysShow) !== null ? { alwaysShow: readBoolean(record?.alwaysShow) } : {}),
+            ...(readBoolean(record?.alwaysLoaded) !== null ? { alwaysLoaded: readBoolean(record?.alwaysLoaded) } : {}),
+          };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  return [];
+}
+
+async function buildPreferredWorkingSet(): Promise<Record<string, unknown>> {
+  const nativeWorkingSet = await fetchNativeStatusPayload<Record<string, unknown>>('/api/mcp/working-set');
+  if (!nativeWorkingSet) {
+    return {
+      tools: [],
+      limits: {
+        maxLoadedTools: 24,
+        maxHydratedSchemas: 8,
+      },
+    };
+  }
+
+  const normalizedTools = Array.isArray(nativeWorkingSet.tools)
+    ? nativeWorkingSet.tools
+      .map((entry) => {
+        const record = asObjectRecord(entry);
+        const name = readString(record?.name);
+        if (!name) {
+          return null;
+        }
+
+        return {
+          name,
+          hydrated: readBoolean(record?.hydrated) ?? false,
+          lastLoadedAt: readNumber(record?.lastLoadedAt) ?? 0,
+          lastHydratedAt: readNumber(record?.lastHydratedAt),
+          lastAccessedAt: readNumber(record?.lastAccessedAt) ?? 0,
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+    : [];
+  const limits = asObjectRecord(nativeWorkingSet.limits);
+
+  return {
+    tools: normalizedTools,
+    limits: {
+      maxLoadedTools: readNumber(limits?.maxLoadedTools) ?? 24,
+      maxHydratedSchemas: readNumber(limits?.maxHydratedSchemas) ?? 8,
+      ...(readNumber(limits?.idleEvictionThresholdMs) !== null ? { idleEvictionThresholdMs: readNumber(limits?.idleEvictionThresholdMs) } : {}),
+    },
+  };
+}
+
+async function buildPreferredToolSelectionTelemetry(): Promise<unknown[]> {
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const response = await fetch(`${base}/api/mcp/tool-selection-telemetry`, { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      if (payload.success !== true || !Array.isArray(payload.data)) {
+        continue;
+      }
+
+      return payload.data
+        .map((entry, index) => {
+          const record = asObjectRecord(entry);
+          const type = readString(record?.type);
+          const status = readString(record?.status);
+          const timestamp = readNumber(record?.timestamp);
+          if (!record || !type || !status || timestamp === null) {
+            return null;
+          }
+
+          return {
+            id: readString(record.id) ?? `telemetry-${index}`,
+            type,
+            timestamp,
+            ...(readString(record.query) ? { query: readString(record.query) } : {}),
+            ...(readString(record.profile) ? { profile: readString(record.profile) } : {}),
+            ...(readString(record.source) ? { source: readString(record.source) } : {}),
+            ...(readNumber(record.resultCount) !== null ? { resultCount: readNumber(record.resultCount) } : {}),
+            ...(readString(record.topResultName) ? { topResultName: readString(record.topResultName) } : {}),
+            ...(readString(record.topMatchReason) ? { topMatchReason: readString(record.topMatchReason) } : {}),
+            ...(readNumber(record.topScore) !== null ? { topScore: readNumber(record.topScore) } : {}),
+            ...(readString(record.secondResultName) ? { secondResultName: readString(record.secondResultName) } : {}),
+            ...(readString(record.secondMatchReason) ? { secondMatchReason: readString(record.secondMatchReason) } : {}),
+            ...(readNumber(record.secondScore) !== null ? { secondScore: readNumber(record.secondScore) } : {}),
+            ...(readNumber(record.scoreGap) !== null ? { scoreGap: readNumber(record.scoreGap) } : {}),
+            ...(readNumber(record.ignoredResultCount) !== null ? { ignoredResultCount: readNumber(record.ignoredResultCount) } : {}),
+            ...(readStringArray(record.ignoredResultNames).length > 0 ? { ignoredResultNames: readStringArray(record.ignoredResultNames) } : {}),
+            ...(readString(record.toolName) ? { toolName: readString(record.toolName) } : {}),
+            status,
+            ...(readString(record.message) ? { message: readString(record.message) } : {}),
+            ...(readStringArray(record.evictedTools).length > 0 ? { evictedTools: readStringArray(record.evictedTools) } : {}),
+            ...(readNumber(record.latencyMs) !== null ? { latencyMs: readNumber(record.latencyMs) } : {}),
+            ...(readString(record.autoLoadReason) ? { autoLoadReason: readString(record.autoLoadReason) } : {}),
+            ...(readNumber(record.autoLoadConfidence) !== null ? { autoLoadConfidence: readNumber(record.autoLoadConfidence) } : {}),
+            ...(readBoolean(record.autoLoadEvaluated) !== null ? { autoLoadEvaluated: readBoolean(record.autoLoadEvaluated) } : {}),
+            ...(readString(record.autoLoadOutcome) ? { autoLoadOutcome: readString(record.autoLoadOutcome) } : {}),
+            ...(readString(record.autoLoadSkipReason) ? { autoLoadSkipReason: readString(record.autoLoadSkipReason) } : {}),
+            ...(readNumber(record.autoLoadMinConfidence) !== null ? { autoLoadMinConfidence: readNumber(record.autoLoadMinConfidence) } : {}),
+            ...(readString(record.autoLoadExecutionStatus) ? { autoLoadExecutionStatus: readString(record.autoLoadExecutionStatus) } : {}),
+            ...(readString(record.autoLoadExecutionError) ? { autoLoadExecutionError: readString(record.autoLoadExecutionError) } : {}),
+          };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  return [];
+}
+
+async function buildPreferredToolPreferences(): Promise<Record<string, unknown>> {
+  const nativePreferences = await fetchNativeStatusPayload<Record<string, unknown>>('/api/mcp/preferences');
+  if (!nativePreferences) {
+    return {
+      importantTools: [],
+      alwaysLoadedTools: ['search_tools', 'read_file', 'write_file', 'grep_search', 'execute_command', 'browser__open'],
+    };
+  }
+
+  return {
+    importantTools: readStringArray(nativePreferences.importantTools),
+    alwaysLoadedTools: readStringArray(nativePreferences.alwaysLoadedTools),
+    ...(readNumber(nativePreferences.autoLoadMinConfidence) !== null ? { autoLoadMinConfidence: readNumber(nativePreferences.autoLoadMinConfidence) } : {}),
+    ...(readNumber(nativePreferences.maxLoadedTools) !== null ? { maxLoadedTools: readNumber(nativePreferences.maxLoadedTools) } : {}),
+    ...(readNumber(nativePreferences.maxHydratedSchemas) !== null ? { maxHydratedSchemas: readNumber(nativePreferences.maxHydratedSchemas) } : {}),
+    ...(readNumber(nativePreferences.idleEvictionThresholdMs) !== null ? { idleEvictionThresholdMs: readNumber(nativePreferences.idleEvictionThresholdMs) } : {}),
+  };
+}
+
+function buildApiKeyPrefix(rawKey: string | null, fallbackPrefix: string | null): string | null {
+  if (fallbackPrefix) {
+    return fallbackPrefix;
+  }
+  if (!rawKey) {
+    return null;
+  }
+  return rawKey.slice(0, Math.min(rawKey.length, 8));
+}
+
+async function buildPreferredApiKeys(): Promise<unknown[]> {
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const response = await fetch(`${base}/api/api-keys`, { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      if (payload.success !== true || !Array.isArray(payload.data)) {
+        continue;
+      }
+
+      return payload.data
+        .map((entry, index) => {
+          const record = asObjectRecord(entry);
+          if (!record) {
+            return null;
+          }
+
+          const uuid = readString(record.uuid) ?? `api-key-${index}`;
+          const name = readString(record.name) ?? 'Unnamed key';
+          const rawKey = readString(record.key);
+          const keyPrefix = buildApiKeyPrefix(rawKey, readString(record.key_prefix));
+          const createdAt = readString(record.created_at) ?? new Date(0).toISOString();
+          const isActive = readBoolean(record.is_active);
+
+          return {
+            uuid,
+            name,
+            key_prefix: keyPrefix ?? 'sk-...',
+            created_at: createdAt,
+            is_active: isActive ?? false,
+            ...(rawKey ? { key: rawKey } : {}),
+          };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  return [];
+}
+
+async function buildPreferredSecretsList(): Promise<unknown[]> {
+  const secrets = await fetchNativeControlPlaneData<unknown[]>('/api/secrets');
+  return Array.isArray(secrets) ? secrets : [];
+}
+
+async function buildPreferredPoliciesList(): Promise<unknown[]> {
+  const policies = await fetchNativeControlPlaneData<unknown[]>('/api/policies');
+  return Array.isArray(policies) ? policies : [];
+}
+
+async function buildPreferredToolSetsList(): Promise<unknown[]> {
+  const toolSets = await fetchNativeControlPlaneData<unknown[]>('/api/tool-sets');
+  return Array.isArray(toolSets) ? toolSets : [];
+}
+
+async function buildPreferredSavedScriptsList(): Promise<unknown[]> {
+  const scripts = await fetchNativeControlPlaneData<unknown[]>('/api/scripts');
+  return Array.isArray(scripts) ? scripts : [];
+}
+
+async function buildPreferredMemoryStats(): Promise<Record<string, unknown>> {
+  const nativeMemoryStats = await fetchNativeStatusPayload<Record<string, unknown>>('/api/memory/agent-stats');
+  if (!nativeMemoryStats) {
+    return {
+      sessionCount: 0,
+      workingCount: 0,
+      longTermCount: 0,
+      observationCount: 0,
+      sessionSummaryCount: 0,
+      promptCount: 0,
+    };
+  }
+
+  return {
+    sessionCount: readNumber(nativeMemoryStats.sessionCount) ?? readNumber(nativeMemoryStats.session) ?? 0,
+    workingCount: readNumber(nativeMemoryStats.workingCount) ?? readNumber(nativeMemoryStats.working) ?? 0,
+    longTermCount: readNumber(nativeMemoryStats.longTermCount) ?? readNumber(nativeMemoryStats.longTerm) ?? 0,
+    observationCount: readNumber(nativeMemoryStats.observationCount) ?? 0,
+    sessionSummaryCount: readNumber(nativeMemoryStats.sessionSummaryCount) ?? 0,
+    promptCount: readNumber(nativeMemoryStats.promptCount) ?? 0,
+  };
+}
+
+async function buildPreferredExpertStatus(): Promise<Record<string, unknown>> {
+  const nativeExpertStatus = await fetchNativeStatusPayload<Record<string, unknown>>('/api/expert/status');
+  if (!nativeExpertStatus) {
+    return {};
+  }
+
+  return {
+    ...(readString(nativeExpertStatus.researcher) ? { researcher: readString(nativeExpertStatus.researcher) } : {}),
+    ...(readString(nativeExpertStatus.coder) ? { coder: readString(nativeExpertStatus.coder) } : {}),
+  };
+}
+
+async function buildPreferredAgentMemoryStats(): Promise<Record<string, unknown>> {
+  const nativeAgentMemoryStats = await fetchNativeStatusPayload<Record<string, unknown>>('/api/memory/agent-stats');
+  if (!nativeAgentMemoryStats) {
+    return {
+      session: 0,
+      working: 0,
+      longTerm: 0,
+      total: 0,
+    };
+  }
+
+  return {
+    session: readNumber(nativeAgentMemoryStats.session) ?? readNumber(nativeAgentMemoryStats.sessionCount) ?? 0,
+    working: readNumber(nativeAgentMemoryStats.working) ?? readNumber(nativeAgentMemoryStats.workingCount) ?? 0,
+    longTerm: readNumber(nativeAgentMemoryStats.longTerm) ?? readNumber(nativeAgentMemoryStats.longTermCount) ?? 0,
+    total: readNumber(nativeAgentMemoryStats.total) ?? readNumber(nativeAgentMemoryStats.totalCount) ?? 0,
+  };
+}
+
+function buildMemoryQueryString(entries: Record<string, string | number | null | undefined>): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(entries)) {
+    if (value === null || value === undefined) {
+      continue;
+    }
+    if (typeof value === 'string' && value.trim().length === 0) {
+      continue;
+    }
+    params.set(key, String(value));
+  }
+  const serialized = params.toString();
+  return serialized ? `?${serialized}` : '';
+}
+
+async function buildPreferredShellSystemHistory(limit?: number | null): Promise<unknown[]> {
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const endpoint = new URL(`${base}/api/shell/history/system`);
+      if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
+        endpoint.searchParams.set('limit', String(limit));
+      }
+
+      const response = await fetch(endpoint.toString(), { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      if (payload.success !== true || !Array.isArray(payload.data)) {
+        continue;
+      }
+
+      return payload.data.filter((entry): entry is string => typeof entry === 'string');
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  return [];
+}
+
+async function buildPreferredServerHealth(
+  serverUuid: string,
+  localConfig: LocalMcpConfig,
+): Promise<Record<string, unknown>> {
+  const normalizedUuid = serverUuid.trim();
+  if (!normalizedUuid) {
+    return {
+      status: 'unavailable',
+      crashCount: 0,
+      maxAttempts: 0,
+    };
+  }
+
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const endpoint = new URL(`${base}/api/server-health/check`);
+      endpoint.searchParams.set('serverUuid', normalizedUuid);
+
+      const response = await fetch(endpoint.toString(), { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      const data = asObjectRecord(payload.data);
+      if (payload.success !== true || !data) {
+        continue;
+      }
+
+      const status = readString(data.status);
+      const crashCount = readNumber(data.crashCount);
+      const maxAttempts = readNumber(data.maxAttempts);
+      if (!status || crashCount === null || maxAttempts === null) {
+        continue;
+      }
+
+      return {
+        status,
+        crashCount,
+        maxAttempts,
+      };
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  const match = findLocalServerByUuid(localConfig, normalizedUuid);
+  const meta = match ? buildLocalServerMeta(match.name, match.server) : null;
+  return {
+    status: match
+      ? (meta?.status === 'ready' ? 'ready' : meta?.status === 'disabled' ? 'disabled' : 'unavailable')
+      : 'unavailable',
+    crashCount: meta?.crashCount ?? 0,
+    maxAttempts: meta?.maxAttempts ?? 0,
+  };
+}
+
+async function buildPreferredSessionState(): Promise<Record<string, unknown>> {
+  const nativeSessionState = await fetchNativeStatusPayload<Record<string, unknown>>('/api/sessions/supervisor/state');
+  if (!nativeSessionState) {
+    return {
+      isAutoDriveActive: false,
+      activeGoal: null,
+    };
+  }
+
+  return {
+    isAutoDriveActive: readBoolean(nativeSessionState.isAutoDriveActive) ?? false,
+    activeGoal: readString(nativeSessionState.activeGoal),
+  };
+}
+
+async function buildPreferredImportedMaintenanceStats(): Promise<ImportedMaintenanceStats> {
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const response = await fetch(`${base}/api/sessions/imported/maintenance-stats`, { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      const data = asObjectRecord(payload.data);
+      if (payload.success !== true || !data) {
+        continue;
+      }
+
+      return {
+        totalSessions: readNumber(data.totalSessions) ?? 0,
+        inlineTranscriptCount: readNumber(data.inlineTranscriptCount) ?? 0,
+        archivedTranscriptCount: readNumber(data.archivedTranscriptCount) ?? 0,
+        missingRetentionSummaryCount: readNumber(data.missingRetentionSummaryCount) ?? 0,
+      };
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  return {
+    totalSessions: 0,
+    inlineTranscriptCount: 0,
+    archivedTranscriptCount: 0,
+    missingRetentionSummaryCount: 0,
+  };
+}
+
+async function buildPreferredInstallSurfaces(): Promise<unknown[]> {
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const response = await fetch(`${base}/api/tools/detect-install-surfaces`, { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      if (payload.success !== true || !Array.isArray(payload.data)) {
+        continue;
+      }
+
+      return payload.data
+        .map((entry) => {
+          const record = asObjectRecord(entry);
+          const id = readString(record?.id);
+          const status = readString(record?.status);
+          const detail = readString(record?.detail);
+          if (!id || !detail || (status !== 'ready' && status !== 'partial' && status !== 'missing')) {
+            return null;
+          }
+
+          return {
+            id,
+            status,
+            artifactPath: readString(record?.artifactPath),
+            artifactKind: readString(record?.artifactKind),
+            detail,
+            declaredVersion: readString(record?.declaredVersion),
+            lastModifiedAt: readString(record?.lastModifiedAt),
+          };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  return [];
+}
+
+function buildPreferredSessionCatalog(cliHarnessDetections: unknown[]): unknown[] {
+  return (Array.isArray(cliHarnessDetections) ? cliHarnessDetections : [])
+    .map((entry) => {
+      const record = asObjectRecord(entry);
+      const id = readString(record?.id);
+      if (!id) {
+        return null;
+      }
+
+      const name = readString(record?.name) ?? id;
+      const command = readString(record?.command);
+      const homepage = readString(record?.homepage);
+      const docsUrl = readString(record?.docsUrl);
+      const installHint = readString(record?.installHint);
+      const installed = readBoolean(record?.installed);
+      const resolvedPath = readString(record?.resolvedPath);
+      const version = readString(record?.version);
+      const detectionError = readString(record?.detectionError);
+
+      return {
+        id,
+        name,
+        ...(command ? { command } : {}),
+        ...(homepage ? { homepage } : {}),
+        ...(docsUrl ? { docsUrl } : {}),
+        ...(installHint ? { installHint } : {}),
+        category: 'cli',
+        sessionCapable: true,
+        versionArgs: ['--version'],
+        installed: installed ?? false,
+        resolvedPath: resolvedPath ?? null,
+        version: version ?? null,
+        detectionError: detectionError ?? null,
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+}
+
+async function buildPreferredSessionList(): Promise<unknown[]> {
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const response = await fetch(`${base}/api/sessions`, { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      if (payload.success !== true || !Array.isArray(payload.data)) {
+        continue;
+      }
+
+      return payload.data
+        .map((entry, index) => {
+          const record = asObjectRecord(entry);
+          if (!record) {
+            return null;
+          }
+
+          const id = readString(record.id);
+          const cliType = readString(record.cliType);
+          if (!id || !cliType) {
+            return null;
+          }
+
+          const task = readString(record.task);
+          const sourcePath = readString(record.sourcePath);
+          const startedAt = readString(record.startedAt);
+          const lastActivityAt = readTimestamp(record.startedAt) ?? Date.now();
+          const detectedModels = Array.isArray(record.detectedModels)
+            ? record.detectedModels.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+            : [];
+          const sessionFormat = readString(record.sessionFormat);
+          const valid = readBoolean(record.valid);
+
+          return {
+            id,
+            name: task ?? `${cliType} session`,
+            cliType,
+            workingDirectory: sourcePath ?? '',
+            autoRestart: false,
+            status: normalizeNativeSessionStatus(record.status),
+            restartCount: 0,
+            maxRestartAttempts: 0,
+            lastActivityAt,
+            logs: [],
+            ...(startedAt ? { startedAt } : {}),
+            ...(sessionFormat ? { sessionFormat } : {}),
+            ...(sourcePath ? { sourcePath } : {}),
+            ...(detectedModels.length > 0 ? { detectedModels } : {}),
+            ...(valid !== null ? { valid } : {}),
+          };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  return LEGACY_COMPAT_RESPONSES['session.list'] as unknown[];
+}
+
+async function buildPreferredSessionSnapshot(id: string | null): Promise<unknown | null> {
+  const normalizedId = id?.trim();
+  if (!normalizedId) {
+    return null;
+  }
+
+  const endpoint = new URL('/api/sessions/supervisor/get', 'http://127.0.0.1');
+  endpoint.searchParams.set('id', normalizedId);
+  return await fetchNativeControlPlaneData<unknown>(`${endpoint.pathname}${endpoint.search}`);
+}
+
+async function buildPreferredSessionLogs(id: string | null, limit?: number | null): Promise<unknown[]> {
+  const normalizedId = id?.trim();
+  if (!normalizedId) {
+    return [];
+  }
+
+  const endpoint = new URL('/api/sessions/supervisor/logs', 'http://127.0.0.1');
+  endpoint.searchParams.set('id', normalizedId);
+  if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
+    endpoint.searchParams.set('limit', String(limit));
+  }
+
+  const logs = await fetchNativeControlPlaneData<unknown[]>(`${endpoint.pathname}${endpoint.search}`);
+  return Array.isArray(logs) ? logs : [];
+}
+
+async function buildPreferredSessionAttachInfo(id: string | null): Promise<Record<string, unknown> | null> {
+  const normalizedId = id?.trim();
+  if (!normalizedId) {
+    return null;
+  }
+
+  const endpoint = new URL('/api/sessions/supervisor/attach-info', 'http://127.0.0.1');
+  endpoint.searchParams.set('id', normalizedId);
+  const attachInfo = await fetchNativeControlPlaneData<Record<string, unknown>>(`${endpoint.pathname}${endpoint.search}`);
+  return asObjectRecord(attachInfo);
+}
+
+async function buildPreferredSessionHealth(id: string | null): Promise<Record<string, unknown> | null> {
+  const normalizedId = id?.trim();
+  if (!normalizedId) {
+    return null;
+  }
+
+  const endpoint = new URL('/api/sessions/supervisor/health', 'http://127.0.0.1');
+  endpoint.searchParams.set('id', normalizedId);
+  const health = await fetchNativeControlPlaneData<Record<string, unknown>>(`${endpoint.pathname}${endpoint.search}`);
+  return asObjectRecord(health);
+}
+
+async function buildPreferredProviderQuotas(): Promise<unknown[]> {
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const response = await fetch(`${base}/api/billing/provider-quotas`, { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      if (payload.success !== true || !Array.isArray(payload.data)) {
+        continue;
+      }
+
+      return payload.data
+        .map((entry) => {
+          const record = asObjectRecord(entry);
+          if (!record) {
+            return null;
+          }
+
+          const provider = readString(record.provider);
+          const name = readString(record.name);
+          const configured = readBoolean(record.configured);
+          const tier = readString(record.tier);
+          const used = readNumber(record.used);
+
+          if (!provider || !name || configured === null || !tier || used === null) {
+            return null;
+          }
+
+          return {
+            provider,
+            name,
+            configured,
+            ...(readBoolean(record.authenticated) !== null ? { authenticated: readBoolean(record.authenticated) } : {}),
+            ...(readString(record.authMethod) ? { authMethod: readString(record.authMethod) } : {}),
+            tier,
+            limit: readNumber(record.limit),
+            used,
+            remaining: readNumber(record.remaining),
+            resetDate: readString(record.resetDate),
+            rateLimitRpm: readNumber(record.rateLimitRpm),
+            availability: readString(record.availability) ?? undefined,
+            lastError: readString(record.lastError),
+          };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  return LEGACY_COMPAT_RESPONSES['billing.getProviderQuotas'] as unknown[];
+}
+
+async function buildPreferredFallbackChain(taskType?: string | null): Promise<Record<string, unknown>> {
+  for (const base of resolveNativeStatusBases()) {
+    try {
+      const endpoint = new URL(`${base}/api/billing/fallback-chain`);
+      if (taskType && taskType.trim().length > 0) {
+        endpoint.searchParams.set('taskType', taskType.trim());
+      }
+
+      const response = await fetch(endpoint.toString(), { cache: 'no-store' });
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      if (payload.success !== true) {
+        continue;
+      }
+
+      const data = asObjectRecord(payload.data);
+      const chain = Array.isArray(data?.chain)
+        ? data.chain
+          .map((entry) => {
+            const record = asObjectRecord(entry);
+            if (!record) {
+              return null;
+            }
+
+            const priority = readNumber(record.priority);
+            const provider = readString(record.provider);
+            const reason = readString(record.reason);
+            if (priority === null || !provider || !reason) {
+              return null;
+            }
+
+            return {
+              priority,
+              provider,
+              ...(readString(record.model) ? { model: readString(record.model) } : {}),
+              reason,
+            };
+          })
+          .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+        : [];
+
+      return {
+        selectedTaskType: readString(data?.selectedTaskType) ?? null,
+        chain,
+      };
+    } catch {
+      // Try the next native control-plane base.
+    }
+  }
+
+  return LEGACY_COMPAT_RESPONSES['billing.getFallbackChain'] as Record<string, unknown>;
+}
+
+async function buildPreferredMcpStatus(servers: unknown[]): Promise<Record<string, unknown>> {
+  const baseStatus = buildStatusFromServers(servers) as Record<string, unknown>;
+  const nativeMcpStatus = await fetchNativeStatusPayload<NativeMcpStatusPayload>('/api/mcp/status');
+
+  if (!nativeMcpStatus) {
+    return baseStatus;
+  }
+
+  const mergedStatus: Record<string, unknown> = {
+    ...baseStatus,
+  };
+
+  const initialized = readBoolean(nativeMcpStatus.initialized);
+  const connected = readBoolean(nativeMcpStatus.connected);
+  const toolCount = readNumber(nativeMcpStatus.toolCount);
+  const serverCount = readNumber(nativeMcpStatus.serverCount);
+  const connectedCount = readNumber(nativeMcpStatus.connectedCount);
+  const sourceBackedHarnessCount = readNumber(nativeMcpStatus.sourceBackedHarnessCount);
+  const source = readString(nativeMcpStatus.source);
+  const lifecycle = asObjectRecord(nativeMcpStatus.lifecycle);
+  const pool = asObjectRecord(nativeMcpStatus.pool);
+  const aggregatorStatus = asObjectRecord(nativeMcpStatus.aggregatorStatus);
+  const lazySessionMode = readBoolean(nativeMcpStatus.lazySessionMode);
+  const singleActiveServerMode = readBoolean(nativeMcpStatus.singleActiveServerMode);
+
+  if (initialized !== null) {
+    mergedStatus.initialized = initialized;
+  }
+  if (toolCount !== null) {
+    mergedStatus.toolCount = toolCount;
+  }
+  if (serverCount !== null) {
+    mergedStatus.serverCount = serverCount;
+  }
+  if (connectedCount !== null) {
+    mergedStatus.connectedCount = connectedCount;
+  } else if (connected !== null) {
+    mergedStatus.connectedCount = connected ? Math.max(1, Number(mergedStatus.connectedCount ?? 0)) : 0;
+  }
+  if (connected !== null) {
+    mergedStatus.connected = connected;
+  }
+  if (sourceBackedHarnessCount !== null) {
+    mergedStatus.sourceBackedHarnessCount = sourceBackedHarnessCount;
+  }
+  if (source) {
+    mergedStatus.source = source;
+  }
+  if (aggregatorStatus) {
+    mergedStatus.aggregatorStatus = aggregatorStatus;
+  }
+  if (pool) {
+    mergedStatus.pool = pool;
+  }
+  if (lifecycle) {
+    mergedStatus.lifecycle = lifecycle;
+  } else if (lazySessionMode !== null || singleActiveServerMode !== null) {
+    mergedStatus.lifecycle = {
+      ...(asObjectRecord(mergedStatus.lifecycle) ?? {}),
+      ...(lazySessionMode !== null ? { lazySessionMode } : {}),
+      ...(singleActiveServerMode !== null ? { singleActiveServerMode } : {}),
+    };
+  }
+
+  return mergedStatus;
+}
+
+type ImportedMaintenanceStats = {
+  totalSessions: number;
+  inlineTranscriptCount: number;
+  archivedTranscriptCount: number;
+  missingRetentionSummaryCount: number;
+};
+
+async function buildLocalStartupStatus(
+  servers: unknown[],
+  executionEnvironment?: Record<string, unknown> | null,
+  importedMaintenanceStats?: ImportedMaintenanceStats | null,
+): Promise<LocalCompatStartupStatus> {
+  const baseStatus = buildLocalCompatStartupStatusBase(servers);
+  const [nativeStartupStatus, nativeRuntimeStatus] = await Promise.all([
+    fetchNativeStatusPayload<NativeStartupStatusPayload>('/api/startup/status'),
+    fetchNativeStatusPayload<NativeRuntimeStatusPayload>('/api/runtime/status'),
+  ]);
+
+  const mergedStatus: LocalCompatStartupStatus = {
+    ...baseStatus,
+    runtime: {
+      ...baseStatus.runtime,
+    },
+    checks: {
+      ...baseStatus.checks,
+    },
+  };
+
+  if (nativeStartupStatus) {
+    const nativeStatus = readString(nativeStartupStatus.status);
+    const nativeReady = readBoolean(nativeStartupStatus.ready);
+    const nativeSummary = readString(nativeStartupStatus.summary);
+    const nativeBlockingReasons = Array.isArray(nativeStartupStatus.blockingReasons)
+      ? nativeStartupStatus.blockingReasons
+        .map((reason) => {
+          const record = asObjectRecord(reason);
+          if (!record) {
+            return null;
+          }
+
+          const code = readString(record.code);
+          const detail = readString(record.detail);
+          return code && detail ? { code, detail } : null;
+        })
+        .filter((reason): reason is { code: string; detail: string } => reason !== null)
+      : [];
+    const nativeChecks = asObjectRecord(nativeStartupStatus.checks);
+    const nativeMemory = asObjectRecord(nativeChecks?.memory);
+    const nativeImportedSessions = asObjectRecord(nativeChecks?.importedSessions);
+    const nativeSessionSupervisorBridge = asObjectRecord(nativeChecks?.sessionSupervisorBridge);
+    const nativeMainControlPlane = asObjectRecord(nativeChecks?.mainControlPlane);
+    const nativeConfig = asObjectRecord(nativeChecks?.config);
+    const nativeMesh = asObjectRecord(nativeChecks?.mesh);
+
+    if (nativeStatus) {
+      mergedStatus.status = nativeStatus;
+    }
+    if (nativeReady !== null) {
+      mergedStatus.ready = nativeReady;
+    }
+    if (nativeSummary) {
+      mergedStatus.summary = `${nativeSummary} Using Go-native startup status in local dashboard compatibility mode because the TypeScript startupStatus procedure is unavailable.`;
+    }
+    if (nativeBlockingReasons.length > 0 || nativeStartupStatus.blockingReasons !== undefined) {
+      mergedStatus.blockingReasons = nativeBlockingReasons;
+    }
+    if (nativeMemory) {
+      const memoryReady = readBoolean(nativeMemory.ready);
+      const storePath = readString(nativeMemory.storePath);
+      const totalEntries = readNumber(nativeMemory.totalEntries);
+      const presentDefaultSections = readNumber(nativeMemory.presentDefaultSections);
+      const expectedDefaultSections = readNumber(nativeMemory.expectedDefaultSections);
+      const missingSections = readStringArray(nativeMemory.missingSections);
+
+      if (memoryReady !== null) {
+        mergedStatus.checks = {
+          ...mergedStatus.checks,
+          memory: {
+            ...mergedStatus.checks.memory,
+            ready: memoryReady,
+            initialized: memoryReady,
+            agentMemory: memoryReady,
+            sectionedMemory: {
+              ready: memoryReady,
+              enabled: true,
+              storeExists: memoryReady,
+              storePath,
+              totalEntries: totalEntries ?? 0,
+              defaultSectionCount: expectedDefaultSections ?? 0,
+              presentDefaultSectionCount: presentDefaultSections ?? 0,
+              missingSections,
+            },
+          },
+        };
+      }
+    }
+    if (nativeImportedSessions) {
+      mergedStatus.checks.importedSessions = {
+        totalSessions: readNumber(nativeImportedSessions.totalSessions) ?? 0,
+        inlineTranscriptCount: readNumber(nativeImportedSessions.inlineTranscriptCount) ?? 0,
+        archivedTranscriptCount: readNumber(nativeImportedSessions.archivedTranscriptCount) ?? 0,
+        missingRetentionSummaryCount: readNumber(nativeImportedSessions.missingRetentionSummaryCount) ?? 0,
+      };
+    }
+    if (nativeSessionSupervisorBridge) {
+      const bridgeReady = readBoolean(nativeSessionSupervisorBridge.ready);
+      if (bridgeReady !== null) {
+        mergedStatus.checks.sessionSupervisor = {
+          ...mergedStatus.checks.sessionSupervisor,
+          ready: bridgeReady,
+        };
+      }
+    }
+    if (nativeMainControlPlane) {
+      mergedStatus.checks = {
+        ...mergedStatus.checks,
+        mainControlPlane: {
+          ready: readBoolean(nativeMainControlPlane.ready) ?? false,
+          baseUrl: readString(nativeMainControlPlane.baseUrl),
+        },
+      };
+    }
+    if (nativeConfig) {
+      mergedStatus.checks = {
+        ...mergedStatus.checks,
+        config: {
+          workspaceRootAvailable: readBoolean(nativeConfig.workspaceRootAvailable) ?? false,
+          goConfigDirAvailable: readBoolean(nativeConfig.goConfigDirAvailable) ?? false,
+          mainConfigDirAvailable: readBoolean(nativeConfig.mainConfigDirAvailable) ?? false,
+          repoConfigAvailable: readBoolean(nativeConfig.repoConfigAvailable) ?? false,
+          mcpConfigAvailable: readBoolean(nativeConfig.mcpConfigAvailable) ?? false,
+        },
+      };
+    }
+    if (nativeMesh) {
+      mergedStatus.checks = {
+        ...mergedStatus.checks,
+        mesh: {
+          nodeId: readString(nativeMesh.nodeId),
+          peersCount: readNumber(nativeMesh.peersCount) ?? 0,
+        },
+      };
+    }
+  }
+
+  if (nativeRuntimeStatus) {
+    const nativeUptime = readNumber(nativeRuntimeStatus.uptimeSec);
+    const nativeVersion = readString(nativeRuntimeStatus.version);
+    const nativeStartupMode = asObjectRecord(nativeRuntimeStatus.startupMode);
+
+    if (nativeUptime !== null) {
+      mergedStatus.uptime = nativeUptime;
+    }
+    if (nativeVersion) {
+      mergedStatus.runtime = {
+        ...mergedStatus.runtime,
+        version: nativeVersion,
+      };
+    }
+    if (nativeStartupMode) {
+      mergedStatus.startupMode = {
+        ...(asObjectRecord(mergedStatus.startupMode) ?? {}),
+        ...nativeStartupMode,
+      };
+    }
+  }
+
+  const executionSummary = asObjectRecord(executionEnvironment?.summary);
+  if (executionSummary) {
+    mergedStatus.checks = {
+      ...mergedStatus.checks,
+      executionEnvironment: {
+        ready: readBoolean(executionSummary.ready) ?? mergedStatus.checks.executionEnvironment.ready,
+        preferredShellId: readString(executionSummary.preferredShellId),
+        preferredShellLabel: readString(executionSummary.preferredShellLabel),
+        shellCount: readNumber(executionSummary.shellCount) ?? 0,
+        verifiedShellCount: readNumber(executionSummary.verifiedShellCount) ?? 0,
+        toolCount: readNumber(executionSummary.toolCount) ?? 0,
+        verifiedToolCount: readNumber(executionSummary.verifiedToolCount) ?? 0,
+        harnessCount: readNumber(executionSummary.harnessCount) ?? 0,
+        verifiedHarnessCount: readNumber(executionSummary.verifiedHarnessCount) ?? 0,
+        supportsPowerShell: readBoolean(executionSummary.supportsPowerShell) ?? false,
+        supportsPosixShell: readBoolean(executionSummary.supportsPosixShell) ?? false,
+        notes: readStringArray(executionSummary.notes),
+      },
+    };
+  }
+
+  if (!mergedStatus.checks.importedSessions && importedMaintenanceStats) {
+    mergedStatus.checks = {
+      ...mergedStatus.checks,
+      importedSessions: {
+        totalSessions: importedMaintenanceStats.totalSessions,
+        inlineTranscriptCount: importedMaintenanceStats.inlineTranscriptCount,
+        archivedTranscriptCount: importedMaintenanceStats.archivedTranscriptCount,
+        missingRetentionSummaryCount: importedMaintenanceStats.missingRetentionSummaryCount,
+      },
+    };
+  }
+
+  return mergedStatus;
 }
 
 async function fetchProcedureData(
@@ -763,6 +2419,7 @@ async function tryResolveLegacyMcpResponse(
   req: Request,
   upstreamBases: string[],
   headers: Headers,
+  body?: string,
 ): Promise<Response | null> {
   if (!isLegacyMcpRequest(req)) {
     return null;
@@ -770,20 +2427,25 @@ async function tryResolveLegacyMcpResponse(
 
   const procedures = getProcedureNames(req);
   const isBatch = new URL(req.url).searchParams.get('batch') === '1';
+  const procedureInputs = extractTrpcProcedureInputs(body, req);
 
   const rawServers = await fetchProcedureData(upstreamBases, headers, [...LEGACY_MCP_SERVERS_LIST_PROCEDURES]);
   const localConfig = await loadLocalMcpConfig();
   const normalizedServers = normalizeServerList(rawServers);
   const effectiveServers = normalizedServers.length > 0 ? normalizedServers : mapConfigToServerList(localConfig);
-  const status = buildStatusFromServers(effectiveServers);
+  const status = await buildPreferredMcpStatus(effectiveServers);
+  const toolsList = await buildPreferredToolsList();
+  const mcpTraffic = await buildPreferredMcpTraffic();
+  const providerQuotas = await buildPreferredProviderQuotas();
+  const sessionList = await buildPreferredSessionList();
 
   const dataByResponseKey: Record<LegacyCompatResponseKey, unknown> = {
     'mcpServers.list': effectiveServers,
-    'tools.list': LEGACY_COMPAT_RESPONSES['tools.list'],
+    'tools.list': toolsList,
     'mcp.getStatus': status,
-    'mcp.traffic': LEGACY_COMPAT_RESPONSES['mcp.traffic'],
-    'session.list': LEGACY_COMPAT_RESPONSES['session.list'],
-    'billing.getProviderQuotas': LEGACY_COMPAT_RESPONSES['billing.getProviderQuotas'],
+    'mcp.traffic': mcpTraffic,
+    'session.list': sessionList,
+    'billing.getProviderQuotas': providerQuotas,
     'billing.getFallbackChain': LEGACY_COMPAT_RESPONSES['billing.getFallbackChain'],
   };
 
@@ -791,10 +2453,21 @@ async function tryResolveLegacyMcpResponse(
     return null;
   }
 
-  const entries = procedures.map((procedureName) => ({
-    result: {
-      data: dataByResponseKey[getLegacyCompatResponseKey(procedureName) ?? 'mcp.getStatus'],
-    },
+  const entries = await Promise.all(procedures.map(async (procedureName, index) => {
+    const responseKey = getLegacyCompatResponseKey(procedureName) ?? 'mcp.getStatus';
+    let data = dataByResponseKey[responseKey];
+
+    if (responseKey === 'billing.getFallbackChain') {
+      const input = procedureInputs[index];
+      const taskType = input && typeof input === 'object' ? readString((input as { taskType?: unknown }).taskType) : null;
+      data = await buildPreferredFallbackChain(taskType);
+    }
+
+    return {
+      result: {
+        data,
+      },
+    };
   }));
 
   return new Response(JSON.stringify(isBatch ? entries : entries[0]), {
@@ -810,11 +2483,6 @@ function buildLegacyCompatResponse(req: Request): Response | null {
   return null;
 }
 
-async function buildPreferredSavedScriptsList(): Promise<unknown[]> {
-  const scripts = await fetchNativeControlPlaneData<unknown[]>('/api/scripts');
-  return Array.isArray(scripts) ? scripts : [];
-}
-
 async function buildLocalCompatResponse(req: Request, body?: string): Promise<Response | null> {
   const procedureNames = getProcedureNames(req);
   if (procedureNames.length === 0) {
@@ -826,81 +2494,162 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
   const localConfig = await loadLocalMcpConfig();
   const localConfigSource = await readLocalMcpSource();
   const localServers = mapConfigToServerList(localConfig);
-  const localStatus = buildStatusFromServers(localServers);
-  const localStartupStatus = buildLocalStartupStatus(localServers);
-  const savedScripts = await buildPreferredSavedScriptsList();
+  const localStatus = await buildPreferredMcpStatus(localServers);
+  const toolsList = await buildPreferredToolsList();
+  const mcpTraffic = await buildPreferredMcpTraffic();
+  const providerQuotas = await buildPreferredProviderQuotas();
+  const apiKeys = await buildPreferredApiKeys();
+  const cliHarnessDetections = await buildPreferredCliHarnessDetections();
+  const executionEnvironment = await buildPreferredExecutionEnvironment(cliHarnessDetections);
+  const workingSet = await buildPreferredWorkingSet();
+  const toolSelectionTelemetry = await buildPreferredToolSelectionTelemetry();
+  const toolPreferences = await buildPreferredToolPreferences();
+  const expertStatus = await buildPreferredExpertStatus();
+  const sessionState = await buildPreferredSessionState();
+  const agentMemoryStats = await buildPreferredAgentMemoryStats();
+  const importedMaintenanceStats = await buildPreferredImportedMaintenanceStats();
+  const installSurfaces = await buildPreferredInstallSurfaces();
+  const memoryStats = await buildPreferredMemoryStats();
+  const localStartupStatus = await buildLocalStartupStatus(localServers, executionEnvironment, importedMaintenanceStats);
+  const sessionCatalog = buildPreferredSessionCatalog(cliHarnessDetections);
+  const sessionList = await buildPreferredSessionList();
 
   const dataByResponseKey: Record<LocalCompatResponseKey, unknown> = {
     'mcpServers.list': localServers,
-    'tools.list': LEGACY_COMPAT_RESPONSES['tools.list'],
+    'tools.list': toolsList,
     'mcp.getStatus': localStatus,
-    'mcp.traffic': LEGACY_COMPAT_RESPONSES['mcp.traffic'],
-    'session.list': LEGACY_COMPAT_RESPONSES['session.list'],
-    'billing.getProviderQuotas': LEGACY_COMPAT_RESPONSES['billing.getProviderQuotas'],
+    'mcp.traffic': mcpTraffic,
+    'session.list': sessionList,
+    'billing.getProviderQuotas': providerQuotas,
     'billing.getFallbackChain': LEGACY_COMPAT_RESPONSES['billing.getFallbackChain'],
     startupStatus: localStartupStatus,
-    'mcp.getWorkingSet': {
-      tools: [],
-      limits: {
-        maxLoadedTools: 24,
-        maxHydratedSchemas: 8,
-      },
-    },
-    'mcp.getToolSelectionTelemetry': [],
+    'mcp.getWorkingSet': workingSet,
+    'mcp.getToolSelectionTelemetry': toolSelectionTelemetry,
     'mcp.searchTools': [],
-    'mcp.getToolPreferences': {
-      importantTools: [],
-      alwaysLoadedTools: ['search_tools', 'read_file', 'write_file', 'grep_search', 'execute_command', 'browser__open'],
-    },
+    'mcp.getToolPreferences': toolPreferences,
     'mcp.getJsoncEditor': {
       path: localConfigSource.path,
       content: localConfigSource.content,
     },
     'mcpServers.get': undefined,
-    'apiKeys.list': [],
-    'savedScripts.list': savedScripts,
-    'tools.detectCliHarnesses': [],
-    'tools.detectExecutionEnvironment': {
-      os: 'unknown',
-      summary: {
-        ready: false,
-        preferredShellId: null,
-        preferredShellLabel: null,
-        shellCount: 0,
-        verifiedShellCount: 0,
-        toolCount: 0,
-        verifiedToolCount: 0,
-        harnessCount: 0,
-        verifiedHarnessCount: 0,
-        supportsPowerShell: false,
-        supportsPosixShell: false,
-        notes: [],
-      },
-      shells: [],
-      tools: [],
-      harnesses: [],
-    },
-    'tools.detectInstallSurfaces': [],
-    'expert.getStatus': {},
-    'session.getState': {
-      isAutoDriveActive: false,
-      activeGoal: null,
-    },
-    'agentMemory.stats': {
-      session: 0,
-      working: 0,
-      longTerm: 0,
-      total: 0,
-    },
+    'mcpServers.syncTargets': [],
+    'mcpServers.exportClientConfig': null,
+    'apiKeys.list': apiKeys,
+    'secrets.list': await buildPreferredSecretsList(),
+    'policies.list': await buildPreferredPoliciesList(),
+    'savedScripts.list': await buildPreferredSavedScriptsList(),
+    'config.list': [],
+    'tools.detectCliHarnesses': cliHarnessDetections,
+    'tools.detectExecutionEnvironment': executionEnvironment,
+    'tools.detectInstallSurfaces': installSurfaces,
+    'expert.getStatus': expertStatus,
+    'session.catalog': sessionCatalog,
+    'session.importedMaintenanceStats': importedMaintenanceStats,
+    'session.getState': sessionState,
+    'session.get': null,
+    'session.logs': [],
+    'session.attachInfo': null,
+    'session.health': null,
+    'toolSets.list': await buildPreferredToolSetsList(),
+    'agentMemory.search': [],
+    'agentMemory.add': null,
+    'agentMemory.getRecent': [],
+    'agentMemory.getByType': [],
+    'agentMemory.getByNamespace': [],
+    'agentMemory.delete': false,
+    'agentMemory.clearSession': { success: false },
+    'agentMemory.export': {},
+    'agentMemory.handoff': null,
+    'agentMemory.pickup': null,
+    'agentMemory.stats': agentMemoryStats,
+    'memory.getAgentStats': memoryStats,
+    'memory.getRecentObservations': [],
+    'memory.searchObservations': [],
+    'memory.getRecentUserPrompts': [],
+    'memory.searchUserPrompts': [],
+    'memory.getRecentSessionSummaries': [],
+    'memory.searchSessionSummaries': [],
+    'memory.searchAgentMemory': [],
+    'memory.searchMemoryPivot': [],
+    'memory.getMemoryTimelineWindow': [],
+    'memory.getCrossSessionMemoryLinks': [],
+    'memory.listInterchangeFormats': [],
+    'memory.exportMemories': { data: '', format: 'json', exportedAt: null },
     'shell.getSystemHistory': [],
     'serverHealth.check': {
       status: 'unavailable',
       crashCount: 0,
       maxAttempts: 0,
     },
+    'project.getContext': '',
+    'project.getHandoffs': [],
+    'skills.list': [],
+    'skills.read': { content: [] },
+    'suggestions.list': [],
+    'suggestions.resolve': { success: true },
+    'suggestions.clearAll': { success: true },
+    'squad.list': [],
+    'squad.spawn': { success: true, memberId: '' },
+    'squad.kill': { success: true },
+    'expert.research': { success: true, taskId: '' },
+    'expert.code': { success: true, taskId: '' },
+    'marketplace.list': [],
+    'marketplace.get': null,
+    'marketplace.install': { installed: true },
+    'marketplace.publish': { entry: null },
+    'swarm.startSwarm': { missionId: '', status: 'started' },
+    'swarm.resumeMission': { success: true },
+    'swarm.listMissions': [],
+    'swarm.getMission': null,
+    'swarm.stopMission': { success: true },
+    'swarm.deleteMission': { success: true },
+    'swarm.getLogs': [],
+    'swarm.getAnalytics': {},
+    'swarm.decomposeTask': { success: true, tasks: [] },
+    'swarm.approveTask': { success: true },
+    'swarm.updateTaskPriority': { success: true },
+    'swarm.consensus': { success: true, consensus: null },
+    'swarm.debate': { success: true, result: null },
+    'swarm.sendDirectMessage': { success: true },
+    'infrastructure.runDoctor': { success: true, output: '' },
+    'infrastructure.applyConfigurations': { success: true, output: '' },
+    'linksBacklog.stats': { total: 0, pending: 0, completed: 0 },
+    'linksBacklog.list': [],
+    'linksBacklog.syncFromBobbyBookmarks': { success: true, upserted: 0 },
+    'unifiedDirectory.stats': { total: 0, tools: 0, servers: 0 },
+    'unifiedDirectory.list': [],
+    'workspace.list': [],
+    'submodule.list': [],
+    'submodule.detectCapabilities': [],
+    'git.getModules': [],
+    'git.getLog': [],
+    'git.getStatus': { branch: 'unknown', clean: false, files: [] },
+    'catalog.list': { items: [], total: 0 },
+    'catalog.get': null,
+    'catalog.listRuns': [],
+    'catalog.stats': { total: 0, by_status: {}, by_transport: {}, last_ingest_at: null, providers: 0 },
+    'catalog.listLinkedServers': [],
+    'browser.status': { available: false, pageCount: 0 },
+    'browser.searchHistory': [],
+    'browser.scrapePage': null,
+    'browser.proxyFetch': null,
+    'browser.screenshot': null,
+    'browser.debug': null,
+    'browser.closePage': null,
+    'browser.closeAll': { success: true },
+    'council.base.status': { supervisors: [] },
+    'council.sessions.list': [],
+    'council.sessions.stats': { total: 0, active: 0 },
+    'council.history.list': [],
+    'council.quota.allStats': {},
+    'council.smartPilot.status': { enabled: false },
+    'council.visual.systemDiagram': '',
+    'director.chat': { response: '' },
+    'directorConfig.get': {},
+    'directorConfig.update': { success: true },
   };
 
-  const compatEntries = procedureNames.map((procedureName, index) => {
+  const compatEntries = await Promise.all(procedureNames.map(async (procedureName, index) => {
     const responseKey = getLocalCompatResponseKey(procedureName);
     if (!responseKey) {
       return null;
@@ -927,18 +2676,514 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
       data = buildLocalManagedServerRecord(match.name, match.server);
     }
 
+    if (responseKey === 'mcpServers.syncTargets') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/mcp/servers/sync-targets');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'mcpServers.exportClientConfig') {
+      const input = procedureInputs[index];
+      const client = input && typeof input === 'object' ? readString((input as { client?: unknown }).client) : null;
+      const overridePath = input && typeof input === 'object' ? readString((input as { path?: unknown }).path) : null;
+      data = client
+        ? await fetchNativeControlPlaneData<unknown>(`/api/mcp/servers/export-client-config${buildMemoryQueryString({ client, path: overridePath })}`)
+        : null;
+      if (data === null) {
+        data = null;
+      }
+    }
+
+    if (responseKey === 'billing.getFallbackChain') {
+      const input = procedureInputs[index];
+      const taskType = input && typeof input === 'object' ? readString((input as { taskType?: unknown }).taskType) : null;
+      data = await buildPreferredFallbackChain(taskType);
+    }
+
+    if (responseKey === 'mcp.searchTools') {
+      const input = procedureInputs[index];
+      const query = input && typeof input === 'object' ? readString((input as { query?: unknown }).query) : null;
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      data = await buildPreferredToolSearch(query, limit);
+    }
+
+    if (responseKey === 'shell.getSystemHistory') {
+      const input = procedureInputs[index];
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      data = await buildPreferredShellSystemHistory(limit);
+    }
+
+    if (responseKey === 'agentMemory.search' || responseKey === 'agentMemory.getRecent' || responseKey === 'agentMemory.getByType' || responseKey === 'agentMemory.getByNamespace' || responseKey === 'agentMemory.export') {
+      const input = procedureInputs[index];
+      const record = input && typeof input === 'object' ? (input as Record<string, unknown>) : {};
+      let endpointPath = '';
+
+      if (responseKey === 'agentMemory.search') {
+        endpointPath = `/api/agent-memory/search${buildMemoryQueryString({
+          query: readString(record.query),
+          namespace: readString(record.namespace),
+          type: readString(record.type),
+          limit: readNumber(record.limit),
+        })}`;
+      } else if (responseKey === 'agentMemory.getRecent') {
+        endpointPath = `/api/agent-memory/recent${buildMemoryQueryString({
+          limit: readNumber(record.limit),
+          type: readString(record.type),
+        })}`;
+      } else if (responseKey === 'agentMemory.getByType') {
+        endpointPath = `/api/agent-memory/by-type${buildMemoryQueryString({
+          type: readString(record.type),
+        })}`;
+      } else if (responseKey === 'agentMemory.getByNamespace') {
+        endpointPath = `/api/agent-memory/by-namespace${buildMemoryQueryString({
+          namespace: readString(record.namespace),
+        })}`;
+      } else if (responseKey === 'agentMemory.export') {
+        endpointPath = '/api/agent-memory/export';
+      }
+
+      if (endpointPath) {
+        data = await fetchNativeControlPlaneData<unknown>(endpointPath);
+        if (data === null) {
+          data = responseKey === 'agentMemory.export' ? {} : [];
+        }
+      }
+    }
+
+    if (responseKey === 'memory.getRecentObservations' || responseKey === 'memory.searchObservations' || responseKey === 'memory.getRecentUserPrompts' || responseKey === 'memory.searchUserPrompts' || responseKey === 'memory.getRecentSessionSummaries' || responseKey === 'memory.searchSessionSummaries' || responseKey === 'memory.searchAgentMemory' || responseKey === 'memory.listInterchangeFormats' || responseKey === 'memory.exportMemories') {
+      const input = procedureInputs[index];
+      const record = input && typeof input === 'object' ? (input as Record<string, unknown>) : {};
+      let endpointPath = '';
+
+      if (responseKey === 'memory.getRecentObservations') {
+        endpointPath = `/api/memory/observations/recent${buildMemoryQueryString({
+          limit: readNumber(record.limit),
+          namespace: readString(record.namespace),
+          type: readString(record.type),
+        })}`;
+      } else if (responseKey === 'memory.searchObservations') {
+        endpointPath = `/api/memory/observations/search${buildMemoryQueryString({
+          query: readString(record.query),
+          limit: readNumber(record.limit),
+          namespace: readString(record.namespace),
+          type: readString(record.type),
+        })}`;
+      } else if (responseKey === 'memory.getRecentUserPrompts') {
+        endpointPath = `/api/memory/user-prompts/recent${buildMemoryQueryString({
+          limit: readNumber(record.limit),
+          role: readString(record.role),
+        })}`;
+      } else if (responseKey === 'memory.searchUserPrompts') {
+        endpointPath = `/api/memory/user-prompts/search${buildMemoryQueryString({
+          query: readString(record.query),
+          limit: readNumber(record.limit),
+          role: readString(record.role),
+        })}`;
+      } else if (responseKey === 'memory.getRecentSessionSummaries') {
+        endpointPath = `/api/memory/session-summaries/recent${buildMemoryQueryString({
+          limit: readNumber(record.limit),
+        })}`;
+      } else if (responseKey === 'memory.searchSessionSummaries') {
+        endpointPath = `/api/memory/session-summaries/search${buildMemoryQueryString({
+          query: readString(record.query),
+          limit: readNumber(record.limit),
+        })}`;
+      } else if (responseKey === 'memory.searchAgentMemory') {
+        endpointPath = `/api/memory/agent-search${buildMemoryQueryString({
+          query: readString(record.query),
+          type: readString(record.type),
+          limit: readNumber(record.limit),
+        })}`;
+      } else if (responseKey === 'memory.listInterchangeFormats') {
+        endpointPath = '/api/memory/interchange-formats';
+      } else if (responseKey === 'memory.exportMemories') {
+        endpointPath = `/api/memory/export${buildMemoryQueryString({
+          userId: readString(record.userId) ?? 'default',
+          format: readString(record.format) ?? 'json',
+        })}`;
+      }
+
+      if (endpointPath) {
+        data = await fetchNativeControlPlaneData<unknown>(endpointPath);
+        if (data === null) {
+          if (responseKey === 'memory.exportMemories') {
+            data = { data: '', format: readString(record.format) ?? 'json', exportedAt: null };
+          } else {
+            data = [];
+          }
+        }
+      }
+    }
+
+    if (responseKey === 'memory.searchMemoryPivot' || responseKey === 'memory.getMemoryTimelineWindow' || responseKey === 'memory.getCrossSessionMemoryLinks') {
+      const input = procedureInputs[index];
+      const record = input && typeof input === 'object' ? (input as Record<string, unknown>) : null;
+      let endpointPath = '';
+      if (responseKey === 'memory.searchMemoryPivot') {
+        endpointPath = '/api/memory/pivot/search';
+      } else if (responseKey === 'memory.getMemoryTimelineWindow') {
+        endpointPath = '/api/memory/timeline/window';
+      } else if (responseKey === 'memory.getCrossSessionMemoryLinks') {
+        endpointPath = '/api/memory/cross-session-links';
+      }
+
+      if (endpointPath && record) {
+        data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify(record),
+        });
+        if (data === null) {
+          data = [];
+        }
+      }
+    }
+
+    if (responseKey === 'session.get') {
+      const input = procedureInputs[index];
+      const id = input && typeof input === 'object' ? readString((input as { id?: unknown }).id) : null;
+      data = await buildPreferredSessionSnapshot(id);
+    }
+
+    if (responseKey === 'session.logs') {
+      const input = procedureInputs[index];
+      const id = input && typeof input === 'object' ? readString((input as { id?: unknown }).id) : null;
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      data = await buildPreferredSessionLogs(id, limit);
+    }
+
+    if (responseKey === 'session.attachInfo') {
+      const input = procedureInputs[index];
+      const id = input && typeof input === 'object' ? readString((input as { id?: unknown }).id) : null;
+      data = await buildPreferredSessionAttachInfo(id);
+    }
+
+    if (responseKey === 'session.health') {
+      const input = procedureInputs[index];
+      const id = input && typeof input === 'object' ? readString((input as { id?: unknown }).id) : null;
+      data = await buildPreferredSessionHealth(id);
+    }
+
     if (responseKey === 'serverHealth.check') {
       const input = procedureInputs[index];
       const uuid = input && typeof input === 'object' ? String((input as { serverUuid?: unknown }).serverUuid ?? '') : '';
-      const match = uuid ? findLocalServerByUuid(localConfig, uuid) : null;
-      const meta = match ? buildLocalServerMeta(match.name, match.server) : null;
-      data = {
-        status: match
-          ? (meta?.status === 'ready' ? 'ready' : meta?.status === 'disabled' ? 'disabled' : 'unavailable')
-          : 'unavailable',
-        crashCount: meta?.crashCount ?? 0,
-        maxAttempts: meta?.maxAttempts ?? 0,
-      };
+      data = await buildPreferredServerHealth(uuid, localConfig);
+    }
+
+    if (responseKey === 'config.list') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/config/list');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'project.getContext') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/project/context');
+      if (data === null) {
+        data = '';
+      }
+    }
+
+    if (responseKey === 'project.getHandoffs') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/project/handoffs');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'skills.list') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/skills');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'skills.read') {
+      const input = procedureInputs[index];
+      const name = input && typeof input === 'object' ? readString((input as { name?: unknown }).name) : null;
+      data = name ? await fetchNativeControlPlaneData<unknown>(`/api/skills/read${buildMemoryQueryString({ name })}`) : null;
+      if (data === null) {
+        data = { content: [] };
+      }
+    }
+
+    if (responseKey === 'suggestions.list') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/suggestions');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'squad.list') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/squad');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'expert.getStatus') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/expert/status');
+      if (data === null) {
+        data = { status: 'offline' };
+      }
+    }
+
+    if (responseKey === 'marketplace.list') {
+      const input = procedureInputs[index];
+      const filter = input && typeof input === 'object' ? readString((input as { filter?: unknown }).filter) : null;
+      data = await fetchNativeControlPlaneData<unknown>(`/api/marketplace${buildMemoryQueryString({ filter })}`);
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'marketplace.get') {
+      const input = procedureInputs[index];
+      const id = input && typeof input === 'object' ? readString((input as { id?: unknown }).id) : null;
+      data = id ? await fetchNativeControlPlaneData<unknown>(`/api/marketplace/get${buildMemoryQueryString({ id })}`) : null;
+    }
+
+    if (responseKey === 'swarm.listMissions') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/swarm/missions');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'swarm.getMission') {
+      const input = procedureInputs[index];
+      const missionId = input && typeof input === 'object' ? readString((input as { missionId?: unknown }).missionId) : null;
+      data = missionId ? await fetchNativeControlPlaneData<unknown>(`/api/swarm/mission${buildMemoryQueryString({ missionId })}`) : null;
+    }
+
+    if (responseKey === 'swarm.getLogs') {
+      const input = procedureInputs[index];
+      const missionId = input && typeof input === 'object' ? readString((input as { missionId?: unknown }).missionId) : null;
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      data = missionId ? await fetchNativeControlPlaneData<unknown>(`/api/swarm/logs${buildMemoryQueryString({ missionId, limit })}`) : null;
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'swarm.getAnalytics') {
+      const input = procedureInputs[index];
+      const missionId = input && typeof input === 'object' ? readString((input as { missionId?: unknown }).missionId) : null;
+      data = missionId ? await fetchNativeControlPlaneData<unknown>(`/api/swarm/analytics${buildMemoryQueryString({ missionId })}`) : null;
+      if (data === null) {
+        data = {};
+      }
+    }
+
+    if (responseKey === 'linksBacklog.stats') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/links-backlog/stats');
+      if (data === null) {
+        data = { total: 0, pending: 0, completed: 0 };
+      }
+    }
+
+    if (responseKey === 'linksBacklog.list') {
+      const input = procedureInputs[index];
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      const offset = input && typeof input === 'object' ? readNumber((input as { offset?: unknown }).offset) : null;
+      data = await fetchNativeControlPlaneData<unknown>(`/api/links-backlog${buildMemoryQueryString({ limit, offset })}`);
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'unifiedDirectory.stats') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/directory/stats');
+      if (data === null) {
+        data = { total: 0, tools: 0, servers: 0 };
+      }
+    }
+
+    if (responseKey === 'unifiedDirectory.list') {
+      const input = procedureInputs[index];
+      const search = input && typeof input === 'object' ? readString((input as { search?: unknown }).search) : null;
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      const offset = input && typeof input === 'object' ? readNumber((input as { offset?: unknown }).offset) : null;
+      data = await fetchNativeControlPlaneData<unknown>(`/api/directory${buildMemoryQueryString({ search, limit, offset })}`);
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'workspace.list') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/workspace/list');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'submodule.list') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/submodules');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'submodule.detectCapabilities') {
+      const input = procedureInputs[index];
+      const submodulePath = input && typeof input === 'object' ? readString((input as { path?: unknown }).path) : null;
+      data = submodulePath ? await fetchNativeControlPlaneData<unknown>(`/api/submodules/capabilities${buildMemoryQueryString({ path: submodulePath })}`) : null;
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'git.getModules') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/git/modules');
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'git.getLog') {
+      const input = procedureInputs[index];
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      data = await fetchNativeControlPlaneData<unknown>(`/api/git/log${buildMemoryQueryString({ limit })}`);
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'git.getStatus') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/git/status');
+      if (data === null) {
+        data = { branch: 'unknown', clean: false, files: [] };
+      }
+    }
+
+    if (responseKey === 'catalog.list') {
+      const input = procedureInputs[index];
+      const search = input && typeof input === 'object' ? readString((input as { search?: unknown }).search) : null;
+      const status = input && typeof input === 'object' ? readString((input as { status?: unknown }).status) : null;
+      const transport = input && typeof input === 'object' ? readString((input as { transport?: unknown }).transport) : null;
+      const install_method = input && typeof input === 'object' ? readString((input as { install_method?: unknown }).install_method) : null;
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      const offset = input && typeof input === 'object' ? readNumber((input as { offset?: unknown }).offset) : null;
+      
+      data = await fetchNativeControlPlaneData<unknown>(`/api/catalog${buildMemoryQueryString({ search, status, transport, install_method, limit, offset })}`);
+      if (data === null) {
+        data = { items: [], total: 0 };
+      }
+    }
+
+    if (responseKey === 'catalog.get') {
+      const input = procedureInputs[index];
+      const uuid = input && typeof input === 'object' ? readString((input as { uuid?: unknown }).uuid) : null;
+      data = uuid ? await fetchNativeControlPlaneData<unknown>(`/api/catalog/get${buildMemoryQueryString({ uuid })}`) : null;
+    }
+
+    if (responseKey === 'catalog.listRuns') {
+      const input = procedureInputs[index];
+      const server_uuid = input && typeof input === 'object' ? readString((input as { server_uuid?: unknown }).server_uuid) : null;
+      const limit = input && typeof input === 'object' ? readNumber((input as { limit?: unknown }).limit) : null;
+      const offset = input && typeof input === 'object' ? readNumber((input as { offset?: unknown }).offset) : null;
+      data = server_uuid ? await fetchNativeControlPlaneData<unknown>(`/api/catalog/runs${buildMemoryQueryString({ server_uuid, limit, offset })}`) : null;
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'catalog.stats') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/catalog/stats');
+      if (data === null) {
+        data = { total: 0, by_status: {}, by_transport: {}, last_ingest_at: null, providers: 0 };
+      }
+    }
+
+    if (responseKey === 'catalog.listLinkedServers') {
+      const input = procedureInputs[index];
+      const published_server_uuid = input && typeof input === 'object' ? readString((input as { published_server_uuid?: unknown }).published_server_uuid) : null;
+      data = published_server_uuid ? await fetchNativeControlPlaneData<unknown>(`/api/catalog/linked-servers${buildMemoryQueryString({ published_server_uuid })}`) : null;
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'browser.status') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/browser/status');
+      if (data === null) {
+        data = { available: false, pageCount: 0 };
+      }
+    }
+
+    if (responseKey === 'browser.searchHistory') {
+      const input = procedureInputs[index];
+      const query = input && typeof input === 'object' ? readString((input as { query?: unknown }).query) : null;
+      const maxResults = input && typeof input === 'object' ? readNumber((input as { maxResults?: unknown }).maxResults) : null;
+      data = await fetchNativeControlPlaneData<unknown>(`/api/browser/search-history${buildMemoryQueryString({ query, maxResults })}`);
+      if (data === null) {
+        data = [];
+      }
+    }
+
+    if (responseKey === 'browser.scrapePage') {
+      data = await fetchNativeControlPlaneData<unknown>('/api/browser/scrape');
+    }
+
+    if (responseKey === 'browser.proxyFetch' || responseKey === 'browser.screenshot' || responseKey === 'browser.debug' || responseKey === 'browser.closePage' || responseKey === 'browser.closeAll') {
+      const input = procedureInputs[index];
+      let endpointPath = '';
+      if (responseKey === 'browser.proxyFetch') endpointPath = '/api/browser/proxy-fetch';
+      else if (responseKey === 'browser.screenshot') endpointPath = '/api/browser/screenshot';
+      else if (responseKey === 'browser.debug') endpointPath = '/api/browser/debug';
+      else if (responseKey === 'browser.closePage') endpointPath = '/api/browser/close-page';
+      else if (responseKey === 'browser.closeAll') endpointPath = '/api/browser/close-all';
+
+      let browserData = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: input ? JSON.stringify(input) : undefined,
+      });
+      if (browserData === null) {
+        browserData = responseKey === 'browser.closeAll' ? { success: true } : null;
+      }
+      data = browserData;
+    }
+
+    if (responseKey.startsWith('council.') || responseKey.startsWith('director')) {
+      const input = procedureInputs[index];
+      let endpointPath = '';
+      let method = 'GET';
+
+      if (responseKey === 'council.base.status') endpointPath = '/api/council/status';
+      else if (responseKey === 'council.members') endpointPath = '/api/council/members';
+      else if (responseKey === 'council.updateMembers') { endpointPath = '/api/council/members/update'; method = 'POST'; }
+      else if (responseKey === 'council.sessions.list') endpointPath = '/api/council/sessions';
+      else if (responseKey === 'council.sessions.stats') endpointPath = '/api/council/sessions/stats';
+      else if (responseKey === 'council.history.list') endpointPath = '/api/council/history/list';
+      else if (responseKey === 'council.quota.allStats') endpointPath = '/api/council/quota/stats';
+      else if (responseKey === 'council.smartPilot.status') endpointPath = '/api/council/smart-pilot/status';
+      else if (responseKey === 'council.visual.systemDiagram') endpointPath = '/api/council/visual/system-diagram';
+      else if (responseKey === 'director.chat') { endpointPath = '/api/director/chat'; method = 'POST'; }
+      else if (responseKey === 'directorConfig.get') endpointPath = '/api/director-config';
+      else if (responseKey === 'directorConfig.update') { endpointPath = '/api/director-config/update'; method = 'POST'; }
+
+      if (endpointPath) {
+        data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+          method,
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: method === 'POST' && input ? JSON.stringify(input) : undefined,
+        });
+        if (data === null) {
+          if (responseKey.includes('list') || responseKey.includes('stats') || responseKey.includes('history')) {
+            data = [];
+          } else {
+            data = {};
+          }
+        }
+      }
     }
 
     return {
@@ -946,7 +3191,7 @@ async function buildLocalCompatResponse(req: Request, body?: string): Promise<Re
         data,
       },
     };
-  });
+  }));
 
   if (compatEntries.some((entry) => entry === null)) {
     return null;
@@ -1268,6 +3513,71 @@ async function tryLocalBulkImport(req: Request, body: string | undefined): Promi
   });
 }
 
+async function tryLocalSessionMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_SESSION_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  if ((procedureName === 'session.clear' && (input === null || input === undefined || typeof input === 'object')) || (input && typeof input === 'object')) {
+    let endpointPath = '';
+    let method: 'POST' = 'POST';
+    let requestBody: string | undefined;
+
+    if (procedureName === 'session.create') {
+      endpointPath = '/api/sessions/supervisor/create';
+      requestBody = JSON.stringify(input ?? {});
+    } else if (procedureName === 'session.start') {
+      endpointPath = '/api/sessions/supervisor/start';
+      requestBody = JSON.stringify(input ?? {});
+    } else if (procedureName === 'session.stop') {
+      endpointPath = '/api/sessions/supervisor/stop';
+      requestBody = JSON.stringify(input ?? {});
+    } else if (procedureName === 'session.restart') {
+      endpointPath = '/api/sessions/supervisor/restart';
+      requestBody = JSON.stringify(input ?? {});
+    } else if (procedureName === 'session.executeShell') {
+      endpointPath = '/api/sessions/supervisor/execute-shell';
+      requestBody = JSON.stringify(input ?? {});
+    } else if (procedureName === 'session.updateState') {
+      endpointPath = '/api/sessions/supervisor/update-state';
+      requestBody = JSON.stringify(input ?? {});
+    } else if (procedureName === 'session.clear') {
+      endpointPath = '/api/sessions/supervisor/clear';
+      requestBody = JSON.stringify(input ?? {});
+    }
+
+    if (!endpointPath) {
+      return null;
+    }
+
+    const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+      method,
+      headers: {
+        'content-type': 'application/json',
+      },
+      ...(requestBody ? { body: requestBody } : {}),
+    });
+
+    if (data === null && procedureName !== 'session.clear') {
+      return null;
+    }
+
+    return buildTrpcResponse(req, data ?? { success: true }, {
+      status: 200,
+      headers: { 'x-hypercode-trpc-compat': 'local-session-supervisor-action' },
+    });
+  }
+
+  return buildTrpcResponse(req, undefined, {
+    status: 400,
+    statusText: 'Invalid local session compat input',
+    headers: { 'x-hypercode-trpc-compat': 'local-session-supervisor-action' },
+  });
+}
+
 async function tryLocalOperatorMutation(req: Request, body: string | undefined): Promise<Response | null> {
   const procedures = getProcedureNames(req);
   const procedureName = procedures[0] ?? '';
@@ -1285,7 +3595,25 @@ async function tryLocalOperatorMutation(req: Request, body: string | undefined):
   }
 
   let endpointPath = '';
-  if (procedureName === 'savedScripts.create') {
+  if (procedureName === 'apiKeys.create') {
+    endpointPath = '/api/api-keys/create';
+  } else if (procedureName === 'apiKeys.delete') {
+    endpointPath = '/api/api-keys/delete';
+  } else if (procedureName === 'secrets.set') {
+    endpointPath = '/api/secrets/set';
+  } else if (procedureName === 'secrets.delete') {
+    endpointPath = '/api/secrets/delete';
+  } else if (procedureName === 'policies.create') {
+    endpointPath = '/api/policies/create';
+  } else if (procedureName === 'policies.update') {
+    endpointPath = '/api/policies/update';
+  } else if (procedureName === 'policies.delete') {
+    endpointPath = '/api/policies/delete';
+  } else if (procedureName === 'toolSets.create') {
+    endpointPath = '/api/tool-sets/create';
+  } else if (procedureName === 'toolSets.delete') {
+    endpointPath = '/api/tool-sets/delete';
+  } else if (procedureName === 'savedScripts.create') {
     endpointPath = '/api/scripts/create';
   } else if (procedureName === 'savedScripts.update') {
     endpointPath = '/api/scripts/update';
@@ -1316,9 +3644,579 @@ async function tryLocalOperatorMutation(req: Request, body: string | undefined):
   });
 }
 
+async function tryLocalConfigMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_CONFIG_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  if (!input || typeof input !== 'object') {
+    return buildTrpcResponse(req, undefined, {
+      status: 400,
+      statusText: 'Invalid local config compat input',
+      headers: { 'x-hypercode-trpc-compat': 'local-config-action' },
+    });
+  }
+
+  const data = await fetchNativeControlPlaneData<unknown>('/api/config/update', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (data === null) {
+    return null;
+  }
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-config-action' },
+  });
+}
+
+async function tryLocalToolMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_TOOL_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  if (!input || typeof input !== 'object') {
+    return buildTrpcResponse(req, undefined, {
+      status: 400,
+      statusText: 'Invalid local tool compat input',
+      headers: { 'x-hypercode-trpc-compat': 'local-tool-action' },
+    });
+  }
+
+  const data = await fetchNativeControlPlaneData<unknown>('/api/tools/always-on', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (data === null) {
+    return null;
+  }
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-tool-action' },
+  });
+}
+
+async function tryLocalMemoryMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_MEMORY_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  if (!input || typeof input !== 'object') {
+    return buildTrpcResponse(req, undefined, {
+      status: 400,
+      statusText: 'Invalid local memory compat input',
+      headers: { 'x-hypercode-trpc-compat': 'local-memory-action' },
+    });
+  }
+
+  let endpointPath = '';
+  if (procedureName === 'memory.addFact') {
+    endpointPath = '/api/memory/facts/add';
+  } else if (procedureName === 'memory.importMemories') {
+    endpointPath = '/api/memory/import';
+  } else if (procedureName === 'memory.convertMemories') {
+    endpointPath = '/api/memory/convert';
+  }
+
+  if (!endpointPath) {
+    return null;
+  }
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (data === null) {
+    return null;
+  }
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-memory-action' },
+  });
+}
+
+async function tryLocalAgentMemoryMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_AGENT_MEMORY_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  const expectsObject = procedureName !== 'agentMemory.clearSession';
+  if ((expectsObject && (!input || typeof input !== 'object')) || (!expectsObject && input !== null && input !== undefined && typeof input !== 'object')) {
+    return buildTrpcResponse(req, undefined, {
+      status: 400,
+      statusText: 'Invalid local agent memory compat input',
+      headers: { 'x-hypercode-trpc-compat': 'local-agent-memory-action' },
+    });
+  }
+
+  let endpointPath = '';
+  if (procedureName === 'agentMemory.add') {
+    endpointPath = '/api/agent-memory/add';
+  } else if (procedureName === 'agentMemory.delete') {
+    endpointPath = '/api/agent-memory/delete';
+  } else if (procedureName === 'agentMemory.clearSession') {
+    endpointPath = '/api/agent-memory/clear-session';
+  } else if (procedureName === 'agentMemory.handoff') {
+    endpointPath = '/api/agent-memory/handoff';
+  } else if (procedureName === 'agentMemory.pickup') {
+    endpointPath = '/api/agent-memory/pickup';
+  }
+
+  if (!endpointPath) {
+    return null;
+  }
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify((input && typeof input === 'object') ? input : {}),
+  });
+  if (data === null) {
+    return null;
+  }
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-agent-memory-action' },
+  });
+}
+
+async function tryLocalProjectMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_PROJECT_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  if (!input || typeof input !== 'object') {
+    return buildTrpcResponse(req, undefined, {
+      status: 400,
+      statusText: 'Invalid local project compat input',
+      headers: { 'x-hypercode-trpc-compat': 'local-project-action' },
+    });
+  }
+
+  const data = await fetchNativeControlPlaneData<unknown>('/api/project/context/update', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (data === null) {
+    return null;
+  }
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-project-action' },
+  });
+}
+
+async function tryLocalSkillMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_SKILL_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  if (!input || typeof input !== 'object') {
+    return buildTrpcResponse(req, undefined, {
+      status: 400,
+      statusText: 'Invalid local skill compat input',
+      headers: { 'x-hypercode-trpc-compat': 'local-skill-action' },
+    });
+  }
+
+  const data = await fetchNativeControlPlaneData<unknown>('/api/skills/assimilate', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (data === null) {
+    return null;
+  }
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-skill-action' },
+  });
+}
+
+async function tryLocalSuggestionsMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_SUGGESTIONS_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'suggestions.resolve') endpointPath = '/api/suggestions/resolve';
+  else if (procedureName === 'suggestions.clearAll') endpointPath = '/api/suggestions/clear-all';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-suggestions-action' },
+  });
+}
+
+async function tryLocalSquadMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_SQUAD_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'squad.spawn') endpointPath = '/api/squad/spawn';
+  else if (procedureName === 'squad.kill') endpointPath = '/api/squad/kill';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-squad-action' },
+  });
+}
+
+async function tryLocalExpertMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_EXPERT_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'expert.research') endpointPath = '/api/expert/research';
+  else if (procedureName === 'expert.code') endpointPath = '/api/expert/code';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-expert-action' },
+  });
+}
+
+async function tryLocalMarketplaceMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_MARKETPLACE_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'marketplace.install') endpointPath = '/api/marketplace/install';
+  else if (procedureName === 'marketplace.publish') endpointPath = '/api/marketplace/publish';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-marketplace-action' },
+  });
+}
+
+async function tryLocalSwarmMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_SWARM_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'swarm.startSwarm') endpointPath = '/api/swarm/start';
+  else if (procedureName === 'swarm.resumeMission') endpointPath = '/api/swarm/resume';
+  else if (procedureName === 'swarm.stopMission') endpointPath = '/api/swarm/stop';
+  else if (procedureName === 'swarm.deleteMission') endpointPath = '/api/swarm/delete';
+  else if (procedureName === 'swarm.decomposeTask') endpointPath = '/api/swarm/decompose-task';
+  else if (procedureName === 'swarm.approveTask') endpointPath = '/api/swarm/approve-task';
+  else if (procedureName === 'swarm.updateTaskPriority') endpointPath = '/api/swarm/update-task-priority';
+  else if (procedureName === 'swarm.seekConsensus') endpointPath = '/api/swarm/consensus';
+  else if (procedureName === 'swarm.executeDebate') endpointPath = '/api/swarm/debate';
+  else if (procedureName === 'swarm.sendDirectMessage') endpointPath = '/api/swarm/send-direct-message';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-swarm-action' },
+  });
+}
+
+async function tryLocalInfrastructureMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_INFRASTRUCTURE_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'infrastructure.runDoctor') endpointPath = '/api/infrastructure/run-doctor';
+  else if (procedureName === 'infrastructure.applyConfigurations') endpointPath = '/api/infrastructure/apply-configurations';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-infrastructure-action' },
+  });
+}
+
+async function tryLocalLinksBacklogMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_LINKS_BACKLOG_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  let endpointPath = '';
+  if (procedureName === 'linksBacklog.syncFromBobbyBookmarks') endpointPath = '/api/links-backlog/sync';
+
+  if (!endpointPath) return null;
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: input ? JSON.stringify(input) : undefined,
+  });
+  if (data === null) return null;
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-links-backlog-action' },
+  });
+}
+
+async function tryLocalSubmoduleMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_SUBMODULE_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+
+  let endpointPath = '';
+  if (procedureName === 'submodule.updateAll') {
+    endpointPath = '/api/submodules/update-all';
+  } else if (procedureName === 'submodule.installDependencies') {
+    endpointPath = '/api/submodules/install-dependencies';
+  } else if (procedureName === 'submodule.build') {
+    endpointPath = '/api/submodules/build';
+  } else if (procedureName === 'submodule.enable') {
+    endpointPath = '/api/submodules/enable';
+  } else if (procedureName === 'git.revert') {
+    endpointPath = '/api/git/revert';
+  }
+
+  if (!endpointPath) {
+    return null;
+  }
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (data === null) {
+    return null;
+  }
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-submodule-action' },
+  });
+}
+
+async function tryLocalCatalogMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_CATALOG_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+
+  let endpointPath = '';
+  if (procedureName === 'catalog.triggerIngestion') {
+    endpointPath = '/api/catalog/ingest';
+  } else if (procedureName === 'catalog.triggerValidation') {
+    endpointPath = '/api/catalog/validate';
+  } else if (procedureName === 'catalog.installFromRecipe') {
+    endpointPath = '/api/catalog/install';
+  } else if (procedureName === 'catalog.triggerBatchValidation') {
+    endpointPath = '/api/catalog/validate-batch';
+  }
+
+  if (!endpointPath) {
+    return null;
+  }
+
+  const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  if (data === null) {
+    return null;
+  }
+
+  return buildTrpcResponse(req, data, {
+    status: 200,
+    headers: { 'x-hypercode-trpc-compat': 'local-catalog-action' },
+  });
+}
+
+async function tryLocalMCPRuntimeMutation(req: Request, body: string | undefined): Promise<Response | null> {
+  const procedures = getProcedureNames(req);
+  const procedureName = procedures[0] ?? '';
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_MCP_RUNTIME_MUTATION_PROCEDURES.has(procedureName)) {
+    return null;
+  }
+
+  const input = extractTrpcRequestInput(body, req);
+  if ((input === null || input === undefined || typeof input === 'object')) {
+    let endpointPath = '';
+    let requestBody: string | undefined;
+
+    if (procedureName === 'mcp.setToolPreferences') {
+      endpointPath = '/api/mcp/preferences';
+      requestBody = JSON.stringify(input ?? {});
+    } else if (procedureName === 'mcp.loadTool') {
+      endpointPath = '/api/mcp/working-set/load';
+      requestBody = JSON.stringify(input ?? {});
+    } else if (procedureName === 'mcp.unloadTool') {
+      endpointPath = '/api/mcp/working-set/unload';
+      requestBody = JSON.stringify(input ?? {});
+    } else if (procedureName === 'mcp.clearToolSelectionTelemetry') {
+      endpointPath = '/api/mcp/tool-selection-telemetry/clear';
+      requestBody = JSON.stringify(input ?? {});
+    } else if (procedureName === 'mcp.clearWorkingSetEvictionHistory') {
+      endpointPath = '/api/mcp/working-set/evictions/clear';
+      requestBody = JSON.stringify(input ?? {});
+    } else if (procedureName === 'mcp.setLifecycleModes') {
+      endpointPath = '/api/mcp/lifecycle-modes';
+      requestBody = JSON.stringify(input ?? {});
+    }
+
+    if (!endpointPath) {
+      return null;
+    }
+
+    const data = await fetchNativeControlPlaneData<unknown>(endpointPath, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      ...(requestBody ? { body: requestBody } : {}),
+    });
+
+    if (data === null) {
+      return null;
+    }
+
+    return buildTrpcResponse(req, data, {
+      status: 200,
+      headers: { 'x-hypercode-trpc-compat': 'local-mcp-runtime-action' },
+    });
+  }
+
+  return buildTrpcResponse(req, undefined, {
+    status: 400,
+    statusText: 'Invalid local MCP runtime compat input',
+    headers: { 'x-hypercode-trpc-compat': 'local-mcp-runtime-action' },
+  });
+}
+
 async function tryLocalManagedServerMutation(req: Request, body: string | undefined): Promise<Response | null> {
   const procedures = getProcedureNames(req);
-  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_MCP_MUTATION_PROCEDURES.has(procedures[0] ?? '')) {
+  if (req.method !== 'POST' || procedures.length !== 1 || !LOCAL_MCP_CONFIG_MUTATION_PROCEDURES.has(procedures[0] ?? '')) {
     return null;
   }
 
@@ -1331,8 +4229,26 @@ async function tryLocalManagedServerMutation(req: Request, body: string | undefi
     });
   }
 
-  const localConfig = await loadLocalMcpConfig();
   const procedureName = procedures[0] ?? '';
+  if (procedureName === 'mcpServers.syncClientConfig') {
+    const data = await fetchNativeControlPlaneData<unknown>('/api/mcp/servers/sync-client-config', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(input),
+    });
+    if (data === null) {
+      return null;
+    }
+
+    return buildTrpcResponse(req, data, {
+      status: 200,
+      headers: { 'x-hypercode-trpc-compat': 'local-mcp-managed-action' },
+    });
+  }
+
+  const localConfig = await loadLocalMcpConfig();
 
   if (procedureName === 'mcpServers.create') {
     const name = String((input as { name?: unknown }).name ?? '').trim();
@@ -1570,9 +4486,94 @@ async function handler(req: Request): Promise<Response> {
       return bulkImportBridgeResponse;
     }
 
+    const localSessionMutationResponse = await tryLocalSessionMutation(req, body);
+    if (localSessionMutationResponse) {
+      return localSessionMutationResponse;
+    }
+
     const localOperatorMutationResponse = await tryLocalOperatorMutation(req, body);
     if (localOperatorMutationResponse) {
       return localOperatorMutationResponse;
+    }
+
+    const localConfigMutationResponse = await tryLocalConfigMutation(req, body);
+    if (localConfigMutationResponse) {
+      return localConfigMutationResponse;
+    }
+
+    const localToolMutationResponse = await tryLocalToolMutation(req, body);
+    if (localToolMutationResponse) {
+      return localToolMutationResponse;
+    }
+
+    const localMemoryMutationResponse = await tryLocalMemoryMutation(req, body);
+    if (localMemoryMutationResponse) {
+      return localMemoryMutationResponse;
+    }
+
+    const localAgentMemoryMutationResponse = await tryLocalAgentMemoryMutation(req, body);
+    if (localAgentMemoryMutationResponse) {
+      return localAgentMemoryMutationResponse;
+    }
+
+    const localProjectMutationResponse = await tryLocalProjectMutation(req, body);
+    if (localProjectMutationResponse) {
+      return localProjectMutationResponse;
+    }
+
+    const localSkillMutationResponse = await tryLocalSkillMutation(req, body);
+    if (localSkillMutationResponse) {
+      return localSkillMutationResponse;
+    }
+
+    const localSuggestionsMutationResponse = await tryLocalSuggestionsMutation(req, body);
+    if (localSuggestionsMutationResponse) {
+      return localSuggestionsMutationResponse;
+    }
+
+    const localSquadMutationResponse = await tryLocalSquadMutation(req, body);
+    if (localSquadMutationResponse) {
+      return localSquadMutationResponse;
+    }
+
+    const localExpertMutationResponse = await tryLocalExpertMutation(req, body);
+    if (localExpertMutationResponse) {
+      return localExpertMutationResponse;
+    }
+
+    const localMarketplaceMutationResponse = await tryLocalMarketplaceMutation(req, body);
+    if (localMarketplaceMutationResponse) {
+      return localMarketplaceMutationResponse;
+    }
+
+    const localSwarmMutationResponse = await tryLocalSwarmMutation(req, body);
+    if (localSwarmMutationResponse) {
+      return localSwarmMutationResponse;
+    }
+
+    const localInfrastructureMutationResponse = await tryLocalInfrastructureMutation(req, body);
+    if (localInfrastructureMutationResponse) {
+      return localInfrastructureMutationResponse;
+    }
+
+    const localLinksBacklogMutationResponse = await tryLocalLinksBacklogMutation(req, body);
+    if (localLinksBacklogMutationResponse) {
+      return localLinksBacklogMutationResponse;
+    }
+
+    const localSubmoduleMutationResponse = await tryLocalSubmoduleMutation(req, body);
+    if (localSubmoduleMutationResponse) {
+      return localSubmoduleMutationResponse;
+    }
+
+    const localCatalogMutationResponse = await tryLocalCatalogMutation(req, body);
+    if (localCatalogMutationResponse) {
+      return localCatalogMutationResponse;
+    }
+
+    const localMCPRuntimeMutationResponse = await tryLocalMCPRuntimeMutation(req, body);
+    if (localMCPRuntimeMutationResponse) {
+      return localMCPRuntimeMutationResponse;
     }
 
     const localManagedMutationResponse = await tryLocalManagedServerMutation(req, body);
@@ -1585,7 +4586,7 @@ async function handler(req: Request): Promise<Response> {
       return localBulkImportResponse;
     }
 
-    const bridgeResponse = await tryResolveLegacyMcpResponse(req, upstreamBases, headers);
+    const bridgeResponse = await tryResolveLegacyMcpResponse(req, upstreamBases, headers, body);
     if (bridgeResponse) {
       return bridgeResponse;
     }

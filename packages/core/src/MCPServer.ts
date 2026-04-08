@@ -33,7 +33,7 @@ import http from 'http';
 mcpServerDebugLog('[MCPServer] ✓ ws/http');
 
 import { McpmInstaller } from "./skills/McpmInstaller.js";
-import { Director, ToolPredictor, PairOrchestrator, SwarmController, SwarmRole } from "@hypercode/agents";
+import { Director } from "@hypercode/agents";
 import { Council, CouncilRole } from "@hypercode/agents";
 import { GeminiAgent } from "./agents/GeminiAgent.js";
 import { ClaudeAgent } from "./agents/ClaudeAgent.js";
@@ -73,8 +73,6 @@ import { SessionImportService } from "./services/SessionImportService.js";
 import { MemoryManager } from "./services/MemoryManager.js"; // Use legacy MemoryManager
 import { BobbyBookmarksSyncWorker } from "./daemons/hyperingest/BobbyBookmarksSyncWorker.js";
 import { LinkCrawlerWorker } from "./daemons/hyperingest/LinkCrawlerWorker.js";
-import { MemoryArchiver } from "./services/MemoryArchiver.js";
-import { a2aBroker } from "./services/A2ABroker.js";
 import { workspaceTracker } from "./services/WorkspaceTracker.js";
 mcpServerDebugLog('[MCPServer] ✓ Phase 51/53 Infrastructure');
 import { SkillAssimilationService } from "./services/SkillAssimilationService.js";
@@ -129,8 +127,7 @@ import {
     MetaTools,
     SystemStatusTool,
     ChainExecutor,
-    type ChainRequest,
-    getAllParityTools
+    type ChainRequest
 } from "@hypercode/tools";
 mcpServerDebugLog('[MCPServer] ✓ All Tools & ChainExecutor');
 
@@ -289,9 +286,6 @@ export class MCPServer {
     public sessionManager: SessionManager; // Phase 57: State Persistence
     public sessionSupervisor: SessionSupervisor;
     public ptySupervisor: PtySupervisor;
-    private pairOrchestrator: PairOrchestrator;
-    private swarmController: SwarmController;
-    private memoryArchiver: MemoryArchiver;
 
     public projectTracker: ProjectTracker; // Phase 59: Autonomous Loop
     public missionService: MissionService; // Phase 80: Swarm Persistence
@@ -533,10 +527,6 @@ export class MCPServer {
             rootDir: process.cwd(),
             worktreeManager: this.gitWorktreeManager,
         });
-        this.pairOrchestrator = new PairOrchestrator(this, this.llmService);
-        this.pairOrchestrator.setupFrontierSquad();
-        this.swarmController = new SwarmController(this, this.llmService);
-        this.memoryArchiver = new MemoryArchiver(process.cwd(), this.llmService, this.agentMemoryService);
         this.metricsService = new MetricsService(); // Phase 31
         this.metricsService.startMonitoring();
         this.policyService = new PolicyService(process.cwd()); // Phase 32
@@ -1298,66 +1288,6 @@ export class MCPServer {
                 const res = await this.memoryManager.search(query, limit);
                 result = { content: [{ type: "text", text: JSON.stringify(res, null, 2) }] };
             }
-            else if (name === "run_pair_session") {
-                const task = args?.task as string;
-                const pairResult = await this.pairOrchestrator.runTask(task);
-                this.pairOrchestrator.rotateRoles(); // Rotate for next call
-                result = { 
-                    content: [
-                        { type: "text", text: `--- Final Implementation ---\n${pairResult.finalOutput}` },
-                        { type: "text", text: `--- Collaboration History ---\n${pairResult.history.join('\n\n')}` }
-                    ],
-                    isError: !pairResult.success
-                };
-            }
-            else if (name === "a2a_broadcast") {
-                const type = (args?.type as any) || 'STATE_UPDATE';
-                const payload = (args?.payload as any) || {};
-                await a2aBroker.routeMessage({
-                    id: `a2a-${Date.now()}`,
-                    timestamp: Date.now(),
-                    sender: 'MCP_TOOL',
-                    type: type,
-                    payload: payload
-                });
-                result = { content: [{ type: "text", text: `A2A Message '${type}' broadcasted.` }] };
-            }
-            else if (name === "a2a_list_agents") {
-                const agents = a2aBroker.listAgents();
-                result = { content: [{ type: "text", text: JSON.stringify({ agents }, null, 2) }] };
-            }
-            else if (name === "swarm_start_session") {
-                const goal = args?.goal as string;
-                const maxTurns = args?.maxTurns as number || 5;
-
-                // Setup default swarm if none configured
-                this.swarmController.addMember({ id: 'claude', name: 'Claude', role: SwarmRole.PLANNER, provider: 'anthropic', modelId: 'claude-3-5-sonnet-20241022', status: 'idle' });
-                this.swarmController.addMember({ id: 'gpt', name: 'GPT', role: SwarmRole.IMPLEMENTER, provider: 'openai', modelId: 'gpt-4o', status: 'idle' });
-                this.swarmController.addMember({ id: 'gemini', name: 'Gemini', role: SwarmRole.TESTER, provider: 'google', modelId: 'gemini-1.5-pro', status: 'idle' });
-                this.swarmController.addMember({ id: 'qwen', name: 'Qwen', role: SwarmRole.CRITIC, provider: 'google', modelId: 'gemini-2.5-flash', status: 'idle' });
-
-                const swarmResult = await this.swarmController.startSession(goal, {
-                    maxTurns,
-                    completionThreshold: 0.8,
-                    autoRotate: true
-                });
-
-                result = {
-                    content: [
-                        { type: "text", text: `Swarm session complete. Success: ${swarmResult.success}` },
-                        { type: "text", text: `Transcript:\n${swarmResult.transcript.join('\n\n')}` }
-                    ]
-                };
-            }
-            else if (name === "archive_session") {
-                const sessionData = args?.sessionData as any;
-                const archiveResult = await this.memoryArchiver.archiveAndExtract(sessionData);
-                if (archiveResult) {
-                    result = { content: [{ type: "text", text: `Successfully archived session "${archiveResult.title}" (${archiveResult.compressedSize} bytes compressed). Memories extracted and stored.` }] };
-                } else {
-                    result = { content: [{ type: "text", text: "Failed to archive session. Format not recognized." }], isError: true };
-                }
-            }
             // --- DEEP RESEARCH (Phase 31) ---
             else if (name === "research_topic") {
                 const topic = args?.topic as string;
@@ -1845,13 +1775,10 @@ export class MCPServer {
                 };
             }
             else if (name === "list_skills") {
-                result = await this.skillRegistry.listSkills();
-            }
-            else if (name === "search_skills") {
-                result = await this.skillRegistry.searchSkills(args?.query as string);
+                result = this.skillRegistry.listSkills();
             }
             else if (name === "read_skill") {
-                result = await this.skillRegistry.readSkill(args?.skillName as string);
+                result = this.skillRegistry.readSkill(args?.skillName as string);
             }
             else if (name === "mcpm_search") {
                 result = {
@@ -2324,26 +2251,12 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
             else {
                 // Check Standard Library
                 const terminalTools = this.terminalService.getTools();
-                const standardTool = [
-                    ...FileSystemTools,
-                    ...terminalTools,
-                    ...MemoryTools,
-                    ...TunnelTools,
-                    ...LogTools,
-                    ...ConfigTools,
-                    ...SearchTools,
-                    ...ReaderTools,
-                    ...WorktreeTools,
-                    ...MetaTools,
-                    ...getAllParityTools(),
-                    WebSearchTool
-                ].find(t => t.name === name);
+                const standardTool = [...FileSystemTools, ...terminalTools, ...MemoryTools, ...TunnelTools, ...LogTools, ...ConfigTools, ...SearchTools, ...ReaderTools, ...WorktreeTools, ...MetaTools, WebSearchTool].find(t => t.name === name);
                 if (standardTool && this.isToolWithHandler(standardTool)) {
-                    result = (await standardTool.handler(args)) as CallToolResult;
+                    result = await standardTool.handler(args);
 
                     // Phase 93: P2P Artifact Federation Interception
-                    const firstContent = result?.content?.[0];
-                    if (name === 'read_file' && this.meshService && firstContent?.type === 'text' && (firstContent as any).text?.includes('ENOENT')) {
+                    if (name === 'read_file' && this.meshService && result?.content?.[0]?.text?.includes('ENOENT')) {
                         console.log(`[Mesh Artifact] Local read missed for ${args.path}. Querying Swarm...`);
 
                         const timeoutMs = 2000;
@@ -2599,57 +2512,6 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
                         limit: { type: "number" }
                     },
                     required: ["query"]
-                }
-            },
-            {
-                name: "run_pair_session",
-                description: "Orchestrate a shared task with a squad of frontier models (Claude, GPT, Gemini) rotating roles.",
-                inputSchema: {
-                    type: "object",
-                    properties: {
-                        task: { type: "string", description: "The high-level task to solve via multi-model collaboration." }
-                    },
-                    required: ["task"]
-                }
-            },
-            {
-                name: "a2a_broadcast",
-                description: "Broadcast an A2A message to all registered HyperCode autonomous agents.",
-                inputSchema: {
-                    type: "object",
-                    properties: {
-                        type: { type: "string", description: "Message Type (TASK_REQUEST, STATE_UPDATE, etc.)" },
-                        payload: { type: "object", description: "Message payload" }
-                    },
-                    required: ["type", "payload"]
-                }
-            },
-            {
-                name: "a2a_list_agents",
-                description: "List all currently active and registered A2A-capable agents.",
-                inputSchema: { type: "object", properties: {} }
-            },
-            {
-                name: "swarm_start_session",
-                description: "Start a multi-model swarm collaboration session for a specific goal.",
-                inputSchema: {
-                    type: "object",
-                    properties: {
-                        goal: { type: "string" },
-                        maxTurns: { type: "number", default: 5 }
-                    },
-                    required: ["goal"]
-                }
-            },
-            {
-                name: "archive_session",
-                description: "Archive a session JSON into compressed plaintext and extract valuable memories.",
-                inputSchema: {
-                    type: "object",
-                    properties: {
-                        sessionData: { type: "object", description: "The raw session JSON object to archive." }
-                    },
-                    required: ["sessionData"]
                 }
             },
             {
@@ -3391,18 +3253,7 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
 
         // Standard Library Tools
         const terminalTools = this.terminalService.getTools();
-        const standardTools = [
-            ...FileSystemTools,
-            ...terminalTools,
-            ...MemoryTools,
-            ...TunnelTools,
-            ...LogTools,
-            ...ConfigTools,
-            ...SearchTools,
-            ...ReaderTools,
-            ...WorktreeTools,
-            ...getAllParityTools()
-        ].map(t => ({
+        const standardTools = [...FileSystemTools, ...terminalTools, ...MemoryTools, ...TunnelTools, ...LogTools, ...ConfigTools, ...SearchTools, ...ReaderTools, ...WorktreeTools].map(t => ({
             name: t.name,
             description: t.description,
             inputSchema: t.inputSchema
@@ -3946,21 +3797,6 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
             });
             const wss = new WebSocketServer({ server: httpServer });
             this.wssInstance = wss;
-
-            // Neural Pulse & A2A Bridge
-            wss.on('connection', (ws) => {
-                ws.on('message', async (data) => {
-                    try {
-                        const str = data.toString();
-                        const message = JSON.parse(str);
-                        if (message.type === 'A2A_SIGNAL') {
-                            await a2aBroker.routeMessage(message.payload);
-                        }
-                    } catch (e) {
-                        // Ignore non-JSON or malformed pulse signals
-                    }
-                });
-            });
 
             let bridgePortConflictHandled = false;
             const handleBridgePortConflict = () => {

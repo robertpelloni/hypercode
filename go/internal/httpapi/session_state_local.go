@@ -15,6 +15,7 @@ type localSessionState struct {
 	LastObjective     *string `json:"lastObjective"`
 	LastHeartbeat     int64   `json:"lastHeartbeat"`
 	ThreadID          *string `json:"threadId,omitempty"`
+	MemoryContext     string  `json:"memoryContext,omitempty"`
 }
 
 type localSessionStateManager struct {
@@ -157,4 +158,13 @@ func nullableStringValue(value *string) any {
 		return nil
 	}
 	return trimmed
+}
+
+func (m *localSessionStateManager) SaveMemoryContext(content string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.state.MemoryContext = content
+	m.saveLocked()
+	return nil
 }

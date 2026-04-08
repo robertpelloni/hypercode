@@ -174,38 +174,13 @@ func (s Scanner) rules() []discoveryRule {
 
 	return []discoveryRule{
 		{
-			sourceTool:    "aider",
-			roots:         []string{filepath.Join(s.WorkspaceRoot, ".aider.chat.history.md"), filepath.Join(s.WorkspaceRoot, ".aider"), filepath.Join(s.HomeDir, ".aider")},
-			fileNameHints: []string{"aider", "history", "chat"},
-		},
-		{
 			sourceTool:    "claude-code",
-			roots:         []string{filepath.Join(s.WorkspaceRoot, ".claude"), filepath.Join(s.HomeDir, ".claude"), filepath.Join(appData, "Claude")},
+			roots:         []string{filepath.Join(s.WorkspaceRoot, ".claude")},
 			fileNameHints: []string{"session", "chat", "conversation", "transcript"},
 		},
 		{
-			sourceTool:    "cursor",
-			roots:         []string{filepath.Join(s.WorkspaceRoot, ".cursor"), filepath.Join(appData, "Cursor", "User", "workspaceStorage"), filepath.Join(localAppData, "Cursor", "User", "workspaceStorage")},
-			fileNameHints: []string{"cursor", "session", "chat", "conversation", "history"},
-		},
-		{
-			sourceTool:    "windsurf",
-			roots:         []string{filepath.Join(s.WorkspaceRoot, ".windsurf"), filepath.Join(appData, "Windsurf", "User", "workspaceStorage")},
-			fileNameHints: []string{"windsurf", "session", "chat", "conversation", "history"},
-		},
-		{
-			sourceTool:    "opencode",
-			roots:         []string{filepath.Join(s.WorkspaceRoot, ".opencode"), filepath.Join(s.WorkspaceRoot, ".docs", "ai-logs"), filepath.Join(s.HomeDir, ".opencode")},
-			fileNameHints: []string{"opencode", "session", "chat", "conversation", "history", "log"},
-		},
-		{
-			sourceTool:    "gemini",
-			roots:         []string{filepath.Join(s.WorkspaceRoot, ".gemini"), filepath.Join(s.HomeDir, ".gemini")},
-			fileNameHints: []string{"gemini", "session", "chat", "conversation", "history"},
-		},
-		{
 			sourceTool:    "copilot-cli",
-			roots:         []string{filepath.Join(s.WorkspaceRoot, ".copilot", "session-state"), filepath.Join(s.HomeDir, ".copilot", "session-state")},
+			roots:         []string{filepath.Join(s.WorkspaceRoot, ".copilot", "session-state")},
 			fileNameHints: []string{"session", "handoff", "checkpoint", "history"},
 		},
 		{
@@ -231,8 +206,6 @@ func (s Scanner) rules() []discoveryRule {
 				filepath.Join(appData, "Code - Insiders", "User", "globalStorage", "emptyWindowChatSessions"),
 				filepath.Join(appData, "Code", "User", "globalStorage", "github.copilot-chat"),
 				filepath.Join(appData, "Code - Insiders", "User", "globalStorage", "github.copilot-chat"),
-				filepath.Join(appData, "Code", "User", "globalStorage"),
-				filepath.Join(appData, "Code - Insiders", "User", "globalStorage"),
 			},
 			fileNameHints: []string{"session", "chat", "copilot", "conversation", "history", "message"},
 		},

@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { t, publicProcedure, getMcpServer } from '../lib/trpc-core.js';
-import { a2aBroker } from '../services/A2ABroker.js';
 import { TRPCError } from '@trpc/server';
 
 function getErrorMessage(error: unknown): string {
@@ -88,38 +87,5 @@ export const agentRouter = t.router({
                     degraded: true,
                 };
             }
-        }),
-
-    /**
-     * List all currently active A2A-capable agents.
-     */
-    listA2AAgents: publicProcedure.query(() => {
-        return a2aBroker.listAgents();
-    }),
-
-    /**
-     * Get recent A2A message history for the broker.
-     */
-    getA2AMessages: publicProcedure.query(() => {
-        return a2aBroker.getHistory();
-    }),
-
-    /**
-     * Broadcast an A2A message from the dashboard.
-     */
-    a2aBroadcast: publicProcedure
-        .input(z.object({
-            type: z.string(),
-            payload: z.any().optional(),
-        }))
-        .mutation(async ({ input }) => {
-            await a2aBroker.routeMessage({
-                id: `a2a-dash-${Date.now()}`,
-                timestamp: Date.now(),
-                sender: 'DASHBOARD',
-                type: input.type as any,
-                payload: input.payload || {},
-            });
-            return { success: true };
         }),
 });
