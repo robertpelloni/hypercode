@@ -1,175 +1,175 @@
 {
-    "name": "hypercode-vscode-extension",
-    "displayName": "HyperCode Plugin",
-    "version": "1.0.0-alpha.1",
-    "description": "Connect VS Code to HyperCode Hub for AI agent orchestration, memory management, and tool invocation",
-    "publisher": "hypercode",
-    "engines": {
-        "vscode": "^1.85.0"
-    },
-    "enabledApiProposals": [
-        "terminalDataWriteEvent"
+  "name": "hypercode-vscode-extension",
+  "displayName": "HyperCode Plugin",
+  "version": "1.0.0-alpha.9",
+  "description": "Connect VS Code to HyperCode Hub for AI agent orchestration, memory management, and tool invocation",
+  "publisher": "hypercode",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "enabledApiProposals": [
+    "terminalDataWriteEvent"
+  ],
+  "categories": [
+    "Other",
+    "Machine Learning"
+  ],
+  "keywords": [
+    "ai",
+    "agents",
+    "mcp",
+    "orchestration",
+    "memory"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "hypercode.connect",
+        "title": "HyperCode: Connect to Core"
+      },
+      {
+        "command": "hypercode.disconnect",
+        "title": "HyperCode: Disconnect from Core"
+      },
+      {
+        "command": "hypercode.showStatus",
+        "title": "HyperCode: Show Hub Status"
+      },
+      {
+        "command": "hypercode.runAgent",
+        "title": "HyperCode: Run Agent"
+      },
+      {
+        "command": "hypercode.searchMemory",
+        "title": "HyperCode: Search Memory"
+      },
+      {
+        "command": "hypercode.ingestUrl",
+        "title": "HyperCode: Ingest URL to Knowledge"
+      },
+      {
+        "command": "hypercode.ingestSelectionToRag",
+        "title": "HyperCode: Ingest Selection to RAG"
+      },
+      {
+        "command": "hypercode.rememberSelection",
+        "title": "HyperCode: Remember Selection"
+      },
+      {
+        "command": "hypercode.listTools",
+        "title": "HyperCode: List Tools"
+      },
+      {
+        "command": "hypercode.invokeTool",
+        "title": "HyperCode: Invoke Tool"
+      },
+      {
+        "command": "hypercode.openDashboard",
+        "title": "HyperCode: Open Dashboard"
+      },
+      {
+        "command": "hypercode.showLogs",
+        "title": "HyperCode: Show Logs"
+      },
+      {
+        "command": "hypercode.startDebate",
+        "title": "HyperCode: Start Council Debate"
+      },
+      {
+        "command": "hypercode.viewAnalytics",
+        "title": "HyperCode: View Supervisor Analytics"
+      },
+      {
+        "command": "hypercode.listDebateTemplates",
+        "title": "HyperCode: List Debate Templates"
+      },
+      {
+        "command": "hypercode.architectMode",
+        "title": "HyperCode: Architect Mode (Two-Model)"
+      }
     ],
-    "categories": [
-        "Other",
-        "Machine Learning"
-    ],
-    "keywords": [
-        "ai",
-        "agents",
-        "mcp",
-        "orchestration",
-        "memory"
-    ],
-    "main": "./dist/extension.js",
-    "activationEvents": [
-        "onStartupFinished"
-    ],
-    "contributes": {
-        "commands": [
-            {
-                "command": "hypercode.connect",
-                "title": "HyperCode: Connect to Core"
-            },
-            {
-                "command": "hypercode.disconnect",
-                "title": "HyperCode: Disconnect from Core"
-            },
-            {
-                "command": "hypercode.showStatus",
-                "title": "HyperCode: Show Hub Status"
-            },
-            {
-                "command": "hypercode.runAgent",
-                "title": "HyperCode: Run Agent"
-            },
-            {
-                "command": "hypercode.searchMemory",
-                "title": "HyperCode: Search Memory"
-            },
-            {
-                "command": "hypercode.ingestUrl",
-                "title": "HyperCode: Ingest URL to Knowledge"
-            },
-            {
-                "command": "hypercode.ingestSelectionToRag",
-                "title": "HyperCode: Ingest Selection to RAG"
-            },
-            {
-                "command": "hypercode.rememberSelection",
-                "title": "HyperCode: Remember Selection"
-            },
-            {
-                "command": "hypercode.listTools",
-                "title": "HyperCode: List Tools"
-            },
-            {
-                "command": "hypercode.invokeTool",
-                "title": "HyperCode: Invoke Tool"
-            },
-            {
-                "command": "hypercode.openDashboard",
-                "title": "HyperCode: Open Dashboard"
-            },
-            {
-                "command": "hypercode.showLogs",
-                "title": "HyperCode: Show Logs"
-            },
-            {
-                "command": "hypercode.startDebate",
-                "title": "HyperCode: Start Council Debate"
-            },
-            {
-                "command": "hypercode.viewAnalytics",
-                "title": "HyperCode: View Supervisor Analytics"
-            },
-            {
-                "command": "hypercode.listDebateTemplates",
-                "title": "HyperCode: List Debate Templates"
-            },
-            {
-                "command": "hypercode.architectMode",
-                "title": "HyperCode: Architect Mode (Two-Model)"
-            }
-        ],
-        "viewsContainers": {
-            "activitybar": [
-                {
-                    "id": "hypercodeSidebar",
-                    "title": "HyperCode",
-                    "icon": "resources/hypercode.svg"
-                }
-            ]
-        },
-        "views": {
-            "hypercodeSidebar": [
-                {
-                    "type": "webview",
-                    "id": "hypercode.dispatchView",
-                    "name": "Mini Dashboard"
-                }
-            ]
-        },
-        "configuration": {
-            "title": "HyperCode",
-            "properties": {
-                "hypercode.coreUrl": {
-                    "type": "string",
-                    "default": "ws://localhost:3001",
-                    "description": "URL of the HyperCode Core WebSocket server"
-                },
-                "hypercode.apiKey": {
-                    "type": "string",
-                    "default": "",
-                    "description": "API key for authenticated Core access"
-                },
-                "hypercode.dashboardUrl": {
-                    "type": "string",
-                    "default": "http://localhost:3000",
-                    "description": "Base URL of the HyperCode web dashboard used for deep links from the VS Code extension"
-                },
-                "hypercode.autoConnect": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Automatically connect to Core on startup"
-                }
-            }
-        },
-        "menus": {
-            "editor/context": [
-                {
-                    "command": "hypercode.ingestSelectionToRag",
-                    "when": "editorHasSelection",
-                    "group": "hypercode@1"
-                },
-                {
-                    "command": "hypercode.rememberSelection",
-                    "when": "editorHasSelection",
-                    "group": "hypercode@2"
-                }
-            ]
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "hypercodeSidebar",
+          "title": "HyperCode",
+          "icon": "resources/hypercode.svg"
         }
+      ]
     },
-    "scripts": {
-        "vscode:prepublish": "npm run build",
-        "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./",
-        "lint": "eslint --no-eslintrc --parser @typescript-eslint/parser \"src/**/*.{ts,tsx,js,mjs,cjs}\"",
-        "build": "tsup src/extension.ts --format cjs --external vscode",
-        "package": "vsce package"
+    "views": {
+      "hypercodeSidebar": [
+        {
+          "type": "webview",
+          "id": "hypercode.dispatchView",
+          "name": "Mini Dashboard"
+        }
+      ]
     },
-    "devDependencies": {
-        "@types/node": "20.x",
-        "@types/vscode": "^1.85.0",
-        "@types/ws": "^8.5.10",
-        "@typescript-eslint/eslint-plugin": "^6.13.1",
-        "@typescript-eslint/parser": "^6.13.1",
-        "eslint": "^8.54.0",
-        "tsup": "^8.0.2",
-        "typescript": "^5.9.3",
-        "vsce": "^2.15.0"
+    "configuration": {
+      "title": "HyperCode",
+      "properties": {
+        "hypercode.coreUrl": {
+          "type": "string",
+          "default": "ws://localhost:3001",
+          "description": "URL of the HyperCode Core WebSocket server"
+        },
+        "hypercode.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for authenticated Core access"
+        },
+        "hypercode.dashboardUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "Base URL of the HyperCode web dashboard used for deep links from the VS Code extension"
+        },
+        "hypercode.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically connect to Core on startup"
+        }
+      }
     },
-    "dependencies": {
-        "ws": "^8.16.0"
+    "menus": {
+      "editor/context": [
+        {
+          "command": "hypercode.ingestSelectionToRag",
+          "when": "editorHasSelection",
+          "group": "hypercode@1"
+        },
+        {
+          "command": "hypercode.rememberSelection",
+          "when": "editorHasSelection",
+          "group": "hypercode@2"
+        }
+      ]
     }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint --no-eslintrc --parser @typescript-eslint/parser \"src/**/*.{ts,tsx,js,mjs,cjs}\"",
+    "build": "tsup src/extension.ts --format cjs --external vscode",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "20.x",
+    "@types/vscode": "^1.85.0",
+    "@types/ws": "^8.5.10",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.54.0",
+    "tsup": "^8.0.2",
+    "typescript": "^5.9.3",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
 }
