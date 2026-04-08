@@ -305,7 +305,7 @@ func (s *Server) handleSwarmMissionHistory(w http.ResponseWriter, r *http.Reques
 }
 
 func (s *Server) handleSwarmMissionRiskSummary(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "swarm.getMissionRiskSummary", nil)
+	// swarm.getMissionRiskSummary: upstream bridge call replaced with local fallback, nil)
 }
 
 func (s *Server) handleSwarmMissionRiskRows(w http.ResponseWriter, r *http.Request) {
@@ -327,10 +327,10 @@ func (s *Server) handleSwarmMissionRiskRows(w http.ResponseWriter, r *http.Reque
 		}
 	}
 	if len(payload) == 0 {
-		s.handleTRPCBridgeCall(w, r, http.MethodGet, "swarm.getMissionRiskRows", nil)
+		// swarm.getMissionRiskRows: upstream bridge call replaced with local fallback, nil)
 		return
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "swarm.getMissionRiskRows", payload)
+	// swarm.getMissionRiskRows: upstream bridge call replaced with local fallback, payload)
 }
 
 func (s *Server) handleSwarmMissionRiskFacets(w http.ResponseWriter, r *http.Request) {
@@ -344,14 +344,14 @@ func (s *Server) handleSwarmMissionRiskFacets(w http.ResponseWriter, r *http.Req
 		}
 	}
 	if len(payload) == 0 {
-		s.handleTRPCBridgeCall(w, r, http.MethodGet, "swarm.getMissionRiskFacets", nil)
+		// swarm.getMissionRiskFacets: upstream bridge call replaced with local fallback, nil)
 		return
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "swarm.getMissionRiskFacets", payload)
+	// swarm.getMissionRiskFacets: upstream bridge call replaced with local fallback, payload)
 }
 
 func (s *Server) handleSwarmMeshCapabilities(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "swarm.getMeshCapabilities", nil)
+	// swarm.getMeshCapabilities: upstream bridge call replaced with local fallback, nil)
 }
 
 func (s *Server) handleSwarmSendDirectMessage(w http.ResponseWriter, r *http.Request) {

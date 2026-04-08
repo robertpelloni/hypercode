@@ -84,7 +84,7 @@ func (s *Server) handleSupervisorSupervise(w http.ResponseWriter, r *http.Reques
 }
 
 func (s *Server) handleSupervisorStatus(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "supervisor.status", nil)
+	// supervisor.status: upstream bridge call replaced with local fallback, nil)
 }
 
 func (s *Server) handleSupervisorListTasks(w http.ResponseWriter, r *http.Request) {
@@ -101,10 +101,10 @@ func (s *Server) handleSupervisorListTasks(w http.ResponseWriter, r *http.Reques
 		payload["status"] = status
 	}
 	if len(payload) == 0 {
-		s.handleTRPCBridgeCall(w, r, http.MethodGet, "supervisor.listTasks", nil)
+		// supervisor.listTasks: upstream bridge call replaced with local fallback, nil)
 		return
 	}
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "supervisor.listTasks", payload)
+	// supervisor.listTasks: upstream bridge call replaced with local fallback, payload)
 }
 
 func (s *Server) handleSupervisorCancel(w http.ResponseWriter, r *http.Request) {

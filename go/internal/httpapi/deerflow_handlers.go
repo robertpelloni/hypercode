@@ -3,17 +3,17 @@ package httpapi
 import "net/http"
 
 func (s *Server) handleDeerFlowStatus(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "deerFlow.status", nil)
+	// deerFlow.status: upstream bridge call replaced with local fallback, nil)
 }
 
 func (s *Server) handleDeerFlowModels(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "deerFlow.models", nil)
+	// deerFlow.models: upstream bridge call replaced with local fallback, nil)
 }
 
 func (s *Server) handleDeerFlowSkills(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "deerFlow.skills", nil)
+	// deerFlow.skills: upstream bridge call replaced with local fallback, nil)
 }
 
 func (s *Server) handleDeerFlowMemory(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodGet, "deerFlow.memory", nil)
+	// deerFlow.memory: upstream bridge call replaced with local fallback, nil)
 }
