@@ -15,13 +15,13 @@
         {
             "name": "Quality Engineer",
             "provider": "google",
-            "modelId": "gemini-3.1-pro",
+            "modelId": "gemini-2.5-flash",
             "systemPrompt": "You are the QA lead. Focus on test coverage, edge cases, and bug prevention. Ensure every feature has a verification plan."
         },
         {
             "name": "Data Analyst",
             "provider": "google",
-            "modelId": "gemini-1.5-pro",
+            "modelId": "gemini-2.5-flash",
             "systemPrompt": "You are the Data Analyst. Focus on pattern recognition, data processing, and large context synthesis."
         },
         {

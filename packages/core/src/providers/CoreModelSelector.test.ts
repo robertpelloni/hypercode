@@ -127,8 +127,8 @@ describe('CoreModelSelector.getDepletedModels', () => {
     it('does not duplicate a provider that has both a per-model and a provider-quota entry', () => {
         const { selector, quotaService } = buildSelector();
 
-        // Per-model cooldown for google/gemini-2.0-flash.
-        selector.reportFailure('google', 'gemini-2.0-flash', { status: 429, message: 'rate limit' });
+        // Per-model cooldown for google/gemini-2.5-flash.
+        selector.reportFailure('google', 'gemini-2.5-flash', { status: 429, message: 'rate limit' });
         // Also mark the provider-level quota rate-limited.
         quotaService.markRateLimited('google');
 
@@ -136,7 +136,7 @@ describe('CoreModelSelector.getDepletedModels', () => {
         const googleEntries = depleted.filter((e) => e.provider === 'google');
         // Only the per-model entry should appear; the provider-quota entry is suppressed.
         expect(googleEntries).toHaveLength(1);
-        expect(googleEntries[0]!.modelId).toBe('gemini-2.0-flash');
+        expect(googleEntries[0]!.modelId).toBe('gemini-2.5-flash');
     });
 });
 
