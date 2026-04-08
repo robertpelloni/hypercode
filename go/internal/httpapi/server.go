@@ -74,6 +74,7 @@ type Server struct {
 	sessionState      *localSessionStateManager
 	workflowEngine    *workflow.Engine
 	configStore       *configKVStore
+	council           *localCouncilManager
 }
 
 type providerFallbackEvent struct {
@@ -385,6 +386,7 @@ func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
 		sessionState:      newLocalSessionStateManager(filepath.Join(cfg.WorkspaceRoot, ".hypercode-session.json")),
 		workflowEngine:    workflow.NewEngine(),
 		configStore:       nil, // initialized below
+		council:           newLocalCouncilManager(cfg.WorkspaceRoot),
 	}
 
 	if cs, err := newConfigKVStore(filepath.Join(cfg.ConfigDir, "config-store")); err == nil {
@@ -392,6 +394,7 @@ func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
 	}
 	server.squad.load()
 	server.swarm.load()
+	server.council.load()
 	server.registerRoutes()
 	return server
 }
