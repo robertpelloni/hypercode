@@ -1,69 +1,102 @@
-# Handoff — Stabilization Session
+# Handoff — Session 2026-04-08
 
-## Current status
-**Version:** `1.0.0-alpha.1`
+**Version:** `1.0.0-alpha.3`
+**Branch:** `main`
+**Session focus:** Git fix, SQLite rebuild, Gemini model update, comprehensive documentation refresh
 
-### Latest incremental pass — massive Go porting and repo-wide HyperCode rename (2026-04-06)
-This defining pass executed the broad "borg" → "hypercode" rename repo-wide and significantly expanded Go-native ownership of core services.
+## What happened this session
 
-#### 1. Repo-wide Rename
-- Renamed Go module to `github.com/hypercodehq/hypercode-go`.
-- Updated all internal imports and directory references.
-- Replaced all "borg" strings in active code and documentation.
+### 1. Fixed detached HEAD on main
+The workspace had a complex worktree situation where:
+- `C:/Users/hyper/workspace/.git/modules/hypercode` held `main` as the primary worktree
+- `C:/Users/hyper/workspace/hypercode-push` (actual working dir) was detached at the same commit
+- Fixed by writing `ref: refs/heads/main` into the worktree HEAD and updating the bare repo HEAD to detached
+- Result: `hypercode-push` now cleanly on `main` branch
 
-#### 2. Go-Native Porting
-Implemented native Go handlers and state management for:
-- **MCP Catalog Ingestion**: Core engine + Glama adapter.
-- **AutoDev Manager**: Test/lint retry loops with native shell execution.
-- **Squad & Swarm**: Local member and mission state management.
-- **Marketplace & Sync**: Native listing and BobbyBookmarks sync.
-- **Infrastructure & Expert**: Ported diagnostic and AI assistance hooks.
+### 2. Rebuilt better-sqlite3 for Node 24.10.0
+The native `.node` bindings were not compiled for Node v24.10.0 x64 win32.
+- `node-gyp` rebuild failed due to Node 24 incompatibilities
+- `pnpm rebuild better-sqlite3` succeeded using `prebuild-install`
+- Verified: `require('better-sqlite3')(':memory:')` works
+- This fixes ALL SQLite-dependent subsystems: BobbyBookmarks, LinkCrawler, catalog ingestion, debate history, session import, MCP config sync, debate history
 
-#### 3. Dashboard Compatibility
-- Almost all dashboard clusters now route to Go fallbacks in degraded mode.
-- Validated with 34 green route tests.
+### 3. Updated Google Gemini model from deprecated `gemini-2.0-flash` to `gemini-2.5-flash`
+- `gemini-2.0-flash` returns 404 "no longer available to new users"
+- `gemini-2.5-flash` is **free tier** with 1M context window
+- Updated: `ProviderRegistry.ts`, `CoreModelSelector.test.ts`, `council.json`
+- This gives a working free fallback when OpenAI/Anthropic/DeepSeek quotas are exhausted
 
-#### Recommended next step after this pass
-The transition to a Go-primary backend is nearly complete for the operator experience. The next high-value target is refining the **Maestro (Visual Orchestrator)** Go/Wails port to bring the visual layer into the Go-primary fold. Alternatively, focus on **Browser Automation** deeper native Go ownership.
+### 4. Pushed to both remotes
+- `origin` (hypercodehq/hypercode): pushed successfully
+- `borg-upstream` (robertpelloni/borg): force-pushed to sync
 
-### Latest validated tranche (2026-04-05):
+## Current state of the project
 
-- `submodules/hyperharness` is back to being the canonical tracked harness gitlink.
-- `submodules/hyperharness` is aligned to upstream HEAD `98785f5c95c0c870e71aa4c635dd293017504802`.
-- `superai` is not tracked in `.gitmodules`.
-- Go saved-scripts fallback ownership is validated for create/update/delete/execute.
-- Web degraded-mode compat now routes saved script reads/mutations through native `/api/scripts*` endpoints, including `savedScripts.update`.
-- The Saved Scripts dashboard now exposes a real edit/update UI wired to `savedScripts.update`.
-- `packages/core` TypeScript buildability was restored by fixing `MetricsService.getStats()`.
-- Core/UI context-router rename drift was normalized on `hypercodeContext`.
-- `apps/web` production build is green again.
+### What works
+- Server starts and runs (Express/tRPC on :4000, Next.js dashboard on :3000, MCP WebSocket on :3001)
+- SQLite now functional after rebuild
+- Google Gemini 2.5 Flash as free-tier fallback
+- MCP catalog ingestion runs on schedule (glama.ai, smithery.ai, npm.registry, github-topics)
+- BobbyBookmarks sync worker and LinkCrawler worker start (but need quota to process)
+- Session auto-import from Gemini CLI sessions
+- Council hierarchy, debate history, healer reactor, self-evolution services
+- Dashboard at http://localhost:3000/dashboard with 50+ sub-pages
+- Go server handles ~40+ route families with native fallbacks
+- 34/34 TRPC route compat tests passing
 
-We have also addressed a major split-brain issue between the MCP database cache and the lightweight stdio loader that was causing models to see only 1 tool (`hypercode_core_loader_status`) and losing the `always_on` setting across restarts.
+### What's broken or incomplete
+- `/api/scripts` returns 404 — dashboard requests this but Go server doesn't implement it yet
+- All paid LLM providers exhausted (OpenAI 429, Anthropic 400 low balance, DeepSeek 402)
+- Only Google Gemini 2.5 Flash (free) and LM Studio (no local server) as fallbacks
+- Catalog ingestion fetched 789 items but upserted 0 (SQLite was down during that run; should work on restart)
+- `mcp.run` adapter returns 404 (their API changed)
+- `glama.ai` returns HTML instead of JSON (their API changed)
 
-## Key technical discoveries & fixes
+### Architecture overview
+```
+packages/core/       — Main TypeScript control plane (593 .ts files)
+packages/cli/        — CLI entrypoint (28 .ts files)
+apps/web/            — Next.js 16 dashboard (311 .ts/.tsx files)
+go/                  — Go-native server bridge (139 .go files)
+apps/maestro/        — Electron/Wails visual orchestrator (submodule)
+apps/cloud-orchestrator/ — Jules autopilot wrapper (submodule)
+submodules/hyperharness/ — LLM harness submodule
+submodules/prism-mcp/    — Prism MCP reference
+packages/claude-mem/     — Claude memory bridge (submodule)
+```
 
-1. **The Config Deletion Loop**
-   - **Bug**: `McpConfigService.syncWithDatabase()` was reading the user's `mcp.jsonc` file. If the file lacked cached tools under `_meta.tools` (which was the default state for many servers), it passed an empty array to `toolsRepository.syncTools()`. This caused the repository to execute a DELETE query against all 651 tools in the database, wiping out their `always_on` status.
-   - **Fix**: Modified `McpConfigService.ts` to strictly prevent `syncStoredMetadataTools` from overwriting or deleting DB tools if the incoming `mcp.jsonc` array is empty.
+### Key files for next agent
+- `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` — Master rules for all models
+- `packages/core/src/providers/ProviderRegistry.ts` — Provider/model definitions
+- `packages/core/src/MCPServer.ts` — Core MCP server (5000+ lines)
+- `go/internal/httpapi/server.go` — Go HTTP API server (largest Go file, ~16K lines)
+- `apps/web/src/app/dashboard/` — Dashboard pages (50+ subdirectories)
+- `packages/core/config/council.json` — Council member config
+- `mcp.jsonc` — MCP server configuration (34K+ lines)
 
-2. **The Stdio Loader Blindspot**
-   - **Bug**: The `stdioLoader.ts` script (which `pi` and other extensions connect to) was explicitly bypassing the database to remain lightweight. It only read from `mcp.jsonc`. Because the tools were only in the DB and not in `mcp.jsonc` (or were wiped), the proxy served 0 downstream tools.
-   - **Fix**: We changed `syncToMcpJson` to `exportToolCache` and made it write to `.hypercode/mcp-cache.json`. This new unified cache merges both the SQLite database inventory and the manual `mcp.jsonc` configurations without destroying the manual file. The `stdioLoader` now reads `mcp-cache.json`.
+## Recommended next steps
 
-3. **Workspace Config Resolution**
-   - **Bug**: The system hardcoded `os.homedir() + '/.hypercode'` for the configuration directory, causing confusion when a local `mcp.jsonc` existed at the project root.
-   - **Fix**: Updated `getHyperCodeConfigDir()` in `mcpJsonConfig.ts` to respect `process.env.HYPERCODE_CONFIG_DIR`, then check for `process.cwd()/mcp.jsonc`, and finally fall back to the home directory.
+### Immediate (P0)
+1. **Restart the server** — SQLite rebuild means a restart will fix all the cascading failures
+2. **Fix `/api/scripts` route** — Dashboard 404s every 5 seconds polling this. Add Go handler or TRPC route
+3. **Fix catalog ingestion adapters** — `glama.ai` and `mcp.run` API endpoints have changed
+4. **Add Google AI Studio free models to fallback chain** — Gemini 2.5 Flash is free, use it more aggressively
 
-4. **Tool Inventory Merging**
-   - **Bug**: `getCachedToolInventory()` returned either the SQLite snapshot OR the JSON snapshot, but never both.
-   - **Fix**: Rewrote the function to cleanly merge both collections, ensuring manual API-imported servers and auto-discovered DB servers coexist.
+### Short-term (P1)
+5. **Implement the MCP "decision system"** — The 6 meta-tools (search_tools, load_tool, etc.) are scaffolded but need ranking/auto-load
+6. **Dashboard polish** — Many dashboard pages exist but some show placeholder/empty states
+7. **Session import pipeline** — Gemini sessions are detected but LLM extraction fails without quota
+8. **Submodule updates** — Sync submodules with upstream changes
 
-5. **Universal Instructions Refactor**
-   - Rewrote `CLAUDE.md`, `GEMINI.md`, `GPT.md`, `copilot-instructions.md`, and `AGENTS.md` to cleanly point back to `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`, reducing prompt bloat and ensuring architectural alignment across models.
+### Medium-term (P2)
+9. **Complete Go parity** — Continue porting handlers per `PORTING_MAP.md`
+10. **Browser extension** — Chrome/Firefox extensions for MCP injection into web chats
+11. **Multi-model chatroom** — Shared context between models rotating implementer/planner/tester
+12. **Native UI** — Replace Electron Maestro with lightweight native UI
 
-## Next steps for the next agent
-1. **Continue degraded-mode operator parity**: the saved-scripts cluster is now in much better shape; target the next operator-facing dashboard mutation family where Go already has durable local state or cheap truthful ownership available.
-2. **Validate Stdio Loader**: Run `pi` or test the stdio proxy directly to ensure it now broadcasts the combined DB and manual tool inventory.
-3. **Dashboard Review**: Check if the `always_on` toggles in the React dashboard correctly persist across server restarts now that the destructive wipe bug is gone.
-4. **Continue Porting**: The Go bridge needs more direct mappings. Evaluate `PORTING_MAP.md` and continue porting features safely without violating the `UNIVERSAL_LLM_INSTRUCTIONS.md` stabilization rule.
-5. **Next likely UI slice**: another dashboard page where the backend/compat route is already truthful but the operator-facing controls still lag behind the now-supported mutation/read surface.
+## Critical warnings for next agent
+- **Do NOT kill running processes** — The server is likely running
+- **Node 24 requires `pnpm rebuild better-sqlite3`** after any `pnpm install`
+- **Gemini model names change frequently** — Check current availability before using
+- **The Go server is a bridge/fallback** — Not the primary source of truth yet
+- **`mcp.jsonc` is 34K+ lines** — Edit carefully, don't rewrite

@@ -16,6 +16,8 @@ import { listenExpress } from './orchestrator-listen.js';
 import { resolveSupervisorEntryPath } from './orchestratorPaths.js';
 import { resolveBridgePort } from './bridge/bridgePort.js';
 import { councilApp } from './orchestrator/council/node-index.js';
+import { jsonConfigProvider } from './services/config/JsonConfigProvider.js';
+import { codeExecutorService } from './services/CodeExecutorService.js';
 
 export const name = "@hypercode/core";
 
@@ -94,6 +96,67 @@ export async function startOrchestrator(options: StartOrchestratorOptions = {}) 
             timestamp: Date.now(),
             mcpReady: !!global.mcpServerInstance,
         });
+    });
+
+    // REST API: /api/scripts — bridge so the dashboard's native-control-plane
+    // fetch reaches the same saved-scripts store that the tRPC router serves.
+    // The Go server registers these routes too; this covers the TS-primary path.
+    app.get('/api/scripts', async (_req, res) => {
+        try {
+            const scripts = await jsonConfigProvider.loadScripts();
+            res.json({ success: true, data: scripts });
+        } catch (err: any) {
+            res.json({ success: true, data: [], meta: { fallback: true, reason: err?.message } });
+        }
+    });
+    app.get('/api/scripts/get', async (req, res) => {
+        try {
+            const uuid = String(req.query.uuid ?? '');
+            const scripts = await jsonConfigProvider.loadScripts();
+            const found = scripts.find((s: any) => s.uuid === uuid);
+            res.json({ success: true, data: found ?? null });
+        } catch (err: any) {
+            res.json({ success: false, error: err?.message });
+        }
+    });
+    app.post('/api/scripts/create', express.json(), async (req, res) => {
+        try {
+            const script = await jsonConfigProvider.saveScript(req.body);
+            res.json({ success: true, data: script });
+        } catch (err: any) {
+            res.json({ success: false, error: err?.message });
+        }
+    });
+    app.post('/api/scripts/update', express.json(), async (req, res) => {
+        try {
+            const scripts = await jsonConfigProvider.loadScripts();
+            const existing = scripts.find((s: any) => s.uuid === req.body.uuid);
+            if (!existing) { res.json({ success: false, error: 'Script not found' }); return; }
+            const updated = { ...existing, ...req.body };
+            await jsonConfigProvider.saveScript(updated);
+            res.json({ success: true, data: updated });
+        } catch (err: any) {
+            res.json({ success: false, error: err?.message });
+        }
+    });
+    app.post('/api/scripts/delete', express.json(), async (req, res) => {
+        try {
+            await jsonConfigProvider.deleteScript(req.body.uuid);
+            res.json({ success: true });
+        } catch (err: any) {
+            res.json({ success: false, error: err?.message });
+        }
+    });
+    app.post('/api/scripts/execute', express.json(), async (req, res) => {
+        try {
+            const scripts = await jsonConfigProvider.loadScripts();
+            const found = scripts.find((s: any) => s.uuid === req.body.uuid);
+            if (!found) { res.json({ success: false, error: 'Script not found' }); return; }
+            const result = await codeExecutorService.executeCode(found.code);
+            res.json({ success: true, data: result });
+        } catch (err: any) {
+            res.json({ success: false, error: err?.message });
+        }
     });
 
     // tRPC middleware
