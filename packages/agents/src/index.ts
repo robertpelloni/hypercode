@@ -5,3 +5,4 @@ export * from './orchestration/ToolPredictor.js';
 export * from './orchestration/PairOrchestrator.js';
 export * from './orchestration/SwarmController.js';
 export * from './orchestration/A2ABroker.js';
+export * from './orchestration/A2ALogger.js';

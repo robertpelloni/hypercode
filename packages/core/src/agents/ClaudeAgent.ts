@@ -30,6 +30,19 @@ export class ClaudeAgent extends EventEmitter implements IAgent, IA2AClient {
 
         // Register with A2A Broker
         a2aBroker.registerAgent('claude', this);
+        this.startA2AHeartbeat();
+    }
+
+    private startA2AHeartbeat() {
+        setInterval(() => {
+            a2aBroker.routeMessage({
+                id: `heartbeat-claude-${Date.now()}`,
+                timestamp: Date.now(),
+                sender: 'claude',
+                type: A2AMessageType.HEARTBEAT,
+                payload: {}
+            });
+        }, 15000);
     }
 
     // A2A Implementation

@@ -14,11 +14,26 @@ import { EventEmitter } from "events";
 
 export class A2ABroker extends EventEmitter {
     private agents: Map<string, IA2AClient> = new Map();
+    private heartbeats: Map<string, number> = new Map();
     private history: A2AMessage[] = [];
     private readonly MAX_HISTORY = 1000;
+    private readonly HEARTBEAT_TIMEOUT = 30000; // 30 seconds
 
     constructor() {
         super();
+        this.startHeartbeatMonitor();
+    }
+
+    private startHeartbeatMonitor() {
+        setInterval(() => {
+            const now = Date.now();
+            for (const [id, lastSeen] of this.heartbeats.entries()) {
+                if (now - lastSeen > this.HEARTBEAT_TIMEOUT) {
+                    console.warn(`[A2A Broker] Agent ${id} timed out. Pruning from pool.`);
+                    this.unregisterAgent(id);
+                }
+            }
+        }, 10000); // Check every 10 seconds
     }
 
     /**
@@ -26,6 +41,7 @@ export class A2ABroker extends EventEmitter {
      */
     public registerAgent(id: string, client: IA2AClient) {
         this.agents.set(id, client);
+        this.heartbeats.set(id, Date.now());
         console.log(`[A2A Broker] Registered agent: ${id}`);
         
         client.onMessage((msg) => this.routeMessage(msg));
@@ -38,6 +54,7 @@ export class A2ABroker extends EventEmitter {
      */
     public unregisterAgent(id: string) {
         this.agents.delete(id);
+        this.heartbeats.delete(id);
         console.log(`[A2A Broker] Unregistered agent: ${id}`);
         this.emit('agent_unregistered', { id });
     }
@@ -46,6 +63,15 @@ export class A2ABroker extends EventEmitter {
      * Routes a message to its intended recipient or broadcasts it
      */
     public async routeMessage(message: A2AMessage) {
+        // Record heartbeat
+        if (message.sender !== 'MCP_TOOL' && message.sender !== 'DASHBOARD') {
+            this.heartbeats.set(message.sender, Date.now());
+        }
+
+        if (message.type === A2AMessageType.HEARTBEAT) {
+            return; // Don't log or route heartbeats
+        }
+
         this.history.push(message);
         if (this.history.length > this.MAX_HISTORY) {
             this.history.shift();

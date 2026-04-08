@@ -16,9 +16,21 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const defaultOpenRouterFreeModel = "xiaomi/mimo-v2-flash:free"
+const defaultOpenRouterFreeModel = "openrouter/free"
 
-type LinkClassifier func(ctx context.Context, title, description, content string) ([]string, error)
+type LinkFeature struct {
+	Name        string `json:"name"`
+	Type        string `json:"type"` // "mcp_server", "skill", "prompt_library", "api", "tool"
+	Description string `json:"description"`
+}
+
+type LinkAnalysis struct {
+	Tags     []string      `json:"tags"`
+	Features []LinkFeature `json:"features"`
+	Summary  string        `json:"summary"`
+}
+
+type LinkClassifier func(ctx context.Context, title, description, content string) (*LinkAnalysis, error)
 
 type LinkCrawlerOptions struct {
 	Limit      int
@@ -72,7 +84,7 @@ func CrawlPendingLinks(ctx context.Context, dbPath string, opts LinkCrawlerOptio
 	}
 
 	for _, link := range links {
-		if err := markLinkResearchStatus(ctx, db, link.UUID, "running", nil, nil, nil, nil, nil, false); err != nil {
+		if err := markLinkResearchStatus(ctx, db, link.UUID, "running", nil, nil, nil, nil, nil, false, ""); err != nil {
 			report.Errors = append(report.Errors, fmt.Sprintf("mark running %s: %v", link.UUID, err))
 			continue
 		}
@@ -82,7 +94,7 @@ func CrawlPendingLinks(ctx context.Context, dbPath string, opts LinkCrawlerOptio
 		if err != nil {
 			report.Failed++
 			httpStatus := parseHTTPStatus(err)
-			if markErr := markLinkResearchStatus(ctx, db, link.UUID, "failed", nil, nil, nil, httpStatus, nil, false); markErr != nil {
+			if markErr := markLinkResearchStatus(ctx, db, link.UUID, "failed", nil, nil, nil, httpStatus, nil, false, ""); markErr != nil {
 				report.Errors = append(report.Errors, fmt.Sprintf("mark failed %s: %v", link.UUID, markErr))
 			} else {
 				report.Errors = append(report.Errors, fmt.Sprintf("crawl %s: %v", link.URL, err))
@@ -91,17 +103,28 @@ func CrawlPendingLinks(ctx context.Context, dbPath string, opts LinkCrawlerOptio
 		}
 
 		tags := link.Tags
-		tagged := false
-		if len(tags) == 0 && strings.TrimSpace(metadata.Content) != "" && opts.Classifier != nil {
-			classifiedTags, classifyErr := opts.Classifier(ctx, metadata.Title, metadata.Description, metadata.Content)
+		var analysis *LinkAnalysis
+		if strings.TrimSpace(metadata.Content) != "" && opts.Classifier != nil {
+			var classifyErr error
+			analysis, classifyErr = opts.Classifier(ctx, metadata.Title, metadata.Description, metadata.Content)
 			if classifyErr != nil {
 				report.Errors = append(report.Errors, fmt.Sprintf("classify %s: %v", link.URL, classifyErr))
-			} else if len(classifiedTags) > 0 {
-				tags = classifiedTags
-				tagged = true
+			} else if analysis != nil {
+				if len(tags) == 0 {
+					tags = analysis.Tags
+				}
 				report.Tagged++
 			}
 		}
+
+		rawPayload := map[string]interface{}{
+			"crawledAt": time.Now().Format(time.RFC3339),
+			"content":   metadata.Content,
+		}
+		if analysis != nil {
+			rawPayload["analysis"] = analysis
+		}
+		rawPayloadJSON, _ := json.Marshal(rawPayload)
 
 		if err := markLinkResearchStatus(
 			ctx,
@@ -113,7 +136,8 @@ func CrawlPendingLinks(ctx context.Context, dbPath string, opts LinkCrawlerOptio
 			nullableString(metadata.FaviconURL),
 			nullableInt(metadata.HTTPStatus),
 			tags,
-			tagged,
+			true,
+			string(rawPayloadJSON),
 		); err != nil {
 			report.Errors = append(report.Errors, fmt.Sprintf("mark done %s: %v", link.UUID, err))
 			continue
@@ -184,28 +208,54 @@ func crawlLink(ctx context.Context, httpClient *http.Client, rawURL string) (*cr
 	}, nil
 }
 
-func DefaultLinkTagClassifier(ctx context.Context, title, description, content string) ([]string, error) {
+func DefaultLinkAnalysisClassifier(ctx context.Context, title, description, content string) (*LinkAnalysis, error) {
+	prompt := fmt.Sprintf(`
+		Analyze the following webpage content:
+		Title: %s
+		Description: %s
+		Content: %s
+
+		Identify:
+		1. 3-5 concise technical tags (tools, topics, languages).
+		2. Key features (is it an MCP server? does it have skills, prompts, or an API?).
+		3. A 1-sentence summary of its value to an AI coding assistant.
+
+		Return valid JSON only with this structure:
+		{
+		  "tags": ["string"],
+		  "features": [{"name": "string", "type": "mcp_server|skill|prompt_library|api|tool", "description": "string"}],
+		  "summary": "string"
+		}
+	`, title, description, content[:min(2000, len(content))])
+
 	response, err := ai.AutoRouteWithModel(ctx, defaultOpenRouterFreeModel, []ai.Message{
-		{Role: "system", Content: "Extract concise webpage tags. Return valid JSON only with a single field named tags containing an array of 3 to 5 short strings."},
-		{Role: "user", Content: fmt.Sprintf("Title: %s\nDescription: %s\nContent: %s", title, description, content)},
+		{Role: "system", Content: "You are a technical analyst for the HyperCode control plane. Output JSON only."},
+		{Role: "user", Content: prompt},
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	cleaned := strings.TrimSpace(response.Content)
-	cleaned = strings.TrimPrefix(cleaned, "```json")
-	cleaned = strings.TrimPrefix(cleaned, "```")
-	cleaned = strings.TrimSuffix(cleaned, "```")
-	cleaned = strings.TrimSpace(cleaned)
-
-	var payload struct {
-		Tags []string `json:"tags"`
+	if start := strings.Index(cleaned, "{"); start != -1 {
+		if end := strings.LastIndex(cleaned, "}"); end != -1 {
+			cleaned = cleaned[start : end+1]
+		}
 	}
-	if err := json.Unmarshal([]byte(cleaned), &payload); err != nil {
+
+	var analysis LinkAnalysis
+	if err := json.Unmarshal([]byte(cleaned), &analysis); err != nil {
 		return nil, err
 	}
-	return normalizeTags(payload.Tags), nil
+	analysis.Tags = normalizeTags(analysis.Tags)
+	return &analysis, nil
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 func normalizeTags(tags []string) []string {
@@ -262,7 +312,7 @@ func selectPendingLinks(ctx context.Context, db *sql.DB, limit int) ([]pendingLi
 	return result, nil
 }
 
-func markLinkResearchStatus(ctx context.Context, db *sql.DB, uuidValue, status string, pageTitle, pageDescription, faviconURL *string, httpStatus *int, tags []string, updateTags bool) error {
+func markLinkResearchStatus(ctx context.Context, db *sql.DB, uuidValue, status string, pageTitle, pageDescription, faviconURL *string, httpStatus *int, tags []string, updateTags bool, rawPayload string) error {
 	timestamp := time.Now().UnixMilli()
 	var tagsJSON any
 	if updateTags {
@@ -283,10 +333,11 @@ func markLinkResearchStatus(ctx context.Context, db *sql.DB, uuidValue, status s
 			page_description = COALESCE(?, page_description),
 			favicon_url = COALESCE(?, favicon_url),
 			tags = COALESCE(?, tags),
+			raw_payload = CASE WHEN ? != '' THEN ? ELSE raw_payload END,
 			researched_at = CASE WHEN ? = 'done' THEN ? ELSE researched_at END,
 			updated_at = ?
 		WHERE uuid = ?
-	`, status, httpStatus, pageTitle, pageDescription, faviconURL, tagsJSON, status, timestamp, timestamp, uuidValue)
+	`, status, httpStatus, pageTitle, pageDescription, faviconURL, tagsJSON, rawPayload, rawPayload, status, timestamp, timestamp, uuidValue)
 	return err
 }
 

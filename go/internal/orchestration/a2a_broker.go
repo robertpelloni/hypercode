@@ -13,6 +13,7 @@ package orchestration
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 type A2AMessageType string
@@ -25,6 +26,7 @@ const (
 	Handoff         A2AMessageType = "HANDOFF"
 	DebateProposal  A2AMessageType = "DEBATE_PROPOSAL"
 	Critique        A2AMessageType = "CRITIQUE"
+	Heartbeat       A2AMessageType = "HEARTBEAT"
 )
 
 type A2AMessage struct {
@@ -38,15 +40,39 @@ type A2AMessage struct {
 }
 
 type A2ABroker struct {
-	mu      sync.RWMutex
-	agents  map[string]chan A2AMessage
-	history []A2AMessage
+	mu         sync.RWMutex
+	agents     map[string]chan A2AMessage
+	heartbeats map[string]int64
+	history    []A2AMessage
 }
 
 func NewA2ABroker() *A2ABroker {
-	return &A2ABroker{
-		agents:  make(map[string]chan A2AMessage),
-		history: make([]A2AMessage, 0),
+	b := &A2ABroker{
+		agents:     make(map[string]chan A2AMessage),
+		heartbeats: make(map[string]int64),
+		history:    make([]A2AMessage, 0),
+	}
+	go b.startHeartbeatMonitor()
+	return b
+}
+
+func (b *A2ABroker) startHeartbeatMonitor() {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+	for range ticker.C {
+		now := nowMillis()
+		b.mu.Lock()
+		for id, lastSeen := range b.heartbeats {
+			if now-lastSeen > 30000 { // 30 seconds
+				fmt.Printf("[Go A2A] Agent %s timed out. Pruning.\n", id)
+				if ch, ok := b.agents[id]; ok {
+					close(ch)
+					delete(b.agents, id)
+					delete(b.heartbeats, id)
+				}
+			}
+		}
+		b.mu.Unlock()
 	}
 }
 
@@ -56,6 +82,7 @@ func (b *A2ABroker) RegisterAgent(id string) chan A2AMessage {
 
 	ch := make(chan A2AMessage, 100)
 	b.agents[id] = ch
+	b.heartbeats[id] = nowMillis()
 	fmt.Printf("[Go A2A] Registered agent: %s\n", id)
 	return ch
 }
@@ -67,12 +94,22 @@ func (b *A2ABroker) UnregisterAgent(id string) {
 	if ch, ok := b.agents[id]; ok {
 		close(ch)
 		delete(b.agents, id)
+		delete(b.heartbeats, id)
 		fmt.Printf("[Go A2A] Unregistered agent: %s\n", id)
 	}
 }
 
 func (b *A2ABroker) RouteMessage(msg A2AMessage) {
 	b.mu.Lock()
+	if msg.Sender != "MCP_TOOL" && msg.Sender != "DASHBOARD" {
+		b.heartbeats[msg.Sender] = nowMillis()
+	}
+
+	if msg.Type == Heartbeat {
+		b.mu.Unlock()
+		return
+	}
+
 	b.history = append(b.history, msg)
 	if len(b.history) > 1000 {
 		b.history = b.history[1:]

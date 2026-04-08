@@ -33,7 +33,7 @@ import http from 'http';
 mcpServerDebugLog('[MCPServer] ✓ ws/http');
 
 import { McpmInstaller } from "./skills/McpmInstaller.js";
-import { Director, ToolPredictor, PairOrchestrator, SwarmController, SwarmRole, a2aBroker } from "@hypercode/agents";
+import { Director, ToolPredictor, PairOrchestrator, SwarmController, SwarmRole, a2aBroker, A2ALogger } from "@hypercode/agents";
 import { Council, CouncilRole } from "@hypercode/agents";
 import { GeminiAgent } from "./agents/GeminiAgent.js";
 import { ClaudeAgent } from "./agents/ClaudeAgent.js";
@@ -290,6 +290,7 @@ export class MCPServer {
     public ptySupervisor: PtySupervisor;
     private pairOrchestrator: PairOrchestrator;
     private swarmController: SwarmController;
+    private a2aLogger: A2ALogger;
     private memoryArchiver: MemoryArchiver;
 
     public projectTracker: ProjectTracker; // Phase 59: Autonomous Loop
@@ -539,6 +540,7 @@ export class MCPServer {
         this.pairOrchestrator = new PairOrchestrator(this, this.llmService);
         this.pairOrchestrator.setupFrontierSquad();
         this.swarmController = new SwarmController(this, this.llmService);
+        this.a2aLogger = new A2ALogger(process.cwd());
         this.memoryArchiver = new MemoryArchiver(process.cwd(), this.llmService, this.agentMemoryService);
         this.metricsService = new MetricsService(); // Phase 31
         this.metricsService.startMonitoring();

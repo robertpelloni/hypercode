@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.19] - 2026-04-08
+
+### Added
+- **A2A Heartbeat & Pruning**: Implemented a heartbeat mechanism in the `A2ABroker` (TS/Go) to detect and automatically prune inactive agents from the active pool after 30 seconds of silence.
+- **A2A ↔ Mesh Bridging**: Enabled bidirectional signal propagation between the process-local A2A broker and the global P2P Mesh. Remote nodes can now participate in local agent coordination.
+- **Enhanced Link Analysis (Go)**: Upgraded the Go Link Crawler with an LLM-based technical feature extractor that identifies MCP servers, skills, and APIs from crawled webpages.
+
+### Changed
+- **Agent Integration**: Updated `GeminiAgent` and `ClaudeAgent` to natively send periodic heartbeats and register with the A2A broker.
+- **Dashboard Enhancements**: Added `A2AMessageComposer` to the Agent dashboard for manual signal drafting and dispatch.
+
 ## [1.0.0-alpha.18] - 2026-04-08
 
 ### Added

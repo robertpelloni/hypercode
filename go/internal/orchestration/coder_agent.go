@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/hypercodehq/hypercode-go/internal/ai"
 )
@@ -38,7 +39,27 @@ func NewCoderAgent(broker *A2ABroker, workspace string) *CoderAgent {
 
 func (a *CoderAgent) Start(ctx context.Context) {
 	fmt.Printf("[Go Coder] 🤖 Agent started (Workspace: %s)\n", a.Workspace)
+	go a.heartbeatLoop(ctx)
 	go a.loop(ctx)
+}
+
+func (a *CoderAgent) heartbeatLoop(ctx context.Context) {
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			a.Broker.RouteMessage(A2AMessage{
+				ID:        fmt.Sprintf("hb-%s-%d", a.ID, nowMillis()),
+				Timestamp: nowMillis(),
+				Sender:    a.ID,
+				Type:      Heartbeat,
+				Payload:   map[string]interface{}{},
+			})
+		}
+	}
 }
 
 func (a *CoderAgent) loop(ctx context.Context) {

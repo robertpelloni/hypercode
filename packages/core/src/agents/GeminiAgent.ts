@@ -29,6 +29,19 @@ export class GeminiAgent extends EventEmitter implements IAgent, IA2AClient {
 
         // Register with A2A Broker
         a2aBroker.registerAgent('gemini', this);
+        this.startA2AHeartbeat();
+    }
+
+    private startA2AHeartbeat() {
+        setInterval(() => {
+            a2aBroker.routeMessage({
+                id: `heartbeat-gemini-${Date.now()}`,
+                timestamp: Date.now(),
+                sender: 'gemini',
+                type: A2AMessageType.HEARTBEAT,
+                payload: {}
+            });
+        }, 15000); // Send heartbeat every 15 seconds
     }
 
     // A2A Implementation

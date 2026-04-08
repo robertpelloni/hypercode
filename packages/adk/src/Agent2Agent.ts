@@ -21,7 +21,8 @@ export enum A2AMessageType {
     STATE_UPDATE = 'STATE_UPDATE',
     HANDOFF = 'HANDOFF',
     DEBATE_PROPOSAL = 'DEBATE_PROPOSAL',
-    CRITIQUE = 'CRITIQUE'
+    CRITIQUE = 'CRITIQUE',
+    HEARTBEAT = 'HEARTBEAT'
 }
 
 export interface A2AMessage<T = any> {

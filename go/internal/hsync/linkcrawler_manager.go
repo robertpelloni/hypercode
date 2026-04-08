@@ -81,7 +81,7 @@ func (m *LinkCrawlerManager) Stop() bool {
 func (m *LinkCrawlerManager) RunOnce(ctx context.Context) (*LinkCrawlerReport, error) {
 	opts := LinkCrawlerOptions{Limit: 5}
 	if m.classifyTags {
-		opts.Classifier = DefaultLinkTagClassifier
+		opts.Classifier = DefaultLinkAnalysisClassifier
 	}
 
 	m.mu.Lock()
