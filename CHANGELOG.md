@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.32] - 2026-04-09
+
+### Added
+- **Go EventBus**: Native Go `EventBus` with exact-match, wildcard pattern, and global listeners. Thread-safe with bounded history.
+- **Go CacheService**: Generic TTL+LRU in-memory cache with periodic cleanup goroutine, event callbacks, singleton registry, and transparent `Cached()` helper.
+- **Go ContextHarvester**: Full port of semantic chunking, relevance scoring, time decay, keyword boosting, access frequency, pruning, and compacting from TS.
+- **Go GitService**: Comprehensive native git operations (log, status, revert, reset, diff, blame, stash, branch, add, commit, fetch, pull, push, show).
+- **Go WorkspaceTracker**: Workspace registration, discovery, validation, and persistence to `~/.hypercode/workspaces.json`.
+- **Go MetricsService**: Counters, gauges, histograms, Prometheus export, downsampled time series, system monitoring goroutine.
+- **Go ProcessManager**: Child process lifecycle management with stdin/stdout/stderr streaming.
+- **Go HealerService**: LLM-powered error diagnosis, fix generation, and auto-heal with heal history.
+- **Go SessionManager**: Session lifecycle state machine (created/starting/running/stopped/failed/paused).
+- **Go ToolRegistry**: Tool registration, fuzzy search, always-on tracking, and aggregate statistics.
+- **Go TaskQueue**: Decentralized A2A task queue with priority, claiming, and broadcast signals.
+- **Server Integration**: All 10 new Go-native services wired into the Go sidecar Server struct.
+
+### Fixed
+- **A2A_BRIDGE_SIGNAL Zod Validation**: Added missing `A2A_BRIDGE_SIGNAL` to the mesh protocol `SwarmMessageTypeSchema` Zod enum, fixing a startup crash.
+- **Duplicate Route Registration**: Fixed `/api/scripts/*` routes being registered twice, causing a panic in the Go sidecar.
+- **Build Fix**: Rebuilt `@hypercode/agents` package to resolve missing `taskQueue` export in `agentRouter.ts`.
+
 ## [1.0.0-alpha.31] - 2026-04-08
 
 ### Added

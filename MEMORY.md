@@ -208,4 +208,14 @@
 **Resolution**: Updated the Go server to check the actual state of `s.coderAgent` and other native components before reporting status.
 **Implication**: The dashboard now reflects the true availability of Go-native agents, improving operator trust in the sidecar's fallback capabilities.
 
+### 43. Automated Tool Integration (Added 2026-04-08)
+**Observation**: Discovered tools and skills from Link Crawler were previously stagnant in the backlog, requiring manual operator intervention to become active.
+**Resolution**: Updated the `HighValueIngestor` to automatically promote analyzed technical resources. MCP servers are added to the active configuration, and skills are saved to the native store.
+**Implication**: The system's capabilities now grow autonomously as the background crawler discovers high-quality technical resources.
+
+### 44. Native Go Context Harvesting (Added 2026-04-08)
+**Observation**: The Go sidecar's lack of a context harvester meant its local memory view was always out of sync with recent file changes.
+**Resolution**: Implemented the `MemoryReactor` in Go. It performs semantic chunking and incremental summarization of workspace files autonomously.
+**Implication**: The Go sidecar now maintains its own live semantic index of the project, further reducing its dependency on the TypeScript control plane.
+
 *Update this file whenever a major systemic pattern, recurring bug, or deep architectural quirk is discovered.*

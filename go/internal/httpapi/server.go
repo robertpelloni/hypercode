@@ -42,6 +42,17 @@ import (
 	"github.com/hypercodehq/hypercode-go/internal/supervisor"
 	"github.com/hypercodehq/hypercode-go/internal/tools"
 	"github.com/hypercodehq/hypercode-go/internal/workflow"
+
+	"github.com/hypercodehq/hypercode-go/internal/cache"
+	"github.com/hypercodehq/hypercode-go/internal/ctxharvester"
+	"github.com/hypercodehq/hypercode-go/internal/eventbus"
+	"github.com/hypercodehq/hypercode-go/internal/gitservice"
+	"github.com/hypercodehq/hypercode-go/internal/healer"
+	"github.com/hypercodehq/hypercode-go/internal/metrics"
+	processmanager "github.com/hypercodehq/hypercode-go/internal/process"
+	"github.com/hypercodehq/hypercode-go/internal/session"
+	"github.com/hypercodehq/hypercode-go/internal/toolregistry"
+	"github.com/hypercodehq/hypercode-go/internal/workspaces"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )
@@ -79,6 +90,7 @@ type Server struct {
 	mcpPredictor      *mcp.ToolPredictor
 	a2aLogger         *orchestration.A2ALogger
 	a2aBroker         *orchestration.A2ABroker
+	taskQueue         *orchestration.TaskQueue
 	swarmController   *orchestration.SwarmController
 	coderAgent        *orchestration.CoderAgent
 	goDirector        *orchestration.Director
@@ -87,6 +99,18 @@ type Server struct {
 	mcpConfig         *mcp.ConfigManager
 	skillStore        *harnesses.SkillStore
 	memoryArchiver    *memorystore.MemoryArchiver
+
+	// --- New Go-native services (alpha.32+) ---
+	eventBus          *eventbus.EventBus
+	metricsService    *metrics.MetricsService
+	sessionManager    *session.Manager
+	toolRegistry      *toolregistry.ToolRegistry
+	gitService        *gitservice.GitService
+	contextHarvester  *ctxharvester.ContextHarvester
+	workspaceTracker  *workspaces.WorkspaceTracker
+	processManager    *processmanager.ProcessManager
+	healerService     *healer.HealerService
+	cacheService      *cache.Cache
 }
 
 type providerFallbackEvent struct {
@@ -413,6 +437,22 @@ func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
 	server.swarmController = orchestration.NewSwarmController(server.a2aBroker)
 	server.mcpPredictor = mcp.NewToolPredictor(server.mcpAggregator)
 	server.supervisorManager.SetPredictor(server.mcpPredictor)
+
+	// --- Initialize new Go-native services ---
+	server.eventBus = eventbus.New(1000)
+	server.metricsService = metrics.NewMetricsService()
+	server.sessionManager = session.NewSessionManager(100)
+	server.toolRegistry = toolregistry.NewToolRegistry()
+	server.gitService = gitservice.NewGitService(cfg.WorkspaceRoot)
+	server.contextHarvester = ctxharvester.NewContextHarvester(nil)
+	server.workspaceTracker = workspaces.NewWorkspaceTracker("")
+	server.processManager = processmanager.NewProcessManager()
+	server.healerService = healer.NewHealerService(nil, "") // LLM provider wired later
+	server.cacheService = cache.New(cache.CacheOptions{MaxSize: 500, DefaultTTL: 60000})
+
+	// Register workspace on startup
+	_ = server.workspaceTracker.RegisterWorkspace(cfg.WorkspaceRoot)
+
 	server.squad.load()
 	server.swarm.load()
 	server.registerRoutes()

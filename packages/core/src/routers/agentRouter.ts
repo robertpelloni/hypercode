@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { t, publicProcedure, getMcpServer } from '../lib/trpc-core.js';
-import { a2aBroker } from '@hypercode/agents';
+import { a2aBroker, taskQueue } from '@hypercode/agents';
 import { TRPCError } from '@trpc/server';
 
 function getErrorMessage(error: unknown): string {
@@ -109,6 +109,13 @@ export const agentRouter = t.router({
      */
     getNegotiations: publicProcedure.query(() => {
         return a2aBroker.getNegotiations();
+    }),
+
+    /**
+     * Get active A2A tasks from the collective queue.
+     */
+    getQueuedTasks: publicProcedure.query(() => {
+        return taskQueue.listTasks();
     }),
 
     /**

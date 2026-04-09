@@ -16,6 +16,7 @@ export const SwarmMessageTypeSchema = z.enum([
     'TASK_ASSIGN',
     'ARTIFACT_READ_REQUEST',
     'ARTIFACT_READ_RESPONSE',
+    'A2A_BRIDGE_SIGNAL',
 ]);
 
 export const SwarmMessageMetadataSchema = z.object({

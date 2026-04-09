@@ -132,15 +132,11 @@ func (ss *scriptStore) delete(scriptUUID string) error {
 	return os.Remove(path)
 }
 
-// registerSavedScriptRoutes adds all /api/scripts/* routes to the mux.
+// registerSavedScriptRoutes is a legacy entry point — all /api/scripts/* routes
+// are already registered in registerRoutes(). This function is kept for
+// compatibility but does not add duplicate routes.
 func (s *Server) registerSavedScriptRoutes() {
-	s.mux.HandleFunc("/api/scripts", s.handleScriptsList)
-	s.mux.HandleFunc("/api/scripts/list", s.handleScriptsList)
-	s.mux.HandleFunc("/api/scripts/get", s.handleScriptsGet)
-	s.mux.HandleFunc("/api/scripts/create", s.handleScriptsCreate)
-	s.mux.HandleFunc("/api/scripts/update", s.handleScriptsUpdate)
-	s.mux.HandleFunc("/api/scripts/delete", s.handleScriptsDelete)
-	s.mux.HandleFunc("/api/scripts/execute", s.handleScriptsExecute)
+	// All /api/scripts/* routes are registered in registerRoutes().
 }
 
 func (s *Server) scriptStore() *scriptStore {

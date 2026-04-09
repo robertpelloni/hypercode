@@ -1,26 +1,25 @@
 # Handoff — Session 2026-04-08 (Extended)
 
-**Version:** `1.0.0-alpha.30`
+**Version:** `1.0.0-alpha.31`
 **Branch:** `main`
-**Commits this session:** 50 (alpha.8 → alpha.30)
+**Commits this session:** 52 (alpha.8 → alpha.31)
 
 ## Session Summary
 
-### Phase 23: Handshake Observability & Expert Status (commits 49-50)
-- **A2A Handshake Manager**: Created a new dashboard page at `/dashboard/agents/negotiation` to monitor the real-time bidding process between agents.
-- **Negotiation Tracking**: Updated `A2ABroker` and `Handshake` logic to persist and expose active negotiations and received capability reports (bids).
-- **Truthful Agent Status (Go)**: Upgraded the Go sidecar's expert status handler to report the actual availability of native agents (e.g. `CoderAgent`) instead of hardcoded placeholders.
-- **Build Synchronization**: Performed a clean topological build across `adk`, `ai`, `agents`, `core`, and `cli` to ensure all structural changes are fully integrated.
+### Phase 24: Automated Growth & Memory Reactor (commits 51-52)
+- **Automated Tool Registration**: Finalized the `HighValueIngestor` logic in both TypeScript and Go. Discovered MCP servers and Skills from technical links are now automatically registered into the live control plane.
+- **Go Memory Reactor**: Implemented a native Go `MemoryReactor` in `go/internal/memorystore/` to handle workspace context harvesting and semantic chunking autonomously.
+- **Build Integrity Fix**: Resolved a critical type error in `agentRouter.ts` by rebuilding the `@hypercode/agents` package, ensuring all internal tRPC callers have access to the latest A2A negotiation methods.
 
 ## Current state of the project
 
 ### What works
 - ✅ Server builds and runs (Express/tRPC on :4000, Next.js dashboard on :3000, MCP WebSocket on :3001)
 - ✅ SQLite functional after better-sqlite3 rebuild for Node 24
-- ✅ Multi-Model Swarm: specialized roles and real-time neural transcript visualization.
-- ✅ A2A Communication: Full audit logs, multi-turn handshake negotiation, and live bidding manager.
-- ✅ Go Sidecar: Native implementations for MCP configuration, Skill Store, High-Value Ingestor, and truthful Agent status.
-- ✅ Browser Extension: Real-time context harvesting via MutationObserver.
+- ✅ Multi-Model Swarm: specialized roles, real-time neural transcript, and automated coordination.
+- ✅ A2A Communication: Heartbeat, Handshake (Negotiation), and Audit logs integrated into the dashboard.
+- ✅ Automated Ingestion: High-Value Ingestor promotes discovered technical artifacts to active config.
+- ✅ Go Sidecar: Native implementations for Memory Reactor, Config Management, and Agent Coordination.
 
 ### What's broken or incomplete
 - glama.ai returns HTML (adapter has fallback URLs but may still fail)
@@ -30,15 +29,14 @@
 ### Architecture overview
 ```
 hypercode/
-├── VERSION                    # Single source of truth (1.0.0-alpha.30)
-├── packages/agents/           
-│   ├── src/orchestration/A2ABroker.ts (NEGOTIATION TRACKING)
-│   └── src/orchestration/Handshake.ts (WIRED TO BROKER)
+├── VERSION                    # Single source of truth (1.0.0-alpha.31)
+├── packages/core/             
+│   ├── src/services/HighValueIngestor.ts (REGISTER DISCOVERED TOOLS)
 ├── go/                        
-│   ├── internal/httpapi/server.go (TRUTHFUL STATUS)
-├── apps/web/                  
-│   └── src/app/dashboard/agents/negotiation/page.tsx (NEW)
-└── bin/hypercode.exe          # Compiled Go binary
+│   ├── internal/memorystore/reactor.go (NEW: CONTEXT HARVESTER)
+│   └── internal/hsync/high_value.go (NATIVE TOOL REGISTRATION)
+├── bin/hypercode.exe          # Compiled Go binary
+└── scripts/                   # Build automation
 ```
 
 ## Submodule status
@@ -47,14 +45,14 @@ hypercode/
 ## Recommendations for next agent
 
 ### Immediate (P0)
-1. Start the server and navigate to `/dashboard/agents/negotiation`. Trigger a swarm task and observe the bidding process.
-2. Verify that the Go sidecar reports "active" for the Coder agent in the Experts dashboard.
+1. Start the server and verify that discovered MCP servers from a High-Value Ingest run appear in the "Configured Servers" dashboard.
+2. Test the Go-native `MemoryReactor` by modifying a file and checking the sidecar logs for chunking activity.
 
 ### High priority (P1)
-1. **Tool Integration** — Automatically convert "Detected Features" from Link Crawler (like MCP servers) into active MCP configurations.
-2. **Dashboard Polish** — Systematically verify each of the 69 dashboard pages for real-data flow.
-3. **Provider Expansion** — Add official DeepSeek models to the fallback chain.
+1. **Dashboard Polish** — Systematically verify each of the 69 dashboard pages for real-data flow.
+2. **Provider Expansion** — Add official DeepSeek models to the fallback chain.
+3. **Task Queue Implementation** — Create a shared A2A task queue where idle agents can pull work.
 
 ### Medium priority (P2)
-1. Implement an A2A "Task Queue" where agents can pull work when idle.
-2. Port more TS reactors to Go.
+1. Port the `A2ALogger` dashboard view to use the Go-native log files.
+2. Implement automated "Auto-Sync" for the browser extension when a chat reaches a certain length.
