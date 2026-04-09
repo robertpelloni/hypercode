@@ -168,4 +168,14 @@
 **Resolution**: Expanded the fallback chain to include multiple new free-tier options, including `google/gemini-2.0-flash-lite` and `openrouter/free`.
 **Implication**: Utility calls now have a nearly guaranteed path to execution even when multiple paid API quotas are hit simultaneously.
 
+### 35. Automated Browser Memory Ingestion (Added 2026-04-08)
+**Observation**: Manually clicking "Sync to Memory" in the extension is a friction point that leads to missing context.
+**Resolution**: Implemented a `MutationObserver` in the extension's `MemoryCaptureService`. It now watches for new DOM nodes matching AI message patterns and automatically schedules a capture.
+**Implication**: Conversations from web chat interfaces now flow into the HyperCode memory bank in near real-time without user intervention.
+
+### 36. Persistent A2A Audit Logs (Added 2026-04-08)
+**Observation**: Live A2A traffic in the dashboard is transient and lost on page refresh, making long-term debugging difficult.
+**Resolution**: Created a dedicated dashboard page that reads the `a2a_traffic.jsonl` log file from disk.
+**Implication**: Operators can now audit historical agent coordination signals to understand why specific swarm decisions were made.
+
 *Update this file whenever a major systemic pattern, recurring bug, or deep architectural quirk is discovered.*

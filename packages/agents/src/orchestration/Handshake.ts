@@ -14,7 +14,8 @@
  * 3. Requester evaluates reports and sends TASK_ASSIGN to the winner.
  */
 
-import { A2AMessage, A2AMessageType, a2aBroker } from "./A2ABroker.js";
+import { A2AMessage, A2AMessageType } from "@hypercode/adk";
+import { a2aBroker } from "./A2ABroker.js";
 
 export interface CapabilityReport {
     agentId: string;

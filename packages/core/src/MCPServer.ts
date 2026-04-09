@@ -289,8 +289,8 @@ export class MCPServer {
     public sessionSupervisor: SessionSupervisor;
     public ptySupervisor: PtySupervisor;
     private pairOrchestrator: PairOrchestrator;
-    private swarmController: SwarmController;
-    private a2aLogger: A2ALogger;
+    public swarmController: SwarmController;
+    public a2aLogger: A2ALogger;
     private memoryArchiver: MemoryArchiver;
 
     public projectTracker: ProjectTracker; // Phase 59: Autonomous Loop

@@ -74,8 +74,31 @@ func (a *CoderAgent) loop(ctx context.Context) {
 			if msg.Type == TaskRequest {
 				a.handleTaskRequest(ctx, msg)
 			}
+			if msg.Type == TaskNegotiation {
+				a.handleTaskNegotiation(ctx, msg)
+			}
 		}
 	}
+}
+
+func (a *CoderAgent) handleTaskNegotiation(ctx context.Context, msg A2AMessage) {
+	fmt.Printf("[Go Coder] 🤝 Bidding on task: %s\n", msg.Payload)
+
+	a.Broker.RouteMessage(A2AMessage{
+		ID:        fmt.Sprintf("a2a-bid-%d", nowMillis()),
+		Timestamp: nowMillis(),
+		Sender:    a.ID,
+		Recipient: msg.Sender,
+		Type:      CapabilityReport,
+		ReplyTo:   msg.ID,
+		Payload: map[string]interface{}{
+			"agentId":            a.ID,
+			"capabilities":       []string{"coding", "refactoring"},
+			"canHandle":          true,
+			"estimatedLatencyMs": 5000,
+			"reasoning":          "Ready to implement Go-native code changes.",
+		},
+	})
 }
 
 func (a *CoderAgent) handleTaskRequest(ctx context.Context, msg A2AMessage) {

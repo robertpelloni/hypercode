@@ -64,6 +64,10 @@ export class SwarmController {
         // a2aBroker.registerAgent(member.id, this.createA2AWrapper(member));
     }
 
+    public getTranscript(): string[] {
+        return [...this.transcript];
+    }
+
     /**
      * Start a swarm collaboration session
      */

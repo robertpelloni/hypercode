@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.28] - 2026-04-08
+
+### Fixed
+- **Runtime Startup Fix**: Added missing `adm-zip` runtime dependency to `@hypercode/core`, resolving a crash during server initialization.
+
+### Added
+- **Go A2A Handshake**: Implemented the Task Negotiation pattern in the Go sidecar, matching the TypeScript implementation for autonomous agent task bidding.
+- **A2A Dashboard Mutation**: Implemented `a2aBroadcast` tRPC mutation for manual signal injection.
+
 ## [1.0.0-alpha.27] - 2026-04-08
 
 ### Added
