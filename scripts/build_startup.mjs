@@ -67,6 +67,12 @@ function runWorkspaceBuild() {
 function runGoPrimaryBuild() {
   printStep('Running Go-primary startup build (Go control plane + CLI)...');
 
+  // Build core first since CLI depends on its dist output
+  const coreBuild = runPnpm(['-C', 'packages/core', 'run', 'build']);
+  if ((coreBuild.status ?? 1) !== 0) {
+    fail('Core startup build failed', coreBuild);
+  }
+
   const cliBuild = runPnpm(['-C', 'packages/cli', 'run', 'build']);
   if ((cliBuild.status ?? 1) !== 0) {
     fail('CLI startup build failed', cliBuild);

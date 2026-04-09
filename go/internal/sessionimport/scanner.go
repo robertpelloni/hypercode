@@ -199,6 +199,11 @@ func (s Scanner) rules() []discoveryRule {
 			fileNameHints: []string{"opencode", "session", "chat", "conversation", "history", "log"},
 		},
 		{
+			sourceTool:    "antigravity",
+			roots:         []string{filepath.Join(s.HomeDir, ".gemini", "antigravity", "brain")},
+			fileNameHints: []string{"brain", "session", "chat", "conversation", "history", "message"},
+		},
+		{
 			sourceTool:    "gemini",
 			roots:         []string{filepath.Join(s.WorkspaceRoot, ".gemini"), filepath.Join(s.HomeDir, ".gemini")},
 			fileNameHints: []string{"gemini", "session", "chat", "conversation", "history"},
@@ -235,11 +240,6 @@ func (s Scanner) rules() []discoveryRule {
 				filepath.Join(appData, "Code - Insiders", "User", "globalStorage"),
 			},
 			fileNameHints: []string{"session", "chat", "copilot", "conversation", "history", "message"},
-		},
-		{
-			sourceTool:    "antigravity",
-			roots:         []string{filepath.Join(s.HomeDir, ".gemini", "antigravity", "brain")},
-			fileNameHints: []string{"brain", "session", "chat", "conversation", "history", "message"},
 		},
 		{
 			sourceTool: "prism-mcp",
