@@ -151,6 +151,9 @@ func (c *SwarmController) executeMemberTurn(ctx context.Context, role SwarmRole,
 	}
 
 	member.Status = "thinking"
+
+	systemPrompt := ai.GetSwarmPrompt(string(role))
+
 	prompt := fmt.Sprintf(`
 		TRANSCRIPT:
 		%s
@@ -160,7 +163,7 @@ func (c *SwarmController) executeMemberTurn(ctx context.Context, role SwarmRole,
 	`, strings.Join(transcript, "\n\n"), member.Name, strings.ToUpper(string(member.Role)), instruction)
 
 	messages := []ai.Message{
-		{Role: "system", Content: fmt.Sprintf("You are part of a model swarm. Your role is %s.", member.Role)},
+		{Role: "system", Content: systemPrompt},
 		{Role: "user", Content: prompt},
 	}
 
@@ -207,7 +210,7 @@ func (c *SwarmController) executeEvaluation(ctx context.Context, threshold float
 	`, goal, strings.Join(transcript[len(transcript)-min(5, len(transcript)):], "\n\n"))
 
 	messages := []ai.Message{
-		{Role: "system", Content: "You are the Swarm Critic."},
+		{Role: "system", Content: ai.GetSwarmPrompt("critic")},
 		{Role: "user", Content: prompt},
 	}
 

@@ -15,7 +15,7 @@
  * 4. Support rotating Implementers, Testers, and Planners.
  */
 
-import { LLMService, SelectedModel } from "@hypercode/ai";
+import { LLMService, SelectedModel, SWARM_PROMPTS } from "@hypercode/ai";
 import type { IMCPServer } from "@hypercode/adk";
 import { A2AMessageType } from "@hypercode/adk";
 import { a2aBroker } from "./A2ABroker.js";
@@ -117,6 +117,14 @@ export class SwarmController {
         if (!member) return `[System]: No active member for role ${role}`;
 
         member.status = 'thinking';
+
+        // Select the appropriate specialized system prompt
+        let systemPrompt = `You are part of a model swarm. Your role is ${member.role}.`;
+        if (role === SwarmRole.PLANNER) systemPrompt = SWARM_PROMPTS.PLANNER;
+        else if (role === SwarmRole.IMPLEMENTER) systemPrompt = SWARM_PROMPTS.IMPLEMENTER;
+        else if (role === SwarmRole.TESTER) systemPrompt = SWARM_PROMPTS.TESTER;
+        else if (role === SwarmRole.CRITIC) systemPrompt = SWARM_PROMPTS.CRITIC;
+
         const prompt = `
             TRANSCRIPT:
             ${this.transcript.join("\n\n")}
@@ -129,7 +137,7 @@ export class SwarmController {
             const response = await this.llmService.generateText(
                 member.provider,
                 member.modelId,
-                `You are part of a model swarm. Your role is ${member.role}.`,
+                systemPrompt,
                 prompt
             );
             member.status = 'idle';
@@ -158,7 +166,7 @@ export class SwarmController {
             const response = await this.llmService.generateText(
                 critic?.provider || "google",
                 modelId,
-                "You are the Swarm Critic.",
+                SWARM_PROMPTS.CRITIC,
                 prompt
             );
             const content = response.content.trim();

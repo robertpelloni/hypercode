@@ -39,6 +39,7 @@ const DEFAULT_CHAINS: Record<'worker' | 'supervisor', ChainCandidate[]> = {
     worker: [
         { provider: 'lmstudio', modelId: 'C:/Users/hyper/.lmstudio/models/HauhauCS/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive-Q2_K_P.gguf gemma-4-e2b-uncensored-hauhaucs-aggressive' },
         { provider: 'openrouter', modelId: 'openrouter/free' },
+        { provider: 'openrouter', modelId: 'google/gemini-2.0-flash-lite-preview-02-05:free' },
         { provider: 'openrouter', modelId: 'google/gemini-2.0-flash-exp:free' },
         { provider: 'openrouter', modelId: 'meta-llama/llama-3.3-70b-instruct:free' },
         { provider: 'google', modelId: 'gemini-2.5-flash' },
@@ -48,6 +49,7 @@ const DEFAULT_CHAINS: Record<'worker' | 'supervisor', ChainCandidate[]> = {
         { provider: 'ollama', modelId: 'gemma:2b' }
     ],
     supervisor: [
+        { provider: 'openrouter', modelId: 'openrouter/best-available-coding' },
         { provider: 'anthropic', modelId: 'claude-3-5-sonnet-20241022' },
         { provider: 'google', modelId: 'gemini-1.5-pro' },
         { provider: 'openai', modelId: 'gpt-4o' },

@@ -31,7 +31,7 @@ func Catalog(statuses []Status) []CatalogEntry {
 			Provider:       "anthropic",
 			Name:           "Anthropic",
 			AuthMethod:     "api_key",
-			DefaultModel:   "claude-sonnet-4-20250514",
+			DefaultModel:   "claude-3-5-sonnet-20241022",
 			PreferredTasks: []string{"planning", "research"},
 			Executable:     true,
 		},

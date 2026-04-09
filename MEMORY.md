@@ -148,4 +148,14 @@
 **Resolution**: Ensure a full topological build (ADK -> Agents -> Core -> CLI) when introducing new protocol members or cross-package exports.
 **Implication**: Developers should use a workspace-wide build command or script to maintain environment sanity after structural changes.
 
+### 31. Swarm Transcript Observability (Added 2026-04-08)
+**Observation**: High-level swarm coordination was previously a "black box" in the dashboard, with no way to see the models' internal dialogue.
+**Resolution**: Implemented the `getSwarmTranscript` tRPC endpoint and a corresponding "Neural Transcript" tab in the dashboard.
+**Implication**: Operators can now watch model team collaboration in real-time, significantly improving trust and debugging for multi-agent workflows.
+
+### 32. Native Go Configuration Management (Added 2026-04-08)
+**Observation**: The Go sidecar's dependency on the Node server for reading `mcp.jsonc` limited its utility as a standalone fallback.
+**Resolution**: Implemented `ConfigManager` in Go. It natively handles reading and writing the `mcpServers` object in `mcp.jsonc`.
+**Implication**: The Go sidecar can now independently manage the MCP ecosystem, completing another key requirement for "Total Autonomy".
+
 *Update this file whenever a major systemic pattern, recurring bug, or deep architectural quirk is discovered.*
