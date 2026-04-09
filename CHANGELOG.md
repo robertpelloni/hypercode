@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.29] - 2026-04-08
+
+### Added
+- **A2A Handshake Parity (Go)**: Completed the port of the multi-turn task negotiation pattern to Go, enabling native agents to bid on goals independently.
+- **Go Skill Store Persistence**: The native Go sidecar can now independently manage `.md` runbooks in the `.hypercode/skills` directory.
+
+### Fixed
+- **Go Build Conflict**: Resolved an import ambiguity in the Go high-value link analysis logic by adding an explicit package alias, fixing a `undefined: json` build failure.
+- **Topological Monorepo Sync**: Performed a workspace-wide dependency and artifact synchronization to ensure all 57 packages are perfectly aligned.
+
 ## [1.0.0-alpha.28] - 2026-04-08
 
 ### Fixed

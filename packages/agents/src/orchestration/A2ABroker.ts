@@ -17,12 +17,28 @@ export class A2ABroker extends EventEmitter {
     private heartbeats: Map<string, number> = new Map();
     private history: A2AMessage[] = [];
     private pendingResponses: Map<string, (msg: A2AMessage) => void> = new Map();
+    private activeNegotiations: Map<string, { task: string, sender: string, bids: any[] }> = new Map();
     private readonly MAX_HISTORY = 1000;
     private readonly HEARTBEAT_TIMEOUT = 30000; // 30 seconds
 
     constructor() {
         super();
         this.startHeartbeatMonitor();
+    }
+
+    public recordNegotiation(id: string, sender: string, task: string) {
+        this.activeNegotiations.set(id, { task, sender, bids: [] });
+    }
+
+    public recordBid(id: string, bid: any) {
+        const neg = this.activeNegotiations.get(id);
+        if (neg) {
+            neg.bids.push(bid);
+        }
+    }
+
+    public getNegotiations() {
+        return Array.from(this.activeNegotiations.entries()).map(([id, data]) => ({ id, ...data }));
     }
 
     /**

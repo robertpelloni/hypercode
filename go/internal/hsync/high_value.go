@@ -17,17 +17,20 @@ import (
 
 	"github.com/hypercodehq/hypercode-go/internal/ai"
 	"github.com/hypercodehq/hypercode-go/internal/harnesses"
+	mcp_pkg "github.com/hypercodehq/hypercode-go/internal/mcp"
 )
 
 type HighValueIngestor struct {
 	dbPath     string
 	skillStore *harnesses.SkillStore
+	mcpConfig  *mcp_pkg.ConfigManager
 }
 
-func NewHighValueIngestor(dbPath string, skillStore *harnesses.SkillStore) *HighValueIngestor {
+func NewHighValueIngestor(dbPath string, skillStore *harnesses.SkillStore, mcpConfig *mcp_pkg.ConfigManager) *HighValueIngestor {
 	return &HighValueIngestor{
 		dbPath:     dbPath,
 		skillStore: skillStore,
+		mcpConfig:  mcpConfig,
 	}
 }
 
@@ -91,15 +94,27 @@ func (i *HighValueIngestor) deepDive(ctx context.Context, uuidValue, url, title,
 
 	// 1. If it's a Skill, save it natively
 	var analysis struct {
-		IsSkill      bool   `json:"isSkill"`
-		SkillContent string `json:"skillContent"`
-		Summary      string `json:"summary"`
+		IsSkill      bool                `json:"isSkill"`
+		SkillContent string              `json:"skillContent"`
+		IsMcpServer  bool                `json:"isMcpServer"`
+		McpRecipe    *mcp_pkg.McpServerConfig `json:"mcpRecipe"`
+		Summary      string              `json:"summary"`
 	}
-	if err := json.Unmarshal([]byte(resp.Content), &analysis); err == nil && analysis.IsSkill && analysis.SkillContent != "" {
-		skillID := strings.ToLower(strings.ReplaceAll(title, " ", "-"))
-		err := i.skillStore.SaveSkill(skillID, title, desc, analysis.SkillContent)
-		if err == nil {
-			fmt.Printf("[Go HighValue] 🧠 Saved new native skill: %s\n", skillID)
+	if err := json.Unmarshal([]byte(resp.Content), &analysis); err == nil {
+		if analysis.IsSkill && analysis.SkillContent != "" {
+			skillID := strings.ToLower(strings.ReplaceAll(title, " ", "-"))
+			err := i.skillStore.SaveSkill(skillID, title, desc, analysis.SkillContent)
+			if err == nil {
+				fmt.Printf("[Go HighValue] 🧠 Saved new native skill: %s\n", skillID)
+			}
+		}
+
+		if analysis.IsMcpServer && analysis.McpRecipe != nil {
+			serverName := strings.ToLower(strings.ReplaceAll(title, " ", "-"))
+			err := i.mcpConfig.AddServer(serverName, *analysis.McpRecipe)
+			if err == nil {
+				fmt.Printf("[Go HighValue] 📦 Registered new native MCP server: %s\n", serverName)
+			}
 		}
 	}
 

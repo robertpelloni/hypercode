@@ -1,6 +1,6 @@
 {
   "name": "@hypercode/core",
-  "version": "1.0.0-alpha.28",
+  "version": "1.0.0-alpha.29",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

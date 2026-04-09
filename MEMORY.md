@@ -178,4 +178,14 @@
 **Resolution**: Created a dedicated dashboard page that reads the `a2a_traffic.jsonl` log file from disk.
 **Implication**: Operators can now audit historical agent coordination signals to understand why specific swarm decisions were made.
 
+### 37. Runtime Dependency Hygiene (Added 2026-04-08)
+**Observation**: Adding TypeScript dev-dependencies (like @types/adm-zip) is insufficient for runtime features; the actual implementation library (adm-zip) must be in the `dependencies` block of the consumer package.
+**Resolution**: Added `adm-zip` to the dependencies of `packages/core`.
+**Implication**: Always verify that new services have their core runtime dependencies properly declared in `package.json` to prevent production/startup crashes.
+
+### 38. Cross-Runtime Handshake Parity (Added 2026-04-08)
+**Observation**: Agents in Go sidecar were previously unable to participate in task-bidding, creating an orchestration gap between TS and Go agents.
+**Resolution**: Implemented the native Go Handshake logic, matching the TS protocol. The `CoderAgent` in Go now correctly responds to `TASK_NEGOTIATION` with a `CAPABILITY_REPORT`.
+**Implication**: The swarm controller can now transparently pick the best agent regardless of whether they are implemented in TypeScript or Go.
+
 *Update this file whenever a major systemic pattern, recurring bug, or deep architectural quirk is discovered.*
