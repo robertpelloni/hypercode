@@ -82,6 +82,7 @@ type Server struct {
 	swarmController   *orchestration.SwarmController
 	coderAgent        *orchestration.CoderAgent
 	goDirector        *orchestration.Director
+	highValueIngestor *hsync.HighValueIngestor
 	memoryArchiver    *memorystore.MemoryArchiver
 }
 
@@ -401,6 +402,7 @@ func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
 	server.coderAgent = orchestration.NewCoderAgent(server.a2aBroker, cfg.WorkspaceRoot)
 	server.coderAgent.Start(context.Background())
 	server.goDirector = orchestration.NewDirector(server.swarmController, server.coderAgent, server.a2aBroker)
+	server.highValueIngestor = hsync.NewHighValueIngestor(filepath.Join(cfg.MainConfigDir, "metamcp.db"))
 	server.memoryArchiver = memorystore.NewMemoryArchiver(cfg.WorkspaceRoot)
 	server.swarmController = orchestration.NewSwarmController(server.a2aBroker)
 	server.mcpPredictor = mcp.NewToolPredictor(server.mcpAggregator)
@@ -944,6 +946,7 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/rag/text", s.handleRAGIngestText)
 	s.mux.HandleFunc("/api/directory", s.handleUnifiedDirectoryList)
 	s.mux.HandleFunc("/api/directory/stats", s.handleUnifiedDirectoryStats)
+	s.mux.HandleFunc("/api/directory/high-value-ingest", s.handleHighValueIngest)
 	s.mux.HandleFunc("/api/tool-chains/aliases", s.handleToolChainAliases)
 	s.mux.HandleFunc("/api/tool-chains/aliases/create", s.handleToolChainCreateAlias)
 	s.mux.HandleFunc("/api/tool-chains/aliases/remove", s.handleToolChainRemoveAlias)
@@ -9222,6 +9225,43 @@ func (s *Server) handleRAGIngestFile(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleRAGIngestText(w http.ResponseWriter, r *http.Request) {
 	s.handleTRPCBridgeBodyCall(w, r, "rag.ingestText")
+}
+
+func (s *Server) handleHighValueIngest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"success": false, "error": "method not allowed"})
+		return
+	}
+
+	// Try upstream first
+	var result any
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "unifiedDirectory.highValueIngest", nil, &result)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data":    result,
+			"bridge": map[string]any{
+				"upstreamBase": upstreamBase,
+				"procedure":    "unifiedDirectory.highValueIngest",
+			},
+		})
+		return
+	}
+
+	// Fallback: local Go high-value ingestor
+	err = s.highValueIngestor.ProcessHighValueQueue(r.Context(), 5)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": err.Error()})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"message": "Local high-value link processing complete",
+		"bridge": map[string]any{
+			"fallback": "go-local-high-value-ingest",
+		},
+	})
 }
 
 func (s *Server) handleUnifiedDirectoryList(w http.ResponseWriter, r *http.Request) {

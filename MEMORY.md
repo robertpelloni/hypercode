@@ -118,4 +118,14 @@
 **Resolution**: Implemented `A2ALogger` in TS and Go. Every message routed through the broker is now appended to a persistent JSONL log. These logs are also bundled into session archives by `MemoryArchiver`.
 **Implication**: Operators can now perform post-mortem analysis on agent coordination by inspecting the signal traffic logs.
 
+### 25. Standard Tool Visibility Fix (Added 2026-04-08)
+**Observation**: The "Ultra-Streamlined Advertising" filter was too aggressive, hiding basic standard library tools (bash, filesystem) from models. This forced a manual discovery turn that most agents (like pi) weren't prepared for.
+**Resolution**: Modified `getDirectModeTools` to treat standard library and tool parity aliases as `alwaysOn` by default.
+**Implication**: HyperCode is now immediately useful as an MCP server for any host agent, as basic coding capabilities are advertised upfront.
+
+### 26. Directory Clutter Reduction (Added 2026-04-08)
+**Observation**: The nested hash-based directory structure for session archives was creating thousands of nearly-empty subdirectories, making the `.hypercode` folder difficult to manage.
+**Resolution**: Flattened the archive structure in `ImportedSessionStore` to store all session files in a single `sessions/` directory.
+**Implication**: Improved filesystem performance and much cleaner project directory structure.
+
 *Update this file whenever a major systemic pattern, recurring bug, or deep architectural quirk is discovered.*

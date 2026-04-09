@@ -84,6 +84,21 @@ func (a *CoderAgent) handleTaskRequest(ctx context.Context, msg A2AMessage) {
 		return
 	}
 
+	// Handle Capability Report
+	if msg.Type == StateUpdate && payload["action"] == "REPORT_CAPABILITIES" {
+		a.Broker.RouteMessage(A2AMessage{
+			ID:        fmt.Sprintf("a2a-cap-%d", nowMillis()),
+			Timestamp: nowMillis(),
+			Sender:    a.ID,
+			Type:      StateUpdate,
+			Payload: map[string]interface{}{
+				"capabilities": []string{"coding", "refactoring", "filesystem"},
+				"role":         "Go Native Coder",
+			},
+		})
+		return
+	}
+
 	task, _ := payload["task"].(string)
 	if task == "" {
 		return

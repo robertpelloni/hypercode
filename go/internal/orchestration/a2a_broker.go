@@ -111,6 +111,17 @@ func (b *A2ABroker) RegisterAgent(id string) chan A2AMessage {
 	b.agents[id] = ch
 	b.heartbeats[id] = nowMillis()
 	fmt.Printf("[Go A2A] Registered agent: %s\n", id)
+
+	// Phase 105: Capability Exchange
+	go b.RouteMessage(A2AMessage{
+		ID:        fmt.Sprintf("cap-req-%s-%d", id, nowMillis()),
+		Timestamp: nowMillis(),
+		Sender:    "BROKER",
+		Recipient: id,
+		Type:      StateUpdate,
+		Payload:   map[string]interface{}{"action": "REPORT_CAPABILITIES"},
+	})
+
 	return ch
 }
 

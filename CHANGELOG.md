@@ -2,7 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0.html).
+
+## [1.0.0-alpha.22] - 2026-04-08
+
+### Added
+- **A2A Multi-turn Implementation**: Ported the `Query` pattern to the Go `A2ABroker`, enabling structured request-response correlation between Go-native agents.
+- **Go A2A Auditing**: Ported the `A2ALogger` to Go, providing native JSONL logging for agent signals in the sidecar.
+- **Agent Dashboard UI**: Added `A2AMessageComposer` to the Agent dashboard for manual signal drafting and integrated `a2a_broadcast` tRPC mutations.
+
+### Changed
+- **Tool Visibility**: Standard tools and parity aliases are now visible to models by default, fixing the "no tools reported" issue.
+- **Session Archive Optimization**: Flattened the session archive structure in `ImportedSessionStore` to avoid directory clutter.
+- **Researcher Agent Integration**: Updated `ResearcherAgent` to natively participate in the A2A broker and send periodic heartbeats.
 
 ## [1.0.0-alpha.21] - 2026-04-08
 
