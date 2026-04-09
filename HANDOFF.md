@@ -1,15 +1,16 @@
 # Handoff — Session 2026-04-08 (Extended)
 
-**Version:** `1.0.0-alpha.29`
+**Version:** `1.0.0-alpha.30`
 **Branch:** `main`
-**Commits this session:** 48 (alpha.8 → alpha.29)
+**Commits this session:** 50 (alpha.8 → alpha.30)
 
 ## Session Summary
 
-### Phase 22: Go Port Refinement & Build Resolution (commits 47-48)
-- **Go Build Conflict Resolution**: Fixed a compilation error in the Go sidecar's high-value link analysis logic by adding an explicit import alias (`mcp_pkg`) to prevent shadowing the `json` package.
-- **Go Skill Store Integration**: Successfully wired the native Go `SkillStore` into the `HighValueIngestor`. The Go sidecar can now independently save discovered technical runbooks as markdown files.
-- **Topological Workspace Build**: Verified that all 57 packages and the Go sidecar are in sync through a full topological rebuild.
+### Phase 23: Handshake Observability & Expert Status (commits 49-50)
+- **A2A Handshake Manager**: Created a new dashboard page at `/dashboard/agents/negotiation` to monitor the real-time bidding process between agents.
+- **Negotiation Tracking**: Updated `A2ABroker` and `Handshake` logic to persist and expose active negotiations and received capability reports (bids).
+- **Truthful Agent Status (Go)**: Upgraded the Go sidecar's expert status handler to report the actual availability of native agents (e.g. `CoderAgent`) instead of hardcoded placeholders.
+- **Build Synchronization**: Performed a clean topological build across `adk`, `ai`, `agents`, `core`, and `cli` to ensure all structural changes are fully integrated.
 
 ## Current state of the project
 
@@ -17,9 +18,9 @@
 - ✅ Server builds and runs (Express/tRPC on :4000, Next.js dashboard on :3000, MCP WebSocket on :3001)
 - ✅ SQLite functional after better-sqlite3 rebuild for Node 24
 - ✅ Multi-Model Swarm: specialized roles and real-time neural transcript visualization.
-- ✅ A2A Communication: Full audit logs, multi-turn handshake negotiation, and WebSocket bridges.
-- ✅ Go Sidecar: Native implementations for MCP configuration, Skill Store, High-Value Ingestor, and Swarm management.
-- ✅ Tool Parity: 40+ aliases for Claude Code, Codex, and Gemini CLI natively supported in both runtimes.
+- ✅ A2A Communication: Full audit logs, multi-turn handshake negotiation, and live bidding manager.
+- ✅ Go Sidecar: Native implementations for MCP configuration, Skill Store, High-Value Ingestor, and truthful Agent status.
+- ✅ Browser Extension: Real-time context harvesting via MutationObserver.
 
 ### What's broken or incomplete
 - glama.ai returns HTML (adapter has fallback URLs but may still fail)
@@ -29,13 +30,14 @@
 ### Architecture overview
 ```
 hypercode/
-├── VERSION                    # Single source of truth (1.0.0-alpha.29)
+├── VERSION                    # Single source of truth (1.0.0-alpha.30)
+├── packages/agents/           
+│   ├── src/orchestration/A2ABroker.ts (NEGOTIATION TRACKING)
+│   └── src/orchestration/Handshake.ts (WIRED TO BROKER)
 ├── go/                        
-│   ├── internal/hsync/high_value.go (FIXED: mcp alias)
-│   ├── internal/harnesses/skill_store.go (INTEGRATED)
-│   └── internal/mcp/config_manager.go
-├── packages/core/             # Main Control Plane
-├── apps/web/                  # Dashboard (69 pages)
+│   ├── internal/httpapi/server.go (TRUTHFUL STATUS)
+├── apps/web/                  
+│   └── src/app/dashboard/agents/negotiation/page.tsx (NEW)
 └── bin/hypercode.exe          # Compiled Go binary
 ```
 
@@ -45,14 +47,14 @@ hypercode/
 ## Recommendations for next agent
 
 ### Immediate (P0)
-1. Start the server and verify that discovered skills from High-Value Ingestion are correctly saved in `.hypercode/skills`.
-2. Check the Go sidecar API endpoints to ensure native configuration reading works.
+1. Start the server and navigate to `/dashboard/agents/negotiation`. Trigger a swarm task and observe the bidding process.
+2. Verify that the Go sidecar reports "active" for the Coder agent in the Experts dashboard.
 
 ### High priority (P1)
-1. **Dashboard Polish** — Systematically verify each of the 69 dashboard pages and ensure they display live backend state instead of placeholders.
-2. **Provider Expansion** — Add more specific free-tier models (DeepSeek, etc.) to the fallback chain.
-3. **Handshake UI** — Create a dedicated dashboard view for monitoring active agent negotiations.
+1. **Tool Integration** — Automatically convert "Detected Features" from Link Crawler (like MCP servers) into active MCP configurations.
+2. **Dashboard Polish** — Systematically verify each of the 69 dashboard pages for real-data flow.
+3. **Provider Expansion** — Add official DeepSeek models to the fallback chain.
 
 ### Medium priority (P2)
-1. Implement an A2A "Handshake Manager" UI to see active negotiations in progress.
+1. Implement an A2A "Task Queue" where agents can pull work when idle.
 2. Port more TS reactors to Go.

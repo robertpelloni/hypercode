@@ -1,6 +1,6 @@
 {
   "name": "@hypercode/browser-extension-pkg",
-  "version": "1.0.0-alpha.30",
+  "version": "1.0.0-alpha.31",
   "description": "HyperCode Browser Extension for Hub Connectivity",
   "scripts": {
     "build": "vite build",

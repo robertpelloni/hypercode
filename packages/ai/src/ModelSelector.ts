@@ -49,10 +49,10 @@ const DEFAULT_CHAINS: Record<'worker' | 'supervisor', ChainCandidate[]> = {
         { provider: 'ollama', modelId: 'gemma:2b' }
     ],
     supervisor: [
-        { provider: 'openrouter', modelId: 'openrouter/best-available-coding' },
-        { provider: 'anthropic', modelId: 'claude-3-5-sonnet-20241022' },
-        { provider: 'google', modelId: 'gemini-1.5-pro' },
+        { provider: 'anthropic', modelId: 'claude-3-7-sonnet-20250219' },
         { provider: 'openai', modelId: 'gpt-4o' },
+        { provider: 'google', modelId: 'gemini-1.5-pro' },
+        { provider: 'deepseek', modelId: 'deepseek-reasoner' },
         { provider: 'lmstudio', modelId: 'local' }
     ]
 };

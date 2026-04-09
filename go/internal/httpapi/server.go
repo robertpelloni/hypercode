@@ -83,6 +83,7 @@ type Server struct {
 	coderAgent        *orchestration.CoderAgent
 	goDirector        *orchestration.Director
 	highValueIngestor *hsync.HighValueIngestor
+	memoryReactor     *memorystore.MemoryReactor
 	mcpConfig         *mcp.ConfigManager
 	skillStore        *harnesses.SkillStore
 	memoryArchiver    *memorystore.MemoryArchiver
@@ -406,6 +407,7 @@ func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
 	server.coderAgent.Start(context.Background())
 	server.goDirector = orchestration.NewDirector(server.swarmController, server.coderAgent, server.a2aBroker)
 	server.mcpConfig = mcp.NewConfigManager(cfg.MainConfigDir)
+	server.memoryReactor = memorystore.NewMemoryReactor(cfg.WorkspaceRoot)
 	server.highValueIngestor = hsync.NewHighValueIngestor(filepath.Join(cfg.MainConfigDir, "metamcp.db"), server.skillStore, server.mcpConfig)
 	server.memoryArchiver = memorystore.NewMemoryArchiver(cfg.WorkspaceRoot)
 	server.swarmController = orchestration.NewSwarmController(server.a2aBroker)

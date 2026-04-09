@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.31] - 2026-04-08
+
+### Added
+- **Automated Tool Registration**: Completed the logic in the `HighValueIngestor` (TS/Go) to automatically register discovered MCP servers and skills into the active control plane configuration.
+- **Go Memory Reactor**: Implemented a native Go `MemoryReactor` for workspace context harvesting, semantic chunking, and incremental indexing.
+
+### Fixed
+- **Build Resolution**: Fixed a `getNegotiations` type error in `agentRouter.ts` by performing a clean build of the `@hypercode/agents` package.
+- **Go Registry Sync**: Wired the native Go `ConfigManager` to correctly support autonomous tool registration without the Node control plane.
+
 ## [1.0.0-alpha.30] - 2026-04-08
 
 ### Added

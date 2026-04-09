@@ -31,7 +31,7 @@ func Catalog(statuses []Status) []CatalogEntry {
 			Provider:       "anthropic",
 			Name:           "Anthropic",
 			AuthMethod:     "api_key",
-			DefaultModel:   "claude-3-5-sonnet-20241022",
+			DefaultModel:   "claude-3-7-sonnet-20250219",
 			PreferredTasks: []string{"planning", "research"},
 			Executable:     true,
 		},
@@ -48,7 +48,7 @@ func Catalog(statuses []Status) []CatalogEntry {
 			Name:           "DeepSeek",
 			AuthMethod:     "api_key",
 			DefaultModel:   "deepseek-chat",
-			PreferredTasks: []string{"coding"},
+			PreferredTasks: []string{"coding", "research"},
 			Executable:     true,
 		},
 		{

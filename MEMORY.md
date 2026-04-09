@@ -198,4 +198,14 @@
 **Resolution**: Fully integrated the Go native `SkillStore` with the `HighValueIngestor`. Discovered technical skills are now written directly to disk by the sidecar.
 **Implication**: Operational runbooks are now truly cross-runtime and persistent across control-plane restarts.
 
+### 41. Bidding Process Visibility (Added 2026-04-08)
+**Observation**: Task negotiation between agents was an invisible internal state, making it impossible for operators to know why a specific agent was selected.
+**Resolution**: Implemented negotiation tracking in `A2ABroker` and created a dedicated "A2A Handshake Manager" dashboard page.
+**Implication**: Every step of the bidding process—from task proposal to individual capability reports—is now visible and auditable in real-time.
+
+### 42. Truthful Sidecar Status (Added 2026-04-08)
+**Observation**: The Go sidecar's expert status endpoint returned hardcoded "offline" values, misleading the dashboard even when native agents were ready.
+**Resolution**: Updated the Go server to check the actual state of `s.coderAgent` and other native components before reporting status.
+**Implication**: The dashboard now reflects the true availability of Go-native agents, improving operator trust in the sidecar's fallback capabilities.
+
 *Update this file whenever a major systemic pattern, recurring bug, or deep architectural quirk is discovered.*

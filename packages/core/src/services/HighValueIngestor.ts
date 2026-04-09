@@ -90,12 +90,14 @@ export class HighValueIngestor {
 
             if (analysis.isMcpServer && analysis.mcpRecipe) {
                 console.log(`[HighValueIngestor] 📦 Discovered MCP Server: ${link.url}`);
-                // In a real implementation, we would add this to mcp.jsonc
+                const serverName = (link.page_title || link.title || 'discovered-server').toLowerCase().replace(/\s+/g, '-');
+                await this.mcpConfig.addServerConfig(serverName, analysis.mcpRecipe);
             }
 
             if (analysis.isSkill && analysis.skillContent) {
                 console.log(`[HighValueIngestor] 🧠 Discovered Skill: ${link.url}`);
-                // Create a skill from content
+                const skillId = (link.page_title || link.title || 'discovered-skill').toLowerCase().replace(/\s+/g, '-');
+                await this.skillRegistry.createSkill(skillId, link.page_title || link.title, analysis.summary);
             }
 
             // Update status
