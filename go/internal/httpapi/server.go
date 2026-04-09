@@ -83,6 +83,7 @@ type Server struct {
 	coderAgent        *orchestration.CoderAgent
 	goDirector        *orchestration.Director
 	highValueIngestor *hsync.HighValueIngestor
+	skillStore        *harnesses.SkillStore
 	memoryArchiver    *memorystore.MemoryArchiver
 }
 
@@ -399,6 +400,7 @@ func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
 		a2aLogger:         orchestration.NewA2ALogger(cfg.WorkspaceRoot),
 	}
 	server.a2aBroker = orchestration.NewA2ABroker(server.a2aLogger)
+	server.skillStore = harnesses.NewSkillStore(cfg.MainConfigDir)
 	server.coderAgent = orchestration.NewCoderAgent(server.a2aBroker, cfg.WorkspaceRoot)
 	server.coderAgent.Start(context.Background())
 	server.goDirector = orchestration.NewDirector(server.swarmController, server.coderAgent, server.a2aBroker)

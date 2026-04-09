@@ -15,14 +15,19 @@ import (
 	"strings"
 
 	"github.com/hypercodehq/hypercode-go/internal/ai"
+	"github.com/hypercodehq/hypercode-go/internal/harnesses"
 )
 
 type HighValueIngestor struct {
-	dbPath string
+	dbPath     string
+	skillStore *harnesses.SkillStore
 }
 
-func NewHighValueIngestor(dbPath string) *HighValueIngestor {
-	return &HighValueIngestor{dbPath: dbPath}
+func NewHighValueIngestor(dbPath string, skillStore *harnesses.SkillStore) *HighValueIngestor {
+	return &HighValueIngestor{
+		dbPath:     dbPath,
+		skillStore: skillStore,
+	}
 }
 
 func (i *HighValueIngestor) ProcessHighValueQueue(ctx context.Context, limit int) error {
@@ -83,6 +88,19 @@ func (i *HighValueIngestor) deepDive(ctx context.Context, uuidValue, url, title,
 		return
 	}
 
-	// In a real implementation, we would parse and save to mcp.jsonc or skills/
-	fmt.Printf("[Go HighValue] 🔍 Analysis complete for %s: %s\n", url, resp.Content[:min(100, len(resp.Content))])
+	// 1. If it's a Skill, save it natively
+	var analysis struct {
+		IsSkill      bool   `json:"isSkill"`
+		SkillContent string `json:"skillContent"`
+		Summary      string `json:"summary"`
+	}
+	if err := json.Unmarshal([]byte(resp.Content), &analysis); err == nil && analysis.IsSkill && analysis.SkillContent != "" {
+		skillID := strings.ToLower(strings.ReplaceAll(title, " ", "-"))
+		err := i.skillStore.SaveSkill(skillID, title, desc, analysis.SkillContent)
+		if err == nil {
+			fmt.Printf("[Go HighValue] 🧠 Saved new native skill: %s\n", skillID)
+		}
+	}
+
+	fmt.Printf("[Go HighValue] 🔍 Analysis complete for %s\n", url)
 }

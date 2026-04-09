@@ -128,4 +128,14 @@
 **Resolution**: Flattened the archive structure in `ImportedSessionStore` to store all session files in a single `sessions/` directory.
 **Implication**: Improved filesystem performance and much cleaner project directory structure.
 
+### 27. Multi-Turn Agent Coordination (Added 2026-04-08)
+**Observation**: Simple broadcast signaling is not enough for complex handoffs. Agents need a way to ask questions and wait for specific answers.
+**Resolution**: Implemented the `query` pattern in `A2ABroker` (TS and Go). Agents can now perform request-response cycles with built-in correlation and timeouts.
+**Implication**: This enables more complex autonomous workflows where a planner can query a coder's status or a critic can ask for clarification on a test failure.
+
+### 28. Native Go Auditing (Added 2026-04-08)
+**Observation**: Without a native logger in Go, signal traffic through the sidecar was invisible.
+**Resolution**: Ported `A2ALogger` to Go. It now captures every signal routed through the native broker in a JSONL format.
+**Implication**: Full observability of agent coordination is now maintained even when the TypeScript control plane is inactive.
+
 *Update this file whenever a major systemic pattern, recurring bug, or deep architectural quirk is discovered.*

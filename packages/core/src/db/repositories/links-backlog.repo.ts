@@ -144,6 +144,16 @@ export class LinksBacklogRepository {
         return row;
     }
 
+    async updateLinkStatus(uuid: string, status: string, score: number = 0): Promise<void> {
+        await db
+            .update(linksBacklogTable)
+            .set({
+                research_status: status as any,
+                updated_at: new Date(),
+            })
+            .where(eq(linksBacklogTable.uuid, uuid));
+    }
+
     async upsertLink(input: UpsertLinkBacklogInput): Promise<LinkBacklogItem> {
         const now = new Date();
         const payload = {

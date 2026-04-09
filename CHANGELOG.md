@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.23] - 2026-04-08
+
+### Fixed
+- **TSC Error Resolution**: Fixed multiple build failures across `ClaudeAgent`, `GeminiAgent`, `ResearcherAgent`, `MCPServer`, and `MemoryArchiver` caused by missing type definitions and out-of-order package builds.
+- **Mesh/A2A Typing**: Corrected `A2A_BRIDGE_SIGNAL` implementation to use the proper `SwarmMessageType` enum member.
+
+### Added
+- **Go A2A Logger**: Ported the `A2ALogger` to Go, enabling native signal auditing in the sidecar.
+- **Go Skill Store**: Implemented a Go-native `SkillStore` for managing `.md` runbooks, achieving total autonomy from the Node skill registry.
+- **Go High-Value Ingestor**: Ported the `HighValueIngestor` to Go to perform native technical analysis on technical links.
+
 ## [1.0.0-alpha.22] - 2026-04-08
 
 ### Added

@@ -66,7 +66,7 @@ export class MemoryArchiver {
         if (this.a2aLogger) {
             const logs = await this.a2aLogger.getRecentLogs(200);
             if (logs.length > 0) {
-                const logsContent = logs.map(l => JSON.stringify(l)).join('\n');
+                const logsContent = logs.map((l: any) => JSON.stringify(l)).join('\n');
                 zip.addFile(`${sessionId}.a2a.jsonl`, Buffer.from(logsContent, 'utf-8'));
             }
         }

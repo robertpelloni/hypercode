@@ -664,7 +664,7 @@ export class MCPServer {
         // A2A to Mesh Bridge
         a2aBroker.on('bridge_to_mesh', (message) => {
             if (this.meshService) {
-                this.meshService.broadcast('A2A_BRIDGE_SIGNAL', message);
+                this.meshService.broadcast(SwarmMessageType.A2A_BRIDGE_SIGNAL, message);
             }
         });
 
