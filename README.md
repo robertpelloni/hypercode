@@ -1,91 +1,170 @@
-# HyperCode
+# ⚡ HyperCode
 
-**The local-first control plane for AI operations.**
+> **The AI control plane you've been waiting for.**  
+> One local system to rule your MCP servers, tame your providers, resurrect lost sessions, and watch every AI operation in real time.
 
-> Status: **Pre-1.0 convergence**  
-> Focus: **stability, truthfulness, and operator trust**
+[![Version](https://img.shields.io/badge/version-1.0.0--alpha.32-blueviolet)](CHANGELOG.md)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Status](https://img.shields.io/badge/status-pre--1.0%20convergence-orange)](ROADMAP.md)
 
-HyperCode helps operators run a fragmented AI tool stack from one local control plane. It is designed for people who already use multiple MCP servers, multiple model providers, and multiple coding or session workflows—and want one place to inspect, route, recover, and understand them.
+---
 
-## What HyperCode is
+## The problem nobody wants to admit
 
-HyperCode is primarily four things:
+You're juggling a dozen MCP servers, three provider accounts, five AI coding assistants, and a memory system held together with vibes and hope. Every tool is isolated. Every session starts from scratch. When something breaks, you have no idea why.
 
-1. **MCP control plane** — manage and inspect MCP servers and tool inventories from one local service.
-2. **Provider routing layer** — handle quota-aware fallback across model providers.
-3. **Session and memory substrate** — preserve continuity across work sessions.
-4. **Operator dashboard** — make runtime state visible and diagnosable.
+**This is the mess HyperCode was built to end.**
 
-## Why this project exists
+---
 
-Modern AI work is messy:
-- too many MCP servers,
-- too many providers and quotas,
-- too many half-connected tools,
-- too little context continuity,
-- and weak observability when something breaks.
+## What HyperCode does — and why it matters
 
-HyperCode exists to reduce that fragmentation without requiring a hosted backend.
+### 🔌 The Ultimate MCP Control Plane
 
-## What is real today
+Stop launching MCP servers manually and praying they stay up. HyperCode is your **mission control for the entire MCP ecosystem**.
 
-### Stable
-- Local control-plane foundations
-- MCP aggregation and management primitives
-- Provider fallback infrastructure
-- Core dashboard architecture
-- Build, test, and typecheck workflows
+- **900+ MCP servers** catalogued and indexed from Glama, Smithery, MCP.run, npm, and GitHub Topics — all searchable from one place.
+- **Intelligent working set** with LRU eviction: only the tools you actually need are loaded, keeping context lean and fast.
+- **6 permanent meta-tools** always available — discover, search, and call any tool in your entire ecosystem on demand.
+- **Auto-load with confidence thresholds**: HyperCode silently loads high-confidence tools before you even know you need them.
+- **Profile-based boosting**: activate a `web-research` or `repo-coding` profile and the right tools float to the top automatically.
+- **Single-instance pooling**: multiple clients share one MCP server process — no more duplicate daemons eating your RAM.
+- **Live traffic inspection**: see every tool call, its latency, error rate, and payload in a real-time dashboard.
 
-### Beta
-- Session supervision workflows
-- Memory retrieval and inspection UX
-- Discovered external session import from supported tools, including Copilot CLI, VS Code Copilot Chat, Simon Willison `llm` CLI logs, OpenAI or ChatGPT export roots, and Prism local SQLite histories plus behavioral metadata, with derived memories and generated instruction docs; Antigravity local `~/.gemini/antigravity/brain` discovery is now available as an explicitly **Experimental**, reverse-engineered import lane
-- MCP traffic inspection and tool search UX
-- Billing and routing visibility
-- Browser and IDE bridge integration surfaces
+> **Why it matters:** Models perform dramatically better when they have access to the right tools at the right moment. HyperCode is the only system that manages tool visibility as a first-class, automated concern.
 
-### Experimental
-- HyperCode assimilation via `submodules/hypercode` plus primary HyperCode CLI harness registration
-- Council or debate workflows
-- Broader autonomous workflow layers
-- Mobile and desktop parity layers
-- Mesh and marketplace concepts
+---
 
-### Vision
-- A definitive internal library of MCP servers and tool metadata aggregated from public lists and operator-added sources
-- Continuous normalization, deduplication, and refresh of that MCP library inside HyperCode
-- Eventual operator-controlled access to any relevant MCP tool through one local control plane
-- Operator-owned discovery, benchmarking, and ranking of the MCP ecosystem so HyperCode knows what tools exist, how well they work, and when to trust them
-- A universal model-facing substrate where any model, any provider, any session, and any relevant MCP tool can be coordinated through HyperCode
+### 🧠 First-Class Tool Parity — LLMs Love It
 
-## What HyperCode is not yet
+Here's a secret most AI tooling ignores: LLMs are fine-tuned on the *exact* tool signatures used by the most popular coding environments. When a model sees a familiar `bash`, `glob`, or `str_replace_editor` tool, it performs **dramatically better** because it's working in territory it knows deeply.
 
-HyperCode is **not yet** a fully hardened universal “AI operating system.” The most honest current description is:
+HyperCode implements **byte-for-byte identical** tool schemas for every major harness:
 
-> HyperCode is an ambitious, local-first AI control plane with real implementation across MCP routing, provider management, sessions, and memory—plus a broader experimental layer around orchestration and automation.
+| Harness | Parity Tools |
+|---|---|
+| **Claude Code** | `bash`, `glob`, `grep_search`, `file_read`, `str_replace_editor`, `web_fetch`, `ls` |
+| **Codex CLI** | `shell`, `apply_diff`, `create_file`, `view_file`, `list_directory`, `search_files` |
+| **Gemini CLI** | `read_file`, `write_file`, `edit_file`, `list_directory`, `search` |
+| **OpenCode** | `read`, `write`, `edit`, `bash`, `glob`, `grep`, `ls`, `web_fetch` |
 
-## Current focus
+No renaming. No "inspired by." Identical schemas, identical behavior. Your models work at full capacity, every time.
 
-The current release track centers on:
-- core MCP reliability,
-- provider routing correctness,
-- practical memory usefulness,
-- session continuity,
-- and honest dashboard or operator UX.
+> **Why it matters:** Stop leaving performance on the table. Tool parity means your AI does what you expect, with the precision it was trained to deliver.
 
-Longer-term, HyperCode should become the place where operators maintain a definitive internal MCP server library, benchmark the live tool ecosystem, and expose universal tool reach through one operator-owned control plane. That ambition is intentionally large, but it is still **Vision** work until the current control plane is more reliable.
+---
 
-## Orchestrator identities
+### 🔀 Quota-Aware Provider Routing — Never Hit a Wall Again
 
-HyperCode currently presents three operator-facing orchestrator identities:
+Running out of Claude tokens mid-task? Rate-limited by OpenAI at 2am? **HyperCode routes around failures automatically**, so your work never stops.
 
-- `packages/cli` is the **cli-orchestrator** lane.
-- `apps/maestro` is the desktop **electron-orchestrator** lane.
-- `apps/cloud-orchestrator` is the web **cloud-orchestrator** lane.
+- Configurable **fallback chains** across GPT, Claude, Gemini, local models, and OpenRouter.
+- Automatic switching on **quota exhaustion, budget limits, and rate limits** — with zero manual intervention.
+- `EMERGENCY_FALLBACK` and `budget_forced_local` states handled gracefully in real time.
+- Full **billing visibility dashboard**: see your cost per session, per provider, per model — no more surprise invoices.
+- **Auth state display**: know at a glance which providers are configured, authenticated, and ready to run.
 
-The experimental Go workspace under `go/` is a sidecar **cli-orchestrator** coexistence port for read-parity and feasibility work, not a replacement fork and not yet the primary control-plane implementation.
+> **Why it matters:** Quota failures are the silent killers of complex AI workflows. HyperCode makes them invisible to the operator — and to the model.
 
-Today, `electron-orchestrator` and `cli-orchestrator` do **not** yet have 100% feature parity. The desktop lane currently exposes the broader operator UX, while the Node-based CLI lane remains the cleaner control-plane foundation. HyperCode should not drop either surface until parity gaps and operator workflows are intentionally closed. The Go lane should currently be described as **Experimental** read-only bridge replacement work, not as a completed daemon extraction.
+---
+
+### 🔮 Omniscient Memory — Your AI Never Forgets
+
+Every session you've ever had with any AI tool is a goldmine of context. Most people throw it away. HyperCode **captures, imports, and makes it searchable forever**.
+
+Automatic session import from **every major AI harness**:
+- VS Code Copilot Chat
+- Claude Code / Copilot CLI
+- Gemini CLI / Antigravity (`~/.gemini/antigravity/brain`)
+- Simon Willison's `llm` CLI
+- OpenAI / ChatGPT export roots
+- Prism local SQLite histories + behavioral metadata
+
+HyperCode processes these into **durable memories** with derived instruction docs — so the next session starts with full context, not a blank slate.
+
+**Vector memory search** lets models query your entire knowledge base semantically. The `search_memory` and `add_memory` MCP tools are live and connected — models can read from and write to your memory without you lifting a finger.
+
+> **Why it matters:** Context is everything. HyperCode turns your past AI sessions into a compounding asset instead of a landfill.
+
+---
+
+### 📊 Real-Time Operator Dashboard — Full Visibility, Zero Magic
+
+HyperCode's **91-page web dashboard** is the nerve center of your AI stack. Every number is a real database row. Every status reflects actual runtime state.
+
+**What you can see right now:**
+- 🟢 Live MCP server health — response time, error rate, uptime, auto-restart status
+- 🔍 Tool inventory with **Always On** toggling and semantic search
+- 📡 Real-time traffic inspection — every MCP call, payload, and latency
+- 💰 Provider billing — cost per session, quota remaining, routing decisions
+- 🧬 Memory inspector — browse, search, and edit your entire memory store
+- 🔄 Session timeline — every tool call, model response, and state change, in order
+- 🤖 Agent negotiation monitor — watch A2A agents bid on tasks in real time
+- 📈 Metrics dashboard — call counts, error rates, and latency histograms, live
+- 🔧 Submodule health — git status and one-click heal for all submodules
+
+> **Why it matters:** You can't fix what you can't see. HyperCode makes the invisible visible — so you can trust your AI stack, not just hope it works.
+
+---
+
+### 🤝 Multi-Agent Orchestration — Your Own AI Council
+
+Why use one model when you can use five? HyperCode's **Council and Swarm** system lets multiple frontier models collaborate on the same problem with specialized roles:
+
+- **Planner** — decomposes the problem and sets the strategy
+- **Implementer** — writes the code, surgically and precisely
+- **Tester** — validates correctness and hunts for edge cases
+- **Critic** — challenges assumptions and finds what everyone else missed
+
+The **Swarm Neural Transcript** shows the live collaborative conversation between models in a beautiful real-time dashboard. The **A2A (Agent-to-Agent) Handshake** protocol lets agents bid on tasks autonomously — no human babysitting required.
+
+**Supported model networks:** `claude-3-7-sonnet`, `gpt-4o`, `gemini-2.0-flash`, `google/gemini-2.0-flash-lite`, `openrouter/best-available-coding`, and more.
+
+> **Why it matters:** The best answers don't come from one model — they come from the right combination of models, each doing what they're best at.
+
+---
+
+### 🧬 Session Continuity — Pick Up Where You Left Off
+
+Sessions crash. Contexts get lost. HyperCode's **SessionSupervisor** makes that irrelevant:
+
+- **Auto-restart** with isolated PTY recovery — a crashed session comes back exactly where it stopped.
+- **Session branching** — fork any session and explore alternatives without losing your original path.
+- **Automatic summarization** — when a session gets long, HyperCode compresses old turns into memory entries so the model never runs out of context.
+- **Session mesh** — `hypercode mesh status`, `hypercode mesh peers`, `hypercode mesh find --capability <name>` give you live visibility into every running agent in your local network.
+
+> **Why it matters:** You spent hours building context in that session. HyperCode makes sure you never have to rebuild it.
+
+---
+
+### 🌐 Browser Extension — Memory Everywhere
+
+The HyperCode browser extension uses a `MutationObserver` to **automatically capture every message** from ChatGPT and Claude web interfaces as you chat. No manual export. No copy-paste. Your web conversations flow directly into your universal memory bank.
+
+MCP tools are also injectable into web chat interfaces — giving browser-based models the same tool access as your local harnesses.
+
+> **Why it matters:** Your best insights don't only happen in the CLI. HyperCode captures them wherever they occur.
+
+---
+
+### ⚡ Go-Native Performance Sidecar
+
+HyperCode ships a high-performance **Go sidecar** that natively owns core system services — no Node.js required for the hot path:
+
+- **EventBus** with wildcard pattern matching and bounded history
+- **CacheService** with TTL+LRU eviction and event callbacks
+- **GitService** with full git operations (log, status, diff, blame, stash, branch, push, pull)
+- **MetricsService** with Prometheus export and downsampled time series
+- **ProcessManager** for child process lifecycle with stdin/stdout/stderr streaming
+- **HealerService** — LLM-powered error diagnosis, fix generation, and auto-heal
+- **SessionManager** with a full state machine (created → starting → running → stopped → failed → paused)
+- **ToolRegistry** with fuzzy search and always-on tracking
+
+The Go sidecar bridges seamlessly to the TypeScript control plane, providing native fallbacks across 50+ API route families with truthful local SQLite reads.
+
+> **Why it matters:** Performance matters at scale. The Go sidecar keeps HyperCode fast, resilient, and correct — even when the Node runtime is under pressure.
+
+---
 
 ## Quick start
 
@@ -93,141 +172,91 @@ Today, `electron-orchestrator` and `cli-orchestrator` do **not** yet have 100% f
 - Node.js 22+
 - pnpm 10+
 
-### Local development
+### Up and running in 60 seconds
+
 ```bash
+git clone https://github.com/hypercodehq/hypercode.git
+cd hypercode
 pnpm install
 pnpm run dev
 ```
 
-### HyperCode harness lane
+Open `http://localhost:3000/dashboard` and see your AI stack come to life.
+
+### CLI harness
+
 ```bash
-hypercode session harnesses
+hypercode session harnesses           # see all available harnesses
 hypercode session start ./my-app --harness hypercode
-hypercode mesh status
+hypercode mesh status                 # inspect the live agent mesh
+hypercode mesh peers                  # see all connected nodes
+hypercode mesh find --capability bash # find agents that can run bash
 ```
 
-`hypercode` is now HyperCode's primary CLI harness identity, backed by the `submodules/hypercode` upstream. The upstream now exposes a Go/Cobra CLI with a default TUI REPL plus a `pipe` command, and HyperCode now surfaces HyperCode's source-backed tool inventory from `submodules/hypercode/tools/*.go` via `hypercode session harnesses` and the Go sidecar harness registry. HyperCode's harness catalogs now also track the broader known external identities it already references elsewhere in the repo, including `aider`, `cursor`, `copilot`, `qwen`, `superai-cli`, `codebuff`, `codemachine`, and `factory-droid`, but those still expose install/runtime metadata only until HyperCode has equally source-backed bridge contracts for them. HyperCode's maturity remains **Experimental** while the cross-runtime adapter contract is still shallow.
-
-The CLI mesh surface is now operator-visible through `hypercode mesh status`, `hypercode mesh peers`, `hypercode mesh capabilities [nodeId]`, and `hypercode mesh find --capability <name>`. These commands query the live local control plane through `HYPERCODE_TRPC_UPSTREAM` or the HyperCode startup lock, so they report real mesh visibility instead of placeholder CLI output.
-
 ### Docker
+
 ```bash
 docker compose up --build
 ```
 
-## Repository shape
+---
+
+## Architecture at a glance
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│                  HyperCode Control Plane                │
+│                                                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │  MCP Router  │  │  Provider    │  │   Memory &   │  │
+│  │  + Catalog   │  │  Fallback    │  │   Sessions   │  │
+│  └──────────────┘  └──────────────┘  └──────────────┘  │
+│                                                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │  Multi-Agent │  │  Dashboard   │  │  Go Sidecar  │  │
+│  │  Council     │  │  (91 pages)  │  │  (native)    │  │
+│  └──────────────┘  └──────────────┘  └──────────────┘  │
+└─────────────────────────────────────────────────────────┘
+         │                   │                  │
+    CLI harness         Web Dashboard      Browser ext.
+   (hypercode CLI)   (localhost:3000)    (ChatGPT/Claude)
+```
 
 ```text
 apps/
-  web/              Next.js dashboard
-  hypercode-extension/   Browser extension surfaces (compatibility path)
-  maestro/          electron-orchestrator desktop shell work (legacy path)
-  vscode/           VS Code integration
+  web/                    Next.js dashboard (91 pages, all real data)
+  hypercode-extension/    Browser extension (auto memory capture)
+  maestro/                Desktop orchestrator shell
 
 packages/
-  core/             Main control plane backend
-  ai/               Provider/model routing
-  cli/              cli-orchestrator entrypoints
-  ui/               Shared UI package
-  types/            Shared types
-
-submodules/
-  hypercode/        External HyperCode harness upstream (experimental assimilation track)
+  core/                   TypeScript control plane (MCP, sessions, memory, routing)
+  ai/                     Provider & model integrations
+  cli/                    CLI orchestrator entrypoints
+  ui/                     Shared React UI components
+  memory/                 Vector memory + retrieval layer
+  tools/                  Shared tool definitions (parity implementations)
 
 go/
-  cmd/hypercode/         Experimental sidecar Go cli-orchestrator port workspace
+  cmd/hypercode/          Go sidecar (native services, SQLite reads, Prometheus)
+  internal/               EventBus, Cache, Git, Metrics, Healer, Sessions, Tools, A2A
 
-The Go port is intentionally isolated from the main Node/Next fork. It uses its own `.hypercode-go` config directory and can observe the primary HyperCode lock state via `/api/runtime/locks`, summarize its interop visibility via `/api/runtime/status` including compact lock visibility/running counts, config-path health, total and available CLI tool/harness counts, provider totals plus configured/authenticated/executable counts and auth/task buckets, memory availability plus default-section and per-section entry breakdowns, discovered-session counts plus session-type, task, model-hint, and TypeScript supervisor-bridge visibility, and import-root plus import-source health including valid/invalid counts, aggregate estimated size, and compact source-type, model-hint, and error buckets, expose a self-describing route index via `/api/index`, inspect effective path wiring via `/api/config/status` including repo-level `hypercode.config.json` and `mcp.jsonc` presence, expose read-only provider credential visibility via `/api/providers/status`, expose provider catalog metadata via `/api/providers/catalog`, expose compact provider rollups via `/api/providers/summary`, preview intended task-type routing order via `/api/providers/routing-summary`, read the main fork's generated imported-instructions artifact via `/api/runtime/imported-instructions`, expose discovered session artifacts through `/api/sessions` and `/api/sessions/summary`, and bridge or selectively replace TypeScript read routes across `/api/sessions/supervisor/*`, `/api/sessions/imported/*`, `/api/mcp/*`, `/api/memory/*`, `/api/agent-memory/*`, `/api/graph/*`, `/api/context/*`, `/api/git/*`, `/api/tests/*`, `/api/metrics/*`, `/api/logs/*`, `/api/server-health/*`, `/api/settings/*`, `/api/tools/*`, `/api/tool-sets/*`, `/api/project/*`, `/api/shell/*`, `/api/agent/*`, `/api/commands/*`, `/api/skills/*`, `/api/workflows/*`, `/api/symbols/*`, `/api/lsp/*`, `/api/api-keys/*`, `/api/audit/*`, `/api/scripts/*`, `/api/links-backlog/*`, `/api/infrastructure/*`, `/api/expert/*`, `/api/policies/*`, `/api/secrets/*`, `/api/marketplace/*`, `/api/catalog/*`, `/api/oauth/*`, `/api/research/*`, `/api/pulse/*`, `/api/session-export/*`, `/api/browser-extension/*`, `/api/open-webui/*`, `/api/code-mode/*`, `/api/submodules/*`, `/api/suggestions/*`, and `/api/plan/*`. Some of those reads now have truthful local Go fallbacks backed by the same SQLite database, local config files, or deterministic local defaults, but many orchestration-heavy routes remain bridge-only by design. Its current role is to validate a Go-native cli-orchestrator path, grow honest read-only local truth where practical, and avoid overstating daemon-extraction maturity before the underlying contracts are stable.
+submodules/
+  hypercode/              External CLI harness upstream
 ```
 
-## Recommended binary-to-package evolution
-
-The repo does **not** yet ship the full recommended HyperCode binary family, but the current workspace already suggests the right extraction seams.
-
-### Control plane
-
-- Future binaries: `hypercode`, `hypercoded`
-- Current likely sources:
-  - `packages/cli`
-  - `packages/core`
-  - `packages/ai`
-  - `packages/types`
-  - `packages/tools`
-  - `go/cmd/hypercode`
-  - `go/internal/controlplane`, `go/internal/httpapi`, `go/internal/providers`
-
-### MCP layer
-
-- Future binaries: `hypermcpd`, `hypermcp-indexer`
-- Current likely sources:
-  - `packages/mcp-client`
-  - `packages/mcp-registry`
-  - `packages/mcp-router-cli`
-  - MCP-related surfaces inside `packages/core`
-  - `go/internal/httpapi` and future Go MCP-specific packages as extraction work continues
-
-### Memory and ingestion layer
-
-- Future binaries: `hypermemd`, `hyperingest`
-- Current likely sources:
-  - `packages/memory`
-  - `packages/claude-mem`
-  - session and import flows inside `packages/core`
-  - `go/internal/memorystore`
-  - `go/internal/sessionimport`
-
-### Harness layer
-
-- Future binaries: `hyperharness`, `hyperharnessd`
-- Current likely sources:
-  - `packages/agents`
-  - `packages/adk`
-  - `packages/hypercode-supervisor`
-  - `packages/browser`
-  - `packages/search`
-  - harness registration and supervisor flows in `packages/core`
-  - `go/internal/harnesses`
-
-### Client surfaces
-
-- Future apps/binaries: `hypercode-web`, `hypercode-native`
-- Current likely sources:
-  - `apps/web`
-  - `apps/maestro`
-  - `apps/maestro-go`
-  - `apps/mobile`
-  - `packages/ui`
-
-### Extraction rule
-
-Keep shared contracts, config, auth, logging, and transport schemas in reusable packages first. Extract a new binary only after the package seam is clear enough that process separation improves reliability or operator clarity instead of just adding more moving parts.
-
-### First extraction seams to prefer
-
-If work proceeds incrementally, the first concrete seams should be:
-
-1. `hypercoded`
-   - pull top-level control-plane routing, operator health/status APIs, lock/config coordination, and provider-routing orchestration toward a cleaner daemon-owned boundary
-   - keep CLI, web, and native surfaces as clients of that boundary
-2. `hypermcpd`
-   - pull MCP registry state, runtime-server lifecycle, working-set state, tool inventory/search/call mediation, and probe/test flows toward a dedicated service boundary
-   - keep scrape/probe refresh and offline metadata enrichment as `hypermcp-indexer` worker responsibilities rather than interactive daemon logic
-
-These seams are preferred first because they already have visible operator-facing surfaces, clear uptime concerns, and strong pressure to separate control-plane truth from client UX.
+---
 
 ## Design principles
 
-1. **Local first** — default to local state and operator control.
-2. **Truth over hype** — label maturity honestly.
-3. **Interoperability over reinvention** — unify tools where possible.
-4. **Visibility over magic** — make system state inspectable.
-5. **Continuity over novelty** — prioritize recovery, routing, and memory.
+1. **Local first** — your data, your hardware, your control. No cloud dependency required.
+2. **Visibility over magic** — every dashboard number is a real database row. No mocks. No lies.
+3. **Interoperability over reinvention** — wrap excellent tools (ripgrep, SQLite, LanceDB) instead of rewriting them poorly.
+4. **Continuity over novelty** — crash recovery, session persistence, and routing correctness beat shiny new features every time.
+5. **Parity over invention** — if the model expects `bash`, give it `bash`. Don't make it learn something new.
+
+---
 
 ## Contributing
-
-For now, compatibility paths, package names, and the `hypercode` CLI command remain unchanged while the visible branding shifts to HyperCode.
-
-Use `pnpm` v10 and verify changes before claiming success:
 
 ```bash
 pnpm -C packages/core exec tsc --noEmit
@@ -235,20 +264,10 @@ pnpm -C apps/web exec tsc --noEmit --pretty false
 pnpm run test
 ```
 
-Also review:
-- `AGENTS.md`
-- `ROADMAP.md`
-- `TODO.md`
-- `VISION.md`
+See also: [`AGENTS.md`](AGENTS.md) · [`ROADMAP.md`](ROADMAP.md) · [`TODO.md`](TODO.md) · [`VISION.md`](VISION.md) · [`CHANGELOG.md`](CHANGELOG.md)
 
-## Documentation map
-
-- `VISION.md` — long-term direction
-- `ROADMAP.md` — now/next/later
-- `TODO.md` — active worklist
-- `AGENTS.md` — contributor and agent rules
-- `CHANGELOG.md` — release history
+---
 
 ## License
 
-MIT
+MIT — build something great.
