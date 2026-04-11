@@ -1,5 +1,5 @@
-import { LLMService } from '@hypercode/ai';
-import { SearchService, type SearchResult } from '@hypercode/search';
+import { LLMService } from '@borg/ai';
+import { SearchService, type SearchResult } from '@borg/search';
 
 export class PreemptiveToolAdvertiser {
     private llmService: LLMService;

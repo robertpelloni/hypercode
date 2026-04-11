@@ -70,7 +70,7 @@ async function getCachedExecutionEnvironment() {
 
 export const systemProcedures = {
     health: publicProcedure.query(() => {
-        return { status: 'running', service: '@hypercode/core' };
+        return { status: 'running', service: '@borg/core' };
     }),
     startupStatus: publicProcedure.query(async () => {
         const mcpServer = getMcpServer();

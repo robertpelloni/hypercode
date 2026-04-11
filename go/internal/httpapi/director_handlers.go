@@ -38,9 +38,9 @@ func (s *Server) handleDirectorConfigGet(w http.ResponseWriter, r *http.Request)
 		"success": true,
 		"data":    result,
 		"bridge": map[string]any{
-			"fallback":  "go-local-hypercode-config",
+			"fallback":  "go-local-borg-config",
 			"procedure": "directorConfig.get",
-			"reason":    "upstream unavailable; using local .hypercode/config.json",
+			"reason":    "upstream unavailable; using local .borg/config.json",
 		},
 	})
 }

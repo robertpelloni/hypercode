@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { trpc } from "@/utils/trpc";
 import type { inferRouterOutputs } from "@trpc/server";
-import type { AppRouter } from "@hypercode/core";
+import type { AppRouter } from "@borg/core";
 import { useSearchParams } from "next/navigation";
 import { BookMarked, ExternalLink, Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -138,7 +138,7 @@ function LinksBacklogPageContent() {
             <PageStatusBanner
                 status="beta"
                 message="Link Backlog"
-                note="Canonical HyperCode backlog for BobbyBookmarks-powered link sync, research status, and future universal MCP directory integration."
+                note="Canonical borg backlog for BobbyBookmarks-powered link sync, research status, and future universal MCP directory integration."
             />
 
             <div className="flex items-center justify-between gap-4 flex-wrap">

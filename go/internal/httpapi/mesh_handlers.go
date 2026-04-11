@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/borghq/hypercode-go/internal/mesh"
+	"github.com/borghq/borg-go/internal/mesh"
 )
 
 func (s *Server) handleMeshStatus(w http.ResponseWriter, r *http.Request) {

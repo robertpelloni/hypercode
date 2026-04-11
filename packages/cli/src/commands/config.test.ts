@@ -108,7 +108,7 @@ describe('registerConfigCommand', () => {
     queryTrpcMock.mockResolvedValue({
       success: true,
       scope: 'global',
-      path: 'C:\\Users\\hyper\\.hypercode',
+      path: 'C:\\Users\\hyper\\.borg',
     });
 
     const program = createProgram();
@@ -120,7 +120,7 @@ describe('registerConfigCommand', () => {
     expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
       success: true,
       scope: 'global',
-      path: 'C:\\Users\\hyper\\.hypercode',
+      path: 'C:\\Users\\hyper\\.borg',
     }, null, 2));
   });
 

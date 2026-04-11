@@ -468,7 +468,7 @@ function initializeSchema(database: BetterSqlite3Database): void {
         CREATE INDEX IF NOT EXISTS pmvr_outcome_idx ON published_mcp_validation_runs(outcome);
         CREATE INDEX IF NOT EXISTS pmvr_created_at_idx ON published_mcp_validation_runs(created_at);
 
-        -- links_backlog: canonical HyperCode link backlog (BobbyBookmarks + future sources)
+        -- links_backlog: canonical borg link backlog (BobbyBookmarks + future sources)
         CREATE TABLE IF NOT EXISTS links_backlog (
             uuid TEXT PRIMARY KEY,
             url TEXT NOT NULL,
@@ -720,7 +720,7 @@ let sqliteInitializationError: unknown = null;
 function buildSqliteUnavailableError(error: unknown): Error {
     const reason = error instanceof Error ? error.message : String(error);
     const wrapped = new Error(
-        `SQLite runtime is unavailable for HyperCode DB-backed features (${reason}). ` +
+        `SQLite runtime is unavailable for borg DB-backed features (${reason}). ` +
         `The control plane can still start, but SQLite-backed routes and services remain unavailable until better-sqlite3 loads successfully.`,
     );
     if (error instanceof Error) {

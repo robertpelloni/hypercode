@@ -1,6 +1,6 @@
 # Content Scripts
 
-This directory contains the content scripts and core functionality for the HyperCode Extension Chrome extension.
+This directory contains the content scripts and core functionality for the borg Extension Chrome extension.
 
 ## Overview
 

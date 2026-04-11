@@ -1,15 +1,15 @@
 /**
- * `hypercode start` - Start the HyperCode backend server
+ * `borg start` - Start the borg backend server
  *
- * Launches the HyperCode core server with Express/tRPC/WebSocket/MCP endpoints.
+ * Launches the borg core server with Express/tRPC/WebSocket/MCP endpoints.
  * The server provides the API backend for the WebUI dashboard, CLI commands,
  * and external MCP clients.
  *
  * @example
- *   hypercode start                    # Start on default port 3000
- *   hypercode start --port 8080        # Start on custom port
- *   hypercode start --no-mcp           # Start without MCP server
- *   hypercode start --config ./my.json # Use custom config file
+ *   borg start                    # Start on default port 3000
+ *   borg start --port 8080        # Start on custom port
+ *   borg start --no-mcp           # Start without MCP server
+ *   borg start --config ./my.json # Use custom config file
  */
 
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -184,7 +184,7 @@ export async function acquireSingleInstanceLock(
   mkdirSync(resolvedDataDir, { recursive: true });
 
   const pid = getPid();
-  const instanceId = `hypercode-${pid}-${now().getTime()}`;
+  const instanceId = `borg-${pid}-${now().getTime()}`;
   let selectedPort = options.requestedPort;
   let clearedStaleLock = false;
   let reusedStalePort = false;
@@ -236,7 +236,7 @@ export async function acquireSingleInstanceLock(
         releaseSync();
         throw new Error(
           `Port ${selectedPort} is already in use by another process. `
-          + `Stop that process or start HyperCode with --port <free-port>.`,
+          + `Stop that process or start borg with --port <free-port>.`,
         );
       }
 
@@ -267,7 +267,7 @@ export async function acquireSingleInstanceLock(
 
         if (!lockedPortIsFree) {
           throw new Error(
-            `HyperCode is already running (PID ${existingLock.pid}) on port ${existingLock.port}. `
+            `borg is already running (PID ${existingLock.pid}) on port ${existingLock.port}. `
             + `Stop that process before starting another instance, or remove ${lockPath} if it is incorrect.`,
           );
         }
@@ -286,7 +286,7 @@ export async function acquireSingleInstanceLock(
     }
   }
 
-  throw new Error(`Unable to acquire HyperCode startup lock at ${lockPath}`);
+  throw new Error(`Unable to acquire borg startup lock at ${lockPath}`);
 }
 
 export async function startCoreRuntime(
@@ -297,7 +297,7 @@ export async function startCoreRuntime(
     supervisor?: boolean;
     autoDrive?: boolean;
   },
-  loadCore: () => Promise<CoreRuntimeModule> = async () => await import('@hypercode/core/orchestrator'),
+  loadCore: () => Promise<CoreRuntimeModule> = async () => await import('@borg/core/orchestrator'),
 ) {
   const core = await loadCore();
 
@@ -545,26 +545,26 @@ export function createLockLifecycleHandlers(
 export function registerStartCommand(program: Command): void {
   program
     .command('start')
-    .description('Start the HyperCode backend server (Express/tRPC/WebSocket/MCP)')
+    .description('Start the borg backend server (Express/tRPC/WebSocket/MCP)')
     .option('-p, --port <number>', 'tRPC control-plane port', '4000')
     .option('--dashboard-port <number>', 'Dashboard web runtime port', '3000')
     .option('-H, --host <address>', 'Server host address', '0.0.0.0')
     .option('--no-mcp', 'Disable the MCP server endpoint')
-    .option('--supervisor', 'Enable HyperCode supervisor startup')
+    .option('--supervisor', 'Enable borg supervisor startup')
     .option('--auto-drive', 'Enable Director auto-drive after startup')
     .option('--no-dashboard', 'Disable serving the WebUI dashboard')
     .option('--no-open-dashboard', 'Start the dashboard runtime without opening the browser')
     .option('-c, --config <path>', 'Path to config file')
-    .option('-d, --data-dir <path>', 'Data directory for HyperCode state (compat path: ~/.hypercode)', '~/.hypercode')
+    .option('-d, --data-dir <path>', 'Data directory for borg state (compat path: ~/.borg)', '~/.borg')
     .option('--daemon', 'Run as background daemon')
     .addHelpText('after', `
 Examples:
-  $ hypercode start                     Start with defaults (tRPC on port 4000)
-  $ hypercode start -p 8080             Start on port 8080
-  $ hypercode start --no-mcp            Start without MCP server
-  $ hypercode start --auto-drive        Start the Director after boot completes
-  $ hypercode start --daemon            Run as background service
-  $ hypercode start --host 127.0.0.1    Bind to localhost only
+  $ borg start                     Start with defaults (tRPC on port 4000)
+  $ borg start -p 8080             Start on port 8080
+  $ borg start --no-mcp            Start without MCP server
+  $ borg start --auto-drive        Start the Director after boot completes
+  $ borg start --daemon            Run as background service
+  $ borg start --host 127.0.0.1    Bind to localhost only
     `)
     .action(async (opts) => {
       const chalk = (await import('chalk')).default;
@@ -580,7 +580,7 @@ Examples:
       const borgVersion = readCanonicalVersion(cliDir);
       const repoRoot = resolveRepoRoot(cliDir) ?? resolve(cliDir, '..', '..', '..', '..', '..');
       const webRoot = join(repoRoot, 'apps', 'web');
-      console.log(chalk.bold.cyan(`\n  ⬡ HyperCode v${borgVersion}`));
+      console.log(chalk.bold.cyan(`\n  ⬡ borg v${borgVersion}`));
       console.log(chalk.dim('  The Neural Operating System\n'));
 
       try {
@@ -608,7 +608,7 @@ Examples:
         console.log(chalk.dim(`  Dashboard: ${opts.dashboard ? 'enabled' : 'disabled'}`));
         console.log(chalk.dim(`  Lock: ${lockHandle.lockPath}`));
         if (lockHandle.clearedStaleLock) {
-          console.log(chalk.yellow(`  ↺ Cleared stale HyperCode lock${lockHandle.reusedStalePort ? ` and reused port ${port}` : ''}`));
+          console.log(chalk.yellow(`  ↺ Cleared stale borg lock${lockHandle.reusedStalePort ? ` and reused port ${port}` : ''}`));
         }
         console.log('');
 

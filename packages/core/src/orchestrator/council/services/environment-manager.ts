@@ -30,7 +30,7 @@ const DEFAULT_PASSTHROUGH_VARS = [
 ];
 
 const CLI_SPECIFIC_VARS: Record<CLIType, string[]> = {
-  hypercode: [],
+  borg: [],
   opencode: ['OPENCODE_*', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY'],
   claude: ['ANTHROPIC_API_KEY', 'CLAUDE_*'],
   aider: ['AIDER_*', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY'],
@@ -228,7 +228,7 @@ class EnvironmentManager {
 
   getRequiredVarsForCLI(cliType: CLIType): string[] {
     const required: Record<CLIType, string[]> = {
-      hypercode: [],
+      borg: [],
       opencode: [],
       claude: ['ANTHROPIC_API_KEY'],
       aider: ['OPENAI_API_KEY'],

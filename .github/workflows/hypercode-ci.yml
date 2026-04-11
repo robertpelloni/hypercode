@@ -1,4 +1,4 @@
-name: Hypercode Native CI
+name: borg Native CI
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
     
     defaults:
       run:
-        working-directory: ./submodules/hypercode
+        working-directory: ./submodules/borg
 
     steps:
     - uses: actions/checkout@v4

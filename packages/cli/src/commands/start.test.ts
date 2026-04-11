@@ -201,7 +201,7 @@ describe('acquireSingleInstanceLock', () => {
         }, {
             isProcessRunning: () => true,
             isPortFree: async () => false,
-        })).rejects.toThrow('HyperCode is already running');
+        })).rejects.toThrow('borg is already running');
     });
 
     it('fails clearly when the requested port is already occupied by another process', async () => {

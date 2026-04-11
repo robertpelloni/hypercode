@@ -15,7 +15,7 @@ export class WebSocketPlugin implements ITransportPlugin {
     version: '1.0.0',
     transportType: 'websocket',
     description: 'WebSocket transport for MCP protocol with real-time bidirectional communication',
-    author: 'HyperCode Extension',
+    author: 'borg Extension',
   };
 
   private config: WebSocketPluginConfig = {};

@@ -48,30 +48,30 @@ describe('extension-storage fallback', () => {
   });
 
   it('does not fall back to page localStorage when extension storage access is denied', async () => {
-    localStorage.setItem('hypercode-key', 'legacy-value');
+    localStorage.setItem('borg-key', 'legacy-value');
 
-    await expect(getExtensionStorageValue('hypercode-key')).resolves.toBeNull();
+    await expect(getExtensionStorageValue('borg-key')).resolves.toBeNull();
 
-    await setExtensionStorageValue('hypercode-key', 'next-value');
-    expect(localStorage.getItem('hypercode-key')).toBe('legacy-value');
+    await setExtensionStorageValue('borg-key', 'next-value');
+    expect(localStorage.getItem('borg-key')).toBe('legacy-value');
 
-    await removeExtensionStorageValue('hypercode-key');
-    expect(localStorage.getItem('hypercode-key')).toBe('legacy-value');
+    await removeExtensionStorageValue('borg-key');
+    expect(localStorage.getItem('borg-key')).toBe('legacy-value');
 
     expect(console.warn).toHaveBeenCalledTimes(1);
   });
 
   it('falls back to localStorage when extension storage is unavailable entirely', async () => {
     delete (globalThis as typeof globalThis & { chrome?: unknown }).chrome;
-    localStorage.setItem('hypercode-key', 'legacy-value');
+    localStorage.setItem('borg-key', 'legacy-value');
 
-    await expect(getExtensionStorageValue('hypercode-key')).resolves.toBe('legacy-value');
+    await expect(getExtensionStorageValue('borg-key')).resolves.toBe('legacy-value');
 
-    await setExtensionStorageValue('hypercode-key', 'next-value');
-    expect(localStorage.getItem('hypercode-key')).toBe('next-value');
+    await setExtensionStorageValue('borg-key', 'next-value');
+    expect(localStorage.getItem('borg-key')).toBe('next-value');
 
-    await removeExtensionStorageValue('hypercode-key');
-    expect(localStorage.getItem('hypercode-key')).toBeNull();
+    await removeExtensionStorageValue('borg-key');
+    expect(localStorage.getItem('borg-key')).toBeNull();
 
     expect(console.warn).not.toHaveBeenCalled();
   });

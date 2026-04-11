@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useHealerStream } from '@hypercode/ui';
+import { useHealerStream } from '@borg/ui';
 
 type HealerEvent = {
     success: boolean;

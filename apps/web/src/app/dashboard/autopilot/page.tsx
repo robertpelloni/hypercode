@@ -3,7 +3,7 @@
 /**
  * autopilot/page.tsx – CLI Orchestrator Dashboard (compatibility route)
  *
- * Native HyperCode-integrated control panel for the CLI orchestrator council runtime.
+ * Native borg-integrated control panel for the CLI orchestrator council runtime.
  *
  * Provides:
  *  - Council status: supervisor roster, consensus mode, enable/disable toggle
@@ -670,7 +670,7 @@ export default function BorgOrchestratorDashboardPage() {
                         </a>
                     )}
                     <a
-                        href="https://github.com/robertpelloni/hypercode"
+                        href="https://github.com/robertpelloni/borg"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-xs flex items-center gap-1.5"
@@ -720,7 +720,7 @@ export default function BorgOrchestratorDashboardPage() {
                     <PageStatusBanner
                         status="experimental"
                         message="CLI Orchestrator integration"
-                        note="Native HyperCode dashboard for council governance, session supervision, and smart-pilot workflows. Legacy autopilot env names remain supported during migration."
+                        note="Native borg dashboard for council governance, session supervision, and smart-pilot workflows. Legacy autopilot env names remain supported during migration."
                     />
                 </div>
             )}

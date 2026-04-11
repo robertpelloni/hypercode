@@ -42,7 +42,7 @@ describe('mcpServersRouter degraded SQLite handling', () => {
 
     it('surfaces a clear error for list when SQLite is unavailable', async () => {
         repositoryMocks.findAll.mockRejectedValue(
-            new Error('SQLite runtime is unavailable for HyperCode DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)'),
+            new Error('SQLite runtime is unavailable for borg DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)'),
         );
 
         const caller = createCaller();
@@ -54,7 +54,7 @@ describe('mcpServersRouter degraded SQLite handling', () => {
 
     it('surfaces a clear error for create when SQLite is unavailable', async () => {
         repositoryMocks.create.mockRejectedValue(
-            new Error('SQLite runtime is unavailable for HyperCode DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)'),
+            new Error('SQLite runtime is unavailable for borg DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)'),
         );
 
         const caller = createCaller();

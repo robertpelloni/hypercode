@@ -56,7 +56,7 @@ describe('resolveUpstreamBases', () => {
   let tempConfigDir = '';
 
   beforeEach(async () => {
-    tempConfigDir = await fs.mkdtemp(path.join(os.tmpdir(), 'hypercode-trpc-upstream-'));
+    tempConfigDir = await fs.mkdtemp(path.join(os.tmpdir(), 'borg-trpc-upstream-'));
     process.env.BORG_CONFIG_DIR = tempConfigDir;
   });
 
@@ -74,7 +74,7 @@ describe('resolveUpstreamBases', () => {
     }
   });
 
-  it('includes HyperCode core\'s default tRPC port before legacy fallbacks', () => {
+  it('includes borg core\'s default tRPC port before legacy fallbacks', () => {
     delete process.env.BORG_TRPC_UPSTREAM;
 
     expect(resolveUpstreamBases()).toEqual([
@@ -98,7 +98,7 @@ describe('resolveUpstreamBases', () => {
     ]);
   });
 
-  it('prefers the live HyperCode lock port over stale configured upstreams', async () => {
+  it('prefers the live borg lock port over stale configured upstreams', async () => {
     process.env.BORG_TRPC_UPSTREAM = 'http://127.0.0.1:4000/trpc';
     await fs.writeFile(
       path.join(tempConfigDir, 'lock'),
@@ -123,7 +123,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
   let compatConfigDir = '';
 
   beforeEach(async () => {
-    compatConfigDir = await fs.mkdtemp(path.join(os.tmpdir(), 'hypercode-trpc-compat-'));
+    compatConfigDir = await fs.mkdtemp(path.join(os.tmpdir(), 'borg-trpc-compat-'));
     process.env.BORG_CONFIG_DIR = compatConfigDir;
   });
 
@@ -167,7 +167,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('x-hypercode-trpc-compat')).toBe('legacy-mcp-dashboard-bridge');
+    expect(response.headers.get('x-borg-trpc-compat')).toBe('legacy-mcp-dashboard-bridge');
     expect(Array.isArray(payload)).toBe(true);
     expect(payload).toHaveLength(3);
     expect(Array.isArray(payload[0]?.result?.data)).toBe(true);
@@ -203,7 +203,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('x-hypercode-trpc-compat')).toBe('legacy-mcp-dashboard-bridge');
+    expect(response.headers.get('x-borg-trpc-compat')).toBe('legacy-mcp-dashboard-bridge');
     expect(Array.isArray(payload)).toBe(true);
     expect(payload).toHaveLength(3);
     expect(Array.isArray(payload[0]?.result?.data)).toBe(true);
@@ -270,7 +270,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('x-hypercode-trpc-compat')).toBe('legacy-mcp-dashboard-bridge');
+    expect(response.headers.get('x-borg-trpc-compat')).toBe('legacy-mcp-dashboard-bridge');
     expect(payload[0]?.result?.data).toEqual(upstreamServers);
     expect(payload[2]?.result?.data).toEqual({
       initialized: true,
@@ -314,7 +314,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+    expect(response.headers.get('x-borg-trpc-compat')).toBe('local-dashboard-fallback');
     expect(Array.isArray(payload)).toBe(true);
     expect(payload).toHaveLength(5);
 
@@ -438,7 +438,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
         type: 'STDIO',
         command: 'npx',
         args: ['-y', '@modelcontextprotocol/server-filesystem'],
-        env: { ROOT_PATH: 'C:/Users/hyper/workspace/hypercode' },
+        env: { ROOT_PATH: 'C:/Users/hyper/workspace/borg' },
         metadataStrategy: 'auto',
       },
       {
@@ -446,7 +446,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
         type: 'STREAMABLE_HTTP',
         url: 'https://api.githubcopilot.com/mcp/',
         bearerToken: 'ghp_mock_token',
-        headers: { 'x-org': 'hypercode-dev', 'x-env': 'test' },
+        headers: { 'x-org': 'borg-dev', 'x-env': 'test' },
         metadataStrategy: 'auto',
       },
       {
@@ -508,7 +508,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
         type: 'http',
         url: 'https://api.githubcopilot.com/mcp/',
         bearerToken: 'ghp_mock_token',
-        headers: { 'x-org': 'hypercode-dev' },
+        headers: { 'x-org': 'borg-dev' },
       },
       {
         name: 'remote_sse_runtime',
@@ -529,7 +529,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     const importPayload = await importResponse.json();
 
     expect(importResponse.status).toBe(200);
-    expect(importResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-mcp-config-bulk-import');
+    expect(importResponse.headers.get('x-borg-trpc-compat')).toBe('local-mcp-config-bulk-import');
     expect(importPayload?.[0]?.result?.data).toEqual({ imported: 3, errors: [] });
 
     const listResponse = await POST(new Request('http://localhost:3010/api/trpc/mcpServers.list', {
@@ -578,7 +578,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
       type: 'STREAMABLE_HTTP',
       url: 'https://api.githubcopilot.com/mcp/',
       bearerToken: 'ghp_mock_token',
-      headers: { 'x-org': 'hypercode-dev' },
+      headers: { 'x-org': 'borg-dev' },
     }));
 
     const remoteSseDetail = await POST(new Request('http://localhost:3010/api/trpc/mcpServers.get', {
@@ -631,7 +631,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
       const listData = listPayload?.result?.data as Array<{ uuid: string; name: string; _meta?: { status?: string } }>;
 
       expect(listResponse.status).toBe(200);
-      expect(listResponse.headers.get('x-hypercode-trpc-compat')).toBe('legacy-mcp-dashboard-bridge');
+      expect(listResponse.headers.get('x-borg-trpc-compat')).toBe('legacy-mcp-dashboard-bridge');
       expect(Array.isArray(listData)).toBe(true);
       expect(listData[0]?.uuid).toEqual(expect.stringMatching(/^local-/));
       expect(listData[0]?.name).toBe(testServerName);
@@ -647,7 +647,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
       const getPayload = await getResponse.json();
 
       expect(getResponse.status).toBe(200);
-      expect(getResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+      expect(getResponse.headers.get('x-borg-trpc-compat')).toBe('local-dashboard-fallback');
       expect(getPayload?.result?.data).toEqual(expect.objectContaining({
         uuid: serverUuid,
         name: testServerName,
@@ -660,7 +660,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
       const getViaQueryPayload = await getViaQueryResponse.json();
 
       expect(getViaQueryResponse.status).toBe(200);
-      expect(getViaQueryResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+      expect(getViaQueryResponse.headers.get('x-borg-trpc-compat')).toBe('local-dashboard-fallback');
       expect(getViaQueryPayload?.result?.data).toEqual(expect.objectContaining({
         uuid: serverUuid,
         name: testServerName,
@@ -674,7 +674,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
       const reloadPayload = await reloadResponse.json();
 
       expect(reloadResponse.status).toBe(200);
-      expect(reloadResponse.headers.get('x-hypercode-trpc-compat')).toBe('local-mcp-managed-action');
+      expect(reloadResponse.headers.get('x-borg-trpc-compat')).toBe('local-mcp-managed-action');
       expect(reloadPayload?.result?.data?.metadata).toEqual(expect.objectContaining({
         uuid: serverUuid,
         status: 'ready',
@@ -778,7 +778,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('x-hypercode-trpc-compat')).toBe('local-dashboard-fallback');
+    expect(response.headers.get('x-borg-trpc-compat')).toBe('local-dashboard-fallback');
     expect(payload?.result).toBeUndefined();
     expect(payload?.error).toEqual(expect.objectContaining({
       code: 'NOT_FOUND',
@@ -853,7 +853,7 @@ describe('legacy MCP dashboard compatibility bridge', () => {
       const payload = await response.json();
 
       expect(response.status).toBe(200);
-      expect(response.headers.get('x-hypercode-trpc-compat')).toBe('legacy-mcp-bulk-import-bridge');
+      expect(response.headers.get('x-borg-trpc-compat')).toBe('legacy-mcp-bulk-import-bridge');
       expect(payload?.result?.data ?? payload?.[0]?.result?.data).toEqual(legacyUpstreamResult);
 
       // Verify the bridge call used the legacy { mcpServers: { name: config } } format

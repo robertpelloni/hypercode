@@ -39,7 +39,7 @@ vi.mock('../services/config/JsonConfigProvider.js', () => ({
 }));
 
 vi.mock('../mcp/mcpJsonConfig.js', () => ({
-    getBorgConfigDir: vi.fn(() => 'C:\\Users\\hyper\\.hypercode'),
+    getBorgConfigDir: vi.fn(() => 'C:\\Users\\hyper\\.borg'),
     writeBorgMcpConfig: vi.fn(),
 }));
 
@@ -63,7 +63,7 @@ describe('configRouter degraded SQLite handling', () => {
 
     it('surfaces a clear error for list when SQLite is unavailable', async () => {
         repoMocks.findAll.mockRejectedValue(
-            new Error('SQLite runtime is unavailable for HyperCode DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)'),
+            new Error('SQLite runtime is unavailable for borg DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)'),
         );
 
         const caller = createCaller();
@@ -75,7 +75,7 @@ describe('configRouter degraded SQLite handling', () => {
 
     it('surfaces a clear error for getMcpTimeout when SQLite is unavailable', async () => {
         serviceMocks.getMcpTimeout.mockRejectedValue(
-            new Error('SQLite runtime is unavailable for HyperCode DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)'),
+            new Error('SQLite runtime is unavailable for borg DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)'),
         );
 
         const caller = createCaller();
@@ -110,11 +110,11 @@ describe('configRouter degraded SQLite handling', () => {
         const caller = createCaller();
         const result = await caller.init({ scope: 'local' });
 
-        expect(writeConfigMock).toHaveBeenCalledWith({ mcpServers: {} }, expect.stringMatching(/\.hypercode$/));
+        expect(writeConfigMock).toHaveBeenCalledWith({ mcpServers: {} }, expect.stringMatching(/\.borg$/));
         expect(result).toEqual({
             success: true,
             scope: 'local',
-            path: expect.stringMatching(/\.hypercode$/),
+            path: expect.stringMatching(/\.borg$/),
         });
     });
 });

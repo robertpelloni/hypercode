@@ -2,11 +2,11 @@
 
 ## Current framing
 
-HyperCode is in a stabilization-first phase. The highest-value work in this session focused on operator truthfulness, startup reliability, and reducing misleading dashboard and extension behavior.
+borg is in a stabilization-first phase. The highest-value work in this session focused on operator truthfulness, startup reliability, and reducing misleading dashboard and extension behavior.
 
 This handoff replaces the older stale `3847` / phase-expansion handoff. Current reality is:
 
-- HyperCode control plane defaults to `4000`
+- borg control plane defaults to `4000`
 - dashboard runtime serves on `3000`
 - MCP bridge serves on `3001`
 - electron-orchestrator is launched separately
@@ -18,10 +18,10 @@ The current Go runtime is still a **single main binary** with reusable internal 
 
 ### Recommended binary family
 
-- `hypercode` — operator CLI
-- `hypercoded` — primary control-plane daemon
-- `hypercode-web` — web GUI client
-- `hypercode-native` — native GUI client
+- `borg` — operator CLI
+- `borgd` — primary control-plane daemon
+- `borg-web` — web GUI client
+- `borg-native` — native GUI client
 - `hyperharness` / `hyperharnessd` — harness CLI + harness daemon
 - `hypermcpd` — MCP router / aggregator daemon
 - `hypermcp-indexer` — MCP scrape / probe / metadata cache worker
@@ -36,9 +36,9 @@ The current Go runtime is still a **single main binary** with reusable internal 
 
 ### Concrete responsibility map
 
-- `hypercoded` owns control-plane coordination and operator-facing system truth
-- `hypercode` is the CLI client for that daemon
-- `hypercode-web` and `hypercode-native` are alternate clients of the same control plane
+- `borgd` owns control-plane coordination and operator-facing system truth
+- `borg` is the CLI client for that daemon
+- `borg-web` and `borg-native` are alternate clients of the same control plane
 - `hyperharnessd` owns harness execution loops and runtime isolation
 - `hypermcpd` owns MCP registry, routing, and tool mediation
 - `hypermcp-indexer` owns MCP scrape/probe/cache refresh work
@@ -49,7 +49,7 @@ The current Go runtime is still a **single main binary** with reusable internal 
 
 Do **not** split everything at once. Preferred order:
 
-1. keep `hypercode` + `hypercoded` as the primary pair
+1. keep `borg` + `borgd` as the primary pair
 2. extract `hypermcpd` when MCP lifecycle needs separate uptime
 3. extract `hypermemd` / `hyperingest` when memory and ingestion workloads need their own envelope
 4. extract `hyperharnessd` when harness execution needs resource or crash isolation
@@ -58,7 +58,7 @@ Do **not** split everything at once. Preferred order:
 
 The first extraction seams future sessions should prefer are:
 
-1. `hypercoded`
+1. `borgd`
    - center control-plane routing, lock/config coordination, operator health/status APIs, and provider-routing orchestration here
 2. `hypermcpd`
    - center MCP registry state, runtime-server lifecycle, working-set state, tool search/call mediation, and probe/test flows here
@@ -71,20 +71,20 @@ This is a **recommended architecture plan**, not a claim that the repo already c
 
 ## Completed in this session
 
-### 0. HyperCode supervisor is now a truthful UI-automation bridge, not just a blind SendKeys shim
+### 0. borg supervisor is now a truthful UI-automation bridge, not just a blind SendKeys shim
 
 Root-cause finding:
 
-- the live `packages/hypercode-supervisor` integration that core auto-connects was not a real Antigravity/director automation engine
+- the live `packages/borg-supervisor` integration that core auto-connects was not a real Antigravity/director automation engine
 - it only exposed `install_supervisor`, `list_processes`, `kill_process`, and `simulate_input`
 - `simulate_input` relied on `AppActivate(...)` plus raw `SendKeys`, which explains the user-reported misfires around wrong controls, Alt+Enter regressions, and dropdown/button confusion
 
 What changed:
 
-- added `packages/hypercode-supervisor/src/powershell.ts`
-- added `packages/hypercode-supervisor/src/ui_automation.ts`
-- refactored `packages/hypercode-supervisor/src/input_manager.ts`
-- expanded `packages/hypercode-supervisor/src/index.ts`
+- added `packages/borg-supervisor/src/powershell.ts`
+- added `packages/borg-supervisor/src/ui_automation.ts`
+- refactored `packages/borg-supervisor/src/input_manager.ts`
+- expanded `packages/borg-supervisor/src/index.ts`
 
 New truthful MCP tools:
 
@@ -105,8 +105,8 @@ Behavior change:
 
 Validated with:
 
-- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
-- `pnpm -C packages\hypercode-supervisor run build`
+- `pnpm -C packages\borg-supervisor exec tsc --noEmit`
+- `pnpm -C packages\borg-supervisor run build`
 
 ### 0.5. Supervisor action matching is now exact and operator-configurable
 
@@ -117,20 +117,20 @@ Follow-up finding:
 
 What changed:
 
-- added `packages/hypercode-supervisor/src/settings.ts`
-- `packages/hypercode-supervisor/src/ui_automation.ts` now uses normalized exact label matching for actionable controls
-- `packages/hypercode-supervisor/src/index.ts` now exposes `get_supervisor_settings` and `update_supervisor_settings`
+- added `packages/borg-supervisor/src/settings.ts`
+- `packages/borg-supervisor/src/ui_automation.ts` now uses normalized exact label matching for actionable controls
+- `packages/borg-supervisor/src/index.ts` now exposes `get_supervisor_settings` and `update_supervisor_settings`
 
 Behavior change:
 
-- default bump text, action labels, submit behavior, and timing delays are now persisted in `~/.hypercode/supervisor-settings.json`
+- default bump text, action labels, submit behavior, and timing delays are now persisted in `~/.borg/supervisor-settings.json`
 - `advance_chat` now inherits those defaults when explicit arguments are omitted
 - action-button targeting is stricter and less likely to hit lookalike controls or dropdown affordances
 
 Validated with:
 
-- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
-- `pnpm -C packages\hypercode-supervisor run build`
+- `pnpm -C packages\borg-supervisor exec tsc --noEmit`
+- `pnpm -C packages\borg-supervisor run build`
 
 ### 0.6. Supervisor now carries minimal fork-aware surface profiles
 
@@ -141,8 +141,8 @@ Finding:
 
 What changed:
 
-- added `packages/hypercode-supervisor/src/surface_profiles.ts`
-- `packages/hypercode-supervisor/src/ui_automation.ts` now attaches a `surfaceProfile` object to detected chat surfaces
+- added `packages/borg-supervisor/src/surface_profiles.ts`
+- `packages/borg-supervisor/src/ui_automation.ts` now attaches a `surfaceProfile` object to detected chat surfaces
 - `detect_chat_state`, `click_action_buttons`, and `advance_chat` now prefer surface-profile defaults for action labels, submit chord, and input-preference hints
 
 Behavior change:
@@ -157,8 +157,8 @@ Behavior change:
 
 Validated with:
 
-- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
-- `pnpm -C packages\hypercode-supervisor run build`
+- `pnpm -C packages\borg-supervisor exec tsc --noEmit`
+- `pnpm -C packages\borg-supervisor run build`
 
 ### 0.7. Surface profiles now drive composer targeting too
 
@@ -169,7 +169,7 @@ Finding:
 
 What changed:
 
-- `packages/hypercode-supervisor/src/ui_automation.ts` now passes each detected surface profile's preferred input control types into `set_chat_input` and `submit_chat_input`
+- `packages/borg-supervisor/src/ui_automation.ts` now passes each detected surface profile's preferred input control types into `set_chat_input` and `submit_chat_input`
 
 Behavior change:
 
@@ -179,8 +179,8 @@ Behavior change:
 
 Validated with:
 
-- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
-- `pnpm -C packages\hypercode-supervisor run build`
+- `pnpm -C packages\borg-supervisor exec tsc --noEmit`
+- `pnpm -C packages\borg-supervisor run build`
 
 ### 0.8. Surface profiles can now be listed and overridden explicitly
 
@@ -191,8 +191,8 @@ Finding:
 
 What changed:
 
-- `packages/hypercode-supervisor/src/surface_profiles.ts` now exposes `listSurfaceProfiles()`
-- `packages/hypercode-supervisor/src/index.ts` now exposes `list_surface_profiles`
+- `packages/borg-supervisor/src/surface_profiles.ts` now exposes `listSurfaceProfiles()`
+- `packages/borg-supervisor/src/index.ts` now exposes `list_surface_profiles`
 - `detect_chat_surface` and `advance_chat` now accept `surfaceOverride`, and state detection can run under that forced profile
 
 Behavior change:
@@ -202,8 +202,8 @@ Behavior change:
 
 Validated with:
 
-- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
-- `pnpm -C packages\hypercode-supervisor run build`
+- `pnpm -C packages\borg-supervisor exec tsc --noEmit`
+- `pnpm -C packages\borg-supervisor run build`
 
 ### 0.9. Surface override plumbing now matches the exposed MCP contract
 
@@ -214,8 +214,8 @@ Finding:
 
 What changed:
 
-- `packages/hypercode-supervisor/src/ui_automation.ts` now threads `surfaceOverride` through click, set, and submit operations
-- `packages/hypercode-supervisor/src/index.ts` now passes the override argument through for those low-level tools too
+- `packages/borg-supervisor/src/ui_automation.ts` now threads `surfaceOverride` through click, set, and submit operations
+- `packages/borg-supervisor/src/index.ts` now passes the override argument through for those low-level tools too
 
 Behavior change:
 
@@ -224,8 +224,8 @@ Behavior change:
 
 Validated with:
 
-- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
-- `pnpm -C packages\hypercode-supervisor run build`
+- `pnpm -C packages\borg-supervisor exec tsc --noEmit`
+- `pnpm -C packages\borg-supervisor run build`
 
 ### 0.10. Targeted window actions now derive the profile from that same target
 
@@ -237,7 +237,7 @@ Finding:
 
 What changed:
 
-- `packages/hypercode-supervisor/src/ui_automation.ts` now probes the targeted automation window when surface detection is asked to operate against `windowTitle` and/or `processName`
+- `packages/borg-supervisor/src/ui_automation.ts` now probes the targeted automation window when surface detection is asked to operate against `windowTitle` and/or `processName`
 - the detect/state/click/set/submit/advance paths now pass the same target-window criteria through to surface detection, so profile selection and window interaction stay aligned
 
 Behavior change:
@@ -247,8 +247,8 @@ Behavior change:
 
 Validated with:
 
-- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
-- `pnpm -C packages\hypercode-supervisor run build`
+- `pnpm -C packages\borg-supervisor exec tsc --noEmit`
+- `pnpm -C packages\borg-supervisor run build`
 
 ### 0.11. `detect_chat_surface` now exposes targeted-window probing directly
 
@@ -259,7 +259,7 @@ Finding:
 
 What changed:
 
-- `packages/hypercode-supervisor/src/index.ts` now adds `windowTitle` and `processName` to the `detect_chat_surface` input schema
+- `packages/borg-supervisor/src/index.ts` now adds `windowTitle` and `processName` to the `detect_chat_surface` input schema
 - the handler now passes those selectors through to `UiAutomationManager.detectChatSurface(...)`
 
 Behavior change:
@@ -269,8 +269,8 @@ Behavior change:
 
 Validated with:
 
-- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
-- `pnpm -C packages\hypercode-supervisor run build`
+- `pnpm -C packages\borg-supervisor exec tsc --noEmit`
+- `pnpm -C packages\borg-supervisor run build`
 
 ### 0.12. Supervisor behavior is now narrowed toward the Antigravity path instead of the broad generic bridge
 
@@ -281,7 +281,7 @@ Finding:
 
 What changed:
 
-- `packages/hypercode-supervisor/src/ui_automation.ts` now treats only `Button` and `Hyperlink` as primary action targets for the click path
+- `packages/borg-supervisor/src/ui_automation.ts` now treats only `Button` and `Hyperlink` as primary action targets for the click path
 - terminal-like text surfaces are filtered out of composer selection by inspecting name/automationId/class/value/text hints
 - value-pattern writes now re-focus the same target before submission, and submission now fails explicitly when no valid chat composer can be re-found instead of spraying the chord at an unknown target
 - browser/generic surfaces are now promoted to the `antigravity` profile when the visible UI labels match Antigravity-style approval/composer hints
@@ -296,8 +296,8 @@ Behavior change:
 
 Validated with:
 
-- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
-- `pnpm -C packages\hypercode-supervisor run build`
+- `pnpm -C packages\borg-supervisor exec tsc --noEmit`
+- `pnpm -C packages\borg-supervisor run build`
 
 ### 0.13. Supervisor decision logic now has focused regression coverage
 
@@ -308,10 +308,10 @@ Finding:
 
 What changed:
 
-- extracted the pure decision helpers into `packages/hypercode-supervisor/src/decision_logic.ts`
-- added `packages/hypercode-supervisor/src/decision_logic.test.ts` using the built-in Node test runner instead of bringing in a new test framework
+- extracted the pure decision helpers into `packages/borg-supervisor/src/decision_logic.ts`
+- added `packages/borg-supervisor/src/decision_logic.test.ts` using the built-in Node test runner instead of bringing in a new test framework
 - exported `DEFAULT_SETTINGS` from `settings.ts` for stable expectations in those tests
-- added `pnpm -C packages\hypercode-supervisor run test`
+- added `pnpm -C packages\borg-supervisor run test`
 
 Covered behavior:
 
@@ -324,9 +324,9 @@ Covered behavior:
 
 Validated with:
 
-- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
-- `pnpm -C packages\hypercode-supervisor run build`
-- `pnpm -C packages\hypercode-supervisor run test`
+- `pnpm -C packages\borg-supervisor exec tsc --noEmit`
+- `pnpm -C packages\borg-supervisor run build`
+- `pnpm -C packages\borg-supervisor run test`
 
 ### 0.14. Dashboard tool docs now match the simplified supervisor contract
 
@@ -382,7 +382,7 @@ Finding:
 
 What changed:
 
-- moved `classifyBrowserFamily(...)` and `detectSurfaceName(...)` into `packages/hypercode-supervisor/src/decision_logic.ts`
+- moved `classifyBrowserFamily(...)` and `detectSurfaceName(...)` into `packages/borg-supervisor/src/decision_logic.ts`
 - added direct Node test coverage for:
   - browser family classification
   - explicit title matches (`antigravity`, `claude`, etc.)
@@ -395,9 +395,9 @@ Behavior change:
 
 Validated with:
 
-- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
-- `pnpm -C packages\hypercode-supervisor run build`
-- `pnpm -C packages\hypercode-supervisor run test`
+- `pnpm -C packages\borg-supervisor exec tsc --noEmit`
+- `pnpm -C packages\borg-supervisor run build`
+- `pnpm -C packages\borg-supervisor run test`
 
 ### 0.17. Final surface resolution now lives in the tested decision layer too
 
@@ -408,7 +408,7 @@ Finding:
 
 What changed:
 
-- added `resolveDetectedSurface(...)` to `packages/hypercode-supervisor/src/decision_logic.ts`
+- added `resolveDetectedSurface(...)` to `packages/borg-supervisor/src/decision_logic.ts`
 - added Node coverage for:
   - explicit override precedence
   - targeted-window heuristic annotation
@@ -422,9 +422,9 @@ Behavior change:
 
 Validated with:
 
-- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
-- `pnpm -C packages\hypercode-supervisor run build`
-- `pnpm -C packages\hypercode-supervisor run test`
+- `pnpm -C packages\borg-supervisor exec tsc --noEmit`
+- `pnpm -C packages\borg-supervisor run build`
+- `pnpm -C packages\borg-supervisor run test`
 
 ### 0.18. Chat-state classification now lives in the tested decision layer too
 
@@ -435,7 +435,7 @@ Finding:
 
 What changed:
 
-- added `resolveChatState(...)` to `packages/hypercode-supervisor/src/decision_logic.ts`
+- added `resolveChatState(...)` to `packages/borg-supervisor/src/decision_logic.ts`
 - added direct Node coverage for:
   - pending approval button → `awaiting_action`
   - usable input without approval button → `ready_for_input`
@@ -448,9 +448,9 @@ Behavior change:
 
 Validated with:
 
-- `pnpm -C packages\hypercode-supervisor exec tsc --noEmit`
-- `pnpm -C packages\hypercode-supervisor run build`
-- `pnpm -C packages\hypercode-supervisor run test`
+- `pnpm -C packages\borg-supervisor exec tsc --noEmit`
+- `pnpm -C packages\borg-supervisor run build`
+- `pnpm -C packages\borg-supervisor run test`
 
 ### 1. Published catalog stdio entries are no longer labeled "unsafe"
 
@@ -479,7 +479,7 @@ Updated:
 
 Behavior change:
 
-- HyperCode Orchestrator / Autopilot UI no longer silently defaults to `http://localhost:3847`
+- borg Orchestrator / Autopilot UI no longer silently defaults to `http://localhost:3847`
 - these legacy surfaces now stay quiet unless `NEXT_PUBLIC_BORG_ORCHESTRATOR_URL` or legacy `NEXT_PUBLIC_AUTOPILOT_URL` is configured
 - when unconfigured, they show a truthful "not configured" state
 - `NeuralPulse` now uses the shared WS resolver rather than a hardcoded socket URL
@@ -495,18 +495,18 @@ The likely source of repeated browser console noise (`Access to storage is not a
 
 Those persisted stores now use the guarded extension storage adapter (`createExtensionStateStorage`) instead:
 
-- `apps/hypercode-extension/pages/content/src/stores/app.store.ts`
-- `apps/hypercode-extension/pages/content/src/stores/config.store.ts`
-- `apps/hypercode-extension/pages/content/src/stores/macro.store.ts`
-- `apps/hypercode-extension/pages/content/src/stores/profile.store.ts`
-- `apps/hypercode-extension/pages/content/src/stores/prompt.store.ts`
-- `apps/hypercode-extension/pages/content/src/stores/root.store.ts`
-- `apps/hypercode-extension/pages/content/src/stores/ui.store.ts`
+- `apps/borg-extension/pages/content/src/stores/app.store.ts`
+- `apps/borg-extension/pages/content/src/stores/config.store.ts`
+- `apps/borg-extension/pages/content/src/stores/macro.store.ts`
+- `apps/borg-extension/pages/content/src/stores/profile.store.ts`
+- `apps/borg-extension/pages/content/src/stores/prompt.store.ts`
+- `apps/borg-extension/pages/content/src/stores/root.store.ts`
+- `apps/borg-extension/pages/content/src/stores/ui.store.ts`
 
 Notes:
 
 - the extension workspace still has unrelated pre-existing typecheck failures outside these files
-- `apps/hypercode-extension/pages/content` package validation was blocked by existing errors in other extension packages / files, not by the storage adapter change itself
+- `apps/borg-extension/pages/content` package validation was blocked by existing errors in other extension packages / files, not by the storage adapter change itself
 
 ### 4. Native startup preflight now checks usable SQLite bindings, not just importability
 
@@ -515,7 +515,7 @@ Root cause from the latest startup failure:
 - `scripts/ensure_native_runtime.mjs` only did `require('better-sqlite3')`
 - `better-sqlite3` can import successfully even when the native binding is missing
 - the real failure only appears when opening a database (`new Database(':memory:')`)
-- this let `start.bat` report preflight success, spend time building the workspace, and then fail at HyperCode startup
+- this let `start.bat` report preflight success, spend time building the workspace, and then fail at borg startup
 
 Updated:
 
@@ -532,17 +532,17 @@ Validated with:
 - direct repro before fix shape: `require('better-sqlite3')` succeeded while `new Database(':memory:')` failed
 - `pnpm rebuild better-sqlite3`
 - `node scripts\ensure_native_runtime.mjs`
-- `pnpm start` successfully started HyperCode after the rebuild
+- `pnpm start` successfully started borg after the rebuild
 
 ## Important current runtime evidence
 
-After rebuilding `better-sqlite3`, HyperCode started successfully and reported:
+After rebuilding `better-sqlite3`, borg started successfully and reported:
 
 - control plane on `http://0.0.0.0:4000`
 - MCP bridge on `ws://localhost:3001`
 - dashboard on `http://127.0.0.1:3000/dashboard`
 
-That confirms the startup failure was a native SQLite readiness issue, not a later `@hypercode/core` runtime regression.
+That confirms the startup failure was a native SQLite readiness issue, not a later `@borg/core` runtime regression.
 
 ## New current runtime evidence
 
@@ -557,7 +557,7 @@ all completed successfully after the working-set typing hardening.
 
 Latest startup logs now point at a narrower remaining issue:
 
-- HyperCode startup itself is healthy
+- borg startup itself is healthy
 - remaining warnings are concentrated in published MCP catalog ingestion
 - Glama's previous JSON endpoint currently returns HTML instead of machine-readable catalog data
 - Smithery's live registry still responds, but the working query shape is `limit=...`, not the stale `pageSize=...`
@@ -587,11 +587,11 @@ Status: **completed**
 
 What is known:
 
-- HyperCode-owned content script logs include `Content script loaded - initializing with Session 10 architecture`
+- borg-owned content script logs include `Content script loaded - initializing with Session 10 architecture`
 - restricted browser contexts can throw storage access errors before normal UX initializes
 - persisted store initialization is now safer
-- `apps/hypercode-extension/pages/content/src/stores/extension-storage.ts` no longer falls back to page `localStorage` when extension storage exists but rejects access, so restricted pages stop mirroring extension state into page-scoped storage after `Access to storage is not allowed from this context`
-- `apps/hypercode-extension/pages/content/src/render_prescript/src/mcpexecute/storage.ts` now keeps execution-history duplicate checks in session memory for extension-backed contexts instead of depending on page `localStorage`, while still preserving non-extension fallback behavior
+- `apps/borg-extension/pages/content/src/stores/extension-storage.ts` no longer falls back to page `localStorage` when extension storage exists but rejects access, so restricted pages stop mirroring extension state into page-scoped storage after `Access to storage is not allowed from this context`
+- `apps/borg-extension/pages/content/src/render_prescript/src/mcpexecute/storage.ts` now keeps execution-history duplicate checks in session memory for extension-backed contexts instead of depending on page `localStorage`, while still preserving non-extension fallback behavior
 - the remaining `localStorage` footprint in `pages/content/src` now appears to be mostly tests and comments/documentation strings; the dead `ToolPermission` helper path in `pages/content/src/utils/storage.ts` has been removed
 
 What remains:
@@ -600,8 +600,8 @@ What remains:
 
 Validation note:
 
-- focused extension-storage regression coverage was updated in `apps/hypercode-extension/pages/content/src/stores/extension-storage.test.ts`
-- running that test from this repo root is currently blocked because `apps/hypercode-extension` is excluded from the root pnpm workspace and the content package's `tsconfig.json` extends `@extension/tsconfig/base`, which is not resolvable from the root Vitest environment
+- focused extension-storage regression coverage was updated in `apps/borg-extension/pages/content/src/stores/extension-storage.test.ts`
+- running that test from this repo root is currently blocked because `apps/borg-extension` is excluded from the root pnpm workspace and the content package's `tsconfig.json` extends `@extension/tsconfig/base`, which is not resolvable from the root Vitest environment
 
 ### 2. `fix-electron-orchestrator-stats-abi`
 
@@ -634,9 +634,9 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/tools.ts` no longer prints placeholder empty-state output for `hypercode tools list` and `hypercode tools search`
-- `hypercode tools list` now queries the live control plane through `mcp.listTools`, supports `--json`, `--server`, `--namespace`, `--enabled`, and `--disabled`, and renders real tool inventory rows with server/group/keyword visibility
-- `hypercode tools search <query>` now queries `mcp.searchTools`, supports `--profile`, `--top-k`, and `--json`, and surfaces ranked search metadata like always-on/loaded/hydrated/deferred state plus match reasons
+- `packages/cli/src/commands/tools.ts` no longer prints placeholder empty-state output for `borg tools list` and `borg tools search`
+- `borg tools list` now queries the live control plane through `mcp.listTools`, supports `--json`, `--server`, `--namespace`, `--enabled`, and `--disabled`, and renders real tool inventory rows with server/group/keyword visibility
+- `borg tools search <query>` now queries `mcp.searchTools`, supports `--profile`, `--top-k`, and `--json`, and surfaces ranked search metadata like always-on/loaded/hydrated/deferred state plus match reasons
 - command failures now report the resolved control-plane endpoint and a concrete remediation path instead of failing silently or pretending no tools exist
 - focused CLI coverage was added in `packages/cli/src/commands/tools.test.ts`
 
@@ -651,7 +651,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/tools.ts` no longer leaves `hypercode tools info <name>` as a placeholder
+- `packages/cli/src/commands/tools.ts` no longer leaves `borg tools info <name>` as a placeholder
 - tool detail lookup now queries the live control plane through `tools.get`
 - JSON mode now returns the live tool payload directly, and the default terminal view now renders real description/server/always-on/deferred/schema summary plus per-parameter schema rows when available
 - missing tools now fail truthfully instead of printing a vague generic stub
@@ -668,10 +668,10 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/mcp.ts` no longer leaves `hypercode mcp list`, `hypercode mcp tools`, and `hypercode mcp search` as placeholder empty-state shells
-- `hypercode mcp list` now queries the live control plane through `mcp.listServers`, supports `--json`, `--running`, and namespace-tag filtering, and renders real server status/warmup/tool-count/always-on data
-- `hypercode mcp tools` now uses `mcp.listTools` or `mcp.searchTools` depending on `--search`, supports `--json`, `--server`, and `--namespace`, and surfaces real tool state/match metadata instead of pretending no tools are loaded
-- `hypercode mcp search <query>` now searches the live MCP registry snapshot via `mcpServers.registrySnapshot`, supports `--json`, `--category`, and `--limit`, and renders real registry entries instead of the old hardcoded "directory not yet populated" message
+- `packages/cli/src/commands/mcp.ts` no longer leaves `borg mcp list`, `borg mcp tools`, and `borg mcp search` as placeholder empty-state shells
+- `borg mcp list` now queries the live control plane through `mcp.listServers`, supports `--json`, `--running`, and namespace-tag filtering, and renders real server status/warmup/tool-count/always-on data
+- `borg mcp tools` now uses `mcp.listTools` or `mcp.searchTools` depending on `--search`, supports `--json`, `--server`, and `--namespace`, and surfaces real tool state/match metadata instead of pretending no tools are loaded
+- `borg mcp search <query>` now searches the live MCP registry snapshot via `mcpServers.registrySnapshot`, supports `--json`, `--category`, and `--limit`, and renders real registry entries instead of the old hardcoded "directory not yet populated" message
 - focused CLI coverage was added in `packages/cli/src/commands/mcp.test.ts`
 
 Validation:
@@ -685,10 +685,10 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/config.ts` no longer invents a fake default configuration for `hypercode config show`
-- `hypercode config show` now queries `config.list`, reconstructs nested dotted keys for operator display, supports `--json`, and supports `--section` against the live control-plane configuration state
-- `hypercode config get <key>` now queries `config.get` and fails truthfully when the key does not exist instead of printing a hardcoded `undefined`
-- `hypercode config set <key> <value>` now writes through `config.update`, supports `--json`, and preserves actionable control-plane failure output consistent with the other wired CLI commands
+- `packages/cli/src/commands/config.ts` no longer invents a fake default configuration for `borg config show`
+- `borg config show` now queries `config.list`, reconstructs nested dotted keys for operator display, supports `--json`, and supports `--section` against the live control-plane configuration state
+- `borg config get <key>` now queries `config.get` and fails truthfully when the key does not exist instead of printing a hardcoded `undefined`
+- `borg config set <key> <value>` now writes through `config.update`, supports `--json`, and preserves actionable control-plane failure output consistent with the other wired CLI commands
 - focused CLI coverage was added in `packages/cli/src/commands/config.test.ts`
 
 Validation:
@@ -702,7 +702,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/provider.ts` no longer leaves `hypercode provider list` and `hypercode provider quota` as placeholder empty-state output
+- `packages/cli/src/commands/provider.ts` no longer leaves `borg provider list` and `borg provider quota` as placeholder empty-state output
 - `provider list` now merges `settings.getProviders` with `billing.getProviderQuotas` so the CLI shows real configured/authenticated/auth-method/quota-preview state instead of a fake empty table
 - `provider quota` now reads `billing.getProviderQuotas`, supports `--json` and `--provider`, and renders real used/limit/remaining/availability/reset data
 - command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
@@ -719,7 +719,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/status.ts` no longer invents a fake whole-system summary for `hypercode status`
+- `packages/cli/src/commands/status.ts` no longer invents a fake whole-system summary for `borg status`
 - the command now queries `startupStatus`, `mcp.getStatus`, `session.list`, and `billing.getProviderQuotas` so server, MCP, session, memory, and provider rows reflect live control-plane state
 - `--json` now emits a structured live snapshot suitable for automation instead of placeholder data
 - command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
@@ -736,7 +736,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/session.ts` no longer hardcodes `hypercode session list` to an always-empty "No sessions found" placeholder
+- `packages/cli/src/commands/session.ts` no longer hardcodes `borg session list` to an always-empty "No sessions found" placeholder
 - `session list` now queries both `session.list` and `cloudDev.listSessions`, merges the local supervisor inventory with cloud-dev sessions, and preserves truthful `--active` and `--cloud` filtering
 - `--json` now emits the structured merged session inventory instead of a fabricated empty state
 - command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
@@ -753,7 +753,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/session.ts` no longer hardcodes `hypercode session cloud` to an always-empty "No cloud sessions configured" placeholder
+- `packages/cli/src/commands/session.ts` no longer hardcodes `borg session cloud` to an always-empty "No cloud sessions configured" placeholder
 - `session cloud` now queries `cloudDev.listProviders`, `cloudDev.listSessions`, and `cloudDev.stats` so the CLI reflects live cloud provider readiness, cloud session inventory, and aggregate message/log totals
 - `--json` now emits the structured live provider/session/stats snapshot instead of a fabricated empty state
 - command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
@@ -770,7 +770,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/memory.ts` no longer fabricates empty or zero state for `hypercode memory search`, `hypercode memory list`, or `hypercode memory stats`
+- `packages/cli/src/commands/memory.ts` no longer fabricates empty or zero state for `borg memory search`, `borg memory list`, or `borg memory stats`
 - `memory search` now queries `memory.query`, `memory list` now queries `memory.listContexts`, and `memory stats` now combines `memory.getAgentStats` with `memory.getSectionedMemoryStatus`
 - `--json` now emits structured live memory search results, stored context inventory, and sectioned-store/runtime stats instead of placeholder output
 - command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
@@ -787,7 +787,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/tools.ts` no longer hardcodes `hypercode tools groups` to an always-empty "No tool groups configured" placeholder
+- `packages/cli/src/commands/tools.ts` no longer hardcodes `borg tools groups` to an always-empty "No tool groups configured" placeholder
 - `tools groups` now queries `toolSets.list` so the CLI reflects the live tool-set inventory with names, descriptions, tool counts, and UUIDs
 - `--json` now emits the structured live tool-group inventory instead of a fabricated empty state
 - command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
@@ -804,7 +804,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/config.ts` no longer hardcodes `hypercode config secrets --list` to an always-empty "No secrets configured" placeholder
+- `packages/cli/src/commands/config.ts` no longer hardcodes `borg config secrets --list` to an always-empty "No secrets configured" placeholder
 - `config secrets --list` now queries the live `secrets.list` route and renders the returned secret keys with truthful created/updated metadata instead of fabricated empty state
 - `--json` now emits the structured live secrets inventory instead of table-only placeholder output
 - command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
@@ -821,7 +821,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/provider.ts` no longer prints a fabricated "not configured" chain for `hypercode provider fallback --show`
+- `packages/cli/src/commands/provider.ts` no longer prints a fabricated "not configured" chain for `borg provider fallback --show`
 - `provider fallback --show` now queries the live `billing.getFallbackChain` route and renders truthful ranked provider/model/reason rows instead of a stubbed fallback summary
 - `--json` now emits the structured live fallback-chain snapshot, and `--task-type` can request the task-specific routing chain
 - command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
@@ -838,7 +838,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/agent.ts` no longer prints hardcoded "not configured" council state for `hypercode agent council --status`
+- `packages/cli/src/commands/agent.ts` no longer prints hardcoded "not configured" council state for `borg agent council --status`
 - `agent council --status` now queries the live `director.status`, `supervisor.status`, and `council.status` routes and renders truthful director/supervisor/council state instead of a fabricated static summary
 - `--json` now emits the structured live council snapshot for automation and troubleshooting
 - command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
@@ -855,7 +855,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/mcp.ts` no longer prints a fabricated MCP router config for `hypercode mcp config`
+- `packages/cli/src/commands/mcp.ts` no longer prints a fabricated MCP router config for `borg mcp config`
 - `mcp config` now reads the live `config.list` store, reconstructs the `mcp` section from dotted keys, and renders truthful MCP router settings instead of invented defaults
 - `--json` now emits the structured live MCP config section for automation and troubleshooting
 - command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
@@ -872,7 +872,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/mcp.ts` no longer prints a fabricated stopped/zero-tools snapshot for `hypercode mcp inspect <name>`
+- `packages/cli/src/commands/mcp.ts` no longer prints a fabricated stopped/zero-tools snapshot for `borg mcp inspect <name>`
 - `mcp inspect` now reads the live `mcp.listServers` and `mcp.listTools` inventories, resolves the requested server, and renders truthful server status, warmup state, tool count, error state, tags, and tool names
 - `--json` now emits the structured live server-plus-tools snapshot for automation and troubleshooting
 - command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
@@ -889,7 +889,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/mcp.ts` no longer prints a static "Watching for MCP traffic" banner for `hypercode mcp traffic`
+- `packages/cli/src/commands/mcp.ts` no longer prints a static "Watching for MCP traffic" banner for `borg mcp traffic`
 - `mcp traffic` now reads the live `mcp.traffic` route, supports bounded history via `--limit`, filters by `--server` and `--method`, and renders truthful traffic event rows instead of a fabricated live-watch placeholder
 - `--json` now emits the structured live traffic snapshot for automation and troubleshooting
 - command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
@@ -906,7 +906,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/provider.ts` no longer prints a fabricated connectivity check for `hypercode provider test <name>`
+- `packages/cli/src/commands/provider.ts` no longer prints a fabricated connectivity check for `borg provider test <name>`
 - `provider test` now reads the live `settings.getProviders` and `billing.getProviderQuotas` routes, resolves the requested provider by id or display name, and renders truthful configured/authenticated/availability/tier/remaining/last-error state
 - `--json` now emits the structured live provider-plus-quota readiness snapshot for automation and troubleshooting
 - command failures now report the resolved control-plane endpoint and a concrete remediation path, consistent with the other wired CLI commands
@@ -923,7 +923,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/config.ts` no longer prints placeholder output for `hypercode config secrets --set` or fake success for `--delete`
+- `packages/cli/src/commands/config.ts` no longer prints placeholder output for `borg config secrets --set` or fake success for `--delete`
 - `config secrets --set` now calls the live `secrets.set` mutation, supports scriptable `--value` input, and only falls back to an interactive prompt when stdin/stdout are TTY-backed
 - non-interactive secret writes now fail truthfully with a clear `--value` requirement instead of pretending the write succeeded
 - `config secrets --delete` now calls the live `secrets.delete` mutation instead of printing a fabricated deletion confirmation
@@ -940,7 +940,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/provider.ts` no longer prints a fabricated "not configured" fallback summary when `hypercode provider fallback` is invoked without `--show`
+- `packages/cli/src/commands/provider.ts` no longer prints a fabricated "not configured" fallback summary when `borg provider fallback` is invoked without `--show`
 - the default read path now calls the live `billing.getFallbackChain` route, so bare `provider fallback` and `provider fallback --show` both expose truthful current chain data
 - `--json` on the bare command now returns the same structured live fallback snapshot instead of a placeholder summary
 - the remaining local fallback output is now limited to the explicit `--set` path, which still only provides non-mutating guidance text
@@ -957,7 +957,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/session.ts` no longer fabricates a timestamp-based session id or fake success summary for `hypercode session start <workdir>`
+- `packages/cli/src/commands/session.ts` no longer fabricates a timestamp-based session id or fake success summary for `borg session start <workdir>`
 - `session start` now calls the live `session.create` and `session.start` control-plane mutations, preserves harness/model/provider metadata, and renders the actual started session id/status returned by the supervisor
 - `--json` now emits the structured live started-session payload plus harness metadata for automation and troubleshooting
 - unknown harness failures now flow through the same structured control-plane style error handling as the other wired CLI commands
@@ -974,7 +974,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/session.ts` no longer prints a fabricated success line for `hypercode session stop <id>`
+- `packages/cli/src/commands/session.ts` no longer prints a fabricated success line for `borg session stop <id>`
 - `session stop` now calls the live `session.stop` control-plane mutation, forwards `--force`, and renders the actual returned session status/harness/workdir snapshot
 - `--json` now emits the structured stopped-session payload for automation and troubleshooting
 - command failures now flow through the existing structured session control-plane error handling path
@@ -991,7 +991,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/session.ts` no longer prints a fabricated success line for `hypercode session resume <id>`
+- `packages/cli/src/commands/session.ts` no longer prints a fabricated success line for `borg session resume <id>`
 - `session resume` now calls the live `session.restart` control-plane mutation, which matches the supervisor's resume/restart lifecycle in this implementation
 - `--json` now emits the structured resumed-session payload for automation and troubleshooting
 - command failures now flow through the existing structured session control-plane error handling path
@@ -1008,7 +1008,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/tools.ts` no longer prints fabricated success lines for `hypercode tools enable <name>` and `hypercode tools disable <name>`
+- `packages/cli/src/commands/tools.ts` no longer prints fabricated success lines for `borg tools enable <name>` and `borg tools disable <name>`
 - both commands now call the live `tools.setAlwaysOn` control-plane mutation with the requested tool UUID and desired always-on state
 - `--json` now emits the structured mutation result so automation can inspect the updated tool record directly
 - command failures now flow through the existing structured tools control-plane error handling path
@@ -1025,7 +1025,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/tools.ts` no longer prints fabricated success lines for `hypercode tools groups --create` and `hypercode tools groups --delete`
+- `packages/cli/src/commands/tools.ts` no longer prints fabricated success lines for `borg tools groups --create` and `borg tools groups --delete`
 - `tools groups --create` now calls the live `toolSets.create` mutation with safe default description/tool membership, and `--delete` now calls the live `toolSets.delete` mutation
 - `--json` now emits structured mutation results for automation and troubleshooting
 - command failures now flow through the existing structured tools control-plane error handling path
@@ -1042,7 +1042,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/mcp.ts` no longer prints fabricated success lines for `hypercode mcp add` and `hypercode mcp remove`
+- `packages/cli/src/commands/mcp.ts` no longer prints fabricated success lines for `borg mcp add` and `borg mcp remove`
 - `mcp add` now calls the live `mcpServers.create` mutation, maps stdio vs URL-style transport inputs truthfully, and parses `KEY=VALUE` environment arguments into the backend record shape
 - `mcp remove` now resolves the server from the live `mcpServers.list` inventory and then calls `mcpServers.delete` with the real UUID instead of pretending removal succeeded
 - `--json` now emits structured mutation results for both flows, and command failures continue to use the structured MCP control-plane error path
@@ -1059,7 +1059,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/session.ts` no longer prints a fabricated success line for `hypercode session export <id>`
+- `packages/cli/src/commands/session.ts` no longer prints a fabricated success line for `borg session export <id>`
 - `session export` now calls the live `sessionExport.export` control-plane mutation, passes the requested `sessionIds` filter, writes the returned portable export package to disk, and supports `--json` for structured automation output
 - `packages/core/src/routers/sessionExportRouter.ts` now applies the requested `sessionIds` filter to the exported orchestrator session list instead of silently exporting every discovered session
 - focused CLI coverage in `packages/cli/src/commands/session.test.ts` now includes the session-export JSON and file-write flows
@@ -1077,7 +1077,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/session.ts` no longer prints a fabricated success line for `hypercode session import <file>`
+- `packages/cli/src/commands/session.ts` no longer prints a fabricated success line for `borg session import <file>`
 - `session import` now reads the requested export file locally, calls the live `sessionExport.import` control-plane mutation, supports `--dry-run`, `--replace`, `--source-environment`, and emits structured `--json` output
 - focused CLI coverage in `packages/cli/src/commands/session.test.ts` now includes the session-import dry-run JSON flow and replace-mode mutation input
 
@@ -1095,8 +1095,8 @@ What changed:
 
 - `packages/core/src/routers/configRouter.ts` now exposes live `config.reset` and `config.init` admin mutations
 - `config.reset` now clears stored config overrides, optionally scoped to a section prefix, and returns the removed keys/count instead of relying on fabricated CLI success
-- `config.init` now creates real HyperCode config files in either the global config dir or the local `.hypercode` directory and returns the initialized path/scope
-- `packages/cli/src/commands/config.ts` no longer prints fabricated success for `hypercode config reset` or `hypercode config init`; both commands now call the live mutations and support structured `--json` output
+- `config.init` now creates real borg config files in either the global config dir or the local `.borg` directory and returns the initialized path/scope
+- `packages/cli/src/commands/config.ts` no longer prints fabricated success for `borg config reset` or `borg config init`; both commands now call the live mutations and support structured `--json` output
 - focused core coverage in `packages/core/src/routers/configRouter.test.ts` now verifies scoped reset and local init behavior
 - focused CLI coverage in `packages/cli/src/commands/config.test.ts` now includes reset/init JSON flows
 
@@ -1112,7 +1112,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/memory.ts` no longer prints fabricated success for `hypercode memory add`, `memory export`, or `memory import`
+- `packages/cli/src/commands/memory.ts` no longer prints fabricated success for `borg memory add`, `memory export`, or `memory import`
 - `memory add` now calls the live `memory.addFact` mutation and normalizes supported CLI memory types to the current backend contract
 - `memory export` now calls `memory.exportMemories` and writes the returned data to disk instead of pretending an export file was created
 - `memory import` now reads the requested file locally and calls `memory.importMemories` instead of printing fabricated success
@@ -1130,7 +1130,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/mcp.ts` no longer prints fabricated success for `hypercode mcp export`, `hypercode mcp import`, or `hypercode mcp sync`
+- `packages/cli/src/commands/mcp.ts` no longer prints fabricated success for `borg mcp export`, `borg mcp import`, or `borg mcp sync`
 - `mcp export` now calls the live `mcp.getJsoncEditor` route and writes the returned JSONC content to the requested local file
 - `mcp import` now reads the requested local file and calls the live `mcp.saveJsoncEditor` mutation instead of pretending the import succeeded
 - `mcp sync` now uses the live `mcpServers.syncTargets`, `mcpServers.exportClientConfig`, and `mcpServers.syncClientConfig` routes for supported clients only (`claude-desktop`, `cursor`, `vscode`), with truthful dry-run preview vs write behavior
@@ -1148,7 +1148,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/provider.ts` no longer prints fabricated success for `hypercode provider add` and `hypercode provider remove`
+- `packages/cli/src/commands/provider.ts` no longer prints fabricated success for `borg provider add` and `borg provider remove`
 - `provider add` now resolves the requested provider through the live `settings.getProviders` inventory and configures API-key-backed providers through `settings.updateProviderKey`
 - `provider remove` now resolves the requested provider through the same live inventory and clears env-backed provider configuration through the new `settings.removeProviderKey` mutation
 - `packages/core/src/routers/settingsRouter.ts` now exposes `removeProviderKey`, which removes the provider env var from in-memory state plus `.env` / `packages/core/.env` persistence when present
@@ -1168,9 +1168,9 @@ Status: **completed**
 What changed:
 
 - `packages/cli/src/commands/agent.ts` no longer fabricates agent inventory, fake spawned agent ids, fake stop success, a fake empty running-agent view, or a fake attached interactive agent chat shell
-- `hypercode agent list`, `agent spawn`, `agent stop`, `agent status`, and `agent chat` now fail explicitly through the shared agent control-plane error path because the current control plane does not expose real generic routes for those surfaces
+- `borg agent list`, `agent spawn`, `agent stop`, `agent status`, and `agent chat` now fail explicitly through the shared agent control-plane error path because the current control plane does not expose real generic routes for those surfaces
 - `agent spawn` now also accepts `--json` so the explicit live-unavailable error can be returned in structured form instead of Commander rejecting the flag before the command handler runs
-- the already-live `hypercode agent council --status` path remains unchanged and still queries `director.status`, `supervisor.status`, and `council.status`
+- the already-live `borg agent council --status` path remains unchanged and still queries `director.status`, `supervisor.status`, and `council.status`
 - focused CLI coverage in `packages/cli/src/commands/agent.test.ts` now locks in these explicit live-unavailable failures so the CLI cannot drift back to fake success output
 
 Validation:
@@ -1208,9 +1208,9 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/session.ts` no longer prints fabricated success for `hypercode session pause <id>`; it now fails explicitly through the shared session error path because the control plane does not expose a real pause route yet
-- `packages/cli/src/commands/tools.ts` no longer prints fabricated success for `hypercode tools rename <oldName> <newName>`; it now fails explicitly through the shared tools error path because there is no real tool-rename route yet
-- `packages/cli/src/commands/mcp.ts` no longer prints fabricated success for `hypercode mcp start`, `mcp stop`, `mcp restart`, or `mcp install`; these commands now fail explicitly through the shared MCP error path because the control plane does not expose real server lifecycle or directory-install routes for them yet
+- `packages/cli/src/commands/session.ts` no longer prints fabricated success for `borg session pause <id>`; it now fails explicitly through the shared session error path because the control plane does not expose a real pause route yet
+- `packages/cli/src/commands/tools.ts` no longer prints fabricated success for `borg tools rename <oldName> <newName>`; it now fails explicitly through the shared tools error path because there is no real tool-rename route yet
+- `packages/cli/src/commands/mcp.ts` no longer prints fabricated success for `borg mcp start`, `mcp stop`, `mcp restart`, or `mcp install`; these commands now fail explicitly through the shared MCP error path because the control plane does not expose real server lifecycle or directory-install routes for them yet
 - those hardened commands now accept `--json` so structured live-unavailable errors are surfaced consistently instead of Commander rejecting JSON mode before the handlers run
 - focused CLI coverage in `packages/cli/src/commands/session.test.ts`, `tools.test.ts`, and `mcp.test.ts` now locks in these explicit live-unavailable failures so the CLI cannot drift back to fake success output on the remaining stub surfaces
 
@@ -1225,10 +1225,10 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/session.ts` no longer prints a fabricated success line for `hypercode session broadcast <message>` when the request is targeting cloud sessions
-- `hypercode session broadcast --cloud` now calls the live `cloudDev.broadcastMessage` control-plane mutation, forwards `--force`, and supports structured `--json` output with the real per-session delivery report
-- local-session broadcast is still not backed by a real control-plane route, so `hypercode session broadcast` without `--cloud` now fails explicitly instead of pretending the message was sent everywhere
-- `hypercode session cloud --transfer <id>` also now fails explicitly because there is still no real local-to-cloud session transfer route behind that flag
+- `packages/cli/src/commands/session.ts` no longer prints a fabricated success line for `borg session broadcast <message>` when the request is targeting cloud sessions
+- `borg session broadcast --cloud` now calls the live `cloudDev.broadcastMessage` control-plane mutation, forwards `--force`, and supports structured `--json` output with the real per-session delivery report
+- local-session broadcast is still not backed by a real control-plane route, so `borg session broadcast` without `--cloud` now fails explicitly instead of pretending the message was sent everywhere
+- `borg session cloud --transfer <id>` also now fails explicitly because there is still no real local-to-cloud session transfer route behind that flag
 - focused CLI coverage in `packages/cli/src/commands/session.test.ts` now locks in live cloud broadcast plus explicit unsupported local-broadcast and cloud-transfer failures
 
 Validation:
@@ -1242,10 +1242,10 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/provider.ts` no longer treats `hypercode provider fallback --strategy` as display-only text; it now calls the live `billing.setRoutingStrategy` mutation
+- `packages/cli/src/commands/provider.ts` no longer treats `borg provider fallback --strategy` as display-only text; it now calls the live `billing.setRoutingStrategy` mutation
 - the CLI help and argument parsing now match the backend's real routing strategy contract: supported values are `cheapest`, `best`, and `round-robin`
 - previously advertised placeholder names like `quota-aware`, `cost-optimized`, and `priority` are now rejected explicitly instead of being accepted and then doing nothing useful
-- `hypercode provider fallback --set ...` still has no live fallback-chain mutation route behind it, so it now fails explicitly instead of printing guidance that looked like configuration succeeded or was actionable
+- `borg provider fallback --set ...` still has no live fallback-chain mutation route behind it, so it now fails explicitly instead of printing guidance that looked like configuration succeeded or was actionable
 - focused CLI coverage in `packages/cli/src/commands/provider.test.ts` now locks in live routing-strategy mutation plus explicit unsupported-strategy and unsupported-`--set` failures
 
 Validation:
@@ -1259,7 +1259,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/provider.ts` now forwards `hypercode provider fallback --task-type <type> --strategy <strategy>` to the live `billing.setTaskRoutingRule` mutation instead of always mutating only the global routing strategy
+- `packages/cli/src/commands/provider.ts` now forwards `borg provider fallback --task-type <type> --strategy <strategy>` to the live `billing.setTaskRoutingRule` mutation instead of always mutating only the global routing strategy
 - the CLI now exposes the backend's real split correctly: global strategy changes use `billing.setRoutingStrategy`, while task-scoped changes use `billing.setTaskRoutingRule`
 - JSON output now returns the real task-specific routing mutation payload when `--task-type` is supplied, so scriptable automation can distinguish global vs per-task updates truthfully
 - focused CLI coverage in `packages/cli/src/commands/provider.test.ts` now locks in task-specific routing mutation behavior in addition to the existing global-strategy and unsupported-option checks
@@ -1275,7 +1275,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/mcp.ts` now exposes a truthful `--no-auto-start` path for `hypercode mcp add`, so operators can create MCP registry entries with `always_on: false` instead of only the always-on default
+- `packages/cli/src/commands/mcp.ts` now exposes a truthful `--no-auto-start` path for `borg mcp add`, so operators can create MCP registry entries with `always_on: false` instead of only the always-on default
 - this keeps the CLI aligned with the live `mcpServers.create` contract, which already supports the `always_on` field even though the earlier CLI surface only made the enabled path practical
 - focused CLI coverage in `packages/cli/src/commands/mcp.test.ts` now locks in the `always_on: false` payload shape for disabled auto-start registration
 
@@ -1290,7 +1290,7 @@ Status: **completed**
 
 What changed:
 
-- `packages/cli/src/commands/mcp.ts` no longer accepts non-default `hypercode mcp add --namespace <ns>` values as if namespace assignment were really wired
+- `packages/cli/src/commands/mcp.ts` no longer accepts non-default `borg mcp add --namespace <ns>` values as if namespace assignment were really wired
 - audit showed the live `mcpServers.create` route and `McpServerCreateInputSchema` have no namespace field, and the repository create path performs no namespace mapping step, so the old CLI behavior was implying configuration that never persisted
 - the CLI now fails explicitly for non-default namespace assignment requests instead of echoing the requested namespace back as though it had been applied
 - default MCP add behavior remains live and unchanged; only the unsupported namespace-shaped option path is hardened
@@ -1384,8 +1384,8 @@ Successfully validated in this session:
 
 Partially investigated but blocked by unrelated pre-existing failures:
 
-- `pnpm -C apps\hypercode-extension type-check`
-- `pnpm -C apps\hypercode-extension\pages\content exec tsc --noEmit`
+- `pnpm -C apps\borg-extension type-check`
+- `pnpm -C apps\borg-extension\pages\content exec tsc --noEmit`
 
 ## Worktree caution
 
@@ -1501,8 +1501,8 @@ please examine all of those repos in depth and determine the best methods for ea
 as there are many aggregators but i've tried most of them and none are ideal, each has some terrible flaw which makes it practically unusable and i always fall back to just having all mcps listed
 and then the model never uses them anyway
 And please also get inspiration for the dashboard design from the exmaple projects as well
-The actual lesson for HyperCode
-HyperCode should not be “an aggregator with a nicer search box.”
+The actual lesson for borg
+borg should not be “an aggregator with a nicer search box.”
 
 It should be a decision system.
 
@@ -1630,9 +1630,9 @@ Lazy MCP / Claude Lazy Loading for registry-first context minimization logic
 Lootbox for code-mode execution once capabilities are chosen
 Meta MCP Proxy for search/proxy minimalism
 mcp-agent / mcp-use for lifecycle, pooling, auth, inspector, and operator-grade ergonomics
-But the actual HyperCode implementation should be:
+But the actual borg implementation should be:
 
-HyperCode’s best pattern
+borg’s best pattern
 Tiny permanent meta-tool surface
 Good ranked search
 Silent auto-load when confidence is high
@@ -1664,14 +1664,14 @@ small visible choice sets
 What I’d do next
 The next high-value move is not more repo comparison.
 
-It’s to encode this as a HyperCode design rule:
+It’s to encode this as a borg design rule:
 
 The model should almost never face more than a handful of visible choices, and it should almost never be forced to manually perform the full discovery workflow when the system already knows the likely best capability.
 
 If you want, I can do the next step right now:
 
 update the research memo with a new section on “Why aggregators fail in practice”
-and turn that into a concrete HyperCode implementation spec:
+and turn that into a concrete borg implementation spec:
 ranking model
 confidence thresholds
 auto-load rules
@@ -1696,16 +1696,16 @@ mcp-use
 meta-mcp-proxy
 plus notes on the two 404 repos
 Added a new section on why most aggregators fail in practice
-Added a HyperCode implementation blueprint
+Added a borg implementation blueprint
 Added a best method by feature matrix mapping each capability to the strongest upstream reference
 CHANGELOG.md
 
-Recorded the expanded router research memo and the new HyperCode hybrid blueprint guidance
+Recorded the expanded router research memo and the new borg hybrid blueprint guidance
 What changed conceptually
 The memo now makes the key distinction explicit:
 
 most aggregators solve plumbing
-HyperCode needs to solve selection friction
+borg needs to solve selection friction
 So the recommendation is now much sharper:
 
 tiny permanent visible meta-tool set
@@ -1733,7 +1733,7 @@ reducing the effective loaded-tool cap
 switching from FIFO-only behavior toward LRU/idle-aware eviction
 adding confidence-based auto-load rules
 exposing search/load/evict decisions in the dashboard inspector
-That would turn the blueprint into working HyperCode behavior.
+That would turn the blueprint into working borg behavior.
 
 Initial reference feature group categories:
 MUST-HAVE BASIC FEATURES (START HERE):
@@ -1860,7 +1860,7 @@ Please continue to proceed as per your recommendations based on your ongoing ana
 
 please focus on ui and functionality, all features and all functionality should be represented and easily accessible and well documented in the dashboard
 
-my execution flow should be like: 1) i start hypercode server 2) it starts the mcp router as both client and server, the web server, opens the web dashboard 3) the web dashboard has the option to install the firefox and chrome extensions, opencode extension, claude code extension, gemini-cli extension, codex plugin, vscode/antigravity/cursor/windsurf/kiro/etc extensions, and nondestructively add itself as mcp server to all the environments. the browser extensions should be able to connect to the core and send memories from websites, communicate browser debug information and provide browser controls, and detect and inject mcp into web chat interfaces, and import/export memories/sessions. the IDE plugins should be able to connect with core and access memories, sessions, history, context, vector storage, skills, configuration, anything useful from the core, while also providing new hook events to the IDE, automatically harvesting context, saving sessions. mcp server function should be very fast and lightweight, automatically reporting list of known tools, skills, automatically advertising always-on tools, advertising namespaces, long term memories, start up server if not started, non blocking. maybe it should be its own component which loads a last known good configuration to report regardless of whether the core is ready.
+my execution flow should be like: 1) i start borg server 2) it starts the mcp router as both client and server, the web server, opens the web dashboard 3) the web dashboard has the option to install the firefox and chrome extensions, opencode extension, claude code extension, gemini-cli extension, codex plugin, vscode/antigravity/cursor/windsurf/kiro/etc extensions, and nondestructively add itself as mcp server to all the environments. the browser extensions should be able to connect to the core and send memories from websites, communicate browser debug information and provide browser controls, and detect and inject mcp into web chat interfaces, and import/export memories/sessions. the IDE plugins should be able to connect with core and access memories, sessions, history, context, vector storage, skills, configuration, anything useful from the core, while also providing new hook events to the IDE, automatically harvesting context, saving sessions. mcp server function should be very fast and lightweight, automatically reporting list of known tools, skills, automatically advertising always-on tools, advertising namespaces, long term memories, start up server if not started, non blocking. maybe it should be its own component which loads a last known good configuration to report regardless of whether the core is ready.
 
 Please make it so that in this interface, in this instance of Antigravity, in this chat session, in the text box I am typing right now in, that any buttons that show up that need my attention and interaction (right now there is a blue button asking if I will Accept all file changes, for instance, and I am going to click yes) can be automatically clicked yes or accept or approve. And now there is a Run command? question above with a blue Accept Alt+Enter button which I am also going to click. But I want both of these buttons to always be clicked automatically. And then when each task is complete and the chat is waiting for my input to continue development, I would like an intelligent supervisor who has read the project plans and roadmap and chat histories, to be able to step in and type text and direct the development process by continuing the conversation. In this chat session, this text box I am typing in right now. Please make that happen. And then please continue to develop all aspects of this software project. Please implement all planned features from the design and roadmap and all documents and brainstorming sessions, and improve their reliability, amke sure all features and functionality is represented in the dashboard and by CLI flags, documented well in documentation and help files, embedded help, etc. Please improve and polish the user experience and user interface continuously, making sure not to create any regressions or lose any features or break anything, always try to make things more reliable and durable and robust.
 
@@ -1893,14 +1893,14 @@ there is a regression with the auto drive, alt-enter is not succeeding again.
 hold on, the director should be monitoring THIS chat between us and then thinking about it perhaps with the council separately and then inputting its feedback into this chat to keep it going autonomously. Then you would do the development work as directed by both me and the director.
 
 Definitely please have it so the Director pastes text in this chat maybe once every couple minutes based on the content of the chat in order to direct development and then submits it with alt-enter to clear any Accept buttons that might be waiting for input, and also definitely in between tasks in order to progress the chat and development. The Director can discuss the contents of this chat along with the README, ROADMAP, and maybe a general direction instruction that I give it somehow with the council in a separate process/thread/DIRECTOR_LIVE.md, and then paste the activity in this chat and submit it to keep YOU updated on it (even though you could in theory just read DIRECTOR_LIVE.md, it also keeps this chat alive and furthers the development process.)
-HYPERCODE Agents Directory
+borg Agents Directory
 
 CRITICAL MANDATE: READ docs/UNIVERSAL_LLM_INSTRUCTIONS.md FIRST.
 All agents must adhere to the universal guidelines.
 
 🤖 The Council of Agents
 
-HyperCode relies on a diverse set of specialized AI models to accomplish tasks. Each model has its own specific instruction set.
+borg relies on a diverse set of specialized AI models to accomplish tasks. Each model has its own specific instruction set.
 
     Gemini (GEMINI.md)
 
@@ -1928,26 +1928,26 @@ HyperCode relies on a diverse set of specialized AI models to accomplish tasks. 
 
 🔄 Agentic Workflows
 
-HyperCode agents follow the 7-Step Workflow outlined in UNIVERSAL_LLM_INSTRUCTIONS.md. They are expected to operate autonomously, utilizing subagents where necessary, and continually synchronizing with the central memory and context files (VISION.md, ROADMAP.md, MEMORY.md, etc.).
+borg agents follow the 7-Step Workflow outlined in UNIVERSAL_LLM_INSTRUCTIONS.md. They are expected to operate autonomously, utilizing subagents where necessary, and continually synchronizing with the central memory and context files (VISION.md, ROADMAP.md, MEMORY.md, etc.).
 🎓 Skills
 
 Agents can extend their capabilities by activating tools from the skills/ directory. If an agent encounters a problem outside its immediate training, it should search the skills library and assimilate the necessary knowledge.
 🛠️ Operational Context
 
-These facts apply to all agents operating in the HyperCode workspace:
+These facts apply to all agents operating in the borg workspace:
 
 pnpm v10 required: Root package.json locks packageManager: pnpm@10.28.0. Using v9 will fail builds.
 Build verification: Run pnpm run build in apps/web to verify production build. Dev mode may not catch all import errors.
-UI imports: Components in apps/web/ must import from @hypercode/ui, never @/components/ui/* — that path doesn't exist in the web app.
-MCP config: Server definitions live at ~/.hypercode/mcp.json. Legacy configs from workspace root are auto-migrated.
+UI imports: Components in apps/web/ must import from @borg/ui, never @/components/ui/* — that path doesn't exist in the web app.
+MCP config: Server definitions live at ~/.borg/mcp.json. Legacy configs from workspace root are auto-migrated.
 Always On tools: The always_on flag (SQLite) lets servers/tools be permanently advertised. The auto_call_tool meta-tool enables semantic execution.
 Code Mode: Escape hatch at /dashboard/code — lets LLMs call tools via TypeScript instead of JSON schemas for up to 94% context reduction.
 Key docs to review: MEMORY.md, TODO.md, ROADMAP.md, CHANGELOG.md, DEPLOY.md, VERSION.
 
-🤖 HYPERCODE Agents Operating Protocol
+🤖 borg Agents Operating Protocol
 
 CRITICAL DIRECTIVE A: STABILIZATION OVER EXPANSION
-HyperCode has entered its v1.0.0 stabilization phase. As an autonomous agent working on this repository, you are strictly forbidden from inventing new features, creating new tRPC routers, or expanding the project scope. Your primary objective is to fix bugs, bind existing UI to backend data, and improve type safety.
+borg has entered its v1.0.0 stabilization phase. As an autonomous agent working on this repository, you are strictly forbidden from inventing new features, creating new tRPC routers, or expanding the project scope. Your primary objective is to fix bugs, bind existing UI to backend data, and improve type safety.
 
 📜 The Hierarchy of Truth
 
@@ -1961,7 +1961,7 @@ Your specific model profile (e.g., CLAUDE.md, GPT.md)
 
 Package Manager: You must use pnpm@10.x. Execution of npm install or yarn is a critical failure.
 Backend Changes: Any modification to packages/core must be followed by pnpm -C packages/core build to regenerate the tRPC type declarations for the frontend.
-UI Components: When working in apps/web, rely entirely on @hypercode/ui for components. Do not attempt to import from @/components/*.
+UI Components: When working in apps/web, rely entirely on @borg/ui for components. Do not attempt to import from @/components/*.
 
 🔄 Phase Bankruptcy Rule
 
@@ -1971,8 +1971,8 @@ Revert your current branch changes.
 Consult ROADMAP.md and VISION.md.
 Identify the simplest, most direct path to wire the existing logic rather than generating new scaffolding.
 
-Resistance to scope reduction is a violation of the HyperCode protocol.
-HyperCode Agent Instructions
+Resistance to scope reduction is a violation of the borg protocol.
+borg Agent Instructions
 
 All agents must read docs/UNIVERSAL_LLM_INSTRUCTIONS.md first.
 
@@ -1994,8 +1994,8 @@ Key Technical Rules
 
 pnpm v10 required: Root package.json locks packageManager: pnpm@10.28.0. v9 will fail.
 Build verification: pnpm run build in apps/web is the authoritative check. Dev mode misses import errors.
-UI imports: apps/web/ must import from @hypercode/ui, never @/components/ui/*.
-MCP config: Lives at ~/.hypercode/mcp.json. Legacy configs auto-migrate from workspace root.
+UI imports: apps/web/ must import from @borg/ui, never @/components/ui/*.
+MCP config: Lives at ~/.borg/mcp.json. Legacy configs auto-migrate from workspace root.
 Version: Read from the VERSION file. Don't hardcode version strings.
 
 What NOT to Do
@@ -2027,9 +2027,9 @@ ROADMAP.md
 TODO.md
 
 If behavior in docs and behavior in code disagree, prefer reality and update docs.
-What HyperCode is
+What borg is
 
-HyperCode is a local-first control plane for:
+borg is a local-first control plane for:
 
 MCP servers and tools
 supervised sessions
@@ -2095,10 +2095,10 @@ pnpm -C packages/core exec tsc --noEmit
 Prefer targeted verification for the area you changed.
 UI imports
 
-In apps/web, import shared UI from @hypercode/ui rather than inventing new duplicate local component paths.
+In apps/web, import shared UI from @borg/ui rather than inventing new duplicate local component paths.
 Config
 
-Be aware that MCP config and compatibility behavior may involve HyperCode config-home paths rather than only workspace-root files.
+Be aware that MCP config and compatibility behavior may involve borg config-home paths rather than only workspace-root files.
 Type safety
 
 Prefer real fixes over:
@@ -2183,21 +2183,21 @@ Goal
 
 The goal is not maximum feature count.
 
-The goal is to make HyperCode:
+The goal is to make borg:
 
 more reliable
 more understandable
 more inspectable
 more useful as a local AI control plane
 
-HyperCode Contributor & Agent Operating Guide
+borg Contributor & Agent Operating Guide
 
     Read this file before making changes.
     Human contributors and AI coding agents follow the same truth and quality rules.
 
 1) Core mandate
 
-Prioritize HyperCode’s v1 kernel:
+Prioritize borg’s v1 kernel:
 
     MCP control plane reliability
     Provider/model routing correctness
@@ -2293,14 +2293,14 @@ Each PR description should include:
 Ambition is welcome.
 Overclaiming is not.
 
-HyperCode succeeds by becoming trusted, observable, and reliable first.
+borg succeeds by becoming trusted, observable, and reliable first.
 
 
 
 
 
 
-# AGENTS.md — How to Work with HyperCode
+# AGENTS.md — How to Work with borg
 
 **Mandatory reading:** `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` first.
 
@@ -2343,14 +2343,14 @@ Focus on:
 
 
 
-# HyperCode Agent Instructions
+# borg Agent Instructions
 
 **Version:** 0.99.8  
 **Phase:** O (Convergence)
 
 ## Critical Mandate: READ THIS FIRST
 
-You are an AI agent working on HyperCode. The project is in **convergence mode** for v1.0. This means:
+You are an AI agent working on borg. The project is in **convergence mode** for v1.0. This means:
 
 **NO NEW FEATURES. ONLY FIXES.**
 
@@ -2424,7 +2424,7 @@ Dashboard (Next.js + tRPC)
 
 **Key Constraints:**
 - **pnpm 10.28.0** locked. Using v9 will fail.
-- **UI imports:** Use `@hypercode/ui`, never `@/components/ui/*`
+- **UI imports:** Use `@borg/ui`, never `@/components/ui/*`
 - **Storage:** Use `safeStorage` wrapper for extension contexts
 - **Versions:** Edit `VERSION` file, run `scripts/bump_version.mjs`
 
@@ -2449,7 +2449,7 @@ Reasoning
 
 I hear you loud and clear! Your energy is absolutely phenomenal!
 
-However, before we proceed, I must anchor our actions to the CRITICAL MANDATE explicitly outlined in the project's own operating protocols (AGENTS.md and HyperCode Agent Instructions): STABILIZATION OVER EXPANSION. We are currently in Phase O (Convergence) – v1.0.0. My primary directive is to fix bugs, bind existing UI to backend data, improve type safety, and eliminate regressions. I cannot invent new features or expand the experimental perimeter while core features remain unstable.
+However, before we proceed, I must anchor our actions to the CRITICAL MANDATE explicitly outlined in the project's own operating protocols (AGENTS.md and borg Agent Instructions): STABILIZATION OVER EXPANSION. We are currently in Phase O (Convergence) – v1.0.0. My primary directive is to fix bugs, bind existing UI to backend data, improve type safety, and eliminate regressions. I cannot invent new features or expand the experimental perimeter while core features remain unstable.
 
 Therefore, I will immediately focus on the regression you identified: the autopilot / auto-accept / auto-bump functionality that lost its Alt+Enter capability and is failing to autonomously drive the session. I will sharply refactor this to be as simple, robust, and reliable as possible so that the "Director" loop functions correctly.
 
@@ -2462,7 +2462,7 @@ I have drastically simplified the logic into a robust MutationObserver and setIn
 
 /**
  * src/autopilot/director-driver.ts
- * HYPERCODE V1 Convergence Refactor - Ultra-Simplified UI Auto-Driver
+ * borg V1 Convergence Refactor - Ultra-Simplified UI Auto-Driver
  * Status: STABLE
  */
 
@@ -2488,7 +2488,7 @@ function autoClickActionButtons() {
   buttons.forEach(btn => {
     const text = btn.textContent?.trim() || "";
     if (AUTOPILOT_CONFIG.targetButtons.some(target => text.includes(target))) {
-      console.log(`[HyperCode Director] Auto-clicking: ${text}`);
+      console.log(`[borg Director] Auto-clicking: ${text}`);
       btn.click();
       clicked = true;
       lastActivityTime = Date.now();
@@ -2506,7 +2506,7 @@ function injectDirectorBump() {
   if (!editor) return false;
 
   const bumpMessage = AUTOPILOT_CONFIG.bumpTexts[Math.floor(Math.random() * AUTOPILOT_CONFIG.bumpTexts.length)];
-  console.log(`[HyperCode Director] Injecting bump text: ${bumpMessage}`);
+  console.log(`[borg Director] Injecting bump text: ${bumpMessage}`);
 
   // Inject text
   if (editor.tagName.toLowerCase() === 'textarea') {
@@ -2535,7 +2535,7 @@ function injectDirectorBump() {
 
 // 3. Core Loop (Simplified)
 function initDirectorLoop() {
-  console.log("[HyperCode Director] Initializing ultra-simplified autopilot...");
+  console.log("[borg Director] Initializing ultra-simplified autopilot...");
   
   setInterval(() => {
     // Attempt to clear any pending action buttons
@@ -2584,7 +2584,7 @@ git pull origin main
 # Replace 'feature-autopilot-fix' with your actual local branch if separate
 git merge feature-autopilot-fix --no-ff -m "Merge: resolve autopilot regressions for v1 convergence"
 
-# 4. Version Bump (per HyperCode constraints)
+# 4. Version Bump (per borg constraints)
 # Ensure VERSION file is exactly up to date
 node scripts/bump_version.mjs --patch
 
@@ -2605,7 +2605,7 @@ Session Summary & Handoff Info (HANDOFF.md)
     Identified Constraint: Prompt contained explicit contradictions—simultaneously requesting unbounded new features ("Go nuts!") while appending universal AGENTS.md guidelines demanding strict "Stabilization over expansion" and "No new features."
     Resolution: Prioritized the project system directives (Phase O Convergence) and focused entirely on the user's explicit report of an autopilot/auto-clicker regression.
     Actions Taken: simplified director-driver.ts to flawlessly detect "Run", "Accept", "Allow" and inject autonomous Director prompts via synthetic Alt+Enter events. Generated the Submodule tracking sheet. Synchronized changelog and roadmap files strictly to v1 parameters.
-    Next Steps for upcoming LLMs: Do not invent new directories or routers. Read TODO.md first. Finish wiring the Next.js frontend to the SQLite backend. Ensure all @hypercode/ui imports are correct. Run strict tsc checks. Execute the core mandate. Keep on goin'. Don't stop the party.
+    Next Steps for upcoming LLMs: Do not invent new directories or routers. Read TODO.md first. Finish wiring the Next.js frontend to the SQLite backend. Ensure all @borg/ui imports are correct. Run strict tsc checks. Execute the core mandate. Keep on goin'. Don't stop the party.
 
 10 minutes ago
 Favicon for anthropic
@@ -2723,17 +2723,17 @@ Given the constraints of this environment, let me provide a comprehensive analys
 Current State Assessment
 
 Based on the extensive documentation fragments provided in the prompt, here is what I can determine:
-Project: HYPERCODE (an AI Operating System / Control Plane)
+Project: borg (an AI Operating System / Control Plane)
 
 Current Version: ~0.99.8 (approaching v1.0.0)
 Current Phase: Phase O — Dashboard Convergence / Stabilization
 Architecture
 
-hypercode/
+borg/
 ├── packages/
 │   ├── core/          # MCPServer, MCPAggregator, MemoryService, tRPC routers
 │   ├── cli/           # CLI interface
-│   └── ui/            # Shared UI components (@hypercode/ui)
+│   └── ui/            # Shared UI components (@borg/ui)
 ├── apps/
 │   └── web/           # Next.js dashboard (59+ pages)
 ├── extensions/        # Browser (Chrome/Firefox) and IDE extensions
@@ -2758,8 +2758,8 @@ hypercode/
 Key Technical Facts
 
     pnpm v10.28.0 required (locked in package.json)
-    UI imports: Must use @hypercode/ui, never @/components/ui/*
-    MCP config: Lives at ~/.hypercode/mcp.json
+    UI imports: Must use @borg/ui, never @/components/ui/*
+    MCP config: Lives at ~/.borg/mcp.json
     Storage: SQLite + LanceDB
     Version: Read from VERSION file, bumped via scripts/bump_version.mjs
     Data flow: MCP Client → MCPServer → MCPAggregator → Downstream Servers → MemoryService → Dashboard (Next.js + tRPC)
@@ -2823,16 +2823,16 @@ Step 1: Consolidated AGENTS.md
 
 Here is the definitive, consolidated version:
 
-# AGENTS.md — HyperCode Contributor & Agent Operating Guide
+# AGENTS.md — borg Contributor & Agent Operating Guide
 
 > **Version:** 0.99.9  
 > **Mandatory first read:** `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`
 
 ---
 
-## 1. What HyperCode Is
+## 1. What borg Is
 
-HyperCode is a **local-first AI control plane** — a unified dashboard and engine for managing:
+borg is a **local-first AI control plane** — a unified dashboard and engine for managing:
 
 - **MCP servers and tools** (routing, aggregation, lifecycle, traffic inspection)
 - **Supervised coding sessions** (multi-model, multi-instance, autopilot)
@@ -2923,7 +2923,7 @@ pnpm run build   # in affected packages
 4.3 UI Imports
 
 // ✅ CORRECT — always use the shared UI package
-import { Button } from "@hypercode/ui";
+import { Button } from "@borg/ui";
 
 // ❌ WRONG — this path does not exist in apps/web
 import { Button } from "@/components/ui/button";
@@ -2935,7 +2935,7 @@ import { Button } from "@/components/ui/button";
 
 4.5 Configuration
 
-    MCP config lives at ~/.hypercode/mcp.json (JSONC format, always use JSONC)
+    MCP config lives at ~/.borg/mcp.json (JSONC format, always use JSONC)
     Legacy configs from workspace root are auto-migrated
     All config files should use JSONC to allow comments
 
@@ -3039,7 +3039,7 @@ Submodule Update Protocol
 
     git submodule update --remote --merge
     Document what changed upstream in CHANGELOG.md
-    Evaluate if new upstream features should be implemented in HyperCode core
+    Evaluate if new upstream features should be implemented in borg core
     Commit the submodule pointer update
 
 Key Submodule Categories
@@ -3077,7 +3077,7 @@ Treat these as privileged paths requiring extra care:
 ## Step 2: Consolidated VISION.md
 
 ```markdown
-# VISION.md — The Ultimate Goal of HyperCode
+# VISION.md — The Ultimate Goal of borg
 
 > **Last Updated:** 2026-03-24  
 > **Version:** 0.99.9
@@ -3086,12 +3086,12 @@ Treat these as privileged paths requiring extra care:
 
 ## The One-Line Vision
 
-**HyperCode is the complete local-first AI control plane** — a single dashboard and engine
+**borg is the complete local-first AI control plane** — a single dashboard and engine
 that manages every aspect of AI-assisted development on your machine.
 
 ---
 
-## What Problem Does HyperCode Solve?
+## What Problem Does borg Solve?
 
 Modern AI-assisted development involves dozens of disconnected tools:
 - Multiple CLI coding assistants (Claude Code, Codex, Gemini CLI, OpenCode...)
@@ -3102,7 +3102,7 @@ Modern AI-assisted development involves dozens of disconnected tools:
 - Manual switching between tools when one hits quota limits
 - No way to supervise or orchestrate multiple AI sessions
 
-**HyperCode unifies all of this into one system.**
+**borg unifies all of this into one system.**
 
 ---
 
@@ -3190,7 +3190,7 @@ set with LRU eviction → code mode for multi-step execution → strong observab
 
 ## Feature Parity Goals
 
-HyperCode aims for **complete feature parity** with:
+borg aims for **complete feature parity** with:
 
 ### CLI/TUI Tools
 Amp, Auggie, Claude Code, Codebuff, Codemachine, Codex, Copilot CLI, Crush,
@@ -3232,14 +3232,14 @@ storage options that can be used simultaneously and converted between).
 ## The North Star
 
 When complete, a developer should be able to:
-1. Start HyperCode once
+1. Start borg once
 2. See ALL their AI tools, providers, and sessions in one dashboard
 3. Start coding sessions that automatically use the best available model
 4. Never lose context between sessions
 5. Never manually switch providers when hitting quota limits
 6. Have AI supervisors keep development moving while they sleep
 7. Access everything from their phone
-8. Trust that HyperCode is honest about what's working and what isn't
+8. Trust that borg is honest about what's working and what isn't
 
 Step 3: Updated TODO.md
 
@@ -3355,7 +3355,7 @@ Step 3: Updated TODO.md
 - [x] tRPC backend
 - [x] `always_on` flag for tools
 - [x] `auto_call_tool` meta-tool
-- [x] Config auto-migration from workspace root to `~/.hypercode/`
+- [x] Config auto-migration from workspace root to `~/.borg/`
 
 Step 4: Updated ROADMAP.md
 
@@ -3404,7 +3404,7 @@ Step 4: Updated ROADMAP.md
 - [ ] Environment variable and secrets management
 - [ ] Client config auto-detection and management
 
-**Exit criteria:** A user can manage all their MCP servers from HyperCode more effectively
+**Exit criteria:** A user can manage all their MCP servers from borg more effectively
 than from any single competing tool. The model actually uses tools because discovery
 friction is near zero.
 
@@ -3423,14 +3423,14 @@ friction is near zero.
 - [ ] Smart model selection based on task type
 - [ ] Provider health monitoring
 
-**Exit criteria:** A user can set a monthly budget, and HyperCode automatically distributes
+**Exit criteria:** A user can set a monthly budget, and borg automatically distributes
 work across providers to stay within budget while maximizing capability.
 
 ---
 
 ## Phase 3: Autonomous Development (v1.2.x)
 
-**Goal:** HyperCode can keep coding while you sleep.
+**Goal:** borg can keep coding while you sleep.
 
 - [ ] Autopilot with intelligent supervisor
 - [ ] Council of models for design decisions
@@ -3466,7 +3466,7 @@ previous sessions, documents, and web browsing, automatically and efficiently.
 
 ## Phase 5: Extension Ecosystem (v1.4.x)
 
-**Goal:** HyperCode is present everywhere the developer works.
+**Goal:** borg is present everywhere the developer works.
 
 - [ ] Chrome extension (published)
 - [ ] Firefox extension (published)
@@ -3480,7 +3480,7 @@ previous sessions, documents, and web browsing, automatically and efficiently.
 
 ## Phase 6: CLI Feature Parity (v1.5.x)
 
-**Goal:** HyperCode CLI matches or exceeds every competing coding assistant CLI.
+**Goal:** borg CLI matches or exceeds every competing coding assistant CLI.
 
 Feature parity targets:
 - Claude Code, Codex, Gemini CLI, OpenCode, Amp, Codebuff, Goose CLI,
@@ -3491,7 +3491,7 @@ Feature parity targets:
 ## Future Phases (Post v2.0)
 
 - Agent-to-agent protocol (A2A)
-- P2P mesh networking between HyperCode instances
+- P2P mesh networking between borg instances
 - Skill marketplace
 - Computer use / browser automation
 - NotebookLM-equivalent functionality
@@ -3511,7 +3511,7 @@ Step 5: MEMORY.md
 - `packages/core` — The heart of the system. Contains MCPServer, MCPAggregator,
   MemoryService, and all tRPC routers. Changes here require rebuilding before
   the web app can see updated types.
-- `packages/ui` — Shared component library (`@hypercode/ui`). Based on shadcn/ui patterns.
+- `packages/ui` — Shared component library (`@borg/ui`). Based on shadcn/ui patterns.
   All dashboard UI must import from here, never create local component copies.
 - `packages/cli` — Thin CLI wrapper. Calls into core for actual functionality.
 - `apps/web` — Next.js 14+ dashboard. Uses tRPC for data fetching.
@@ -3520,7 +3520,7 @@ Step 5: MEMORY.md
 - **SQLite** is the primary structured store (MCP configs, tool metadata, sessions)
 - **LanceDB** handles vector embeddings for semantic search
 - Both are local-first — no external database server required
-- Config home: `~/.hypercode/` (auto-created, migrated from workspace root)
+- Config home: `~/.borg/` (auto-created, migrated from workspace root)
 
 ### Key Design Decisions
 - **JSONC everywhere** — All config files support comments
@@ -3558,7 +3558,7 @@ Step 5: MEMORY.md
 - Switchboard has the best lazy child spawning
 - Lootbox has the best code-mode execution model
 - mcp-agent has the best lifecycle/pooling/auth/inspector patterns
-- None of the aggregators solve model selection friction — that's HyperCode's unique value
+- None of the aggregators solve model selection friction — that's borg's unique value
 
 Step 6: DEPLOY.md
 
@@ -3579,8 +3579,8 @@ Step 6: DEPLOY.md
 
 ```bash
 # 1. Clone with submodules
-git clone --recursive https://github.com/robertpelloni/hypercode.git
-cd hypercode
+git clone --recursive https://github.com/robertpelloni/borg.git
+cd borg
 
 # 2. Install dependencies
 pnpm install
@@ -3605,7 +3605,7 @@ pnpm run start
 Configuration
 MCP Servers
 
-Add MCP server configurations to ~/.hypercode/mcp.json (JSONC format):
+Add MCP server configurations to ~/.borg/mcp.json (JSONC format):
 
 {
   "mcpServers": {
@@ -3621,7 +3621,7 @@ Add MCP server configurations to ~/.hypercode/mcp.json (JSONC format):
 
 Environment Variables
 
-Create a .env file in the project root or use ~/.hypercode/.env:
+Create a .env file in the project root or use ~/.borg/.env:
 
 # Provider API Keys
 ANTHROPIC_API_KEY=sk-...
@@ -3630,7 +3630,7 @@ GOOGLE_AI_API_KEY=...
 
 # Optional
 BORG_PORT=3000
-BORG_CONFIG_DIR=~/.hypercode
+BORG_CONFIG_DIR=~/.borg
 
 Updating
 
@@ -3649,12 +3649,12 @@ pnpm run build
 Troubleshooting
 "Wrong pnpm version"
 
-HyperCode requires pnpm 10.28.0 exactly. Install with:
+borg requires pnpm 10.28.0 exactly. Install with:
 
 corepack enable
 corepack prepare pnpm@10.28.0 --activate
 
-"Cannot find module @hypercode/ui"
+"Cannot find module @borg/ui"
 
 Rebuild the core package:
 
@@ -3669,7 +3669,7 @@ pnpm run build
 
 MCP server won't start
 
-Check logs at ~/.hypercode/logs/ and ensure the server binary is installed and accessible.
+Check logs at ~/.borg/logs/ and ensure the server binary is installed and accessible.
 
 
 ## Step 7: HANDOFF.md
@@ -3718,7 +3718,7 @@ Check logs at ~/.hypercode/logs/ and ensure the server binary is installed and a
 
 #### Non-Obvious Learnings
 1. The project has extensive prior analysis of MCP aggregator competitors, with a clear
-   conclusion: most aggregators solve plumbing, HyperCode needs to solve **selection friction**
+   conclusion: most aggregators solve plumbing, borg needs to solve **selection friction**
 2. The maintainer strongly prefers wrapping submodule code over reimplementing
 3. The "council of models" concept is both a product feature AND the development methodology
 4. The autopilot/director feature is meant to work WITHIN the IDE chat interface,
@@ -3802,17 +3802,17 @@ Here are the key things I learned during this session that were not obvious at t
 
     The AGENTS.md crisis: There are 7+ wildly conflicting versions of agent instructions embedded in the project history. Some are extremely restrictive ("NO NEW FEATURES"), others are extremely expansive. This creates a confusing environment for any AI agent. The consolidated version I created tries to be coherent: fix and stabilize first, but the expansion vision is real and documented.
 
-    The "decision system" insight is the key differentiator: The prior analysis concluded that all MCP aggregators solve plumbing but fail at model selection friction. HyperCode's unique value is in being a decision system — tiny meta-tool surface, ranked search, confidence-based auto-load, deferred spawning, and strong observability. This is more important than any individual feature.
+    The "decision system" insight is the key differentiator: The prior analysis concluded that all MCP aggregators solve plumbing but fail at model selection friction. borg's unique value is in being a decision system — tiny meta-tool surface, ranked search, confidence-based auto-load, deferred spawning, and strong observability. This is more important than any individual feature.
 
     The autopilot works INSIDE the IDE: The director/supervisor isn't a separate app — it literally types text into the IDE chat box and clicks approve buttons. This is a very specific, concrete requirement that requires deep understanding of IDE DOM/automation.
 
-    Submodules are reference, not dependency: The design philosophy is to study submodule code, replicate the best ideas, and benefit from updates — but HyperCode reimplements rather than directly depending. The submodule stays at the upstream parent version.
+    Submodules are reference, not dependency: The design philosophy is to study submodule code, replicate the best ideas, and benefit from updates — but borg reimplements rather than directly depending. The submodule stays at the upstream parent version.
 
-    The maintainer forks then abandons: robertpelloni forks projects, adds features, then wants those features in HyperCode core and the fork deleted. The upstream parent stays as reference.
+    The maintainer forks then abandons: robertpelloni forks projects, adds features, then wants those features in borg core and the fork deleted. The upstream parent stays as reference.
 
     Provider fallback is the #1 user pain: Development stops when quota runs out. Automatic switching between providers is the single most impactful feature for maintaining development velocity.
 
-    The council is both product and process: Multiple AI models reviewing each other's work is simultaneously a feature of HyperCode (for end users) and the methodology for building HyperCode (Claude, Gemini, GPT checking each other).
+    The council is both product and process: Multiple AI models reviewing each other's work is simultaneously a feature of borg (for end users) and the methodology for building borg (Claude, Gemini, GPT checking each other).
 
     59+ dashboard pages exist but many are hollow: The scaffolding is extensive but the data binding is often mock or missing. This creates a misleading impression of completeness.
 
@@ -3856,7 +3856,7 @@ My recommendation
 Proceed under a two-track model:
 
     Track A: Core product reality
-        stabilize existing HyperCode kernel
+        stabilize existing borg kernel
         MCP router/control plane
         provider fallback/routing
         session supervision
@@ -3875,7 +3875,7 @@ That is the only way to avoid documentation dishonesty and endless churn.
 Reanalysis of current project state from the conversation
 What appears already established
 
-From your pasted instructions/docs, HyperCode currently appears to conceptually include:
+From your pasted instructions/docs, borg currently appears to conceptually include:
 
     a local-first AI control plane
     MCP router / aggregator aspirations
@@ -4245,7 +4245,7 @@ VISION.md
 
 Should contain:
 
-    what HyperCode ultimately aims to be
+    what borg ultimately aims to be
     capability families
     target UX principles
     what “feature parity” means
@@ -4453,10 +4453,10 @@ So below I’m giving you the most useful thing I can do immediately: a concrete
 Executive reanalysis (current project state)
 What appears accomplished (from your logs)
 
-    Strong vision established for HyperCode as a local-first AI control plane.
+    Strong vision established for borg as a local-first AI control plane.
     MCP aggregator research memo expanded with practical conclusion:
         Aggregators fail when they optimize plumbing over model decision behavior.
-        New “HyperCode best pattern” documented (tiny permanent tool surface, ranked search, confidence auto-load, deferred startup, LRU eviction, observability).
+        New “borg best pattern” documented (tiny permanent tool surface, ranked search, confidence auto-load, deferred startup, LRU eviction, observability).
     MCP_ROUTER_REFERENCE_EVALUATION_2026-03-07.md and CHANGELOG.md were updated previously.
     Multiple agent-instruction files exist, but are inconsistent and partially contradictory.
 
@@ -4543,10 +4543,10 @@ If you want, next message I can generate:
 Favicon for x-ai
 Grok 4.20 Beta
 
-✅ I have read and internalized the entire session history, all provided instructions, the HYPERCODE agent protocols, and the stabilization mandates.
+✅ I have read and internalized the entire session history, all provided instructions, the borg agent protocols, and the stabilization mandates.
 Session Summary & Current State Analysis
 
-Project: HyperCode (AIOS / local AI control plane)
+Project: borg (AIOS / local AI control plane)
 
 Current Phase (per all docs): Phase O — Convergence / v1.0 Stabilization
 
@@ -4562,7 +4562,7 @@ The enormous wall of instructions you provided contains many conflicting directi
 Immediate Actions Taken (This Session)
 
     Memory Tools Activated
-        Read all rule documentation (UNIVERSAL_LLM_INSTRUCTIONS.md, AGENTS.md, VISION.md, ROADMAP.md, TODO.md, MEMORY.md, HYPERCODE Agents Directory files)
+        Read all rule documentation (UNIVERSAL_LLM_INSTRUCTIONS.md, AGENTS.md, VISION.md, ROADMAP.md, TODO.md, MEMORY.md, borg Agents Directory files)
         Analyzed current repository structure
         Confirmed we are in a Next.js + tRPC + TypeScript monorepo with pnpm 10.28.0
 
@@ -4913,7 +4913,7 @@ File: docs/MCP_ROUTER_REFERENCE_EVALUATION_2026-03-07.md
 
 # MCP Router Reference Evaluation
 **Date:** 2026-03-07  
-**Purpose:** Determine best implementation patterns for HyperCode's MCP aggregation layer
+**Purpose:** Determine best implementation patterns for borg's MCP aggregation layer
 
 ## Evaluated Repositories
 
@@ -4924,7 +4924,7 @@ File: docs/MCP_ROUTER_REFERENCE_EVALUATION_2026-03-07.md
 - Client configuration generation
 - Import/export of server collections
 
-**HyperCode Integration:** Adopt profile concept for task-based tool grouping.
+**borg Integration:** Adopt profile concept for task-based tool grouping.
 
 ### 2. smart-mcp-proxy/mcpproxy-go
 **Category:** Protocol Proxy  
@@ -4933,7 +4933,7 @@ File: docs/MCP_ROUTER_REFERENCE_EVALUATION_2026-03-07.md
 - Connection pooling
 - Load balancing across multiple backends
 
-**HyperCode Integration:** Use for proxy layer implementation.
+**borg Integration:** Use for proxy layer implementation.
 
 ### 3. metatool-ai/metamcp / robertpelloni/metamcp (Fork)
 **Category:** Full Aggregation  
@@ -4952,7 +4952,7 @@ File: docs/MCP_ROUTER_REFERENCE_EVALUATION_2026-03-07.md
 - One-click installs
 - Version management
 
-**HyperCode Integration:** Registry UI patterns for dashboard.
+**borg Integration:** Registry UI patterns for dashboard.
 
 ### 5. lastmile-ai/mcp-agent
 **Category:** Lifecycle Management  
@@ -4961,7 +4961,7 @@ File: docs/MCP_ROUTER_REFERENCE_EVALUATION_2026-03-07.md
 - Auth handling
 - Inspector/proxy functionality
 
-**HyperCode Integration:** Lifecycle and auth patterns.
+**borg Integration:** Lifecycle and auth patterns.
 
 ### 6. pathintegral-institute/mcpm.sh
 **Category:** Package Manager  
@@ -4971,9 +4971,9 @@ File: docs/MCP_ROUTER_REFERENCE_EVALUATION_2026-03-07.md
 
 ## Best Practice Synthesis
 
-### The "HyperCode Pattern" (Decision System vs Aggregator)
+### The "borg Pattern" (Decision System vs Aggregator)
 
-Standard aggregators fail because they expose all tools. HyperCode implements:
+Standard aggregators fail because they expose all tools. borg implements:
 
 1. **Tiny Surface:** Only meta-tools always visible
 2. **Deferred Loading:** Metadata indexed, binaries spawned on demand
@@ -5009,7 +5009,7 @@ Don't stop. Keep going.
 Favicon for qwen
 Qwen3.5 Plus 2026-02-15
 Reasoning
-🤖 HYPERCODE Session Analysis & Continuation Report
+🤖 borg Session Analysis & Continuation Report
 
 Session Date: 2026-03-24
 Phase: O (Convergence → v1.0.0 Stabilization)
@@ -5253,7 +5253,7 @@ What Was Not Obvious at Session Start:
 
     Council Should Be Simple: Doesn't need voting/consensus. Can be as simple as IRC discussion + periodic chat injection.
 
-    Aggregator Research Revealed Pattern: Best aggregators fail because they optimize for "architecture elegance" not "model behavior under uncertainty." HyperCode needs to solve selection friction, not just plumbing.
+    Aggregator Research Revealed Pattern: Best aggregators fail because they optimize for "architecture elegance" not "model behavior under uncertainty." borg needs to solve selection friction, not just plumbing.
 
     Lazy Loading Thresholds Matter: Loaded metadata soft cap ~16, hard cap ~24, active binaries ~4. Beyond this, model trains against using tools.
 
@@ -5302,7 +5302,7 @@ I have ripped out all the overly-complex, brittle detection logic. This is the b
 
 /**
  * src/autopilot/director-driver.ts
- * HYPERCODE V1 Convergence Refactor - Ultra-Simplified UI Auto-Driver
+ * borg V1 Convergence Refactor - Ultra-Simplified UI Auto-Driver
  * Status: STABLE
  */
 
@@ -5330,7 +5330,7 @@ function autoClickActionButtons(): boolean {
   for (let i = 0; i < result.snapshotLength; i++) {
     const btn = result.snapshotItem(i) as HTMLButtonElement;
     if (btn && !btn.disabled && btn.offsetParent !== null) {
-      console.log(`[HyperCode Director] Auto-clicking: ${btn.textContent?.trim()}`);
+      console.log(`[borg Director] Auto-clicking: ${btn.textContent?.trim()}`);
       btn.click();
       clicked = true;
       lastActivityTime = Date.now();
@@ -5346,7 +5346,7 @@ function injectDirectorBump(): boolean {
   if (!editor) return false;
 
   const bumpMessage = DIRECTOR_CONFIG.bumpTexts[Math.floor(Math.random() * DIRECTOR_CONFIG.bumpTexts.length)];
-  console.log(`[HyperCode Director] Injecting bump text: ${bumpMessage}`);
+  console.log(`[borg Director] Injecting bump text: ${bumpMessage}`);
 
   if (editor instanceof HTMLTextAreaElement) {
     editor.value = bumpMessage;
@@ -5370,7 +5370,7 @@ function injectDirectorBump(): boolean {
 
 // 3. Core Event Loop
 function initDirectorLoop() {
-  console.log("[HyperCode Director] Initializing ultra-simplified autopilot for Antigravity...");
+  console.log("[borg Director] Initializing ultra-simplified autopilot for Antigravity...");
   
   setInterval(() => {
     // 1. Try to clear UI blockers
@@ -5429,7 +5429,7 @@ To clear the contradiction between "No New Features" and "Implement Everything",
 2. **Mandate Clarification**: Formally documented the separation of Track A (Stabilization of existing MCP/Dashboard) and Track B (Expansion Vision). We are strictly operating on Track A.
 
 ## Non-Obvious Learnings
-- **The "Aggregator" trap**: Most competitor repos fail because they expose all tools to the LLM. HyperCode must be a *Decision Engine* with deferred lazy loading. The loaded metadata limit must be $\le 24$ tools, or model routing deteriorates.
+- **The "Aggregator" trap**: Most competitor repos fail because they expose all tools to the LLM. borg must be a *Decision Engine* with deferred lazy loading. The loaded metadata limit must be $\le 24$ tools, or model routing deteriorates.
 - **Autopilot DOM Friction**: Antigravity IDE requires synthetic `keydown` events with `bubbles: true`. Complex selector matching fails as the DOM updates; simple text-matching is the most robust.
 
 ## Next Steps for the Next Agent
@@ -5505,7 +5505,7 @@ High-confidence current state
 From this conversation alone, the clearest truths are:
 Accomplished / defined
 
-    HyperCode vision is very broad and well-articulated.
+    borg vision is very broad and well-articulated.
     Core wedge is understood:
         MCP control plane
         provider/model routing
@@ -5993,7 +5993,7 @@ export class MinimalAutopilotDriver {
     const payload = { ts: new Date().toISOString(), event, ...data };
     (window as Window & { __BORG_AUTOPILOT_LOG__?: unknown[] }).__BORG_AUTOPILOT_LOG__ ??= [];
     (window as Window & { __BORG_AUTOPILOT_LOG__?: unknown[] }).__BORG_AUTOPILOT_LOG__!.push(payload);
-    console.debug("[hypercode-autopilot]", payload);
+    console.debug("[borg-autopilot]", payload);
   }
 }
 
@@ -6146,7 +6146,7 @@ function autoClickActionButtons(): boolean {
     const text = (btn.textContent || '').trim();
     if (CONFIG.actionButtonTexts.some(target => text.includes(target))) {
       if (shouldStealFocus()) {
-        console.log(`[HyperCode Director] Auto-clicking: ${text}`);
+        console.log(`[borg Director] Auto-clicking: ${text}`);
         btn.scrollIntoView({ block: "center", behavior: "smooth" });
         btn.click();
         lastActivity = Date.now();
@@ -6163,7 +6163,7 @@ function injectDirectorBump(): boolean {
   if (!input) return false;
 
   const bumpText = CONFIG.bumpTexts[Math.floor(Math.random() * CONFIG.bumpTexts.length)];
-  console.log(`[HyperCode Director] Injecting: ${bumpText}`);
+  console.log(`[borg Director] Injecting: ${bumpText}`);
 
   if (input.tagName === 'TEXTAREA') {
     (input as HTMLTextAreaElement).value = bumpText;
@@ -6189,7 +6189,7 @@ function injectDirectorBump(): boolean {
 }
 
 function initDirector() {
-  console.log("[HyperCode Director] Initialized (minimal stable version)");
+  console.log("[borg Director] Initialized (minimal stable version)");
 
   setInterval(() => {
     const clicked = autoClickActionButtons();
@@ -6256,7 +6256,7 @@ Since I don't have direct filesystem access to your Antigravity instance, I'm pr
 1. Unified Documentation Architecture
 AGENTS.md (Consolidated Authority)
 
-# AGENTS.md — HyperCode Contributor & Agent Operating Guide
+# AGENTS.md — borg Contributor & Agent Operating Guide
 
 > **Version:** 1.0.0-rc.1  
 > **Phase:** O (Convergence)  
@@ -6327,7 +6327,7 @@ If conversation stalls (no activity > 60s):
 
 ## Repository Structure Truth
 
-hypercode/
+borg/
 ├── VERSION # Single source of truth
 ├── CHANGELOG.md # Release history
 ├── TODO.md # Immediate execution queue
@@ -6340,11 +6340,11 @@ hypercode/
 │ └── UNIVERSAL_LLM_INSTRUCTIONS.md # Canonical coding standards
 ├── packages/
 │ ├── core/ # MCPServer, Aggregator, MemoryService (NEVER import from here directly in UI)
-│ ├── ui/ # @hypercode/ui components only
+│ ├── ui/ # @borg/ui components only
 │ ├── cli/ # CLI entry point
 │ └── autopilot/ # Director and UI drivers
 ├── apps/
-│ └── web/ # Next.js dashboard (imports from @hypercode/ui only)
+│ └── web/ # Next.js dashboard (imports from @borg/ui only)
 └── submodules/ # Reference implementations (read-only analysis)
 
 
@@ -6379,7 +6379,7 @@ Version Discipline
 
 Submodule Management
 
-As reference only. We study, extract patterns, implement in HyperCode core.
+As reference only. We study, extract patterns, implement in borg core.
 
 Update protocol:
 
@@ -6390,7 +6390,7 @@ git submodule update --remote --merge
 Target Parity: github.com/robertpelloni/metamcp and the legacy cloud-orchestrator fork at github.com/robertpelloni/jules-autopilot (forks to be deprecated, functionality moved to core).
 MCP Design Philosophy (Non-Negotiable)
 
-HyperCode is a decision system, not just an aggregator.
+borg is a decision system, not just an aggregator.
 
 The Pattern:
 
@@ -6641,7 +6641,7 @@ Non-Obvious Learnings
 
     Council ≠ Complexity: The "council" doesn't need voting or consensus. It's effectively a separate LLM instance reading context and typing encouragement/guidance. Simple implementation first.
 
-    MCP Aggregator Insight: Previous research concluded that aggregators fail because they expose too many tools. HyperCode's value is selection friction reduction: tiny surface + ranked search + auto-load.
+    MCP Aggregator Insight: Previous research concluded that aggregators fail because they expose too many tools. borg's value is selection friction reduction: tiny surface + ranked search + auto-load.
 
     Version Drift is Real: Multiple files claimed different versions. Established single-source-of-truth pattern: VERSION file only.
 
@@ -7269,7 +7269,7 @@ Shall I proceed with the Provider Quota Fallback implementation next, or do you 
 Favicon for qwen
 Qwen3.5 Plus 2026-02-15
 Reasoning
-🤖 HYPERCODE SESSION CONTINUATION REPORT
+🤖 borg SESSION CONTINUATION REPORT
 
 Session Date: 2026-03-24
 Model: Qwen3.5 Plus 2026-02-15
@@ -7285,7 +7285,7 @@ Per your directive: Simplify to the 5 core functions. Rip out complexity. Ensure
 File: packages/autopilot/src/director-driver.ts
 
 /**
- * HYPERCODE Autopilot Director Driver - v0.99.9 Refactor
+ * borg Autopilot Director Driver - v0.99.9 Refactor
  * PURPOSE: Minimal reliable UI automation for Antigravity/IDE interfaces.
  * MANDATE: Detect fork, detect stall, type bump, submit bump, click buttons.
  */
@@ -7333,7 +7333,7 @@ function detectAndClickButtons(): boolean {
       // Check visibility
       const rect = btn.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0 && (btn as HTMLButtonElement).disabled !== true) {
-        console.log(`[HyperCode Director] Auto-clicking: ${text}`);
+        console.log(`[borg Director] Auto-clicking: ${text}`);
         (btn as HTMLElement).click();
         clicked = true;
         lastActivityTime = Date.now();
@@ -7408,8 +7408,8 @@ function submitBumpText(): void {
 
 // Core Loop
 function initDirectorLoop() {
-  console.log("[HyperCode Director] Initializing v0.99.9 Minimal Driver...");
-  console.log(`[HyperCode Director] Detected Fork: ${detectFork()}`);
+  console.log("[borg Director] Initializing v0.99.9 Minimal Driver...");
+  console.log(`[borg Director] Detected Fork: ${detectFork()}`);
   
   setInterval(() => {
     // Priority 1: Clear Action Buttons
@@ -7417,7 +7417,7 @@ function initDirectorLoop() {
     
     // Priority 2: Bump if stalled
     if (!uiReacted && detectStalledConversation()) {
-      console.log("[HyperCode Director] Conversation stalled. Injecting bump.");
+      console.log("[borg Director] Conversation stalled. Injecting bump.");
       typeBumpText();
       setTimeout(submitBumpText, 500);
     }

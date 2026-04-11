@@ -1,5 +1,5 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import type { MCPServerConfig } from "../config/HyperCodeConfig.js";
+import type { MCPServerConfig } from "../config/borgConfig.js";
 import { metamcpLogStore } from "../services/log-store.service.js";
 import { ProcessManagedStdioTransport } from "../transports/process-managed.transport.js";
 
@@ -76,7 +76,7 @@ export class StdioClient {
         });
 
         this.client = new Client({
-            name: `hypercode-client-${this.name}`,
+            name: `borg-client-${this.name}`,
             version: "1.0.0",
         }, {
             capabilities: {

@@ -412,7 +412,7 @@ export class RemoteConfigPlugin implements AdapterPlugin {
             id: `version-update-${data.newVersion}`,
             type: 'info',
             title: `Updated to v${data.newVersion}`,
-            message: `HyperCode Extension has been updated. Check out what's new!`,
+            message: `borg Extension has been updated. Check out what's new!`,
             actions: [
               { text: 'View Changelog', action: 'view-changelog', style: 'primary' },
               { text: 'Dismiss', action: 'dismiss', style: 'secondary' },

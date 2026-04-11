@@ -62,13 +62,13 @@ packages/ui/ui.log
 .next/
 .next-dev*/
 **/.next-dev*/
-.hypercode/
-**/.hypercode/
+.borg/
+**/.borg/
 .turbo/
 **/.turbo/
 .antigravity/
-.hypercode-session.json
-.tmp-hypercode-dist-probe.mjs
+.borg-session.json
+.tmp-borg-dist-probe.mjs
 chat2.json
 resources.db
 **/resources.db
@@ -77,7 +77,7 @@ push_err.txt
 push_out.txt
 test_logs/
 logs/
-apps/web/.hypercode-dev-port.json
+apps/web/.borg-dev-port.json
 apps/web/.tsc-current.txt
 packages/cli/audit-*.jsonl
 packages/core/.tsc-output.txt

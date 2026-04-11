@@ -2,7 +2,7 @@
 
 ## Current objective
 
-Make HyperCode feel trustworthy in daily operator use.
+Make borg feel trustworthy in daily operator use.
 
 ## P0 — Must do now
 
@@ -19,13 +19,13 @@ Make HyperCode feel trustworthy in daily operator use.
 
 - [ ] Add targeted regression coverage for provider fallback, session recovery, and discovery failures
 - [ ] Improve session attach and restart clarity
-- [ ] Deepen `hypercode` assimilation beyond harness registration once the upstream submodule exposes real runtime entrypoints
+- [ ] Deepen `borg` assimilation beyond harness registration once the upstream submodule exposes real runtime entrypoints
 - [ ] Improve memory provenance and retrieval debugging
 - [ ] Improve MCP import and export error reporting
 - [ ] Improve provider fallback history and quota clarity
 - [ ] Improve first-run empty states and setup guidance
 - [ ] Improve MCP health and validation reporting
-- [ ] Define package seams for `hypercoded`, `hypermcpd`, `hypermemd`, `hyperingest`, and `hyperharnessd` before extracting binaries
+- [ ] Define package seams for `borgd`, `hypermcpd`, `hypermemd`, `hyperingest`, and `hyperharnessd` before extracting binaries
 - [ ] Reduce duplicated orchestration logic across CLI, web, desktop, and sidecar surfaces so daemon ownership is clearer
 - [ ] Continue Go truth-parity work only where the sidecar can read the same SQLite tables, config files, session artifacts, or deterministic local defaults without pretending to own live orchestration state
 - [ ] Keep documenting which Go routes are truthful local fallbacks versus bridge-only passthroughs so operator expectations stay honest
@@ -37,12 +37,12 @@ Make HyperCode feel trustworthy in daily operator use.
 - [ ] Reduce duplicate or low-value dashboard surfaces
 - [ ] Improve tool search and working-set ergonomics
 - [ ] Design the internal MCP server library pipeline: ingestion from public lists, dedupe, provenance, and refresh rules
-- [ ] Design how HyperCode benchmarks and ranks overlapping MCP servers and tools over time
+- [ ] Design how borg benchmarks and ranks overlapping MCP servers and tools over time
 - [ ] Promote the most justified package seams into standalone binaries only after contracts and ownership are stable
 
 ## Keep visible, but do not let it hijack the queue
 
-- [ ] Build toward a definitive internal library of MCP servers so the model can eventually reach any relevant MCP tool through HyperCode
+- [ ] Build toward a definitive internal library of MCP servers so the model can eventually reach any relevant MCP tool through borg
 - [ ] Build toward a universal operator-owned control plane spanning any model, any provider, any session, and any relevant tool
 - [ ] Council or debate maturation
 - [ ] Mesh or federation ideas
@@ -54,7 +54,7 @@ Make HyperCode feel trustworthy in daily operator use.
 
 ## Decision heuristic
 
-When in doubt, choose the task that makes HyperCode:
+When in doubt, choose the task that makes borg:
 1. more reliable,
 2. more understandable,
 3. more inspectable,

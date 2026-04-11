@@ -1,7 +1,7 @@
 /**
- * `hypercode tools` - Tool management
+ * `borg tools` - Tool management
  *
- * Browse and search tools exposed through the HyperCode control plane.
+ * Browse and search tools exposed through the borg control plane.
  * Uses the live MCP inventory/search surfaces instead of placeholder output.
  */
 
@@ -155,7 +155,7 @@ async function withToolsErrorHandling(
       const location = resolveControlPlaneLocation();
       console.error(chalk.red(`  ✗ ${message}`));
       console.error(chalk.dim(`  Control plane: ${location.baseUrl} (${location.source})`));
-      console.error(chalk.dim('  Start HyperCode with `hypercode start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
+      console.error(chalk.dim('  Start borg with `borg start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
     }
     process.exitCode = 1;
   }
@@ -227,9 +227,9 @@ export function registerToolsCommand(program: Command): void {
     .option('--json', 'Output as JSON')
     .addHelpText('after', `
 Examples:
-  $ hypercode tools search "read and write files"
-  $ hypercode tools search "run shell commands"
-  $ hypercode tools search "search code semantically"
+  $ borg tools search "read and write files"
+  $ borg tools search "run shell commands"
+  $ borg tools search "search code semantically"
     `)
     .action(async (query, opts) => {
       await withToolsErrorHandling(async () => {

@@ -961,10 +961,10 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ status: initialStatus }) =>
                 />
                 <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   <div className="mb-2">
-                    <strong>To start HyperCode Extension Proxy:</strong>
+                    <strong>To start borg Extension Proxy:</strong>
                   </div>
                   <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded font-mono text-xs border border-slate-200 dark:border-slate-700">
-                    npx @srbhptl39/hypercode-extension-proxy@latest --config ./config.json --outputTransport{' '}
+                    npx @srbhptl39/borg-extension-proxy@latest --config ./config.json --outputTransport{' '}
                     {connectionType === 'sse' ? 'sse' : connectionType === 'websocket' ? 'ws' : 'streamableHttp'}
                   </div>
                   <div className="mt-2 text-xs">

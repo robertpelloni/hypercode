@@ -10026,7 +10026,7 @@ This document is an aggregated index of all autonomous models, multi-agent frame
 - [https://openai.com/index/equip-responses-api-computer-environment/](https://openai.com/index/equip-responses-api-computer-environment/)
 - [https://github.com/jkerdels/dependency-graph-mcp](https://github.com/jkerdels/dependency-graph-mcp)
 - [https://payo.tech/](https://payo.tech/)
-- [https://kunnas.com/articles/the-hypercodex](https://kunnas.com/articles/the-hypercodex)
+- [https://kunnas.com/articles/the-borgx](https://kunnas.com/articles/the-borgx)
 - [https://www.wsj.com/business/ai-startup-aaru-young-founders-35da7f87](https://www.wsj.com/business/ai-startup-aaru-young-founders-35da7f87)
 - [https://news.ycombinator.com/item?id=47343951](https://news.ycombinator.com/item?id=47343951)
 - [https://kling3.io/](https://kling3.io/)

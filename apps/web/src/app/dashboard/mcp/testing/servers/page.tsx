@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '@hypercode/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@borg/ui';
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
 import { Activity, ExternalLink, Loader2, Play, Server, TestTube2, Waypoints, Wrench } from 'lucide-react';
@@ -199,7 +199,7 @@ function MCPServerProbePageContent(): React.JSX.Element {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white">Server probes</h1>
                     <p className="mt-2 max-w-3xl text-zinc-500">
-                        Run a client-style probe against the HyperCode router or any downstream MCP server and inspect the exact request plus response payload without leaving the dashboard.
+                        Run a client-style probe against the borg router or any downstream MCP server and inspect the exact request plus response payload without leaving the dashboard.
                     </p>
                 </div>
                 <Link
@@ -308,12 +308,12 @@ function MCPServerProbePageContent(): React.JSX.Element {
                                         <div className="flex flex-wrap items-center gap-2">
                                             <Waypoints className="h-4 w-4 text-cyan-400" />
                                             <span className="font-semibold text-white">{selectedTarget.label}</span>
-                                            <span className="text-zinc-500">via {selectedTarget.kind === 'router' ? 'HyperCode router' : 'direct downstream connection'}</span>
+                                            <span className="text-zinc-500">via {selectedTarget.kind === 'router' ? 'borg router' : 'direct downstream connection'}</span>
                                         </div>
                                         <p className="mt-2 text-xs text-zinc-500">
                                             {selectedTarget.kind === 'router'
-                                                ? 'This simulates a client probing HyperCode’s aggregated router surface. Router traffic below reflects downstream calls HyperCode made on your behalf.'
-                                                : 'This bypasses HyperCode’s tool-selection layer and hits the downstream server directly, which is handy when you want to separate upstream routing issues from server-specific breakage.'}
+                                                ? 'This simulates a client probing borg’s aggregated router surface. Router traffic below reflects downstream calls borg made on your behalf.'
+                                                : 'This bypasses borg’s tool-selection layer and hits the downstream server directly, which is handy when you want to separate upstream routing issues from server-specific breakage.'}
                                         </p>
                                     </div>
 
@@ -373,7 +373,7 @@ function MCPServerProbePageContent(): React.JSX.Element {
                                             {runServerTestMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
                                             Run probe
                                         </Button>
-                                        <span className="text-xs text-zinc-500">The result includes request payload, response payload, latency, and any matching HyperCode router traffic captured during the probe window.</span>
+                                        <span className="text-xs text-zinc-500">The result includes request payload, response payload, latency, and any matching borg router traffic captured during the probe window.</span>
                                     </div>
                                 </>
                             )}
@@ -411,7 +411,7 @@ function MCPServerProbePageContent(): React.JSX.Element {
 
                                     <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">
                                         <div className="flex items-center justify-between gap-3">
-                                            <div className="text-xs uppercase tracking-wider text-zinc-500">Matching HyperCode router traffic</div>
+                                            <div className="text-xs uppercase tracking-wider text-zinc-500">Matching borg router traffic</div>
                                             <Link
                                                 href="/dashboard/inspector"
                                                 className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-white"
@@ -423,7 +423,7 @@ function MCPServerProbePageContent(): React.JSX.Element {
                                             </Link>
                                         </div>
                                         {result.trafficEvents.length === 0 ? (
-                                            <p className="mt-3 text-sm text-zinc-500">No HyperCode router traffic matched this probe window. Direct downstream probes only record the explicit request/response transcript above.</p>
+                                            <p className="mt-3 text-sm text-zinc-500">No borg router traffic matched this probe window. Direct downstream probes only record the explicit request/response transcript above.</p>
                                         ) : (
                                             <div className="mt-3 space-y-3">
                                                 {result.trafficEvents.map((event, index) => (

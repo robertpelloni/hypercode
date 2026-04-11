@@ -270,7 +270,7 @@ describe('buildStartupStatusSnapshot', () => {
                     clients: [
                         {
                             clientId: 'client-1',
-                            clientName: 'HyperCode VS Code Bridge',
+                            clientName: 'borg VS Code Bridge',
                             clientType: 'vscode-extension',
                             version: '1.2.3',
                             platform: 'VS Code 1.99',
@@ -853,7 +853,7 @@ describe('buildStartupStatusSnapshot', () => {
             },
             sectionedMemory: {
                 enabled: true,
-                storePath: '.hypercode/sectioned_memory.json',
+                storePath: '.borg/sectioned_memory.json',
                 storeExists: false,
                 totalEntries: 0,
                 sectionCount: 0,

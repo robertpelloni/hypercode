@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@hypercode/ui";
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@borg/ui";
 import { Database, Upload, FileText, Check, Loader2, Search, Brain, Activity } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -94,7 +94,7 @@ export default function IntakePage() {
                     Cognitive Intake
                 </h1>
                 <p className="text-zinc-500 mt-2">
-                    Manually feed documentation, notes, or raw logs into HyperCode's long-term memory graph.
+                    Manually feed documentation, notes, or raw logs into borg's long-term memory graph.
                 </p>
             </div>
 
@@ -159,7 +159,7 @@ export default function IntakePage() {
                             </div>
                             <div className="pt-4 border-t border-zinc-900">
                                 <p className="text-[10px] text-zinc-600 italic leading-relaxed">
-                                    HyperCode uses semantic chunking to digest large inputs. Once ingested, this knowledge is available to all agents via <code>search_memory</code> or <code>auto_call_tool</code>.
+                                    borg uses semantic chunking to digest large inputs. Once ingested, this knowledge is available to all agents via <code>search_memory</code> or <code>auto_call_tool</code>.
                                 </p>
                             </div>
                         </CardContent>

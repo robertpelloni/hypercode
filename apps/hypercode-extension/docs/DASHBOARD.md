@@ -10,7 +10,7 @@
 
 | Package | Version | Location |
 |---------|---------|----------|
-| `hypercode-extension` (root) | 0.7.3 | `package.json` |
+| `borg-extension` (root) | 0.7.3 | `package.json` |
 | `chrome-extension` | 0.7.3 | `chrome-extension/package.json` |
 | `@extension/content` | 0.7.3 | `pages/content/package.json` |
 

@@ -94,7 +94,7 @@ export const configRouter = t.router({
             try {
                 const configDir = input.scope === 'global'
                     ? getBorgConfigDir()
-                    : path.join(process.cwd(), '.hypercode');
+                    : path.join(process.cwd(), '.borg');
 
                 await writeBorgMcpConfig({ mcpServers: {} }, configDir);
 

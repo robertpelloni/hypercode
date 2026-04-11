@@ -6,7 +6,7 @@ import path from 'path';
 import Database from 'better-sqlite3';
 import fg from 'fast-glob';
 
-import { LLMService } from '@hypercode/ai';
+import { LLMService } from '@borg/ai';
 import { formatOptionalSqliteFailure } from '../db/sqliteAvailability.js';
 
 import AgentMemoryService from './AgentMemoryService.js';
@@ -744,12 +744,12 @@ export class SessionImportService {
         this.memoryService = memoryService;
         this.workspaceRoot = workspaceRoot;
         this.store = options.store ?? new ImportedSessionStore(
-            path.join(this.workspaceRoot, '.hypercode', 'imported_sessions', 'archive'),
+            path.join(this.workspaceRoot, '.borg', 'imported_sessions', 'archive'),
         );
         this.includeHomeDirectories = options.includeHomeDirectories ?? true;
         this.importIntervalMs = options.importIntervalMs ?? DEFAULT_SCAN_INTERVAL_MS;
         this.maxFilesPerRoot = options.maxFilesPerRoot ?? DEFAULT_MAX_FILES_PER_ROOT;
-        this.docsDir = path.join(this.workspaceRoot, '.hypercode', 'imported_sessions', 'docs');
+        this.docsDir = path.join(this.workspaceRoot, '.borg', 'imported_sessions', 'docs');
 
         if (typeof (this.store as ImportedSessionStore & { compactInlineTranscripts?: unknown }).compactInlineTranscripts === 'function') {
             try {
@@ -971,8 +971,8 @@ export class SessionImportService {
                 fileNameHints: ['openai', 'chatgpt', 'conversation', 'history', 'export', 'session', 'messages'],
             },
             {
-                sourceTool: 'hypercode',
-                roots: [path.join(this.workspaceRoot, '.hypercode')],
+                sourceTool: 'borg',
+                roots: [path.join(this.workspaceRoot, '.borg')],
                 filePatterns: ['**/*.{md,txt,log,json,jsonl}'],
                 fileNameHints: ['session', 'memory', 'handoff', 'history'],
             },
@@ -1090,8 +1090,8 @@ export class SessionImportService {
                 importAllFiles: true,
             },
             {
-                sourceTool: 'hypercode',
-                roots: [path.join(homeDir, '.hypercode')],
+                sourceTool: 'borg',
+                roots: [path.join(homeDir, '.borg')],
                 filePatterns: ['**/*.{md,txt,log,json,jsonl}'],
                 fileNameHints: ['session', 'memory', 'handoff', 'history'],
             },
@@ -1604,8 +1604,8 @@ export class SessionImportService {
     private isGeneratedImportPath(filePath: string): boolean {
         const normalizedPath = path.resolve(filePath).toLowerCase();
         const ignoredRoots = [
-            path.join(this.workspaceRoot, '.hypercode', 'imported_sessions'),
-            path.join(os.homedir(), '.hypercode', 'imported_sessions'),
+            path.join(this.workspaceRoot, '.borg', 'imported_sessions'),
+            path.join(os.homedir(), '.borg', 'imported_sessions'),
         ]
             .map((root) => path.resolve(root).toLowerCase());
 
@@ -1795,7 +1795,7 @@ export class SessionImportService {
         }
 
         const prompt = `
-You are HyperCode's session-import memory extractor and archive-retention analyst.
+You are borg's session-import memory extractor and archive-retention analyst.
 Given an imported transcript from ${session.sourceTool}, extract up to 6 durable technical memories or operator instructions and summarize what should remain archive-only.
 Project context:
 - working directory: ${session.workingDirectory}
@@ -1806,7 +1806,7 @@ Return JSON only as an object:
 {
   "memories": [
     {
-      "fact": "Use port 4000 for the HyperCode control plane.",
+      "fact": "Use port 4000 for the borg control plane.",
       "tags": ["networking", "runtime"],
       "kind": "instruction"
     }

@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/borghq/hypercode-go/internal/config"
-	"github.com/borghq/hypercode-go/internal/interop"
-	"github.com/borghq/hypercode-go/internal/memorystore"
+	"github.com/borghq/borg-go/internal/config"
+	"github.com/borghq/borg-go/internal/interop"
+	"github.com/borghq/borg-go/internal/memorystore"
 )
 
 type StartupBlockingReason struct {

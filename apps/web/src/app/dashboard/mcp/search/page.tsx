@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@hypercode/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@borg/ui";
 import { Loader2, Search, Zap, Code, Layers, ExternalLink, Activity, Database, ArrowDownToLine, Sparkles, Trash2, SlidersHorizontal, History } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -127,7 +127,7 @@ type EvictionReasonFilter = 'all' | 'idle-biased' | 'capacity';
 type EvictionTierFilter = 'all' | WorkingSetEvictionEvent['tier'];
 type EvictionWindowPreset = 'all' | '5m' | '15m' | '1h' | '24h';
 
-const TELEMETRY_FILTERS_STORAGE_KEY = 'hypercode.mcp.search.telemetryFilters.v1';
+const TELEMETRY_FILTERS_STORAGE_KEY = 'borg.mcp.search.telemetryFilters.v1';
 const TELEMETRY_TYPE_QUERY_KEY = 'telemetryType';
 const TELEMETRY_STATUS_QUERY_KEY = 'telemetryStatus';
 const TELEMETRY_WINDOW_QUERY_KEY = 'telemetryWindow';
@@ -135,7 +135,7 @@ const TELEMETRY_SOURCE_QUERY_KEY = 'telemetrySource';
 const TELEMETRY_TOOL_QUERY_KEY = 'telemetryTool';
 const TELEMETRY_BUCKET_START_QUERY_KEY = 'telemetryBucketStart';
 const TELEMETRY_BUCKET_END_QUERY_KEY = 'telemetryBucketEnd';
-const EVICTION_FILTERS_STORAGE_KEY = 'hypercode.mcp.search.evictionFilters.v1';
+const EVICTION_FILTERS_STORAGE_KEY = 'borg.mcp.search.evictionFilters.v1';
 const EVICTION_REASON_QUERY_KEY = 'evictionReason';
 const EVICTION_TIER_QUERY_KEY = 'evictionTier';
 const EVICTION_WINDOW_QUERY_KEY = 'evictionWindow';
@@ -1755,7 +1755,7 @@ function SearchDashboardContent() {
                                     <div className="text-xs uppercase tracking-wider text-zinc-500">Keep warm tools</div>
                                     <div className="mt-1 text-2xl font-semibold text-white">{preferencesError ? '—' : alwaysLoadedTools.size}</div>
                                     <div className={`mt-1 text-xs ${preferencesError ? 'text-red-300' : 'text-zinc-500'}`}>
-                                        {preferencesError ? preferencesError : 'Pinned tools HyperCode auto-loads into the working set.'}
+                                        {preferencesError ? preferencesError : 'Pinned tools borg auto-loads into the working set.'}
                                     </div>
                                 </div>
                                 <div className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3 md:col-span-3 space-y-3">
@@ -1779,7 +1779,7 @@ function SearchDashboardContent() {
                                             value={autoLoadMinConfidenceDraft}
                                             onChange={(event) => setAutoLoadMinConfidenceDraft(Number(event.target.value))}
                                             className="w-full"
-                                            title="Set minimum confidence required before HyperCode auto-loads the top ranked tool"
+                                            title="Set minimum confidence required before borg auto-loads the top ranked tool"
                                             aria-label="Auto-load confidence threshold"
                                             disabled={Boolean(preferencesError)}
                                         />
@@ -3518,7 +3518,7 @@ function SearchDashboardContent() {
                             <textarea
                                 value={jsoncDraft}
                                 onChange={(event) => setJsoncDraft(event.target.value)}
-                                title="Edit the HyperCode MCP JSONC configuration. Changes are saved to the HyperCode config mcp.jsonc file (typically ~/.hypercode/mcp.jsonc)."
+                                title="Edit the borg MCP JSONC configuration. Changes are saved to the borg config mcp.jsonc file (typically ~/.borg/mcp.jsonc)."
                                 aria-label="MCP JSONC configuration editor"
                                 className="w-full h-48 bg-zinc-950 border border-zinc-800 rounded-md p-3 font-mono text-xs text-zinc-200 outline-none"
                                 spellCheck={false}

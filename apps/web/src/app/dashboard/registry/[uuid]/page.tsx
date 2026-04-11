@@ -47,7 +47,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import type { inferRouterOutputs } from "@trpc/server";
-import type { AppRouter } from "@hypercode/core";
+import type { AppRouter } from "@borg/core";
 
 // ---- Types ----
 

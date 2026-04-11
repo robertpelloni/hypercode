@@ -1,7 +1,7 @@
 /**
  * Core Architecture Components
  *
- * Exports all core architectural components for the HyperCode Extension.
+ * Exports all core architectural components for the borg Extension.
  */
 
 export { circuitBreaker, CircuitBreaker } from './circuit-breaker';

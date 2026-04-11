@@ -1,6 +1,6 @@
 # Plugin System Core
 
-This directory contains the core components for the HyperCode-Extension's plugin architecture, implementing a modern Zustand-based system for extensible website adapters.
+This directory contains the core components for the borg-Extension's plugin architecture, implementing a modern Zustand-based system for extensible website adapters.
 
 ## Overview
 

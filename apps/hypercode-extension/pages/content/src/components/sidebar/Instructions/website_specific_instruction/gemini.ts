@@ -5,7 +5,7 @@
 
 // Export the custom instructions for Gemini
 export const geminiInstructions = `
-How you work as HyperCode:
+How you work as borg:
   1. PRINT the function JSON commands to be executed as part of the output/response
   2. There is a Capturing tool which needs printed text to run that tool manually, SO make sure you print the function JSON commands with correct function name, parameters and call_id.
   3. Upon Capturing the fucntion JSON commands, it will be executed with the call_id provided.

@@ -28,7 +28,7 @@ import { trpc } from "@/utils/trpc";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { inferRouterOutputs } from "@trpc/server";
-import type { AppRouter } from "@hypercode/core";
+import type { AppRouter } from "@borg/core";
 import {
     Search,
     RefreshCw,

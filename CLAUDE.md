@@ -33,17 +33,17 @@ Best suited for:
 
 ## Binary-topology context
 
-When working on the long-term HyperCode architecture, assume the recommended direction is:
+When working on the long-term borg architecture, assume the recommended direction is:
 
-- `hypercode` / `hypercoded` as the main operator CLI + daemon pair
+- `borg` / `borgd` as the main operator CLI + daemon pair
 - `hypermcpd` for MCP routing/aggregation
 - `hypermemd` and `hyperingest` for memory/resource/background ingestion concerns
 - `hyperharnessd` for harness runtime isolation
-- `hypercode-web` and `hypercode-native` as clients, not alternate orchestration backends
+- `borg-web` and `borg-native` as clients, not alternate orchestration backends
 
 Use these ownership assumptions while designing boundaries:
 
-- `hypercoded` owns orchestration, supervision, and operator-facing control-plane truth
+- `borgd` owns orchestration, supervision, and operator-facing control-plane truth
 - `hypermcpd` owns MCP registry, routing, and tool mediation
 - `hypermemd` owns long-running memory/session/resource state
 - `hyperingest` owns batch imports and normalization work

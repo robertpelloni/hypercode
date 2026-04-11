@@ -5,7 +5,7 @@ import SuggestionsPanel from '../../components/SuggestionsPanel';
 import { SessionHandoffWidget } from '../../components/SessionHandoffWidget';
 import { ContextHealthWidget } from '../../components/ContextHealthWidget';
 import { NeuralPulse } from '../../components/NeuralPulse';
-import { HyperCodeOrchestratorWidget } from '../../components/HyperCodeOrchestratorWidget';
+import { borgOrchestratorWidget } from '../../components/borgOrchestratorWidget';
 
 export interface DashboardStatusSummary {
     initialized: boolean;
@@ -909,7 +909,7 @@ export function buildDashboardAlerts(
             id: 'startup-compat-fallback',
             severity: 'warning',
             title: 'Startup is using local compat fallback',
-            detail: startupSummary || 'Live startup telemetry is unavailable, so HyperCode is showing config-backed compatibility state instead of the full core startup contract.',
+            detail: startupSummary || 'Live startup telemetry is unavailable, so borg is showing config-backed compatibility state instead of the full core startup contract.',
             href: '/dashboard/mcp/system',
             hrefLabel: 'Review startup status',
         });
@@ -1050,7 +1050,7 @@ function getAlertTone(severity: DashboardAlert['severity']): string {
 }
 
 export function DashboardHomeView({
-    versionLabel = 'HyperCode',
+    versionLabel = 'borg',
     generatedAtLabel,
     currentTimestamp,
     isBootstrapping = false,
@@ -1152,7 +1152,7 @@ export function DashboardHomeView({
 
                         {isBootstrapping ? (
                             <div className="mt-4 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-sm text-cyan-100">
-                                Connecting to live core telemetry. HyperCode will replace these neutral placeholders as soon as the first startup snapshot arrives.
+                                Connecting to live core telemetry. borg will replace these neutral placeholders as soon as the first startup snapshot arrives.
                             </div>
                         ) : dashboardAlerts.length === 0 ? (
                             <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-100">
@@ -1368,7 +1368,7 @@ export function DashboardHomeView({
                         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
                             <div className="flex items-start justify-between gap-4">
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Install &amp; connect HyperCode</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Install &amp; connect borg</h3>
                                     <p className="mt-1 text-sm text-slate-500">Fast path for getting browser bridges, editor surfaces, and managed MCP configs into the tools you already use.</p>
                                 </div>
                                 <Link
@@ -1392,7 +1392,7 @@ export function DashboardHomeView({
                                 </div>
                                 <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 text-sm text-slate-300">
                                     <div className="font-medium text-white">Client config sync</div>
-                                    <p className="mt-2 text-slate-400">Push HyperCode-managed MCP endpoints into Claude Desktop, Cursor, and VS Code without manual JSON surgery.</p>
+                                    <p className="mt-2 text-slate-400">Push borg-managed MCP endpoints into Claude Desktop, Cursor, and VS Code without manual JSON surgery.</p>
                                 </div>
                             </div>
                         </div>
@@ -1665,12 +1665,12 @@ export function DashboardHomeView({
                         </div>
                     </section>
 
-                        <HyperCodeOrchestratorWidget />
+                        <borgOrchestratorWidget />
 
                     </div>
 
                     <div className="flex flex-col gap-6">
-                        <HyperCodeOrchestratorWidget />
+                        <borgOrchestratorWidget />
                     </div>
                 </div>
             </div>

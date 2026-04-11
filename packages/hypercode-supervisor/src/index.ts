@@ -23,7 +23,7 @@ class SupervisorServer {
         this.uiAutomationManager = new UiAutomationManager();
         this.server = new Server(
             {
-                name: "hypercode-supervisor",
+                name: "borg-supervisor",
                 version: "0.1.0",
             },
             {
@@ -42,7 +42,7 @@ class SupervisorServer {
                 tools: [
                     {
                         name: "install_supervisor",
-                        description: "Install HyperCode Supervisor into Antigravity MCP Config",
+                        description: "Install borg Supervisor into Antigravity MCP Config",
                         inputSchema: {
                             type: "object",
                             properties: {
@@ -476,10 +476,10 @@ class SupervisorServer {
     }
 
     async start() {
-        logger.info("HyperCode Supervisor Starting...");
+        logger.info("borg Supervisor Starting...");
         const transport = new StdioServerTransport();
         await this.server.connect(transport);
-        logger.info("HyperCode Supervisor Connected to Stdio");
+        logger.info("borg Supervisor Connected to Stdio");
     }
 }
 

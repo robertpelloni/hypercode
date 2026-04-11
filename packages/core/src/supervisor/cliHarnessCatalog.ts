@@ -14,13 +14,13 @@ export interface CliHarnessCatalogEntry {
 
 export const CLI_HARNESS_CATALOG: CliHarnessCatalogEntry[] = [
     {
-        id: 'hypercode',
-        name: 'HyperCode',
-        command: 'hypercode',
+        id: 'borg',
+        name: 'borg',
+        command: 'borg',
         args: [],
-        homepage: 'https://github.com/robertpelloni/hypercode',
-        docsUrl: 'https://github.com/robertpelloni/hypercode',
-        installHint: 'Use Borg\'s tracked `submodules/hypercode` checkout or install HyperCode and ensure `hypercode` is on PATH.',
+        homepage: 'https://github.com/robertpelloni/borg',
+        docsUrl: 'https://github.com/robertpelloni/borg',
+        installHint: 'Use Borg\'s tracked `submodules/borg` checkout or install borg and ensure `borg` is on PATH.',
         category: 'cli',
         sessionCapable: true,
         versionArgs: ['version'],

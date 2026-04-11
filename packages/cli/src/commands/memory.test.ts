@@ -172,7 +172,7 @@ describe('registerMemoryCommand', () => {
       exportedAt: '2026-04-02T09:00:00.000Z',
     });
 
-    const output = join(tmpdir(), `hypercode-memory-export-${Date.now()}.json`);
+    const output = join(tmpdir(), `borg-memory-export-${Date.now()}.json`);
 
     try {
       const program = createProgram();
@@ -189,7 +189,7 @@ describe('registerMemoryCommand', () => {
   });
 
   it('imports memories through the live control plane as JSON', async () => {
-    const input = join(tmpdir(), `hypercode-memory-import-${Date.now()}.json`);
+    const input = join(tmpdir(), `borg-memory-import-${Date.now()}.json`);
     queryTrpcMock.mockResolvedValue({
       imported: 2,
       errors: 0,

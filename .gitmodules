@@ -28,6 +28,6 @@
 [submodule "submodules/prism-mcp"]
 	path = submodules/prism-mcp
 	url = https://github.com/dcostenco/prism-mcp
-[submodule "submodules/hypercode"]
-	path = submodules/hypercode
-	url = https://github.com/robertpelloni/hypercode.git
+[submodule "submodules/borg"]
+	path = submodules/borg
+	url = https://github.com/robertpelloni/borg.git

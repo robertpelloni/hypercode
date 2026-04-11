@@ -109,7 +109,7 @@ pnpm start
 Once the dashboard is running, navigate to the **Integrations** tab in the WebUI to install:
 *   Browser Extensions (Chrome, Firefox).
 *   IDE Plugins (VSCode, Cursor, Windsurf).
-*   CLI Harnesses, with `hypercode` now tracked as Borg's primary CLI harness lane via `submodules/hypercode` and surfaced as a Go/Cobra runtime with REPL + `pipe` metadata (still **Experimental**).
+*   CLI Harnesses, with `borg` now tracked as Borg's primary CLI harness lane via `submodules/borg` and surfaced as a Go/Cobra runtime with REPL + `pipe` metadata (still **Experimental**).
 
 ## Package Manager Requirement
 

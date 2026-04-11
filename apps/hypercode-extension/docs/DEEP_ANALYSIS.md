@@ -3,7 +3,7 @@
 **Version**: 0.7.1
 **Date**: 2026-02-12
 
-This document provides a comprehensive technical analysis of the `hypercode-extension` codebase, intended for advanced AI models and senior developers. It covers architectural patterns, state management, data flow, and specific feature implementations.
+This document provides a comprehensive technical analysis of the `borg-extension` codebase, intended for advanced AI models and senior developers. It covers architectural patterns, state management, data flow, and specific feature implementations.
 
 ## 1. Architecture Overview
 

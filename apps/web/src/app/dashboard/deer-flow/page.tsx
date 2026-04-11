@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@hypercode/ui";
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@borg/ui";
 import { Loader2, ExternalLink, Activity, BrainCircuit, Box, Workflow, Network, Cable, ShieldAlert } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -141,7 +141,7 @@ export default function DeerFlowDashboard() {
                             <PageStatusBanner
                                 status="experimental"
                                 message="DeerFlow is an external LangGraph agent harness. This page requires the DeerFlow service to be running independently."
-                                note="Full HyperCode-native orchestration is planned for a future release."
+                                note="Full borg-native orchestration is planned for a future release."
                             />
                 </div>
             </div>

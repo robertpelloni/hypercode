@@ -1,6 +1,6 @@
 # Shared Package (`@extension/shared`)
 
-This package contains shared TypeScript types, utilities, and constants used across the HyperCode Extension extension, particularly between the content script and background script components.
+This package contains shared TypeScript types, utilities, and constants used across the borg Extension extension, particularly between the content script and background script components.
 
 ## Contents
 

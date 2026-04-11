@@ -1,7 +1,7 @@
 /**
- * `hypercode status` - Show system status overview
+ * `borg status` - Show system status overview
  *
- * Displays the current state of the HyperCode system including server status,
+ * Displays the current state of the borg system including server status,
  * MCP servers, active sessions, and provider quotas.
  */
 
@@ -71,7 +71,7 @@ async function withStatusErrorHandling(
       const location = resolveControlPlaneLocation();
       console.error(chalk.red(`  ✗ ${message}`));
       console.error(chalk.dim(`  Control plane: ${location.baseUrl} (${location.source})`));
-      console.error(chalk.dim('  Start HyperCode with `hypercode start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
+      console.error(chalk.dim('  Start borg with `borg start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
     }
     process.exitCode = 1;
   }
@@ -83,12 +83,12 @@ export function registerStatusCommand(program: Command): void {
 
   program
     .command('status')
-    .description('Show HyperCode system status (server, MCP, sessions, memory, providers)')
+    .description('Show borg system status (server, MCP, sessions, memory, providers)')
     .option('--json', 'Output as JSON')
     .addHelpText('after', `
 Examples:
-  $ hypercode status          Show full system overview
-  $ hypercode status --json   Machine-readable JSON output
+  $ borg status          Show full system overview
+  $ borg status --json   Machine-readable JSON output
     `)
     .action(async (opts) => {
       await withStatusErrorHandling(async () => {
@@ -142,7 +142,7 @@ Examples:
         const chalk = (await import('chalk')).default;
         const Table = (await import('cli-table3')).default;
 
-        console.log(chalk.bold.cyan('\n  ⬡ HyperCode Status\n'));
+        console.log(chalk.bold.cyan('\n  ⬡ borg Status\n'));
 
         const table = new Table({
           chars: { mid: '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' },

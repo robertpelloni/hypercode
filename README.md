@@ -1,15 +1,15 @@
-# HyperCode
+# borg
 
 **The local-first control plane for AI operations.**
 
 > Status: **Pre-1.0 convergence**  
 > Focus: **stability, truthfulness, and operator trust**
 
-HyperCode helps operators run a fragmented AI tool stack from one local control plane. It is designed for people who already use multiple MCP servers, multiple model providers, and multiple coding or session workflows—and want one place to inspect, route, recover, and understand them.
+borg helps operators run a fragmented AI tool stack from one local control plane. It is designed for people who already use multiple MCP servers, multiple model providers, and multiple coding or session workflows—and want one place to inspect, route, recover, and understand them.
 
-## What HyperCode is
+## What borg is
 
-HyperCode is primarily four things:
+borg is primarily four things:
 
 1. **MCP control plane** — manage and inspect MCP servers and tool inventories from one local service.
 2. **Provider routing layer** — handle quota-aware fallback across model providers.
@@ -25,7 +25,7 @@ Modern AI work is messy:
 - too little context continuity,
 - and weak observability when something breaks.
 
-HyperCode exists to reduce that fragmentation without requiring a hosted backend.
+borg exists to reduce that fragmentation without requiring a hosted backend.
 
 ## What is real today
 
@@ -45,7 +45,7 @@ HyperCode exists to reduce that fragmentation without requiring a hosted backend
 - Browser and IDE bridge integration surfaces
 
 ### Experimental
-- HyperCode assimilation via `submodules/hypercode` plus primary HyperCode CLI harness registration
+- borg assimilation via `submodules/borg` plus primary borg CLI harness registration
 - Council or debate workflows
 - Broader autonomous workflow layers
 - Mobile and desktop parity layers
@@ -53,16 +53,16 @@ HyperCode exists to reduce that fragmentation without requiring a hosted backend
 
 ### Vision
 - A definitive internal library of MCP servers and tool metadata aggregated from public lists and operator-added sources
-- Continuous normalization, deduplication, and refresh of that MCP library inside HyperCode
+- Continuous normalization, deduplication, and refresh of that MCP library inside borg
 - Eventual operator-controlled access to any relevant MCP tool through one local control plane
-- Operator-owned discovery, benchmarking, and ranking of the MCP ecosystem so HyperCode knows what tools exist, how well they work, and when to trust them
-- A universal model-facing substrate where any model, any provider, any session, and any relevant MCP tool can be coordinated through HyperCode
+- Operator-owned discovery, benchmarking, and ranking of the MCP ecosystem so borg knows what tools exist, how well they work, and when to trust them
+- A universal model-facing substrate where any model, any provider, any session, and any relevant MCP tool can be coordinated through borg
 
-## What HyperCode is not yet
+## What borg is not yet
 
-HyperCode is **not yet** a fully hardened universal “AI operating system.” The most honest current description is:
+borg is **not yet** a fully hardened universal “AI operating system.” The most honest current description is:
 
-> HyperCode is an ambitious, local-first AI control plane with real implementation across MCP routing, provider management, sessions, and memory—plus a broader experimental layer around orchestration and automation.
+> borg is an ambitious, local-first AI control plane with real implementation across MCP routing, provider management, sessions, and memory—plus a broader experimental layer around orchestration and automation.
 
 ## Current focus
 
@@ -73,11 +73,11 @@ The current release track centers on:
 - session continuity,
 - and honest dashboard or operator UX.
 
-Longer-term, HyperCode should become the place where operators maintain a definitive internal MCP server library, benchmark the live tool ecosystem, and expose universal tool reach through one operator-owned control plane. That ambition is intentionally large, but it is still **Vision** work until the current control plane is more reliable.
+Longer-term, borg should become the place where operators maintain a definitive internal MCP server library, benchmark the live tool ecosystem, and expose universal tool reach through one operator-owned control plane. That ambition is intentionally large, but it is still **Vision** work until the current control plane is more reliable.
 
 ## Orchestrator identities
 
-HyperCode currently presents three operator-facing orchestrator identities:
+borg currently presents three operator-facing orchestrator identities:
 
 - `packages/cli` is the **cli-orchestrator** lane.
 - `apps/maestro` is the desktop **electron-orchestrator** lane.
@@ -85,7 +85,7 @@ HyperCode currently presents three operator-facing orchestrator identities:
 
 The experimental Go workspace under `go/` is a sidecar **cli-orchestrator** coexistence port for read-parity and feasibility work, not a replacement fork and not yet the primary control-plane implementation.
 
-Today, `electron-orchestrator` and `cli-orchestrator` do **not** yet have 100% feature parity. The desktop lane currently exposes the broader operator UX, while the Node-based CLI lane remains the cleaner control-plane foundation. HyperCode should not drop either surface until parity gaps and operator workflows are intentionally closed. The Go lane should currently be described as **Experimental** read-only bridge replacement work, not as a completed daemon extraction.
+Today, `electron-orchestrator` and `cli-orchestrator` do **not** yet have 100% feature parity. The desktop lane currently exposes the broader operator UX, while the Node-based CLI lane remains the cleaner control-plane foundation. borg should not drop either surface until parity gaps and operator workflows are intentionally closed. The Go lane should currently be described as **Experimental** read-only bridge replacement work, not as a completed daemon extraction.
 
 ## Quick start
 
@@ -99,16 +99,16 @@ pnpm install
 pnpm run dev
 ```
 
-### HyperCode harness lane
+### borg harness lane
 ```bash
-hypercode session harnesses
-hypercode session start ./my-app --harness hypercode
-hypercode mesh status
+borg session harnesses
+borg session start ./my-app --harness borg
+borg mesh status
 ```
 
-`hypercode` is now HyperCode's primary CLI harness identity, backed by the `submodules/hypercode` upstream. The upstream now exposes a Go/Cobra CLI with a default TUI REPL plus a `pipe` command, and HyperCode now surfaces HyperCode's source-backed tool inventory from `submodules/hypercode/tools/*.go` via `hypercode session harnesses` and the Go sidecar harness registry. HyperCode's harness catalogs now also track the broader known external identities it already references elsewhere in the repo, including `aider`, `cursor`, `copilot`, `qwen`, `superai-cli`, `codebuff`, `codemachine`, and `factory-droid`, but those still expose install/runtime metadata only until HyperCode has equally source-backed bridge contracts for them. HyperCode's maturity remains **Experimental** while the cross-runtime adapter contract is still shallow.
+`borg` is now borg's primary CLI harness identity, backed by the `submodules/borg` upstream. The upstream now exposes a Go/Cobra CLI with a default TUI REPL plus a `pipe` command, and borg now surfaces borg's source-backed tool inventory from `submodules/borg/tools/*.go` via `borg session harnesses` and the Go sidecar harness registry. borg's harness catalogs now also track the broader known external identities it already references elsewhere in the repo, including `aider`, `cursor`, `copilot`, `qwen`, `superai-cli`, `codebuff`, `codemachine`, and `factory-droid`, but those still expose install/runtime metadata only until borg has equally source-backed bridge contracts for them. borg's maturity remains **Experimental** while the cross-runtime adapter contract is still shallow.
 
-The CLI mesh surface is now operator-visible through `hypercode mesh status`, `hypercode mesh peers`, `hypercode mesh capabilities [nodeId]`, and `hypercode mesh find --capability <name>`. These commands query the live local control plane through `BORG_TRPC_UPSTREAM` or the HyperCode startup lock, so they report real mesh visibility instead of placeholder CLI output.
+The CLI mesh surface is now operator-visible through `borg mesh status`, `borg mesh peers`, `borg mesh capabilities [nodeId]`, and `borg mesh find --capability <name>`. These commands query the live local control plane through `BORG_TRPC_UPSTREAM` or the borg startup lock, so they report real mesh visibility instead of placeholder CLI output.
 
 ### Docker
 ```bash
@@ -120,7 +120,7 @@ docker compose up --build
 ```text
 apps/
   web/              Next.js dashboard
-  hypercode-extension/   Browser extension surfaces (compatibility path)
+  borg-extension/   Browser extension surfaces (compatibility path)
   maestro/          electron-orchestrator desktop shell work (legacy path)
   vscode/           VS Code integration
 
@@ -132,28 +132,28 @@ packages/
   types/            Shared types
 
 submodules/
-  hypercode/        External HyperCode harness upstream (experimental assimilation track)
+  borg/        External borg harness upstream (experimental assimilation track)
 
 go/
-  cmd/hypercode/         Experimental sidecar Go cli-orchestrator port workspace
+  cmd/borg/         Experimental sidecar Go cli-orchestrator port workspace
 
-The Go port is intentionally isolated from the main Node/Next fork. It uses its own `.hypercode-go` config directory and can observe the primary HyperCode lock state via `/api/runtime/locks`, summarize its interop visibility via `/api/runtime/status` including compact lock visibility/running counts, config-path health, total and available CLI tool/harness counts, provider totals plus configured/authenticated/executable counts and auth/task buckets, memory availability plus default-section and per-section entry breakdowns, discovered-session counts plus session-type, task, model-hint, and TypeScript supervisor-bridge visibility, and import-root plus import-source health including valid/invalid counts, aggregate estimated size, and compact source-type, model-hint, and error buckets, expose a self-describing route index via `/api/index`, inspect effective path wiring via `/api/config/status` including repo-level `hypercode.config.json` and `mcp.jsonc` presence, expose read-only provider credential visibility via `/api/providers/status`, expose provider catalog metadata via `/api/providers/catalog`, expose compact provider rollups via `/api/providers/summary`, preview intended task-type routing order via `/api/providers/routing-summary`, read the main fork's generated imported-instructions artifact via `/api/runtime/imported-instructions`, expose discovered session artifacts through `/api/sessions` and `/api/sessions/summary`, and bridge or selectively replace TypeScript read routes across `/api/sessions/supervisor/*`, `/api/sessions/imported/*`, `/api/mcp/*`, `/api/memory/*`, `/api/agent-memory/*`, `/api/graph/*`, `/api/context/*`, `/api/git/*`, `/api/tests/*`, `/api/metrics/*`, `/api/logs/*`, `/api/server-health/*`, `/api/settings/*`, `/api/tools/*`, `/api/tool-sets/*`, `/api/project/*`, `/api/shell/*`, `/api/agent/*`, `/api/commands/*`, `/api/skills/*`, `/api/workflows/*`, `/api/symbols/*`, `/api/lsp/*`, `/api/api-keys/*`, `/api/audit/*`, `/api/scripts/*`, `/api/links-backlog/*`, `/api/infrastructure/*`, `/api/expert/*`, `/api/policies/*`, `/api/secrets/*`, `/api/marketplace/*`, `/api/catalog/*`, `/api/oauth/*`, `/api/research/*`, `/api/pulse/*`, `/api/session-export/*`, `/api/browser-extension/*`, `/api/open-webui/*`, `/api/code-mode/*`, `/api/submodules/*`, `/api/suggestions/*`, and `/api/plan/*`. Some of those reads now have truthful local Go fallbacks backed by the same SQLite database, local config files, or deterministic local defaults, but many orchestration-heavy routes remain bridge-only by design. Its current role is to validate a Go-native cli-orchestrator path, grow honest read-only local truth where practical, and avoid overstating daemon-extraction maturity before the underlying contracts are stable.
+The Go port is intentionally isolated from the main Node/Next fork. It uses its own `.borg-go` config directory and can observe the primary borg lock state via `/api/runtime/locks`, summarize its interop visibility via `/api/runtime/status` including compact lock visibility/running counts, config-path health, total and available CLI tool/harness counts, provider totals plus configured/authenticated/executable counts and auth/task buckets, memory availability plus default-section and per-section entry breakdowns, discovered-session counts plus session-type, task, model-hint, and TypeScript supervisor-bridge visibility, and import-root plus import-source health including valid/invalid counts, aggregate estimated size, and compact source-type, model-hint, and error buckets, expose a self-describing route index via `/api/index`, inspect effective path wiring via `/api/config/status` including repo-level `borg.config.json` and `mcp.jsonc` presence, expose read-only provider credential visibility via `/api/providers/status`, expose provider catalog metadata via `/api/providers/catalog`, expose compact provider rollups via `/api/providers/summary`, preview intended task-type routing order via `/api/providers/routing-summary`, read the main fork's generated imported-instructions artifact via `/api/runtime/imported-instructions`, expose discovered session artifacts through `/api/sessions` and `/api/sessions/summary`, and bridge or selectively replace TypeScript read routes across `/api/sessions/supervisor/*`, `/api/sessions/imported/*`, `/api/mcp/*`, `/api/memory/*`, `/api/agent-memory/*`, `/api/graph/*`, `/api/context/*`, `/api/git/*`, `/api/tests/*`, `/api/metrics/*`, `/api/logs/*`, `/api/server-health/*`, `/api/settings/*`, `/api/tools/*`, `/api/tool-sets/*`, `/api/project/*`, `/api/shell/*`, `/api/agent/*`, `/api/commands/*`, `/api/skills/*`, `/api/workflows/*`, `/api/symbols/*`, `/api/lsp/*`, `/api/api-keys/*`, `/api/audit/*`, `/api/scripts/*`, `/api/links-backlog/*`, `/api/infrastructure/*`, `/api/expert/*`, `/api/policies/*`, `/api/secrets/*`, `/api/marketplace/*`, `/api/catalog/*`, `/api/oauth/*`, `/api/research/*`, `/api/pulse/*`, `/api/session-export/*`, `/api/browser-extension/*`, `/api/open-webui/*`, `/api/code-mode/*`, `/api/submodules/*`, `/api/suggestions/*`, and `/api/plan/*`. Some of those reads now have truthful local Go fallbacks backed by the same SQLite database, local config files, or deterministic local defaults, but many orchestration-heavy routes remain bridge-only by design. Its current role is to validate a Go-native cli-orchestrator path, grow honest read-only local truth where practical, and avoid overstating daemon-extraction maturity before the underlying contracts are stable.
 ```
 
 ## Recommended binary-to-package evolution
 
-The repo does **not** yet ship the full recommended HyperCode binary family, but the current workspace already suggests the right extraction seams.
+The repo does **not** yet ship the full recommended borg binary family, but the current workspace already suggests the right extraction seams.
 
 ### Control plane
 
-- Future binaries: `hypercode`, `hypercoded`
+- Future binaries: `borg`, `borgd`
 - Current likely sources:
   - `packages/cli`
   - `packages/core`
   - `packages/ai`
   - `packages/types`
   - `packages/tools`
-  - `go/cmd/hypercode`
+  - `go/cmd/borg`
   - `go/internal/controlplane`, `go/internal/httpapi`, `go/internal/providers`
 
 ### MCP layer
@@ -182,7 +182,7 @@ The repo does **not** yet ship the full recommended HyperCode binary family, but
 - Current likely sources:
   - `packages/agents`
   - `packages/adk`
-  - `packages/hypercode-supervisor`
+  - `packages/borg-supervisor`
   - `packages/browser`
   - `packages/search`
   - harness registration and supervisor flows in `packages/core`
@@ -190,7 +190,7 @@ The repo does **not** yet ship the full recommended HyperCode binary family, but
 
 ### Client surfaces
 
-- Future apps/binaries: `hypercode-web`, `hypercode-native`
+- Future apps/binaries: `borg-web`, `borg-native`
 - Current likely sources:
   - `apps/web`
   - `apps/maestro`
@@ -206,7 +206,7 @@ Keep shared contracts, config, auth, logging, and transport schemas in reusable 
 
 If work proceeds incrementally, the first concrete seams should be:
 
-1. `hypercoded`
+1. `borgd`
    - pull top-level control-plane routing, operator health/status APIs, lock/config coordination, and provider-routing orchestration toward a cleaner daemon-owned boundary
    - keep CLI, web, and native surfaces as clients of that boundary
 2. `hypermcpd`
@@ -225,7 +225,7 @@ These seams are preferred first because they already have visible operator-facin
 
 ## Contributing
 
-For now, compatibility paths, package names, and the `hypercode` CLI command remain unchanged while the visible branding shifts to HyperCode.
+For now, compatibility paths, package names, and the `borg` CLI command remain unchanged while the visible branding shifts to borg.
 
 Use `pnpm` v10 and verify changes before claiming success:
 

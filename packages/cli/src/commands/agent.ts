@@ -1,13 +1,13 @@
 /**
- * `hypercode agent` - Agent management commands
+ * `borg agent` - Agent management commands
  *
  * Manage AI agents: list available definitions, spawn instances,
  * monitor running agents, and interact via chat.
  *
  * @example
- *   hypercode agent list              # List available agent definitions
- *   hypercode agent spawn architect   # Spawn an architect agent
- *   hypercode agent chat agent_123    # Chat with a running agent
+ *   borg agent list              # List available agent definitions
+ *   borg agent spawn architect   # Spawn an architect agent
+ *   borg agent chat agent_123    # Chat with a running agent
  */
 
 import type { Command } from 'commander';
@@ -46,7 +46,7 @@ async function withAgentErrorHandling(
       const location = resolveControlPlaneLocation();
       console.error(chalk.red(`  ✗ ${message}`));
       console.error(chalk.dim(`  Control plane: ${location.baseUrl} (${location.source})`));
-      console.error(chalk.dim('  Start HyperCode with `hypercode start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
+      console.error(chalk.dim('  Start borg with `borg start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
     }
     process.exitCode = 1;
   }
@@ -85,9 +85,9 @@ export function registerAgentCommand(program: Command): void {
     .option('--json', 'Output as JSON')
     .addHelpText('after', `
 Examples:
-  $ hypercode agent spawn architect
-  $ hypercode agent spawn builder --model gpt-5.2 --workdir ./my-project
-  $ hypercode agent spawn researcher --provider google
+  $ borg agent spawn architect
+  $ borg agent spawn builder --model gpt-5.2 --workdir ./my-project
+  $ borg agent spawn researcher --provider google
     `)
     .action(async (name, opts) => {
       await withAgentErrorHandling(

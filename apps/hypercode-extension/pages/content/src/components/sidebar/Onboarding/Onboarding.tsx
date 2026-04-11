@@ -14,7 +14,7 @@ interface OnboardingStep {
 
 const steps: OnboardingStep[] = [
   {
-    title: 'Welcome to HyperCode Extension',
+    title: 'Welcome to borg Extension',
     description:
       'Empower your AI with real-world tools. This sidebar is your control center for connecting local data, files, and APIs to ChatGPT, Claude, and more.',
     icon: 'lightning',

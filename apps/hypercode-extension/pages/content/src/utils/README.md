@@ -1,6 +1,6 @@
 # Utility Modules (`utils`)
 
-This directory contains various utility modules and helper functions that provide common, reusable functionality across the HyperCode-Extension content script. These utilities help to keep the codebase DRY (Don't Repeat Yourself) and make common tasks easier to perform.
+This directory contains various utility modules and helper functions that provide common, reusable functionality across the borg-Extension content script. These utilities help to keep the codebase DRY (Don't Repeat Yourself) and make common tasks easier to perform.
 
 ## Overview
 

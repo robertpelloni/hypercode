@@ -18,13 +18,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/borghq/hypercode-go/internal/config"
-	"github.com/borghq/hypercode-go/internal/controlplane"
-	"github.com/borghq/hypercode-go/internal/interop"
-	"github.com/borghq/hypercode-go/internal/lockfile"
-	"github.com/borghq/hypercode-go/internal/memorystore"
-	"github.com/borghq/hypercode-go/internal/providers"
-	"github.com/borghq/hypercode-go/internal/sessionimport"
+	"github.com/borghq/borg-go/internal/config"
+	"github.com/borghq/borg-go/internal/controlplane"
+	"github.com/borghq/borg-go/internal/interop"
+	"github.com/borghq/borg-go/internal/lockfile"
+	"github.com/borghq/borg-go/internal/memorystore"
+	"github.com/borghq/borg-go/internal/providers"
+	"github.com/borghq/borg-go/internal/sessionimport"
 	_ "modernc.org/sqlite"
 )
 
@@ -312,7 +312,7 @@ func TestPlanReadRoutesFallBackToLocalSandboxState(t *testing.T) {
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 
 	workspace := t.TempDir()
-	sandboxDir := filepath.Join(workspace, ".hypercode", "sandbox")
+	sandboxDir := filepath.Join(workspace, ".borg", "sandbox")
 	if err := os.MkdirAll(sandboxDir, 0o755); err != nil {
 		t.Fatalf("failed to create sandbox dir: %v", err)
 	}
@@ -414,18 +414,18 @@ func TestStartupStatusEndpoint(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	cfg := config.Default()
 	cfg.WorkspaceRoot = workspaceRoot
-	cfg.ConfigDir = filepath.Join(workspaceRoot, ".hypercode-go")
-	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".hypercode")
+	cfg.ConfigDir = filepath.Join(workspaceRoot, ".borg-go")
+	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".borg")
 	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create go config dir: %v", err)
 	}
 	if err := os.MkdirAll(cfg.MainConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create main config dir: %v", err)
 	}
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".hypercode", "memory"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".borg", "memory"), 0o755); err != nil {
 		t.Fatalf("failed to create memory dir: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(workspaceRoot, ".hypercode", "memory", "claude_mem.json"), []byte(`{"default":[]}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".borg", "memory", "claude_mem.json"), []byte(`{"default":[]}`), 0o644); err != nil {
 		t.Fatalf("failed to seed memory store: %v", err)
 	}
 
@@ -522,18 +522,18 @@ func TestSessionContextEndpoint(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	cfg := config.Default()
 	cfg.WorkspaceRoot = workspaceRoot
-	cfg.ConfigDir = filepath.Join(workspaceRoot, ".hypercode-go")
-	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".hypercode")
+	cfg.ConfigDir = filepath.Join(workspaceRoot, ".borg-go")
+	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".borg")
 	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create go config dir: %v", err)
 	}
 	if err := os.MkdirAll(cfg.MainConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create main config dir: %v", err)
 	}
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".hypercode", "memory"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".borg", "memory"), 0o755); err != nil {
 		t.Fatalf("failed to create memory dir: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(workspaceRoot, ".hypercode", "memory", "claude_mem.json"), []byte(`{"default":[]}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".borg", "memory", "claude_mem.json"), []byte(`{"default":[]}`), 0o644); err != nil {
 		t.Fatalf("failed to seed memory store: %v", err)
 	}
 
@@ -561,9 +561,9 @@ func TestSessionContextEndpoint(t *testing.T) {
 
 func TestSessionContextFallsBackToLocalBootstrapAndAds(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	toolsDir := filepath.Join(workspaceRoot, "submodules", "hypercode", "tools")
+	toolsDir := filepath.Join(workspaceRoot, "submodules", "borg", "tools")
 	if err := os.MkdirAll(toolsDir, 0o755); err != nil {
-		t.Fatalf("failed to create hypercode tools dir: %v", err)
+		t.Fatalf("failed to create borg tools dir: %v", err)
 	}
 	toolSource := `package tools
 
@@ -580,7 +580,7 @@ var ListAllTools = struct{
 }
 `
 	if err := os.WriteFile(filepath.Join(toolsDir, "registry.go"), []byte(toolSource), 0o644); err != nil {
-		t.Fatalf("failed to write hypercode tool source: %v", err)
+		t.Fatalf("failed to write borg tool source: %v", err)
 	}
 
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
@@ -620,7 +620,7 @@ func TestToolsContextEndpoint(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"result": map[string]any{"data": map[string]any{"json": map[string]any{
 					"toolName":         "search_tools",
-					"query":            "search_tools hypercode go session",
+					"query":            "search_tools borg go session",
 					"matchedPaths":     []string{"go/internal/httpapi/server.go"},
 					"observationCount": 2,
 					"summaryCount":     1,
@@ -632,7 +632,7 @@ func TestToolsContextEndpoint(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to read searchTools body: %v", err)
 			}
-			if !strings.Contains(string(body), `"query":"search_tools hypercode go session"`) || !strings.Contains(string(body), `"profile":"repo-coding"`) {
+			if !strings.Contains(string(body), `"query":"search_tools borg go session"`) || !strings.Contains(string(body), `"profile":"repo-coding"`) {
 				t.Fatalf("expected contextual searchTools payload, got %s", string(body))
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{
@@ -645,7 +645,7 @@ func TestToolsContextEndpoint(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to read callTool body: %v", err)
 			}
-			if !strings.Contains(string(body), `"name":"list_all_tools"`) || !strings.Contains(string(body), `"query":"search_tools hypercode go session"`) {
+			if !strings.Contains(string(body), `"name":"list_all_tools"`) || !strings.Contains(string(body), `"query":"search_tools borg go session"`) {
 				t.Fatalf("expected list_all_tools payload, got %s", string(body))
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{
@@ -680,18 +680,18 @@ func TestToolsContextEndpoint(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	cfg := config.Default()
 	cfg.WorkspaceRoot = workspaceRoot
-	cfg.ConfigDir = filepath.Join(workspaceRoot, ".hypercode-go")
-	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".hypercode")
+	cfg.ConfigDir = filepath.Join(workspaceRoot, ".borg-go")
+	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".borg")
 	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create go config dir: %v", err)
 	}
 	if err := os.MkdirAll(cfg.MainConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create main config dir: %v", err)
 	}
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".hypercode", "memory"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".borg", "memory"), 0o755); err != nil {
 		t.Fatalf("failed to create memory dir: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(workspaceRoot, ".hypercode", "memory", "claude_mem.json"), []byte(`{"default":[]}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".borg", "memory", "claude_mem.json"), []byte(`{"default":[]}`), 0o644); err != nil {
 		t.Fatalf("failed to seed memory store: %v", err)
 	}
 
@@ -719,9 +719,9 @@ func TestToolsContextEndpoint(t *testing.T) {
 
 func TestToolsContextFallsBackToLocalPrompt(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	toolsDir := filepath.Join(workspaceRoot, "submodules", "hypercode", "tools")
+	toolsDir := filepath.Join(workspaceRoot, "submodules", "borg", "tools")
 	if err := os.MkdirAll(toolsDir, 0o755); err != nil {
-		t.Fatalf("failed to create hypercode tools dir: %v", err)
+		t.Fatalf("failed to create borg tools dir: %v", err)
 	}
 	toolSource := `package tools
 
@@ -738,7 +738,7 @@ var ListAllTools = struct{
 }
 `
 	if err := os.WriteFile(filepath.Join(toolsDir, "registry.go"), []byte(toolSource), 0o644); err != nil {
-		t.Fatalf("failed to write hypercode tool source: %v", err)
+		t.Fatalf("failed to write borg tool source: %v", err)
 	}
 
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
@@ -865,11 +865,11 @@ func TestMemoryRecentRoutesFallBackToPersistedData(t *testing.T) {
 
 func TestMemorySectionedStatusAndFormatsFallBackLocally(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".hypercode"), 0o755); err != nil {
-		t.Fatalf("failed to create .hypercode dir: %v", err)
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".borg"), 0o755); err != nil {
+		t.Fatalf("failed to create .borg dir: %v", err)
 	}
 	store := `{"sections":[{"section":"project_context","entries":[{"createdAt":"2026-01-01T00:00:00Z"}]}]}`
-	if err := os.WriteFile(filepath.Join(workspaceRoot, ".hypercode", "sectioned_memory.json"), []byte(store), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".borg", "sectioned_memory.json"), []byte(store), 0o644); err != nil {
 		t.Fatalf("failed to seed sectioned memory: %v", err)
 	}
 
@@ -895,7 +895,7 @@ func TestMemorySectionedStatusAndFormatsFallBackLocally(t *testing.T) {
 
 func TestMemoryContextsFallsBackToLocalRegistry(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	contextsDir := filepath.Join(workspaceRoot, ".hypercode", "memory")
+	contextsDir := filepath.Join(workspaceRoot, ".borg", "memory")
 	if err := os.MkdirAll(contextsDir, 0o755); err != nil {
 		t.Fatalf("failed to create memory dir: %v", err)
 	}
@@ -932,7 +932,7 @@ func TestMemoryAgentStatsFallsBackToPersistedState(t *testing.T) {
 	cfg.WorkspaceRoot = t.TempDir()
 	cfg.ConfigDir = t.TempDir()
 	cfg.MainConfigDir = t.TempDir()
-	agentMemoryDir := filepath.Join(cfg.WorkspaceRoot, ".hypercode", "agent_memory")
+	agentMemoryDir := filepath.Join(cfg.WorkspaceRoot, ".borg", "agent_memory")
 	if err := os.MkdirAll(agentMemoryDir, 0o755); err != nil {
 		t.Fatalf("mkdir agent memory dir: %v", err)
 	}
@@ -1143,7 +1143,7 @@ func TestReadOnlyMemoryRoutesFallBackLocally(t *testing.T) {
 
 func seedPersistedAgentMemories(t *testing.T, workspaceRoot string) {
 	t.Helper()
-	agentMemoryDir := filepath.Join(workspaceRoot, ".hypercode", "agent_memory")
+	agentMemoryDir := filepath.Join(workspaceRoot, ".borg", "agent_memory")
 	if err := os.MkdirAll(agentMemoryDir, 0o755); err != nil {
 		t.Fatalf("mkdir agent memory dir: %v", err)
 	}
@@ -1222,7 +1222,7 @@ func seedPersistedAgentMemories(t *testing.T, workspaceRoot string) {
 					"structuredSessionSummary": map[string]any{
 						"sessionId":     "sess-1",
 						"name":          "search_tools parity session",
-						"cliType":       "hypercode",
+						"cliType":       "borg",
 						"status":        "completed",
 						"activeGoal":    "ship parity",
 						"lastObjective": "surface jit tool context",
@@ -1317,9 +1317,9 @@ func TestMemoryServiceBackedMutationsFallBackLocally(t *testing.T) {
 
 func TestMCPAddAndRemoveServerFallBackToLocalConfiguredServers(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	borgDir := filepath.Join(workspaceRoot, ".hypercode")
+	borgDir := filepath.Join(workspaceRoot, ".borg")
 	if err := os.MkdirAll(borgDir, 0o755); err != nil {
-		t.Fatalf("failed to create .hypercode dir: %v", err)
+		t.Fatalf("failed to create .borg dir: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(borgDir, "mcp.jsonc"), []byte("{\"mcpServers\":{}}"), 0o644); err != nil {
 		t.Fatalf("failed to seed mcp.jsonc: %v", err)
@@ -1361,7 +1361,7 @@ func TestMCPServerTestFallsBackToStructuredProbeFailures(t *testing.T) {
 	routerReq.Header.Set("content-type", "application/json")
 	routerRecorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(routerRecorder, routerReq)
-	if routerRecorder.Code != http.StatusOK || !strings.Contains(routerRecorder.Body.String(), `"fallback":"go-local-mcp"`) || !strings.Contains(routerRecorder.Body.String(), `HyperCode MCP router is not initialized.`) {
+	if routerRecorder.Code != http.StatusOK || !strings.Contains(routerRecorder.Body.String(), `"fallback":"go-local-mcp"`) || !strings.Contains(routerRecorder.Body.String(), `borg MCP router is not initialized.`) {
 		t.Fatalf("expected local router probe fallback response, got %d %s", routerRecorder.Code, routerRecorder.Body.String())
 	}
 	if !strings.Contains(routerRecorder.Body.String(), `simulating router probe failure locally`) {
@@ -1382,9 +1382,9 @@ func TestMCPServerTestFallsBackToStructuredProbeFailures(t *testing.T) {
 
 func TestMCPLifecycleModesFallBackToLocalState(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	toolsDir := filepath.Join(workspaceRoot, "submodules", "hypercode", "tools")
+	toolsDir := filepath.Join(workspaceRoot, "submodules", "borg", "tools")
 	if err := os.MkdirAll(toolsDir, 0o755); err != nil {
-		t.Fatalf("failed to create hypercode tools dir: %v", err)
+		t.Fatalf("failed to create borg tools dir: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(toolsDir, "registry.go"), []byte("package tools\n"), 0o644); err != nil {
 		t.Fatalf("failed to seed tool dir: %v", err)
@@ -1977,11 +1977,11 @@ func TestCouncilBridgeRoutes(t *testing.T) {
 			})
 		case "/trpc/council.sessions.byCLI":
 			body, _ := io.ReadAll(r.Body)
-			if !strings.Contains(string(body), `"cliType":"hypercode"`) {
+			if !strings.Contains(string(body), `"cliType":"borg"`) {
 				t.Fatalf("expected council.sessions.byCLI payload, got %s", string(body))
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{
-				"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"id": "sess-cli", "cliType": "hypercode"}}}},
+				"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"id": "sess-cli", "cliType": "borg"}}}},
 			})
 		case "/trpc/council.sessions.updateTags":
 			body, _ := io.ReadAll(r.Body)
@@ -2105,8 +2105,8 @@ func TestCouncilBridgeRoutes(t *testing.T) {
 		{name: "council sessions active", method: http.MethodGet, path: "/api/council/sessions/active", contains: `"running"`, procedure: `"procedure":"council.sessions.active"`},
 		{name: "council sessions stats", method: http.MethodGet, path: "/api/council/sessions/stats", contains: `"total":1`, procedure: `"procedure":"council.sessions.stats"`},
 		{name: "council sessions get", method: http.MethodGet, path: "/api/council/sessions/get?id=sess-1", contains: `"sess-1"`, procedure: `"procedure":"council.sessions.get"`},
-		{name: "council sessions start", method: http.MethodPost, path: "/api/council/sessions/start", body: `{"cliType":"hypercode"}`, contains: `"sess-2"`, procedure: `"procedure":"council.sessions.start"`},
-		{name: "council sessions bulk start", method: http.MethodPost, path: "/api/council/sessions/bulk-start", body: `{"count":2,"cliType":"hypercode"}`, contains: `"sess-bulk-1"`, procedure: `"procedure":"council.sessions.bulkStart"`},
+		{name: "council sessions start", method: http.MethodPost, path: "/api/council/sessions/start", body: `{"cliType":"borg"}`, contains: `"sess-2"`, procedure: `"procedure":"council.sessions.start"`},
+		{name: "council sessions bulk start", method: http.MethodPost, path: "/api/council/sessions/bulk-start", body: `{"count":2,"cliType":"borg"}`, contains: `"sess-bulk-1"`, procedure: `"procedure":"council.sessions.bulkStart"`},
 		{name: "council sessions bulk stop", method: http.MethodPost, path: "/api/council/sessions/bulk-stop", contains: `"stopped":2`, procedure: `"procedure":"council.sessions.bulkStop"`},
 		{name: "council sessions bulk resume", method: http.MethodPost, path: "/api/council/sessions/bulk-resume", contains: `"sess-2"`, procedure: `"procedure":"council.sessions.bulkResume"`},
 		{name: "council sessions stop", method: http.MethodPost, path: "/api/council/sessions/stop", body: `{"id":"sess-1"}`, contains: `"stopped"`, procedure: `"procedure":"council.sessions.stop"`},
@@ -2119,7 +2119,7 @@ func TestCouncilBridgeRoutes(t *testing.T) {
 		{name: "council sessions persisted", method: http.MethodGet, path: "/api/council/sessions/persisted", contains: `"sess-persisted"`, procedure: `"procedure":"council.sessions.persisted"`},
 		{name: "council sessions by tag", method: http.MethodGet, path: "/api/council/sessions/by-tag?tag=priority", contains: `"sess-tagged"`, procedure: `"procedure":"council.sessions.byTag"`},
 		{name: "council sessions by template", method: http.MethodGet, path: "/api/council/sessions/by-template?template=default", contains: `"sess-template"`, procedure: `"procedure":"council.sessions.byTemplate"`},
-		{name: "council sessions by cli", method: http.MethodGet, path: "/api/council/sessions/by-cli?cliType=hypercode", contains: `"sess-cli"`, procedure: `"procedure":"council.sessions.byCLI"`},
+		{name: "council sessions by cli", method: http.MethodGet, path: "/api/council/sessions/by-cli?cliType=borg", contains: `"sess-cli"`, procedure: `"procedure":"council.sessions.byCLI"`},
 		{name: "council sessions update tags", method: http.MethodPost, path: "/api/council/sessions/tags/update", body: `{"id":"sess-1","tags":["priority","go"]}`, contains: `"priority","go"`, procedure: `"procedure":"council.sessions.updateTags"`},
 		{name: "council sessions add tag", method: http.MethodPost, path: "/api/council/sessions/tags/add", body: `{"id":"sess-1","tag":"priority"}`, contains: `"priority"`, procedure: `"procedure":"council.sessions.addTag"`},
 		{name: "council sessions remove tag", method: http.MethodPost, path: "/api/council/sessions/tags/remove", body: `{"id":"sess-1","tag":"priority"}`, contains: `"tags":[]`, procedure: `"procedure":"council.sessions.removeTag"`},
@@ -2488,7 +2488,7 @@ func TestCloudDevBridgeRoutes(t *testing.T) {
 		procedure string
 	}{
 		{name: "clouddev providers", method: http.MethodGet, path: "/api/clouddev/providers", contains: `"jules"`, procedure: `"procedure":"cloudDev.listProviders"`},
-		{name: "clouddev create session", method: http.MethodPost, path: "/api/clouddev/sessions/create", body: `{"provider":"jules","projectName":"hypercode","task":"ship","autoAcceptPlan":false}`, contains: `"status":"pending"`, procedure: `"procedure":"cloudDev.createSession"`},
+		{name: "clouddev create session", method: http.MethodPost, path: "/api/clouddev/sessions/create", body: `{"provider":"jules","projectName":"borg","task":"ship","autoAcceptPlan":false}`, contains: `"status":"pending"`, procedure: `"procedure":"cloudDev.createSession"`},
 		{name: "clouddev list sessions", method: http.MethodGet, path: "/api/clouddev/sessions?provider=jules&status=active", contains: `"status":"active"`, procedure: `"procedure":"cloudDev.listSessions"`},
 		{name: "clouddev get session", method: http.MethodGet, path: "/api/clouddev/sessions/get?sessionId=cds-1", contains: `"id":"cds-1"`, procedure: `"procedure":"cloudDev.getSession"`},
 		{name: "clouddev update status", method: http.MethodPost, path: "/api/clouddev/sessions/status", body: `{"sessionId":"cds-1","status":"awaiting_approval"}`, contains: `"awaiting_approval"`, procedure: `"procedure":"cloudDev.updateSessionStatus"`},
@@ -4032,7 +4032,7 @@ func TestMetricsReadEndpointsFallBackToLocalPreview(t *testing.T) {
 
 func TestConfigAlwaysVisibleToolsFallsBackToLocalJSONCPreferences(t *testing.T) {
 	mainConfigDir := t.TempDir()
-	jsoncContent := `// HyperCode MCP configuration
+	jsoncContent := `// borg MCP configuration
 {
   "mcpServers": {},
   "alwaysVisibleTools": ["legacy__tool"],
@@ -4084,7 +4084,7 @@ func TestSessionExportReadEndpointsFallBackLocally(t *testing.T) {
 	if detectRecorder.Code != http.StatusOK {
 		t.Fatalf("expected detect-format fallback 200, got %d with body %s", detectRecorder.Code, detectRecorder.Body.String())
 	}
-	if !strings.Contains(detectRecorder.Body.String(), `"fallback":"go-local-session-export"`) || !strings.Contains(detectRecorder.Body.String(), `"format":"hypercode-export"`) {
+	if !strings.Contains(detectRecorder.Body.String(), `"fallback":"go-local-session-export"`) || !strings.Contains(detectRecorder.Body.String(), `"format":"borg-export"`) {
 		t.Fatalf("expected local session export format detection, got %s", detectRecorder.Body.String())
 	}
 
@@ -4094,7 +4094,7 @@ func TestSessionExportReadEndpointsFallBackLocally(t *testing.T) {
 	if formatsRecorder.Code != http.StatusOK {
 		t.Fatalf("expected known-formats fallback 200, got %d with body %s", formatsRecorder.Code, formatsRecorder.Body.String())
 	}
-	if !strings.Contains(formatsRecorder.Body.String(), `"fallback":"go-local-session-export"`) || !strings.Contains(formatsRecorder.Body.String(), `"type":"hypercode"`) || !strings.Contains(formatsRecorder.Body.String(), `"id":"copilot"`) {
+	if !strings.Contains(formatsRecorder.Body.String(), `"fallback":"go-local-session-export"`) || !strings.Contains(formatsRecorder.Body.String(), `"type":"borg"`) || !strings.Contains(formatsRecorder.Body.String(), `"id":"copilot"`) {
 		t.Fatalf("expected local known session export formats, got %s", formatsRecorder.Body.String())
 	}
 
@@ -4125,12 +4125,12 @@ func TestBrowserBridgeRoutes(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
 		case "/trpc/browser.searchHistory":
 			body, _ := io.ReadAll(r.Body)
-			if !strings.Contains(string(body), `"query":"hypercode"`) {
+			if !strings.Contains(string(body), `"query":"borg"`) {
 				t.Fatalf("expected browser.searchHistory payload, got %s", string(body))
 			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"items": []any{map[string]any{"title": "HyperCode"}}}}}})
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"items": []any{map[string]any{"title": "borg"}}}}}})
 		case "/trpc/browser.scrapePage":
-			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"title": "HyperCode Docs", "content": "hello"}}}})
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"title": "borg Docs", "content": "hello"}}}})
 		case "/trpc/browser.screenshot":
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"message": "Screenshot captured."}}}})
 		case "/trpc/browser.debug":
@@ -4168,8 +4168,8 @@ func TestBrowserBridgeRoutes(t *testing.T) {
 		{name: "browser status", method: http.MethodGet, path: "/api/browser/status", contains: `"pageCount":1`, procedure: `"procedure":"browser.status"`},
 		{name: "browser close page", method: http.MethodPost, path: "/api/browser/close-page", body: `{"pageId":"page-1"}`, contains: `"success":true`, procedure: `"procedure":"browser.closePage"`},
 		{name: "browser close all", method: http.MethodPost, path: "/api/browser/close-all", contains: `"success":true`, procedure: `"procedure":"browser.closeAll"`},
-		{name: "browser search history", method: http.MethodGet, path: "/api/browser/search-history?query=hypercode&maxResults=5", contains: `"HyperCode"`, procedure: `"procedure":"browser.searchHistory"`},
-		{name: "browser scrape", method: http.MethodGet, path: "/api/browser/scrape", contains: `"HyperCode Docs"`, procedure: `"procedure":"browser.scrapePage"`},
+		{name: "browser search history", method: http.MethodGet, path: "/api/browser/search-history?query=borg&maxResults=5", contains: `"borg"`, procedure: `"procedure":"browser.searchHistory"`},
+		{name: "browser scrape", method: http.MethodGet, path: "/api/browser/scrape", contains: `"borg Docs"`, procedure: `"procedure":"browser.scrapePage"`},
 		{name: "browser screenshot", method: http.MethodPost, path: "/api/browser/screenshot", contains: `"Screenshot captured."`, procedure: `"procedure":"browser.screenshot"`},
 		{name: "browser debug", method: http.MethodPost, path: "/api/browser/debug", body: `{"action":"command","method":"Page.reload"}`, contains: `"{\"ok\":true}"`, procedure: `"procedure":"browser.debug"`},
 		{name: "browser proxy fetch", method: http.MethodPost, path: "/api/browser/proxy-fetch", body: `{"url":"https://example.com","method":"GET","headers":{}}`, contains: `"status":200`, procedure: `"procedure":"browser.proxyFetch"`},
@@ -4406,8 +4406,8 @@ func TestConfigStatusEndpoint(t *testing.T) {
 	workspaceRoot := t.TempDir()
 	cfg := config.Default()
 	cfg.WorkspaceRoot = workspaceRoot
-	cfg.ConfigDir = filepath.Join(workspaceRoot, ".hypercode-go")
-	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".hypercode")
+	cfg.ConfigDir = filepath.Join(workspaceRoot, ".borg-go")
+	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".borg")
 	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create config dir: %v", err)
 	}
@@ -4445,7 +4445,7 @@ func TestConfigStatusEndpoint(t *testing.T) {
 		t.Fatalf("expected main config dir status for %s, got %+v", cfg.MainConfigDir, payload.Data.MainConfigDir)
 	}
 	if payload.Data.BorgConfigFile.Exists || payload.Data.MCPConfigFile.Exists {
-		t.Fatalf("expected config files to be absent in this fixture, got hypercode=%+v mcp=%+v", payload.Data.BorgConfigFile, payload.Data.MCPConfigFile)
+		t.Fatalf("expected config files to be absent in this fixture, got borg=%+v mcp=%+v", payload.Data.BorgConfigFile, payload.Data.MCPConfigFile)
 	}
 }
 
@@ -4788,8 +4788,8 @@ func TestSupervisorSessionBridgeRoutes(t *testing.T) {
 					"data": map[string]any{
 						"json": map[string]any{
 							"command":   "pwd",
-							"cwd":       "C:\\workspace\\hypercode",
-							"output":    "C:\\workspace\\hypercode",
+							"cwd":       "C:\\workspace\\borg",
+							"output":    "C:\\workspace\\borg",
 							"exitCode":  0,
 							"succeeded": true,
 						},
@@ -5069,7 +5069,7 @@ func TestMCPBridgeRoutes(t *testing.T) {
 				}
 				contentText = "list_all_tools"
 			} else if strings.Contains(bodyText, `"name":"auto_call_tool"`) {
-				if !strings.Contains(bodyText, `"objective":"find the right tool"`) || !strings.Contains(bodyText, `"context":"repo: hypercode"`) {
+				if !strings.Contains(bodyText, `"objective":"find the right tool"`) || !strings.Contains(bodyText, `"context":"repo: borg"`) {
 					t.Fatalf("expected auto_call_tool payload, got %s", bodyText)
 				}
 				contentText = "auto_call_tool"
@@ -5327,7 +5327,7 @@ func TestMCPBridgeRoutes(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"result": map[string]any{
 					"data": map[string]any{
-						"json": map[string]any{"path": "C:/tmp/hypercode.mcp.jsonc", "content": "// HyperCode MCP configuration"},
+						"json": map[string]any{"path": "C:/tmp/borg.mcp.jsonc", "content": "// borg MCP configuration"},
 					},
 				},
 			})
@@ -5446,8 +5446,8 @@ func TestMCPBridgeRoutes(t *testing.T) {
 	}{
 		{name: "list tools", method: http.MethodGet, path: "/api/mcp/tools", contains: "\"search_tools\"", procedure: "\"procedure\":\"mcp.listTools\""},
 		{name: "search tools", method: http.MethodGet, path: "/api/mcp/tools/search?query=search&profile=repo-coding", contains: "\"alwaysShow\":true", procedure: "\"procedure\":\"mcp.searchTools\""},
-		{name: "call tool", method: http.MethodPost, path: "/api/mcp/tools/call", body: `{"name":"search_tools","args":{"query":"hypercode"}}`, contains: "\"ok\":true", procedure: "\"procedure\":\"mcp.callTool\""},
-		{name: "auto call tool", method: http.MethodPost, path: "/api/mcp/tools/auto-call", body: `{"objective":"find the right tool","context":"repo: hypercode"}`, contains: "\"auto_call_tool\"", procedure: "\"procedure\":\"mcp.callTool\""},
+		{name: "call tool", method: http.MethodPost, path: "/api/mcp/tools/call", body: `{"name":"search_tools","args":{"query":"borg"}}`, contains: "\"ok\":true", procedure: "\"procedure\":\"mcp.callTool\""},
+		{name: "auto call tool", method: http.MethodPost, path: "/api/mcp/tools/auto-call", body: `{"objective":"find the right tool","context":"repo: borg"}`, contains: "\"auto_call_tool\"", procedure: "\"procedure\":\"mcp.callTool\""},
 		{name: "tool advertisements", method: http.MethodGet, path: "/api/mcp/tool-ads?goal=ship&objective=find%20tool&limit=6", contains: "\"list_all_tools\"", procedure: "\"procedure\":\"mcp.callTool\""},
 		{name: "get preferences", method: http.MethodGet, path: "/api/mcp/preferences", contains: "\"importantTools\":[\"search_tools\"]", procedure: "\"procedure\":\"mcp.getToolPreferences\""},
 		{name: "set preferences", method: http.MethodPost, path: "/api/mcp/preferences", body: `{"importantTools":["search_tools"]}`, contains: "\"ok\":true", procedure: "\"procedure\":\"mcp.setToolPreferences\""},
@@ -5465,7 +5465,7 @@ func TestMCPBridgeRoutes(t *testing.T) {
 		{name: "set lifecycle modes", method: http.MethodPost, path: "/api/mcp/lifecycle-modes", body: `{"lazySessionMode":true,"singleActiveServerMode":false}`, contains: "\"lazySessionMode\":true", procedure: "\"procedure\":\"mcp.setLifecycleModes\""},
 		{name: "add runtime server", method: http.MethodPost, path: "/api/mcp/runtime-servers/add", body: `{"name":"runtime-core","command":"node","args":["server.js"],"env":{"MODE":"test"}}`, contains: "\"name\":\"runtime-core\"", procedure: "\"procedure\":\"mcp.addServer\""},
 		{name: "remove runtime server", method: http.MethodPost, path: "/api/mcp/runtime-servers/remove", body: `{"name":"runtime-core"}`, contains: "\"success\":true", procedure: "\"procedure\":\"mcp.removeServer\""},
-		{name: "get jsonc config", method: http.MethodGet, path: "/api/mcp/config/jsonc", contains: "\"content\":\"// HyperCode MCP configuration\"", procedure: "\"procedure\":\"mcp.getJsoncEditor\""},
+		{name: "get jsonc config", method: http.MethodGet, path: "/api/mcp/config/jsonc", contains: "\"content\":\"// borg MCP configuration\"", procedure: "\"procedure\":\"mcp.getJsoncEditor\""},
 		{name: "save jsonc config", method: http.MethodPost, path: "/api/mcp/config/jsonc", body: `{"content":"{}"}`, contains: "\"ok\":true", procedure: "\"procedure\":\"mcp.saveJsoncEditor\""},
 		{name: "runtime servers", method: http.MethodGet, path: "/api/mcp/servers/runtime", contains: "\"runtimeConnected\":true", procedure: "\"procedure\":\"mcp.listServers\""},
 		{name: "configured servers", method: http.MethodGet, path: "/api/mcp/servers/configured", contains: "\"uuid\":\"srv-1\"", procedure: "\"procedure\":\"mcpServers.list\""},
@@ -5563,9 +5563,9 @@ func TestMCPAutoCallToolNormalizesAliasInputs(t *testing.T) {
 
 func TestMCPReadRoutesFallBackToLocalSummary(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	toolsDir := filepath.Join(workspaceRoot, "submodules", "hypercode", "tools")
+	toolsDir := filepath.Join(workspaceRoot, "submodules", "borg", "tools")
 	if err := os.MkdirAll(toolsDir, 0o755); err != nil {
-		t.Fatalf("failed to create hypercode tools dir: %v", err)
+		t.Fatalf("failed to create borg tools dir: %v", err)
 	}
 	toolSource := `package tools
 
@@ -5582,7 +5582,7 @@ var AutoCallTool = struct{
 }
 `
 	if err := os.WriteFile(filepath.Join(toolsDir, "registry.go"), []byte(toolSource), 0o644); err != nil {
-		t.Fatalf("failed to write hypercode tool source: %v", err)
+		t.Fatalf("failed to write borg tool source: %v", err)
 	}
 
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
@@ -5619,7 +5619,7 @@ var AutoCallTool = struct{
 			contains: []string{
 				`"fallback":"go-local-mcp"`,
 				`using local MCP runtime server summary`,
-				`"name":"hypercode"`,
+				`"name":"borg"`,
 				`"toolInventoryStatus":"source-backed"`,
 			},
 		},
@@ -5630,7 +5630,7 @@ var AutoCallTool = struct{
 				`"fallback":"go-local-mcp"`,
 				`using local MCP tool inventory`,
 				`"name":"search_tools"`,
-				`"server":"hypercode"`,
+				`"server":"borg"`,
 			},
 		},
 	}
@@ -5677,7 +5677,7 @@ func TestToolsReadEndpointsFallBackToLocalDB(t *testing.T) {
 			updated_at INTEGER NOT NULL,
 			mcp_server_uuid TEXT NOT NULL
 		);
-		INSERT INTO mcp_servers (uuid, name) VALUES ('srv-1', 'hypercode');
+		INSERT INTO mcp_servers (uuid, name) VALUES ('srv-1', 'borg');
 		INSERT INTO tools (uuid, name, description, tool_schema, is_deferred, always_on, created_at, updated_at, mcp_server_uuid) VALUES
 			('tool-1', 'search_tools', 'Search tools', '{"type":"object","properties":{"query":{"type":"string"}}}', 0, 1, 1711958400, 1711958460, 'srv-1'),
 			('tool-2', 'read_file', 'Read files', '{"type":"object","properties":{"path":{"type":"string"}}}', 0, 0, 1711958401, 1711958461, 'srv-1');
@@ -5701,7 +5701,7 @@ func TestToolsReadEndpointsFallBackToLocalDB(t *testing.T) {
 
 	byServerRecorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(byServerRecorder, httptest.NewRequest(http.MethodGet, "/api/tools/by-server?mcpServerUuid=srv-1", nil))
-	if byServerRecorder.Code != http.StatusOK || !strings.Contains(byServerRecorder.Body.String(), `"fallback":"go-local-tool-db"`) || !strings.Contains(byServerRecorder.Body.String(), `"server":"hypercode"`) {
+	if byServerRecorder.Code != http.StatusOK || !strings.Contains(byServerRecorder.Body.String(), `"fallback":"go-local-tool-db"`) || !strings.Contains(byServerRecorder.Body.String(), `"server":"borg"`) {
 		t.Fatalf("expected local tools DB by-server fallback, got %d %s", byServerRecorder.Code, byServerRecorder.Body.String())
 	}
 
@@ -5720,16 +5720,16 @@ func TestToolsReadEndpointsFallBackToLocalDB(t *testing.T) {
 
 func TestFileBackedReadEndpointsFallBackLocally(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(workspaceRoot, ".gitmodules"), []byte("[submodule \"hypercode\"]\npath = submodules/hypercode\nurl = https://github.com/example/hypercode.git\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".gitmodules"), []byte("[submodule \"borg\"]\npath = submodules/borg\nurl = https://github.com/example/borg.git\n"), 0o644); err != nil {
 		t.Fatalf("failed to write .gitmodules: %v", err)
 	}
 
-	hypercodeDir := filepath.Join(workspaceRoot, ".hypercode")
-	handoffsDir := filepath.Join(hypercodeDir, "handoffs")
+	borgDir := filepath.Join(workspaceRoot, ".borg")
+	handoffsDir := filepath.Join(borgDir, "handoffs")
 	if err := os.MkdirAll(handoffsDir, 0o755); err != nil {
 		t.Fatalf("failed to create handoffs dir: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(hypercodeDir, "project_context.md"), []byte("# Project Context\n\nShip reliable fallbacks."), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(borgDir, "project_context.md"), []byte("# Project Context\n\nShip reliable fallbacks."), 0o644); err != nil {
 		t.Fatalf("failed to write project context: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(handoffsDir, "handoff_1710000000000.json"), []byte(`{}`), 0o644); err != nil {
@@ -5774,7 +5774,7 @@ func TestFileBackedReadEndpointsFallBackLocally(t *testing.T) {
 				`"fallback":"go-local-git"`,
 				`"procedure":"git.getModules"`,
 				`using local .gitmodules parsing`,
-				`"name":"hypercode"`,
+				`"name":"borg"`,
 			},
 		},
 		{
@@ -5952,14 +5952,14 @@ func TestOperatorListEndpointsFallBackToEmptyState(t *testing.T) {
 	homeDir := t.TempDir()
 	t.Setenv("USERPROFILE", homeDir)
 	t.Setenv("HOME", homeDir)
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".hypercode"), 0o755); err != nil {
-		t.Fatalf("failed to create .hypercode dir: %v", err)
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".borg"), 0o755); err != nil {
+		t.Fatalf("failed to create .borg dir: %v", err)
 	}
 	if err := os.MkdirAll(filepath.Join(homeDir, "AppData", "Roaming", "Microsoft", "Windows", "PowerShell", "PSReadLine"), 0o755); err != nil {
 		t.Fatalf("failed to create powershell history dir: %v", err)
 	}
 	configJSON := `{"scripts":[{"uuid":"script-local-1","name":"Deploy local","description":"ship it","code":"echo hi"}]}`
-	if err := os.WriteFile(filepath.Join(workspaceRoot, ".hypercode", "config.json"), []byte(configJSON), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".borg", "config.json"), []byte(configJSON), 0o644); err != nil {
 		t.Fatalf("failed to write local config: %v", err)
 	}
 	dbPath := filepath.Join(workspaceRoot, "metamcp.db")
@@ -6003,7 +6003,7 @@ func TestOperatorListEndpointsFallBackToEmptyState(t *testing.T) {
 		t.Fatalf("failed to seed sqlite db: %v", err)
 	}
 	historyJSON := `[{"id":"cmd-1","command":"pnpm test","cwd":"C:\\repo","timestamp":1700000000000,"outputSnippet":"tests passed","session":"sess-1"}]`
-	if err := os.WriteFile(filepath.Join(workspaceRoot, ".hypercode", "shell_history.json"), []byte(historyJSON), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".borg", "shell_history.json"), []byte(historyJSON), 0o644); err != nil {
 		t.Fatalf("failed to write shell history: %v", err)
 	}
 	systemHistory := "npm install\r\ngit status\r\npnpm test\r\n"
@@ -6039,7 +6039,7 @@ func TestOperatorListEndpointsFallBackToEmptyState(t *testing.T) {
 			contains: []string{
 				`"fallback":"go-local-operator"`,
 				`"procedure":"savedScripts.list"`,
-				`using local saved scripts from HyperCode config`,
+				`using local saved scripts from borg config`,
 				`"script-local-1"`,
 				`"Deploy local"`,
 			},
@@ -6050,7 +6050,7 @@ func TestOperatorListEndpointsFallBackToEmptyState(t *testing.T) {
 			contains: []string{
 				`"fallback":"go-local-operator"`,
 				`"procedure":"savedScripts.get"`,
-				`using local saved script from HyperCode config`,
+				`using local saved script from borg config`,
 				`"script-local-1"`,
 				`"Deploy local"`,
 			},
@@ -6123,7 +6123,7 @@ func TestAuditReadEndpointsFallBackToLocalFiles(t *testing.T) {
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 
 	workspaceRoot := t.TempDir()
-	auditDir := filepath.Join(workspaceRoot, ".hypercode", "audit")
+	auditDir := filepath.Join(workspaceRoot, ".borg", "audit")
 	if err := os.MkdirAll(auditDir, 0o755); err != nil {
 		t.Fatalf("failed to create audit dir: %v", err)
 	}
@@ -6271,7 +6271,7 @@ func TestMarketplaceListFallsBackToLocalRegistries(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(workspaceRoot, "packages", "mcp-registry", "src"), 0o755); err != nil {
 		t.Fatalf("failed to create mcp registry dir: %v", err)
 	}
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".hypercode", "skills", "alpha-tool"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".borg", "skills", "alpha-tool"), 0o755); err != nil {
 		t.Fatalf("failed to create installed skill dir: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(workspaceRoot, "packages", "core", "data", "skills_registry.json"), []byte(`{
@@ -6290,7 +6290,7 @@ func TestMarketplaceListFallsBackToLocalRegistries(t *testing.T) {
 	cfg.WorkspaceRoot = workspaceRoot
 	cfg.ConfigDir = t.TempDir()
 	cfg.MainConfigDir = t.TempDir()
-	if err := os.WriteFile(filepath.Join(cfg.MainConfigDir, "mcp.jsonc"), []byte("// HyperCode MCP configuration\n{\n  \"mcpServers\": {\n    \"tool-box\": {\n      \"command\": \"npx\",\n      \"args\": [\"@example/tool-box\"]\n    }\n  }\n}\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(cfg.MainConfigDir, "mcp.jsonc"), []byte("// borg MCP configuration\n{\n  \"mcpServers\": {\n    \"tool-box\": {\n      \"command\": \"npx\",\n      \"args\": [\"@example/tool-box\"]\n    }\n  }\n}\n"), 0o644); err != nil {
 		t.Fatalf("failed to seed mcp jsonc: %v", err)
 	}
 	server := New(cfg, stubDetector{})
@@ -7623,8 +7623,8 @@ func TestOperatorFallbackGetRoutesReturnUnavailableWhenRecordMissing(t *testing.
 	mainConfigDir := t.TempDir()
 	homeDir := t.TempDir()
 
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".hypercode"), 0o755); err != nil {
-		t.Fatalf("failed to create .hypercode dir: %v", err)
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".borg"), 0o755); err != nil {
+		t.Fatalf("failed to create .borg dir: %v", err)
 	}
 	scriptsPayload := []map[string]any{
 		{
@@ -7638,7 +7638,7 @@ func TestOperatorFallbackGetRoutesReturnUnavailableWhenRecordMissing(t *testing.
 	if err != nil {
 		t.Fatalf("failed to marshal scripts payload: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(workspaceRoot, ".hypercode", "saved-scripts.json"), scriptsJSON, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".borg", "saved-scripts.json"), scriptsJSON, 0o644); err != nil {
 		t.Fatalf("failed to seed saved scripts: %v", err)
 	}
 
@@ -7918,11 +7918,11 @@ func TestDirectorConfigGetFallsBackToLocalConfig(t *testing.T) {
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 
 	workspaceRoot := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".hypercode"), 0o755); err != nil {
-		t.Fatalf("failed to create .hypercode dir: %v", err)
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".borg"), 0o755); err != nil {
+		t.Fatalf("failed to create .borg dir: %v", err)
 	}
 	if err := os.WriteFile(
-		filepath.Join(workspaceRoot, ".hypercode", "config.json"),
+		filepath.Join(workspaceRoot, ".borg", "config.json"),
 		[]byte(`{"persona":"professional","defaultTopic":"mcp","enableCouncil":true}`),
 		0o644,
 	); err != nil {
@@ -7943,7 +7943,7 @@ func TestDirectorConfigGetFallsBackToLocalConfig(t *testing.T) {
 
 	for _, needle := range []string{
 		`"procedure":"directorConfig.get"`,
-		`"fallback":"go-local-hypercode-config"`,
+		`"fallback":"go-local-borg-config"`,
 		`"persona":"professional"`,
 		`"defaultTopic":"mcp"`,
 		`"enableCouncil":true`,
@@ -8293,7 +8293,7 @@ func TestResearchQueueFallsBackToLocalFiles(t *testing.T) {
 
 func TestSettingsReadEndpointsFallBackLocally(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	mainConfigDir := filepath.Join(workspaceRoot, ".hypercode")
+	mainConfigDir := filepath.Join(workspaceRoot, ".borg")
 	if err := os.MkdirAll(mainConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create config dir: %v", err)
 	}
@@ -8332,7 +8332,7 @@ func TestSettingsReadEndpointsFallBackLocally(t *testing.T) {
 	for _, needle := range []string{
 		`"fallback":"go-local-settings"`,
 		`"procedure":"settings.get"`,
-		`using local .hypercode config fallback`,
+		`using local .borg config fallback`,
 		`"theme":"local-dark"`,
 		`"enabled":true`,
 	} {
@@ -8382,7 +8382,7 @@ func TestSettingsReadEndpointsFallBackLocally(t *testing.T) {
 
 func TestServerHealthFallsBackToCachedMCPMetadata(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	mainConfigDir := filepath.Join(workspaceRoot, ".hypercode")
+	mainConfigDir := filepath.Join(workspaceRoot, ".borg")
 	if err := os.MkdirAll(mainConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create config dir: %v", err)
 	}
@@ -8713,7 +8713,7 @@ func TestMemoryExportFallsBackToLocalSnapshotAndRegistry(t *testing.T) {
 
 	t.Run("registry_formats", func(t *testing.T) {
 		workspaceRoot := t.TempDir()
-		contextsDir := filepath.Join(workspaceRoot, ".hypercode", "memory")
+		contextsDir := filepath.Join(workspaceRoot, ".borg", "memory")
 		if err := os.MkdirAll(contextsDir, 0o755); err != nil {
 			t.Fatalf("failed to create memory dir: %v", err)
 		}
@@ -8875,11 +8875,11 @@ func TestAgentMemoryReadRoutesFallBackToEmptyResults(t *testing.T) {
 
 func TestToolsRuntimeDetectionFallsBackLocally(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	mainConfigDir := filepath.Join(workspaceRoot, ".hypercode")
+	mainConfigDir := filepath.Join(workspaceRoot, ".borg")
 	if err := os.MkdirAll(mainConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create main config dir: %v", err)
 	}
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, "apps", "hypercode-extension", "dist-chromium"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, "apps", "borg-extension", "dist-chromium"), 0o755); err != nil {
 		t.Fatalf("failed to create chromium dist: %v", err)
 	}
 	if err := os.MkdirAll(filepath.Join(workspaceRoot, "packages", "vscode", "dist"), 0o755); err != nil {
@@ -8891,10 +8891,10 @@ func TestToolsRuntimeDetectionFallsBackLocally(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(mainConfigDir, "mcp.jsonc"), []byte(`{"mcpServers":{"core":{"command":"node"}}}`), 0o644); err != nil {
 		t.Fatalf("failed to write mcp config: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(workspaceRoot, "apps", "hypercode-extension", "package.json"), []byte(`{"version":"1.2.3"}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(workspaceRoot, "apps", "borg-extension", "package.json"), []byte(`{"version":"1.2.3"}`), 0o644); err != nil {
 		t.Fatalf("failed to write extension package json: %v", err)
 	}
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, "apps", "hypercode-extension"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, "apps", "borg-extension"), 0o755); err != nil {
 		t.Fatalf("failed to create extension dir: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(workspaceRoot, "packages", "vscode", "package.json"), []byte(`{"version":"0.9.0"}`), 0o644); err != nil {
@@ -8975,12 +8975,12 @@ func TestGitStatusFallsBackLocally(t *testing.T) {
 	if output, err := initRepo.CombinedOutput(); err != nil {
 		t.Fatalf("failed to init git repo: %v (%s)", err, string(output))
 	}
-	configName := exec.Command("git", "config", "user.name", "HyperCode Test")
+	configName := exec.Command("git", "config", "user.name", "borg Test")
 	configName.Dir = workspaceRoot
 	if output, err := configName.CombinedOutput(); err != nil {
 		t.Fatalf("failed to configure git user.name: %v (%s)", err, string(output))
 	}
-	configEmail := exec.Command("git", "config", "user.email", "test@hypercode.local")
+	configEmail := exec.Command("git", "config", "user.email", "test@borg.local")
 	configEmail.Dir = workspaceRoot
 	if output, err := configEmail.CombinedOutput(); err != nil {
 		t.Fatalf("failed to configure git user.email: %v (%s)", err, string(output))
@@ -9048,8 +9048,8 @@ func TestGitLogFallsBackLocally(t *testing.T) {
 		t.Fatalf("failed to init git repo: %v (%s)", err, string(output))
 	}
 	for _, args := range [][]string{
-		{"config", "user.name", "HyperCode Test"},
-		{"config", "user.email", "test@hypercode.local"},
+		{"config", "user.name", "borg Test"},
+		{"config", "user.email", "test@borg.local"},
 	} {
 		command := exec.Command("git", args...)
 		command.Dir = workspaceRoot
@@ -9098,7 +9098,7 @@ func TestGitLogFallsBackLocally(t *testing.T) {
 		`"procedure":"git.getLog"`,
 		`using local git log fallback`,
 		`"message":"second commit"`,
-		`"author":"HyperCode Test"`,
+		`"author":"borg Test"`,
 	} {
 		if !strings.Contains(recorder.Body.String(), needle) {
 			t.Fatalf("expected git log response to contain %s, got %s", needle, recorder.Body.String())
@@ -9111,16 +9111,16 @@ func TestGitLogFallsBackLocally(t *testing.T) {
 
 func TestSubmoduleReadEndpointsFallBackLocally(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	gitmodules := `[submodule "submodules/hypercode"]
-	path = submodules/hypercode
-	url = https://github.com/example/hypercode.git
+	gitmodules := `[submodule "submodules/borg"]
+	path = submodules/borg
+	url = https://github.com/example/borg.git
 `
 	if err := os.WriteFile(filepath.Join(workspaceRoot, ".gitmodules"), []byte(gitmodules), 0o644); err != nil {
 		t.Fatalf("failed to write .gitmodules: %v", err)
 	}
 
-	hypercodePath := filepath.Join(workspaceRoot, "submodules", "hypercode")
-	if err := os.MkdirAll(filepath.Join(hypercodePath, "dist"), 0o755); err != nil {
+	borgPath := filepath.Join(workspaceRoot, "submodules", "borg")
+	if err := os.MkdirAll(filepath.Join(borgPath, "dist"), 0o755); err != nil {
 		t.Fatalf("failed to create submodule dist dir: %v", err)
 	}
 	packageJSON := `{
@@ -9128,10 +9128,10 @@ func TestSubmoduleReadEndpointsFallBackLocally(t *testing.T) {
   "dependencies": {"@modelcontextprotocol/sdk": "^1.0.0"},
   "scripts": {"build": "tsc", "start": "node index.js"}
 }`
-	if err := os.WriteFile(filepath.Join(hypercodePath, "package.json"), []byte(packageJSON), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(borgPath, "package.json"), []byte(packageJSON), 0o644); err != nil {
 		t.Fatalf("failed to write package.json: %v", err)
 	}
-	if err := os.MkdirAll(filepath.Join(hypercodePath, "node_modules"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(borgPath, "node_modules"), 0o755); err != nil {
 		t.Fatalf("failed to create node_modules dir: %v", err)
 	}
 
@@ -9162,7 +9162,7 @@ func TestSubmoduleReadEndpointsFallBackLocally(t *testing.T) {
 		`"fallback":"go-local-submodules"`,
 		`"procedure":"submodule.list"`,
 		`using local .gitmodules submodule fallback`,
-		`"path":"submodules/hypercode"`,
+		`"path":"submodules/borg"`,
 		`"status":"clean"`,
 		`"capabilities":["mcp-server","mcp-sdk","build"]`,
 		`"isInstalled":true`,
@@ -9195,7 +9195,7 @@ func TestSubmoduleReadEndpointsFallBackLocally(t *testing.T) {
 
 func TestKnowledgeReadEndpointsFallBackLocally(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	memoryDir := filepath.Join(workspaceRoot, ".hypercode", "memory")
+	memoryDir := filepath.Join(workspaceRoot, ".borg", "memory")
 	if err := os.MkdirAll(memoryDir, 0o755); err != nil {
 		t.Fatalf("failed to create memory dir: %v", err)
 	}
@@ -9264,9 +9264,9 @@ func TestKnowledgeReadEndpointsFallBackLocally(t *testing.T) {
 
 func TestMCPSearchToolsFallsBackToLocalInventory(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	toolsDir := filepath.Join(workspaceRoot, "submodules", "hypercode", "tools")
+	toolsDir := filepath.Join(workspaceRoot, "submodules", "borg", "tools")
 	if err := os.MkdirAll(toolsDir, 0o755); err != nil {
-		t.Fatalf("failed to create hypercode tools dir: %v", err)
+		t.Fatalf("failed to create borg tools dir: %v", err)
 	}
 	toolSource := `package tools
 
@@ -9277,7 +9277,7 @@ var SearchTools = struct{
 }
 `
 	if err := os.WriteFile(filepath.Join(toolsDir, "search.go"), []byte(toolSource), 0o644); err != nil {
-		t.Fatalf("failed to write hypercode tool source: %v", err)
+		t.Fatalf("failed to write borg tool source: %v", err)
 	}
 
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
@@ -9312,9 +9312,9 @@ var SearchTools = struct{
 
 func TestMCPCallToolFallsBackToLocalMetaTools(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	toolsDir := filepath.Join(workspaceRoot, "submodules", "hypercode", "tools")
+	toolsDir := filepath.Join(workspaceRoot, "submodules", "borg", "tools")
 	if err := os.MkdirAll(toolsDir, 0o755); err != nil {
-		t.Fatalf("failed to create hypercode tools dir: %v", err)
+		t.Fatalf("failed to create borg tools dir: %v", err)
 	}
 	toolSource := `package tools
 
@@ -9331,7 +9331,7 @@ var ListAllTools = struct{
 }
 `
 	if err := os.WriteFile(filepath.Join(toolsDir, "search.go"), []byte(toolSource), 0o644); err != nil {
-		t.Fatalf("failed to write hypercode tool source: %v", err)
+		t.Fatalf("failed to write borg tool source: %v", err)
 	}
 
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
@@ -9348,14 +9348,14 @@ var ListAllTools = struct{
 	callRequest.Header.Set("content-type", "application/json")
 	callRecorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(callRecorder, callRequest)
-	if callRecorder.Code != http.StatusOK || !strings.Contains(callRecorder.Body.String(), `"fallback":"go-local-mcp"`) || !strings.Contains(callRecorder.Body.String(), `hypercode`) || !strings.Contains(callRecorder.Body.String(), `search_tools`) {
+	if callRecorder.Code != http.StatusOK || !strings.Contains(callRecorder.Body.String(), `"fallback":"go-local-mcp"`) || !strings.Contains(callRecorder.Body.String(), `borg`) || !strings.Contains(callRecorder.Body.String(), `search_tools`) {
 		t.Fatalf("expected local callTool fallback response, got %d %s", callRecorder.Code, callRecorder.Body.String())
 	}
 	if !strings.Contains(callRecorder.Body.String(), `using local MCP meta-tool execution`) {
 		t.Fatalf("expected local callTool fallback reason, got %s", callRecorder.Body.String())
 	}
 
-	autoRequest := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/auto-call", strings.NewReader(`{"objective":"find the right tool","context":"repo: hypercode"}`))
+	autoRequest := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/auto-call", strings.NewReader(`{"objective":"find the right tool","context":"repo: borg"}`))
 	autoRequest.Header.Set("content-type", "application/json")
 	autoRecorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(autoRecorder, autoRequest)
@@ -9453,7 +9453,7 @@ func TestMCPRegistrySnapshotFallsBackToMasterIndex(t *testing.T) {
 
 func TestMCPJsoncEditorFallsBackToLocalFile(t *testing.T) {
 	mainConfigDir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(mainConfigDir, "mcp.jsonc"), []byte("// HyperCode MCP configuration\n{\n  \"mcpServers\": {}\n}\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(mainConfigDir, "mcp.jsonc"), []byte("// borg MCP configuration\n{\n  \"mcpServers\": {}\n}\n"), 0o644); err != nil {
 		t.Fatalf("failed to write local mcp jsonc: %v", err)
 	}
 
@@ -9478,7 +9478,7 @@ func TestMCPJsoncEditorFallsBackToLocalFile(t *testing.T) {
 	if !strings.Contains(recorder.Body.String(), `using local MCP JSONC editor payload`) {
 		t.Fatalf("expected local MCP JSONC editor fallback reason, got %s", recorder.Body.String())
 	}
-	if !strings.Contains(recorder.Body.String(), `"path":"`) || !strings.Contains(recorder.Body.String(), `"content":"// HyperCode MCP configuration`) {
+	if !strings.Contains(recorder.Body.String(), `"path":"`) || !strings.Contains(recorder.Body.String(), `"content":"// borg MCP configuration`) {
 		t.Fatalf("expected local editor payload, got %s", recorder.Body.String())
 	}
 }
@@ -9531,7 +9531,7 @@ func TestMCPJsoncEditorSaveFallsBackToLocalWrite(t *testing.T) {
 func TestMCPConfiguredServersFallBackToLocalJsonc(t *testing.T) {
 	mainConfigDir := t.TempDir()
 	workspaceRoot := t.TempDir()
-	jsoncContent := `// HyperCode MCP configuration
+	jsoncContent := `// borg MCP configuration
 {
   "mcpServers": {
     "core": {
@@ -9638,7 +9638,7 @@ func TestMCPConfiguredServersFallBackToLocalJsonc(t *testing.T) {
 
 func TestMCPSyncTargetsAndExportFallBackToLocalJsonc(t *testing.T) {
 	mainConfigDir := t.TempDir()
-	jsoncContent := `// HyperCode MCP configuration
+	jsoncContent := `// borg MCP configuration
 {
   "mcpServers": {
     "core": {
@@ -9698,7 +9698,7 @@ func TestMCPSyncTargetsAndExportFallBackToLocalJsonc(t *testing.T) {
 
 func TestMCPToolPreferencesFallBackToLocalJsonc(t *testing.T) {
 	mainConfigDir := t.TempDir()
-	jsoncContent := `// HyperCode MCP configuration
+	jsoncContent := `// borg MCP configuration
 {
   "mcpServers": {},
   "settings": {
@@ -9767,7 +9767,7 @@ func TestMCPToolPreferencesFallBackToLocalJsonc(t *testing.T) {
 
 func TestMCPConfiguredServerMutationsFallBackToLocalJsonc(t *testing.T) {
 	mainConfigDir := t.TempDir()
-	initialConfig := `// HyperCode MCP configuration
+	initialConfig := `// borg MCP configuration
 {
   "mcpServers": {
     "core": {
@@ -9845,7 +9845,7 @@ func TestMCPConfiguredServerMutationsFallBackToLocalJsonc(t *testing.T) {
 
 func TestMCPConfiguredServerMetadataMutationsFallBackToLocalJsonc(t *testing.T) {
 	mainConfigDir := t.TempDir()
-	jsoncContent := `// HyperCode MCP configuration
+	jsoncContent := `// borg MCP configuration
 {
   "mcpServers": {
     "core": {
@@ -9905,7 +9905,7 @@ func TestMCPConfiguredServerMetadataMutationsFallBackToLocalJsonc(t *testing.T) 
 
 func TestSkillsFallBackToLocalSkillRegistry(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	skillDir := filepath.Join(workspaceRoot, ".hypercode", "skills", "debug")
+	skillDir := filepath.Join(workspaceRoot, ".borg", "skills", "debug")
 	if err := os.MkdirAll(skillDir, 0o755); err != nil {
 		t.Fatalf("failed to create skill dir: %v", err)
 	}
@@ -9970,7 +9970,7 @@ func TestSkillsFallBackToLocalSkillRegistry(t *testing.T) {
 		t.Fatalf("expected local skills save fallback reason, got %s", saveRecorder.Body.String())
 	}
 
-	writtenSkill, err := os.ReadFile(filepath.Join(workspaceRoot, ".hypercode", "skills", "trace", "SKILL.md"))
+	writtenSkill, err := os.ReadFile(filepath.Join(workspaceRoot, ".borg", "skills", "trace", "SKILL.md"))
 	if err != nil {
 		t.Fatalf("expected created skill file: %v", err)
 	}
@@ -10293,7 +10293,7 @@ func writeGzipFile(t *testing.T, path string, contents []byte) {
 
 func seedArchivedImportedSession(t *testing.T, workspaceRoot string) string {
 	t.Helper()
-	archiveDir := filepath.Join(workspaceRoot, ".hypercode", "imported_sessions", "archive", "ab", "cd")
+	archiveDir := filepath.Join(workspaceRoot, ".borg", "imported_sessions", "archive", "ab", "cd")
 	transcriptHash := "abcd1234ef567890abcd1234ef567890"
 	sessionID := "imp-archived-1"
 	metadataPath := filepath.Join(archiveDir, transcriptHash+".meta.json.gz")
@@ -10574,15 +10574,15 @@ func TestStartupImportedSessionMaintenanceStatsUsesScanOnlySemantics(t *testing.
 
 	cfg := config.Default()
 	cfg.WorkspaceRoot = workspaceRoot
-	cfg.ConfigDir = filepath.Join(workspaceRoot, ".hypercode-go")
-	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".hypercode")
+	cfg.ConfigDir = filepath.Join(workspaceRoot, ".borg-go")
+	cfg.MainConfigDir = filepath.Join(workspaceRoot, ".borg")
 	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create go config dir: %v", err)
 	}
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".hypercode", "memory"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, ".borg", "memory"), 0o755); err != nil {
 		t.Fatalf("failed to create memory dir: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(workspaceRoot, ".hypercode", "memory", "claude_mem.json"), []byte(`{"default":[]}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(workspaceRoot, ".borg", "memory", "claude_mem.json"), []byte(`{"default":[]}`), 0o644); err != nil {
 		t.Fatalf("failed to seed memory store: %v", err)
 	}
 
@@ -10962,7 +10962,7 @@ func TestCodeBridgeRoutes(t *testing.T) {
 		case "/trpc/borgContext.getPrompt":
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": "Prompt context"}}})
 		case "/trpc/git.getModules":
-			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []map[string]any{{"name": "hypercode", "path": "submodules/hypercode"}}}}})
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []map[string]any{{"name": "borg", "path": "submodules/borg"}}}}})
 		case "/trpc/git.getLog":
 			body, _ := io.ReadAll(r.Body)
 			if !strings.Contains(string(body), `"limit":5`) {
@@ -11017,7 +11017,7 @@ func TestCodeBridgeRoutes(t *testing.T) {
 		{name: "context remove", method: http.MethodPost, path: "/api/context/remove", body: "{\"filePath\":\"src/app.ts\"}", contains: "removed src/app.ts", procedure: "\"procedure\":\"borgContext.remove\""},
 		{name: "context clear", method: http.MethodPost, path: "/api/context/clear", contains: "cleared", procedure: "\"procedure\":\"borgContext.clear\""},
 		{name: "context prompt", method: http.MethodGet, path: "/api/context/prompt", contains: "Prompt context", procedure: "\"procedure\":\"borgContext.getPrompt\""},
-		{name: "git modules", method: http.MethodGet, path: "/api/git/modules", contains: "\"hypercode\"", procedure: "\"procedure\":\"git.getModules\""},
+		{name: "git modules", method: http.MethodGet, path: "/api/git/modules", contains: "\"borg\"", procedure: "\"procedure\":\"git.getModules\""},
 		{name: "git log", method: http.MethodGet, path: "/api/git/log?limit=5", contains: "\"abc123\"", procedure: "\"procedure\":\"git.getLog\""},
 		{name: "git status", method: http.MethodGet, path: "/api/git/status", contains: "\"branch\":\"main\"", procedure: "\"procedure\":\"git.getStatus\""},
 		{name: "git revert", method: http.MethodPost, path: "/api/git/revert", body: "{\"hash\":\"abc123\"}", contains: "\"success\":true", procedure: "\"procedure\":\"git.revert\""},
@@ -11197,7 +11197,7 @@ func TestControlBridgeRoutes(t *testing.T) {
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"name": "search_tools"}}}}})
 		case "/trpc/tools.detectCliHarnesses":
-			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"id": "hypercode"}}}}})
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"id": "borg"}}}}})
 		case "/trpc/tools.detectExecutionEnvironment":
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"shell": "pwsh"}}}})
 		case "/trpc/tools.detectInstallSurfaces":
@@ -11280,7 +11280,7 @@ func TestControlBridgeRoutes(t *testing.T) {
 		{name: "tools list", method: http.MethodGet, path: "/api/tools", contains: `"search_tools"`, procedure: `"procedure":"tools.list"`},
 		{name: "tools by server", method: http.MethodGet, path: "/api/tools/by-server?mcpServerUuid=srv-1", contains: `"core"`, procedure: `"procedure":"tools.listByServer"`},
 		{name: "tools search", method: http.MethodGet, path: "/api/tools/search?query=search&limit=5", contains: `"search_tools"`, procedure: `"procedure":"tools.search"`},
-		{name: "tools detect cli harnesses", method: http.MethodGet, path: "/api/tools/detect-cli-harnesses", contains: `"hypercode"`, procedure: `"procedure":"tools.detectCliHarnesses"`},
+		{name: "tools detect cli harnesses", method: http.MethodGet, path: "/api/tools/detect-cli-harnesses", contains: `"borg"`, procedure: `"procedure":"tools.detectCliHarnesses"`},
 		{name: "tools detect execution environment", method: http.MethodGet, path: "/api/tools/detect-execution-environment", contains: `"shell":"pwsh"`, procedure: `"procedure":"tools.detectExecutionEnvironment"`},
 		{name: "tools detect install surfaces", method: http.MethodGet, path: "/api/tools/detect-install-surfaces", contains: `"npm-global"`, procedure: `"procedure":"tools.detectInstallSurfaces"`},
 		{name: "tools get", method: http.MethodGet, path: "/api/tools/get?uuid=search_tools", contains: `"name":"search_tools"`, procedure: `"procedure":"tools.get"`},
@@ -11376,7 +11376,7 @@ func TestAgentBridgeRoutes(t *testing.T) {
 		contains  string
 		procedure string
 	}{
-		{name: "agent run tool", method: http.MethodPost, path: "/api/agent/tool", body: `{"toolName":"search_tools","arguments":{"query":"hypercode"}}`, contains: `"tool output"`, procedure: `"procedure":"agent.runTool"`},
+		{name: "agent run tool", method: http.MethodPost, path: "/api/agent/tool", body: `{"toolName":"search_tools","arguments":{"query":"borg"}}`, contains: `"tool output"`, procedure: `"procedure":"agent.runTool"`},
 		{name: "agent chat", method: http.MethodPost, path: "/api/agent/chat", body: `{"message":"hello"}`, contains: `"response":"hello"`, procedure: `"procedure":"agent.chat"`},
 		{name: "commands execute", method: http.MethodPost, path: "/api/commands/execute", body: `{"input":"/status"}`, contains: `"handled":true`, procedure: `"procedure":"commands.execute"`},
 		{name: "commands list", method: http.MethodGet, path: "/api/commands", contains: `"name":"status"`, procedure: `"procedure":"commands.list"`},
@@ -11984,9 +11984,9 @@ func TestResearchOAuthPulseAndExportBridgeRoutes(t *testing.T) {
 		case "/trpc/sessionExport.import":
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"imported": 1}}}})
 		case "/trpc/sessionExport.detectFormat":
-			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"format": "hypercode-export", "valid": true}}}})
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"format": "borg-export", "valid": true}}}})
 		case "/trpc/sessionExport.knownFormats":
-			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"id": "hypercode", "type": "hypercode"}}}}})
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"id": "borg", "type": "borg"}}}}})
 		case "/trpc/sessionExport.history":
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"id": "export-1"}}}}})
 		default:
@@ -12027,8 +12027,8 @@ func TestResearchOAuthPulseAndExportBridgeRoutes(t *testing.T) {
 		{name: "pulse providers", method: http.MethodGet, path: "/api/pulse/providers", contains: `"ollama":true`, procedure: `"procedure":"pulse.checkLocalProviders"`},
 		{name: "session export", method: http.MethodPost, path: "/api/session-export/export", body: `{"format":"json","includeMemories":true,"includeLogs":true,"includeMetadata":true}`, contains: `"export-1"`, procedure: `"procedure":"sessionExport.export"`},
 		{name: "session import", method: http.MethodPost, path: "/api/session-export/import", body: `{"data":"{}","merge":true,"dryRun":true}`, contains: `"imported":1`, procedure: `"procedure":"sessionExport.import"`},
-		{name: "session detect format", method: http.MethodPost, path: "/api/session-export/detect-format", body: `{"data":"{\"version\":\"1.0\",\"sessions\":[]}"}`, contains: `"hypercode-export"`, procedure: `"procedure":"sessionExport.detectFormat"`},
-		{name: "session known formats", method: http.MethodGet, path: "/api/session-export/formats", contains: `"type":"hypercode"`, procedure: `"procedure":"sessionExport.knownFormats"`},
+		{name: "session detect format", method: http.MethodPost, path: "/api/session-export/detect-format", body: `{"data":"{\"version\":\"1.0\",\"sessions\":[]}"}`, contains: `"borg-export"`, procedure: `"procedure":"sessionExport.detectFormat"`},
+		{name: "session known formats", method: http.MethodGet, path: "/api/session-export/formats", contains: `"type":"borg"`, procedure: `"procedure":"sessionExport.knownFormats"`},
 		{name: "session export history", method: http.MethodGet, path: "/api/session-export/history", contains: `"export-1"`, procedure: `"procedure":"sessionExport.history"`},
 	}
 
@@ -12088,7 +12088,7 @@ func TestUIHelperBridgeRoutes(t *testing.T) {
 		case "/trpc/codeMode.execute":
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
 		case "/trpc/submodule.list":
-			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"path": "submodules/hypercode"}}}}})
+			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": []any{map[string]any{"path": "submodules/borg"}}}}})
 		case "/trpc/submodule.updateAll":
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
 		case "/trpc/submodule.installDependencies":
@@ -12099,7 +12099,7 @@ func TestUIHelperBridgeRoutes(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"success": true}}}})
 		case "/trpc/submodule.detectCapabilities":
 			body, _ := io.ReadAll(r.Body)
-			if !strings.Contains(string(body), `"path":"submodules/hypercode"`) {
+			if !strings.Contains(string(body), `"path":"submodules/borg"`) {
 				t.Fatalf("expected submodule.detectCapabilities payload, got %s", string(body))
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{"result": map[string]any{"data": map[string]any{"json": map[string]any{"caps": []any{"build"}}}}})
@@ -12162,12 +12162,12 @@ func TestUIHelperBridgeRoutes(t *testing.T) {
 		{name: "code mode enable", method: http.MethodPost, path: "/api/code-mode/enable", body: `{}`, contains: `"enabled":true`, procedure: `"procedure":"codeMode.enable"`},
 		{name: "code mode disable", method: http.MethodPost, path: "/api/code-mode/disable", body: `{}`, contains: `"enabled":false`, procedure: `"procedure":"codeMode.disable"`},
 		{name: "code mode execute", method: http.MethodPost, path: "/api/code-mode/execute", body: `{"code":"return 1;"}`, contains: `"success":true`, procedure: `"procedure":"codeMode.execute"`},
-		{name: "submodule list", method: http.MethodGet, path: "/api/submodules", contains: `"submodules/hypercode"`, procedure: `"procedure":"submodule.list"`},
+		{name: "submodule list", method: http.MethodGet, path: "/api/submodules", contains: `"submodules/borg"`, procedure: `"procedure":"submodule.list"`},
 		{name: "submodule update all", method: http.MethodPost, path: "/api/submodules/update-all", body: `{}`, contains: `"success":true`, procedure: `"procedure":"submodule.updateAll"`},
-		{name: "submodule install deps", method: http.MethodPost, path: "/api/submodules/install-dependencies", body: `{"path":"submodules/hypercode"}`, contains: `"success":true`, procedure: `"procedure":"submodule.installDependencies"`},
-		{name: "submodule build", method: http.MethodPost, path: "/api/submodules/build", body: `{"path":"submodules/hypercode"}`, contains: `"success":true`, procedure: `"procedure":"submodule.build"`},
-		{name: "submodule enable", method: http.MethodPost, path: "/api/submodules/enable", body: `{"path":"submodules/hypercode"}`, contains: `"success":true`, procedure: `"procedure":"submodule.enable"`},
-		{name: "submodule capabilities", method: http.MethodGet, path: "/api/submodules/capabilities?path=submodules%2Fhypercode", contains: `"build"`, procedure: `"procedure":"submodule.detectCapabilities"`},
+		{name: "submodule install deps", method: http.MethodPost, path: "/api/submodules/install-dependencies", body: `{"path":"submodules/borg"}`, contains: `"success":true`, procedure: `"procedure":"submodule.installDependencies"`},
+		{name: "submodule build", method: http.MethodPost, path: "/api/submodules/build", body: `{"path":"submodules/borg"}`, contains: `"success":true`, procedure: `"procedure":"submodule.build"`},
+		{name: "submodule enable", method: http.MethodPost, path: "/api/submodules/enable", body: `{"path":"submodules/borg"}`, contains: `"success":true`, procedure: `"procedure":"submodule.enable"`},
+		{name: "submodule capabilities", method: http.MethodGet, path: "/api/submodules/capabilities?path=submodules%2Fborg", contains: `"build"`, procedure: `"procedure":"submodule.detectCapabilities"`},
 		{name: "suggestions list", method: http.MethodGet, path: "/api/suggestions", contains: `"sug-1"`, procedure: `"procedure":"suggestions.list"`},
 		{name: "suggestions resolve", method: http.MethodPost, path: "/api/suggestions/resolve", body: `{"id":"sug-1","status":"APPROVED"}`, contains: `"APPROVED"`, procedure: `"procedure":"suggestions.resolve"`},
 		{name: "suggestions clear", method: http.MethodPost, path: "/api/suggestions/clear", body: `{}`, contains: `"data":true`, procedure: `"procedure":"suggestions.clearAll"`},
@@ -12444,12 +12444,12 @@ func TestCLIToolsEndpointReportsDetectorFailure(t *testing.T) {
 
 func TestCLIHarnessesEndpoint(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, "submodules", "hypercode"), 0o755); err != nil {
-		t.Fatalf("failed to create hypercode submodule path: %v", err)
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, "submodules", "borg"), 0o755); err != nil {
+		t.Fatalf("failed to create borg submodule path: %v", err)
 	}
-	toolsDir := filepath.Join(workspaceRoot, "submodules", "hypercode", "tools")
+	toolsDir := filepath.Join(workspaceRoot, "submodules", "borg", "tools")
 	if err := os.MkdirAll(toolsDir, 0o755); err != nil {
-		t.Fatalf("failed to create hypercode tools path: %v", err)
+		t.Fatalf("failed to create borg tools path: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(toolsDir, "registry.go"), []byte(`
 package tools
@@ -12459,7 +12459,7 @@ func demo() {
 	_ = Tool{Name: "read_file"}
 }
 `), 0o644); err != nil {
-		t.Fatalf("failed to seed hypercode tool registry: %v", err)
+		t.Fatalf("failed to seed borg tool registry: %v", err)
 	}
 
 	cfg := config.Default()
@@ -12478,11 +12478,11 @@ func demo() {
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected status 200, got %d", recorder.Code)
 	}
-	if !strings.Contains(recorder.Body.String(), "\"hypercode\"") {
-		t.Fatalf("expected hypercode in harness payload, got %s", recorder.Body.String())
+	if !strings.Contains(recorder.Body.String(), "\"borg\"") {
+		t.Fatalf("expected borg in harness payload, got %s", recorder.Body.String())
 	}
 	if !strings.Contains(recorder.Body.String(), "\"toolCallCount\":2") {
-		t.Fatalf("expected hypercode tool inventory in harness payload, got %s", recorder.Body.String())
+		t.Fatalf("expected borg tool inventory in harness payload, got %s", recorder.Body.String())
 	}
 	if !strings.Contains(recorder.Body.String(), "\"toolInventoryStatus\":\"source-backed\"") {
 		t.Fatalf("expected source-backed inventory status in harness payload, got %s", recorder.Body.String())
@@ -12506,12 +12506,12 @@ func TestCLIHarnessesEndpointReportsDetectorFailure(t *testing.T) {
 
 func TestCLISummaryEndpoint(t *testing.T) {
 	workspaceRoot := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(workspaceRoot, "submodules", "hypercode"), 0o755); err != nil {
-		t.Fatalf("failed to create hypercode submodule path: %v", err)
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, "submodules", "borg"), 0o755); err != nil {
+		t.Fatalf("failed to create borg submodule path: %v", err)
 	}
-	toolsDir := filepath.Join(workspaceRoot, "submodules", "hypercode", "tools")
+	toolsDir := filepath.Join(workspaceRoot, "submodules", "borg", "tools")
 	if err := os.MkdirAll(toolsDir, 0o755); err != nil {
-		t.Fatalf("failed to create hypercode tools path: %v", err)
+		t.Fatalf("failed to create borg tools path: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(toolsDir, "registry.go"), []byte(`
 package tools
@@ -12521,7 +12521,7 @@ func demo() {
 	_ = Tool{Name: "read_file"}
 }
 `), 0o644); err != nil {
-		t.Fatalf("failed to seed hypercode tool registry: %v", err)
+		t.Fatalf("failed to seed borg tool registry: %v", err)
 	}
 
 	cfg := config.Default()
@@ -12541,8 +12541,8 @@ func demo() {
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected status 200, got %d", recorder.Code)
 	}
-	if !strings.Contains(recorder.Body.String(), "\"primaryHarness\":\"hypercode\"") {
-		t.Fatalf("expected hypercode primary harness in payload, got %s", recorder.Body.String())
+	if !strings.Contains(recorder.Body.String(), "\"primaryHarness\":\"borg\"") {
+		t.Fatalf("expected borg primary harness in payload, got %s", recorder.Body.String())
 	}
 	if !strings.Contains(recorder.Body.String(), "\"installedHarnessCount\":2") {
 		t.Fatalf("expected two installed harnesses in payload, got %s", recorder.Body.String())
@@ -12558,8 +12558,8 @@ func demo() {
 func TestRuntimeLocksEndpoint(t *testing.T) {
 	tempDir := t.TempDir()
 	cfg := config.Default()
-	cfg.ConfigDir = filepath.Join(tempDir, ".hypercode-go")
-	cfg.MainConfigDir = filepath.Join(tempDir, ".hypercode")
+	cfg.ConfigDir = filepath.Join(tempDir, ".borg-go")
+	cfg.MainConfigDir = filepath.Join(tempDir, ".borg")
 
 	if err := os.MkdirAll(cfg.MainConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create main config dir: %v", err)
@@ -12597,8 +12597,8 @@ func TestRuntimeLocksEndpoint(t *testing.T) {
 	if len(payload.Data) != 2 {
 		t.Fatalf("expected 2 runtime lock slots, got %d", len(payload.Data))
 	}
-	if payload.Data[0].Name != "hypercode-node" {
-		t.Fatalf("expected hypercode-node first lock slot, got %+v", payload.Data[0])
+	if payload.Data[0].Name != "borg-node" {
+		t.Fatalf("expected borg-node first lock slot, got %+v", payload.Data[0])
 	}
 	if payload.Data[0].LockPath != cfg.MainLockPath() {
 		t.Fatalf("expected main lock path %s, got %s", cfg.MainLockPath(), payload.Data[0].LockPath)
@@ -12609,14 +12609,14 @@ func TestRuntimeLocksEndpoint(t *testing.T) {
 	if payload.Data[0].Version != "0.99.1" || payload.Data[0].StartedAt != "2026-03-28T00:00:00Z" {
 		t.Fatalf("expected seeded main lock metadata, got %+v", payload.Data[0])
 	}
-	if payload.Data[1].Name != "hypercode-go" {
-		t.Fatalf("expected hypercode-go second lock slot, got %+v", payload.Data[1])
+	if payload.Data[1].Name != "borg-go" {
+		t.Fatalf("expected borg-go second lock slot, got %+v", payload.Data[1])
 	}
 	if payload.Data[1].LockPath != cfg.LockPath() {
 		t.Fatalf("expected go lock path %s, got %s", cfg.LockPath(), payload.Data[1].LockPath)
 	}
 	if payload.Data[1].Running {
-		t.Fatalf("expected hypercode-go lock slot to be absent, got %+v", payload.Data[1])
+		t.Fatalf("expected borg-go lock slot to be absent, got %+v", payload.Data[1])
 	}
 }
 
@@ -13020,7 +13020,7 @@ func TestMemoryStatusEndpoint(t *testing.T) {
 	cfg := config.Default()
 	cfg.WorkspaceRoot = tempDir
 
-	storePath := filepath.Join(tempDir, ".hypercode", "sectioned_memory.json")
+	storePath := filepath.Join(tempDir, ".borg", "sectioned_memory.json")
 	if err := os.MkdirAll(filepath.Dir(storePath), 0o755); err != nil {
 		t.Fatalf("failed to create memory dir: %v", err)
 	}
@@ -13029,7 +13029,7 @@ func TestMemoryStatusEndpoint(t *testing.T) {
 	}
 
 	server := New(cfg, stubDetector{})
-	request := httptest.NewRequest(http.MethodGet, "/api/memory/hypercode-memory/status", nil)
+	request := httptest.NewRequest(http.MethodGet, "/api/memory/borg-memory/status", nil)
 	recorder := httptest.NewRecorder()
 
 	server.Handler().ServeHTTP(recorder, request)
@@ -13062,7 +13062,7 @@ func TestMemoryStatusEndpointReportsReadFailure(t *testing.T) {
 	cfg := config.Default()
 	cfg.WorkspaceRoot = tempDir
 
-	storePath := filepath.Join(tempDir, ".hypercode", "sectioned_memory.json")
+	storePath := filepath.Join(tempDir, ".borg", "sectioned_memory.json")
 	if err := os.MkdirAll(filepath.Dir(storePath), 0o755); err != nil {
 		t.Fatalf("failed to create memory dir: %v", err)
 	}
@@ -13071,7 +13071,7 @@ func TestMemoryStatusEndpointReportsReadFailure(t *testing.T) {
 	}
 
 	server := New(cfg, stubDetector{})
-	request := httptest.NewRequest(http.MethodGet, "/api/memory/hypercode-memory/status", nil)
+	request := httptest.NewRequest(http.MethodGet, "/api/memory/borg-memory/status", nil)
 	recorder := httptest.NewRecorder()
 
 	server.Handler().ServeHTTP(recorder, request)
@@ -13096,7 +13096,7 @@ func TestRuntimeStatusEndpoint(t *testing.T) {
 			"result": map[string]any{
 				"data": map[string]any{
 					"json": []map[string]any{
-						{"id": "hypercode", "maturity": "Experimental"},
+						{"id": "borg", "maturity": "Experimental"},
 					},
 				},
 			},
@@ -13106,8 +13106,8 @@ func TestRuntimeStatusEndpoint(t *testing.T) {
 
 	cfg := config.Default()
 	cfg.WorkspaceRoot = tempDir
-	cfg.ConfigDir = filepath.Join(tempDir, ".hypercode-go")
-	cfg.MainConfigDir = filepath.Join(tempDir, ".hypercode")
+	cfg.ConfigDir = filepath.Join(tempDir, ".borg-go")
+	cfg.MainConfigDir = filepath.Join(tempDir, ".borg")
 
 	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create go config dir: %v", err)
@@ -13115,12 +13115,12 @@ func TestRuntimeStatusEndpoint(t *testing.T) {
 	if err := os.MkdirAll(cfg.MainConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create main config dir: %v", err)
 	}
-	if err := os.MkdirAll(filepath.Join(tempDir, "submodules", "hypercode"), 0o755); err != nil {
-		t.Fatalf("failed to create hypercode submodule path: %v", err)
+	if err := os.MkdirAll(filepath.Join(tempDir, "submodules", "borg"), 0o755); err != nil {
+		t.Fatalf("failed to create borg submodule path: %v", err)
 	}
-	toolsDir := filepath.Join(tempDir, "submodules", "hypercode", "tools")
+	toolsDir := filepath.Join(tempDir, "submodules", "borg", "tools")
 	if err := os.MkdirAll(toolsDir, 0o755); err != nil {
-		t.Fatalf("failed to create hypercode tools path: %v", err)
+		t.Fatalf("failed to create borg tools path: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(toolsDir, "registry.go"), []byte(`
 package tools
@@ -13130,10 +13130,10 @@ func demo() {
 	_ = Tool{Name: "read_file"}
 }
 `), 0o644); err != nil {
-		t.Fatalf("failed to seed hypercode tool registry: %v", err)
+		t.Fatalf("failed to seed borg tool registry: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(tempDir, "hypercode.config.json"), []byte("{}"), 0o644); err != nil {
-		t.Fatalf("failed to create hypercode config file: %v", err)
+	if err := os.WriteFile(filepath.Join(tempDir, "borg.config.json"), []byte("{}"), 0o644); err != nil {
+		t.Fatalf("failed to create borg config file: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(tempDir, "mcp.jsonc"), []byte("{}"), 0o644); err != nil {
 		t.Fatalf("failed to create mcp config file: %v", err)
@@ -13164,7 +13164,7 @@ func demo() {
 		t.Fatalf("failed to write imported instructions doc: %v", err)
 	}
 
-	storePath := filepath.Join(tempDir, ".hypercode", "sectioned_memory.json")
+	storePath := filepath.Join(tempDir, ".borg", "sectioned_memory.json")
 	if err := os.MkdirAll(filepath.Dir(storePath), 0o755); err != nil {
 		t.Fatalf("failed to create memory dir: %v", err)
 	}
@@ -13206,8 +13206,8 @@ func demo() {
 	if !payload.Success {
 		t.Fatalf("expected success payload, got %#v", payload)
 	}
-	if payload.Data.Service != "hypercode-go" {
-		t.Fatalf("expected hypercode-go service, got %q", payload.Data.Service)
+	if payload.Data.Service != "borg-go" {
+		t.Fatalf("expected borg-go service, got %q", payload.Data.Service)
 	}
 	if len(payload.Data.Locks) != 2 {
 		t.Fatalf("expected 2 lock statuses, got %d", len(payload.Data.Locks))
@@ -13224,8 +13224,8 @@ func demo() {
 	if !payload.Data.Config.RepoConfigAvailable || !payload.Data.Config.MCPConfigAvailable {
 		t.Fatalf("expected repo config files to be available, got %+v", payload.Data.Config)
 	}
-	if !payload.Data.Config.HypercodeSubmoduleAvailable {
-		t.Fatalf("expected hypercode submodule to be available")
+	if !payload.Data.Config.borgSubmoduleAvailable {
+		t.Fatalf("expected borg submodule to be available")
 	}
 	if !payload.Data.ImportedInstructions.Available {
 		t.Fatalf("expected imported instructions to be available")
@@ -13240,7 +13240,7 @@ func demo() {
 		t.Fatalf("expected 49 total harness definitions, got %d", payload.Data.CLI.HarnessCount)
 	}
 	if payload.Data.CLI.InstalledHarnessCount != 1 {
-		t.Fatalf("expected 1 installed harness from hypercode submodule, got %d", payload.Data.CLI.InstalledHarnessCount)
+		t.Fatalf("expected 1 installed harness from borg submodule, got %d", payload.Data.CLI.InstalledHarnessCount)
 	}
 	if payload.Data.CLI.SourceBackedHarnessCount != 1 || payload.Data.CLI.SourceBackedToolCount != 2 {
 		t.Fatalf("expected runtime source-backed CLI summary, got %+v", payload.Data.CLI)
@@ -13248,8 +13248,8 @@ func demo() {
 	if payload.Data.CLI.MetadataOnlyHarnessCount != 47 || payload.Data.CLI.OperatorDefinedHarnessCount != 1 {
 		t.Fatalf("expected runtime metadata/operator harness counts, got %+v", payload.Data.CLI)
 	}
-	if payload.Data.CLI.PrimaryHarness != "hypercode" {
-		t.Fatalf("expected hypercode primary harness, got %q", payload.Data.CLI.PrimaryHarness)
+	if payload.Data.CLI.PrimaryHarness != "borg" {
+		t.Fatalf("expected borg primary harness, got %q", payload.Data.CLI.PrimaryHarness)
 	}
 	if payload.Data.Providers.ProviderCount < payload.Data.Providers.ConfiguredCount {
 		t.Fatalf("expected provider count to cover configured providers, got providerCount=%d configured=%d", payload.Data.Providers.ProviderCount, payload.Data.Providers.ConfiguredCount)
@@ -13336,8 +13336,8 @@ func TestRuntimeStatusEndpointReportsDetectorFailure(t *testing.T) {
 	tempDir := t.TempDir()
 	cfg := config.Default()
 	cfg.WorkspaceRoot = tempDir
-	cfg.ConfigDir = filepath.Join(tempDir, ".hypercode-go")
-	cfg.MainConfigDir = filepath.Join(tempDir, ".hypercode")
+	cfg.ConfigDir = filepath.Join(tempDir, ".borg-go")
+	cfg.MainConfigDir = filepath.Join(tempDir, ".borg")
 
 	if err := os.MkdirAll(cfg.ConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create go config dir: %v", err)
@@ -13345,8 +13345,8 @@ func TestRuntimeStatusEndpointReportsDetectorFailure(t *testing.T) {
 	if err := os.MkdirAll(cfg.MainConfigDir, 0o755); err != nil {
 		t.Fatalf("failed to create main config dir: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(tempDir, "hypercode.config.json"), []byte("{}"), 0o644); err != nil {
-		t.Fatalf("failed to create hypercode config file: %v", err)
+	if err := os.WriteFile(filepath.Join(tempDir, "borg.config.json"), []byte("{}"), 0o644); err != nil {
+		t.Fatalf("failed to create borg config file: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(tempDir, "mcp.jsonc"), []byte("{}"), 0o644); err != nil {
 		t.Fatalf("failed to create mcp config file: %v", err)

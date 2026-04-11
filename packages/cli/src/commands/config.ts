@@ -1,7 +1,7 @@
 /**
- * `hypercode config` - Configuration management
+ * `borg config` - Configuration management
  *
- * View, set, and manage HyperCode configuration including
+ * View, set, and manage borg configuration including
  * subsystem settings, secrets, and environment variables.
  */
 
@@ -163,7 +163,7 @@ async function withConfigErrorHandling(
       const location = resolveControlPlaneLocation();
       console.error(chalk.red(`  ✗ ${message}`));
       console.error(chalk.dim(`  Control plane: ${location.baseUrl} (${location.source})`));
-      console.error(chalk.dim('  Start HyperCode with `hypercode start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
+      console.error(chalk.dim('  Start borg with `borg start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
     }
     process.exitCode = 1;
   }
@@ -176,11 +176,11 @@ export function registerConfigCommand(program: Command): void {
   const config = program
     .command('config')
     .alias('cfg')
-    .description('Config — view and manage HyperCode configuration, secrets, and environment variables');
+    .description('Config — view and manage borg configuration, secrets, and environment variables');
 
   config
     .command('show')
-    .description('Display the current HyperCode configuration')
+    .description('Display the current borg configuration')
     .option('--json', 'Output as raw JSON')
     .option('--section <section>', 'Show specific section: server, mcp, memory, providers, sessions, director')
     .action(async (opts) => {
@@ -202,7 +202,7 @@ export function registerConfigCommand(program: Command): void {
         }
 
         const chalk = (await import('chalk')).default;
-        console.log(chalk.bold.cyan('\n  HyperCode Configuration\n'));
+        console.log(chalk.bold.cyan('\n  borg Configuration\n'));
 
         if (selected && typeof selected === 'object' && !Array.isArray(selected)) {
           printConfigObject(selected as Record<string, unknown>, chalk);
@@ -220,11 +220,11 @@ export function registerConfigCommand(program: Command): void {
     .option('--json', 'Output as JSON')
     .addHelpText('after', `
 Examples:
-  $ hypercode config set server.port 8080
-  $ hypercode config set mcp.toonFormat true
-  $ hypercode config set memory.primaryBackend sqlite
-  $ hypercode config set director.enabled true
-  $ hypercode config set logLevel debug
+  $ borg config set server.port 8080
+  $ borg config set mcp.toonFormat true
+  $ borg config set memory.primaryBackend sqlite
+  $ borg config set director.enabled true
+  $ borg config set logLevel debug
     `)
     .action(async (key, value, opts) => {
       await withConfigErrorHandling(async () => {
@@ -296,13 +296,13 @@ Examples:
     .option('--delete <key>', 'Delete a secret')
     .option('--env', 'Show environment variable sources')
     .addHelpText('after', `
-Secrets are stored encrypted in ~/.hypercode/secrets.enc
+Secrets are stored encrypted in ~/.borg/secrets.enc
 
 Examples:
-  $ hypercode config secrets --list
-  $ hypercode config secrets --set OPENAI_API_KEY
-  $ hypercode config secrets --delete GITHUB_TOKEN
-  $ hypercode config secrets --env
+  $ borg config secrets --list
+  $ borg config secrets --set OPENAI_API_KEY
+  $ borg config secrets --delete GITHUB_TOKEN
+  $ borg config secrets --env
     `)
     .action(async (opts) => {
       await withConfigErrorHandling(async () => {
@@ -378,9 +378,9 @@ Examples:
 
   config
     .command('init')
-    .description('Initialize HyperCode configuration in current directory or globally')
-    .option('--global', 'Initialize global config at ~/.hypercode/')
-    .option('--local', 'Initialize local .hypercode/ config in current directory')
+    .description('Initialize borg configuration in current directory or globally')
+    .option('--global', 'Initialize global config at ~/.borg/')
+    .option('--local', 'Initialize local .borg/ config in current directory')
     .option('--json', 'Output as JSON')
     .action(async (opts) => {
       await withConfigErrorHandling(async () => {

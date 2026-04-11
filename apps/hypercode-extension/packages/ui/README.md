@@ -1,6 +1,6 @@
 # UI Package (`@extension/ui`)
 
-This package provides React components and styling utilities that make up the HyperCode Extension user interface, integrated with the modern plugin architecture and state management system.
+This package provides React components and styling utilities that make up the borg Extension user interface, integrated with the modern plugin architecture and state management system.
 
 ## Overview
 

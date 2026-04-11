@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import type { inferRouterOutputs } from "@trpc/server";
-import type { AppRouter } from "@hypercode/core";
+import type { AppRouter } from "@borg/core";
 import { trpc } from "@/utils/trpc";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";

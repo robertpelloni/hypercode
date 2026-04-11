@@ -1,6 +1,6 @@
 # Zustand State Management Stores
 
-This directory contains all Zustand state management stores for the HyperCode-Extension content script. The stores provide centralized, reactive, and type-safe state management with optimal performance characteristics.
+This directory contains all Zustand state management stores for the borg-Extension content script. The stores provide centralized, reactive, and type-safe state management with optimal performance characteristics.
 
 ## Overview
 

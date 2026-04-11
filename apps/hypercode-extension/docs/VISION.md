@@ -1,13 +1,13 @@
 # Vision: The AI Operating System
 
-**HyperCode Extension** is building toward a single, unified experience for interacting with *any* AI model, *any* tool, on *any* platform — directly from your browser.
+**borg Extension** is building toward a single, unified experience for interacting with *any* AI model, *any* tool, on *any* platform — directly from your browser.
 
 ---
 
 ## Core Philosophy
 
 ### 1. Universal Compatibility
-One extension to rule them all. Whether you're using ChatGPT, Gemini, Perplexity, Grok, DeepSeek, OpenRouter, T3 Chat, GitHub Copilot, Mistral, Kimi, Qwen, or Z Chat — HyperCode Extension provides the same powerful sidebar experience. The adapter architecture means adding new platforms is just a plugin — the core stays unchanged.
+One extension to rule them all. Whether you're using ChatGPT, Gemini, Perplexity, Grok, DeepSeek, OpenRouter, T3 Chat, GitHub Copilot, Mistral, Kimi, Qwen, or Z Chat — borg Extension provides the same powerful sidebar experience. The adapter architecture means adding new platforms is just a plugin — the core stays unchanged.
 
 ### 2. Cross-Browser
 Chrome, Edge, and Firefox from a single codebase. The Manifest V3 build compiles to Chrome/Edge directly; the Firefox build applies an automatic manifest transform (service_worker → scripts) via the ManifestParser. One codebase, three browsers.

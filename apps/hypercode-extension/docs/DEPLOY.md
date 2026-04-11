@@ -1,6 +1,6 @@
 # Deployment Instructions
 
-> How to build and deploy HyperCode Extension for Chrome, Edge, and Firefox.
+> How to build and deploy borg Extension for Chrome, Edge, and Firefox.
 
 ## Prerequisites
 

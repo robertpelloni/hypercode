@@ -1,6 +1,6 @@
 # Components Directory
 
-This directory contains React components that make up the user interface of the HyperCode Extension content script, integrated with the modern plugin architecture and state management system.
+This directory contains React components that make up the user interface of the borg Extension content script, integrated with the modern plugin architecture and state management system.
 
 ## Overview
 

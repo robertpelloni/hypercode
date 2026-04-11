@@ -1,6 +1,6 @@
 # Adapter Plugins
 
-This directory contains concrete implementations of Adapter Plugins for the HyperCode-Extension. Adapters are specialized plugins designed to tailor the assistant's behavior and capabilities to specific websites or types of websites.
+This directory contains concrete implementations of Adapter Plugins for the borg-Extension. Adapters are specialized plugins designed to tailor the assistant's behavior and capabilities to specific websites or types of websites.
 
 ## Overview
 

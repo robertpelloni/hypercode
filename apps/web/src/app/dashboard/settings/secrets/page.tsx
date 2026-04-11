@@ -2,7 +2,7 @@
 
 import { trpc } from '@/utils/trpc';
 import { useState } from 'react';
-import { Card, Button, Input } from '@hypercode/ui';
+import { Card, Button, Input } from '@borg/ui';
 
 function isSecretRecord(value: unknown): value is { key: string; updated_at: string | number | Date } {
     return typeof value === 'object'

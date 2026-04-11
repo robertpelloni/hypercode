@@ -1,9 +1,9 @@
 "use client";
 
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@hypercode/ui";
-import { Badge } from "@hypercode/ui";
-import { Button } from "@hypercode/ui";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@borg/ui";
+import { Badge } from "@borg/ui";
+import { Button } from "@borg/ui";
 import { Activity, FileText, Shield, Server, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { PageStatusBanner } from '@/components/PageStatusBanner';
@@ -114,7 +114,7 @@ export default function SystemOverview() {
                         System Overview
                     </h1>
                     <p className="text-zinc-500 mt-1">
-                        HyperCode operator console — subsystem health, uptime, and quick navigation.
+                        borg operator console — subsystem health, uptime, and quick navigation.
                     </p>
                 </div>
                 {statusData ? (

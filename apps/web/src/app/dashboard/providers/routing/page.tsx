@@ -5,7 +5,7 @@ import { trpc } from "@/utils/trpc";
 import { PageStatusBanner } from "@/components/PageStatusBanner";
 import { Network, ArrowUp, ArrowDown, Save, ShieldAlert, Cpu } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@hypercode/ui";
+import { Button } from "@borg/ui";
 
 interface CouncilMember {
     name: string;

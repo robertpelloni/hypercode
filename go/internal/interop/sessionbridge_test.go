@@ -9,7 +9,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/borghq/hypercode-go/internal/lockfile"
+	"github.com/borghq/borg-go/internal/lockfile"
 )
 
 func TestResolveTRPCBasesPrefersLockedAndConfiguredBases(t *testing.T) {

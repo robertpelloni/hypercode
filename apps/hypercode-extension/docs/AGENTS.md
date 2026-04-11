@@ -1,10 +1,10 @@
-# AGENTS — `apps/hypercode-extension/docs`
+# AGENTS — `apps/borg-extension/docs`
 
 **Mandatory reading first:**
 - `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`
 - root `AGENTS.md`
 
-This file contains only guidance for documentation under `apps/hypercode-extension/docs`.
+This file contains only guidance for documentation under `apps/borg-extension/docs`.
 
 ## Purpose
 
@@ -17,7 +17,7 @@ These docs should describe the browser extension honestly and specifically. They
 - Distinguish clearly between:
   - current extension behavior,
   - planned integration work,
-  - and broader HyperCode vision.
+  - and broader borg vision.
 - Do not require version bumps or broad project-wide release rituals for routine doc edits.
 
 ## What to emphasize

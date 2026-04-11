@@ -1,7 +1,7 @@
 /**
  * Main Application Initializer (Session 10)
  *
- * This module orchestrates the complete initialization sequence for the HyperCode Extension
+ * This module orchestrates the complete initialization sequence for the borg Extension
  * application, ensuring all components are initialized in the correct order with proper
  * dependency management and error handling.
  */

@@ -5,7 +5,7 @@ export function sqliteErrorMessage(error: unknown): string {
 export function isSqliteUnavailableError(error: unknown): boolean {
     const message = sqliteErrorMessage(error);
     return message.includes('SQLite runtime is unavailable')
-        || message.includes('SQLite runtime is unavailable for HyperCode DB-backed features')
+        || message.includes('SQLite runtime is unavailable for borg DB-backed features')
         || (
             message.includes('Could not locate the bindings file')
             && message.includes('better-sqlite3')

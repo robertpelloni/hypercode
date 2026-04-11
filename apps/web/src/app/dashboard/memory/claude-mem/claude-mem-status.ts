@@ -60,87 +60,87 @@ export type ClaudeMemOperatorGuidance = {
 
 export const CLAUDE_MEM_CAPABILITIES: ClaudeMemCapability[] = [
     {
-        title: 'Schema-inspired hypercode-memory adapter',
+        title: 'Schema-inspired borg-memory adapter',
         status: 'shipped',
-        note: 'HyperCode ships a dedicated `ClaudeMemAdapter` that mirrors hypercode-memory-style sections inside a HyperCode-managed local store.',
+        note: 'borg ships a dedicated `ClaudeMemAdapter` that mirrors borg-memory-style sections inside a borg-managed local store.',
         evidence: 'packages/core/src/services/memory/ClaudeMemAdapter.ts',
     },
     {
         title: 'Redundant fan-out persistence',
         status: 'shipped',
-        note: 'The default memory manager can fan out writes to both HyperCode JSON memory and the hypercode-memory-inspired adapter.',
+        note: 'The default memory manager can fan out writes to both borg JSON memory and the borg-memory-inspired adapter.',
         evidence: 'packages/core/src/services/memory/RedundantMemoryManager.ts',
     },
     {
         title: 'Section-aware memory buckets',
         status: 'shipped',
-        note: 'Current storage models project context, user facts, style preferences, commands, and general notes as hypercode-memory-shaped sections.',
+        note: 'Current storage models project context, user facts, style preferences, commands, and general notes as borg-memory-shaped sections.',
         evidence: 'packages/core/src/services/memory/ClaudeMemAdapter.ts',
     },
     {
         title: 'Dedicated operator parity surface',
         status: 'shipped',
-        note: 'HyperCode now exposes a route that tells the truth about current hypercode-memory assimilation instead of quietly forwarding to the generic vector explorer.',
+        note: 'borg now exposes a route that tells the truth about current borg-memory assimilation instead of quietly forwarding to the generic vector explorer.',
         evidence: 'apps/web/src/app/dashboard/memory/claude-mem/page.tsx',
     },
     {
-        title: 'Canonical HyperCode observation schema',
+        title: 'Canonical borg observation schema',
         status: 'shipped',
-        note: 'HyperCode defines shared observation input contracts in `@hypercode/types` and stores typed observation payloads with facts, concepts, files, hashes, and timestamps.',
+        note: 'borg defines shared observation input contracts in `@borg/types` and stores typed observation payloads with facts, concepts, files, hashes, and timestamps.',
         evidence: 'packages/types/src/schemas/memory.ts',
     },
     {
         title: 'Structured prompt and session summary capture',
         status: 'shipped',
-        note: 'HyperCode natively records structured user prompts and supervised-session summaries alongside the adapter layer, instead of relying on the hypercode-memory store alone.',
+        note: 'borg natively records structured user prompts and supervised-session summaries alongside the adapter layer, instead of relying on the borg-memory store alone.',
         evidence: 'packages/core/src/services/AgentMemoryService.ts',
     },
     {
-        title: 'Generic HyperCode memory search foundation',
+        title: 'Generic borg memory search foundation',
         status: 'partial',
-        note: 'HyperCode can already search observations, prompts, summaries, and raw memory records from the main memory dashboard, but that is not yet a dedicated hypercode-memory search/timeline workflow.',
+        note: 'borg can already search observations, prompts, summaries, and raw memory records from the main memory dashboard, but that is not yet a dedicated borg-memory search/timeline workflow.',
         evidence: 'apps/web/src/app/dashboard/memory/page.tsx',
     },
     {
         title: 'Vector and graph memory primitives adjacent to the adapter',
         status: 'partial',
-        note: 'HyperCode has broader memory infrastructure around the adapter, but it is not yet wired into a native hypercode-memory runtime story.',
+        note: 'borg has broader memory infrastructure around the adapter, but it is not yet wired into a native borg-memory runtime story.',
         evidence: 'apps/web/src/app/dashboard/memory/page.tsx',
     },
     {
         title: 'Claude Code lifecycle hooks',
         status: 'missing',
-        note: 'HyperCode does not currently register SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop, or SessionEnd hooks into Claude Code.',
-        evidence: 'Gap vs upstream hypercode-memory hook system',
+        note: 'borg does not currently register SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop, or SessionEnd hooks into Claude Code.',
+        evidence: 'Gap vs upstream borg-memory hook system',
     },
     {
         title: 'Structured observation compression pipeline',
         status: 'partial',
-        note: 'HyperCode already records heuristic typed observations with facts, concepts, files, and deduplicated hashes, but it does not yet have hypercode-memory-style model-driven observation workers or response processors.',
+        note: 'borg already records heuristic typed observations with facts, concepts, files, and deduplicated hashes, but it does not yet have borg-memory-style model-driven observation workers or response processors.',
         evidence: 'packages/core/src/services/AgentMemoryService.ts',
     },
     {
         title: 'Progressive-disclosure memory injection',
         status: 'missing',
-        note: 'HyperCode does not yet assemble hypercode-memory-style session context with index/detail/source layers and token-budgeted injection.',
+        note: 'borg does not yet assemble borg-memory-style session context with index/detail/source layers and token-budgeted injection.',
         evidence: 'Gap vs upstream ContextBuilder / ObservationCompiler pipeline',
     },
     {
         title: 'Observation-centric search and timeline workflow',
         status: 'missing',
-        note: 'Upstream tools like `search`, `timeline`, and `get_observations` do not have HyperCode-native hypercode-memory equivalents yet.',
+        note: 'Upstream tools like `search`, `timeline`, and `get_observations` do not have borg-native borg-memory equivalents yet.',
         evidence: 'Gap vs upstream memory MCP toolset',
     },
     {
         title: 'Transcript compression / Endless Mode',
         status: 'missing',
-        note: 'HyperCode does not currently rewrite long-running transcripts in place to replace bulky tool output with compressed memories.',
+        note: 'borg does not currently rewrite long-running transcripts in place to replace bulky tool output with compressed memories.',
         evidence: 'Gap vs upstream transcript transformer and watcher',
     },
     {
         title: 'Relational session-observation storage model',
         status: 'missing',
-        note: 'There is no HyperCode-native hypercode-memory schema yet for sessions, observations, summaries, prompts, correlations, and a persistent pending queue.',
+        note: 'There is no borg-native borg-memory schema yet for sessions, observations, summaries, prompts, correlations, and a persistent pending queue.',
         evidence: 'Gap vs upstream SQLite schema and queueing model',
     },
 ];
@@ -149,22 +149,22 @@ export const CLAUDE_MEM_IMPLEMENTATION_FILES = [
     {
         label: 'Current adapter implementation',
         path: 'packages/core/src/services/memory/ClaudeMemAdapter.ts',
-        note: 'Flat-file JSON provider inspired by hypercode-memory sections, not the full upstream runtime.',
+        note: 'Flat-file JSON provider inspired by borg-memory sections, not the full upstream runtime.',
     },
     {
         label: 'Redundant write manager',
         path: 'packages/core/src/services/memory/RedundantMemoryManager.ts',
-        note: 'Fans out reads/writes across HyperCode JSON memory and the hypercode-memory-inspired adapter.',
+        note: 'Fans out reads/writes across borg JSON memory and the borg-memory-inspired adapter.',
     },
     {
-        label: 'Primary HyperCode memory dashboard',
+        label: 'Primary borg memory dashboard',
         path: 'apps/web/src/app/dashboard/memory/page.tsx',
-        note: 'HyperCode-native view for observations, prompts, session summaries, search, and provider interchange.',
+        note: 'borg-native view for observations, prompts, session summaries, search, and provider interchange.',
     },
     {
         label: 'This parity page',
         path: 'apps/web/src/app/dashboard/memory/claude-mem/page.tsx',
-        note: 'Operator-facing truth table for what HyperCode has and has not assimilated from hypercode-memory yet.',
+        note: 'Operator-facing truth table for what borg has and has not assimilated from borg-memory yet.',
     },
 ];
 
@@ -200,7 +200,7 @@ export function getClaudeMemOperatorGuidance(storeStatus?: ClaudeMemStoreSnapsho
     if (!storeStatus) {
         return {
             title: 'Reading adapter state',
-            detail: 'Waiting for core to report whether the HyperCode-managed hypercode-memory store exists and how many default buckets are already seeded.',
+            detail: 'Waiting for core to report whether the borg-managed borg-memory store exists and how many default buckets are already seeded.',
             tone: 'warming',
         };
     }
@@ -214,8 +214,8 @@ export function getClaudeMemOperatorGuidance(storeStatus?: ClaudeMemStoreSnapsho
     if (runtimePipeline && runtimePipeline.claudeMemEnabled === false) {
         const providerLabel = runtimePipeline.providerNames?.length ? runtimePipeline.providerNames.join(', ') : 'no active providers reported';
         return {
-            title: 'hypercode-memory adapter not active in the runtime pipeline',
-            detail: `Core reports the active memory pipeline as ${runtimePipeline.configuredMode ?? 'unknown'} with ${providerLabel}. The adapter file can still exist on disk, but HyperCode is not currently writing new memories through hypercode-memory.`,
+            title: 'borg-memory adapter not active in the runtime pipeline',
+            detail: `Core reports the active memory pipeline as ${runtimePipeline.configuredMode ?? 'unknown'} with ${providerLabel}. The adapter file can still exist on disk, but borg is not currently writing new memories through borg-memory.`,
             tone: 'warning',
         };
     }
@@ -223,7 +223,7 @@ export function getClaudeMemOperatorGuidance(storeStatus?: ClaudeMemStoreSnapsho
     if (!storeStatus.exists) {
         return {
             title: 'Adapter store not created yet',
-            detail: `No HyperCode-managed claude_mem store exists yet. When the adapter initializes, it seeds ${defaultSectionCount} default buckets for project context, user facts, style preferences, commands, and general notes.`,
+            detail: `No borg-managed claude_mem store exists yet. When the adapter initializes, it seeds ${defaultSectionCount} default buckets for project context, user facts, style preferences, commands, and general notes.`,
             tone: 'warning',
         };
     }
@@ -246,7 +246,7 @@ export function getClaudeMemOperatorGuidance(storeStatus?: ClaudeMemStoreSnapsho
 
     return {
         title: 'Adapter store active',
-        detail: `${populatedSectionCount} populated bucket${populatedSectionCount === 1 ? '' : 's'} across all ${presentDefaultSectionCount}/${defaultSectionCount} default hypercode-memory buckets.`,
+        detail: `${populatedSectionCount} populated bucket${populatedSectionCount === 1 ? '' : 's'} across all ${presentDefaultSectionCount}/${defaultSectionCount} default borg-memory buckets.`,
         tone: 'ready',
     };
 }
@@ -295,7 +295,7 @@ export function getClaudeMemStatusSummary(
     const coreStatusDetail = !startupStatus
         ? null
         : startupStatus.status === 'degraded'
-            ? (startupSummary || 'Live startup telemetry is unavailable, so HyperCode is serving a cached compatibility snapshot.')
+            ? (startupSummary || 'Live startup telemetry is unavailable, so borg is serving a cached compatibility snapshot.')
             : !coreReady && startupSummary
                 ? startupSummary
                 : null;

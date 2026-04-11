@@ -28,7 +28,7 @@ describe('AutonomousMaintenanceService', () => {
 
     mockGetDb.mockImplementation(() => {
       throw new Error(
-        'SQLite runtime is unavailable for HyperCode DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)',
+        'SQLite runtime is unavailable for borg DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)',
       );
     });
 

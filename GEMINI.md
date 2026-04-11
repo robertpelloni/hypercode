@@ -35,15 +35,15 @@ Best suited for:
 
 When analyzing future architecture, use this recommended target layout:
 
-- `hypercode` / `hypercoded` for the core control plane
+- `borg` / `borgd` for the core control plane
 - `hypermcpd` plus `hypermcp-indexer` for MCP routing and metadata work
 - `hypermemd` plus `hyperingest` for memory/session/resource/background ingestion
 - `hyperharness` / `hyperharnessd` for harness execution surfaces
-- `hypercode-web` and `hypercode-native` as client applications
+- `borg-web` and `borg-native` as client applications
 
 Use these ownership assumptions during analysis:
 
-- `hypercoded` owns orchestration and operator-facing state
+- `borgd` owns orchestration and operator-facing state
 - `hypermcpd` owns MCP lifecycle, routing, and inventory exposure
 - `hypermcp-indexer` owns scrape/probe/cache refresh jobs
 - `hypermemd` owns memory/session/resource persistence and serving

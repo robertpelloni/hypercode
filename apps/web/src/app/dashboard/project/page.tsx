@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@hypercode/ui";
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@borg/ui";
 import { Scale, Save, History, RotateCcw, Loader2, Info, BookOpen } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -77,7 +77,7 @@ export default function ProjectPage() {
                         Project Constitution
                     </h1>
                     <p className="text-zinc-500 mt-2">
-                        Define the high-level rules, architectural patterns, and "laws" that all HyperCode agents must follow.
+                        Define the high-level rules, architectural patterns, and "laws" that all borg agents must follow.
                     </p>
                 </div>
                 <Badge variant="outline" className="bg-amber-500/5 text-amber-400 border-amber-500/20 px-3 py-1">
@@ -177,7 +177,7 @@ export default function ProjectPage() {
                                 <span className="text-[10px] font-bold uppercase tracking-tight">Pro Tip</span>
                             </div>
                             <p className="text-[10px] text-zinc-600 leading-relaxed italic">
-                                Use this page to set "permanent" context. HyperCode agents call <code>get_project_context</code> on every fresh session to align their behavior with these rules.
+                                Use this page to set "permanent" context. borg agents call <code>get_project_context</code> on every fresh session to align their behavior with these rules.
                             </p>
                         </CardContent>
                     </Card>

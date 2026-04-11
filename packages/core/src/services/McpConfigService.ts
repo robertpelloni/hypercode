@@ -21,8 +21,8 @@ export class McpConfigService {
     };
 
     /**
-     * Reads HyperCode's mcp.jsonc (falling back to mcp.json) and updates the database to match.
-     * This makes HyperCode's config file the authoritative source for config entry existence/content.
+     * Reads borg's mcp.jsonc (falling back to mcp.json) and updates the database to match.
+     * This makes borg's config file the authoritative source for config entry existence/content.
      */
     async syncWithDatabase() {
         console.log('[McpConfigService] Syncing Database with mcp.jsonc...');

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@hypercode/ui";
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@borg/ui";
 import { Loader2, Activity, Play, Square, Target, Crosshair, HelpCircle, ActivitySquare, RotateCcw } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -380,7 +380,7 @@ export default function SessionDashboard() {
                             </div>
                         ) : sessions.length === 0 ? (
                             <div className="rounded-lg border border-dashed border-zinc-800 bg-black/40 p-6 text-sm text-zinc-400">
-                                No supervised sessions exist yet. Create one to launch Aider, Claude Code, Gemini CLI, Codex, or OpenCode under HyperCode supervision.
+                                No supervised sessions exist yet. Create one to launch Aider, Claude Code, Gemini CLI, Codex, or OpenCode under borg supervision.
                             </div>
                         ) : sessions.map((session) => {
                             const latestLog = session.logs.length > 0 ? session.logs[session.logs.length - 1] : null;

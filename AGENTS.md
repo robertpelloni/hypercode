@@ -89,14 +89,14 @@ Do not present scaffolding, mocks, or partial integrations as complete.
 
 ## Recommended binary topology
 
-Treat the long-term HyperCode runtime as a **small family of focused binaries**, not one giant process and not a fully exploded microservice graph.
+Treat the long-term borg runtime as a **small family of focused binaries**, not one giant process and not a fully exploded microservice graph.
 
 ### Core naming
 
-- `hypercode` — operator CLI
-- `hypercoded` — primary control-plane daemon
-- `hypercode-web` — web GUI client
-- `hypercode-native` — native GUI client
+- `borg` — operator CLI
+- `borgd` — primary control-plane daemon
+- `borg-web` — web GUI client
+- `borg-native` — native GUI client
 - `hyperharness` — harness CLI
 - `hyperharnessd` — harness runtime daemon
 - `hypermcpd` — MCP router / aggregator daemon
@@ -112,16 +112,16 @@ Treat the long-term HyperCode runtime as a **small family of focused binaries**,
 
 ### Responsibility map
 
-- `hypercoded`
+- `borgd`
   - owns top-level orchestration, operator state, routing policy, supervision, and system health/status surfaces
-- `hypercode`
-  - is the operator-facing CLI that talks to `hypercoded`
-- `hypercode-web` and `hypercode-native`
+- `borg`
+  - is the operator-facing CLI that talks to `borgd`
+- `borg-web` and `borg-native`
   - are GUI clients for the same control-plane APIs and should not become independent orchestration backends
 - `hyperharnessd`
   - owns model execution loops, tool-call execution flow, harness-local session runtime, and harness isolation concerns
 - `hyperharness`
-  - is the direct CLI/operator entrypoint for harness-specific tasks when a narrower surface than `hypercode` is useful
+  - is the direct CLI/operator entrypoint for harness-specific tasks when a narrower surface than `borg` is useful
 - `hypermcpd`
   - owns MCP server registry, routing, connection lifecycle, tool inventory exposure, and runtime tool mediation
 - `hypermcp-indexer`
@@ -135,7 +135,7 @@ Treat the long-term HyperCode runtime as a **small family of focused binaries**,
 
 Do **not** split everything at once. Prefer this extraction order:
 
-1. Keep `hypercode` and `hypercoded` as the primary operator pair.
+1. Keep `borg` and `borgd` as the primary operator pair.
 2. Extract `hypermcpd` when MCP routing/probing/cache lifecycle clearly needs its own uptime or crash boundary.
 3. Extract `hypermemd` and/or `hyperingest` when background ingestion, session processing, or memory persistence starts competing with operator latency.
 4. Extract `hyperharnessd` when harness execution needs its own resource envelope or failure isolation.
@@ -184,7 +184,7 @@ Borg operates with three primary orchestrator interfaces, designed to distribute
 
 1. **cli-orchestrator (CLI)**:
    - The native local terminal interface, historically surfaced under Borg's older standalone orchestrator branding, bridging stdio MCP servers and foundational agentic workflows.
-   - Borg now tracks `submodules/hypercode` as the primary external CLI harness assimilation lane for this interface. The upstream exposes a Go/Cobra CLI with a TUI REPL, `pipe` command, and a Borg-aware adapter package, but the integration should still be described as **Experimental** until the runtime contract is deeper than metadata and launch scaffolding.
+   - Borg now tracks `submodules/borg` as the primary external CLI harness assimilation lane for this interface. The upstream exposes a Go/Cobra CLI with a TUI REPL, `pipe` command, and a Borg-aware adapter package, but the integration should still be described as **Experimental** until the runtime contract is deeper than metadata and launch scaffolding.
 2. **electron-orchestrator (Desktop)**:
    - A cross-platform Electron application (submoduled from `robertpelloni/maestro`) built for hacking parallel projects. 
    - **Capabilities**: Unattended Auto Run playbooks, Git Worktrees, Group Chat moderation, and visual context management.

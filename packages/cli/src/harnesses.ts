@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 export const CLI_HARNESSES = [
-  'hypercode',
+  'borg',
   'aider',
   'antigravity',
   'opencode',
@@ -53,23 +53,23 @@ export interface CliHarnessParitySummary {
   sourceBackedToolCount: number;
 }
 
-export const PRIMARY_CLI_HARNESS: CliHarness = 'hypercode';
+export const PRIMARY_CLI_HARNESS: CliHarness = 'borg';
 
 const EXTERNAL_HARNESS_NOTE =
-  'External harness; HyperCode currently tracks install/runtime metadata only, not a source-backed tool registry.';
+  'External harness; borg currently tracks install/runtime metadata only, not a source-backed tool registry.';
 
 export const CLI_HARNESS_DEFINITIONS: Record<CliHarness, CliHarnessDefinition> = {
-  hypercode: {
-    id: 'hypercode',
-    description: 'HyperCode Go CLI harness',
+  borg: {
+    id: 'borg',
+    description: 'borg Go CLI harness',
     maturity: 'Experimental',
     primary: true,
-    submodulePath: 'submodules/hypercode',
-    upstream: 'https://github.com/robertpelloni/hypercode',
+    submodulePath: 'submodules/borg',
+    upstream: 'https://github.com/robertpelloni/borg',
     runtime: 'Go / Cobra / TUI',
     launchCommand: 'go run .',
     capabilities: ['repl', 'pipe', 'borg-adapter', 'tool-registry'],
-    parityNotes: 'HyperCode can read HyperCode tool calls directly from the assimilated submodule source.',
+    parityNotes: 'borg can read borg tool calls directly from the assimilated submodule source.',
   },
   aider: {
     id: 'aider',
@@ -85,7 +85,7 @@ export const CLI_HARNESS_DEFINITIONS: Record<CliHarness, CliHarnessDefinition> =
     runtime: 'Desktop IDE / command surface',
     upstream: 'https://antigravity.google/',
     parityNotes:
-      'Docs-backed Antigravity editor surface; HyperCode does not yet have a source-backed shell contract or tool registry for parity-safe integration.',
+      'Docs-backed Antigravity editor surface; borg does not yet have a source-backed shell contract or tool registry for parity-safe integration.',
   },
   opencode: {
     id: 'opencode',
@@ -201,11 +201,11 @@ export function resolveCliHarnessDefinition(harness: string, workspaceRoot = pro
     toolInventoryStatus: definition.id === 'custom' ? 'operator-defined' : 'metadata-only',
     integrationLevel: definition.id === 'custom' ? 'operator-defined' : 'metadata-only',
   };
-  if (definition.id !== 'hypercode') {
+  if (definition.id !== 'borg') {
     return resolved;
   }
 
-  const toolInventory = readHypercodeToolInventory(workspaceRoot);
+  const toolInventory = readborgToolInventory(workspaceRoot);
   if (!toolInventory) {
     return resolved;
   }
@@ -262,8 +262,8 @@ export function formatCliHarnessHelpLines(workspaceRoot = process.cwd()): string
   }).join('\n');
 }
 
-function readHypercodeToolInventory(workspaceRoot: string): { toolCallNames: string[]; toolInventorySource: string } | null {
-  const toolsDir = path.join(workspaceRoot, 'submodules', 'hypercode', 'tools');
+function readborgToolInventory(workspaceRoot: string): { toolCallNames: string[]; toolInventorySource: string } | null {
+  const toolsDir = path.join(workspaceRoot, 'submodules', 'borg', 'tools');
   if (!existsSync(toolsDir)) {
     return null;
   }
@@ -287,6 +287,6 @@ function readHypercodeToolInventory(workspaceRoot: string): { toolCallNames: str
 
   return {
     toolCallNames: [...toolCallNames].sort((left, right) => left.localeCompare(right)),
-    toolInventorySource: 'submodules/hypercode/tools/*.go',
+    toolInventorySource: 'submodules/borg/tools/*.go',
   };
 }

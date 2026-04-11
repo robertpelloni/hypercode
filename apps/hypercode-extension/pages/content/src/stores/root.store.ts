@@ -22,7 +22,7 @@ export const useRootStore = create<RootState>()(
         ...createAdapterSlice(...a),
       }),
       {
-        name: 'hypercode-extension-root-store',
+        name: 'borg-extension-root-store',
         storage: createJSONStorage(createExtensionStateStorage),
         partialize: (state) => ({
           ui: {

@@ -27,15 +27,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/borghq/hypercode-go/internal/buildinfo"
-	"github.com/borghq/hypercode-go/internal/config"
-	"github.com/borghq/hypercode-go/internal/controlplane"
-	"github.com/borghq/hypercode-go/internal/harnesses"
-	"github.com/borghq/hypercode-go/internal/interop"
-	"github.com/borghq/hypercode-go/internal/memorystore"
-	"github.com/borghq/hypercode-go/internal/mesh"
-	"github.com/borghq/hypercode-go/internal/providers"
-	"github.com/borghq/hypercode-go/internal/sessionimport"
+	"github.com/borghq/borg-go/internal/buildinfo"
+	"github.com/borghq/borg-go/internal/config"
+	"github.com/borghq/borg-go/internal/controlplane"
+	"github.com/borghq/borg-go/internal/harnesses"
+	"github.com/borghq/borg-go/internal/interop"
+	"github.com/borghq/borg-go/internal/memorystore"
+	"github.com/borghq/borg-go/internal/mesh"
+	"github.com/borghq/borg-go/internal/providers"
+	"github.com/borghq/borg-go/internal/sessionimport"
 	_ "modernc.org/sqlite"
 )
 
@@ -45,7 +45,7 @@ var sessionExportKnownFormats = []map[string]any{
 	{"id": "opencode", "type": "opencode", "paths": []string{".docs/ai-logs"}},
 	{"id": "aider", "type": "aider", "paths": []string{".aider.chat.history.md", ".aider.tags.cache"}},
 	{"id": "windsurf", "type": "windsurf", "paths": []string{".windsurf", ".docs/ai-logs"}},
-	{"id": "hypercode", "type": "hypercode", "paths": []string{".hypercode", ".hypercode/sessions"}},
+	{"id": "borg", "type": "borg", "paths": []string{".borg", ".borg/sessions"}},
 	{"id": "continue", "type": "continue", "paths": []string{".continue", ".continue/sessions"}},
 	{"id": "copilot", "type": "copilot", "paths": []string{".github/copilot"}},
 }
@@ -173,7 +173,7 @@ type ConfigRuntimeSummary struct {
 	MainConfigDirAvailable      bool `json:"mainConfigDirAvailable"`
 	RepoConfigAvailable         bool `json:"repoConfigAvailable"`
 	MCPConfigAvailable          bool `json:"mcpConfigAvailable"`
-	HypercodeSubmoduleAvailable bool `json:"hypercodeSubmoduleAvailable"`
+	borgSubmoduleAvailable bool `json:"borgSubmoduleAvailable"`
 }
 
 type MemoryRuntimeSummary struct {
@@ -924,7 +924,7 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/cli/tools", s.handleCLITools)
 	s.mux.HandleFunc("/api/cli/harnesses", s.handleHarnesses)
 	s.mux.HandleFunc("/api/cli/summary", s.handleCLISummary)
-	s.mux.HandleFunc("/api/memory/hypercode-memory/status", s.handleMemoryStatus)
+	s.mux.HandleFunc("/api/memory/borg-memory/status", s.handleMemoryStatus)
 	s.mux.HandleFunc("/api/import/sources", s.handleImportSources)
 	s.mux.HandleFunc("/api/import/roots", s.handleImportRoots)
 	s.mux.HandleFunc("/api/import/validate", s.handleImportValidate)
@@ -946,7 +946,7 @@ func (s *Server) registerRoutes() {
 func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":        true,
-		"service":   "hypercode-go",
+		"service":   "borg-go",
 		"version":   buildinfo.Version,
 		"uptimeSec": int(time.Since(s.startedAt).Seconds()),
 		"baseUrl":   s.cfg.BaseURL(),
@@ -963,7 +963,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
 		"data": APIIndex{
-			Service: "hypercode-go",
+			Service: "borg-go",
 			BaseURL: s.cfg.BaseURL(),
 			Routes: []RouteInfo{
 				{Path: "/health", Category: "meta", Description: "Basic service health check."},
@@ -1156,7 +1156,7 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/logs/clear", Category: "ops", Description: "Clear observability logs, with a local metamcp.db fallback when the TypeScript log store is unavailable."},
 				{Path: "/api/server-health/check", Category: "ops", Description: "Bridge to the TypeScript MCP server health state for a specific server UUID, with a local cached mcp.jsonc metadata fallback when unavailable."},
 				{Path: "/api/server-health/reset", Category: "ops", Description: "Reset the TypeScript MCP server health error state for a specific server UUID."},
-				{Path: "/api/settings", Category: "control", Description: "Bridge to the full TypeScript configuration object, with a local Go .hypercode/config.json fallback when unavailable."},
+				{Path: "/api/settings", Category: "control", Description: "Bridge to the full TypeScript configuration object, with a local Go .borg/config.json fallback when unavailable."},
 				{Path: "/api/settings/update", Category: "control", Description: "Update the TypeScript configuration object with a partial config payload."},
 				{Path: "/api/settings/providers", Category: "control", Description: "Read provider visibility, with a local Go provider catalog fallback when the TypeScript settings router is unavailable."},
 				{Path: "/api/settings/test-connection", Category: "control", Description: "Test a provider connection through the TypeScript control plane."},
@@ -1180,11 +1180,11 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/tool-sets/create", Category: "control", Description: "Create a tool set through the TypeScript control plane."},
 				{Path: "/api/tool-sets/update", Category: "control", Description: "Update a tool set through the TypeScript control plane."},
 				{Path: "/api/tool-sets/delete", Category: "control", Description: "Delete a tool set through the TypeScript control plane."},
-				{Path: "/api/project/context", Category: "control", Description: "Bridge to the TypeScript project context document, with a local .hypercode/project_context.md fallback when the TypeScript control plane is unavailable."},
+				{Path: "/api/project/context", Category: "control", Description: "Bridge to the TypeScript project context document, with a local .borg/project_context.md fallback when the TypeScript control plane is unavailable."},
 				{Path: "/api/project/context/update", Category: "control", Description: "Update the TypeScript project context document."},
-				{Path: "/api/project/handoffs", Category: "control", Description: "Bridge to TypeScript project handoff metadata, with a local .hypercode/handoffs listing fallback when the TypeScript control plane is unavailable."},
+				{Path: "/api/project/handoffs", Category: "control", Description: "Bridge to TypeScript project handoff metadata, with a local .borg/handoffs listing fallback when the TypeScript control plane is unavailable."},
 				{Path: "/api/shell/log", Category: "control", Description: "Log a shell command through the TypeScript shell service."},
-				{Path: "/api/shell/history/query", Category: "control", Description: "Bridge to TypeScript shell history search, with a local .hypercode/shell_history.json fallback when unavailable."},
+				{Path: "/api/shell/history/query", Category: "control", Description: "Bridge to TypeScript shell history search, with a local .borg/shell_history.json fallback when unavailable."},
 				{Path: "/api/shell/history/system", Category: "control", Description: "Bridge to recent TypeScript system shell history, with a local shell history file fallback when unavailable."},
 				{Path: "/api/agent/tool", Category: "agents", Description: "Run a tool through the TypeScript agent router."},
 				{Path: "/api/agent/chat", Category: "agents", Description: "Bridge to the TypeScript agent chat surface."},
@@ -1230,8 +1230,8 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/api-keys/validate", Category: "governance", Description: "Validate an API key through the TypeScript API keys router."},
 				{Path: "/api/audit", Category: "governance", Description: "List audit logs through the TypeScript audit router, with a local empty-state fallback when the audit service is unavailable."},
 				{Path: "/api/audit/query", Category: "governance", Description: "Query audit logs through the TypeScript audit router, with a local empty-state fallback when the audit service is unavailable."},
-				{Path: "/api/scripts", Category: "operator", Description: "List saved scripts through the TypeScript saved scripts router, with a local HyperCode config fallback when unavailable."},
-				{Path: "/api/scripts/get", Category: "operator", Description: "Read a saved script through the TypeScript saved scripts router, with a local HyperCode config fallback when unavailable."},
+				{Path: "/api/scripts", Category: "operator", Description: "List saved scripts through the TypeScript saved scripts router, with a local borg config fallback when unavailable."},
+				{Path: "/api/scripts/get", Category: "operator", Description: "Read a saved script through the TypeScript saved scripts router, with a local borg config fallback when unavailable."},
 				{Path: "/api/scripts/create", Category: "operator", Description: "Create a saved script through the TypeScript saved scripts router."},
 				{Path: "/api/scripts/update", Category: "operator", Description: "Update a saved script through the TypeScript saved scripts router."},
 				{Path: "/api/scripts/delete", Category: "operator", Description: "Delete a saved script through the TypeScript saved scripts router."},
@@ -1492,14 +1492,14 @@ func (s *Server) handleAPIIndex(w http.ResponseWriter, _ *http.Request) {
 				{Path: "/api/cli/tools", Category: "cli", Description: "Detected local CLI tools and versions."},
 				{Path: "/api/cli/harnesses", Category: "cli", Description: "Harness registry metadata and install visibility."},
 				{Path: "/api/cli/summary", Category: "cli", Description: "Compact CLI and harness readiness summary."},
-				{Path: "/api/memory/hypercode-memory/status", Category: "memory", Description: "Read-only sectioned-memory status snapshot."},
+				{Path: "/api/memory/borg-memory/status", Category: "memory", Description: "Read-only sectioned-memory status snapshot."},
 				{Path: "/api/import/roots", Category: "imports", Description: "Explicit import discovery roots and whether they exist."},
 				{Path: "/api/import/sources", Category: "imports", Description: "Discovered import artifacts from explicit roots."},
 				{Path: "/api/import/validate", Category: "imports", Description: "Validation summary for a single import artifact path."},
 				{Path: "/api/import/candidates", Category: "imports", Description: "Validated import candidates with metadata."},
 				{Path: "/api/import/manifest", Category: "imports", Description: "Structured manifest of validated import candidates."},
 				{Path: "/api/import/summary", Category: "imports", Description: "Aggregate summary of validated import candidates."},
-				{Path: "/api/runtime/locks", Category: "runtime", Description: "Visibility into main HyperCode and sidecar lock files."},
+				{Path: "/api/runtime/locks", Category: "runtime", Description: "Visibility into main borg and sidecar lock files."},
 				{Path: "/api/runtime/status", Category: "runtime", Description: "Top-level runtime summary across CLI, imports, providers, memory, and sessions."},
 				{Path: "/api/runtime/imported-instructions", Category: "runtime", Description: "Read-only bridge to imported instructions generated by the main fork."},
 				{Path: "/api/startup/status", Category: "runtime", Description: "Truthful Go-sidecar startup readiness snapshot, including upstream control-plane dependency state."},
@@ -2990,7 +2990,7 @@ func (s *Server) handleMCPServerTest(w http.ResponseWriter, r *http.Request) {
 		}(),
 		"target": func() string {
 			if targetKind == "router" {
-				return "hypercode-router"
+				return "borg-router"
 			}
 			if strings.TrimSpace(serverName) != "" {
 				return serverName
@@ -2999,7 +2999,7 @@ func (s *Server) handleMCPServerTest(w http.ResponseWriter, r *http.Request) {
 		}(),
 		"via": func() string {
 			if targetKind == "router" {
-				return "hypercode-router"
+				return "borg-router"
 			}
 			return "direct-downstream"
 		}(),
@@ -3013,7 +3013,7 @@ func (s *Server) handleMCPServerTest(w http.ResponseWriter, r *http.Request) {
 				"kind": targetKind,
 				"displayName": func() string {
 					if targetKind == "router" {
-						return "HyperCode router"
+						return "borg router"
 					}
 					if strings.TrimSpace(serverName) != "" {
 						return serverName
@@ -3054,7 +3054,7 @@ func (s *Server) handleMCPServerTest(w http.ResponseWriter, r *http.Request) {
 	case targetKind == "router":
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
-			"data":    buildFailure("HyperCode MCP router is not initialized.", map[string]any{"error": "HyperCode MCP router is not initialized."}),
+			"data":    buildFailure("borg MCP router is not initialized.", map[string]any{"error": "borg MCP router is not initialized."}),
 			"bridge":  map[string]any{"fallback": "go-local-mcp", "procedure": "mcp.runServerTest", "reason": "upstream unavailable; simulating router probe failure locally"},
 		})
 		return
@@ -5276,7 +5276,7 @@ func (s *Server) handleSettingsGet(w http.ResponseWriter, r *http.Request) {
 		"bridge": map[string]any{
 			"fallback":  "go-local-settings",
 			"procedure": "settings.get",
-			"reason":    "upstream unavailable; using local .hypercode config fallback",
+			"reason":    "upstream unavailable; using local .borg config fallback",
 		},
 	})
 }
@@ -6778,7 +6778,7 @@ func (s *Server) handleSavedScriptsList(w http.ResponseWriter, r *http.Request) 
 		"bridge": map[string]any{
 			"fallback":  "go-local-operator",
 			"procedure": "savedScripts.list",
-			"reason":    "upstream unavailable; using local saved scripts from HyperCode config",
+			"reason":    "upstream unavailable; using local saved scripts from borg config",
 		},
 	})
 }
@@ -6821,7 +6821,7 @@ func (s *Server) handleSavedScriptsGet(w http.ResponseWriter, r *http.Request) {
 				"bridge": map[string]any{
 					"fallback":  "go-local-operator",
 					"procedure": "savedScripts.get",
-					"reason":    "upstream unavailable; using local saved script from HyperCode config",
+					"reason":    "upstream unavailable; using local saved script from borg config",
 				},
 			})
 			return
@@ -6831,11 +6831,11 @@ func (s *Server) handleSavedScriptsGet(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 		"success": false,
 		"error":   "saved script unavailable",
-		"detail":  "upstream unavailable; saved script was not found in local HyperCode config",
+		"detail":  "upstream unavailable; saved script was not found in local borg config",
 		"bridge": map[string]any{
 			"fallback":  "go-local-operator",
 			"procedure": "savedScripts.get",
-			"reason":    "upstream unavailable; saved script was not found in local HyperCode config",
+			"reason":    "upstream unavailable; saved script was not found in local borg config",
 		},
 	})
 }
@@ -9401,7 +9401,7 @@ func (s *Server) handleRuntimeStatus(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success": true,
 		"data": RuntimeStatus{
-			Service:   "hypercode-go",
+			Service:   "borg-go",
 			Version:   buildinfo.Version,
 			BaseURL:   s.cfg.BaseURL(),
 			UptimeSec: int(time.Since(s.startedAt).Seconds()),
@@ -9416,7 +9416,7 @@ func (s *Server) handleRuntimeStatus(w http.ResponseWriter, r *http.Request) {
 				MainConfigDirAvailable:      configStatus.MainConfigDir.Exists,
 				RepoConfigAvailable:         configStatus.BorgConfigFile.Exists,
 				MCPConfigAvailable:          configStatus.MCPConfigFile.Exists,
-				HypercodeSubmoduleAvailable: configStatus.HypercodeSubmodule.Exists,
+				borgSubmoduleAvailable: configStatus.borgSubmodule.Exists,
 			},
 			CLI: CLIRuntimeSummary{
 				ToolCount:                   cliSummary.ToolCount,
@@ -9698,7 +9698,7 @@ func localKnowledgeResources(workspaceRoot string) any {
 }
 
 func (s *Server) localPlanSandboxDir() string {
-	return filepath.Join(s.cfg.WorkspaceRoot, ".hypercode", "sandbox")
+	return filepath.Join(s.cfg.WorkspaceRoot, ".borg", "sandbox")
 }
 
 func (s *Server) localPlanAllDiffs() []map[string]any {
@@ -10358,7 +10358,7 @@ func (s *Server) localMarketplaceLegacyEntries(filter string) ([]map[string]any,
 			"id":          item.Name,
 			"name":        item.Name,
 			"description": "Official Skill",
-			"author":      "HyperCode Ecosystem",
+			"author":      "borg Ecosystem",
 			"type":        "skill",
 			"source":      "official",
 			"url":         emptyStringToNilAny(item.URL),
@@ -10422,7 +10422,7 @@ func (s *Server) localMarketplaceSkillInstalled(id string) bool {
 	if strings.TrimSpace(id) == "" {
 		return false
 	}
-	_, err := os.Stat(filepath.Join(s.cfg.WorkspaceRoot, ".hypercode", "skills", id))
+	_, err := os.Stat(filepath.Join(s.cfg.WorkspaceRoot, ".borg", "skills", id))
 	return err == nil
 }
 
@@ -11315,7 +11315,7 @@ func (s *Server) localWorkflowCanvas(id string) (any, error) {
 }
 
 func (s *Server) localAuditLogs(filter localAuditFilter) ([]map[string]any, error) {
-	logPath := filepath.Join(s.cfg.WorkspaceRoot, ".hypercode", "audit", "audit-"+time.Now().UTC().Format("2006-01-02")+".jsonl")
+	logPath := filepath.Join(s.cfg.WorkspaceRoot, ".borg", "audit", "audit-"+time.Now().UTC().Format("2006-01-02")+".jsonl")
 	raw, err := os.ReadFile(logPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -12135,7 +12135,7 @@ func coalesceSubmoduleName(name string, modulePath string) string {
 
 func localProjectContext(workspaceRoot string) string {
 	const defaultContent = "# Project Context\n\nDefine your repository rules and architectural vision here."
-	content, err := os.ReadFile(filepath.Join(workspaceRoot, ".hypercode", "project_context.md"))
+	content, err := os.ReadFile(filepath.Join(workspaceRoot, ".borg", "project_context.md"))
 	if err != nil {
 		return defaultContent
 	}
@@ -12143,7 +12143,7 @@ func localProjectContext(workspaceRoot string) string {
 }
 
 func localProjectHandoffs(workspaceRoot string) []map[string]any {
-	entries, err := os.ReadDir(filepath.Join(workspaceRoot, ".hypercode", "handoffs"))
+	entries, err := os.ReadDir(filepath.Join(workspaceRoot, ".borg", "handoffs"))
 	if err != nil {
 		return []map[string]any{}
 	}
@@ -12233,7 +12233,7 @@ func localSettingsEnvironment() map[string]any {
 }
 
 func localSettingsConfig(workspaceRoot string) map[string]any {
-	configPath := filepath.Join(workspaceRoot, ".hypercode", "config.json")
+	configPath := filepath.Join(workspaceRoot, ".borg", "config.json")
 	raw, err := os.ReadFile(configPath)
 	if err != nil {
 		return map[string]any{}
@@ -12694,7 +12694,7 @@ func (s *Server) localDBTool(uuid string) (any, error) {
 }
 
 func (s *Server) localShellQueryHistory(query string, limit int) ([]map[string]any, error) {
-	historyPath := filepath.Join(s.cfg.WorkspaceRoot, ".hypercode", "shell_history.json")
+	historyPath := filepath.Join(s.cfg.WorkspaceRoot, ".borg", "shell_history.json")
 	raw, err := os.ReadFile(historyPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -13040,7 +13040,7 @@ func (s *Server) localExecutionEnvironment(ctx context.Context) (map[string]any,
 
 	notes := []string{}
 	if strings.TrimSpace(preferredShellLabel) != "" {
-		notes = append(notes, "Prefer "+preferredShellLabel+" for default HyperCode shell execution on this host.")
+		notes = append(notes, "Prefer "+preferredShellLabel+" for default borg shell execution on this host.")
 	}
 	if supportsPosixShell {
 		for _, shell := range shells {
@@ -13081,12 +13081,12 @@ func (s *Server) localExecutionEnvironment(ctx context.Context) (map[string]any,
 func (s *Server) localInstallSurfaces() []map[string]any {
 	workspaceRoot := s.cfg.WorkspaceRoot
 	chromiumPath := firstExistingRelativePath(workspaceRoot, []string{
-		filepath.Join("apps", "hypercode-extension", "dist-chromium"),
+		filepath.Join("apps", "borg-extension", "dist-chromium"),
 		filepath.Join("apps", "extension", "dist"),
-		filepath.Join("apps", "hypercode-extension", "dist"),
+		filepath.Join("apps", "borg-extension", "dist"),
 	})
 	firefoxBundlePath := firstExistingRelativePath(workspaceRoot, []string{
-		filepath.Join("apps", "hypercode-extension", "dist-firefox"),
+		filepath.Join("apps", "borg-extension", "dist-firefox"),
 	})
 	firefoxManifestPath := firstExistingRelativePath(workspaceRoot, []string{
 		filepath.Join("apps", "extension", "manifest.firefox.json"),
@@ -13101,12 +13101,12 @@ func (s *Server) localInstallSurfaces() []map[string]any {
 		installSurfaceArtifact("browser-extension-chromium", chromiumPath != "", chromiumPath, chromiumArtifactKind(chromiumPath), map[bool]string{
 			true:  "Unpacked Chromium-compatible browser extension output is available.",
 			false: "Build the browser extension to generate a Chromium/Edge unpacked bundle.",
-		}, packageVersion(workspaceRoot, filepath.Join("apps", "hypercode-extension", "package.json")), workspaceRoot),
+		}, packageVersion(workspaceRoot, filepath.Join("apps", "borg-extension", "package.json")), workspaceRoot),
 		firefoxInstallSurface(workspaceRoot, firefoxBundlePath, firefoxManifestPath),
 		vscodeInstallSurface(workspaceRoot, vscodeBuildPath),
 		installSurfaceArtifact("mcp-client-sync", mcpConfigPath != "", mcpConfigPath, mcpConfigArtifactKind(mcpConfigPath), map[bool]string{
-			true:  "HyperCode-managed MCP config source is present for dashboard sync and preview flows.",
-			false: "No HyperCode MCP config source file was detected yet.",
+			true:  "borg-managed MCP config source is present for dashboard sync and preview flows.",
+			false: "No borg MCP config source file was detected yet.",
 		}, "", workspaceRoot),
 	}
 }
@@ -13207,8 +13207,8 @@ func fallbackControlTools(definitions []harnesses.Definition) []map[string]any {
 
 func definitionDescriptionName(id string, description string) string {
 	switch id {
-	case "hypercode":
-		return "HyperCode"
+	case "borg":
+		return "borg"
 	case "claude":
 		return "Claude Code"
 	case "codex":
@@ -13243,8 +13243,8 @@ func definitionDescriptionName(id string, description string) string {
 
 func harnessHomepage(id string) string {
 	switch id {
-	case "hypercode":
-		return "https://github.com/robertpelloni/hypercode"
+	case "borg":
+		return "https://github.com/robertpelloni/borg"
 	case "aider":
 		return "https://aider.chat/"
 	case "antigravity":
@@ -13280,8 +13280,8 @@ func harnessHomepage(id string) string {
 
 func harnessDocsURL(id string) string {
 	switch id {
-	case "hypercode":
-		return "https://github.com/robertpelloni/hypercode"
+	case "borg":
+		return "https://github.com/robertpelloni/borg"
 	case "aider":
 		return "https://aider.chat/docs/"
 	case "antigravity":
@@ -13317,12 +13317,12 @@ func harnessDocsURL(id string) string {
 
 func harnessInstallHint(id string) string {
 	switch id {
-	case "hypercode":
-		return "Use HyperCode's tracked `submodules/hypercode` checkout or install HyperCode and ensure `hypercode` is on PATH."
+	case "borg":
+		return "Use borg's tracked `submodules/borg` checkout or install borg and ensure `borg` is on PATH."
 	case "aider":
 		return "pip install aider-chat"
 	case "antigravity":
-		return "Download the Antigravity desktop app from https://antigravity.google/download and launch it directly; HyperCode does not currently detect it as a PATH CLI."
+		return "Download the Antigravity desktop app from https://antigravity.google/download and launch it directly; borg does not currently detect it as a PATH CLI."
 	case "claude":
 		return "npm install -g @anthropic-ai/claude-code"
 	case "codex":
@@ -13363,7 +13363,7 @@ func harnessCategory(id string) string {
 
 func harnessSessionCapable(id string) bool {
 	switch id {
-	case "hypercode", "aider", "claude", "codex", "gemini", "opencode", "superai-cli", "codebuff", "codemachine", "factory-droid":
+	case "borg", "aider", "claude", "codex", "gemini", "opencode", "superai-cli", "codebuff", "codemachine", "factory-droid":
 		return true
 	default:
 		return false
@@ -13396,7 +13396,7 @@ func localExecutionShells() []map[string]any {
 			"resolvedPath": lookupPath("pwsh"),
 			"version":      nil,
 			"preferred":    false,
-			"notes":        []string{"Preferred HyperCode shell on Windows for general command execution and structured scripting."},
+			"notes":        []string{"Preferred borg shell on Windows for general command execution and structured scripting."},
 		},
 		{
 			"id":           "powershell",
@@ -13527,7 +13527,7 @@ func firefoxInstallSurface(workspaceRoot string, bundlePath string, manifestPath
 		"artifactPath":    emptyStringToNilAny(artifactPath),
 		"artifactKind":    emptyStringToNilAny(artifactKind),
 		"detail":          detail,
-		"declaredVersion": emptyStringToNilAny(packageVersion(workspaceRoot, filepath.Join("apps", "hypercode-extension", "package.json"))),
+		"declaredVersion": emptyStringToNilAny(packageVersion(workspaceRoot, filepath.Join("apps", "borg-extension", "package.json"))),
 		"lastModifiedAt":  lastModifiedAtIfPresent(workspaceRoot, artifactPath),
 	}
 }
@@ -13554,12 +13554,12 @@ func vscodeInstallSurface(workspaceRoot string, buildPath string) map[string]any
 
 func chromiumArtifactKind(path string) string {
 	switch path {
-	case filepath.Join("apps", "hypercode-extension", "dist-chromium"):
+	case filepath.Join("apps", "borg-extension", "dist-chromium"):
 		return "Chromium unpacked bundle"
 	case filepath.Join("apps", "extension", "dist"):
 		return "Legacy extension dist bundle"
-	case filepath.Join("apps", "hypercode-extension", "dist"):
-		return "Generic hypercode-extension dist bundle"
+	case filepath.Join("apps", "borg-extension", "dist"):
+		return "Generic borg-extension dist bundle"
 	default:
 		return ""
 	}
@@ -14010,7 +14010,7 @@ func (s *Server) localMCPJsoncEditor() (map[string]any, error) {
 	}
 	return map[string]any{
 		"path":    jsoncPath,
-		"content": "// HyperCode MCP configuration\n" + prettyJSON(fallback) + "\n",
+		"content": "// borg MCP configuration\n" + prettyJSON(fallback) + "\n",
 	}, nil
 }
 
@@ -14030,7 +14030,7 @@ func (s *Server) saveLocalMCPJsonc(content string) error {
 		return err
 	}
 
-	jsoncBody := "// HyperCode MCP configuration\n// This file is HyperCode-owned and may include cached server metadata under mcpServers.<name>._meta.\n" + prettyJSON(parsed) + "\n"
+	jsoncBody := "// borg MCP configuration\n// This file is borg-owned and may include cached server metadata under mcpServers.<name>._meta.\n" + prettyJSON(parsed) + "\n"
 	if err := os.WriteFile(jsoncPath, []byte(jsoncBody), 0o644); err != nil {
 		return err
 	}
@@ -14050,7 +14050,7 @@ func (s *Server) saveLocalMCPJsonc(content string) error {
 }
 
 func (s *Server) localMemoryContexts() ([]map[string]any, error) {
-	contextsPath := filepath.Join(s.cfg.WorkspaceRoot, ".hypercode", "memory", "contexts.json")
+	contextsPath := filepath.Join(s.cfg.WorkspaceRoot, ".borg", "memory", "contexts.json")
 	raw, err := os.ReadFile(contextsPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -14175,7 +14175,7 @@ func (s *Server) localAgentMemoryStats() (map[string]any, error) {
 }
 
 func (s *Server) localAgentMemories() ([]localAgentMemoryRecord, error) {
-	memoriesPath := filepath.Join(s.cfg.WorkspaceRoot, ".hypercode", "agent_memory", "memories.json")
+	memoriesPath := filepath.Join(s.cfg.WorkspaceRoot, ".borg", "agent_memory", "memories.json")
 	raw, err := os.ReadFile(memoriesPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -15499,7 +15499,7 @@ func (s *Server) localSaveSkill(payload map[string]any) (map[string]any, error) 
 func (s *Server) localSkillRoots() []string {
 	return []string{
 		filepath.Join(s.cfg.WorkspaceRoot, "packages", "core", "src", "skills"),
-		filepath.Join(s.cfg.WorkspaceRoot, ".hypercode", "skills"),
+		filepath.Join(s.cfg.WorkspaceRoot, ".borg", "skills"),
 	}
 }
 
@@ -16177,7 +16177,7 @@ func localSessionExportFormatDetection(raw string) map[string]any {
 			if sessions, ok := record["sessions"].([]any); ok {
 				_ = sessions
 				return map[string]any{
-					"format": "hypercode-export",
+					"format": "borg-export",
 					"valid":  true,
 				}
 			}
@@ -16413,7 +16413,7 @@ func (s *Server) scanValidatedImportSources() ([]sessionimport.ValidationResult,
 }
 
 func (s *Server) importedSessionsArchiveRoot() string {
-	return filepath.Join(s.cfg.WorkspaceRoot, ".hypercode", "imported_sessions", "archive")
+	return filepath.Join(s.cfg.WorkspaceRoot, ".borg", "imported_sessions", "archive")
 }
 
 func readGzipJSON(filePath string, target any) error {

@@ -1,6 +1,6 @@
 # Events Module
 
-This directory contains the core event management system for the HyperCode-Extension content script.
+This directory contains the core event management system for the borg-Extension content script.
 
 ## Overview
 

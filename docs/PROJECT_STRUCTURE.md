@@ -1,12 +1,12 @@
 # Project Structure and Module Diagram
 
-This document maps the current structure of the HyperCode/Borg repository, shows where the main modules live, and explains how the major pieces connect.
+This document maps the current structure of the borg/Borg repository, shows where the main modules live, and explains how the major pieces connect.
 
 It is intentionally descriptive rather than aspirational: it focuses on what exists in the repo today.
 
 ## 1. High-level shape
 
-HyperCode is a **pnpm monorepo** with four major layers:
+borg is a **pnpm monorepo** with four major layers:
 
 1. `apps/` — operator-facing applications and shells
 2. `packages/` — shared libraries and the main TypeScript control plane
@@ -73,7 +73,7 @@ flowchart TD
     TYPES["packages/types\nshared types"]
     MCP["packages/mcp-registry + packages/mcp-client\nMCP metadata and client surfaces"]
     GO["go/\nexperimental Go sidecar"]
-    SUB["submodules/hypercode\nexternal CLI harness upstream"]
+    SUB["submodules/borg\nexternal CLI harness upstream"]
     DATA["data/\nbookmarks, imports, local knowledge"]
 
     CLI --> CORE
@@ -282,7 +282,7 @@ Observed package surfaces include:
 
 This means the repo has:
 
-- the primary HyperCode/Borg workspace at the root
+- the primary borg/Borg workspace at the root
 - a nested cloud-orchestrator workspace with its own app/server/shared package structure
 
 That nested stack should be understood as adjacent infrastructure, not the same thing as `apps/web`.
@@ -293,7 +293,7 @@ The current submodules directory includes at least two important external lanes:
 
 | Path | Purpose |
 | --- | --- |
-| `submodules/hypercode` | Experimental external CLI harness/upstream assimilation lane |
+| `submodules/borg` | Experimental external CLI harness/upstream assimilation lane |
 | `submodules/prism-mcp` | External Prism MCP reference lane |
 
 This submodule matters because the CLI/session/harness story is no longer only local handwritten code; it also depends on tracked external harness contracts and source-backed tool inventories.
@@ -316,7 +316,7 @@ It connects mainly to:
 | Area | Primary module(s) | Connected to |
 | --- | --- | --- |
 | Operator UI | `apps/web`, `apps/maestro`, `packages/ui` | `packages/core` |
-| CLI orchestration | `packages/cli` | `packages/core`, `submodules/hypercode` |
+| CLI orchestration | `packages/cli` | `packages/core`, `submodules/borg` |
 | Core control plane | `packages/core` | nearly everything |
 | Provider routing | `packages/ai`, `packages/core` | model/provider SDKs, memory, dashboard |
 | Memory and retrieval | `packages/memory`, `packages/core` | sessions, imports, dashboard, providers |
@@ -373,7 +373,7 @@ flowchart TD
     APPS["apps/\nweb, maestro, maestro-go, mobile,\ncloud-orchestrator, browser/editor apps"]
     PKGS["packages/\ncore, cli, ui, ai, memory,\nmcp, tools, agents, extensions"]
     GO["go/\nexperimental sidecar"]
-    SUBS["submodules/\nhypercode, prism-mcp"]
+    SUBS["submodules/\nborg, prism-mcp"]
     DATA["data/\nbobbybookmarks, local DBs"]
     DOCS["docs/\nREADME, roadmap, contributor guidance"]
 

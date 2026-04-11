@@ -79,7 +79,7 @@ Borg should eventually behave like an operator-owned substrate for model capabil
 - with routing, provenance, policy, and supervision handled in one place.
 
 ### 6. Harness convergence
-Borg should absorb important local coding harnesses through explicit, inspectable integration instead of hand-wavy compatibility claims. Today that includes tracking upstreams like `submodules/hypercode`, assigning them first-class harness identity in Borg CLI flows, and only expanding runtime coupling when the upstream actually exposes stable behavior to integrate.
+Borg should absorb important local coding harnesses through explicit, inspectable integration instead of hand-wavy compatibility claims. Today that includes tracking upstreams like `submodules/borg`, assigning them first-class harness identity in Borg CLI flows, and only expanding runtime coupling when the upstream actually exposes stable behavior to integrate.
 
 ## What Borg is not optimizing for in v1
 

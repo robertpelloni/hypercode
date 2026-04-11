@@ -8,9 +8,9 @@ def replace_in_file(filepath):
     except Exception:
         return
         
-    new_content = re.sub(r'\bborg\b', 'hypercode', content)
-    new_content = re.sub(r'\bBorg\b', 'HyperCode', new_content)
-    new_content = re.sub(r'\bBORG\b', 'HYPERCODE', new_content)
+    new_content = re.sub(r'\bborg\b', 'borg', content)
+    new_content = re.sub(r'\bBorg\b', 'borg', new_content)
+    new_content = re.sub(r'\bBORG\b', 'borg', new_content)
     
     if new_content != content:
         with open(filepath, 'w', encoding='utf-8') as f:

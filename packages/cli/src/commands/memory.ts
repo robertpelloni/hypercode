@@ -104,7 +104,7 @@ async function withMemoryErrorHandling(
       const location = resolveControlPlaneLocation();
       console.error(chalk.red(`  ✗ ${message}`));
       console.error(chalk.dim(`  Control plane: ${location.baseUrl} (${location.source})`));
-      console.error(chalk.dim('  Start HyperCode with `hypercode start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
+      console.error(chalk.dim('  Start borg with `borg start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
     }
     process.exitCode = 1;
   }
@@ -124,9 +124,9 @@ export function registerMemoryCommand(program: Command): void {
     .option('-s, --source <source>', 'Source of the memory', 'cli')
     .addHelpText('after', `
 Examples:
-  $ hypercode memory add "User prefers dark mode"
-  $ hypercode memory add "API uses OAuth 2.0" -t semantic --tags auth api
-  $ hypercode memory add "Deploy with: pnpm build && pnpm start" -t procedural
+  $ borg memory add "User prefers dark mode"
+  $ borg memory add "API uses OAuth 2.0" -t semantic --tags auth api
+  $ borg memory add "Deploy with: pnpm build && pnpm start" -t procedural
     `)
     .option('--json', 'Output as JSON')
     .action(async (content, opts) => {
@@ -287,7 +287,7 @@ Examples:
         }
 
         const chalk = (await import('chalk')).default;
-        const file = opts.output || `hypercode-memories-export.${result.format}`;
+        const file = opts.output || `borg-memories-export.${result.format}`;
         writeFileSync(file, result.data, 'utf8');
         console.log(chalk.green(`  ✓ Exported memories to ${file}`));
       }, opts);

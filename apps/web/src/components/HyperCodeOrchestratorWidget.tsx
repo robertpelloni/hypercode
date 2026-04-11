@@ -147,7 +147,7 @@ function SectionCard({ title, icon, children, defaultOpen = true }: { title: str
     );
 }
 
-export function HyperCodeOrchestratorWidget() {
+export function borgOrchestratorWidget() {
     const isConfigured = Boolean(BASE);
     const [online, setOnline] = useState<boolean | null>(null);
     const [council, setCouncil] = useState<CouncilStatus | null>(null);

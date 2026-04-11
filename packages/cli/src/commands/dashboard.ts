@@ -1,7 +1,7 @@
 /**
  * `borg dashboard` - Open the web dashboard
  *
- * Launches the HyperCode WebUI dashboard in the default browser.
+ * Launches the borg WebUI dashboard in the default browser.
  * If the server isn't running, optionally starts it first.
  *
  * @example
@@ -21,13 +21,13 @@ export function registerDashboardCommand(program: Command): void {
   program
     .command('dashboard')
     .alias('ui')
-    .description('Open the HyperCode WebUI dashboard in the default browser')
+    .description('Open the borg WebUI dashboard in the default browser')
     .option('-p, --port <number>', 'Dashboard port', '3000')
     .option('-H, --host <address>', 'Dashboard host', 'localhost')
     .option('--no-open', 'Start dashboard server without opening browser')
     .option('--dev', 'Start in development mode with hot reload')
     .addHelpText('after', `
-The dashboard provides a comprehensive visual interface to all HyperCode subsystems:
+The dashboard provides a comprehensive visual interface to all borg subsystems:
   - System overview with health metrics
   - MCP Router management (servers, tools, traffic, config, directory)
   - Memory browser and search
@@ -48,7 +48,7 @@ Examples:
       const chalk = (await import('chalk')).default;
       const url = `http://${opts.host}:${opts.port}`;
 
-      console.log(chalk.bold.cyan('\n  ⬡ HyperCode Dashboard\n'));
+      console.log(chalk.bold.cyan('\n  ⬡ borg Dashboard\n'));
       console.log(chalk.dim(`  URL: ${url}`));
       console.log(chalk.dim(`  Mode: ${opts.dev ? 'development' : 'production'}`));
       console.log('');
@@ -69,14 +69,14 @@ Examples:
   // About command (bonus)
   program
     .command('about')
-    .description('Show HyperCode version, project info, and submodule status')
+    .description('Show borg version, project info, and submodule status')
     .option('--json', 'Output as JSON')
     .action(async (opts) => {
       const chalk = (await import('chalk')).default;
 
       if (opts.json) {
         console.log(JSON.stringify({
-          name: 'HyperCode',
+          name: 'borg',
           subtitle: 'The Neural Operating System',
           version,
           packages: ['@borg/core', '@borg/cli', '@borg/types', '@borg/ai', '@borg/agents', '@borg/tools', '@borg/search', '@borg/memory', '@borg/adk'],
@@ -85,7 +85,7 @@ Examples:
         return;
       }
 
-      console.log(chalk.bold.cyan('\n  ⬡ HyperCode — The Neural Operating System'));
+      console.log(chalk.bold.cyan('\n  ⬡ borg — The Neural Operating System'));
   console.log(chalk.dim(`  Version: ${version}\n`));
       console.log(chalk.dim('  "The Ultimate AI Tool Dashboard & Development Orchestrator"\n'));
 

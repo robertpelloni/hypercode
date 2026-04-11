@@ -11,7 +11,7 @@ _Last updated: 2026-03-25_
 
 ## Framing
 
-HyperCode has two jobs at once:
+borg has two jobs at once:
 1. ship a reliable local control plane,
 2. preserve a credible long-term vision for richer AI orchestration.
 
@@ -77,7 +77,7 @@ Focus on the strongest product shape already present:
 - stronger attach/restart ergonomics
 - clearer crash/recovery visibility
 - clearer isolation behavior
-- converge primary CLI harness support around first-class HyperCode identities, starting with `hypercode`
+- converge primary CLI harness support around first-class borg identities, starting with `borg`
 
 ### D. Provider routing polish
 - clearer fallback history
@@ -85,8 +85,8 @@ Focus on the strongest product shape already present:
 - more actionable auth-state and routing config
 
 ### E. Architecture convergence
-- converge the repo toward the recommended HyperCode binary family without splitting everything at once
-- turn current packages into clearer extraction seams for `hypercoded`, `hypermcpd`, `hypermemd`, `hyperingest`, and `hyperharnessd`
+- converge the repo toward the recommended borg binary family without splitting everything at once
+- turn current packages into clearer extraction seams for `borgd`, `hypermcpd`, `hypermemd`, `hyperingest`, and `hyperharnessd`
 - keep CLIs and GUIs as clients of daemon-owned state
 - keep shared contracts and config stable before promoting them into cross-process APIs
 - treat the current Go workspace as an **Experimental** coexistence lane for truthful read-parity and bridge-first replacement work, not as proof that the daemon boundaries are already extracted
@@ -104,7 +104,7 @@ Focus on the strongest product shape already present:
 
 These remain exploratory until the control plane is stronger:
 - advanced council or debate systems
-- a definitive internal library of MCP servers aggregated from public lists and kept refreshed inside HyperCode
+- a definitive internal library of MCP servers aggregated from public lists and kept refreshed inside borg
 - benchmarking and comparative ranking across competing MCP server implementations
 - eventual model reach to any relevant MCP tool through one operator-controlled control plane
 - an operator-owned substrate spanning any model, any provider, any session, and any relevant tool
