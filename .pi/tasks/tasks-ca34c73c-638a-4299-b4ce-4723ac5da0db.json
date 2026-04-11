@@ -1,0 +1,50 @@
+{
+  "nextId": 5,
+  "tasks": [
+    {
+      "id": "1",
+      "subject": "Fix Go compilation errors in ctxharvester, repograph, projects, and harnesses packages",
+      "description": "Resolve compilation errors preventing Go build success:\n1. ctxharvester/pruner.go: scoredChunk redeclared, undefined: strings\n2. repograph/graph.go: fmt imported and not used, NodeType redeclared\n3. projects/tracker.go: undefined: fmt\n4. harnesses/skill_store.go: Skill redeclared\n5. harnesses/assimilator.go: declared and not used: info",
+      "status": "in_progress",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1775772715494,
+      "updatedAt": 1775774451172
+    },
+    {
+      "id": "2",
+      "subject": "Fix Go compilation errors in ctxharvester package",
+      "description": "Fix the redeclaration of scoredChunk and missing strings import in go/internal/ctxharvester/pruner.go",
+      "status": "completed",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1775773130249,
+      "updatedAt": 1775775136281
+    },
+    {
+      "id": "3",
+      "subject": "Fix Go compilation errors in ctxharvester package",
+      "description": "Fix compilation errors in go/internal/ctxharvester/pruner.go: redeclared scoredChunk and undefined strings import.",
+      "status": "pending",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1775773295999,
+      "updatedAt": 1775773295999
+    },
+    {
+      "id": "4",
+      "subject": "Fix Go compilation errors in ctxharvester package",
+      "description": "Resolve compilation errors in go/internal/ctxharvester/pruner.go:\n1. scoredChunk redeclared in this block\n2. undefined: strings",
+      "status": "pending",
+      "activeForm": "Fixing Go compilation errors in ctxharvester package",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1775773583830,
+      "updatedAt": 1775773583830
+    }
+  ]
+}
