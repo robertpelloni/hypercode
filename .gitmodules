@@ -22,9 +22,6 @@
 [submodule "apps/cloud-orchestrator"]
 	path = apps/cloud-orchestrator
 	url = https://github.com/robertpelloni/jules-autopilot
-[submodule "submodules/prism-mcp"]
-	path = submodules/prism-mcp
-	url = https://github.com/dcostenco/prism-mcp
 [submodule "submodules/hyperharness"]
 	path = submodules/hyperharness
 	url = https://github.com/robertpelloni/hyperharness.git
