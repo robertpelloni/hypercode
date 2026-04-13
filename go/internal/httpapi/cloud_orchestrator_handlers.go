@@ -44,20 +44,45 @@ func (s *Server) handleCloudOrchestratorManifest() http.HandlerFunc {
 
 func (s *Server) handleCloudOrchestratorSessions() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// First try upstream TS server
+		var upstreamData any
+		_, err := s.callUpstreamJSON(r.Context(), "cloudDev.list", map[string]any{}, &upstreamData)
+		if err == nil {
+			writeJSON(w, http.StatusOK, upstreamData)
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		// TODO: Implement actual session retrieval logic
+		// Fallback local logic
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"sessions": []interface{}{},
+			"bridge": map[string]interface{}{
+				"status": "fallback",
+				"reason": err.Error(),
+			},
 		})
 	}
 }
 
 func (s *Server) handleCloudOrchestratorFleetSummary() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// First try upstream TS server
+		var upstreamData any
+		_, err := s.callUpstreamJSON(r.Context(), "cloudDev.stats", map[string]any{}, &upstreamData)
+		if err == nil {
+			writeJSON(w, http.StatusOK, upstreamData)
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		// TODO: Implement actual fleet summary logic
+		// Fallback local logic
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status": "healthy",
+			"nodes": 1,
+			"bridge": map[string]interface{}{
+				"status": "fallback",
+				"reason": err.Error(),
+			},
 		})
 	}
 }
