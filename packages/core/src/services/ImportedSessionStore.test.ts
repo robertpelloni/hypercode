@@ -137,7 +137,7 @@ describe('ImportedSessionStore', () => {
             get sqliteInstance() {
                 return {
                     prepare() {
-                        throw new Error('SQLite runtime is unavailable for HyperCode DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)');
+                        throw new Error('SQLite runtime is unavailable for this run.');
                     },
                 };
             },

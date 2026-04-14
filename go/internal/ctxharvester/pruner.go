@@ -52,8 +52,8 @@ type PruneResult struct {
 	Summarized    int     `json:"summarized"`
 }
 
-// scoredChunk pairs a chunk with its computed score for sorting.
-type scoredChunk struct {
+// prunerScoredChunk pairs a chunk with its computed score for sorting.
+type prunerScoredChunk struct {
 	chunk *ContextChunk
 	score float64
 }
@@ -69,7 +69,7 @@ func (ch *ContextHarvester) PruneWithOptions(opts PruneOptions) *PruneResult {
 	}
 
 	// Score all chunks
-	var scored []scoredChunk
+	var scored []prunerScoredChunk
 	now := time.Now().UnixMilli()
 	for _, chunk := range ch.chunks {
 		ageHours := float64(now-chunk.CreatedAt) / (1000 * 60 * 60)
@@ -89,7 +89,7 @@ func (ch *ContextHarvester) PruneWithOptions(opts PruneOptions) *PruneResult {
 		// Boost for access count
 		score += float64(chunk.AccessCount) * 0.3
 
-		scored = append(scored, scoredChunk{chunk, score})
+		scored = append(scored, prunerScoredChunk{chunk, score})
 	}
 
 	// Sort by score ascending (weakest first for removal)
