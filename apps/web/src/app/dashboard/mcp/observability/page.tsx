@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentType } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent } from "@hypercode/ui";
 import { trpc } from '@/utils/trpc';
 import { Loader2, Activity, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
 
@@ -20,15 +20,34 @@ type ActivityPoint = {
 
 export default function ObservabilityDashboard() {
     const summaryQuery = trpc.logs.summary.useQuery({ limit: 1000 }, { refetchInterval: 5000 });
+    const summaryUnavailable = summaryQuery.isError || (summaryQuery.data !== undefined && (!summaryQuery.data || typeof summaryQuery.data !== "object" || Array.isArray(summaryQuery.data)));
+    const summaryError = summaryQuery.error?.message ?? "Observability summary is unavailable.";
 
-    const totals = summaryQuery.data?.totals;
+    const totals = !summaryUnavailable && summaryQuery.data && typeof summaryQuery.data === "object" && !Array.isArray(summaryQuery.data)
+        ? (summaryQuery.data as { totals?: { totalCalls?: number; errorCount?: number; errorRate?: number; avgDurationMs?: number; successRate?: number } }).totals
+        : undefined;
+    const totalsUnavailable = summaryUnavailable || (totals !== undefined && (
+        !totals
+        || typeof totals !== "object"
+        || typeof totals.totalCalls !== "number"
+        || typeof totals.errorCount !== "number"
+        || typeof totals.errorRate !== "number"
+        || typeof totals.avgDurationMs !== "number"
+        || typeof totals.successRate !== "number"
+    ));
+    const topToolsUnavailable = summaryUnavailable || ((summaryQuery.data as { topTools?: unknown } | undefined)?.topTools !== undefined && !Array.isArray((summaryQuery.data as { topTools?: unknown } | undefined)?.topTools));
+    const recentActivityUnavailable = summaryUnavailable || ((summaryQuery.data as { recentActivity?: unknown } | undefined)?.recentActivity !== undefined && !Array.isArray((summaryQuery.data as { recentActivity?: unknown } | undefined)?.recentActivity));
     const totalCalls = totals?.totalCalls ?? 0;
     const errorCount = totals?.errorCount ?? 0;
     const errorRate = totals?.errorRate ?? 0;
     const avgDuration = totals?.avgDurationMs ?? 0;
     const successRate = totals?.successRate ?? 100;
-    const topTools = (summaryQuery.data?.topTools ?? []) as ToolStat[];
-    const recentActivity = (summaryQuery.data?.recentActivity ?? []) as ActivityPoint[];
+    const topTools = !topToolsUnavailable && Array.isArray((summaryQuery.data as { topTools?: unknown[] } | undefined)?.topTools)
+        ? ((summaryQuery.data as { topTools?: ToolStat[] }).topTools ?? [])
+        : [];
+    const recentActivity = !recentActivityUnavailable && Array.isArray((summaryQuery.data as { recentActivity?: unknown[] } | undefined)?.recentActivity)
+        ? ((summaryQuery.data as { recentActivity?: ActivityPoint[] }).recentActivity ?? [])
+        : [];
 
     return (
         <div className="p-8 space-y-8">
@@ -41,30 +60,36 @@ export default function ObservabilityDashboard() {
                 </div>
             </div>
 
+            {summaryUnavailable ? (
+                <div className="rounded-lg border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-300">
+                    {summaryError}
+                </div>
+            ) : null}
+
             {/* KPI Cards */}
             <div className="grid gap-4 md:grid-cols-4">
                 <MetricCard
                     title="Total Calls"
-                    value={totalCalls.toString()}
+                    value={totalsUnavailable ? "—" : totalCalls.toString()}
                     icon={Activity}
-                    trend="Last 1000 logs"
+                    trend={totalsUnavailable ? summaryError : "Last 1000 logs"}
                 />
                 <MetricCard
                     title="Error Rate"
-                    value={`${errorRate.toFixed(1)}%`}
+                    value={totalsUnavailable ? "—" : `${errorRate.toFixed(1)}%`}
                     icon={AlertTriangle}
                     color="text-red-500"
-                    trend={`${errorCount} errors`}
+                    trend={totalsUnavailable ? summaryError : `${errorCount} errors`}
                 />
                 <MetricCard
                     title="Avg Latency"
-                    value={`${avgDuration}ms`}
+                    value={totalsUnavailable ? "—" : `${avgDuration}ms`}
                     icon={Clock}
                     color="text-yellow-500"
                 />
                 <MetricCard
                     title="Success Rate"
-                    value={`${successRate.toFixed(1)}%`}
+                    value={totalsUnavailable ? "—" : `${successRate.toFixed(1)}%`}
                     icon={CheckCircle2}
                     color="text-green-500"
                 />
@@ -80,6 +105,13 @@ export default function ObservabilityDashboard() {
                         {summaryQuery.isLoading ? (
                             <div className="h-64 flex items-center justify-center">
                                 <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+                            </div>
+                        ) : topToolsUnavailable ? (
+                            <div className="h-64 flex items-center justify-center rounded-lg border border-amber-700/40 bg-amber-950/20 px-6 text-center text-amber-200">
+                                <div>
+                                    <div className="font-medium">Logs unavailable</div>
+                                    <div className="mt-2 text-sm text-amber-200/80">{summaryError}</div>
+                                </div>
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -108,21 +140,29 @@ export default function ObservabilityDashboard() {
                         <CardTitle className="text-zinc-200">Recent Activity</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-64 flex items-end gap-2 p-4 border-b border-l border-zinc-800 border-dashed">
-                            {recentActivity.slice(0, 20).reverse().map((log, i) => (
-                                <div key={i} className="flex-1 flex flex-col justify-end group relative">
-                                    <div
-                                        className={`w-full rounded-t ${log.error ? 'bg-red-500/50' : 'bg-blue-500/50'} hover:opacity-80 transition-all`}
-                                        style={{ height: `${Math.min(100, (Number(log.durationMs) || 10) / 10)}%`, minHeight: '4px' }}
-                                    ></div>
-                                    {/* Tooltip */}
-                                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-black border border-zinc-800 text-[10px] p-1 rounded hidden group-hover:block whitespace-nowrap z-10">
-                                        {log.toolName} ({log.durationMs}ms)
-                                    </div>
+                        {recentActivityUnavailable ? (
+                            <div className="h-64 flex items-center justify-center rounded-lg border border-amber-700/40 bg-amber-950/20 px-6 text-center text-amber-200">
+                                <div>
+                                    <div className="font-medium">Recent activity unavailable</div>
+                                    <div className="mt-2 text-sm text-amber-200/80">{summaryError}</div>
                                 </div>
-                            ))}
-                            {recentActivity.length === 0 && <div className="w-full text-center text-zinc-500 self-center">No recent activity</div>}
-                        </div>
+                            </div>
+                        ) : (
+                            <div className="h-64 flex items-end gap-2 p-4 border-b border-l border-zinc-800 border-dashed">
+                                {recentActivity.slice(0, 20).reverse().map((log, i) => (
+                                    <div key={i} className="flex-1 flex flex-col justify-end group relative">
+                                        <div
+                                            className={`w-full rounded-t ${log.error ? 'bg-red-500/50' : 'bg-blue-500/50'} hover:opacity-80 transition-all`}
+                                            style={{ height: `${Math.min(100, (Number(log.durationMs) || 10) / 10)}%`, minHeight: '4px' }}
+                                        ></div>
+                                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-black border border-zinc-800 text-[10px] p-1 rounded hidden group-hover:block whitespace-nowrap z-10">
+                                            {log.toolName} ({log.durationMs}ms)
+                                        </div>
+                                    </div>
+                                ))}
+                                {recentActivity.length === 0 && <div className="w-full text-center text-zinc-500 self-center">No recent activity</div>}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

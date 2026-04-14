@@ -1,7 +1,7 @@
 {
-    "name": "@borg/mcp-router-cli",
-    "version": "0.99.1",
-    "description": "Borg MCP Router CLI - Manage MCP servers, configurations, and sessions",
+    "name": "@hypercode/mcp-router-cli",
+    "version": "1.0.0-alpha.1",
+    "description": "HyperCode MCP Router CLI - Manage MCP servers, configurations, and sessions",
     "type": "module",
     "bin": {
         "mcp-router": "./mcp-router-cli.ts"
@@ -13,7 +13,7 @@
         "bun": ">=1.0.0"
     },
     "dependencies": {
-        "@borg/core": "workspace:*",
+        "@hypercode/core": "workspace:*",
         "commander": "^12.1.0"
     }
 }

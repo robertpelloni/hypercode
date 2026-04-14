@@ -265,7 +265,7 @@ export function Sidebar({ className }: SidebarProps) {
                 id: 'open-mcp-router',
                 title: 'Open MCP Router Dashboard',
                 section: 'Actions',
-                description: 'Go to Borg\'s MCP router control plane',
+                description: 'Go to HyperCode\'s MCP router control plane',
                 icon: Command,
             },
             {
@@ -471,7 +471,7 @@ export function Sidebar({ className }: SidebarProps) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `borg-nav-preferences-${new Date().toISOString().slice(0, 10)}.json`;
+        link.download = `hypercode-nav-preferences-${new Date().toISOString().slice(0, 10)}.json`;
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -664,7 +664,7 @@ export function Sidebar({ className }: SidebarProps) {
             <div className="space-y-4 py-4">
                 <div className="px-3 py-2 space-y-5 max-h-[calc(100vh-2rem)] overflow-auto">
                     <h2 className="mb-1 px-4 text-lg font-semibold tracking-tight text-white">
-                        Borg Navigation
+                        HyperCode Navigation
                     </h2>
                     <div className="px-3">
                         <input

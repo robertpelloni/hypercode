@@ -2,7 +2,7 @@ import type { CouncilConfig, SupervisorConfig, SessionTemplate, LogRotationConfi
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 
-const DEFAULT_ORCHESTRATOR_CONFIG_DIR = join(process.cwd(), '.borg', 'orchestrator');
+const DEFAULT_ORCHESTRATOR_CONFIG_DIR = join(process.cwd(), '.hypercode', 'orchestrator');
 const LEGACY_CONFIG_DIR = process.env.AUTOPILOT_CONFIG_DIR || join(process.cwd(), '.autopilot');
 const CONFIG_DIR = process.env.BORG_ORCHESTRATOR_CONFIG_DIR
   || process.env.AUTOPILOT_CONFIG_DIR
@@ -62,7 +62,7 @@ const DEFAULT_CONFIG: AutopilotConfig = {
   },
   persistence: {
     enabled: true,
-    filePath: '.borg/orchestrator/sessions.json',
+    filePath: '.hypercode/orchestrator/sessions.json',
     autoSaveIntervalMs: 5000,
     autoResumeOnStart: true,
     maxPersistedSessions: 100,

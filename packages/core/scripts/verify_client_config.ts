@@ -38,11 +38,11 @@ async function main() {
     const updatedConfig = JSON.parse(fs.readFileSync(mockConfigPath, 'utf-8'));
     console.log('Updated Config:', JSON.stringify(updatedConfig, null, 2));
 
-    if (!updatedConfig.mcpServers['borg-core']) {
-        throw new Error('borg-core entry missing');
+    if (!updatedConfig.mcpServers['hypercode-core']) {
+        throw new Error('hypercode-core entry missing');
     }
 
-    if (updatedConfig.mcpServers['borg-core'].args[0] !== scriptPath) {
+    if (updatedConfig.mcpServers['hypercode-core'].args[0] !== scriptPath) {
         throw new Error('Incorrect script path injected');
     }
 

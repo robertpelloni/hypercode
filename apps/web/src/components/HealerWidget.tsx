@@ -13,13 +13,14 @@ export function HealerWidget() {
     const [eventList, setEventList] = useState<HealerEvent[]>([]);
 
     // 1. Initial Load: Fetch History
-    const { data: history, isLoading } = trpc.healer.getHistory.useQuery(undefined, {
+    const { data: history, error, isLoading } = trpc.healer.getHistory.useQuery(undefined, {
         refetchOnWindowFocus: false,
         refetchOnMount: true
     });
+    const historyUnavailable = Boolean(error) || (history !== undefined && !Array.isArray(history));
 
     useEffect(() => {
-        if (history) {
+        if (Array.isArray(history)) {
             setEventList(history as HealerEvent[]);
         }
     }, [history]);
@@ -37,12 +38,22 @@ export function HealerWidget() {
 
     if (isLoading && eventList.length === 0) return <div className="text-sm text-gray-500 p-4">Loading Healer History...</div>;
 
+    if (historyUnavailable && eventList.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center p-8 text-rose-300">
+                <div className="text-2xl mb-2">🩺</div>
+                <p>Healer history unavailable.</p>
+                <p className="text-xs opacity-80 text-center">{error?.message ?? 'Healer history returned an invalid payload.'}</p>
+            </div>
+        );
+    }
+
     if (eventList.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center p-8 text-gray-400">
                 <div className="text-2xl mb-2">🩺</div>
                 <p>No recent healing events.</p>
-                <p className="text-xs opacity-50">System is healthy.</p>
+                <p className="text-xs opacity-50">No healer activity has been recorded.</p>
             </div>
         );
     }

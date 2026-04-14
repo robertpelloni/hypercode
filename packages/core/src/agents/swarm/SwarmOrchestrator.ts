@@ -239,7 +239,7 @@ export class SwarmOrchestrator extends EventEmitter {
 
         try {
             if (!this.opencodeUrl) {
-                throw new Error('No Borg Orchestrator base configured.');
+                throw new Error('No HyperCode Orchestrator base configured.');
             }
             // Use the Autopilot Council to decompose the goal via multi-model debate.
             const res = await fetch(`${this.opencodeUrl}/api/council/debate`, {

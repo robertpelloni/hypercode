@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent, Button } from "@hypercode/ui";
 import { Download, Upload, Copy, Check, Loader2, Save } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';

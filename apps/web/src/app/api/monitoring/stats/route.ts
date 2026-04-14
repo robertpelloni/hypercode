@@ -13,7 +13,7 @@ export async function GET() {
     try {
         const rootDir = getMonorepoRoot();
 
-        const brainDir = path.join(rootDir, '.borg', 'brain');
+        const brainDir = path.join(rootDir, '.hypercode', 'brain');
         let brainCount = 0;
         const recentCount = 0;
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Card, CardContent } from "@borg/ui";
+import { Card, CardContent } from "@hypercode/ui";
 import { Library, FileCode, Hammer, Brain, BookOpenText, Lightbulb, Layers, ScrollText, ExternalLink, Loader2 } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 
@@ -46,15 +46,17 @@ function ResourceCard({ item }: { item: ResourceSection }) {
 export default function LibraryDashboard() {
     const scriptsQuery = trpc.savedScripts.list.useQuery();
     const skillsQuery = trpc.skills.list.useQuery();
+    const promptsQuery = trpc.prompts.list.useQuery();
 
     // Normalize counts safely.
     const scriptCount = Array.isArray(scriptsQuery.data) ? scriptsQuery.data.length : undefined;
     const skillCount = Array.isArray(skillsQuery.data) ? (skillsQuery.data as unknown[]).length : undefined;
+    const promptCount = Array.isArray(promptsQuery.data) ? promptsQuery.data.length : undefined;
 
     const sections: ResourceSection[] = [
         {
             title: "Saved Scripts",
-            description: "Reusable automation scripts for common Borg operations and workflows.",
+            description: "Reusable automation scripts for common HyperCode operations and workflows.",
             href: "/dashboard/mcp/scripts",
             icon: FileCode,
             accentClass: "text-blue-400",
@@ -63,12 +65,21 @@ export default function LibraryDashboard() {
         },
         {
             title: "Skills",
-            description: "Curated skill bundles that extend Borg's reasoning and action capabilities.",
+            description: "Curated skill bundles that extend HyperCode's reasoning and action capabilities.",
             href: "/dashboard/skills",
             icon: Hammer,
             accentClass: "text-orange-400",
             count: skillCount,
             countLabel: "skills",
+        },
+        {
+            title: "Prompts & Templates",
+            description: "System prompts, task templates, and structural directives for AI agents.",
+            href: "/dashboard/prompts",
+            icon: BookOpenText,
+            accentClass: "text-indigo-400",
+            count: promptCount,
+            countLabel: "templates",
         },
         {
             title: "Tool Sets",
@@ -79,28 +90,28 @@ export default function LibraryDashboard() {
         },
         {
             title: "Memory Bank",
-            description: "Searchable observations, prompts, and session summaries persisted by Borg.",
+            description: "Searchable observations, prompts, and session summaries persisted by HyperCode.",
             href: "/dashboard/memory",
             icon: Brain,
             accentClass: "text-purple-400",
         },
         {
             title: "Plans",
-            description: "Structured reasoning plans and goal decompositions generated or stored by Borg.",
+            description: "Structured reasoning plans and goal decompositions generated or stored by HyperCode.",
             href: "/dashboard/plans",
             icon: Lightbulb,
             accentClass: "text-yellow-400",
         },
         {
             title: "Manual",
-            description: "Operator documentation, usage guides, and feature reference for Borg.",
+            description: "Operator documentation, usage guides, and feature reference for HyperCode.",
             href: "/dashboard/manual",
             icon: BookOpenText,
             accentClass: "text-emerald-400",
         },
         {
             title: "Chronicle",
-            description: "Git commit history and working-tree status for the active Borg workspace.",
+            description: "Git commit history and working-tree status for the active HyperCode workspace.",
             href: "/dashboard/chronicle",
             icon: ScrollText,
             accentClass: "text-violet-400",
@@ -125,7 +136,7 @@ export default function LibraryDashboard() {
                         Resource Library
                     </h1>
                     <p className="text-zinc-500 mt-2 max-w-2xl">
-                        Central hub for scripts, skills, tool sets, memory, plans, and documentation — all the reusable resources that power Borg workflows.
+                        Central hub for scripts, skills, tool sets, memory, plans, and documentation — all the reusable resources that power HyperCode workflows.
                     </p>
                 </div>
                 {isLoading && (

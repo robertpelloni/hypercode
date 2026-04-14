@@ -3,7 +3,7 @@
  *
  * claude-mem stores per-project context as structured markdown sections inside
  * a single `.claude/CLAUDE.md` file.  This adapter translates that format into
- * Borg's Memory/IMemoryProvider interface so it can participate in the
+ * HyperCode's Memory/IMemoryProvider interface so it can participate in the
  * redundant memory pipeline alongside JsonMemoryProvider (and future vector
  * stores).
  *
@@ -59,8 +59,8 @@ export class ClaudeMemAdapter implements IMemoryProvider {
     private initialized = false;
 
     constructor(workspaceRoot: string) {
-        // Store in .borg/claude_mem.json alongside other Borg data
-        this.storePath = path.join(workspaceRoot, '.borg', 'claude_mem.json');
+        // Store in .hypercode/claude_mem.json alongside other HyperCode data
+        this.storePath = path.join(workspaceRoot, '.hypercode', 'claude_mem.json');
     }
 
     async init(): Promise<void> {

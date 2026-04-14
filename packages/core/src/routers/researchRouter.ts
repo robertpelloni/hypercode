@@ -1,3 +1,4 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { t, publicProcedure, getResearchService, getDeepResearchService } from '../lib/trpc-core.js';
 import fs from 'node:fs/promises';
@@ -5,6 +6,12 @@ import path from 'node:path';
 
 const MASTER_INDEX_PATH = path.join(process.cwd(), 'BORG_MASTER_INDEX.jsonc');
 const INGESTION_STATUS_PATH = path.join(process.cwd(), 'scripts', 'ingestion-status.json');
+
+const isMissingFileError = (error: unknown): boolean =>
+    typeof error === 'object'
+    && error !== null
+    && 'code' in error
+    && (error as NodeJS.ErrnoException).code === 'ENOENT';
 
 const stripJsonComments = (content: string) =>
     content.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g, (m, g) => g ? '' : m);
@@ -42,13 +49,12 @@ const readIngestionStatus = async (): Promise<IngestionStatusDoc> => {
             pending: Array.isArray(parsed.pending) ? parsed.pending : [],
             failed: Array.isArray(parsed.failed) ? parsed.failed : []
         };
-    } catch {
-        return { processed: [], pending: [], failed: [] };
+    } catch (error) {
+        if (isMissingFileError(error)) {
+            return { processed: [], pending: [], failed: [] };
+        }
+        throw error;
     }
-};
-
-const writeIngestionStatus = async (doc: IngestionStatusDoc): Promise<void> => {
-    await fs.writeFile(INGESTION_STATUS_PATH, `${JSON.stringify(doc, null, 2)}\n`, 'utf-8');
 };
 
 const loadMasterIndexEntries = async (): Promise<Map<string, { id?: string; name?: string; category?: string }>> => {
@@ -69,9 +75,18 @@ const loadMasterIndexEntries = async (): Promise<Map<string, { id?: string; name
         }
 
         return lookup;
-    } catch {
-        return new Map();
+    } catch (error) {
+        if (isMissingFileError(error)) {
+            return new Map();
+        }
+        throw error;
     }
+};
+
+const formatUnknownError = (error: unknown): string => error instanceof Error ? error.message : String(error);
+
+const writeIngestionStatus = async (doc: IngestionStatusDoc): Promise<void> => {
+    await fs.writeFile(INGESTION_STATUS_PATH, `${JSON.stringify(doc, null, 2)}\n`, 'utf-8');
 };
 
 export const researchRouter = t.router({
@@ -141,10 +156,19 @@ export const researchRouter = t.router({
 
     /** Read ingestion queue state from canonical index + status tracker */
     ingestionQueue: publicProcedure.query(async () => {
-        const [statusDoc, masterEntries] = await Promise.all([
-            readIngestionStatus(),
-            loadMasterIndexEntries()
-        ]);
+        let statusDoc: IngestionStatusDoc;
+        let masterEntries: Map<string, { id?: string; name?: string; category?: string }>;
+        try {
+            [statusDoc, masterEntries] = await Promise.all([
+                readIngestionStatus(),
+                loadMasterIndexEntries()
+            ]);
+        } catch (error) {
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `Research ingestion queue is unavailable: ${formatUnknownError(error)}`,
+            });
+        }
 
         const processed = statusDoc.processed.map((url) => {
             const normalized = normalizeUrl(url);

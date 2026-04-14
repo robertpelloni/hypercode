@@ -7,8 +7,9 @@ export function ContextWidget() {
     const [filePath, setFilePath] = useState('');
     const utils = trpc.useContext();
 
-    const { data: rawFiles, isLoading } = trpc.borgContext.list.useQuery();
-    const files = rawFiles as string[] | undefined;
+    const { data: rawFiles, error, isLoading } = trpc.borgContext.list.useQuery();
+    const filesUnavailable = Boolean(error) || (rawFiles !== undefined && !Array.isArray(rawFiles));
+    const files = !filesUnavailable ? (rawFiles as string[] | undefined) : undefined;
     const addMutation = trpc.borgContext.add.useMutation({
         onSuccess: () => {
             utils.borgContext.list.invalidate();
@@ -37,7 +38,7 @@ export function ContextWidget() {
                 <button
                     onClick={() => clearMutation.mutate()}
                     className="text-xs text-red-500 hover:text-red-400 opacity-60 hover:opacity-100"
-                    disabled={!files || files.length === 0}
+                    disabled={filesUnavailable || !files || files.length === 0}
                 >
                     Clear All
                 </button>
@@ -45,6 +46,8 @@ export function ContextWidget() {
 
             {isLoading ? (
                 <div className="text-sm text-gray-500 animate-pulse">Loading context...</div>
+            ) : filesUnavailable ? (
+                <div className="text-sm text-red-400 italic">Context working set unavailable: {error?.message ?? 'Context working set returned an invalid payload.'}</div>
             ) : (
                 <div className="space-y-2 mb-4">
                     {files && files.length > 0 ? (

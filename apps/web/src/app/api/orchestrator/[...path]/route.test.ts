@@ -36,7 +36,7 @@ describe('orchestrator proxy route', () => {
   });
 
   it('buffers standard JSON responses before returning them', async () => {
-    global.fetch = vi.fn(async () => new Response(JSON.stringify({ ok: true, tools: ['borg'] }), {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify({ ok: true, tools: ['hypercode'] }), {
       status: 200,
       headers: { 'content-type': 'application/json' },
     })) as typeof fetch;
@@ -47,7 +47,7 @@ describe('orchestrator proxy route', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, tools: ['borg'] });
+    expect(await response.json()).toEqual({ ok: true, tools: ['hypercode'] });
     expect(global.fetch).toHaveBeenCalledWith(
       new URL('http://127.0.0.1:4000/api/cli/tools'),
       expect.objectContaining({

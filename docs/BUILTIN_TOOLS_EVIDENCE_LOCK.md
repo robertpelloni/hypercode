@@ -230,7 +230,7 @@ Do not claim parity complete until L1/L0 entries are promoted.
 
 ---
 
-## Borg Readiness Gate
+## HyperCode Readiness Gate
 
 Do not claim “first-class parity complete” until:
 

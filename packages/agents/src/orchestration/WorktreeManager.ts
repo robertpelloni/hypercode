@@ -11,7 +11,7 @@ export class WorktreeManager {
 
     constructor(rootDir: string = process.cwd()) {
         this.rootDir = rootDir;
-        this.worktreeRoot = path.join(rootDir, '.borg', 'worktrees');
+        this.worktreeRoot = path.join(rootDir, '.hypercode', 'worktrees');
     }
 
     /**
@@ -24,7 +24,7 @@ export class WorktreeManager {
         const branchName = `task/${taskId}`;
         const worktreePath = path.join(this.worktreeRoot, taskId);
 
-        // Ensure .borg/worktrees exists (mkdir handled by git usually, but parent needed)
+        // Ensure .hypercode/worktrees exists (mkdir handled by git usually, but parent needed)
         await fs.mkdir(this.worktreeRoot, { recursive: true });
 
         // Check if branch exists, if so, just use it? Or error?
@@ -71,7 +71,7 @@ export class WorktreeManager {
         const branchName = `task/${taskId}`;
         try {
             console.log(`[WorktreeManager] Merging ${branchName} into ${targetBranch}`);
-            await execAsync(`git checkout ${targetBranch} && git merge ${branchName} --squash --author="Borg <borg@system>" -m "task: ${taskId}"`, { cwd: this.rootDir });
+            await execAsync(`git checkout ${targetBranch} && git merge ${branchName} --squash --author="HyperCode <hypercode@system>" -m "task: ${taskId}"`, { cwd: this.rootDir });
             // Don't push yet, let Director decide.
         } catch (e: any) {
             throw new Error(`Merge failed: ${e.message}`);

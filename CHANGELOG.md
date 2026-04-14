@@ -4,6 +4,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.1] - 2026-04-02
+
+### Added
+- **Prompt Library Integration**: Fully assimilated the `PromptRegistry` into the core TRPC router (`promptsRouter.ts`). The dashboard's Prompt Library component now securely accesses the local file system templates via TRPC instead of a hardcoded, hacky Next.js API route. The prompt dashboard has also been moved out of an orphaned URL into the main Dashboard shell.
+
+## [1.0.0-alpha.1] - 2026-04-02
+
+### Added
+- **Global Workspace Tracker**: Added a `WorkspaceTracker` daemon service that automatically registers new session directories into `~/.hypercode/workspaces.json`. The web dashboard (`/dashboard/session`) now prominently features a "Recent Workspaces" visualization for fast multi-project hopping.
+- **Robust Regression Coverage**: Created dedicated Vitest suites in `cachedToolInventory.test.ts` to strictly validate MCP discovery fallback behavior under simulated SQLite failures.
+
+## [1.0.0-alpha.1] - 2026-04-02
+
+### Added
+- **Autonomous Context Harvesting**: Fully wired `ContextHarvester` and `MemoryHarvestReactor` into the `ContextManager`. When files change on disk, the system instantly harvests the semantic chunks into memory and dynamically injects them into the active LLM context prompt. Models now intrinsically "know" when files change without explicitly needing to read them again.
+- **Context Inspection Dashboard**: Wired the `contextHarvester` APIs into the TRPC router and added a live "Harvested Context Chunks" visualization to the Web Dashboard's Context page. Operators can now visually inspect exactly which chunks are being injected into the models' active context window.
+
+## [1.0.0-alpha.1] - 2026-04-02
+
+### Added
+- **Workspace Secrets Injection**: The internal `workspace_secrets` SQLite table (managed by the "Secrets Vault" dashboard) is now natively and securely injected into the `process.env` stream for every `StdioClient` spawn. This allows global API credentials (like GitHub tokens, API keys) to flow securely into all MCP servers without needing to hardcode them in individual server configs or the operator's shell profile.
+
+## [1.0.0-alpha.1] - 2026-04-02
+
+### Added
+- **HyperIngest Daemon Processes**: Implemented the first standalone daemon package boundaries for `hyperingest` via `BobbyBookmarksSyncWorker` and `LinkCrawlerWorker`.
+- **Autonomous Link Crawler**: HyperCode now autonomously crawls pending URLs in the Links Backlog using `jsdom` to extract OpenGraph tags, favicons, and page descriptions, feeding the raw text to a configured LLM to automatically generate semantic tags and categories without user intervention.
+- **Cross-Database Backlog Sync**: Built a background daemon worker to seamlessly and safely synchronize the external `resources.db` bookmarks fed by the Python ecosystem into the canonical `metamcp.db` `links_backlog` table.
+
+## [1.0.0-alpha.1] - 2026-04-02
+
+### Added
+- **Go Sidecar API Documentation**: Created `docs/GO_SIDECAR_API.md` to explicitly map and classify truthful local fallbacks vs bridge-only passthroughs in the experimental Go sidecar.
+- **P1 Feature Freeze**: Successfully implemented, tested, and validated all P1 core features identified in the previous stabilization passes.
+
+## [1.0.0-alpha.1] - 2026-04-02
+
+### Fixed
+- **MCP Database Destructive Sync**: Fixed a critical bug in `McpConfigService.syncWithDatabase()` that was wiping out SQLite tool records (and resetting their `always_on` status) when `mcp.jsonc` was empty.
+- **Config Directory Resolution**: Changed `getBorgConfigDir()` to respect local workspace `mcp.jsonc` configs, improving the loader's ability to find active tool caches.
+- **Split-Brain MCP Loader**: Fixed the `stdioLoader` returning 0 tools by caching the database inventory to `.hypercode/mcp-cache.json` during synchronization via `exportToolCache()`, allowing the lightweight proxy to serve both manually configured servers and database-discovered directories without slowing down initialization.
+- **Tool Inventory Merging**: Fixed `getCachedToolInventory()` to correctly merge database snapshots with `mcp.jsonc` snapshots instead of treating them as mutually exclusive.
+
 ## [Unreleased]
 
 ### Added

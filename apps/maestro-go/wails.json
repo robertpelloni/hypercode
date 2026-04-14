@@ -7,7 +7,7 @@
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
   "author": {
-    "name": "Borg Agent",
-    "email": "bot@borg.dev"
+    "name": "HyperCode Agent",
+    "email": "bot@hypercode.dev"
   }
 }

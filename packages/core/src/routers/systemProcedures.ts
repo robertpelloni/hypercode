@@ -13,7 +13,6 @@ import {
     getSessionImportService,
     getMcpConfigService,
 } from '../lib/trpc-core.js';
-import { mcpServersRepository, toolsRepository } from '../db/repositories/index.js';
 import { buildStartupStatusSnapshot } from './startupStatus.js';
 import { detectLocalExecutionEnvironment } from '../services/execution-environment.js';
 import { getCachedToolInventory } from '../mcp/cachedToolInventory.js';
@@ -84,14 +83,21 @@ export const systemProcedures = {
         const memoryManager = (mcpServer as { memoryManager?: { getPipelineSummary?: () => MemoryPipelineSummary } }).memoryManager;
         const memoryPipelineSummary: MemoryPipelineSummary | null = memoryManager?.getPipelineSummary?.() ?? null;
 
-        const [runtimeServers, sessionCount, browserStatus, persistedServers, persistedTools, executionEnvironment, cachedInventory, sectionedMemoryStoreStatus, importedMaintenanceStats] = await Promise.all([
+        const [runtimeServers, sessionCount, browserStatus, executionEnvironment, cachedInventory, sectionedMemoryStoreStatus, importedMaintenanceStats] = await Promise.all([
             aggregator?.listServers?.().catch(() => []) ?? [],
             Promise.resolve(sessionSupervisor?.listSessions?.().length ?? 0),
             Promise.resolve(browserService?.getStatus?.() ?? { active: false, pageCount: 0, pageIds: [] }),
-            mcpServersRepository.findAll().catch(() => []),
-            toolsRepository.findAll().catch(() => []),
             getCachedExecutionEnvironment(),
-            getCachedToolInventory().catch(() => ({ servers: [], tools: [], toolCounts: new Map(), source: 'empty' as const, snapshotUpdatedAt: null })),
+            getCachedToolInventory().catch(() => ({
+                servers: [],
+                tools: [],
+                toolCounts: new Map(),
+                source: 'empty' as const,
+                snapshotUpdatedAt: null,
+                databaseAvailable: false,
+                databaseError: 'Persisted MCP inventory is unavailable: startup snapshot fallback failed.',
+                fallbackUsed: true,
+            })),
             readSectionedMemoryStoreStatus(process.cwd(), memoryPipelineSummary).catch(() => null),
             Promise.resolve(sessionImportService?.getImportedMaintenanceStats?.() ?? null),
         ]);
@@ -106,23 +112,10 @@ export const systemProcedures = {
 
         const cachedInventorySummary = summarizeCachedInventory(cachedInventory);
 
-        const persistedServerCount = cachedInventorySummary.source === 'empty'
-            ? persistedServers.length
-            : cachedInventorySummary.serverCount;
-        const alwaysOnServerUuids = new Set(
-            persistedServers
-                .filter((server) => Boolean(server.always_on))
-                .map((server) => server.uuid),
-        );
-        const persistedToolCount = cachedInventorySummary.source === 'empty'
-            ? persistedTools.length
-            : cachedInventorySummary.toolCount;
-        const persistedAlwaysOnServerCount = cachedInventorySummary.source === 'empty'
-            ? alwaysOnServerUuids.size
-            : cachedInventorySummary.alwaysOnServerCount;
-        const persistedAlwaysOnToolCount = cachedInventorySummary.source === 'empty'
-            ? persistedTools.filter((tool) => Boolean(tool.always_on) || alwaysOnServerUuids.has(tool.mcp_server_uuid)).length
-            : cachedInventorySummary.alwaysOnToolCount;
+        const persistedServerCount = cachedInventorySummary.serverCount;
+        const persistedToolCount = cachedInventorySummary.toolCount;
+        const persistedAlwaysOnServerCount = cachedInventorySummary.alwaysOnServerCount;
+        const persistedAlwaysOnToolCount = cachedInventorySummary.alwaysOnToolCount;
 
         return buildStartupStatusSnapshot({
             mcpServer,
@@ -144,6 +137,11 @@ export const systemProcedures = {
             persistedAlwaysOnToolCount,
             inventorySource: cachedInventorySummary.source,
             inventorySnapshotUpdatedAt: cachedInventorySummary.snapshotUpdatedAt,
+            inventoryPersistence: {
+                databaseAvailable: cachedInventorySummary.databaseAvailable,
+                fallbackUsed: cachedInventorySummary.fallbackUsed,
+                error: cachedInventorySummary.databaseError,
+            },
             executionEnvironment: executionEnvironment?.summary ?? null,
             sectionedMemory: sectionedMemoryStoreStatus
                 ? {

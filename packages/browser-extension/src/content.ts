@@ -1,7 +1,7 @@
 import { Readability } from '@mozilla/readability';
 import TurndownService from 'turndown';
 
-console.log("Borg Browser Extension Content Script Loaded 🚀");
+console.log("HyperCode Browser Extension Content Script Loaded 🚀");
 
 // 0. Console Hook Injection
 // Intercept console.log/warn/error and forward to window
@@ -40,8 +40,8 @@ consoleScript.textContent = `
         originalError.apply(console, args);
     };
     
-    // Also inject borg globals if needed
-    window.borg = {
+    // Also inject hypercode globals if needed
+    window.hypercode = {
         callTool: function(name, args) {
              return new Promise((resolve, reject) => {
                 const id = Math.random().toString(36).substring(7);
@@ -60,7 +60,7 @@ consoleScript.textContent = `
             });
         }
     };
-    console.log("✅ window.borg injected");
+    console.log("✅ window.hypercode injected");
     
 })();
 `;

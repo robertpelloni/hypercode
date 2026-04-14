@@ -1,5 +1,5 @@
-import { LLMService } from "@borg/ai";
-import type { IMCPServer } from "@borg/adk";
+import { LLMService } from "@hypercode/ai";
+import type { IMCPServer } from "@hypercode/adk";
 
 interface SubTask {
     id: string;

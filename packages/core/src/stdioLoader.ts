@@ -14,7 +14,7 @@ import {
     type BackgroundCoreBootstrapResult,
 } from './backgroundCoreBootstrap.js';
 import { getBridgeHealthUrl, getBridgeToolExecuteUrl } from './bridge/bridgePort.js';
-import { type BorgMcpJsonConfig, loadBorgMcpConfig, type BorgMcpToolMetadata } from './mcp/mcpJsonConfig.js';
+import { type BorgMcpJsonConfig, loadBorgMcpConfig, loadToolCache, type BorgMcpToolMetadata } from './mcp/mcpJsonConfig.js';
 import { namespaceToolName } from './mcp/namespaces.js';
 
 const CORE_HEALTH_URL = getBridgeHealthUrl();
@@ -108,7 +108,7 @@ function toToolDefinition(serverName: string, tool: BorgMcpToolMetadata): Tool {
 export function buildLoaderStatusToolDefinition(): Tool {
     return {
         name: BORG_CORE_LOADER_STATUS_TOOL,
-        description: 'Report whether the lightweight stdio loader is serving cached tools or proxying to a live Borg Core control plane.',
+        description: 'Report whether the lightweight stdio loader is serving cached tools or proxying to a live HyperCode Core control plane.',
         inputSchema: { type: 'object', properties: {} },
     } as Tool;
 }
@@ -181,6 +181,10 @@ export function buildCachedLoaderCatalog(config: BorgMcpJsonConfig): CachedLoade
 export async function loadCachedLoaderCatalog(
     loadConfigImpl: typeof loadBorgMcpConfig = loadBorgMcpConfig,
 ): Promise<CachedLoaderCatalog> {
+    const cache = await loadToolCache();
+    if (cache) {
+        return buildCachedLoaderCatalog(cache);
+    }
     const config = await loadConfigImpl().catch(() => ({ mcpServers: {} } satisfies BorgMcpJsonConfig));
     return buildCachedLoaderCatalog(config);
 }
@@ -216,7 +220,7 @@ async function proxyToolCallToCore(name: string, args: Record<string, unknown>):
     if (!response.ok) {
         const body = await response.text().catch(() => '');
         return asTextResult(
-            `Borg Core returned HTTP ${response.status} while executing '${name}'.${body ? `\n${body}` : ''}`,
+            `HyperCode Core returned HTTP ${response.status} while executing '${name}'.${body ? `\n${body}` : ''}`,
             true,
         );
     }
@@ -234,7 +238,7 @@ async function proxyToolCallToCore(name: string, args: Record<string, unknown>):
 
 function buildLoaderStatusResult(state: LoaderRuntimeState, coreHealthy: boolean): CallToolResult {
     return asTextResult(JSON.stringify({
-        loader: 'borg-core-stdio-loader',
+        loader: 'hypercode-core-stdio-loader',
         coreHealthy,
         bootstrap: state.bootstrap,
         cache: {
@@ -303,7 +307,7 @@ export async function callLoaderTool(
 
     if (!readyAfterBootstrap) {
         return asTextResult(
-            `Borg Core is still warming in the background, so '${name}' is not ready yet. Cached tools are available immediately, and the control plane has been ${bootstrap.status === 'already-running' ? 'detected' : 'requested'}${bootstrap.pid ? ` (PID ${bootstrap.pid})` : ''}. Retry this tool call in a moment.`,
+            `HyperCode Core is still warming in the background, so '${name}' is not ready yet. Cached tools are available immediately, and the control plane has been ${bootstrap.status === 'already-running' ? 'detected' : 'requested'}${bootstrap.pid ? ` (PID ${bootstrap.pid})` : ''}. Retry this tool call in a moment.`,
             true,
         );
     }
@@ -313,7 +317,7 @@ export async function callLoaderTool(
 
 export async function startStdioLoader(): Promise<void> {
     const server = new Server(
-        { name: 'borg-core-loader', version: '0.99.1' },
+        { name: 'hypercode-core-loader', version: '0.99.1' },
         {
             capabilities: {
                 tools: {},
@@ -326,7 +330,7 @@ export async function startStdioLoader(): Promise<void> {
     server.setRequestHandler(ListToolsRequestSchema, async () => {
         runtimeState.cache = await loadCachedLoaderCatalog();
         void ensureLoaderBootstrap(runtimeState).catch((error) => {
-            console.error('[Borg Core] Background control-plane bootstrap failed:', error);
+            console.error('[HyperCode Core] Background control-plane bootstrap failed:', error);
         });
 
         return {
@@ -347,6 +351,6 @@ export async function startStdioLoader(): Promise<void> {
     await server.connect(transport);
 
     void ensureLoaderBootstrap(runtimeState).catch((error) => {
-        console.error('[Borg Core] Background control-plane bootstrap failed:', error);
+        console.error('[HyperCode Core] Background control-plane bootstrap failed:', error);
     });
 }

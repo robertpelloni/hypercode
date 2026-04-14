@@ -36,7 +36,7 @@ describe('toolset meta tools', () => {
     process.env.MCP_PROGRESSIVE_MODE = 'true';
     process.env.MCP_DISABLE_METAMCP = 'true';
 
-    const dir = mkdtempSync(path.join(os.tmpdir(), 'borg-toolset-test-'));
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'hypercode-toolset-test-'));
     process.env.BORG_DATA_DIR = dir;
 
     const policyService: PolicyServiceLike = { evaluate: () => ({ allowed: true }) };

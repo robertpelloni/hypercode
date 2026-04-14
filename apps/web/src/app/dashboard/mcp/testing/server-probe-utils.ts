@@ -26,14 +26,14 @@ export function buildServerProbeTargets(servers: ProbeServerSummary[]): ServerPr
         {
             id: 'router',
             kind: 'router',
-            label: 'Borg router',
-            description: 'Simulate a client hitting Borg’s aggregated MCP surface.',
+            label: 'HyperCode router',
+            description: 'Simulate a client hitting HyperCode’s aggregated MCP surface.',
         },
         ...sortedServers.map((server) => ({
             id: `server:${server.name}`,
             kind: 'server' as const,
             label: server.name,
-            description: 'Probe the downstream server directly without going through the Borg router.',
+            description: 'Probe the downstream server directly without going through the HyperCode router.',
             serverName: server.name,
             toolCount: server.toolCount ?? 0,
             status: server.status ?? 'unknown',

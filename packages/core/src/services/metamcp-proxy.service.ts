@@ -459,10 +459,10 @@ export const attachTo = async (
                     search_tools: "Semantically search for available tools across all connected MCP servers. Use this to find tools for a specific task.",
                     load_tool: "Load a specific tool by name into your context so you can use it. In progressive mode this loads lightweight metadata first; use get_tool_schema to hydrate the full parameter schema when needed.",
                      get_tool_schema: "Explicitly fetch and hydrate the full JSON schema for a deferred tool after search/load, reducing default token overhead for sub-agents.",
-                     get_tool_context: "Fetch compact Borg memory context before calling a downstream tool so the model can reuse recent observations, summaries, and file-specific learnings.",
+                     get_tool_context: "Fetch compact HyperCode memory context before calling a downstream tool so the model can reuse recent observations, summaries, and file-specific learnings.",
                      unload_tool: "Remove a previously loaded tool from the current session working set so it no longer appears in the exposed tool list.",
                      list_loaded_tools: "List tools currently loaded into the session working set, including whether their full schemas are hydrated.",
-                     list_all_tools: "List all currently advertisable tools across meta helpers, compatibility tools, native built-ins, saved scripts, and Borg-managed downstream MCP tools.",
+                     list_all_tools: "List all currently advertisable tools across meta helpers, compatibility tools, native built-ins, saved scripts, and HyperCode-managed downstream MCP tools.",
                      clear_eviction_history: "Clear the bounded recent eviction-history buffer for the current session working set.",
                  },
              }),
@@ -472,7 +472,7 @@ export const attachTo = async (
         // 2. Native Tools (Pre-loaded / Standard Lib)
         // Add native tools to metaTools list so they are always available
         // We prefix them if needed, or assume they are global.
-        // For Borg, standard tools are global.
+        // For HyperCode, standard tools are global.
         if (nativeToolDefinitions && nativeToolDefinitions.length > 0) {
             metaTools.push(...nativeToolDefinitions);
         }

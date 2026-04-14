@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { PageStatusBanner } from '@/components/PageStatusBanner';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, Button, Input, Textarea } from '@borg/ui';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, Button, Input, Textarea } from '@hypercode/ui';
 import { trpc } from '@/utils/trpc';
 import {
     Users as UsersIcon,
@@ -418,6 +418,16 @@ export default function SwarmDashboard() {
     const meshCapabilityMap = (meshCapabilitiesQuery.data ?? {}) as Record<string, string[]>;
     const selectedPeerDetails = remoteMeshCapabilitiesQuery.data as RemoteMeshCapabilities | undefined;
     const matchingPeer = meshCapabilityMatchQuery.data as MatchingMeshPeer | null | undefined;
+    const missionDataLoading =
+        missionRiskSummaryQuery.isLoading ||
+        missionRiskRowsQuery.isLoading ||
+        missionRiskFacetsQuery.isLoading;
+    const missionDataErrors = [
+        missionRiskSummaryQuery.isError ? 'risk summary' : null,
+        missionRiskRowsQuery.isError ? 'mission rows' : null,
+        missionRiskFacetsQuery.isError ? 'risk facets' : null,
+    ].filter((value): value is string => Boolean(value));
+    const missionDataUnavailable = missionDataErrors.length > 0;
 
     return (
         <div className="flex flex-col h-full bg-slate-950 text-slate-100 p-6 space-y-6 overflow-hidden">
@@ -775,7 +785,15 @@ export default function SwarmDashboard() {
                             exit={{ opacity: 0, x: -20 }}
                             className="flex flex-col h-full space-y-4 overflow-y-auto"
                         >
-                            {missionCards.length === 0 ? (
+                            {missionDataLoading && !missionDataUnavailable ? (
+                                <div className="flex h-60 items-center justify-center text-slate-500 italic">
+                                    Loading mission governance data...
+                                </div>
+                            ) : missionDataUnavailable ? (
+                                <div className="rounded-lg border border-rose-500/30 bg-rose-950/20 px-4 py-4 text-sm text-rose-200">
+                                    Mission governance data unavailable: {missionDataErrors.join(', ')}.
+                                </div>
+                            ) : missionCards.length === 0 ? (
                                 <div className="flex h-60 items-center justify-center text-slate-600 italic">
                                     No missions match the current governance filters.
                                 </div>
@@ -1610,7 +1628,7 @@ export default function SwarmDashboard() {
                                     {messages.length === 0 ? (
                                         <div className="flex h-full items-center justify-center flex-col opacity-20">
                                             <RadioIcon className="w-12 h-12 mb-4 animate-ping" />
-                                            <span className="text-xs uppercase tracking-[0.3em]">Listening for Borg Swarm Signals...</span>
+                                            <span className="text-xs uppercase tracking-[0.3em]">Listening for HyperCode Swarm Signals...</span>
                                         </div>
                                     ) : (
                                         messages.map((msg, i) => (

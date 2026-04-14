@@ -9,7 +9,7 @@ import { createFakeDetectEnvironment, createSpawnStub, FakeProcess } from './tes
 const tempDirs: string[] = [];
 
 function createTempDir() {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-session-persist-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-session-persist-'));
     tempDirs.push(dir);
     return dir;
 }
@@ -23,7 +23,7 @@ afterEach(() => {
 describe('session supervisor persistence', () => {
     it('restores persisted sessions after a restart and normalizes running state', async () => {
         const rootDir = createTempDir();
-        const persistencePath = path.join(rootDir, '.borg', 'session-supervisor.json');
+        const persistencePath = path.join(rootDir, '.hypercode', 'session-supervisor.json');
         const child = new FakeProcess(9001);
         const { spawn } = createSpawnStub([child]);
 

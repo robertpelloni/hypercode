@@ -71,6 +71,9 @@ import { WorkflowEngine } from "./orchestrator/WorkflowEngine.js";
 import { AgentMemoryService } from "./services/AgentMemoryService.js";
 import { SessionImportService } from "./services/SessionImportService.js";
 import { MemoryManager } from "./services/MemoryManager.js"; // Use legacy MemoryManager
+import { BobbyBookmarksSyncWorker } from "./daemons/hyperingest/BobbyBookmarksSyncWorker.js";
+import { LinkCrawlerWorker } from "./daemons/hyperingest/LinkCrawlerWorker.js";
+import { workspaceTracker } from "./services/WorkspaceTracker.js";
 mcpServerDebugLog('[MCPServer] ✓ Phase 51/53 Infrastructure');
 import { SkillAssimilationService } from "./services/SkillAssimilationService.js";
 import { MarketplaceService } from "./services/MarketplaceService.js";
@@ -305,6 +308,8 @@ export class MCPServer {
     public lspTools: LSPTools;
     public agentMemoryService: AgentMemoryService;
     public sessionImportService: SessionImportService;
+    public bobbyBookmarksSyncWorker: BobbyBookmarksSyncWorker;
+    public linkCrawlerWorker: LinkCrawlerWorker;
     private readonly nativeSessionMetaTools: NativeSessionMetaTools;
     private readonly promptToClient: Record<string, ConnectedClient> = {};
     private readonly resourceToClient: Record<string, ConnectedClient> = {};
@@ -651,6 +656,8 @@ export class MCPServer {
         this.lspTools = new LSPTools(process.cwd());
         // MemoryManager + AgentMemoryService initialized early
         this.sessionImportService = new SessionImportService(this.llmService, this.agentMemoryService, process.cwd());
+        this.bobbyBookmarksSyncWorker = new BobbyBookmarksSyncWorker(process.cwd());
+        this.linkCrawlerWorker = new LinkCrawlerWorker(this.llmService);
 
         // Phase 5 & 6 Init
         this.browserTool = new BrowserTool();
@@ -3515,8 +3522,15 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
         // Start Services
         // this.director.startChatDaemon(); // Removed, auto-drive handles this
 
+        // Register this workspace globally
+        workspaceTracker.registerWorkspace(process.cwd());
+
         // Trigger automatic session discovery/import in the background
         this.sessionImportService.startAutoImport();
+        
+        // Start hyperingest background workers
+        this.bobbyBookmarksSyncWorker.start();
+        this.linkCrawlerWorker.start();
 
         // Build Graph in Background
         this.autoTestService.repoGraph.buildGraph().catch(e => console.error("Graph build failed", e));
@@ -3584,15 +3598,20 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
                     req.on('end', async () => {
                         try {
                             const data = JSON.parse(body);
-                            res.writeHead(200, {
-                                'Content-Type': 'application/json',
-                                'Access-Control-Allow-Origin': '*'
-                            });
+                            const writeSuccessJson = (payload: unknown) => {
+                                if (!res.headersSent) {
+                                    res.writeHead(200, {
+                                        'Content-Type': 'application/json',
+                                        'Access-Control-Allow-Origin': '*'
+                                    });
+                                }
+                                res.end(JSON.stringify(payload));
+                            };
 
                             if (req.url === '/director.chat') {
                                 // Direct chat interface
                                 const result = await this.director.executeTask(data.message);
-                                res.end(JSON.stringify({ result: { data: result } }));
+                                writeSuccessJson({ result: { data: result } });
                             } else if (req.url === '/expert.dispatch') {
                                 const kind = String(data.kind ?? '').toLowerCase();
 
@@ -3624,7 +3643,7 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
                                         }
                                     });
 
-                                    res.end(JSON.stringify({ success: true, kind: 'research', result }));
+                                    writeSuccessJson({ success: true, kind: 'research', result });
                                 } else if (kind === 'code') {
                                     if (!this.coderAgent) {
                                         res.writeHead(503, {
@@ -3646,7 +3665,7 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
                                     }
 
                                     const result = await this.coderAgent.handleTask({ task });
-                                    res.end(JSON.stringify({ success: true, kind: 'code', result }));
+                                    writeSuccessJson({ success: true, kind: 'code', result });
                                 } else {
                                     res.writeHead(400, {
                                         'Content-Type': 'application/json',
@@ -3655,11 +3674,11 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
                                     res.end(JSON.stringify({ success: false, error: 'Unsupported expert dispatch kind' }));
                                 }
                             } else if (req.url === '/expert.status') {
-                                res.end(JSON.stringify({
+                                writeSuccessJson({
                                     success: true,
                                     researcher: this.researcherAgent ? 'active' : 'offline',
                                     coder: this.coderAgent ? 'active' : 'offline',
-                                }));
+                                });
                             } else if (req.url === '/knowledge.capture') {
                                 const content = String(data.content ?? '').trim();
                                 const title = String(data.title ?? 'Captured Page');
@@ -3697,7 +3716,7 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
                                     }
                                 });
 
-                                res.end(JSON.stringify({ success: true, id: ctxId }));
+                                writeSuccessJson({ success: true, id: ctxId });
                             } else if (req.url === '/knowledge.ingest-url') {
                                 const url = String(data.url ?? '').trim();
                                 if (!url) {
@@ -3710,7 +3729,7 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
                                 }
 
                                 const result = await this.deepResearchService.ingest(url);
-                                res.end(JSON.stringify({ success: true, result }));
+                                writeSuccessJson({ success: true, result });
                             } else if (req.url === '/rag.ingest-text') {
                                 const text = String(data.text ?? '').trim();
                                 const sourceName = String(data.sourceName ?? data.title ?? data.url ?? 'browser-extension-page');
@@ -3748,19 +3767,21 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
                                     }
                                 });
 
-                                res.end(JSON.stringify({ success: result.success, chunksIngested: result.chunks }));
+                                writeSuccessJson({ success: result.success, chunksIngested: result.chunks });
                             } else if (req.url === '/tool/execute') {
                                 // Generic tool execution
                                 const result = await this.executeTool(data.name, data.args);
-                                res.end(JSON.stringify({ result: { data: result } }));
+                                writeSuccessJson({ result: { data: result } });
                             } else {
                                 // Forward to TRPC-like structure if needed, or 404
                                 res.writeHead(404);
                                 res.end(JSON.stringify({ error: 'Endpoint not found' }));
                             }
                         } catch (e: any) {
-                            res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-                            res.end(JSON.stringify({ error: e.message }));
+                            if (!res.headersSent) {
+                                res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                                res.end(JSON.stringify({ error: e.message }));
+                            }
                         }
                     });
                 } else {

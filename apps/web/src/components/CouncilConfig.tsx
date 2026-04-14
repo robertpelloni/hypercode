@@ -2,6 +2,17 @@
 import { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 
+function isCouncilConfigPayload(value: unknown): value is { council?: { personas?: unknown; contextFiles?: unknown } } {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isCouncilState(value: unknown): value is { personas: string[]; contextFiles: string[] } {
+    return typeof value === 'object'
+        && value !== null
+        && Array.isArray((value as { personas?: unknown }).personas)
+        && Array.isArray((value as { contextFiles?: unknown }).contextFiles);
+}
+
 export default function CouncilConfig() {
     const configQuery = trpc.directorConfig.get.useQuery(undefined, { refetchInterval: 10000 });
     const updateMutation = trpc.directorConfig.update.useMutation({
@@ -12,11 +23,13 @@ export default function CouncilConfig() {
     const [isExpanded, setIsExpanded] = useState(false);
 
     useEffect(() => {
-        const data = configQuery.data as any;
-        if (data?.council) {
-            setCouncil(data.council);
+        if (isCouncilConfigPayload(configQuery.data) && isCouncilState(configQuery.data.council)) {
+            setCouncil(configQuery.data.council);
         }
     }, [configQuery.data]);
+
+    const configUnavailable = Boolean(configQuery.error)
+        || (configQuery.data !== undefined && (!isCouncilConfigPayload(configQuery.data) || (configQuery.data.council !== undefined && !isCouncilState(configQuery.data.council))));
 
     const handleUpdate = (newCouncil: any) => {
         setCouncil(newCouncil);
@@ -48,10 +61,10 @@ export default function CouncilConfig() {
 
     if (configQuery.isPending) return null;
 
-    if (configQuery.error) {
+    if (configUnavailable) {
         return (
             <div className="bg-gray-900 border border-red-500/30 rounded-lg overflow-hidden p-4 text-red-200">
-                Council configuration unavailable: {configQuery.error.message}
+                Council configuration unavailable: {configQuery.error?.message ?? 'Council configuration returned an invalid payload.'}
             </div>
         );
     }

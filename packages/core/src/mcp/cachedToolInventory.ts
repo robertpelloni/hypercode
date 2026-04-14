@@ -3,6 +3,7 @@ import { mcpServersRepository, toolsRepository } from '../db/repositories/index.
 import { deriveSemanticCatalogForServer } from './catalogMetadata.js';
 import { loadBorgMcpConfig, type BorgMcpServerEntry, type BorgMcpToolMetadata } from './mcpJsonConfig.js';
 import { namespaceToolName } from './namespaces.js';
+import { formatOptionalSqliteFailure } from '../db/sqliteAvailability.js';
 
 export type CachedMcpServerInventory = Awaited<ReturnType<typeof mcpServersRepository.findAll>>[number] & {
     displayName: string;
@@ -34,6 +35,9 @@ type CachedMcpInventorySnapshot = {
     tools: CachedMcpToolInventory[];
     source: CachedMcpInventorySource;
     snapshotUpdatedAt: string | null;
+    databaseAvailable: boolean;
+    databaseError: string | null;
+    fallbackUsed: boolean;
 };
 
 function toSnapshotUpdatedAt(values: Array<string | undefined | null>): string | null {
@@ -123,6 +127,9 @@ function buildConfigSnapshot(configServers: Record<string, BorgMcpServerEntry>):
         tools,
         source: tools.length > 0 || servers.length > 0 ? 'config' : 'empty',
         snapshotUpdatedAt: toSnapshotUpdatedAt(updatedAtCandidates),
+        databaseAvailable: true,
+        databaseError: null,
+        fallbackUsed: false,
     };
 }
 
@@ -193,6 +200,9 @@ async function buildDatabaseSnapshot(): Promise<CachedMcpInventorySnapshot> {
         }),
         source: tools.length > 0 || servers.length > 0 ? 'database' : 'empty',
         snapshotUpdatedAt: null,
+        databaseAvailable: true,
+        databaseError: null,
+        fallbackUsed: false,
     };
 }
 
@@ -202,15 +212,33 @@ export async function getCachedToolInventory() {
 
     try {
         const databaseSnapshot = await buildDatabaseSnapshot();
-        if (databaseSnapshot.tools.length > 0 || databaseSnapshot.servers.length > 0) {
-            return {
-                ...databaseSnapshot,
-                snapshotUpdatedAt: databaseSnapshot.snapshotUpdatedAt ?? configSnapshot.snapshotUpdatedAt,
-            };
-        }
+        
+        // MERGE both sources so they don't cross-contaminate but both are available
+        const mergedServers = [...configSnapshot.servers, ...databaseSnapshot.servers];
+        const mergedTools = [...configSnapshot.tools, ...databaseSnapshot.tools];
+        const mergedToolCounts = new Map<string, number>();
+        
+        for (const [key, val] of configSnapshot.toolCounts.entries()) mergedToolCounts.set(key, val);
+        for (const [key, val] of databaseSnapshot.toolCounts.entries()) mergedToolCounts.set(key, val);
 
-        return configSnapshot;
-    } catch {
-        return configSnapshot;
+        const source: CachedMcpInventorySource = mergedTools.length > 0 ? 'database' : 'empty';
+
+        return {
+            servers: mergedServers,
+            toolCounts: mergedToolCounts,
+            tools: mergedTools,
+            source,
+            snapshotUpdatedAt: databaseSnapshot.snapshotUpdatedAt ?? configSnapshot.snapshotUpdatedAt,
+            databaseAvailable: true,
+            databaseError: null,
+            fallbackUsed: false,
+        };
+    } catch (error) {
+        return {
+            ...configSnapshot,
+            databaseAvailable: false,
+            databaseError: formatOptionalSqliteFailure('Persisted MCP inventory is unavailable', error),
+            fallbackUsed: true,
+        };
     }
 }

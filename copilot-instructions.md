@@ -1,26 +1,15 @@
-# GitHub Copilot Instructions
+# Github Copilot Instructions
 
-> **CRITICAL MANDATE: READ `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` FIRST.**
-> This file contains only Copilot-specific overrides.
+> **CRITICAL**: Read `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` first. It contains the mandatory rules for all AI agents working on HyperCode.
 
-## Role
+## Copilot-Specific Directives
 
-Copilot is the **IDE companion**.
+1. **Role Context**: You are acting as an inline assistant and localized pair programmer for the HyperCode operator.
+2. **Methodology**:
+   - Provide highly contextual, concise autocomplete suggestions.
+   - Respect the established code style in the currently active file.
+   - For UI components, utilize `@hypercode/ui` and `lucide-react`.
+   - For backend files, respect `better-sqlite3` limitations and `TRPC` routing norms.
+3. **Synergy**: Assume the operator is navigating a broader plan defined by autonomous agents (Claude/Gemini/GPT). Do not attempt to override large architectural patterns through inline suggestions.
 
-Best suited for:
-- immediate-file edits
-- inline completion
-- test generation for active files
-- small, local refactors
-
-## Strengths
-
-- **Immediate context awareness** — active editor and nearby workspace context.
-- **Micro-edits** — efficient completion of bounded edits in the file at hand.
-
-## Working style
-
-- Focus on the immediate file or narrow local context unless explicitly asked to broaden scope.
-- Keep generated code aligned with the repo’s TypeScript, React, and documentation conventions.
-- Defer broad architectural rewrites unless explicitly requested.
-- Stay consistent with the stabilization-first policy in the universal instructions.
+*Keep this file scoped strictly to Copilot inline behaviors. Universal architectural rules belong in `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`.*

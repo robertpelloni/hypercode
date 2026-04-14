@@ -1,3 +1,4 @@
+import { TRPCError } from '@trpc/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../db/repositories/index.js', () => ({
@@ -26,8 +27,15 @@ vi.mock('../mcp/clientConfigSync.js', () => ({
     SUPPORTED_MCP_CLIENTS: ['claude-desktop', 'cursor', 'vscode'],
 }));
 
+vi.mock('node:fs/promises', () => ({
+    default: {
+        readFile: vi.fn(),
+    },
+}));
+
 const { mcpServersRouter } = await import('./mcpServersRouter.js');
 const { mcpServersRepository } = await import('../db/repositories/index.js');
+const fs = (await import('node:fs/promises')).default;
 
 function createCaller() {
     return mcpServersRouter.createCaller({} as never);
@@ -35,6 +43,7 @@ function createCaller() {
 
 describe('mcpServersRouter degraded SQLite handling', () => {
     const repositoryMocks = vi.mocked(mcpServersRepository);
+    const readFileMock = vi.mocked(fs.readFile);
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -66,6 +75,26 @@ describe('mcpServersRouter degraded SQLite handling', () => {
             args: ['server.js'],
         })).rejects.toMatchObject({
             message: 'MCP server registry is unavailable: SQLite runtime is unavailable for this run.',
+        });
+    });
+
+    it('returns an empty registry snapshot only when the master index is missing', async () => {
+        const missing = new Error('missing');
+        (missing as NodeJS.ErrnoException).code = 'ENOENT';
+        readFileMock.mockRejectedValueOnce(missing);
+
+        const caller = createCaller();
+
+        await expect(caller.registrySnapshot()).resolves.toEqual([]);
+    });
+
+    it('surfaces a clear error when the master index is invalid', async () => {
+        readFileMock.mockResolvedValueOnce('{');
+
+        const caller = createCaller();
+
+        await expect(caller.registrySnapshot()).rejects.toMatchObject<Partial<TRPCError>>({
+            message: 'Registry snapshot is unavailable: BORG_MASTER_INDEX.jsonc contains invalid JSON.',
         });
     });
 });

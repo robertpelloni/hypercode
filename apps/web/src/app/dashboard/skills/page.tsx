@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@borg/ui';
-import { Input } from '@borg/ui';
-import { Button } from '@borg/ui';
-import { Badge } from "@borg/ui";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@hypercode/ui';
+import { Input } from '@hypercode/ui';
+import { Button } from '@hypercode/ui';
+import { Badge } from "@hypercode/ui";
 import { Hammer, BookOpen, Terminal, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 
 interface SkillListItem {
@@ -16,20 +16,36 @@ interface SkillListItem {
     path: string;
 }
 
-function normalizeSkills(value: unknown): SkillListItem[] {
-    if (!Array.isArray(value)) return [];
+type NormalizedSkillsResult = {
+    data: SkillListItem[];
+    invalid: boolean;
+};
 
-    return value.filter((item): item is SkillListItem => {
-        if (!item || typeof item !== 'object') return false;
+function normalizeSkills(value: unknown): NormalizedSkillsResult {
+    if (value == null) return { data: [], invalid: false };
+    if (!Array.isArray(value)) return { data: [], invalid: true };
+
+    let invalid = false;
+    const normalized = value.filter((item): item is SkillListItem => {
+        if (!item || typeof item !== 'object') {
+            invalid = true;
+            return false;
+        }
         const skill = item as Partial<SkillListItem>;
-        return (
+        const isValid = (
             typeof skill.id === 'string' &&
             typeof skill.name === 'string' &&
             typeof skill.description === 'string' &&
             typeof skill.content === 'string' &&
             typeof skill.path === 'string'
         );
+        if (!isValid) {
+            invalid = true;
+        }
+        return isValid;
     });
+
+    return { data: normalized, invalid };
 }
 
 export default function SkillsPage() {
@@ -38,8 +54,11 @@ export default function SkillsPage() {
     const [status, setStatus] = useState<'idle' | 'assimilating' | 'success' | 'error'>('idle');
 
     // List existing skills
-    const { data: skills, refetch } = trpc.skills.list.useQuery();
-    const skillList = normalizeSkills(skills);
+    const skillsQuery = trpc.skills.list.useQuery();
+    const { refetch } = skillsQuery;
+    const normalizedSkills = normalizeSkills(skillsQuery.data);
+    const skillList = normalizedSkills.data;
+    const skillInventoryUnavailable = skillsQuery.isError || normalizedSkills.invalid;
 
     const assimilateMutation = trpc.skills.assimilate.useMutation({
         onMutate: () => {
@@ -125,7 +144,12 @@ export default function SkillsPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="h-[400px] overflow-y-auto">
-                            {skillList.length === 0 && <p className="text-muted-foreground italic">No custom skills loaded.</p>}
+                            {skillInventoryUnavailable ? (
+                                <p className="text-rose-400 italic">
+                                    Skill library unavailable{skillsQuery.isError ? `: ${skillsQuery.error.message}` : ' due to malformed data'}.
+                                </p>
+                            ) : null}
+                            {!skillInventoryUnavailable && skillList.length === 0 && <p className="text-muted-foreground italic">No custom skills loaded.</p>}
                             <div className="grid grid-cols-1 gap-2">
                                 {skillList.map((skill, i) => (
                                     <div key={i} className="flex items-center justify-between p-3 rounded-md border border-zinc-800 bg-zinc-900/50">

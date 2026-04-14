@@ -4,6 +4,17 @@ export interface NormalizedMetricBucket {
     valueAvg: number;
 }
 
+export interface HistogramStats {
+    count: number;
+    sum: number;
+    avg: number;
+    min: number;
+    max: number;
+    p50: number;
+    p95: number;
+    p99: number;
+}
+
 export interface NormalizedMetricsData {
     totalEvents: number;
     averages: {
@@ -12,6 +23,7 @@ export interface NormalizedMetricsData {
         systemLoad: number | null;
     };
     countRows: Array<{ type: string; count: number }>;
+    histograms: Array<{ name: string; stats: HistogramStats }>;
     series: NormalizedMetricBucket[];
     maxSeriesCount: number;
     firstSeriesTime: number | null;
@@ -36,6 +48,7 @@ export const normalizeMetricsData = (payload: unknown): NormalizedMetricsData =>
     const source = asRecord(payload);
     const averages = asRecord(source.averages);
     const counts = asRecord(source.counts);
+    const histogramsRaw = asRecord(source.histograms);
 
     const series = Array.isArray(source.series)
         ? source.series.map((rawBucket) => {
@@ -55,6 +68,13 @@ export const normalizeMetricsData = (payload: unknown): NormalizedMetricsData =>
         }))
         .filter((row) => row.type.trim().length > 0);
 
+    const histograms = Object.entries(histogramsRaw)
+        .map(([name, stats]) => ({
+            name,
+            stats: stats as HistogramStats,
+        }))
+        .filter((row) => row.name.trim().length > 0);
+
     const maxSeriesCount = Math.max(1, ...series.map((bucket) => bucket.count));
 
     return {
@@ -65,6 +85,7 @@ export const normalizeMetricsData = (payload: unknown): NormalizedMetricsData =>
             systemLoad: asFiniteNumber(averages.system_load),
         },
         countRows,
+        histograms,
         series,
         maxSeriesCount,
         firstSeriesTime: series.length > 0 ? series[0].time : null,

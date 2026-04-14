@@ -2,7 +2,7 @@ export interface Policy { }
 
 export const policyService = {
     getPolicy: async (_policyId: string): Promise<Policy | null> => {
-        // Compatibility placeholder: Borg currently persists policy definitions through the repository/router
+        // Compatibility placeholder: HyperCode currently persists policy definitions through the repository/router
         // layer, but this legacy compatibility service does not yet resolve an enforcement-ready compiled
         // policy object for middleware execution. Returning null keeps older middleware hooks operational
         // without implying that a real evaluator/storage backend exists here.

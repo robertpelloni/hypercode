@@ -4,6 +4,7 @@
  * Exposes RAG endpoints for document ingestion via the Master Control Panel (dashboard).
  */
 
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { t, publicProcedure, getMemoryManager } from '../lib/trpc-core.js';
 import { DocumentIntakeService } from '../services/rag/DocumentIntakeService.js';
@@ -31,8 +32,12 @@ export const ragRouter = t.router({
             });
 
             return { success: true, chunksIngested: result.chunks };
-        } catch (e: any) {
-            return { success: false, error: e.message };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `Document ingestion failed: ${message}`,
+            });
         }
     }),
 
@@ -57,8 +62,12 @@ export const ragRouter = t.router({
             });
 
             return { success: true, chunksIngested: result.chunks };
-        } catch (e: any) {
-            return { success: false, error: e.message };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `Document ingestion failed: ${message}`,
+            });
         }
     })
 });

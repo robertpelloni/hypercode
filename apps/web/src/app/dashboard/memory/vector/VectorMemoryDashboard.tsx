@@ -1,16 +1,27 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge, ScrollArea } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge, ScrollArea } from "@hypercode/ui";
 import { Loader2, Search, Trash2, Database, Network, Plus, Server, Code } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
+
+type VectorMemoryResult = {
+    id?: string;
+    timestamp?: string | number;
+    score?: number;
+    content?: string;
+};
+
+function isVectorMemoryResult(value: unknown): value is VectorMemoryResult {
+    return typeof value === 'object' && value !== null;
+}
 
 export default function VectorMemoryDashboard() {
     const [searchQuery, setSearchQuery] = useState('');
     const [newVectorText, setNewVectorText] = useState('');
 
-    const { data: results, isLoading, refetch } = trpc.memory.searchAgentMemory.useQuery({
+    const { data: results, isLoading, refetch, error } = trpc.memory.searchAgentMemory.useQuery({
         query: searchQuery,
         type: 'long_term',
         limit: 50
@@ -26,6 +37,8 @@ export default function VectorMemoryDashboard() {
             toast.error(`Failed to push vector: ${err.message}`);
         }
     });
+    const resultsUnavailable = Boolean(error) || (results !== undefined && (!Array.isArray(results) || !results.every(isVectorMemoryResult)));
+    const safeResults = !resultsUnavailable && Array.isArray(results) ? results : [];
 
     const handleInject = (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,7 +55,7 @@ export default function VectorMemoryDashboard() {
                         Vector Memory Explorer
                     </h1>
                     <p className="text-zinc-500 mt-2">
-                        Direct low-level manipulation of the Borg long-term vector memory index and persistent context records.
+                        Direct low-level manipulation of the HyperCode long-term vector memory index and persistent context records.
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -96,7 +109,7 @@ export default function VectorMemoryDashboard() {
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-zinc-500">Total Vectors</span>
-                                    <span className="text-zinc-200 font-mono">{(results as any)?.length || 0}</span>
+                                    <span className="text-zinc-200 font-mono">{resultsUnavailable ? '—' : safeResults.length}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-zinc-500">Dimensions</span>
@@ -131,7 +144,13 @@ export default function VectorMemoryDashboard() {
                                     <Loader2 className="h-10 w-10 animate-spin" />
                                     <p className="text-sm font-mono tracking-widest uppercase">Querying ChromaDB Clusters...</p>
                                 </div>
-                            ) : !results || results.length === 0 ? (
+                            ) : resultsUnavailable ? (
+                                <div className="p-24 text-center text-rose-300">
+                                    <Network className="h-16 w-16 mx-auto mb-6 opacity-40" />
+                                    <p className="text-xl font-medium">Vector memory unavailable</p>
+                                    <p className="text-sm mt-2 text-rose-200">{error?.message ?? 'Vector memory returned an invalid payload.'}</p>
+                                </div>
+                            ) : safeResults.length === 0 ? (
                                 <div className="p-24 text-center text-zinc-600">
                                     <Network className="h-16 w-16 mx-auto mb-6 opacity-20" />
                                     <p className="text-xl font-medium text-zinc-400">Empty Vector Space</p>
@@ -139,7 +158,7 @@ export default function VectorMemoryDashboard() {
                                 </div>
                             ) : (
                                 <div className="divide-y divide-zinc-800/50">
-                                    {results.map((memory: any, idx: number) => (
+                                    {safeResults.map((memory: any, idx: number) => (
                                         <div key={idx} className="p-5 hover:bg-zinc-800/30 transition-colors group flex flex-col gap-3">
                                             <div className="flex justify-between items-start">
                                                 <div className="flex items-center gap-3">

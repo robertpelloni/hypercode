@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 import { Card, Switch, Label } from '@borg/ui';
 
+function isBooleanSetting(value: unknown): value is boolean {
+    return typeof value === 'boolean';
+}
+
 export function SystemLimitsPanel() {
     const signupQuery = trpc.config.getSignupDisabled.useQuery();
     const setSignupMutation = trpc.config.setSignupDisabled.useMutation({
@@ -24,15 +28,26 @@ export function SystemLimitsPanel() {
     const setMcpResetMutation = trpc.config.setMcpResetTimeoutOnProgress.useMutation({
         onSuccess: () => mcpResetQuery.refetch()
     });
+    const signupUnavailable = Boolean(signupQuery.error) || (signupQuery.data !== undefined && !isBooleanSetting(signupQuery.data));
+    const ssoUnavailable = Boolean(ssoQuery.error) || (ssoQuery.data !== undefined && !isBooleanSetting(ssoQuery.data));
+    const basicAuthUnavailable = Boolean(basicAuthQuery.error) || (basicAuthQuery.data !== undefined && !isBooleanSetting(basicAuthQuery.data));
+    const mcpResetUnavailable = Boolean(mcpResetQuery.error) || (mcpResetQuery.data !== undefined && !isBooleanSetting(mcpResetQuery.data));
+    const policyErrorMessage = signupQuery.error?.message
+        || ssoQuery.error?.message
+        || basicAuthQuery.error?.message
+        || mcpResetQuery.error?.message
+        || (signupUnavailable || ssoUnavailable || basicAuthUnavailable || mcpResetUnavailable
+            ? 'System policy settings returned an invalid payload.'
+            : undefined);
 
     return (
         <div className="space-y-6">
             <h2 className="text-xl font-bold text-white mb-2">System Policy & Security</h2>
             <p className="text-sm text-gray-400 mb-6">Manage global authentication policies and execution limits.</p>
 
-            {(signupQuery.error || ssoQuery.error || basicAuthQuery.error || mcpResetQuery.error) && (
+            {policyErrorMessage && (
                 <div className="rounded border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
-                    System policy settings unavailable: {signupQuery.error?.message || ssoQuery.error?.message || basicAuthQuery.error?.message || mcpResetQuery.error?.message}
+                    System policy settings unavailable: {policyErrorMessage}
                 </div>
             )}
 
@@ -46,9 +61,9 @@ export function SystemLimitsPanel() {
                             <p className="text-xs text-gray-500">Prevent new users from registering locally.</p>
                         </div>
                         <Switch 
-                            checked={signupQuery.data ?? false} 
+                            checked={isBooleanSetting(signupQuery.data) ? signupQuery.data : false}
                             onCheckedChange={(v) => setSignupMutation.mutate({ disabled: v })}
-                            disabled={signupQuery.isLoading || Boolean(signupQuery.error) || setSignupMutation.isPending}
+                            disabled={signupQuery.isLoading || signupUnavailable || setSignupMutation.isPending}
                         />
                     </div>
 
@@ -58,9 +73,9 @@ export function SystemLimitsPanel() {
                             <p className="text-xs text-gray-500">Prevent new users from registering via OAuth/SSO.</p>
                         </div>
                         <Switch 
-                            checked={ssoQuery.data ?? false} 
+                            checked={isBooleanSetting(ssoQuery.data) ? ssoQuery.data : false}
                             onCheckedChange={(v) => setSsoMutation.mutate({ disabled: v })}
-                            disabled={ssoQuery.isLoading || Boolean(ssoQuery.error) || setSsoMutation.isPending}
+                            disabled={ssoQuery.isLoading || ssoUnavailable || setSsoMutation.isPending}
                         />
                     </div>
 
@@ -70,9 +85,9 @@ export function SystemLimitsPanel() {
                             <p className="text-xs text-gray-500">Force users to use SSO/OAuth only.</p>
                         </div>
                         <Switch 
-                            checked={basicAuthQuery.data ?? false} 
+                            checked={isBooleanSetting(basicAuthQuery.data) ? basicAuthQuery.data : false}
                             onCheckedChange={(v) => setBasicAuthMutation.mutate({ disabled: v })}
-                            disabled={basicAuthQuery.isLoading || Boolean(basicAuthQuery.error) || setBasicAuthMutation.isPending}
+                            disabled={basicAuthQuery.isLoading || basicAuthUnavailable || setBasicAuthMutation.isPending}
                         />
                     </div>
                 </Card>
@@ -86,9 +101,9 @@ export function SystemLimitsPanel() {
                             <p className="text-xs text-gray-500">If enabled, MCP tools extending their runtime won't hit hard timeouts if they report progress.</p>
                         </div>
                         <Switch 
-                            checked={mcpResetQuery.data ?? false} 
+                            checked={isBooleanSetting(mcpResetQuery.data) ? mcpResetQuery.data : false}
                             onCheckedChange={(v) => setMcpResetMutation.mutate({ enabled: v })}
-                            disabled={mcpResetQuery.isLoading || Boolean(mcpResetQuery.error) || setMcpResetMutation.isPending}
+                            disabled={mcpResetQuery.isLoading || mcpResetUnavailable || setMcpResetMutation.isPending}
                         />
                     </div>
                 </Card>

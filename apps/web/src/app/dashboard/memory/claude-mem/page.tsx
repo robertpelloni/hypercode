@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, ScrollArea } from '@borg/ui';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, ScrollArea } from '@hypercode/ui';
 import { trpc } from '@/utils/trpc';
 import { AlertTriangle, ArrowRight, BookOpenText, BrainCircuit, CheckCircle2, FileCode2, Layers3, Loader2, RefreshCw, Route } from 'lucide-react';
 
@@ -61,10 +61,17 @@ export default function ClaudeMemDashboardPage() {
 
 		try {
 			const response = await fetch('/api/trpc/memory.getClaudeMemStatus');
+			if (!response.ok) {
+				throw new Error(`Failed to read hypercode-memory store status (${response.status} ${response.statusText})`);
+			}
 			const payload = await response.json();
+			if (payload?.error) {
+				throw new Error(typeof payload.error?.message === 'string' ? payload.error.message : 'Failed to read hypercode-memory store status');
+			}
 			setClaudeMemStatus((payload?.result?.data ?? null) as ClaudeMemStoreStatus | null);
 		} catch (error) {
-			setClaudeMemStatusError(error instanceof Error ? error.message : 'Failed to read borg-memory store status');
+			setClaudeMemStatus(null);
+			setClaudeMemStatusError(error instanceof Error ? error.message : 'Failed to read hypercode-memory store status');
 		} finally {
 			setClaudeMemStatusLoading(false);
 		}
@@ -79,10 +86,10 @@ export default function ClaudeMemDashboardPage() {
 			<div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900">
 				<div>
 					<h1 className="text-xl font-bold text-white flex items-center gap-2">
-						<BrainCircuit className="w-5 h-5 text-cyan-400" /> borg-memory Integration (Adapter)
+						<BrainCircuit className="w-5 h-5 text-cyan-400" /> hypercode-memory Integration (Adapter)
 					</h1>
 					<p className="text-gray-400 text-sm">
-						Borg&apos;s memory system is sovereign. The borg-memory layer is an adapter around Borg-native observations, prompts, summaries, and interchange workflows.
+						HyperCode&apos;s memory system is sovereign. The hypercode-memory layer is an adapter around HyperCode-native observations, prompts, summaries, and interchange workflows.
 					</p>
 				</div>
 				<div className="flex gap-2 items-center">
@@ -135,12 +142,14 @@ export default function ClaudeMemDashboardPage() {
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div className="text-2xl font-bold text-white">{claudeMemStatus?.exists ? `${claudeMemStatus.totalEntries} entries` : 'No store yet'}</div>
-							<p className="text-xs text-gray-400 mt-1">{claudeMemStatus?.exists
-								? claudeMemStatus.runtimePipeline?.claudeMemEnabled
-									? `${claudeMemStatus.sectionCount} section buckets under Borg-managed claude_mem.json`
-									: 'Existing claude_mem.json detected, but the active runtime pipeline is not currently writing through borg-memory'
-								: 'The adapter file has not been created yet for this workspace'}</p>
+							<div className="text-2xl font-bold text-white">{claudeMemStatusError ? 'Store unreadable' : claudeMemStatus?.exists ? `${claudeMemStatus.totalEntries} entries` : 'No store yet'}</div>
+							<p className="text-xs text-gray-400 mt-1">{claudeMemStatusError
+								? claudeMemStatusError
+								: claudeMemStatus?.exists
+									? claudeMemStatus.runtimePipeline?.claudeMemEnabled
+										? `${claudeMemStatus.sectionCount} section buckets under HyperCode-managed claude_mem.json`
+										: 'Existing claude_mem.json detected, but the active runtime pipeline is not currently writing through hypercode-memory'
+									: 'The adapter file has not been created yet for this workspace'}</p>
 							{claudeMemStatus ? (
 								<div className="mt-2">
 									<Badge variant="outline" className={claudeMemStatus.runtimePipeline?.claudeMemEnabled ? 'border-emerald-500/30 text-emerald-300' : 'border-amber-500/30 text-amber-300'}>
@@ -153,19 +162,19 @@ export default function ClaudeMemDashboardPage() {
 					<Card>
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2 text-sm">
-								<Route className="w-4 h-4 text-emerald-400" /> Borg-native memory model
+								<Route className="w-4 h-4 text-emerald-400" /> HyperCode-native memory model
 							</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-3 text-sm text-zinc-300">
 							<p>
-								Borg already captures <strong>typed observations, structured prompts, and session summaries</strong> natively. The borg-memory layer exists to mirror and exchange that data with adjacent tools when needed.
+								HyperCode already captures <strong>typed observations, structured prompts, and session summaries</strong> natively. The hypercode-memory layer exists to mirror and exchange that data with adjacent tools when needed.
 							</p>
 							<p>
-								What is still missing is the deeper borg-memory runtime story: Claude Code lifecycle hooks, richer model-driven compression workers, observation timelines, progressive context injection, and transcript rewriting.
+								What is still missing is the deeper hypercode-memory runtime story: Claude Code lifecycle hooks, richer model-driven compression workers, observation timelines, progressive context injection, and transcript rewriting.
 							</p>
 							<div className="flex flex-wrap gap-2 pt-1">
 								<Link href="/dashboard/memory" className="inline-flex items-center gap-2 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-200 hover:bg-cyan-500/15">
-									Open Borg memory dashboard <ArrowRight className="h-3.5 w-3.5" />
+									Open HyperCode memory dashboard <ArrowRight className="h-3.5 w-3.5" />
 								</Link>
 							</div>
 						</CardContent>
@@ -177,10 +186,16 @@ export default function ClaudeMemDashboardPage() {
 						<CardHeader>
 							<CardTitle>Live adapter state</CardTitle>
 							<CardDescription>
-								Actual Borg-managed borg-memory store status from core.
+								Actual HyperCode-managed hypercode-memory store status from core.
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-3 text-sm text-zinc-300">
+							{claudeMemStatusError ? (
+								<div className="rounded border border-rose-500/20 bg-rose-950/10 px-3 py-3">
+									<div className="font-medium text-white">Store status unavailable</div>
+									<div className="mt-2 text-xs text-rose-200">{claudeMemStatusError}</div>
+								</div>
+							) : null}
 							{summary.coreStatusDetail ? (
 								<div className={summary.coreStatusTone === 'degraded'
 									? 'rounded border border-amber-500/20 bg-amber-950/10 px-3 py-3'
@@ -191,7 +206,7 @@ export default function ClaudeMemDashboardPage() {
 							) : null}
 							<div className="rounded border border-zinc-800 bg-zinc-950 px-3 py-3">
 								<div className="text-xs text-zinc-500">Store path</div>
-								<div className="text-[11px] font-mono text-cyan-400 mt-1 break-all">{claudeMemStatus?.storePath ?? '.borg/claude_mem.json'}</div>
+								<div className="text-[11px] font-mono text-cyan-400 mt-1 break-all">{claudeMemStatus?.storePath ?? '.hypercode/claude_mem.json'}</div>
 							</div>
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 								<div className="rounded border border-zinc-800 bg-zinc-950 px-3 py-3">
@@ -218,7 +233,7 @@ export default function ClaudeMemDashboardPage() {
 								</div>
 								<div className="mt-2">
 									<Badge variant="outline" className={claudeMemStatus?.runtimePipeline?.claudeMemEnabled ? 'border-emerald-500/30 text-emerald-300' : 'border-amber-500/30 text-amber-300'}>
-										{claudeMemStatus?.runtimePipeline?.claudeMemEnabled ? 'borg-memory active' : 'borg-memory inactive'}
+										{claudeMemStatus?.runtimePipeline?.claudeMemEnabled ? 'hypercode-memory active' : 'hypercode-memory inactive'}
 									</Badge>
 								</div>
 							</div>
@@ -239,7 +254,7 @@ export default function ClaudeMemDashboardPage() {
 							<div className="rounded border border-cyan-500/20 bg-cyan-950/10 px-3 py-3">
 								<div className="font-medium text-white">Recommended engineering next slice</div>
 								<div className="text-xs text-gray-400 mt-2">
-									Finish the observation search, session timeline, and provenance workflow so Borg&apos;s native memory model is visible end to end before deeper borg-memory hook parity work.
+									Finish the observation search, session timeline, and provenance workflow so HyperCode&apos;s native memory model is visible end to end before deeper hypercode-memory hook parity work.
 								</div>
 							</div>
 						</CardContent>

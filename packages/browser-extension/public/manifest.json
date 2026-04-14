@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Borg Director Link",
+  "name": "HyperCode Director Link",
   "version": "0.1.0",
-  "description": "Connects web chats (ChatGPT, Claude) to Borg Director via Local MCP.",
+  "description": "Connects web chats (ChatGPT, Claude) to HyperCode Director via Local MCP.",
   "permissions": [
     "activeTab",
     "scripting",

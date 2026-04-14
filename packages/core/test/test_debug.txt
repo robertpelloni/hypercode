@@ -1,12 +1,12 @@
 
-[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90mC:/Users/hyper/workspace/borg[39m
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90mC:/Users/hyper/workspace/hypercode[39m
 
 [90mstdout[2m | packages/core/test/Phase22_Memory_Integration.test.ts[2m > [22m[2mPhase 22: Context Intelligence (Memory Integration)[2m > [22m[2mstores and retrieves working memory
 [22m[39m[MemoryManager] Initializing Vector Backend...
 
 [90mstdout[2m | packages/core/test/Phase22_Memory_Integration.test.ts[2m > [22m[2mPhase 22: Context Intelligence (Memory Integration)[2m > [22m[2mstores and retrieves working memory
 [22m[39m[GraphMemory] Initialized (Stub)
-[VectorStore] Connecting to C:\Users\hyper\workspace\borg\.borg\.borg\db\data\lancedb...
+[VectorStore] Connecting to C:\Users\hyper\workspace\hypercode\.hypercode\.hypercode\db\data\lancedb...
 
 [90mstdout[2m | packages/core/test/Phase22_Memory_Integration.test.ts[2m > [22m[2mPhase 22: Context Intelligence (Memory Integration)[2m > [22m[2mstores and retrieves working memory
 [22m[39m[VectorStore] Loading embedding model (Xenova/all-MiniLM-L6-v2)...
@@ -22,7 +22,7 @@
 
 [90mstdout[2m | packages/core/test/Phase22_Memory_Integration.test.ts[2m > [22m[2mPhase 22: Context Intelligence (Memory Integration)[2m > [22m[2mperforms semantic search (Integration with VectorStore)
 [22m[39m[GraphMemory] Initialized (Stub)
-[VectorStore] Connecting to C:\Users\hyper\workspace\borg\.borg\.borg\db\data\lancedb...
+[VectorStore] Connecting to C:\Users\hyper\workspace\hypercode\.hypercode\.hypercode\db\data\lancedb...
 
 [90mstdout[2m | packages/core/test/Phase22_Memory_Integration.test.ts[2m > [22m[2mPhase 22: Context Intelligence (Memory Integration)[2m > [22m[2mperforms semantic search (Integration with VectorStore)
 [22m[39m[VectorStore] Loading embedding model (Xenova/all-MiniLM-L6-v2)...

@@ -46,7 +46,7 @@ async function withMeshErrorHandling(
     } else {
       const chalk = (await import('chalk')).default;
       console.error(chalk.red(`  ✗ ${message}`));
-      console.error(chalk.dim('  Start Borg with `borg start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
+      console.error(chalk.dim('  Start HyperCode with `hypercode start` or point BORG_TRPC_UPSTREAM at a live /trpc endpoint.'));
     }
     process.exitCode = 1;
   }
@@ -55,7 +55,7 @@ async function withMeshErrorHandling(
 export function registerMeshCommand(program: Command): void {
   const mesh = program
     .command('mesh')
-    .description('Mesh — inspect Borg peer mesh status, peers, and capability matches');
+    .description('Mesh — inspect HyperCode peer mesh status, peers, and capability matches');
 
   mesh
     .command('status')
@@ -81,7 +81,7 @@ export function registerMeshCommand(program: Command): void {
         }
 
         const chalk = (await import('chalk')).default;
-        console.log(chalk.bold.cyan('\n  Borg Mesh Status\n'));
+        console.log(chalk.bold.cyan('\n  HyperCode Mesh Status\n'));
         console.log(chalk.dim('  Node ID:        ') + status.nodeId);
         console.log(chalk.dim('  Known peers:    ') + String(status.peersCount));
         console.log(chalk.dim('  Capabilities:   ') + (localCapabilities.length > 0 ? localCapabilities.join(', ') : 'none advertised'));
@@ -125,7 +125,7 @@ export function registerMeshCommand(program: Command): void {
           ]);
         }
 
-        console.log(chalk.bold.cyan('\n  Borg Mesh Peers\n'));
+        console.log(chalk.bold.cyan('\n  HyperCode Mesh Peers\n'));
         if (rows.length === 0) {
           console.log(chalk.dim('  No peers discovered yet.\n'));
           return;
@@ -223,7 +223,7 @@ export function registerMeshCommand(program: Command): void {
         }
 
         const chalk = (await import('chalk')).default;
-        console.log(chalk.bold.cyan('\n  Borg Mesh Capability Match\n'));
+        console.log(chalk.bold.cyan('\n  HyperCode Mesh Capability Match\n'));
         console.log(chalk.dim('  Required: ') + requiredCapabilities.join(', '));
         if (!match) {
           console.log(chalk.yellow('  No matching peer found.\n'));

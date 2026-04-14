@@ -61,7 +61,7 @@ Set WshShell = WScript.CreateObject("WScript.Shell")
 WshShell.AppActivate "Code - Insiders"
 WshShell.AppActivate "Visual Studio Code"
 WshShell.AppActivate "Code"
-WshShell.AppActivate "borg"
+WshShell.AppActivate "hypercode"
 WshShell.AppActivate "Terminal"
 On Error GoTo 0
 `;

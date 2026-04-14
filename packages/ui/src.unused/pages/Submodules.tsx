@@ -27,7 +27,7 @@ export const Submodules = () => {
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-blue-400">Ecosystem Submodules</h1>
-                    <p className="text-gray-400 mt-2">Integrated repositories and references powering the Borg.</p>
+                    <p className="text-gray-400 mt-2">Integrated repositories and references powering the HyperCode.</p>
                 </div>
                 <button onClick={fetchSubmodules} className="text-gray-400 hover:text-white transition">
                     <RefreshCw size={20} />

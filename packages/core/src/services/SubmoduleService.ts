@@ -31,6 +31,11 @@ export class SubmoduleService {
     }
 
     public async listSubmodules(): Promise<SubmoduleStatus[]> {
+        const gitModulesPath = path.join(this.rootDir, '.gitmodules');
+        if (!fs.existsSync(gitModulesPath)) {
+            return [];
+        }
+
         try {
             const { stdout: statusOutput } = await execAsync('git submodule status', { cwd: this.rootDir });
             const { stdout: configOutput } = await execAsync('git config --file .gitmodules --get-regexp path', { cwd: this.rootDir });
@@ -72,9 +77,9 @@ export class SubmoduleService {
             }
             return submodules;
         } catch (error) {
-            console.error("Failed to list submodules:", error);
-            // If not a git repo or no submodules, return empty
-            return [];
+            console.error('Failed to list submodules:', error);
+            const message = error instanceof Error ? error.message : String(error);
+            throw new Error(message);
         }
     }
 

@@ -3,6 +3,9 @@ import type { MCPServerConfig } from "../config/borgConfig.js";
 import { metamcpLogStore } from "../services/log-store.service.js";
 import { ProcessManagedStdioTransport } from "../transports/process-managed.transport.js";
 
+import { db } from "../db/index.js";
+import { workspaceSecretsTable } from "../db/metamcp-schema.js";
+
 export class StdioClient {
     private client: Client | null = null;
     private transport: ProcessManagedStdioTransport | null = null;
@@ -40,6 +43,20 @@ export class StdioClient {
         for (const [key, value] of Object.entries(process.env)) {
             if (value !== undefined) safeEnv[key] = value;
         }
+
+        // Inject workspace secrets from the SQLite database
+        try {
+            const secrets = await db.select().from(workspaceSecretsTable);
+            for (const secret of secrets) {
+                if (secret.value !== undefined) {
+                    safeEnv[secret.key] = secret.value;
+                }
+            }
+        } catch (e: any) {
+            console.warn(`[StdioClient:${this.name}] Failed to fetch workspace secrets:`, e.message);
+        }
+
+        // Config overrides secrets (to allow specific servers to use different keys if needed)
         Object.assign(safeEnv, this.config.env);
 
         this.transport = new ProcessManagedStdioTransport({

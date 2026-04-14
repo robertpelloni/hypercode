@@ -1,6 +1,6 @@
-# Borg Versioning Checklist
+# HyperCode Versioning Checklist
 
-Use this checklist any time Borg version changes (e.g. `0.9.1` -> `0.9.2`).
+Use this checklist any time HyperCode version changes (e.g. `0.9.1` -> `0.9.2`).
 
 ## Source of truth
 

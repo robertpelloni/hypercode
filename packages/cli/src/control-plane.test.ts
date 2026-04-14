@@ -18,7 +18,7 @@ afterEach(() => {
 });
 
 function createTempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'borg-control-plane-'));
+  const dir = mkdtempSync(join(tmpdir(), 'hypercode-control-plane-'));
   tempDirs.push(dir);
   return dir;
 }
@@ -38,7 +38,7 @@ describe('resolveControlPlaneLocation', () => {
   it('uses the lock file when available and rewrites wildcard hosts for local access', () => {
     const dataDir = createTempDir();
     writeFileSync(join(dataDir, 'lock'), JSON.stringify({
-      instanceId: 'borg-test',
+      instanceId: 'hypercode-test',
       pid: 1234,
       port: 4555,
       host: '0.0.0.0',
@@ -124,7 +124,7 @@ describe('queryTrpc', () => {
     await expect(queryTrpc('mesh.getStatus', undefined, {
       upstream: 'http://localhost:4000',
       fetchImpl: vi.fn().mockRejectedValue(new Error('connect ECONNREFUSED')) as unknown as typeof fetch,
-    })).rejects.toThrow('Unable to reach Borg control plane at http://localhost:4000/trpc');
+    })).rejects.toThrow('Unable to reach HyperCode control plane at http://localhost:4000/trpc');
   });
 
   it('surfaces tRPC error payloads clearly', async () => {
@@ -139,6 +139,6 @@ describe('queryTrpc', () => {
           },
         }),
       }) as unknown as typeof fetch,
-    })).rejects.toThrow('Borg control plane query failed for mesh.getStatus: mesh unavailable');
+    })).rejects.toThrow('HyperCode control plane query failed for mesh.getStatus: mesh unavailable');
   });
 });

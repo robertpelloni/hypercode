@@ -1,6 +1,6 @@
-# Ideas for Improvement: @borg/ai
+# Ideas for Improvement: @hypercode/ai
 
-Creative and far-reaching ideas to evolve the model routing and intelligence layer of Borg.
+Creative and far-reaching ideas to evolve the model routing and intelligence layer of HyperCode.
 
 ## 1. Architectural Enhancements
 - **Rust-based Inference Gateway:** Rewrite the `ModelSelector` and token counting logic in Rust for ultra-low latency routing and zero-overhead quota tracking.
@@ -14,7 +14,7 @@ Creative and far-reaching ideas to evolve the model routing and intelligence lay
 
 ## 3. Operations & Economy
 - **Dynamic Cost Optimization:** Real-time integration with provider pricing APIs to automatically route queries to the cheapest high-intelligence model available at that exact moment.
-- **Quota "Rollover" and Trading:** A conceptual P2P system where Borg nodes can "trade" unused quota allocations via a decentralized ledger (Bobcoin integration).
+- **Quota "Rollover" and Trading:** A conceptual P2P system where HyperCode nodes can "trade" unused quota allocations via a decentralized ledger (Bobcoin integration).
 - **Automated Fine-Tuning Loops:** Automatically capture high-quality agent traces and queue them for local fine-tuning of small models (Gemma/Mistral) to eventually replace expensive API calls for repetitive tasks.
 
 ## 4. Developer Experience (DX)

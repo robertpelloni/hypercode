@@ -3,12 +3,13 @@
 import React from "react";
 import { Server, Settings, Activity, TerminalSquare, AlertTriangle, CheckCircle2, ChevronRight, Download } from "lucide-react";
 import { trpc } from "@/utils/trpc";
-import { Button, Card, CardHeader, CardTitle, CardContent } from "@borg/ui";
+import { Button, Card, CardHeader, CardTitle, CardContent } from "@hypercode/ui";
 import { toast } from "sonner";
 
 export default function InfrastructureDashboardPage() {
     const infrastructureClient = trpc.infrastructure as any;
-    const { data: status, isLoading: isLoadingStatus, refetch } = infrastructureClient.getInfrastructureStatus.useQuery();
+    const { data: status, isLoading: isLoadingStatus, error: statusError, refetch } = infrastructureClient.getInfrastructureStatus.useQuery();
+    const statusUnavailable = Boolean(statusError) || (status !== undefined && (!status || typeof status !== "object"));
 
     const applyMutation = trpc.infrastructure.applyConfigurations.useMutation({
         onSuccess: (data: any) => {
@@ -43,7 +44,7 @@ export default function InfrastructureDashboardPage() {
                     Daemon Orchestration
                 </h1>
                 <p className="text-zinc-500 mt-2">
-                    Manage Borg infrastructure deployments from the Supervisor namespace.
+                    Manage HyperCode infrastructure deployments from the Supervisor namespace.
                 </p>
             </div>
 
@@ -60,6 +61,12 @@ export default function InfrastructureDashboardPage() {
                             <div className="animate-pulse space-y-3 pt-4">
                                 <div className="h-4 bg-zinc-800 rounded w-3/4"></div>
                                 <div className="h-4 bg-zinc-800 rounded w-1/2"></div>
+                            </div>
+                        ) : statusUnavailable ? (
+                            <div className="space-y-4 pt-4">
+                                <div className="rounded-md border border-red-900/30 bg-red-950/10 p-3 text-sm text-red-300">
+                                    {statusError?.message ?? "Infrastructure daemon status is unavailable."}
+                                </div>
                             </div>
                         ) : (
                             <div className="space-y-4 pt-4">
@@ -99,7 +106,7 @@ export default function InfrastructureDashboardPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <p className="text-sm text-zinc-400 mb-6">
-                            Apply settings from your Borg infrastructure configuration across connected environments instantly.
+                            Apply settings from your HyperCode infrastructure configuration across connected environments instantly.
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Button

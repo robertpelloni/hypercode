@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge, ScrollArea } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge, ScrollArea } from "@hypercode/ui";
 import { Loader2, Zap, Search, Code, Terminal, Bot, Activity, Brain, Globe, FlaskConical } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
 
 export default function ExpertAgentsDashboard() {
-    const { data: status, isLoading, refetch } = trpc.expert.getStatus.useQuery(undefined, { refetchInterval: 5000 });
+    const { data: status, isLoading, error: statusError, refetch } = trpc.expert.getStatus.useQuery(undefined, { refetchInterval: 5000 });
     
     const [researchQuery, setResearchQuery] = useState('');
     const [researchDepth, setResearchQueryDepth] = useState(2);
@@ -59,10 +59,18 @@ export default function ExpertAgentsDashboard() {
                     </p>
                 </div>
                 <div className="flex gap-4">
-                    <AgentStatusCard name="Researcher" status={status?.researcher} icon={<FlaskConical className="h-4 w-4" />} />
-                    <AgentStatusCard name="Coder" status={status?.coder} icon={<Code className="h-4 w-4" />} />
+                    <AgentStatusCard name="Researcher" status={status?.researcher} unavailable={Boolean(statusError)} icon={<FlaskConical className="h-4 w-4" />} />
+                    <AgentStatusCard name="Coder" status={status?.coder} unavailable={Boolean(statusError)} icon={<Code className="h-4 w-4" />} />
                 </div>
             </div>
+
+            {statusError ? (
+                <Card className="border border-red-900/30 bg-red-950/10">
+                    <CardContent className="p-4 text-sm text-red-200">
+                        {statusError.message}
+                    </CardContent>
+                </Card>
+            ) : null}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
                 {/* Researcher Panel */}
@@ -76,8 +84,11 @@ export default function ExpertAgentsDashboard() {
                                 </CardTitle>
                                 <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">RESEARCH AGENT</p>
                             </div>
-                            <Badge variant={status?.researcher === 'active' ? 'default' : 'secondary'} className={status?.researcher === 'active' ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : ''}>
-                                {status?.researcher === 'active' ? 'READY' : 'OFFLINE'}
+                            <Badge
+                                variant={statusError ? 'destructive' : status?.researcher === 'active' ? 'default' : 'secondary'}
+                                className={statusError ? '' : status?.researcher === 'active' ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : ''}
+                            >
+                                {statusError ? 'UNAVAILABLE' : status?.researcher === 'active' ? 'READY' : 'OFFLINE'}
                             </Badge>
                         </div>
                     </CardHeader>
@@ -90,7 +101,7 @@ export default function ExpertAgentsDashboard() {
                                     onChange={e => setResearchQuery(e.target.value)}
                                     className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-3 text-sm text-white h-24 focus:ring-1 focus:ring-cyan-500 outline-none resize-none"
                                     placeholder="e.g. Compare the performance of Pydantic-AI vs CrewAI for multi-agent workflows..."
-                                    disabled={status?.researcher !== 'active' || researchMutation.isPending}
+                                    disabled={Boolean(statusError) || status?.researcher !== 'active' || researchMutation.isPending}
                                 />
                             </div>
                             <div className="flex items-center justify-between">
@@ -106,7 +117,7 @@ export default function ExpertAgentsDashboard() {
                                 </div>
                                 <Button 
                                     type="submit" 
-                                    disabled={status?.researcher !== 'active' || researchMutation.isPending || !researchQuery.trim()} 
+                                    disabled={Boolean(statusError) || status?.researcher !== 'active' || researchMutation.isPending || !researchQuery.trim()} 
                                     className="bg-cyan-600 hover:bg-cyan-500 text-white font-medium"
                                 >
                                     {researchMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -151,8 +162,11 @@ export default function ExpertAgentsDashboard() {
                                 </CardTitle>
                                 <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">IMPLEMENTATION AGENT</p>
                             </div>
-                            <Badge variant={status?.coder === 'active' ? 'default' : 'secondary'} className={status?.coder === 'active' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : ''}>
-                                {status?.coder === 'active' ? 'READY' : 'OFFLINE'}
+                            <Badge
+                                variant={statusError ? 'destructive' : status?.coder === 'active' ? 'default' : 'secondary'}
+                                className={statusError ? '' : status?.coder === 'active' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : ''}
+                            >
+                                {statusError ? 'UNAVAILABLE' : status?.coder === 'active' ? 'READY' : 'OFFLINE'}
                             </Badge>
                         </div>
                     </CardHeader>
@@ -165,13 +179,13 @@ export default function ExpertAgentsDashboard() {
                                     onChange={e => setCodeTask(e.target.value)}
                                     className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-3 text-sm text-white h-24 focus:ring-1 focus:ring-amber-500 outline-none resize-none"
                                     placeholder="e.g. Implement a new tRPC route for system metrics..."
-                                    disabled={status?.coder !== 'active' || codeMutation.isPending}
+                                    disabled={Boolean(statusError) || status?.coder !== 'active' || codeMutation.isPending}
                                 />
                             </div>
                             <div className="flex justify-end">
                                 <Button 
                                     type="submit" 
-                                    disabled={status?.coder !== 'active' || codeMutation.isPending || !codeTask.trim()} 
+                                    disabled={Boolean(statusError) || status?.coder !== 'active' || codeMutation.isPending || !codeTask.trim()} 
                                     className="bg-amber-600 hover:bg-amber-500 text-white font-medium"
                                 >
                                     {codeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -209,17 +223,17 @@ export default function ExpertAgentsDashboard() {
     );
 }
 
-function AgentStatusCard({ name, status, icon }: { name: string, status?: string, icon: React.ReactNode }) {
+function AgentStatusCard({ name, status, unavailable = false, icon }: { name: string, status?: string, unavailable?: boolean, icon: React.ReactNode }) {
     const isActive = status === 'active';
     return (
-        <div className={`flex items-center gap-3 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg ${isActive ? 'ring-1 ring-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.05)]' : ''}`}>
-            <div className={`h-8 w-8 rounded flex items-center justify-center ${isActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-zinc-800 text-zinc-600'}`}>
-                {isActive ? <Activity className="h-4 w-4" /> : icon}
+        <div className={`flex items-center gap-3 bg-zinc-900 border px-4 py-2 rounded-lg ${unavailable ? 'border-red-900/40' : 'border-zinc-800'} ${isActive && !unavailable ? 'ring-1 ring-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.05)]' : ''}`}>
+            <div className={`h-8 w-8 rounded flex items-center justify-center ${unavailable ? 'bg-red-950/30 text-red-300 border border-red-900/40' : isActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-zinc-800 text-zinc-600'}`}>
+                {isActive && !unavailable ? <Activity className="h-4 w-4" /> : icon}
             </div>
             <div>
                 <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{name}</div>
-                <div className={`text-xs font-medium ${isActive ? 'text-emerald-400' : 'text-zinc-600'}`}>
-                    {isActive ? 'ACTIVE' : 'OFFLINE'}
+                <div className={`text-xs font-medium ${unavailable ? 'text-red-300' : isActive ? 'text-emerald-400' : 'text-zinc-600'}`}>
+                    {unavailable ? 'UNAVAILABLE' : isActive ? 'ACTIVE' : 'OFFLINE'}
                 </div>
             </div>
         </div>

@@ -1,5 +1,5 @@
 
-> @borg/core@0.1.0 build
+> @hypercode/core@0.1.0 build
 > tsc
 
 src/MCPServer.ts(1286,92): error TS2339: Property 'id' does not exist on type 'Promise<Memory>'.

@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@borg/ui';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@borg/ui";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@borg/ui";
-import { Badge } from '@borg/ui';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@hypercode/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@hypercode/ui";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@hypercode/ui";
+import { Badge } from '@hypercode/ui';
 import { trpc } from '@/utils/trpc';
 import { Book, Cpu, Shield, Activity, GraduationCap, GitBranch, Terminal } from 'lucide-react';
 
@@ -13,6 +13,8 @@ export default function ManualPage() {
     const executeTool = trpc.executeTool.useMutation();
     const queueQuery = trpc.research.ingestionQueue.useQuery(undefined, { refetchInterval: 10000 });
     const autonomyQuery = trpc.autonomy.getLevel.useQuery(undefined, { refetchInterval: 10000 });
+    const queueUnavailable = queueQuery.isError || (queueQuery.data !== undefined && (!queueQuery.data || typeof queueQuery.data !== 'object' || Array.isArray(queueQuery.data)));
+    const autonomyUnavailable = autonomyQuery.isError || (autonomyQuery.data !== undefined && typeof autonomyQuery.data !== 'string');
 
     useEffect(() => {
         const loadVersion = async () => {
@@ -41,7 +43,7 @@ export default function ManualPage() {
             <div className="flex flex-col gap-2">
                 <h1 className="text-4xl font-bold tracking-tight text-white flex items-center gap-3">
                     <Book className="w-8 h-8 text-blue-400" />
-                    Borg User Manual
+                    HyperCode User Manual
                 </h1>
                 <p className="text-xl text-muted-foreground">
                     Comprehensive guide to the Neural Operating System {versionLabel}.
@@ -54,23 +56,30 @@ export default function ManualPage() {
                     <CardDescription>Operational context pulled from active runtime endpoints.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    {queueUnavailable || autonomyUnavailable ? (
+                        <div className="md:col-span-4 rounded-md border border-red-900/40 bg-red-950/20 px-3 py-2 text-sm text-red-300">
+                            {queueUnavailable ? (queueQuery.error?.message ?? 'Ingestion queue snapshot unavailable.') : null}
+                            {queueUnavailable && autonomyUnavailable ? ' ' : null}
+                            {autonomyUnavailable ? (autonomyQuery.error?.message ?? 'Autonomy level unavailable.') : null}
+                        </div>
+                    ) : null}
                     <div className="rounded-md border border-emerald-500/30 bg-emerald-950/20 px-3 py-2">
                         <div className="text-xs uppercase tracking-wide text-emerald-300/80">Processed</div>
-                        <div className="text-xl font-semibold text-emerald-300">{queueQuery.data?.totals.processed ?? 0}</div>
+                        <div className="text-xl font-semibold text-emerald-300">{queueUnavailable ? '—' : queueQuery.data?.totals.processed ?? 0}</div>
                     </div>
                     <div className="rounded-md border border-amber-500/30 bg-amber-950/20 px-3 py-2">
                         <div className="text-xs uppercase tracking-wide text-amber-300/80">Pending</div>
-                        <div className="text-xl font-semibold text-amber-300">{queueQuery.data?.totals.pending ?? 0}</div>
+                        <div className="text-xl font-semibold text-amber-300">{queueUnavailable ? '—' : queueQuery.data?.totals.pending ?? 0}</div>
                     </div>
                     <div className="rounded-md border border-rose-500/30 bg-rose-950/20 px-3 py-2">
                         <div className="text-xs uppercase tracking-wide text-rose-300/80">Failed</div>
-                        <div className="text-xl font-semibold text-rose-300">{queueQuery.data?.totals.failed ?? 0}</div>
+                        <div className="text-xl font-semibold text-rose-300">{queueUnavailable ? '—' : queueQuery.data?.totals.failed ?? 0}</div>
                     </div>
                     <div className="rounded-md border border-blue-500/30 bg-blue-950/20 px-3 py-2">
                         <div className="text-xs uppercase tracking-wide text-blue-300/80">Autonomy</div>
                         <div className="mt-1">
                             <Badge variant="outline" className="text-blue-300 border-blue-700/50">
-                                {(autonomyQuery.data || 'unknown').toUpperCase()}
+                                {(autonomyUnavailable ? 'unavailable' : autonomyQuery.data || 'unknown').toUpperCase()}
                             </Badge>
                         </div>
                     </div>
@@ -92,7 +101,7 @@ export default function ManualPage() {
                             <CardDescription>System overview and basic navigation.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <p>The Borg is an autonomous agentic system designed for self-evolving software development.</p>
+                            <p>The HyperCode is an autonomous agentic system designed for self-evolving software development.</p>
                             <div className="grid grid-cols-2 gap-4 mt-4">
                                 <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
                                     <h3 className="font-bold flex items-center gap-2 mb-2"><Activity className="w-4 h-4 text-green-400" /> The Pulse</h3>
@@ -179,7 +188,7 @@ export default function ManualPage() {
                             </CardHeader>
                             <CardContent>
                                 <p className="text-sm text-zinc-400">
-                                    The Borg can learn new capabilities by ingesting documentation.
+                                    The HyperCode can learn new capabilities by ingesting documentation.
                                     Use the <strong>Skills Dashboard</strong> to point the system at a documentation URL.
                                     It will generate a new MCP tool in <code>packages/core/src/skills/</code> automatically.
                                 </p>

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '@borg/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@hypercode/ui';
 import { Bot, CheckCircle2, Database, ExternalLink, KeyRound, Loader2, RefreshCw, Rocket, Search, Server, TerminalSquare, Wrench, XCircle } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -10,6 +10,10 @@ import { PageStatusBanner } from '@/components/PageStatusBanner';
 
 import { getCliHarnessCards, getProviderDirectoryCards, getStatusBadgeClasses } from './ai-tool-directory';
 import { getPortalBadgeClasses, getProviderPortalCards, getProviderQuickAccessSections } from '../../billing/billing-portal-data';
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
 export default function AIToolsDashboard() {
     const [query, setQuery] = useState('');
@@ -46,7 +50,7 @@ export default function AIToolsDashboard() {
     const { data: sessions } = sessionsQuery;
     const { data: expertStatus } = trpc.expert.getStatus.useQuery();
     const { data: sessionState } = trpc.session.getState.useQuery();
-    const { data: memoryStats } = trpc.agentMemory.stats.useQuery();
+    const { data: memoryStats, error: memoryStatsError } = trpc.agentMemory.stats.useQuery();
     const { data: shellHistory } = trpc.shell.getSystemHistory.useQuery({ limit: 8 });
     const { data: serverHealth } = trpc.serverHealth.check.useQuery(
         { serverUuid: healthServerUuid },
@@ -78,9 +82,19 @@ export default function AIToolsDashboard() {
     });
 
     const normalized = query.trim().toLowerCase();
+    const toolsUnavailable = toolsQuery.isError || (tools !== undefined && !Array.isArray(tools));
+    const serversUnavailable = serversQuery.isError || (servers !== undefined && !Array.isArray(servers));
+    const apiKeysUnavailable = apiKeysQuery.isError || (apiKeys !== undefined && !Array.isArray(apiKeys));
+    const cliDetectionsUnavailable = Boolean((cliDetectionsQuery as any).error) || (cliDetections !== undefined && !Array.isArray(cliDetections));
+    const providerQuotasUnavailable = providerQuotasQuery.isError || (providerQuotas !== undefined && !Array.isArray(providerQuotas));
+    const executionEnvironmentUnavailable = Boolean((executionEnvironmentQuery as any).error)
+        || (executionEnvironmentQuery.data !== undefined && !isObjectRecord(executionEnvironmentQuery.data));
+    const safeTools = !toolsUnavailable && Array.isArray(tools) ? tools : [];
+    const safeServers = !serversUnavailable && Array.isArray(servers) ? servers : [];
+    const safeApiKeys = !apiKeysUnavailable && Array.isArray(apiKeys) ? apiKeys : [];
 
     const filteredTools = useMemo(() => {
-        const source = tools ?? [];
+        const source = safeTools;
         if (!normalized) {
             return source;
         }
@@ -91,22 +105,22 @@ export default function AIToolsDashboard() {
             const server = String(tool?.server ?? '').toLowerCase();
             return name.includes(normalized) || description.includes(normalized) || server.includes(normalized);
         });
-    }, [normalized, tools]);
+    }, [normalized, safeTools]);
 
     const activeServers = useMemo(() => {
-        return (servers ?? []).filter((server: any) => server?.error_status === 'NONE');
-    }, [servers]);
+        return safeServers.filter((server: any) => server?.error_status === 'NONE');
+    }, [safeServers]);
 
     const firstServerUuid = useMemo(() => {
-        const first = (servers ?? [])[0] as any;
+        const first = safeServers[0] as any;
         return typeof first?.uuid === 'string' ? first.uuid : '';
-    }, [servers]);
+    }, [safeServers]);
 
     const effectiveHealthServerUuid = healthServerUuid || firstServerUuid;
 
     const activeKeys = useMemo(() => {
-        return (apiKeys ?? []).filter((key: any) => Boolean(key?.is_active));
-    }, [apiKeys]);
+        return safeApiKeys.filter((key: any) => Boolean(key?.is_active));
+    }, [safeApiKeys]);
 
     const normalizedSessions = useMemo(() => {
         return (Array.isArray(sessions) ? sessions : [])
@@ -118,7 +132,7 @@ export default function AIToolsDashboard() {
     }, [sessions]);
 
     const normalizedCliDetections = useMemo(() => {
-        return (Array.isArray(cliDetections) ? cliDetections : [])
+        return (!cliDetectionsUnavailable && Array.isArray(cliDetections) ? cliDetections : [])
             .filter((detection: any) => detection && typeof detection === 'object')
             .map((detection: any, index: number) => ({
                 id: typeof detection.id === 'string' && detection.id.trim().length > 0 ? detection.id : `cli-${index}`,
@@ -133,11 +147,11 @@ export default function AIToolsDashboard() {
                 version: typeof detection.version === 'string' && detection.version.trim().length > 0 ? detection.version : null,
                 detectionError: typeof detection.detectionError === 'string' && detection.detectionError.trim().length > 0 ? detection.detectionError : null,
             }));
-    }, [cliDetections]);
+    }, [cliDetections, cliDetectionsUnavailable]);
 
     const normalizedProviderQuotas = useMemo(() => {
-        return (Array.isArray(providerQuotas) ? providerQuotas : []).filter((quota: any) => quota && typeof quota === 'object');
-    }, [providerQuotas]);
+        return (!providerQuotasUnavailable && Array.isArray(providerQuotas) ? providerQuotas : []).filter((quota: any) => quota && typeof quota === 'object');
+    }, [providerQuotas, providerQuotasUnavailable]);
 
     const cliHarnessCards = useMemo(() => getCliHarnessCards(normalizedCliDetections, normalizedSessions), [normalizedCliDetections, normalizedSessions]);
     const providerDirectoryCards = useMemo(() => getProviderDirectoryCards(normalizedProviderQuotas), [normalizedProviderQuotas]);
@@ -147,7 +161,7 @@ export default function AIToolsDashboard() {
     const detectedHarnesses = useMemo(() => cliHarnessCards.filter((card) => card.installed), [cliHarnessCards]);
     const executionEnvironmentData = useMemo(() => {
         const raw = executionEnvironmentQuery.data as any;
-        if (!raw || typeof raw !== 'object') {
+        if (executionEnvironmentUnavailable || !raw || typeof raw !== 'object') {
             return null;
         }
 
@@ -192,7 +206,7 @@ export default function AIToolsDashboard() {
             shells,
             tools,
         };
-    }, [executionEnvironmentQuery.data]);
+    }, [executionEnvironmentQuery.data, executionEnvironmentUnavailable]);
 
     const loading = loadingTools || loadingServers || loadingKeys || loadingCliDetections || executionEnvironmentQuery.isLoading;
 
@@ -201,7 +215,7 @@ export default function AIToolsDashboard() {
             <PageStatusBanner
                 status="experimental"
                 message="AI Tools Directory"
-                note="This operator view already surfaces real harness, provider, and MCP inventory data, but it is still a broad directory surface rather than a fully consolidated Borg control plane."
+                note="This operator view already surfaces real harness, provider, and MCP inventory data, but it is still a broad directory surface rather than a fully consolidated HyperCode control plane."
             />
             <div className="flex items-center justify-between">
                 <div>
@@ -221,11 +235,11 @@ export default function AIToolsDashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-                <StatCard title="Tools Indexed" value={String(tools?.length ?? 0)} icon={Wrench} tone="text-blue-400" />
-                <StatCard title="Active Servers" value={`${activeServers.length}/${servers?.length ?? 0}`} icon={Server} tone="text-emerald-400" />
-                <StatCard title="Active API Keys" value={`${activeKeys.length}/${apiKeys?.length ?? 0}`} icon={KeyRound} tone="text-yellow-400" />
-                <StatCard title="Detected Harnesses" value={`${detectedHarnesses.length}/${cliHarnessCards.length}`} icon={TerminalSquare} tone="text-violet-400" />
-                <StatCard title="Connected Providers" value={`${connectedProviders.length}/${providerDirectoryCards.length}`} icon={Bot} tone="text-cyan-400" />
+                <StatCard title="Tools Indexed" value={toolsUnavailable ? '—' : String(safeTools.length)} icon={Wrench} tone="text-blue-400" />
+                <StatCard title="Active Servers" value={serversUnavailable ? '—/—' : `${activeServers.length}/${safeServers.length}`} icon={Server} tone="text-emerald-400" />
+                <StatCard title="Active API Keys" value={apiKeysUnavailable ? '—/—' : `${activeKeys.length}/${safeApiKeys.length}`} icon={KeyRound} tone="text-yellow-400" />
+                <StatCard title="Detected Harnesses" value={cliDetectionsUnavailable ? '—/—' : `${detectedHarnesses.length}/${cliHarnessCards.length}`} icon={TerminalSquare} tone="text-violet-400" />
+                <StatCard title="Connected Providers" value={providerQuotasUnavailable ? '—/—' : `${connectedProviders.length}/${providerDirectoryCards.length}`} icon={Bot} tone="text-cyan-400" />
             </div>
 
             <Card className="bg-zinc-900 border-zinc-800">
@@ -234,7 +248,7 @@ export default function AIToolsDashboard() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 text-sm">
                     <Link href="/dashboard/cloud-dev" className="rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900">
-                        Borg cloud session dashboard
+                        HyperCode cloud session dashboard
                     </Link>
                     <Link href="/dashboard/session" className="rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-900">
                         Local session supervisor
@@ -259,7 +273,11 @@ export default function AIToolsDashboard() {
                     <CardTitle className="text-white">Execution Environment</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {!executionEnvironmentData ? (
+                    {executionEnvironmentUnavailable ? (
+                        <div className="rounded border border-red-900/40 bg-red-950/20 p-6 text-sm text-red-300">
+                            {(executionEnvironmentQuery as any).error?.message ?? 'Execution environment details are unavailable.'}
+                        </div>
+                    ) : !executionEnvironmentData ? (
                         <div className="rounded border border-dashed border-zinc-800 bg-zinc-950/40 p-6 text-sm text-zinc-500">
                             Execution environment details are still loading.
                         </div>
@@ -393,7 +411,11 @@ export default function AIToolsDashboard() {
                         <CardTitle className="text-white">CLI Harness Directory</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                        {cliHarnessCards.length === 0 ? (
+                        {cliDetectionsUnavailable ? (
+                            <div className="rounded border border-red-900/40 bg-red-950/20 p-6 text-sm text-red-300">
+                                {(cliDetectionsQuery as any).error?.message ?? 'CLI harness detections are unavailable.'}
+                            </div>
+                        ) : cliHarnessCards.length === 0 ? (
                             <div className="rounded border border-dashed border-zinc-800 bg-zinc-950/40 p-6 text-sm text-zinc-500">
                                 No CLI harness detections available yet.
                             </div>
@@ -441,7 +463,11 @@ export default function AIToolsDashboard() {
                     <CardTitle className="text-white">Provider Billing & Subscription Surfaces</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                    {providerPortalCards.length === 0 ? (
+                    {providerQuotasUnavailable ? (
+                        <div className="rounded border border-red-900/40 bg-red-950/20 p-6 text-sm text-red-300">
+                            {providerQuotasQuery.error?.message ?? 'Provider portal inventory is unavailable.'}
+                        </div>
+                    ) : providerPortalCards.length === 0 ? (
                         <div className="rounded border border-dashed border-zinc-800 bg-zinc-950/40 p-6 text-sm text-zinc-500">
                             Provider portals are not available yet.
                         </div>
@@ -502,7 +528,11 @@ export default function AIToolsDashboard() {
                         <CardTitle className="text-white">Provider Directory</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                        {providerDirectoryCards.length === 0 ? (
+                        {providerQuotasUnavailable ? (
+                            <div className="rounded border border-red-900/40 bg-red-950/20 p-6 text-sm text-red-300">
+                                {providerQuotasQuery.error?.message ?? 'Provider quota inventory is unavailable.'}
+                            </div>
+                        ) : providerDirectoryCards.length === 0 ? (
                             <div className="rounded border border-dashed border-zinc-800 bg-zinc-950/40 p-6 text-sm text-zinc-500">
                                 Provider quota data has not been discovered yet.
                             </div>
@@ -568,6 +598,10 @@ export default function AIToolsDashboard() {
                             <Loader2 className="h-5 w-5 animate-spin" />
                             Loading AI tools dashboard...
                         </div>
+                    ) : toolsUnavailable ? (
+                        <div className="text-center p-10 text-red-300 border border-red-900/40 rounded-lg bg-red-950/20">
+                            {toolsQuery.error?.message ?? 'Tool inventory is unavailable.'}
+                        </div>
                     ) : filteredTools.length === 0 ? (
                         <div className="text-center p-10 text-zinc-500 border border-zinc-800 border-dashed rounded-lg bg-zinc-950/40">
                             <Bot className="h-10 w-10 mx-auto mb-3 opacity-40" />
@@ -598,14 +632,14 @@ export default function AIToolsDashboard() {
                 <ReadinessCard
                     title="Server Readiness"
                     healthyCount={activeServers.length}
-                    totalCount={servers?.length ?? 0}
+                    totalCount={serversUnavailable ? 0 : safeServers.length}
                     healthyLabel="Connected"
                     unhealthyLabel="Issues"
                 />
                 <ReadinessCard
                     title="API Key Readiness"
                     healthyCount={activeKeys.length}
-                    totalCount={apiKeys?.length ?? 0}
+                    totalCount={apiKeysUnavailable ? 0 : safeApiKeys.length}
                     healthyLabel="Active"
                     unhealthyLabel="Inactive"
                 />
@@ -616,12 +650,16 @@ export default function AIToolsDashboard() {
                     <CardTitle className="text-white">MCP metadata cache</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                    {(servers ?? []).length === 0 ? (
+                    {serversUnavailable ? (
+                        <div className="rounded border border-red-900/40 bg-red-950/20 p-6 text-sm text-red-300">
+                            {serversQuery.error?.message ?? 'MCP server inventory is unavailable.'}
+                        </div>
+                    ) : safeServers.length === 0 ? (
                         <div className="rounded border border-dashed border-zinc-800 bg-zinc-950/40 p-6 text-sm text-zinc-500">
                             No MCP servers are available yet.
                         </div>
                     ) : (
-                        (servers ?? []).map((server: any) => {
+                        safeServers.map((server: any) => {
                             const metadata = server?._meta;
                             const pending = reloadMetadataMutation.isPending && reloadMetadataMutation.variables?.uuid === server.uuid;
 
@@ -703,7 +741,9 @@ export default function AIToolsDashboard() {
 
                     <CoverageCard
                         title="agentMemory.stats"
-                        lines={[
+                        lines={memoryStatsError ? [
+                            `unavailable: ${memoryStatsError.message}`,
+                        ] : [
                             `session: ${String(memoryStats?.session ?? 0)}`,
                             `working: ${String(memoryStats?.working ?? 0)}`,
                             `longTerm: ${String(memoryStats?.longTerm ?? 0)}`,

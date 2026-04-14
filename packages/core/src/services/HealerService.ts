@@ -1,5 +1,5 @@
 
-import { LLMService } from '@borg/ai';
+import { LLMService } from '@hypercode/ai';
 import type { MCPServer } from '../MCPServer.js';
 import path from 'path';
 import fs from 'fs';
@@ -31,6 +31,21 @@ export interface HealRecord {
 interface LlmTextResponse {
     text?: string;
     content?: string;
+}
+
+function extractJsonObject(text: string): string {
+    const fencedMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    if (fencedMatch?.[1]) {
+        return fencedMatch[1].trim();
+    }
+
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+        return text.slice(firstBrace, lastBrace + 1).trim();
+    }
+
+    return text.trim();
 }
 
 /**
@@ -147,7 +162,7 @@ export class HealerService extends EventEmitter {
         const response = await this.llm.generateText("openai", "gpt-4o", "You are a JSON-only debugging tool.", prompt, {});
 
         try {
-            return JSON.parse(extractLlmText(response));
+            return JSON.parse(extractJsonObject(extractLlmText(response)));
         } catch (e) {
             console.error("Failed to parse Healer diagnosis", response);
             return {

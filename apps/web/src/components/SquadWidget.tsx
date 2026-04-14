@@ -4,9 +4,11 @@ import { trpc } from '../utils/trpc';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const SquadWidget: React.FC = () => {
-    const { data: members, isLoading } = trpc.squad.list.useQuery(undefined, {
+    const { data: members, error, isLoading } = trpc.squad.list.useQuery(undefined, {
         refetchInterval: 3000 // Real-time pulse
     });
+    const membersUnavailable = Boolean(error) || (members !== undefined && !Array.isArray(members));
+    const safeMembers = !membersUnavailable ? (members ?? []) : [];
 
     const spawnMutation = trpc.squad.spawn.useMutation({
         onSuccess: () => {
@@ -50,7 +52,14 @@ export const SquadWidget: React.FC = () => {
             <div className="flex-1 overflow-y-auto space-y-3">
                 {isLoading && <div className="text-gray-500 text-center py-4">Scanning worktrees...</div>}
 
-                {members && members.length === 0 && !isLoading && (
+                {membersUnavailable && !isLoading && (
+                    <div className="text-red-300 text-center py-8 border-2 border-dashed border-red-500/20 rounded-lg bg-red-500/5">
+                        <p>Agent squad unavailable.</p>
+                        <p className="text-sm mt-1 text-red-200/80">{error?.message ?? 'Agent squad returned an invalid payload.'}</p>
+                    </div>
+                )}
+
+                {safeMembers.length === 0 && !isLoading && !membersUnavailable && (
                     <div className="text-gray-500 text-center py-8 border-2 border-dashed border-gray-800 rounded-lg">
                         <p>No active agents.</p>
                         <p className="text-sm mt-1">Spawn one to offload tasks.</p>
@@ -58,7 +67,7 @@ export const SquadWidget: React.FC = () => {
                 )}
 
                 <AnimatePresence>
-                    {members && members.map((member: any) => (
+                    {safeMembers.map((member: any) => (
                         <motion.div
                             key={member.id}
                             initial={{ opacity: 0, y: 10 }}

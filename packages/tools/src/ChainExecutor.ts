@@ -1,4 +1,4 @@
-import { IMCPServer } from "@borg/adk";
+import { IMCPServer } from "@hypercode/adk";
 
 export interface ChainStep {
     toolName: string;

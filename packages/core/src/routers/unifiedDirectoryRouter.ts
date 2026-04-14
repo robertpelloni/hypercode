@@ -2,6 +2,7 @@ import { z } from "zod";
 import { t, publicProcedure } from "../lib/trpc-core.js";
 import { publishedCatalogRepository } from "../db/repositories/published-catalog.repo.js";
 import { linksBacklogRepository } from "../db/repositories/links-backlog.repo.js";
+import { rethrowSqliteUnavailableAsTrpc } from "./sqliteTrpc.js";
 
 type UnifiedDirectorySource = "catalog" | "backlog";
 
@@ -108,85 +109,93 @@ export const unifiedDirectoryRouter = t.router({
                 .optional(),
         )
         .query(async ({ input }) => {
-            const limit = input?.limit ?? 50;
-            const offset = input?.offset ?? 0;
-            const source = input?.source ?? "all";
-            const search = input?.search;
-            const showDuplicates = input?.show_duplicates ?? false;
-            const duplicatesOnly = input?.duplicates_only ?? false;
-            const researchStatus = input?.research_status;
-            const effectiveShowDuplicates = showDuplicates || duplicatesOnly;
+            try {
+                const limit = input?.limit ?? 50;
+                const offset = input?.offset ?? 0;
+                const source = input?.source ?? "all";
+                const search = input?.search;
+                const showDuplicates = input?.show_duplicates ?? false;
+                const duplicatesOnly = input?.duplicates_only ?? false;
+                const researchStatus = input?.research_status;
+                const effectiveShowDuplicates = showDuplicates || duplicatesOnly;
 
-            const wantCatalog = source === "all" || source === "catalog";
-            const wantBacklog = source === "all" || source === "backlog";
+                const wantCatalog = source === "all" || source === "catalog";
+                const wantBacklog = source === "all" || source === "backlog";
 
-            const fetchWindow = Math.min(1000, Math.max(200, offset + limit * 3));
+                const fetchWindow = Math.min(1000, Math.max(200, offset + limit * 3));
 
-            const [catalogItems, backlogItems, catalogTotal, backlogTotal] = await Promise.all([
-                wantCatalog
-                    ? publishedCatalogRepository
-                          .listServers({ limit: fetchWindow, offset: 0, search })
-                          .then((rows) => rows.map(normalizeCatalogItem))
-                    : Promise.resolve([] as UnifiedCatalogItem[]),
-                wantBacklog
-                    ? linksBacklogRepository
-                          .listLinks({
-                              limit: fetchWindow,
-                              offset: 0,
+                const [catalogItems, backlogItems, catalogTotal, backlogTotal] = await Promise.all([
+                    wantCatalog
+                        ? publishedCatalogRepository
+                              .listServers({ limit: fetchWindow, offset: 0, search })
+                              .then((rows) => rows.map(normalizeCatalogItem))
+                        : Promise.resolve([] as UnifiedCatalogItem[]),
+                    wantBacklog
+                        ? linksBacklogRepository
+                              .listLinks({
+                                  limit: fetchWindow,
+                                  offset: 0,
+                                  search,
+                                  show_duplicates: effectiveShowDuplicates,
+                                  duplicates_only: duplicatesOnly,
+                                  research_status: researchStatus,
+                              })
+                              .then((rows) => rows.map(normalizeBacklogItem))
+                        : Promise.resolve([] as UnifiedBacklogItem[]),
+                    wantCatalog
+                        ? publishedCatalogRepository.countServers({ search })
+                        : Promise.resolve(0),
+                    wantBacklog
+                        ? linksBacklogRepository.countLinks({
                               search,
                               show_duplicates: effectiveShowDuplicates,
                               duplicates_only: duplicatesOnly,
                               research_status: researchStatus,
                           })
-                          .then((rows) => rows.map(normalizeBacklogItem))
-                    : Promise.resolve([] as UnifiedBacklogItem[]),
-                wantCatalog
-                    ? publishedCatalogRepository.countServers({ search })
-                    : Promise.resolve(0),
-                wantBacklog
-                    ? linksBacklogRepository.countLinks({
-                          search,
-                          show_duplicates: effectiveShowDuplicates,
-                          duplicates_only: duplicatesOnly,
-                          research_status: researchStatus,
-                      })
-                    : Promise.resolve(0),
-            ]);
+                        : Promise.resolve(0),
+                ]);
 
-            const merged: UnifiedDirectoryItem[] = [...catalogItems, ...backlogItems].sort((a, b) => {
-                const bTime = toDateValue(b.updated_at) || toDateValue(b.created_at);
-                const aTime = toDateValue(a.updated_at) || toDateValue(a.created_at);
-                return bTime - aTime;
-            });
+                const merged: UnifiedDirectoryItem[] = [...catalogItems, ...backlogItems].sort((a, b) => {
+                    const bTime = toDateValue(b.updated_at) || toDateValue(b.created_at);
+                    const aTime = toDateValue(a.updated_at) || toDateValue(a.created_at);
+                    return bTime - aTime;
+                });
 
-            return {
-                items: merged.slice(offset, offset + limit),
-                total: catalogTotal + backlogTotal,
-                totals: {
-                    catalog: catalogTotal,
-                    backlog: backlogTotal,
-                },
-            };
+                return {
+                    items: merged.slice(offset, offset + limit),
+                    total: catalogTotal + backlogTotal,
+                    totals: {
+                        catalog: catalogTotal,
+                        backlog: backlogTotal,
+                    },
+                };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc("Unified directory is unavailable", error);
+            }
         }),
 
     stats: publicProcedure.query(async () => {
-        const [catalogTotal, catalogValidated, catalogBroken, catalogRecent, backlogStats] = await Promise.all([
-            publishedCatalogRepository.countServers(),
-            publishedCatalogRepository.countServers({ status: "validated" }),
-            publishedCatalogRepository.countServers({ status: "broken" }),
-            publishedCatalogRepository.countRecentlyUpdated(24),
-            linksBacklogRepository.getStats(),
-        ]);
+        try {
+            const [catalogTotal, catalogValidated, catalogBroken, catalogRecent, backlogStats] = await Promise.all([
+                publishedCatalogRepository.countServers(),
+                publishedCatalogRepository.countServers({ status: "validated" }),
+                publishedCatalogRepository.countServers({ status: "broken" }),
+                publishedCatalogRepository.countRecentlyUpdated(24),
+                linksBacklogRepository.getStats(),
+            ]);
 
-        return {
-            catalog: {
-                total: catalogTotal,
-                validated: catalogValidated,
-                broken: catalogBroken,
-                updated_24h: catalogRecent,
-            },
-            backlog: backlogStats,
-            combined_total: catalogTotal + backlogStats.total,
-        };
+            return {
+                catalog: {
+                    total: catalogTotal,
+                    validated: catalogValidated,
+                    broken: catalogBroken,
+                    updated_24h: catalogRecent,
+                },
+                backlog: backlogStats,
+                combined_total: catalogTotal + backlogStats.total,
+            };
+        } catch (error) {
+            rethrowSqliteUnavailableAsTrpc("Unified directory is unavailable", error);
+        }
     }),
 });

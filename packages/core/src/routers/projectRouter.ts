@@ -1,3 +1,4 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { t, publicProcedure, getMcpServer } from '../lib/trpc-core.js';
 import fs from 'fs/promises';
@@ -5,21 +6,29 @@ import path from 'path';
 
 export const projectRouter = t.router({
     getContext: publicProcedure.query(async () => {
-        const contextPath = path.join(process.cwd(), '.borg', 'project_context.md');
+        const contextPath = path.join(process.cwd(), '.hypercode', 'project_context.md');
         try {
             if (!(await fs.access(contextPath).then(() => true).catch(() => false))) {
                 return "# Project Context\n\nDefine your repository rules and architectural vision here.";
             }
             return await fs.readFile(contextPath, 'utf-8');
         } catch (e) {
-            return "# Project Context\n\nError loading context.";
+            const errorCode = (e as NodeJS.ErrnoException | undefined)?.code;
+            if (errorCode === 'ENOENT') {
+                return "# Project Context\n\nDefine your repository rules and architectural vision here.";
+            }
+            const message = e instanceof Error ? e.message : String(e);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `Project context is unavailable: ${message}`,
+            });
         }
     }),
 
     updateContext: publicProcedure
         .input(z.object({ content: z.string() }))
         .mutation(async ({ input }) => {
-            const contextPath = path.join(process.cwd(), '.borg', 'project_context.md');
+            const contextPath = path.join(process.cwd(), '.hypercode', 'project_context.md');
             const borgDir = path.dirname(contextPath);
             
             try {
@@ -32,7 +41,7 @@ export const projectRouter = t.router({
         }),
         
     getHandoffs: publicProcedure.query(async () => {
-        const handoffDir = path.join(process.cwd(), '.borg', 'handoffs');
+        const handoffDir = path.join(process.cwd(), '.hypercode', 'handoffs');
         try {
             if (!(await fs.access(handoffDir).then(() => true).catch(() => false))) {
                 return [];
@@ -47,7 +56,15 @@ export const projectRouter = t.router({
                     path: f
                 }));
         } catch (e) {
-            return [];
+            const errorCode = (e as NodeJS.ErrnoException | undefined)?.code;
+            if (errorCode === 'ENOENT') {
+                return [];
+            }
+            const message = e instanceof Error ? e.message : String(e);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `Project handoffs are unavailable: ${message}`,
+            });
         }
     })
 });

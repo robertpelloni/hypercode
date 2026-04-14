@@ -18,7 +18,7 @@ import {
 import type { ToolContextPayload } from '../services/toolContextMemory.js';
 
 import { executeSemanticAutoCall } from './compatibilityToolRuntime.js';
-import { LLMService } from '@borg/ai';
+import { LLMService } from '@hypercode/ai';
 
 type SearchableTool = Tool & {
     server?: string;
@@ -145,7 +145,7 @@ export class NativeSessionMetaTools {
 
         if (name === 'search_published_catalog') {
             if (!this.searchPublishedCatalogCb) {
-                return createTextResult('Catalog search is not available in this Borg session.', true);
+                return createTextResult('Catalog search is not available in this HyperCode session.', true);
             }
             const query = typeof args.query === 'string' ? args.query : '';
             if (!query) return createTextResult('Query is required.', true);
@@ -161,7 +161,7 @@ export class NativeSessionMetaTools {
 
         if (name === 'install_published_server') {
             if (!this.installPublishedServerCb) {
-                return createTextResult('Server installation is not available in this Borg session.', true);
+                return createTextResult('Server installation is not available in this HyperCode session.', true);
             }
             const identifier = typeof args.identifier === 'string' ? args.identifier : '';
             if (!identifier) return createTextResult('Identifier is required.', true);
@@ -199,7 +199,7 @@ export class NativeSessionMetaTools {
             }
 
             if (!this.toolContextResolver) {
-                return createTextResult('Tool context resolver is not available in this Borg session.', true);
+                return createTextResult('Tool context resolver is not available in this HyperCode session.', true);
             }
 
             const payload = this.toolContextResolver({
@@ -260,7 +260,7 @@ export class NativeSessionMetaTools {
 
         if (name === 'auto_call_tool') {
             if (!this.llmService || !this.delegatedToolCaller) {
-                return createTextResult('Auto-execution is not available in this Borg session.', true);
+                return createTextResult('Auto-execution is not available in this HyperCode session.', true);
             }
 
             return await executeSemanticAutoCall(

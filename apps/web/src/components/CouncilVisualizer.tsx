@@ -3,12 +3,23 @@
 import { trpc } from '@/utils/trpc';
 
 export default function CouncilVisualizer() {
-    const { data: sessions } = trpc.council.sessions.list.useQuery(undefined, {
+    const { data: sessions, error } = trpc.council.sessions.list.useQuery(undefined, {
         refetchInterval: 5000,
     });
+    const sessionsUnavailable = Boolean(error) || (sessions !== undefined && !Array.isArray(sessions));
+    const safeSessions = !sessionsUnavailable ? (sessions ?? []) : [];
 
-    const session = [...(sessions ?? [])]
+    const session = [...safeSessions]
         .sort((a, b) => (b.startedAt ?? 0) - (a.startedAt ?? 0))[0];
+
+    if (sessionsUnavailable) {
+        return (
+            <div className="p-6 bg-red-950/20 rounded-xl border border-red-900/40 text-center">
+                <h3 className="text-xl font-bold text-red-200 mb-2">🏛️ Council unavailable</h3>
+                <p className="text-red-300/80">{error?.message ?? 'Council sessions returned an invalid payload.'}</p>
+            </div>
+        );
+    }
 
     if (!session) {
         return (

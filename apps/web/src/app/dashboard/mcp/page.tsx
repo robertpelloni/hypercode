@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import type { ComponentType, FormEvent } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Alert, AlertDescription, AlertTitle } from '@borg/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Alert, AlertDescription, AlertTitle } from '@hypercode/ui';
 import { trpc } from '@/utils/trpc';
 import { buildBulkImportServers } from '@/lib/mcp-import';
 import { toast } from 'sonner';
@@ -485,7 +485,7 @@ function AddServerForm({ onDone }: { onDone: () => void }): React.JSX.Element {
             <CardHeader className="flex flex-row items-start justify-between">
                 <div>
                     <CardTitle className="text-white text-base">Add downstream MCP server</CardTitle>
-                    <p className="text-sm text-zinc-500 mt-1">Register another MCP endpoint under Borg’s aggregated router.</p>
+                    <p className="text-sm text-zinc-500 mt-1">Register another MCP endpoint under HyperCode’s aggregated router.</p>
                 </div>
                 <Button
                     variant="ghost"
@@ -615,7 +615,7 @@ function AddServerForm({ onDone }: { onDone: () => void }): React.JSX.Element {
                         <Button
                             type="submit"
                             disabled={createMutation.isPending}
-                            title="Register this downstream MCP server in Borg"
+                            title="Register this downstream MCP server in HyperCode"
                             aria-label="Add downstream MCP server"
                             className="bg-blue-600 hover:bg-blue-500 text-white"
                         >
@@ -712,7 +712,7 @@ function BulkImportForm({ onDone, existingServerNames }: { onDone: () => void; e
             <CardHeader className="flex flex-row items-start justify-between">
                 <div>
                     <CardTitle className="text-white text-base">Bulk import MCP config</CardTitle>
-                    <p className="text-sm text-zinc-500 mt-1">Import existing client configs and fold them into Borg’s router.</p>
+                    <p className="text-sm text-zinc-500 mt-1">Import existing client configs and fold them into HyperCode’s router.</p>
                 </div>
                 <Button
                     variant="ghost"
@@ -800,7 +800,7 @@ function BulkImportForm({ onDone, existingServerNames }: { onDone: () => void; e
                         <Button
                             type="submit"
                             disabled={importMutation.isPending || Boolean(preview?.error)}
-                            title="Import all valid server definitions from this config into Borg"
+                            title="Import all valid server definitions from this config into HyperCode"
                             aria-label="Import MCP server configuration"
                             className="bg-purple-600 hover:bg-purple-500 text-white"
                         >
@@ -816,11 +816,11 @@ function BulkImportForm({ onDone, existingServerNames }: { onDone: () => void; e
 
 export default function MCPDashboard(): React.JSX.Element {
     const trpcUtils = trpc.useUtils();
-    const { data: servers, isLoading: isLoadingServers, refetch: refetchServers } = trpc.mcp.listServers.useQuery();
+    const { data: servers, isLoading: isLoadingServers, error: serversError, refetch: refetchServers } = trpc.mcp.listServers.useQuery();
     const mcpServersClient = trpc.mcpServers as any;
-    const { data: managedServers, refetch: refetchManagedServers } = mcpServersClient.list.useQuery();
-    const { data: tools, isLoading: isLoadingTools, refetch: refetchTools } = trpc.mcp.listTools.useQuery();
-    const { data: status, refetch: refetchStatus } = trpc.mcp.getStatus.useQuery(undefined, { refetchInterval: 5000 });
+    const { data: managedServers, error: managedServersError, refetch: refetchManagedServers } = mcpServersClient.list.useQuery();
+    const { data: tools, isLoading: isLoadingTools, error: toolsError, refetch: refetchTools } = trpc.mcp.listTools.useQuery();
+    const { data: status, error: statusError, refetch: refetchStatus } = trpc.mcp.getStatus.useQuery(undefined, { refetchInterval: 5000 });
     const [editingServerUuid, setEditingServerUuid] = useState<string | null>(null);
     const [inspectingServerUuid, setInspectingServerUuid] = useState<string | null>(null);
     const [deletingServerUuid, setDeletingServerUuid] = useState<string | null>(null);
@@ -845,7 +845,11 @@ export default function MCPDashboard(): React.JSX.Element {
     const setLifecycleModesMutation = trpc.mcp.setLifecycleModes.useMutation();
     // Tool working-set eviction history — shows recent LRU/idle eviction events so operators
     // can observe memory-pressure patterns without digging into server logs.
-    const { data: evictionHistoryData, refetch: refetchEvictionHistory } = trpc.mcp.getWorkingSetEvictionHistory.useQuery(undefined, { refetchInterval: 10000 });
+    const {
+        data: evictionHistoryData,
+        error: evictionHistoryError,
+        refetch: refetchEvictionHistory,
+    } = trpc.mcp.getWorkingSetEvictionHistory.useQuery(undefined, { refetchInterval: 10000 });
     const clearEvictionHistoryMutation = trpc.mcp.clearWorkingSetEvictionHistory.useMutation({
         onSuccess: () => {
             void refetchEvictionHistory();
@@ -873,11 +877,15 @@ export default function MCPDashboard(): React.JSX.Element {
         { enabled: Boolean(inspectingServerUuid) },
     );
 
-    const managedServerList = (managedServers || []) as ManagedServerMetadata[];
+    const serversUnavailable = Boolean(serversError) || (servers !== undefined && !Array.isArray(servers));
+    const managedServersUnavailable = Boolean(managedServersError) || (managedServers !== undefined && !Array.isArray(managedServers));
+    const serverInventoryUnavailable = serversUnavailable || managedServersUnavailable;
+    const serverInventoryErrorMessage = serversError?.message ?? managedServersError?.message ?? 'Downstream server inventory is unavailable.';
+    const managedServerList = (!managedServersUnavailable ? (managedServers || []) : []) as ManagedServerMetadata[];
     const discoverySummary = getManagedServerDiscoverySummary(managedServerList);
     const unresolvedDiscoveryTargetUuids = getBulkMetadataTargetUuids(managedServerList, 'unresolved');
     const allDiscoveryTargetUuids = getBulkMetadataTargetUuids(managedServerList, 'all');
-    const serverList = buildDashboardServerRecords((servers || []) as AggregatedServer[], managedServerList);
+    const serverList = buildDashboardServerRecords((!serversUnavailable ? (servers || []) : []) as AggregatedServer[], managedServerList);
     const inspectingRuntimeServer = useMemo(() => serverList.find((server) => server.uuid === inspectingServerUuid), [inspectingServerUuid, serverList]);
     const toolList = (tools || []) as AggregatedTool[];
     const existingServerNames = useMemo(() => Array.from(new Set([
@@ -890,6 +898,7 @@ export default function MCPDashboard(): React.JSX.Element {
         toolCount: 0,
         connectedCount: 0,
     }) as unknown as StatusSummary;
+    const mcpStatusError = statusError?.message ?? null;
 
     const topTools = toolList.slice(0, 8);
     const lifecycleEvents = summary.lifecycle?.events ?? [];
@@ -1316,7 +1325,7 @@ export default function MCPDashboard(): React.JSX.Element {
     async function handleDeleteServer(uuid: string, serverName: string) {
         const confirmed = typeof window === 'undefined'
             ? true
-            : window.confirm(`Delete MCP server '${serverName}'? This removes the server from Borg configuration.`);
+            : window.confirm(`Delete MCP server '${serverName}'? This removes the server from HyperCode configuration.`);
         if (!confirmed) {
             return;
         }
@@ -1620,16 +1629,23 @@ export default function MCPDashboard(): React.JSX.Element {
                     <AlertTriangle className="h-4 w-4 text-amber-400" />
                     <AlertTitle>Last-Known-Good Configuration Active</AlertTitle>
                     <AlertDescription>
-                        Borg failed to load the primary MCP configuration and has fallen back to the last-known-good (LKG) backup.
+                        HyperCode failed to load the primary MCP configuration and has fallen back to the last-known-good (LKG) backup.
                         Please check your configuration files for syntax errors or permission issues.
                     </AlertDescription>
+                </Alert>
+            ) : null}
+            {mcpStatusError ? (
+                <Alert variant="destructive" className="bg-red-500/10 text-red-200 border-red-500/20">
+                    <AlertTriangle className="h-4 w-4 text-red-300" />
+                    <AlertTitle>MCP status unavailable</AlertTitle>
+                    <AlertDescription>{mcpStatusError}</AlertDescription>
                 </Alert>
             ) : null}
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white">MCP Router Control Plane</h1>
                     <p className="text-zinc-500 mt-2 max-w-3xl">
-                        Borg should read like the ultimate MCP aggregator/router first: one operator surface, many downstream servers, semantic search and grouping, lifecycle control, traffic visibility, and client config sync.
+                        HyperCode should read like the ultimate MCP aggregator/router first: one operator surface, many downstream servers, semantic search and grouping, lifecycle control, traffic visibility, and client config sync.
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1681,7 +1697,7 @@ export default function MCPDashboard(): React.JSX.Element {
                         <div className="flex items-center justify-between">
                             <div>
                                 <div className="text-xs uppercase tracking-wider text-zinc-500">Configured servers</div>
-                                <div className="mt-1 text-3xl font-semibold text-white">{summary.serverCount}</div>
+                                <div className="mt-1 text-3xl font-semibold text-white">{mcpStatusError ? '—' : summary.serverCount}</div>
                             </div>
                             <Server className="h-5 w-5 text-blue-400" />
                         </div>
@@ -1692,7 +1708,7 @@ export default function MCPDashboard(): React.JSX.Element {
                         <div className="flex items-center justify-between">
                             <div>
                                 <div className="text-xs uppercase tracking-wider text-zinc-500">Connected peers</div>
-                                <div className="mt-1 text-3xl font-semibold text-white">{summary.connectedCount}</div>
+                                <div className="mt-1 text-3xl font-semibold text-white">{mcpStatusError ? '—' : summary.connectedCount}</div>
                             </div>
                             <Network className="h-5 w-5 text-emerald-400" />
                         </div>
@@ -1703,7 +1719,7 @@ export default function MCPDashboard(): React.JSX.Element {
                         <div className="flex items-center justify-between">
                             <div>
                                 <div className="text-xs uppercase tracking-wider text-zinc-500">Aggregated tools</div>
-                                <div className="mt-1 text-3xl font-semibold text-white">{summary.toolCount}</div>
+                                <div className="mt-1 text-3xl font-semibold text-white">{mcpStatusError ? '—' : summary.toolCount}</div>
                             </div>
                             <Wrench className="h-5 w-5 text-purple-400" />
                         </div>
@@ -1714,23 +1730,29 @@ export default function MCPDashboard(): React.JSX.Element {
                         <div className="flex items-center justify-between">
                             <div>
                                 <div className="text-xs uppercase tracking-wider text-zinc-500">Router status</div>
-                                <div className="mt-1 text-3xl font-semibold text-white">{summary.initialized ? 'Ready' : 'Cold'}</div>
+                                <div className="mt-1 text-3xl font-semibold text-white">{mcpStatusError ? 'Unavailable' : (summary.initialized ? 'Ready' : 'Cold')}</div>
                                 <div className="mt-2 space-y-1 text-[11px] text-zinc-400">
-                                    <div>
-                                        pool active <span className="font-semibold text-white">{summary.pool?.active ?? 0}</span> • idle <span className="font-semibold text-white">{summary.pool?.idle ?? 0}</span>
-                                    </div>
-                                    <div>
-                                        sessions <span className="font-semibold text-white">{summary.pool?.activeSessionCount ?? 0}</span> • lazy <span className="font-semibold text-white">{summary.lifecycle?.lazySessionMode === false ? 'off' : 'on'}</span> • single-active <span className="font-semibold text-white">{summary.lifecycle?.singleActiveServerMode === false ? 'off' : 'on'}</span>
-                                    </div>
-                                    <div>
-                                        active server <span className="font-semibold text-white">{summary.pool?.currentActiveServerName ?? summary.pool?.currentActiveServerUuid ?? 'none'}</span>
-                                        {summary.pool?.currentActiveServerName && summary.pool?.currentActiveServerUuid
-                                            ? <> <span className="text-zinc-500">({summary.pool.currentActiveServerUuid})</span></>
-                                            : null}
-                                        {summary.pool?.lastActiveServerSwitchAt
-                                            ? <> • switched <span className="font-semibold text-white">{new Date(summary.pool.lastActiveServerSwitchAt).toLocaleTimeString()}</span></>
-                                            : null}
-                                    </div>
+                                    {mcpStatusError ? (
+                                        <div className="text-red-300">{mcpStatusError}</div>
+                                    ) : (
+                                        <>
+                                            <div>
+                                                pool active <span className="font-semibold text-white">{summary.pool?.active ?? 0}</span> • idle <span className="font-semibold text-white">{summary.pool?.idle ?? 0}</span>
+                                            </div>
+                                            <div>
+                                                sessions <span className="font-semibold text-white">{summary.pool?.activeSessionCount ?? 0}</span> • lazy <span className="font-semibold text-white">{summary.lifecycle?.lazySessionMode === false ? 'off' : 'on'}</span> • single-active <span className="font-semibold text-white">{summary.lifecycle?.singleActiveServerMode === false ? 'off' : 'on'}</span>
+                                            </div>
+                                            <div>
+                                                active server <span className="font-semibold text-white">{summary.pool?.currentActiveServerName ?? summary.pool?.currentActiveServerUuid ?? 'none'}</span>
+                                                {summary.pool?.currentActiveServerName && summary.pool?.currentActiveServerUuid
+                                                    ? <> <span className="text-zinc-500">({summary.pool.currentActiveServerUuid})</span></>
+                                                    : null}
+                                                {summary.pool?.lastActiveServerSwitchAt
+                                                    ? <> • switched <span className="font-semibold text-white">{new Date(summary.pool.lastActiveServerSwitchAt).toLocaleTimeString()}</span></>
+                                                    : null}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                                 <div className="mt-3 flex flex-wrap gap-2">
                                     <Button
@@ -2143,7 +2165,11 @@ export default function MCPDashboard(): React.JSX.Element {
                                 <p className="mt-1 text-xs text-zinc-500">
                                     Recent LRU and idle-eviction events from the active session working set (capped at 200). Idle evictions fire when a tool has not been accessed within the configured threshold.
                                 </p>
-                                {evictionHistory.length > 0 ? (
+                                {evictionHistoryError ? (
+                                    <div className="mt-3 rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-[11px] text-red-200">
+                                        {evictionHistoryError.message}
+                                    </div>
+                                ) : evictionHistory.length > 0 ? (
                                     <div className="mt-3 space-y-1.5 text-[11px] text-zinc-400">
                                         {evictionHistory.slice(0, 20).map((event, index) => (
                                             <div
@@ -2192,7 +2218,7 @@ export default function MCPDashboard(): React.JSX.Element {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => clearEvictionHistoryMutation.mutate(undefined)}
-                                    disabled={clearEvictionHistoryMutation.isPending || evictionHistory.length === 0}
+                                    disabled={clearEvictionHistoryMutation.isPending || evictionHistory.length === 0 || Boolean(evictionHistoryError)}
                                     className="border-zinc-700 bg-zinc-800 text-xs text-zinc-300 hover:bg-zinc-700 hover:text-white"
                                     title="Clear all eviction history entries"
                                 >
@@ -2213,7 +2239,7 @@ export default function MCPDashboard(): React.JSX.Element {
                     <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                         <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">
                             <div className="flex items-center gap-2 text-sm font-semibold text-white"><Server className="h-4 w-4 text-blue-400" /> Aggregation</div>
-                            <p className="mt-2 text-sm text-zinc-500">One Borg endpoint should make many downstream MCP servers feel like a coherent control plane, not a pile of loose wires.</p>
+                            <p className="mt-2 text-sm text-zinc-500">One HyperCode endpoint should make many downstream MCP servers feel like a coherent control plane, not a pile of loose wires.</p>
                         </div>
                         <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">
                             <div className="flex items-center gap-2 text-sm font-semibold text-white"><Search className="h-4 w-4 text-cyan-400" /> Semantic grouping</div>
@@ -2317,7 +2343,7 @@ export default function MCPDashboard(): React.JSX.Element {
                                         </span>
                                     ) : localCompatActive ? (
                                         <span>
-                                            Local compat fallback is active for {discoverySummary.localCompatCount} managed server{discoverySummary.localCompatCount === 1 ? '' : 's'}, so Borg is surfacing config-backed records with stable local IDs and action links while live core telemetry is unavailable.
+                                            Local compat fallback is active for {discoverySummary.localCompatCount} managed server{discoverySummary.localCompatCount === 1 ? '' : 's'}, so HyperCode is surfacing config-backed records with stable local IDs and action links while live core telemetry is unavailable.
                                         </span>
                                     ) : discoverySummary.staleReadyCount > 0 ? (
                                         <span>
@@ -2341,6 +2367,11 @@ export default function MCPDashboard(): React.JSX.Element {
                         </div>
                         {isLoadingServers ? (
                             <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-zinc-500" /></div>
+                        ) : serverInventoryUnavailable ? (
+                            <div className="rounded-lg border border-amber-700/40 bg-amber-950/20 p-8 text-center text-amber-200">
+                                <div className="font-medium">Downstream server inventory unavailable</div>
+                                <div className="mt-2 text-sm text-amber-200/80">{serverInventoryErrorMessage}</div>
+                            </div>
                         ) : serverList.length > 0 ? (
                             serverList.map((server) => {
                                 const actionLinks = buildServerToolActionLinks(server.name);
@@ -2439,7 +2470,7 @@ export default function MCPDashboard(): React.JSX.Element {
                                                     Ready cache looks stale
                                                 </div>
                                                 <p className="mt-1 text-rose-100/90">
-                                                    This server is marked ready, but Borg has zero cached tools for it. That usually means an older discovery failure got cached as success. Run a binary refresh to repair it.
+                                                    This server is marked ready, but HyperCode has zero cached tools for it. That usually means an older discovery failure got cached as success. Run a binary refresh to repair it.
                                                 </p>
                                             </div>
                                         ) : null}
@@ -2449,7 +2480,7 @@ export default function MCPDashboard(): React.JSX.Element {
                                                     <div className="text-[11px] uppercase tracking-[0.24em] text-cyan-300">Server actions live here</div>
                                                     <p className="mt-1 text-xs text-zinc-400">
                                                         {isLocalCompatServer
-                                                            ? 'This server is being surfaced through local compat fallback, so these controls act on the Borg-managed local config record while upstream core telemetry is unavailable.'
+                                                            ? 'This server is being surfaced through local compat fallback, so these controls act on the HyperCode-managed local config record while upstream core telemetry is unavailable.'
                                                             : 'Keep the operator controls anchored on every server card so inspection, edits, cache warm-up, health tests, and logs stay one click away.'}
                                                     </p>
                                                 </div>
@@ -2635,7 +2666,7 @@ export default function MCPDashboard(): React.JSX.Element {
                                                             size="sm"
                                                             onClick={() => void handleDeleteServer(serverUuid, server.name)}
                                                             disabled={deleteServerMutation.isPending}
-                                                            title={`Delete ${server.name} from Borg configuration`}
+                                                            title={`Delete ${server.name} from HyperCode configuration`}
                                                             aria-label={`Delete ${server.name}`}
                                                             className="border-red-500/30 text-red-200 hover:bg-red-500/10"
                                                         >
@@ -2693,6 +2724,11 @@ export default function MCPDashboard(): React.JSX.Element {
                     <CardContent className="space-y-3">
                         {isLoadingTools ? (
                             <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-zinc-500" /></div>
+                        ) : toolsError ? (
+                            <div className="rounded-lg border border-amber-700/40 bg-amber-950/20 p-8 text-center text-amber-200">
+                                <div className="font-medium">Tool discovery unavailable</div>
+                                <div className="mt-2 text-sm text-amber-200/80">{toolsError.message}</div>
+                            </div>
                         ) : topTools.length > 0 ? (
                             topTools.map((tool) => (
                                 <div key={`${tool.server}:${tool.name}`} className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">

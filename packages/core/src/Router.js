@@ -43,7 +43,7 @@ var stdio_js_1 = require("@modelcontextprotocol/sdk/client/stdio.js");
  * Router (MCP Aggregator)
  *
  * The central hub that manages connections to multiple MCP servers and provides
- * a unified tool interface. This is Borg's "Meta-MCP" layer.
+ * a unified tool interface. This is HyperCode's "Meta-MCP" layer.
  *
  * Architecture:
  * - Maintains a Map of named MCP `Client` connections (e.g., "filesystem", "browser", "search").
@@ -87,7 +87,7 @@ var Router = /** @class */ (function () {
                             args: args,
                         });
                         client = new index_js_1.Client({
-                            name: "borg-router",
+                            name: "hypercode-router",
                             version: "0.1.0",
                         }, {
                             capabilities: {},

@@ -216,6 +216,49 @@ describe('SessionImportService', () => {
         expect(warnSpy.mock.calls.flat().join('\n')).not.toContain('Could not locate the bindings file');
     });
 
+    it('skips imported-session persistence when SQLite-backed store operations are unavailable during scan', async () => {
+        const root = await createTempRoot();
+        const copilotDir = path.join(root, '.copilot', 'session-state');
+        await fs.mkdir(copilotDir, { recursive: true });
+        await fs.writeFile(
+            path.join(copilotDir, 'session-1.md'),
+            'Remember to keep startup running even when imported-session SQLite storage is offline.',
+            'utf-8',
+        );
+
+        const store = createFakeStore();
+        const sqliteUnavailable = new Error(
+            'SQLite runtime is unavailable for HyperCode DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)',
+        );
+        store.hasTranscriptHash.mockImplementation(() => {
+            throw sqliteUnavailable;
+        });
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        const service = new SessionImportService({
+            generateText: vi.fn(async () => {
+                throw new Error('no llm');
+            }),
+        } as any, {
+            addLongTerm: vi.fn(async () => ({})),
+            captureSessionSummary: vi.fn(async () => ({})),
+        } as any, root, {
+            store: store as any,
+            includeHomeDirectories: false,
+            maxFilesPerRoot: 20,
+        });
+
+        const result = await service.scanAndImport();
+
+        expect(result.discoveredCount).toBe(1);
+        expect(result.importedCount).toBe(0);
+        expect(result.skippedCount).toBe(1);
+        expect(warnSpy).toHaveBeenCalledTimes(1);
+        expect(String(warnSpy.mock.calls[0]?.[0] ?? '')).toContain('[SessionImport] Skipping imported-session persistence for ');
+        expect(String(warnSpy.mock.calls[0]?.[0] ?? '')).toContain('.copilot/session-state/session-1.md: SQLite runtime is unavailable for this run.');
+        expect(warnSpy.mock.calls.flat().join('\n')).not.toContain('Could not locate the bindings file');
+    });
+
     it('imports VS Code Copilot Chat home-directory sessions with UUID filenames', async () => {
         const root = await createTempRoot();
         const fakeHome = await createTempRoot();

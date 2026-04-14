@@ -1,4 +1,4 @@
-# Ideas for Improvement: @borg/adk
+# Ideas for Improvement: @hypercode/adk
 
 Evolving the Agent Development Kit from a set of interfaces into a high-intelligence framework for autonomous swarm members.
 
@@ -20,4 +20,4 @@ Evolving the Agent Development Kit from a set of interfaces into a high-intellig
 ## 4. Developer Experience (DX)
 - **Agent Sandbox Simulator:** A local CLI tool to test agent behaviors and tool interactions in a mock environment with simulated network latency and quota failures.
 - **Type-Safe Tool Chaining:** A TypeScript DSL for defining complex multi-tool workflows that agents can execute as a single, atomic operation with guaranteed type safety.
-- **Live "State of Mind" Telemetry:** Standardized telemetry hooks that allow the ADK to export the agent's current internal goals and confidence levels to the Borg dashboard.
+- **Live "State of Mind" Telemetry:** Standardized telemetry hooks that allow the ADK to export the agent's current internal goals and confidence levels to the HyperCode dashboard.

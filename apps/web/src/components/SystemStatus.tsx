@@ -7,11 +7,21 @@ export default function SystemStatus() {
         refetchInterval: 5000,
         refetchOnWindowFocus: false,
     });
+    const snapshotUnavailable = Boolean(snapshotQuery.error)
+        || (snapshotQuery.data !== undefined && (
+            !snapshotQuery.data
+            || typeof snapshotQuery.data !== 'object'
+            || !(snapshotQuery.data as { system?: unknown }).system
+            || typeof (snapshotQuery.data as { system?: unknown }).system !== 'object'
+            || !(snapshotQuery.data as { process?: unknown }).process
+            || typeof (snapshotQuery.data as { process?: unknown }).process !== 'object'
+        ));
+    const snapshotData = !snapshotUnavailable ? snapshotQuery.data : undefined;
 
-    const load1m = snapshotQuery.data?.system.loadAvg?.[0] ?? 0;
-    const memPercent = snapshotQuery.data?.system.memoryUsagePercent ?? 0;
-    const freeRamGb = snapshotQuery.data ? snapshotQuery.data.system.freeMemory / (1024 ** 3) : 0;
-    const uptimeHours = snapshotQuery.data ? snapshotQuery.data.process.uptimeSeconds / 3600 : 0;
+    const load1m = snapshotData?.system.loadAvg?.[0];
+    const memPercent = snapshotData?.system.memoryUsagePercent;
+    const freeRamGb = snapshotData ? snapshotData.system.freeMemory / (1024 ** 3) : undefined;
+    const uptimeHours = snapshotData ? snapshotData.process.uptimeSeconds / 3600 : undefined;
 
     return (
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 space-y-4">
@@ -19,14 +29,14 @@ export default function SystemStatus() {
                 System Status
             </h2>
             <div className="grid grid-cols-2 gap-4">
-                <Stat label="CPU Load (1m)" value={snapshotQuery.isPending ? '…' : load1m.toFixed(2)} unit="" />
-                <Stat label="Memory Usage" value={snapshotQuery.isPending ? '…' : String(memPercent)} unit="%" />
-                <Stat label="Free RAM" value={snapshotQuery.isPending ? '…' : freeRamGb.toFixed(2)} unit="GB" />
-                <Stat label="Uptime" value={snapshotQuery.isPending ? '…' : uptimeHours.toFixed(2)} unit="h" />
+                <Stat label="CPU Load (1m)" value={snapshotQuery.isPending ? '…' : snapshotUnavailable ? '—' : load1m?.toFixed(2) ?? '—'} unit="" />
+                <Stat label="Memory Usage" value={snapshotQuery.isPending ? '…' : snapshotUnavailable ? '—' : memPercent != null ? String(memPercent) : '—'} unit="%" />
+                <Stat label="Free RAM" value={snapshotQuery.isPending ? '…' : snapshotUnavailable ? '—' : freeRamGb?.toFixed(2) ?? '—'} unit="GB" />
+                <Stat label="Uptime" value={snapshotQuery.isPending ? '…' : snapshotUnavailable ? '—' : uptimeHours?.toFixed(2) ?? '—'} unit="h" />
             </div>
-            {snapshotQuery.error && (
+            {snapshotUnavailable && (
                 <div className="text-xs text-red-400 font-mono mt-2">
-                    Failed to load system snapshot: {snapshotQuery.error.message}
+                    Failed to load system snapshot: {snapshotQuery.error?.message ?? 'System snapshot returned an invalid payload.'}
                 </div>
             )}
         </div>

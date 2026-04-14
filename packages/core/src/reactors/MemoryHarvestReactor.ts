@@ -1,6 +1,7 @@
 import { EventBus, SystemEvent } from '../services/EventBus.js';
-import { LLMService } from '@borg/ai';
+import { LLMService } from '@hypercode/ai';
 import AgentMemoryService from '../services/AgentMemoryService.js';
+import { contextHarvester } from '../services/ContextHarvester.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -9,7 +10,7 @@ import path from 'path';
  * 
  * Automatically "harvests" context from file system changes.
  * When a file is created or modified, it semantically analyzes the new content
- * and updates Borg's long-term memory graph.
+ * and updates HyperCode's long-term memory graph.
  */
 export class MemoryHarvestReactor {
     private eventBus: EventBus;
@@ -56,14 +57,21 @@ export class MemoryHarvestReactor {
         const relativePath = payload.path;
 
         // Skip non-source files or huge files
-        if (!relativePath.match(/\.(ts|tsx|js|jsx|md|py|go|rs)$/)) return;
+        if (!relativePath.match(/\.(ts|tsx|js|jsx|md|py|go|rs|json|yml|yaml)$/i)) return;
 
         try {
             const content = await fs.readFile(filePath, 'utf-8');
-            if (content.length > 50000) return; // Skip massive files for harvesting
+            if (content.length > 100000) return; // Skip massive files for harvesting
+
+            // Harvest the active file immediately into the ephemeral context window!
+            // This ensures LLMs instantly know about changes to important files.
+            contextHarvester.harvest('active-file', content, {
+                path: relativePath,
+                timestamp: Date.now()
+            });
 
             const prompt = `
-            You are a Borg Knowledge Harvester.
+            You are a HyperCode Knowledge Harvester.
             A file in the repository has been updated: ${relativePath}
             
             Analyze the content and extract the most important architectural rules, 

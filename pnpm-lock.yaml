@@ -681,12 +681,6 @@ importers:
 
   apps/web:
     dependencies:
-      '@borg/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@borg/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -699,6 +693,12 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.3)
+      '@hypercode/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@hypercode/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@radix-ui/react-avatar':
         specifier: ^1.1.11
         version: 1.1.11(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -861,10 +861,10 @@ importers:
 
   packages/agents:
     dependencies:
-      '@borg/adk':
+      '@hypercode/adk':
         specifier: workspace:*
         version: link:../adk
-      '@borg/ai':
+      '@hypercode/ai':
         specifier: workspace:*
         version: link:../ai
       '@modelcontextprotocol/sdk':
@@ -920,28 +920,6 @@ importers:
       vitest:
         specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.27)(jsdom@27.4.0(@noble/hashes@2.0.1)(canvas@3.2.2))(lightningcss@1.32.0)(terser@5.44.1)
-
-  packages/borg-supervisor:
-    dependencies:
-      '@modelcontextprotocol/sdk':
-        specifier: '>=1.25.2'
-        version: 1.25.2(@cfworker/json-schema@4.1.1)(hono@4.11.3)(zod@3.25.76)
-      active-win:
-        specifier: ^8.2.0
-        version: 8.2.1(encoding@0.1.13)
-      ps-list:
-        specifier: ^8.1.1
-        version: 8.1.1
-      zod:
-        specifier: ^3.23.8
-        version: 3.25.76
-    devDependencies:
-      '@types/node':
-        specifier: ^20.11.24
-        version: 20.19.27
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
 
   packages/browser:
     dependencies:
@@ -1089,7 +1067,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@borg/core':
+      '@hypercode/core':
         specifier: workspace:*
         version: link:../core
       '@trpc/server':
@@ -1123,7 +1101,7 @@ importers:
         specifier: ^3.25.76
         version: 3.25.76
     devDependencies:
-      '@borg/tsconfig':
+      '@hypercode/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/cors':
@@ -1147,36 +1125,36 @@ importers:
 
   packages/core:
     dependencies:
-      '@borg/adk':
-        specifier: workspace:*
-        version: link:../adk
-      '@borg/agents':
-        specifier: workspace:*
-        version: link:../agents
-      '@borg/ai':
-        specifier: workspace:*
-        version: link:../ai
-      '@borg/mcp-registry':
-        specifier: workspace:*
-        version: link:../mcp-registry
-      '@borg/memory':
-        specifier: workspace:*
-        version: link:../memory
-      '@borg/search':
-        specifier: workspace:*
-        version: link:../search
-      '@borg/tools':
-        specifier: workspace:*
-        version: link:../tools
-      '@borg/types':
-        specifier: workspace:*
-        version: link:../types
       '@hono/node-server':
         specifier: ^1.19.11
         version: 1.19.11(hono@4.11.3)
       '@hono/zod-validator':
         specifier: ^0.7.2
         version: 0.7.6(hono@4.11.3)(zod@3.25.76)
+      '@hypercode/adk':
+        specifier: workspace:*
+        version: link:../adk
+      '@hypercode/agents':
+        specifier: workspace:*
+        version: link:../agents
+      '@hypercode/ai':
+        specifier: workspace:*
+        version: link:../ai
+      '@hypercode/mcp-registry':
+        specifier: workspace:*
+        version: link:../mcp-registry
+      '@hypercode/memory':
+        specifier: workspace:*
+        version: link:../memory
+      '@hypercode/search':
+        specifier: workspace:*
+        version: link:../search
+      '@hypercode/tools':
+        specifier: workspace:*
+        version: link:../tools
+      '@hypercode/types':
+        specifier: workspace:*
+        version: link:../types
       '@hyperswarm/secret-stream':
         specifier: ^6.9.1
         version: 6.9.1(bare-url@2.3.2)
@@ -1338,6 +1316,28 @@ importers:
         specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.27)(jsdom@27.4.0(@noble/hashes@2.0.1)(canvas@3.2.2))(lightningcss@1.32.0)(terser@5.44.1)
 
+  packages/hypercode-supervisor:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: '>=1.25.2'
+        version: 1.25.2(@cfworker/json-schema@4.1.1)(hono@4.11.3)(zod@3.25.76)
+      active-win:
+        specifier: ^8.2.0
+        version: 8.2.1(encoding@0.1.13)
+      ps-list:
+        specifier: ^8.1.1
+        version: 8.1.1
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.24
+        version: 20.19.37
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/mcp-client:
     dependencies:
       '@modelcontextprotocol/sdk':
@@ -1366,7 +1366,7 @@ importers:
 
   packages/mcp-router-cli:
     dependencies:
-      '@borg/core':
+      '@hypercode/core':
         specifier: workspace:*
         version: link:../core
       commander:
@@ -1375,7 +1375,7 @@ importers:
 
   packages/memory:
     dependencies:
-      '@borg/ai':
+      '@hypercode/ai':
         specifier: workspace:*
         version: link:../ai
       '@lancedb/lancedb':
@@ -1418,7 +1418,7 @@ importers:
 
   packages/search:
     dependencies:
-      '@borg/adk':
+      '@hypercode/adk':
         specifier: workspace:*
         version: link:../adk
       '@vscode/ripgrep':
@@ -1450,7 +1450,7 @@ importers:
 
   packages/tools:
     dependencies:
-      '@borg/adk':
+      '@hypercode/adk':
         specifier: workspace:*
         version: link:../adk
       '@modelcontextprotocol/sdk':
@@ -1505,9 +1505,6 @@ importers:
 
   packages/ui:
     dependencies:
-      '@borg/core':
-        specifier: workspace:*
-        version: link:../core
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1517,6 +1514,9 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.2
         version: 3.2.2(react@18.3.1)
+      '@hypercode/core':
+        specifier: workspace:*
+        version: link:../core
       '@radix-ui/react-accordion':
         specifier: ^1.1.2
         version: 1.2.12(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -9685,10 +9685,6 @@ packages:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
 
-  iconv-lite@0.7.1:
-    resolution: {integrity: sha512-2Tth85cXwGFHfvRgZWszZSvdo+0Xsqmw8k8ZwxScfcBneNUraK+dxRxRm24nszx80Y0TVio8kKLt5sLE7ZCLlw==}
-    engines: {node: '>=0.10.0'}
-
   iconv-lite@0.7.2:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
     engines: {node: '>=0.10.0'}
@@ -17502,7 +17498,7 @@ snapshots:
       nopt: 5.0.0
       npmlog: 5.0.1
       rimraf: 3.0.2
-      semver: 7.7.3
+      semver: 7.7.4
       tar: 6.2.1
     transitivePeerDependencies:
       - encoding
@@ -22442,7 +22438,7 @@ snapshots:
       content-type: 1.0.5
       debug: 4.4.3
       http-errors: 2.0.1
-      iconv-lite: 0.7.1
+      iconv-lite: 0.7.2
       on-finished: 2.4.1
       qs: 6.14.1
       raw-body: 3.0.2
@@ -25703,10 +25699,6 @@ snapshots:
       safer-buffer: 2.1.2
 
   iconv-lite@0.6.3:
-    dependencies:
-      safer-buffer: 2.1.2
-
-  iconv-lite@0.7.1:
     dependencies:
       safer-buffer: 2.1.2
 
@@ -29711,7 +29703,7 @@ snapshots:
     dependencies:
       bytes: 3.1.2
       http-errors: 2.0.1
-      iconv-lite: 0.7.1
+      iconv-lite: 0.7.2
       unpipe: 1.0.0
 
   rc@1.2.8:

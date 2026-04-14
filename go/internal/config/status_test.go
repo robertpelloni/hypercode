@@ -8,13 +8,20 @@ import (
 
 func TestSnapshotReportsKeyPaths(t *testing.T) {
 	workspaceRoot := t.TempDir()
+<<<<<<< HEAD
 	configDir := filepath.Join(workspaceRoot, ".borg-go")
 	mainConfigDir := filepath.Join(workspaceRoot, ".borg")
 	if err := os.MkdirAll(filepath.Join(workspaceRoot, "submodules", "borg"), 0o755); err != nil {
 		t.Fatalf("failed to create borg path: %v", err)
+=======
+	configDir := filepath.Join(workspaceRoot, ".hypercode-go")
+	mainConfigDir := filepath.Join(workspaceRoot, ".hypercode")
+	if err := os.MkdirAll(filepath.Join(workspaceRoot, "submodules", "hypercode"), 0o755); err != nil {
+		t.Fatalf("failed to create hypercode path: %v", err)
+>>>>>>> main
 	}
-	if err := os.WriteFile(filepath.Join(workspaceRoot, "borg.config.json"), []byte("{}"), 0o644); err != nil {
-		t.Fatalf("failed to create borg config: %v", err)
+	if err := os.WriteFile(filepath.Join(workspaceRoot, "hypercode.config.json"), []byte("{}"), 0o644); err != nil {
+		t.Fatalf("failed to create hypercode config: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(workspaceRoot, "mcp.jsonc"), []byte("{}"), 0o644); err != nil {
 		t.Fatalf("failed to create mcp config: %v", err)
@@ -41,7 +48,7 @@ func TestSnapshotReportsKeyPaths(t *testing.T) {
 		t.Fatalf("expected borg submodule path to exist")
 	}
 	if !status.BorgConfigFile.Exists || !status.MCPConfigFile.Exists {
-		t.Fatalf("expected repo config files to exist, got borg=%+v mcp=%+v", status.BorgConfigFile, status.MCPConfigFile)
+		t.Fatalf("expected repo config files to exist, got hypercode=%+v mcp=%+v", status.BorgConfigFile, status.MCPConfigFile)
 	}
 	if status.SectionedMemoryStore.Exists {
 		t.Fatalf("expected sectioned memory store to be absent by default")

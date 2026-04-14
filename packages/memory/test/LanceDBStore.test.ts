@@ -4,7 +4,7 @@ import { LanceDBStore } from '../src/LanceDBStore.js';
 
 describe('LanceDBStore', () => {
     it('retries openTable after a concurrent memories table creation wins the race', async () => {
-        const store = new LanceDBStore('C:\\temp\\borg-memory-test');
+        const store = new LanceDBStore('C:\\temp\\hypercode-memory-test');
         const addedRows: Array<Record<string, unknown>>[] = [];
 
         const existingTable = {
@@ -44,7 +44,7 @@ describe('LanceDBStore', () => {
     });
 
     it('drops unknown metadata fields when appending to an older memories schema', async () => {
-        const store = new LanceDBStore('C:\\temp\\borg-memory-test');
+        const store = new LanceDBStore('C:\\temp\\hypercode-memory-test');
         const addCalls: Array<Array<Record<string, unknown>>> = [];
 
         const existingTable = {

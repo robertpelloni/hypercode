@@ -1,11 +1,11 @@
-# Ideas for Improvement: @borg/web
+# Ideas for Improvement: @hypercode/web
 
 Ambitious features and architectural shifts for the Mission Control dashboard.
 
 ## 1. Collaborative Orchestration
 - **The "War Room" Mode:** A real-time collaborative environment where multiple human operators can monitor and participate in multi-agent "Squad" sessions, with shared cursors and live annotations.
 - **Agent Handoff Streams:** A specialized view for reviewing and approving autonomous handoff prompts between model cycles, with a "diff" view of the context change.
-- **Global Mesh Dashboard:** Visualize not just local agents, but the entire global Borg network (if opted-in), showing trending MCP tools and collective swarm intelligence.
+- **Global Mesh Dashboard:** Visualize not just local agents, but the entire global HyperCode network (if opted-in), showing trending MCP tools and collective swarm intelligence.
 
 ## 2. Advanced Data Exploration
 - **Visual "Knowledge Miner":** A deep-dive exploration tool for the context harvested by Claude-Mem, allowing the operator to trace the lineage of a specific fact or decision through multiple sessions.

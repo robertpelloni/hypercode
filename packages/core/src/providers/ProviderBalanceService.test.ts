@@ -8,7 +8,7 @@ describe('ProviderBalanceService', () => {
         vi.unstubAllGlobals();
     });
 
-    it('normalizes GitHub Copilot quota snapshots into Borg provider quotas', async () => {
+    it('normalizes GitHub Copilot quota snapshots into HyperCode provider quotas', async () => {
         const source: ProviderBalanceConnectionSource = {
             async getConnection(provider) {
                 if (provider !== 'github') {

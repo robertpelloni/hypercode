@@ -140,9 +140,9 @@ export const INSTALL_SURFACES: InstallSurfaceCard[] = [
         id: 'browser-extension-chromium',
         title: 'Browser Extension (Chrome / Edge)',
         platforms: 'Chrome, Edge, Chromium browsers',
-        repoPath: 'apps/borg-extension',
-        buildHint: 'pnpm -C apps/borg-extension build',
-        installHint: 'Load unpacked from apps/borg-extension/dist-chromium after build.',
+        repoPath: 'apps/hypercode-extension',
+        buildHint: 'pnpm -C apps/hypercode-extension build',
+        installHint: 'Load unpacked from apps/hypercode-extension/dist-chromium after build.',
         capabilities: [
             'Browser chat bridge + page context capture',
             'Knowledge and RAG ingestion from active pages',
@@ -155,12 +155,12 @@ export const INSTALL_SURFACES: InstallSurfaceCard[] = [
         id: 'browser-extension-firefox',
         title: 'Browser Extension (Firefox)',
         platforms: 'Firefox',
-        repoPath: 'apps/borg-extension',
-        buildHint: 'pnpm -C apps/borg-extension build:firefox',
-        installHint: 'Load temporary add-on from about:debugging using apps/borg-extension/dist-firefox after build.',
+        repoPath: 'apps/hypercode-extension',
+        buildHint: 'pnpm -C apps/hypercode-extension build:firefox',
+        installHint: 'Load temporary add-on from about:debugging using apps/hypercode-extension/dist-firefox after build.',
         capabilities: [
             'Knowledge capture and page-to-RAG ingestion',
-            'Extension bridge telemetry into Borg Core',
+            'Extension bridge telemetry into HyperCode Core',
             'Browser history, screenshots, and active-tab tooling',
         ],
         managementHref: '/dashboard/browser',
@@ -168,7 +168,7 @@ export const INSTALL_SURFACES: InstallSurfaceCard[] = [
     },
     {
         id: 'vscode-extension',
-        title: 'Borg Plugin for VS Code',
+        title: 'HyperCode Plugin for VS Code',
         platforms: 'VS Code / compatible forks',
         repoPath: 'packages/vscode',
         buildHint: 'pnpm -C packages/vscode build && pnpm -C packages/vscode package',
@@ -186,12 +186,12 @@ export const INSTALL_SURFACES: InstallSurfaceCard[] = [
         title: 'MCP Client Config Sync',
         platforms: 'Claude Desktop, Cursor, VS Code',
         repoPath: 'packages/core client sync service',
-        buildHint: 'No separate build required once Borg Core is running.',
-        installHint: 'Preview and write Borg-managed MCP configs directly from the dashboard.',
+        buildHint: 'No separate build required once HyperCode Core is running.',
+        installHint: 'Preview and write HyperCode-managed MCP configs directly from the dashboard.',
         capabilities: [
             'Auto-detect supported client config targets',
             'Preview merged config JSON before writing',
-            'Push Borg MCP endpoints without clobbering unrelated settings',
+            'Push HyperCode MCP endpoints without clobbering unrelated settings',
         ],
         managementHref: '/dashboard/mcp/settings',
         managementLabel: 'Open MCP client sync',
@@ -298,7 +298,7 @@ function getInstallSurfaceOperatorAction(
             return {
                 label: 'Build command',
                 value: surface.buildHint,
-                detail: 'Run this first to produce the Chromium bundle Borg expects you to load into Chrome or Edge.',
+                detail: 'Run this first to produce the Chromium bundle HyperCode expects you to load into Chrome or Edge.',
             };
         case 'browser-extension-firefox':
             if (status === 'ready' && artifactPath) {
@@ -314,7 +314,7 @@ function getInstallSurfaceOperatorAction(
                 value: surface.buildHint,
                 detail: status === 'partial'
                     ? 'Firefox source assets exist, but this build step is still needed before Firefox can load the add-on.'
-                    : 'Run this first to produce the Firefox bundle Borg expects you to load as a temporary add-on.',
+                    : 'Run this first to produce the Firefox bundle HyperCode expects you to load as a temporary add-on.',
             };
         case 'vscode-extension':
             if (status === 'ready' && artifactPath) {
@@ -337,8 +337,8 @@ function getInstallSurfaceOperatorAction(
                 label: status === 'ready' ? 'Dashboard action' : 'Bring core online',
                 value: status === 'ready' ? '/dashboard/mcp/settings' : 'pnpm run dev',
                 detail: status === 'ready'
-                    ? 'Open the MCP settings page to preview and write Borg-managed client configuration files.'
-                    : 'Start Borg Core so the config sync page can generate and write managed MCP client configs.',
+                    ? 'Open the MCP settings page to preview and write HyperCode-managed client configuration files.'
+                    : 'Start HyperCode Core so the config sync page can generate and write managed MCP client configs.',
             };
     }
 }
@@ -451,13 +451,13 @@ function getInstallSurfaceNextStep(surfaceId: InstallSurfaceCard['id'], status: 
             if (status === 'ready') {
                 return {
                     label: 'Open sync dashboard',
-                    detail: 'Preview and write Borg-managed MCP configs into supported clients from the dashboard.',
+                    detail: 'Preview and write HyperCode-managed MCP configs into supported clients from the dashboard.',
                 };
             }
 
             return {
-                label: 'Start Borg Core',
-                detail: 'Bring Borg Core online so it can generate and expose the managed MCP config source for client sync.',
+                label: 'Start HyperCode Core',
+                detail: 'Bring HyperCode Core online so it can generate and expose the managed MCP config source for client sync.',
             };
     }
 }
@@ -519,7 +519,7 @@ const EXTERNAL_CLIENTS: Array<{
         id: 'vscode',
         label: 'VS Code',
         windowsPath: '%APPDATA%\\Code\\User\\globalStorage\\mcp-servers.json',
-        notes: 'Native dashboard sync target plus Borg VS Code extension package.',
+        notes: 'Native dashboard sync target plus HyperCode VS Code extension package.',
         autoSyncSupported: true,
         syncClient: 'vscode',
     },

@@ -41,7 +41,7 @@ import { ShellHistoryWidget } from "../components/ShellHistoryWidget";
 import SuggestionsPanel from "../components/SuggestionsPanel";
 import { HealerWidget } from "../components/HealerWidget";
 import IngestionStatus from "../components/IngestionStatus";
-import { ActivityPulse, SystemHealth, LatencyMonitor, SecurityWidget } from "@borg/ui";
+import { ActivityPulse, SystemHealth, LatencyMonitor, SecurityWidget } from "@hypercode/ui";
 import { trpc } from "@/utils/trpc"; // Need tRPC to fetch stats
 import { HelpWidget } from "../components/HelpWidget";
 import { MirrorView } from "../components/MirrorView";
@@ -82,20 +82,53 @@ function WrappedSecurityWidget() {
     return <SecurityWidget />;
 }
 
+function MetricsUnavailable({ message }: { message: string }) {
+    return <div className="text-sm text-rose-300">{message}</div>;
+}
+
+function isMetricsStatsPayload(value: unknown): value is {
+    series?: unknown[];
+    counts?: Record<string, unknown>;
+    averages?: Record<string, unknown>;
+} {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function normalizeNumberRecord(value: unknown): Record<string, number> | null {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        return null;
+    }
+
+    const entries = Object.entries(value);
+    if (entries.some(([, entryValue]) => typeof entryValue !== 'number')) {
+        return null;
+    }
+
+    return Object.fromEntries(entries) as Record<string, number>;
+}
+
 // Wrapper Components for Data Fetching
 function ConnectedActivityPulse() {
-    const { data } = trpc.metrics.getStats.useQuery(undefined, { refetchInterval: 2000 });
-    return <ActivityPulse series={data?.series || []} />;
+    const { data, error } = trpc.metrics.getStats.useQuery(undefined, { refetchInterval: 2000 });
+    const unavailable = Boolean(error) || (data !== undefined && !isMetricsStatsPayload(data)) || (isMetricsStatsPayload(data) && data.series !== undefined && !Array.isArray(data.series));
+    if (unavailable) return <MetricsUnavailable message={`Metrics unavailable: ${error?.message ?? 'Metrics returned an invalid payload.'}`} />;
+    return <ActivityPulse series={Array.isArray(data?.series) ? data.series : []} />;
 }
 
 function ConnectedSystemHealth() {
-    const { data } = trpc.metrics.getStats.useQuery(undefined, { refetchInterval: 5000 });
-    return <SystemHealth counts={data?.counts || {}} />;
+    const { data, error } = trpc.metrics.getStats.useQuery(undefined, { refetchInterval: 5000 });
+    const counts = isMetricsStatsPayload(data) ? normalizeNumberRecord(data.counts) : null;
+    const unavailable = Boolean(error) || (data !== undefined && !isMetricsStatsPayload(data)) || (isMetricsStatsPayload(data) && data.counts !== undefined && counts === null);
+    if (unavailable) return <MetricsUnavailable message={`Metrics unavailable: ${error?.message ?? 'Metrics returned an invalid payload.'}`} />;
+    return <SystemHealth counts={counts ?? {}} />;
 }
 
 function ConnectedLatency() {
-    const { data } = trpc.metrics.getStats.useQuery(undefined, { refetchInterval: 5000 });
-    return <LatencyMonitor averages={data?.averages || {}} />;
+    const { data, error } = trpc.metrics.getStats.useQuery(undefined, { refetchInterval: 5000 });
+    const averages = isMetricsStatsPayload(data) ? normalizeNumberRecord(data.averages) : null;
+    const unavailable = Boolean(error) || (data !== undefined && !isMetricsStatsPayload(data)) || (isMetricsStatsPayload(data) && data.averages !== undefined && averages === null);
+    if (unavailable) return <MetricsUnavailable message={`Metrics unavailable: ${error?.message ?? 'Metrics returned an invalid payload.'}`} />;
+    return <LatencyMonitor averages={averages ?? {}} />;
 }
 
 // Default Order

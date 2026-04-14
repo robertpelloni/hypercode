@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { resolveLockedBorgBase } from '../../../../lib/borg-runtime';
+import { resolveLockedBorgBase } from '../../../../lib/hypercode-runtime';
 import { resolveConfiguredOrchestratorBase } from '../../../../lib/orchestrator-config';
 
 export const runtime = 'nodejs';

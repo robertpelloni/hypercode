@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import { existsSync } from 'fs';
 
 import { ContextPruner, PruningOptions } from './ContextPruner.js';
-import type { GraphMemory } from '@borg/memory';
+import type { GraphMemory } from '@hypercode/memory';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -116,8 +116,8 @@ export class MemoryManager {
     }
 
     constructor(workspaceRoot: string = process.cwd()) {
-        this.dbPath = path.join(workspaceRoot, '.borg', 'db');
-        this.registryPath = path.join(workspaceRoot, '.borg', 'memory', 'contexts.json');
+        this.dbPath = path.join(workspaceRoot, '.hypercode', 'db');
+        this.registryPath = path.join(workspaceRoot, '.hypercode', 'memory', 'contexts.json');
         this.pruner = new ContextPruner();
     }
 
@@ -126,9 +126,9 @@ export class MemoryManager {
 
         console.log("[MemoryManager] Initializing Vector Backend...");
 
-        // Lazy load the providers from @borg/memory
+        // Lazy load the providers from @hypercode/memory
         // This allows switching to Chroma/SQLite/Memory based on config
-        const { LanceDBStore, MemoryVectorStore, GraphMemory } = await import('@borg/memory') as unknown as BorgMemoryModule;
+        const { LanceDBStore, MemoryVectorStore, GraphMemory } = await import('@hypercode/memory') as unknown as BorgMemoryModule;
 
         // Select Backend
         let store: VectorStoreLike;
@@ -268,7 +268,7 @@ export class MemoryManager {
         }
 
         try {
-            const { CodeSplitter } = await import('@borg/memory') as unknown as CodeSplitterModule;
+            const { CodeSplitter } = await import('@hypercode/memory') as unknown as CodeSplitterModule;
             const chunks = CodeSplitter
                 .split(content, extension, 1000)
                 .map((chunk: string) => chunk.trim())
@@ -315,8 +315,8 @@ export class MemoryManager {
 
         console.log(`[MemoryManager] Indexing symbols at ${rootDir}...`);
 
-        // Lazy load Indexer from @borg/memory
-        const { Indexer } = await import('@borg/memory') as unknown as IndexerModule;
+        // Lazy load Indexer from @hypercode/memory
+        const { Indexer } = await import('@hypercode/memory') as unknown as IndexerModule;
 
         // Adapter to make VectorProvider look like IndexerStorage
         const storageAdapter = {
@@ -348,8 +348,8 @@ export class MemoryManager {
 
         console.log(`[MemoryManager] Indexing codebase at ${rootDir}...`);
 
-        // Lazy load Indexer from @borg/memory
-        const { Indexer } = await import('@borg/memory') as unknown as IndexerModule;
+        // Lazy load Indexer from @hypercode/memory
+        const { Indexer } = await import('@hypercode/memory') as unknown as IndexerModule;
 
         // Adapter to make VectorProvider look like IndexerStorage
         const storageAdapter = {

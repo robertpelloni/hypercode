@@ -1,10 +1,10 @@
-# Ideas for Improvement: @borg/mobile
+# Ideas for Improvement: @hypercode/mobile
 
 Ambitious features to evolve the mobile companion app from a telemetry log into a first-class remote control pane.
 
 ## 1. Remote Orchestration & Veto
 - **Biometric Action Veto:** Use FaceID/TouchID to authorize high-risk agent actions (like `rm -rf` or large refactors) detected by the supervisor.
-- **Voice-Command Interaction:** Allow the operator to give natural language directives to the swarm directly via the mobile microphone (e.g., "Borg, fix all lint errors in the ui package").
+- **Voice-Command Interaction:** Allow the operator to give natural language directives to the swarm directly via the mobile microphone (e.g., "HyperCode, fix all lint errors in the ui package").
 - **Live Debate Monitor:** A specialized UI for monitoring multi-agent "Council Debates" in real-time, with the ability to "vote" or break ties from the phone.
 
 ## 2. Immersive Visualization

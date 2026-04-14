@@ -29,7 +29,7 @@ describe('resolveSwarmOrchestratorBase', () => {
         expect(resolveSwarmOrchestratorBase('http://127.0.0.1:5001/')).toBe('http://127.0.0.1:5001');
     });
 
-    it('reuses the live borg lock when no explicit override is supplied', () => {
+    it('reuses the live hypercode lock when no explicit override is supplied', () => {
         const configDir = mkdtempSync(path.join(os.tmpdir(), 'swarm-lock-'));
         process.env.BORG_CONFIG_DIR = configDir;
         writeFileSync(path.join(configDir, 'lock'), JSON.stringify({ host: '0.0.0.0', port: 4321 }));

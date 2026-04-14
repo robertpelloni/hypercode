@@ -4,21 +4,21 @@ Use this file for posting and live comment operations during launch day.
 
 ## Canonical links
 
-- Repo: `https://github.com/robertpelloni/borg`
-- Quick Start: `https://github.com/robertpelloni/borg#-quick-start`
+- Repo: `https://github.com/robertpelloni/hypercode`
+- Quick Start: `https://github.com/robertpelloni/hypercode#-quick-start`
 - Security FAQ replies: `docs/LAUNCH_SECURITY_FAQ.md`
 
 ## Show HN draft
 
 ### Title options
-1. Show HN: Borg — local MCP control plane for routing, memory, and observability
-2. Show HN: Borg, a local-first MCP router with memory + dashboard
-3. Show HN: I built Borg to run multi-MCP setups without orchestration chaos
+1. Show HN: HyperCode — local MCP control plane for routing, memory, and observability
+2. Show HN: HyperCode, a local-first MCP router with memory + dashboard
+3. Show HN: I built HyperCode to run multi-MCP setups without orchestration chaos
 
 ### Body
-I built **Borg** to make multi-server MCP setups manageable in practice.
+I built **HyperCode** to make multi-server MCP setups manageable in practice.
 
-When tool count grows, things get messy: routing, naming collisions, poor visibility, brittle workflows. Borg is a local-first control plane that sits between AI clients and MCP infrastructure.
+When tool count grows, things get messy: routing, naming collisions, poor visibility, brittle workflows. HyperCode is a local-first control plane that sits between AI clients and MCP infrastructure.
 
 What it does:
 - Unified MCP routing + namespacing
@@ -27,8 +27,8 @@ What it does:
 - Observability dashboard (health/logs/system views)
 - Local-first architecture for operator control
 
-Repo: `https://github.com/robertpelloni/borg`
-Quickstart: `https://github.com/robertpelloni/borg#-quick-start`
+Repo: `https://github.com/robertpelloni/hypercode`
+Quickstart: `https://github.com/robertpelloni/hypercode#-quick-start`
 
 I’d really value feedback on:
 1. Routing/policy model for larger MCP fleets
@@ -40,10 +40,10 @@ Happy to answer technical questions.
 ## Reddit r/mcp draft
 
 ### Title
-Built Borg: local-first MCP control plane (routing + memory + observability) — feedback wanted
+Built HyperCode: local-first MCP control plane (routing + memory + observability) — feedback wanted
 
 ### Body
-Hey everyone — I built **Borg** to help manage complex MCP environments without glue-code sprawl.
+Hey everyone — I built **HyperCode** to help manage complex MCP environments without glue-code sprawl.
 
 It includes:
 - MCP server/tool routing with namespacing
@@ -51,8 +51,8 @@ It includes:
 - Memory layer (vector + graph context)
 - Operator dashboard for logs/health/status
 
-Repo: `https://github.com/robertpelloni/borg`
-Quickstart: `https://github.com/robertpelloni/borg#-quick-start`
+Repo: `https://github.com/robertpelloni/hypercode`
+Quickstart: `https://github.com/robertpelloni/hypercode#-quick-start`
 
 I’m looking for concrete feedback from people running real MCP stacks:
 - Where routing breaks first
@@ -90,18 +90,18 @@ If this belongs in a different thread format, I’m happy to repost accordingly.
 ## Comment triage templates
 
 ### “How is this different from existing MCP clients?”
-Borg is an operator-layer control plane rather than a single client UX. It focuses on routing, memory, and observability across multiple MCP servers/tools.
+HyperCode is an operator-layer control plane rather than a single client UX. It focuses on routing, memory, and observability across multiple MCP servers/tools.
 
 ### “Can I trust this in production?”
 Current focus is strong local/operator workflows with active hardening. Feedback-driven stabilization is part of the launch plan.
 
 ### “What should I test first?”
-Route your existing MCP setup through Borg, then compare tool discovery speed, debugging clarity, and memory-assisted workflow continuity.
+Route your existing MCP setup through HyperCode, then compare tool discovery speed, debugging clarity, and memory-assisted workflow continuity.
 
 ## Day-2 follow-up template
 
 ### Title
-Borg launch update: what we learned in 24 hours + what we shipped
+HyperCode launch update: what we learned in 24 hours + what we shipped
 
 ### Body
 Quick update after launch:
@@ -109,6 +109,6 @@ Quick update after launch:
 - What shipped: [list 2–3 concrete changes]
 - Next 72h priorities: [list 2–3]
 
-Repo: `https://github.com/robertpelloni/borg`
+Repo: `https://github.com/robertpelloni/hypercode`
 
 If you tried it, I’d love your next round of feedback on routing/policies, memory signal quality, and observability gaps.

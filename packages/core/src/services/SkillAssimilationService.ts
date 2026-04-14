@@ -1,6 +1,6 @@
 import { DeepResearchService } from './DeepResearchService.js';
 import type { MCPServer } from '../MCPServer.js';
-import { LLMService } from '@borg/ai';
+import { LLMService } from '@hypercode/ai';
 import { SkillRegistry } from '../skills/SkillRegistry.js'; // Import
 import fs from 'fs/promises';
 import path from 'path';

@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardHeader, CardTitle, CardContent } from "@borg/ui";
-import { Button } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
 import { Loader2, Play, Wrench, Search, ChevronRight, Layers, Database, ExternalLink, Link2, Activity, ArrowDownToLine, Sparkles, Trash2, Clock, Zap, AlertTriangle } from "lucide-react";
 import { TrafficInspector } from '@/components/TrafficInspector';
 import { trpc } from '@/utils/trpc';
@@ -98,7 +98,7 @@ type TelemetryTrendBucket = {
     label: string;
 };
 
-const INSPECTOR_TELEMETRY_FILTERS_STORAGE_KEY = 'borg.mcp.inspector.telemetryFilters.v1';
+const INSPECTOR_TELEMETRY_FILTERS_STORAGE_KEY = 'hypercode.mcp.inspector.telemetryFilters.v1';
 const INSPECTOR_TELEMETRY_TYPE_QUERY_KEY = 'telemetryType';
 const INSPECTOR_TELEMETRY_STATUS_QUERY_KEY = 'telemetryStatus';
 const INSPECTOR_TELEMETRY_WINDOW_QUERY_KEY = 'telemetryWindow';
@@ -107,7 +107,7 @@ const INSPECTOR_TELEMETRY_TOOL_QUERY_KEY = 'telemetryTool';
 const INSPECTOR_TELEMETRY_SEARCH_QUERY_KEY = 'telemetrySearch';
 const INSPECTOR_TELEMETRY_BUCKET_START_QUERY_KEY = 'telemetryBucketStart';
 const INSPECTOR_TELEMETRY_BUCKET_END_QUERY_KEY = 'telemetryBucketEnd';
-const INSPECTOR_EVICTION_FILTERS_STORAGE_KEY = 'borg.mcp.inspector.evictionFilters.v1';
+const INSPECTOR_EVICTION_FILTERS_STORAGE_KEY = 'hypercode.mcp.inspector.evictionFilters.v1';
 const INSPECTOR_EVICTION_REASON_QUERY_KEY = 'evictionReason';
 const INSPECTOR_EVICTION_TIER_QUERY_KEY = 'evictionTier';
 const INSPECTOR_EVICTION_WINDOW_QUERY_KEY = 'evictionWindow';
@@ -400,8 +400,11 @@ function InspectorDashboardContent() {
         maxHydratedSchemas?: number;
         idleEvictionThresholdMs?: number;
     } | undefined;
+    const workingSetError = workingSetQuery.error?.message ?? null;
     const telemetry = (telemetryQuery.data || []) as ToolSelectionTelemetryEvent[];
+    const telemetryError = telemetryQuery.error?.message ?? null;
     const evictionHistory = (evictionHistoryQuery.data || []) as EvictionEvent[];
+    const evictionHistoryError = evictionHistoryQuery.error?.message ?? null;
     const evictionSummary = evictionHistory.reduce((accumulator, event) => {
         accumulator.total += 1;
         if (event.idleEvicted) {
@@ -1772,13 +1775,13 @@ function InspectorDashboardContent() {
                 <Card className="bg-zinc-900 border-zinc-800">
                     <CardContent className="p-4">
                         <div className="text-xs uppercase tracking-wider text-zinc-500">Loaded tools</div>
-                        <div className="mt-1 text-2xl font-semibold text-white">{workingSet.length}</div>
+                        <div className="mt-1 text-2xl font-semibold text-white">{workingSetError ? '—' : workingSet.length}</div>
                     </CardContent>
                 </Card>
                 <Card className="bg-zinc-900 border-zinc-800">
                     <CardContent className="p-4">
                         <div className="text-xs uppercase tracking-wider text-zinc-500">Hydrated schemas</div>
-                        <div className="mt-1 text-2xl font-semibold text-white">{workingSet.filter((tool) => tool.hydrated).length}</div>
+                        <div className="mt-1 text-2xl font-semibold text-white">{workingSetError ? '—' : workingSet.filter((tool) => tool.hydrated).length}</div>
                     </CardContent>
                 </Card>
             </div>
@@ -2023,19 +2026,25 @@ function InspectorDashboardContent() {
                             <div className="grid grid-cols-2 gap-2 text-xs">
                                 <div className="rounded border border-zinc-800 bg-zinc-950/70 p-2">
                                     <div className="uppercase tracking-wider text-zinc-500">Loaded cap</div>
-                                    <div className="mt-1 text-sm font-semibold text-white">{workingSetLimits?.maxLoadedTools ?? 0}</div>
+                                    <div className="mt-1 text-sm font-semibold text-white">{workingSetError ? '—' : (workingSetLimits?.maxLoadedTools ?? 0)}</div>
                                 </div>
                                 <div className="rounded border border-zinc-800 bg-zinc-950/70 p-2">
                                     <div className="uppercase tracking-wider text-zinc-500">Schema cap</div>
-                                    <div className="mt-1 text-sm font-semibold text-white">{workingSetLimits?.maxHydratedSchemas ?? 0}</div>
+                                    <div className="mt-1 text-sm font-semibold text-white">{workingSetError ? '—' : (workingSetLimits?.maxHydratedSchemas ?? 0)}</div>
                                 </div>
                                 <div className="rounded border border-zinc-800 bg-zinc-950/70 p-2 col-span-2">
                                     <div className="uppercase tracking-wider text-zinc-500">Idle threshold</div>
                                     <div className="mt-1 text-sm font-semibold text-white">
-                                        {Math.max(0.17, Number((((workingSetLimits?.idleEvictionThresholdMs ?? 0) / 60000)).toFixed(2)))} min
+                                        {workingSetError ? 'unavailable' : `${Math.max(0.17, Number((((workingSetLimits?.idleEvictionThresholdMs ?? 0) / 60000)).toFixed(2)))} min`}
                                     </div>
                                 </div>
                             </div>
+
+                            {workingSetError ? (
+                                <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-200">
+                                    Working set unavailable: {workingSetError}
+                                </div>
+                            ) : null}
 
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
@@ -2296,7 +2305,11 @@ function InspectorDashboardContent() {
                             </div>
                         </div>
 
-                        {workingSet.length > 0 ? (
+                        {workingSetError ? (
+                            <div className="p-4 text-xs text-red-200 text-center">
+                                Working set unavailable. Loaded-tool controls are temporarily unavailable.
+                            </div>
+                        ) : workingSet.length > 0 ? (
                             <div className="divide-y divide-zinc-800/50">
                                 {workingSet.map((tool) => {
                                     const idleSecs = tool.lastAccessedAt
@@ -2379,7 +2392,7 @@ function InspectorDashboardContent() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            disabled={clearTelemetryMutation.isPending || telemetry.length === 0}
+                            disabled={clearTelemetryMutation.isPending || telemetry.length === 0 || Boolean(telemetryError)}
                             onClick={() => clearTelemetryMutation.mutate()}
                             title="Clear the current telemetry history shown in this panel"
                             aria-label="Clear inspector telemetry history"
@@ -3220,6 +3233,10 @@ function InspectorDashboardContent() {
                                     {event.message ? <div className="text-xs text-zinc-500 break-all">{event.message}</div> : null}
                                 </div>
                             ))
+                        ) : telemetryError ? (
+                            <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-6 text-sm text-red-200 text-center lg:col-span-2">
+                                {telemetryError}
+                            </div>
                         ) : (
                             <div className="rounded-lg border border-dashed border-zinc-800 p-6 text-sm text-zinc-500 text-center lg:col-span-2">
                                 No telemetry events match the current filter yet.
@@ -3272,7 +3289,7 @@ function InspectorDashboardContent() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        disabled={clearEvictionHistoryMutation.isPending || evictionHistory.length === 0}
+                        disabled={clearEvictionHistoryMutation.isPending || evictionHistory.length === 0 || Boolean(evictionHistoryError)}
                         onClick={() => clearEvictionHistoryMutation.mutate()}
                         title="Clear the eviction history ring buffer"
                         aria-label="Clear working-set eviction history"
@@ -3425,7 +3442,11 @@ function InspectorDashboardContent() {
                         ) : null}
                     </div>
 
-                    {filteredEvictionHistory.length > 0 ? (
+                    {evictionHistoryError ? (
+                        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-6 text-sm text-red-200 text-center">
+                            {evictionHistoryError}
+                        </div>
+                    ) : filteredEvictionHistory.length > 0 ? (
                         <div className="grid gap-2 lg:grid-cols-3">
                             {filteredEvictionHistory.slice(0, 20).map((ev, i) => {
                                 const idleLabel = formatDurationCompact(ev.idleDurationMs);

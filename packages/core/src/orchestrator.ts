@@ -10,14 +10,14 @@ import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import { appRouter } from './trpc.js';
 console.log("[Core:Orchestrator] ✓ trpc.js");
 import { ingestPublishedCatalog } from './services/published-catalog-ingestor.js';
-import { InputTools, SystemStatusTool } from '@borg/tools';
+import { InputTools, SystemStatusTool } from '@hypercode/tools';
 import { MCPServer } from './MCPServer.js';
 import { listenExpress } from './orchestrator-listen.js';
 import { resolveSupervisorEntryPath } from './orchestratorPaths.js';
 import { resolveBridgePort } from './bridge/bridgePort.js';
 import { councilApp } from './orchestrator/council/node-index.js';
 
-export const name = "@borg/core";
+export const name = "@hypercode/core";
 
 export interface StartOrchestratorOptions {
     host?: string;
@@ -89,7 +89,7 @@ export async function startOrchestrator(options: StartOrchestratorOptions = {}) 
     app.get('/health', (_req, res) => {
         res.json({
             status: 'ok',
-            name: '@borg/core',
+            name: '@hypercode/core',
             uptime: process.uptime(),
             timestamp: Date.now(),
             mcpReady: !!global.mcpServerInstance,
@@ -111,10 +111,10 @@ export async function startOrchestrator(options: StartOrchestratorOptions = {}) 
     // 1.5. Start Supervisor (Native Input / Watchdog)
     if (startSupervisor) {
         try {
-            console.log("[Core] 1.5 Starting Borg Supervisor...");
+            console.log("[Core] 1.5 Starting HyperCode Supervisor...");
             const supervisorPath = resolveSupervisorEntryPath();
             if (!supervisorPath) {
-                console.warn("[Core] Borg Supervisor build not found. Skipping supervisor startup.");
+                console.warn("[Core] HyperCode Supervisor build not found. Skipping supervisor startup.");
             } else {
                 const supervisor = spawn('node', [supervisorPath], {
                     stdio: 'inherit',

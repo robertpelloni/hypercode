@@ -1,5 +1,5 @@
-// Background Service Worker for Borg Director Link
-console.log("Borg Browser Extension Background Service Worker Starting... 🚀");
+// Background Service Worker for HyperCode Director Link
+console.log("HyperCode Browser Extension Background Service Worker Starting... 🚀");
 
 let socket: WebSocket | null = null;
 let requestIdCounter = 0;
@@ -8,11 +8,11 @@ let reconnectAttempts = 0;
 
 function connect() {
   // Use 127.0.0.1 to avoid dual-stack localhost ambiguity
-  console.log("Connecting to Borg MCP Server (ws://127.0.0.1:3001)...");
+  console.log("Connecting to HyperCode MCP Server (ws://127.0.0.1:3001)...");
   socket = new WebSocket("ws://127.0.0.1:3001");
 
   socket.onopen = () => {
-    console.log("✅ Connected to Borg Hub");
+    console.log("✅ Connected to HyperCode Hub");
     reconnectAttempts = 0;
   };
 
@@ -157,7 +157,7 @@ async function navigate(url: string) {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === "MCP_REQUEST") {
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-      sendResponse({ error: "Borg Disconnected" });
+      sendResponse({ error: "HyperCode Disconnected" });
       return true;
     }
 
@@ -175,7 +175,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.type === "CONSOLE_LOG") {
-    // Forward to Borg Core
+    // Forward to HyperCode Core
     send({
       type: "BROWSER_LOG",
       level: request.level,

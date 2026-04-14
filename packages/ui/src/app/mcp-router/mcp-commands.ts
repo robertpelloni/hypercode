@@ -1,7 +1,7 @@
 /**
- * Borg MCP Router - CLI Integration
+ * HyperCode MCP Router - CLI Integration
  *
- * Integrates MCP Router CLI commands into the main borg CLI
+ * Integrates MCP Router CLI commands into the main hypercode CLI
  */
 
 import { spawn } from 'child_process';

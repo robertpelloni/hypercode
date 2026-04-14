@@ -1,6 +1,6 @@
 {
-    "name": "@borg/mcp-registry",
-    "version": "0.99.1",
+    "name": "@hypercode/mcp-registry",
+    "version": "1.0.0-alpha.1",
     "private": true,
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

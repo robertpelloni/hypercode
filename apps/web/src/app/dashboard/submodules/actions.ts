@@ -39,14 +39,14 @@ export interface WorkspaceInventorySection {
 const SECTION_DESCRIPTIONS: Record<string, string> = {
     apps: 'Operator-facing applications and external integration surfaces.',
     packages: 'Shared runtime libraries, services, engines, and reusable UI packages.',
-    submodules: 'Reference repos and mirrored upstream code tracked alongside Borg.',
+    submodules: 'Reference repos and mirrored upstream code tracked alongside HyperCode.',
     docs: 'Long-lived architecture, deployment, planning, and research documents.',
     scripts: 'Repo automation, build orchestration, maintenance, and tooling entrypoints.',
 };
 
 const ENTRY_SUMMARIES: Record<string, string> = {
     'apps/web': 'Next.js operator dashboard and web control plane.',
-    'apps/borg-extension': 'Browser extension workspace for Chromium and Firefox bridge builds.',
+    'apps/hypercode-extension': 'Browser extension workspace for Chromium and Firefox bridge builds.',
     'apps/maestro': 'electron-orchestrator desktop shell for multi-agent coordination.',
     'apps/mobile': 'React Native companion app for remote monitoring and control.',
     'packages/core': 'Core backend runtime, council orchestration, MCP server, and tRPC APIs.',

@@ -24,7 +24,11 @@ export default function SquadsPage() {
     });
 
     // Indexer Hooks
-    const { data: indexerStatus, refetch: refetchIndexer } = trpc.squad.getIndexerStatus.useQuery(undefined, {
+    const {
+        data: indexerStatus,
+        error: indexerStatusError,
+        refetch: refetchIndexer,
+    } = trpc.squad.getIndexerStatus.useQuery(undefined, {
         refetchInterval: 5000
     });
 
@@ -66,7 +70,7 @@ export default function SquadsPage() {
                         variant={indexerStatus?.running ? "destructive" : "default"}
                         size="sm"
                         onClick={() => indexerMutation.mutate({ enabled: !indexerStatus?.running })}
-                        disabled={indexerMutation.isPending}
+                        disabled={indexerMutation.isPending || !indexerStatus}
                     >
                         {indexerStatus?.running ? "Stop Indexer" : "Start Indexer"}
                     </Button>
@@ -75,6 +79,11 @@ export default function SquadsPage() {
                     <p className="text-sm text-muted-foreground mb-2">
                         Automatically scans codebase every 5 minutes to keep Symbols and Graph up-to-date.
                     </p>
+                    {indexerStatusError && (
+                        <div className="mb-2 text-xs text-red-400">
+                            {indexerStatusError.message}
+                        </div>
+                    )}
                     {indexerStatus?.indexing && (
                         <div className="flex items-center gap-2 text-xs text-blue-400">
                             <Loader2 className="h-3 w-3 animate-spin" />

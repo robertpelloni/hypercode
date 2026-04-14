@@ -52,7 +52,8 @@ function extractSkillContent(value: unknown): string {
 }
 
 export function SkillsViewer() {
-    const { data: rawSkills, isLoading } = trpc.skills.list.useQuery();
+    const { data: rawSkills, error, isLoading } = trpc.skills.list.useQuery();
+    const skillsUnavailable = Boolean(error) || (rawSkills !== undefined && !Array.isArray(rawSkills));
     const skills = normalizeSkillList(rawSkills);
     const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
 
@@ -63,34 +64,41 @@ export function SkillsViewer() {
                     📚 Skills Library
                 </h2>
                 <div className="text-xs text-zinc-500 uppercase font-bold tracking-wider">
-                    {skills.length} Available
+                    {skillsUnavailable ? '—' : skills.length} Available
                 </div>
             </div>
 
             {isLoading && <div className="text-zinc-500 animate-pulse">Loading skills...</div>}
+            {skillsUnavailable && <div className="text-red-400 text-sm mb-4">Skills library unavailable: {error?.message ?? 'Skills list returned an invalid payload.'}</div>}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {skills.map((skill) => (
-                    <div
-                        key={skill.name}
-                        onClick={() => setSelectedSkill(skill.name === selectedSkill ? null : skill.name)}
-                        className={`p-4 rounded-lg border cursor-pointer transition-all hover:scale-[1.02] ${selectedSkill === skill.name
-                            ? 'bg-blue-900/20 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
-                            : 'bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 hover:border-zinc-600'
-                            }`}
-                    >
-                        <div className="font-bold text-zinc-200 mb-1 flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                            {skill.name}
+            {!skillsUnavailable && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {skills.map((skill) => (
+                        <div
+                            key={skill.name}
+                            onClick={() => setSelectedSkill(skill.name === selectedSkill ? null : skill.name)}
+                            className={`p-4 rounded-lg border cursor-pointer transition-all hover:scale-[1.02] ${selectedSkill === skill.name
+                                ? 'bg-blue-900/20 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
+                                : 'bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 hover:border-zinc-600'
+                                }`}
+                        >
+                            <div className="font-bold text-zinc-200 mb-1 flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                {skill.name}
+                            </div>
+                            <div className="text-xs text-zinc-400 line-clamp-2">
+                                {skill.description}
+                            </div>
                         </div>
-                        <div className="text-xs text-zinc-400 line-clamp-2">
-                            {skill.description}
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
-            {selectedSkill && (
+            {!isLoading && !skillsUnavailable && skills.length === 0 && (
+                <div className="text-zinc-500 text-sm">No skills available.</div>
+            )}
+
+            {selectedSkill && !skillsUnavailable && (
                 <div className="mt-6 p-4 bg-black/50 border border-zinc-800 rounded-lg text-sm font-mono text-zinc-300">
                     <SkillDetails name={selectedSkill} />
                 </div>
@@ -103,6 +111,7 @@ function SkillDetails({ name }: { name: string }) {
     const details = trpc.skills.read.useQuery({ name });
 
     if (details.isLoading) return <div className="text-zinc-500">Loading definition...</div>;
+    if (details.error) return <div className="text-red-400">Skill definition unavailable: {details.error.message}</div>;
 
     const content = extractSkillContent(details.data);
 

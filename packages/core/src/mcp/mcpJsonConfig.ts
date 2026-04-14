@@ -69,10 +69,24 @@ export type BorgMcpJsonConfig = {
 
 import os from 'node:os';
 
-const JSONC_HEADER = `// Borg MCP configuration\n// This file is Borg-owned and may include cached server metadata under mcpServers.<name>._meta.\n`;
+const JSONC_HEADER = `// HyperCode MCP configuration\n// This file is HyperCode-owned and may include cached server metadata under mcpServers.<name>._meta.\n`;
 
 export function getBorgConfigDir(): string {
-    return path.join(os.homedir(), '.borg');
+    // If there is an mcp.jsonc in the current working directory, use it
+    // This allows project-level config to be the source of truth if intended.
+    if (process.env.BORG_CONFIG_DIR) {
+        return process.env.BORG_CONFIG_DIR;
+    }
+    const cwdPath = process.cwd();
+    try {
+        const cwdStat = require('node:fs').statSync(path.join(cwdPath, 'mcp.jsonc'));
+        if (cwdStat.isFile()) {
+            return cwdPath;
+        }
+    } catch {
+        // Fall back
+    }
+    return path.join(os.homedir(), '.hypercode');
 }
 
 export function getBorgMcpJsoncPath(configDir: string = getBorgConfigDir()): string {
@@ -81,6 +95,10 @@ export function getBorgMcpJsoncPath(configDir: string = getBorgConfigDir()): str
 
 export function getBorgMcpJsonPath(configDir: string = getBorgConfigDir()): string {
     return path.join(configDir, 'mcp.json');
+}
+
+export function getBorgToolCachePath(configDir: string = getBorgConfigDir()): string {
+    return path.join(configDir, 'mcp-cache.json');
 }
 
 export function stripJsonComments(content: string): string {
@@ -232,5 +250,20 @@ export async function writeBorgMcpConfig(config: BorgMcpJsonConfig, configDir?: 
     const jsonBody = `${JSON.stringify(toCompatibilityConfig(normalized), null, 2)}\n`;
     await fs.writeFile(jsoncPath, jsoncBody, 'utf-8');
     await fs.writeFile(jsonPath, jsonBody, 'utf-8');
+}
+
+export async function writeToolCache(config: BorgMcpJsonConfig, configDir?: string): Promise<void> {
+    const cachePath = getBorgToolCachePath(configDir);
+    await fs.mkdir(path.dirname(cachePath), { recursive: true });
+    await fs.writeFile(cachePath, JSON.stringify(config, null, 2), 'utf-8');
+}
+
+export async function loadToolCache(configDir?: string): Promise<BorgMcpJsonConfig | null> {
+    try {
+        const raw = await fs.readFile(getBorgToolCachePath(configDir), 'utf-8');
+        return normalizeConfigShape(JSON.parse(raw));
+    } catch {
+        return null;
+    }
 }
 

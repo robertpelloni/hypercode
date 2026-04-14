@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { buildServerProbeTargets, filterToolsForProbeTarget } from './server-probe-utils';
 
 describe('server probe helpers', () => {
-    it('prepends the Borg router before sorted downstream targets', () => {
+    it('prepends the HyperCode router before sorted downstream targets', () => {
         expect(buildServerProbeTargets([
             { name: 'zeta', toolCount: 2, status: 'ready' },
             { name: 'alpha', toolCount: 4, status: 'connected' },
@@ -11,14 +11,14 @@ describe('server probe helpers', () => {
             {
                 id: 'router',
                 kind: 'router',
-                label: 'Borg router',
-                description: 'Simulate a client hitting Borg’s aggregated MCP surface.',
+                label: 'HyperCode router',
+                description: 'Simulate a client hitting HyperCode’s aggregated MCP surface.',
             },
             {
                 id: 'server:alpha',
                 kind: 'server',
                 label: 'alpha',
-                description: 'Probe the downstream server directly without going through the Borg router.',
+                description: 'Probe the downstream server directly without going through the HyperCode router.',
                 serverName: 'alpha',
                 toolCount: 4,
                 status: 'connected',
@@ -27,7 +27,7 @@ describe('server probe helpers', () => {
                 id: 'server:zeta',
                 kind: 'server',
                 label: 'zeta',
-                description: 'Probe the downstream server directly without going through the Borg router.',
+                description: 'Probe the downstream server directly without going through the HyperCode router.',
                 serverName: 'zeta',
                 toolCount: 2,
                 status: 'ready',
@@ -44,7 +44,7 @@ describe('server probe helpers', () => {
         expect(filterToolsForProbeTarget(tools, {
             id: 'router',
             kind: 'router',
-            label: 'Borg router',
+            label: 'HyperCode router',
             description: 'router',
         })).toEqual(tools);
 

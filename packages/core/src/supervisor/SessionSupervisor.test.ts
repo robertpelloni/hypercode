@@ -67,7 +67,7 @@ describe('SessionSupervisor', () => {
             clearTimeout: () => undefined,
         };
 
-        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-session-supervisor-'));
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-session-supervisor-'));
         tempDirs.push(tempDir);
 
         const supervisor = new SessionSupervisor({
@@ -146,7 +146,7 @@ describe('SessionSupervisor', () => {
     });
 
     it('captures execution shell policy and exports it into the supervised environment', async () => {
-        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-session-supervisor-'));
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-session-supervisor-'));
         tempDirs.push(tempDir);
 
         const supervisor = new SessionSupervisor({
@@ -220,7 +220,7 @@ describe('SessionSupervisor', () => {
     });
 
     it('persists metadata patches for a running session', async () => {
-        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-session-supervisor-'));
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-session-supervisor-'));
         tempDirs.push(tempDir);
 
         const supervisor = new SessionSupervisor({
@@ -269,9 +269,61 @@ describe('SessionSupervisor', () => {
         }));
     });
 
+    describe('session recovery', () => {
+        it('restores sessions from persistence file on boot', () => {
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-session-supervisor-'));
+            tempDirs.push(tempDir);
+            
+            const persistencePath = path.join(tempDir, 'session-supervisor.json');
+            
+            const mockSession = {
+                id: 'sess_recovery_123',
+                name: 'Recovery Test',
+                cliType: 'hypercode',
+                workingDirectory: tempDir,
+                status: 'running',
+                restartCount: 0,
+                maxRestartAttempts: 3,
+                lastActivityAt: Date.now(),
+                createdAt: Date.now(),
+                autoRestart: true,
+                startedAt: Date.now(),
+                executionPolicy: {
+                    shellId: 'node',
+                    shellLabel: 'Node',
+                    spawnCommand: 'node',
+                    spawnArgs: ['-v']
+                }
+            };
+
+            fs.writeFileSync(persistencePath, JSON.stringify({
+                sessions: [mockSession],
+                lastUpdate: Date.now()
+            }));
+
+            const spawnedProcesses: FakeProcess[] = [];
+            const spawnProcess: SpawnSupervisedProcess = () => {
+                const p = new FakeProcess();
+                spawnedProcesses.push(p);
+                return p;
+            };
+
+            const supervisor = new SessionSupervisor({
+                rootDir: tempDir,
+                persistencePath,
+                spawnProcess,
+            });
+
+            const sessions = supervisor.listSessions();
+            expect(sessions).toHaveLength(1);
+            expect(sessions[0].id).toBe('sess_recovery_123');
+            expect(spawnedProcesses).toHaveLength(1);
+        });
+    });
+
     describe('attach readiness', () => {
         it('reports ready when status is running and a PID is available', async () => {
-            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-session-supervisor-'));
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-session-supervisor-'));
             tempDirs.push(tempDir);
 
             const supervisor = new SessionSupervisor({
@@ -333,7 +385,7 @@ describe('SessionSupervisor', () => {
                 clearTimeout: () => undefined,
             };
 
-            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-session-supervisor-'));
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-session-supervisor-'));
             tempDirs.push(tempDir);
 
             const supervisor = new SessionSupervisor({
@@ -397,7 +449,7 @@ describe('SessionSupervisor', () => {
                 clearTimeout: () => undefined,
             };
 
-            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-session-supervisor-'));
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-session-supervisor-'));
             tempDirs.push(tempDir);
 
             const supervisor = new SessionSupervisor({
@@ -448,7 +500,7 @@ describe('SessionSupervisor', () => {
         });
 
         it('reports unavailable when status is stopped', async () => {
-            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-session-supervisor-'));
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-session-supervisor-'));
             tempDirs.push(tempDir);
 
             const spawnedProcesses: FakeProcess[] = [];
@@ -508,7 +560,7 @@ describe('SessionSupervisor', () => {
         });
 
         it('reports unavailable when status is created (not yet started)', async () => {
-            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-session-supervisor-'));
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-session-supervisor-'));
             tempDirs.push(tempDir);
 
             const supervisor = new SessionSupervisor({
@@ -550,7 +602,7 @@ describe('SessionSupervisor', () => {
         });
 
         it('maintains backward compatibility via the attachable field', async () => {
-            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-session-supervisor-'));
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-session-supervisor-'));
             tempDirs.push(tempDir);
 
             const supervisor = new SessionSupervisor({

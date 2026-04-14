@@ -40,7 +40,7 @@ function createService(options?: {
 
     const service = new ClientConfigSyncService({
         platform: options?.platform ?? 'win32',
-        cwd: options?.cwd ?? 'C:\\workspace\\borg',
+        cwd: options?.cwd ?? 'C:\\workspace\\hypercode',
         homedir: () => 'C:\\Users\\hyper',
         env: {
             APPDATA: options?.appData ?? 'C:\\Users\\hyper\\AppData\\Roaming',

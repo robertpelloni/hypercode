@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@borg/ui";
-import { Button } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
 import { Loader2, Plus, Key, Trash2, Copy, Check } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
 import { normalizeApiKeyList } from './api-keys-page-normalizers';
 
 export default function ApiKeysDashboard() {
-    const { data: apiKeys, isLoading, refetch } = trpc.apiKeys.list.useQuery();
+    const apiKeysQuery = trpc.apiKeys.list.useQuery();
+    const { data: apiKeys, isLoading, refetch } = apiKeysQuery;
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const normalizedApiKeys = normalizeApiKeyList(apiKeys);
+    const apiKeysUnavailable = apiKeysQuery.isError || (apiKeys != null && !Array.isArray(apiKeys));
 
     return (
         <div className="p-8 space-y-8">
@@ -19,7 +21,7 @@ export default function ApiKeysDashboard() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white">API Keys</h1>
                     <p className="text-zinc-500">
-                        Manage authentication keys for accessing Borg-managed MCP traffic
+                        Manage authentication keys for accessing HyperCode-managed MCP traffic
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -37,6 +39,12 @@ export default function ApiKeysDashboard() {
                 {isLoading ? (
                     <div className="col-span-3 flex justify-center p-12">
                         <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+                    </div>
+                ) : apiKeysUnavailable ? (
+                    <div className="col-span-3 text-center p-12 text-red-300 bg-red-950/20 rounded-lg border border-red-900/40">
+                        <Key className="h-12 w-12 mx-auto mb-4 opacity-60" />
+                        <p className="text-lg font-medium">API key inventory unavailable</p>
+                        <p className="text-sm mt-1">{apiKeysQuery.isError ? apiKeysQuery.error.message : 'Malformed API key payload.'}</p>
                     </div>
                 ) : normalizedApiKeys.length === 0 ? (
                     <div className="col-span-3 text-center p-12 text-zinc-500 bg-zinc-900/50 rounded-lg border border-zinc-800 border-dashed">
@@ -70,7 +78,7 @@ function ApiKeyCard({ apiKey, onUpdate }: { apiKey: any; onUpdate: () => void })
         // If the key IS available (e.g. for display purposes in this internal dashboard), we copy it.
         // Usually we only show it on creation. 
         // For now, let's assume we copy the ID or a placeholder if actual key isn't stored in plain text (it shouldn't be).
-        // Borg stores API key metadata for dashboard display; the raw secret should only be
+        // HyperCode stores API key metadata for dashboard display; the raw secret should only be
         // available at creation time. This view mostly copies the visible identifier/prefix.
         // Checked api-keys.repo.ts -> findPublicApiKeys.
         // If it returns full key, that's a security risk, but for MVP/Internal usage might be acceptable or it returns a masked version.

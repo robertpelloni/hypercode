@@ -16,7 +16,7 @@ export class PromptRegistry {
     private cache: Map<string, PromptTemplate> = new Map();
 
     constructor(storageDir?: string) {
-        this.storageDir = storageDir || path.join(process.cwd(), '.borg', 'prompts');
+        this.storageDir = storageDir || path.join(process.cwd(), '.hypercode', 'prompts');
     }
 
     async initialize() {
@@ -49,6 +49,10 @@ export class PromptRegistry {
         return this.cache.get(id);
     }
 
+    list(): PromptTemplate[] {
+        return Array.from(this.cache.values());
+    }
+
     async save(prompt: PromptTemplate) {
         prompt.updatedAt = new Date().toISOString();
         this.cache.set(prompt.id, prompt);
@@ -56,6 +60,13 @@ export class PromptRegistry {
             path.join(this.storageDir, `${prompt.id}.json`),
             JSON.stringify(prompt, null, 2)
         );
+    }
+
+    async delete(id: string) {
+        this.cache.delete(id);
+        try {
+            await fs.unlink(path.join(this.storageDir, `${id}.json`));
+        } catch { }
     }
 
     render(id: string, variables: Record<string, string>): string {

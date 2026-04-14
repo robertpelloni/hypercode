@@ -1,3 +1,4 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { t, publicProcedure, getMemoryManager, getAgentMemoryService } from '../lib/trpc-core.js';
 import path from 'path';
@@ -19,7 +20,28 @@ import {
     searchObservationsInputSchema, 
     getRecentUserPromptsInputSchema, 
     searchUserPromptsInputSchema 
-} from '@borg/types';
+} from '@hypercode/types';
+
+function requireAgentMemoryService(contextLabel: string) {
+    const service = getAgentMemoryService();
+    if (!service) {
+        throw new TRPCError({
+            code: 'SERVICE_UNAVAILABLE',
+            message: `${contextLabel} is unavailable: Agent memory service not initialized`,
+        });
+    }
+    return service;
+}
+
+function requireAgentMemoryCapability<T>(value: T | undefined, contextLabel: string): T {
+    if (value === undefined) {
+        throw new TRPCError({
+            code: 'SERVICE_UNAVAILABLE',
+            message: `${contextLabel} is unavailable: Agent memory service does not support this operation`,
+        });
+    }
+    return value;
+}
 
 export const memoryRouter = t.router({
     saveContext: publicProcedure.input(z.object({
@@ -78,8 +100,7 @@ export const memoryRouter = t.router({
         type: z.enum(['session', 'working', 'long_term']).optional(),
         limit: z.number().optional().default(10)
     })).query(async ({ input }) => {
-        const service = getAgentMemoryService();
-        if (!service) return [];
+        const service = requireAgentMemoryService('Agent memory search');
         return await service.search(input.query, {
             type: input.type,
             limit: input.limit
@@ -113,18 +134,18 @@ export const memoryRouter = t.router({
     }),
 
     getRecentObservations: publicProcedure.input(getRecentObservationsInputSchema).query(async ({ input }) => {
-        const service = getAgentMemoryService();
-        if (!service?.getRecentObservations) return [];
-        return service.getRecentObservations(input.limit, {
+        const service = requireAgentMemoryService('Recent observations');
+        const getRecentObservations = requireAgentMemoryCapability(service.getRecentObservations, 'Recent observations');
+        return getRecentObservations(input.limit, {
             namespace: input.namespace,
             type: input.type,
         });
     }),
 
     searchObservations: publicProcedure.input(searchObservationsInputSchema).query(async ({ input }) => {
-        const service = getAgentMemoryService();
-        if (!service?.searchObservations) return [];
-        return await service.searchObservations(input.query, {
+        const service = requireAgentMemoryService('Observation search');
+        const searchObservations = requireAgentMemoryCapability(service.searchObservations, 'Observation search');
+        return await searchObservations(input.query, {
             limit: input.limit,
             namespace: input.namespace,
             type: input.type,
@@ -132,38 +153,38 @@ export const memoryRouter = t.router({
     }),
 
     getRecentUserPrompts: publicProcedure.input(getRecentUserPromptsInputSchema).query(async ({ input }) => {
-        const service = getAgentMemoryService();
-        if (!service?.getRecentUserPrompts) return [];
-        return service.getRecentUserPrompts(input.limit, {
+        const service = requireAgentMemoryService('Recent user prompts');
+        const getRecentUserPrompts = requireAgentMemoryCapability(service.getRecentUserPrompts, 'Recent user prompts');
+        return getRecentUserPrompts(input.limit, {
             role: input.role,
         });
     }),
 
     searchUserPrompts: publicProcedure.input(searchUserPromptsInputSchema).query(async ({ input }) => {
-        const service = getAgentMemoryService();
-        if (!service?.searchUserPrompts) return [];
-        return await service.searchUserPrompts(input.query, {
+        const service = requireAgentMemoryService('User prompt search');
+        const searchUserPrompts = requireAgentMemoryCapability(service.searchUserPrompts, 'User prompt search');
+        return await searchUserPrompts(input.query, {
             limit: input.limit,
             role: input.role,
         });
     }),
 
     searchMemoryPivot: publicProcedure.input(searchMemoryPivotInputSchema).query(async ({ input }) => {
-        const service = getAgentMemoryService();
-        if (!service?.searchByPivot) return [];
-        return service.searchByPivot(input);
+        const service = requireAgentMemoryService('Memory pivot search');
+        const searchByPivot = requireAgentMemoryCapability(service.searchByPivot, 'Memory pivot search');
+        return searchByPivot(input);
     }),
 
     getMemoryTimelineWindow: publicProcedure.input(getMemoryTimelineWindowInputSchema).query(async ({ input }) => {
-        const service = getAgentMemoryService();
-        if (!service?.getTimelineWindow) return [];
-        return service.getTimelineWindow(input);
+        const service = requireAgentMemoryService('Memory timeline window');
+        const getTimelineWindow = requireAgentMemoryCapability(service.getTimelineWindow, 'Memory timeline window');
+        return getTimelineWindow(input);
     }),
 
     getCrossSessionMemoryLinks: publicProcedure.input(getCrossSessionMemoryLinksInputSchema).query(async ({ input }) => {
-        const service = getAgentMemoryService();
-        if (!service?.getCrossSessionLinks) return [];
-        return service.getCrossSessionLinks(input);
+        const service = requireAgentMemoryService('Cross-session memory links');
+        const getCrossSessionLinks = requireAgentMemoryCapability(service.getCrossSessionLinks, 'Cross-session memory links');
+        return getCrossSessionLinks(input);
     }),
 
     captureSessionSummary: publicProcedure.input(z.object({
@@ -193,9 +214,9 @@ export const memoryRouter = t.router({
     getRecentSessionSummaries: publicProcedure.input(z.object({
         limit: z.number().optional().default(10),
     }).optional().default({ limit: 10 })).query(async ({ input }) => {
-        const service = getAgentMemoryService();
-        if (!service?.getRecentSessionSummaries) return [];
-        return service.getRecentSessionSummaries(input.limit);
+        const service = requireAgentMemoryService('Recent session summaries');
+        const getRecentSessionSummaries = requireAgentMemoryCapability(service.getRecentSessionSummaries, 'Recent session summaries');
+        return getRecentSessionSummaries(input.limit);
     }),
 
     getSessionBootstrap: publicProcedure.input(z.object({
@@ -230,9 +251,9 @@ export const memoryRouter = t.router({
         query: z.string(),
         limit: z.number().optional().default(10),
     })).query(async ({ input }) => {
-        const service = getAgentMemoryService();
-        if (!service?.searchSessionSummaries) return [];
-        return await service.searchSessionSummaries(input.query, input.limit);
+        const service = requireAgentMemoryService('Session summary search');
+        const searchSessionSummaries = requireAgentMemoryCapability(service.searchSessionSummaries, 'Session summary search');
+        return await searchSessionSummaries(input.query, input.limit);
     }),
 
     // --- Export / Import (Phase 70: Memory Multi-Backend) ---

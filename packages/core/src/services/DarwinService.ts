@@ -1,5 +1,5 @@
 
-import { LLMService } from '@borg/ai';
+import { LLMService } from '@hypercode/ai';
 import type { MCPServer } from '../MCPServer.js';
 
 export interface Mutation {

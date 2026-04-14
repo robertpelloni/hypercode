@@ -18,10 +18,10 @@ import {
   RefreshCw,
   Trash2
 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@borg/ui";
-import { Badge } from "@borg/ui";
-import { Button } from "@borg/ui";
-import { Card, CardContent, CardHeader, CardTitle } from "@borg/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@hypercode/ui";
+import { Badge } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@hypercode/ui";
 import { trpc } from '@/utils/trpc';
 
 import { SessionGrid } from '@/components/council/SessionGrid';
@@ -30,6 +30,65 @@ import { CouncilMemberGrid } from '@/components/council/CouncilMemberGrid';
 import { QuotaConfigPanel } from '@/components/council/QuotaConfigPanel';
 import { SmartPilotPanel } from '@/components/council/SmartPilotPanel';
 import { VisualArchitecture } from '@/components/council/VisualArchitecture';
+
+function isRoundtableSession(value: unknown): value is {
+  id?: string;
+  status?: string;
+  startedAt?: string;
+  tags?: string[];
+} {
+  return typeof value === 'object'
+    && value !== null
+    && ((value as { tags?: unknown }).tags === undefined || (Array.isArray((value as { tags?: unknown }).tags) && (value as { tags: unknown[] }).tags.every((tag) => typeof tag === 'string')));
+}
+
+function isSmartPilotStatusPayload(value: unknown): value is {
+  config?: {
+    enabled?: boolean;
+    autoApproveThreshold?: number;
+    requireUnanimous?: boolean;
+    maxAutoApprovals?: number;
+  };
+  activePlans?: Array<{ sessionId?: string; plan?: Record<string, unknown> }>;
+} {
+  return typeof value === 'object'
+    && value !== null
+    && ((value as { activePlans?: unknown }).activePlans === undefined || Array.isArray((value as { activePlans?: unknown }).activePlans));
+}
+
+function isHistoryPayload(value: unknown): value is {
+  meta?: { totalRecords?: number };
+  records?: Array<{
+    id?: string;
+    timestamp?: number;
+    task?: { description?: string };
+    decision?: { approved?: boolean; consensus?: number; votes?: unknown[] };
+    metadata?: { participatingSupervisors?: string[]; dynamicSelection?: { taskType?: string } };
+  }>;
+} {
+  return typeof value === 'object'
+    && value !== null
+    && ((value as { records?: unknown }).records === undefined || Array.isArray((value as { records?: unknown }).records));
+}
+
+function isCouncilStatusPayload(value: unknown): value is {
+  enabled?: boolean;
+  supervisorCount?: number;
+  hierarchy?: Array<{ id: string; name: string; supervisorCount?: number; specialties: string[] }>;
+  config?: { consensusMode?: string };
+} {
+  return typeof value === 'object'
+    && value !== null
+    && ((value as { hierarchy?: unknown }).hierarchy === undefined || Array.isArray((value as { hierarchy?: unknown }).hierarchy));
+}
+
+function isSessionStatsPayload(value: unknown): value is { active?: number } {
+  return typeof value === 'object' && value !== null;
+}
+
+function isVisualPayload(value: unknown): value is { mermaid?: string } {
+  return typeof value === 'object' && value !== null && ((value as { mermaid?: unknown }).mermaid === undefined || typeof (value as { mermaid?: unknown }).mermaid === 'string');
+}
 
 export function RoundtableDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -62,6 +121,19 @@ export function RoundtableDashboard() {
   const visualDiagram = trpc.council.visual.systemDiagram.useQuery(undefined, {
     refetchInterval: 20000
   });
+  const councilStatusUnavailable = councilStatus.isError || (councilStatus.data !== undefined && !isCouncilStatusPayload(councilStatus.data));
+  const sessionsUnavailable = sessions.isError || (sessions.data !== undefined && (!Array.isArray(sessions.data) || !sessions.data.every(isRoundtableSession)));
+  const sessionStatsUnavailable = sessionStats.isError || (sessionStats.data !== undefined && !isSessionStatsPayload(sessionStats.data));
+  const historyUnavailable = history.isError || (history.data !== undefined && !isHistoryPayload(history.data));
+  const smartPilotUnavailable = smartPilotStatus.isError || (smartPilotStatus.data !== undefined && !isSmartPilotStatusPayload(smartPilotStatus.data));
+  const visualUnavailable = visualDiagram.isError || (visualDiagram.data !== undefined && !isVisualPayload(visualDiagram.data));
+  const councilStatusData = !councilStatusUnavailable && isCouncilStatusPayload(councilStatus.data) ? councilStatus.data : undefined;
+  const sessionsData = !sessionsUnavailable && Array.isArray(sessions.data) ? sessions.data : [];
+  const sessionStatsData = !sessionStatsUnavailable && isSessionStatsPayload(sessionStats.data) ? sessionStats.data : undefined;
+  const historyData = !historyUnavailable && isHistoryPayload(history.data) ? history.data : undefined;
+  const smartPilotData = !smartPilotUnavailable && isSmartPilotStatusPayload(smartPilotStatus.data) ? smartPilotStatus.data : undefined;
+  const visualData = !visualUnavailable && isVisualPayload(visualDiagram.data) ? visualDiagram.data : undefined;
+  const hierarchy = !councilStatusUnavailable && Array.isArray(councilStatusData?.hierarchy) ? councilStatusData.hierarchy.filter((item) => typeof item === 'object' && item !== null) : [];
 
   // Mutations
   const stopSession = trpc.council.sessions.stop.useMutation({
@@ -84,7 +156,7 @@ export function RoundtableDashboard() {
     onSuccess: () => sessions.refetch()
   });
 
-  const sessionItems = (sessions.data ?? []).map((session, index) => ({
+  const sessionItems = sessionsData.map((session, index) => ({
     id: session.id ?? `session-${index}`,
     status: session.status ?? 'stopped',
     cliType: undefined,
@@ -93,18 +165,18 @@ export function RoundtableDashboard() {
   }));
 
   const smartPilotConfig = {
-    enabled: smartPilotStatus.data?.config?.enabled ?? false,
-    autoApproveThreshold: smartPilotStatus.data?.config?.autoApproveThreshold ?? 0.7,
-    requireUnanimous: smartPilotStatus.data?.config?.requireUnanimous ?? false,
-    maxAutoApprovals: smartPilotStatus.data?.config?.maxAutoApprovals ?? 5,
+    enabled: !smartPilotUnavailable ? (smartPilotData?.config?.enabled ?? false) : false,
+    autoApproveThreshold: !smartPilotUnavailable ? (smartPilotData?.config?.autoApproveThreshold ?? 0.7) : 0.7,
+    requireUnanimous: !smartPilotUnavailable ? (smartPilotData?.config?.requireUnanimous ?? false) : false,
+    maxAutoApprovals: !smartPilotUnavailable ? (smartPilotData?.config?.maxAutoApprovals ?? 5) : 5,
   };
 
-  const activePlanItems = (smartPilotStatus.data?.activePlans ?? []).map((plan, index) => ({
+  const activePlanItems = (!smartPilotUnavailable ? (smartPilotData?.activePlans ?? []) : []).map((plan, index) => ({
     sessionId: plan.sessionId ?? `plan-${index}`,
     plan: plan.plan ?? {},
   }));
 
-  const historyRecords = (history.data?.records ?? []).map((record, index) => ({
+  const historyRecords = (!historyUnavailable ? (historyData?.records ?? []) : []).map((record, index) => ({
     id: record.id ?? `record-${index}`,
     timestamp: record.timestamp ?? Date.now(),
     task: {
@@ -131,10 +203,10 @@ export function RoundtableDashboard() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                Borg Roundtable
+                HyperCode Roundtable
               </h1>
               <Badge variant="outline" className="border-green-500/30 text-green-400 bg-green-500/10 animate-pulse">
-                {councilStatus.data?.enabled ? 'Online' : 'Standby'}
+                {councilStatusUnavailable ? 'Unavailable' : councilStatusData?.enabled ? 'Online' : 'Standby'}
               </Badge>
             </div>
             <p className="text-muted-foreground text-sm mt-1 flex items-center gap-2">
@@ -145,7 +217,7 @@ export function RoundtableDashboard() {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex -space-x-2 mr-4 hidden lg:flex">
-            {councilStatus.data?.hierarchy.map((c: any) => (
+            {hierarchy.map((c: any) => (
               <div 
                 key={c.id} 
                 className="h-8 w-8 rounded-full border-2 border-background bg-zinc-800 flex items-center justify-center text-[10px] font-bold"
@@ -166,13 +238,24 @@ export function RoundtableDashboard() {
         </div>
       </header>
 
+      {councilStatusUnavailable || sessionsUnavailable || sessionStatsUnavailable || historyUnavailable || smartPilotUnavailable || visualUnavailable ? (
+        <div className="rounded-lg border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-300 space-y-1">
+          {councilStatusUnavailable ? <div>{councilStatus.error?.message ?? 'Council status is unavailable.'}</div> : null}
+          {sessionsUnavailable ? <div>{sessions.error?.message ?? 'Council sessions are unavailable.'}</div> : null}
+          {sessionStatsUnavailable ? <div>{sessionStats.error?.message ?? 'Council session stats are unavailable.'}</div> : null}
+          {historyUnavailable ? <div>{history.error?.message ?? 'Council history is unavailable.'}</div> : null}
+          {smartPilotUnavailable ? <div>{smartPilotStatus.error?.message ?? 'Smart Pilot status is unavailable.'}</div> : null}
+          {visualUnavailable ? <div>{visualDiagram.error?.message ?? 'Council architecture diagram is unavailable.'}</div> : null}
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-card/20 border-border/40 backdrop-blur-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Active Units</p>
-                <h3 className="text-3xl font-black mt-1">{sessionStats.data?.active ?? 0}</h3>
+                <h3 className="text-3xl font-black mt-1">{sessionStatsUnavailable ? '—' : sessionStatsData?.active ?? 0}</h3>
               </div>
               <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
                 <Terminal className="h-6 w-6 text-blue-400" />
@@ -185,7 +268,7 @@ export function RoundtableDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Supervisor Pool</p>
-                <h3 className="text-3xl font-black mt-1">{councilStatus.data?.supervisorCount ?? 0}</h3>
+                <h3 className="text-3xl font-black mt-1">{councilStatusUnavailable ? '—' : councilStatusData?.supervisorCount ?? 0}</h3>
               </div>
               <div className="h-12 w-12 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
                 <Users className="h-6 w-6 text-purple-400" />
@@ -198,7 +281,7 @@ export function RoundtableDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Historical Truth</p>
-                <h3 className="text-3xl font-black mt-1">{history.data?.meta.totalRecords ?? 0}</h3>
+                <h3 className="text-3xl font-black mt-1">{historyUnavailable ? '—' : historyData?.meta?.totalRecords ?? 0}</h3>
               </div>
               <div className="h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center border border-green-500/20">
                 <Activity className="h-6 w-6 text-green-400" />
@@ -212,7 +295,7 @@ export function RoundtableDashboard() {
               <div>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Consensus Engine</p>
                 <h3 className="text-lg font-black mt-1 truncate capitalize">
-                  {councilStatus.data?.config.consensusMode?.replace('-', ' ') ?? 'Weighted'}
+                  {councilStatusUnavailable ? 'Unavailable' : councilStatusData?.config?.consensusMode?.replace('-', ' ') ?? 'Weighted'}
                 </h3>
               </div>
               <div className="h-12 w-12 rounded-xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
@@ -278,11 +361,11 @@ export function RoundtableDashboard() {
                 <div className="h-[200px] bg-black/40 border border-border/40 rounded-xl font-mono text-[10px] p-4 overflow-y-auto backdrop-blur-md">
                   <div className="text-blue-400/80 mb-1 flex gap-2">
                     <span className="opacity-50">[{new Date().toLocaleTimeString()}]</span>
-                    <span>[INFO] Borg Roundtable initialized successfully</span>
+                    <span>[INFO] HyperCode Roundtable initialized successfully</span>
                   </div>
                   <div className="text-purple-400/80 mb-1 flex gap-2">
                     <span className="opacity-50">[{new Date().toLocaleTimeString()}]</span>
-                    <span>[COUNCIL] Verified {councilStatus.data?.supervisorCount} cognitive units across 3 specializations</span>
+                    <span>[COUNCIL] Verified {councilStatusUnavailable ? '—' : councilStatusData?.supervisorCount} cognitive units across 3 specializations</span>
                   </div>
                   <div className="text-green-400/80 mb-1 flex gap-2">
                     <span className="opacity-50">[{new Date().toLocaleTimeString()}]</span>
@@ -308,7 +391,11 @@ export function RoundtableDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4 space-y-3">
-                  {councilStatus.data?.hierarchy.map((c: any) => (
+                  {councilStatusUnavailable ? (
+                    <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-3 text-sm text-red-300">
+                      {councilStatus.error?.message ?? 'Specialized hierarchies are unavailable.'}
+                    </div>
+                  ) : hierarchy.map((c: any) => (
                     <div key={c.id} className="group relative overflow-hidden flex items-center justify-between p-3 rounded-lg bg-accent/20 border border-border/30 hover:border-purple-500/30 transition-all">
                       <div className="flex flex-col gap-0.5">
                         <span className="text-xs font-bold">{c.name}</span>
@@ -335,7 +422,11 @@ export function RoundtableDashboard() {
               <RefreshCw className="h-3 w-3" /> Refresh Audit
             </Button>
           </div>
-          <DebateHistoryTable records={historyRecords} />
+          {historyUnavailable ? (
+            <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-4 text-sm text-red-300">
+              {history.error?.message ?? 'Council history is unavailable.'}
+            </div>
+          ) : <DebateHistoryTable records={historyRecords} />}
         </TabsContent>
 
         <TabsContent value="supervisors" className="outline-none">
@@ -347,7 +438,7 @@ export function RoundtableDashboard() {
         </TabsContent>
 
         <TabsContent value="visual" className="h-[700px] outline-none">
-          <VisualArchitecture mermaidCode={visualDiagram.data?.mermaid ?? 'graph TD\n  Start'} />
+          <VisualArchitecture mermaidCode={visualUnavailable ? 'graph TD\n  Unavailable["Architecture unavailable"]' : visualData?.mermaid ?? 'graph TD\n  Start'} />
         </TabsContent>
       </Tabs>
     </div>

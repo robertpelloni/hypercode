@@ -22,7 +22,7 @@ export default function OpenWebUIDashboardPage() {
                 <div className="flex gap-2">
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded text-xs font-medium">
                         <Shield className="h-3.5 w-3.5" />
-                        Native Borg Integration Active
+                        Native HyperCode Integration Active
                     </div>
                     <a
                         href={webuiUrl}

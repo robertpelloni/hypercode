@@ -1,19 +1,23 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@borg/ui";
-import { Button } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
 import { Loader2, Plus, Box, Trash2, Layers, Wrench, Check } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
 import { normalizeSelectableTools, normalizeToolSets } from './tool-sets-page-normalizers';
 
 export default function ToolSetsDashboard() {
-    const { data: toolSets, isLoading, refetch } = trpc.toolSets.list.useQuery();
-    const { data: tools } = trpc.tools.list.useQuery(); // For selection in creation
+    const toolSetsQuery = trpc.toolSets.list.useQuery();
+    const toolsQuery = trpc.tools.list.useQuery(); // For selection in creation
+    const { data: toolSets, isLoading, refetch } = toolSetsQuery;
+    const { data: tools } = toolsQuery;
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const normalizedToolSets = normalizeToolSets(toolSets);
     const normalizedSelectableTools = normalizeSelectableTools(tools);
+    const toolSetsUnavailable = toolSetsQuery.isError || (toolSets != null && !Array.isArray(toolSets));
+    const toolsUnavailable = toolsQuery.isError || (tools != null && !Array.isArray(tools));
 
     return (
         <div className="p-8 space-y-8">
@@ -34,6 +38,7 @@ export default function ToolSetsDashboard() {
             {isCreateOpen && (
                 <CreateToolSetForm
                     tools={normalizedSelectableTools}
+                    toolsUnavailable={toolsUnavailable}
                     onSuccess={() => { setIsCreateOpen(false); refetch(); }}
                 />
             )}
@@ -42,6 +47,12 @@ export default function ToolSetsDashboard() {
                 {isLoading ? (
                     <div className="col-span-3 flex justify-center p-12">
                         <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+                    </div>
+                ) : toolSetsUnavailable ? (
+                    <div className="col-span-3 text-center p-12 text-red-300 bg-red-950/20 rounded-lg border border-red-900/40">
+                        <Layers className="h-12 w-12 mx-auto mb-4 opacity-60" />
+                        <p className="text-lg font-medium">Tool set inventory unavailable</p>
+                        <p className="text-sm mt-1">{toolSetsQuery.isError ? toolSetsQuery.error.message : 'Malformed tool set payload.'}</p>
                     </div>
                 ) : normalizedToolSets.length === 0 ? (
                     <div className="col-span-3 text-center p-12 text-zinc-500 bg-zinc-900/50 rounded-lg border border-zinc-800 border-dashed">
@@ -106,7 +117,7 @@ function ToolSetCard({ toolSet, onUpdate }: { toolSet: any; onUpdate: () => void
     );
 }
 
-function CreateToolSetForm({ tools, onSuccess }: { tools: any[]; onSuccess: () => void }) {
+function CreateToolSetForm({ tools, toolsUnavailable, onSuccess }: { tools: any[]; toolsUnavailable: boolean; onSuccess: () => void }) {
     const [formData, setFormData] = useState<{
         name: string;
         description: string;
@@ -194,7 +205,9 @@ function CreateToolSetForm({ tools, onSuccess }: { tools: any[]; onSuccess: () =
                                     {formData.selectedTools.includes(tool.uuid) && <Check className="h-3 w-3 text-indigo-400" />}
                                 </div>
                             ))}
-                            {tools.length === 0 && (
+                            {toolsUnavailable ? (
+                                <div className="col-span-3 text-center text-red-300 py-4">Tool inventory unavailable.</div>
+                            ) : tools.length === 0 && (
                                 <div className="col-span-3 text-center text-zinc-500 py-4">No tools available to select.</div>
                             )}
                         </div>

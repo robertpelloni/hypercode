@@ -1,8 +1,8 @@
 {
-  "name": "borg Browser Extension",
+  "name": "hypercode Browser Extension",
   "version": "0.1.0",
   "manifest_version": 3,
-  "description": "Connects Chrome to borg Hub",
+  "description": "Connects Chrome to hypercode Hub",
   "permissions": ["activeTab", "scripting"],
   "host_permissions": ["http://localhost:3000/*"],
   "action": {

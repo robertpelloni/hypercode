@@ -235,6 +235,9 @@ export class ContextHarvester {
     /**
      * Compact old chunks — merge adjacent chunks from same source.
      */
+    getChunks(): ContextChunk[] {
+        return Array.from(this.chunks.values()).sort((a, b) => b.createdAt - a.createdAt);
+    }
     compact(): number {
         const now = Date.now();
         let compacted = 0;

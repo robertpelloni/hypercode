@@ -10,7 +10,7 @@ import { loadBorgMcpConfig, stripJsonComments, writeBorgMcpConfig } from '../src
 const tempDirs: string[] = [];
 
 async function makeTempDir(): Promise<string> {
-    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'borg-mcp-jsonc-'));
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'hypercode-mcp-jsonc-'));
     tempDirs.push(dir);
     return dir;
 }

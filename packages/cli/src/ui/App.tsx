@@ -11,7 +11,7 @@ import { readCanonicalVersion } from '../version.js';
 
 // We'll import these dynamically in useEffect to ensure they run in the same process context if needed,
 // but for the TUI, we are the host.
-import { startOrchestrator } from '@borg/core/orchestrator';
+import { startOrchestrator } from '@hypercode/core/orchestrator';
 
 const moduleDir = dirname(fileURLToPath(import.meta.url));
 

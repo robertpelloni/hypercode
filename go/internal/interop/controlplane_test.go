@@ -1,4 +1,4 @@
-﻿package interop
+package interop
 
 import (
 	"os"

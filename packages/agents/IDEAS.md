@@ -1,6 +1,6 @@
-# Ideas for Improvement: @borg/agents
+# Ideas for Improvement: @hypercode/agents
 
-Creative architectural shifts to evolve the "Brain" of the Borg swarm.
+Creative architectural shifts to evolve the "Brain" of the HyperCode swarm.
 
 ## 1. Intelligence & Self-Optimization
 - **Autonomous Local Fine-Tuning:** A background process that captures high-quality reasoning traces and automatically fine-tunes local small models (Gemma 3, Llama 4) to eventually replace expensive cloud API calls.

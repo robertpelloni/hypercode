@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { KnowledgeService } from '../services/KnowledgeService.js';
 import { MemoryManager } from '../services/MemoryManager.js';
-import { GraphMemory } from '@borg/memory';
+import { GraphMemory } from '@hypercode/memory';
 
 // Mock MemoryManager
 class MockMemoryManager {

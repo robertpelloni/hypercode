@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Badge, resolveCoreWsUrl } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent, Badge, resolveCoreWsUrl } from "@hypercode/ui";
 import { Zap, Activity, Shield, Brain, MessageSquare, AlertTriangle, FileText } from "lucide-react";
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -14,12 +14,25 @@ interface PulseEvent {
 
 export function NeuralPulse() {
     const [events, setEvents] = useState<PulseEvent[]>([]);
+    const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // Connect to Borg WebSocket for live NEURAL_PULSE feed
+        // Connect to HyperCode WebSocket for live NEURAL_PULSE feed
         const ws = new WebSocket(resolveCoreWsUrl(process.env.NEXT_PUBLIC_CORE_WS_URL));
-        
+
+        ws.onopen = () => {
+            setConnectionState('connected');
+        };
+
+        ws.onclose = () => {
+            setConnectionState('disconnected');
+        };
+
+        ws.onerror = () => {
+            setConnectionState('disconnected');
+        };
+
         ws.onmessage = (msg) => {
             try {
                 const data = JSON.parse(msg.data);
@@ -64,7 +77,11 @@ export function NeuralPulse() {
                     <AnimatePresence initial={false}>
                         {events.length === 0 ? (
                             <div className="p-12 text-center text-zinc-600 italic text-xs">
-                                Waiting for cognitive activity...
+                                {connectionState === 'connected'
+                                    ? 'Waiting for cognitive activity...'
+                                    : connectionState === 'connecting'
+                                        ? 'Connecting to neural pulse feed...'
+                                        : 'Neural pulse feed unavailable.'}
                             </div>
                         ) : (
                             events.map((event, i) => (

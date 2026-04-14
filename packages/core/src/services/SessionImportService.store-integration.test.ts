@@ -7,6 +7,15 @@ import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let sqliteForTest: Database.Database;
+const sqliteAvailable = (() => {
+    try {
+        const db = new Database(':memory:');
+        db.close();
+        return true;
+    } catch {
+        return false;
+    }
+})();
 
 vi.mock('../db/index.js', () => ({
     get sqliteInstance() {
@@ -70,17 +79,23 @@ async function createTempRoot(): Promise<string> {
 
 describe('SessionImportService with ImportedSessionStore', () => {
     beforeEach(() => {
+        if (!sqliteAvailable) {
+            return;
+        }
         sqliteForTest = new Database(':memory:');
         createSchema(sqliteForTest);
     });
 
     afterEach(async () => {
-        sqliteForTest.close();
+        sqliteForTest?.close();
         await Promise.all(tempRoots.splice(0).map((root) => fs.rm(root, { recursive: true, force: true })));
         vi.restoreAllMocks();
     });
 
     it('persists discovered sessions into the real imported-session store and writes instruction docs', async () => {
+        if (!sqliteAvailable) {
+            return;
+        }
         const root = await createTempRoot();
         const fakeHome = await createTempRoot();
         vi.spyOn(os, 'homedir').mockReturnValue(fakeHome);

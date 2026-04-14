@@ -7,32 +7,29 @@ import { ProviderRegistry } from './ProviderRegistry.js';
 // Build a minimal registry with two executable providers so tests do not depend
 // on environment variables.
 function makeRegistry(providers: Array<{ id: string; modId: string }>): ProviderRegistry {
-    const registry = new ProviderRegistry();
-    for (const { id, modId } of providers) {
-        (registry as unknown as { providers: Map<unknown, unknown> })['providers'].set(id, {
-            id,
-            name: id,
-            authMethod: 'api_key',
-            envKeys: [],
-            executable: true,
-            defaultModel: modId,
-            models: [
-                {
-                    id: modId,
-                    provider: id,
-                    name: modId,
-                    inputPrice: 0.001,
-                    outputPrice: 0.002,
-                    contextWindow: 128_000,
-                    tier: 'standard',
-                    capabilities: ['coding'],
-                    executable: true,
-                    qualityScore: 7,
-                },
-            ],
-        });
-    }
-    return registry;
+    const catalog = providers.map(({ id, modId }) => ({
+        id,
+        name: id,
+        authMethod: 'none' as const,
+        envKeys: [],
+        executable: true,
+        defaultModel: modId,
+        models: [
+            {
+                id: modId,
+                provider: id,
+                name: modId,
+                inputPrice: 0.001,
+                outputPrice: 0.002,
+                contextWindow: 128_000,
+                tier: 'standard',
+                capabilities: ['coding'],
+                executable: true,
+                qualityScore: 7,
+            },
+        ],
+    }));
+    return new ProviderRegistry(catalog as any);
 }
 
 // Build a bare-minimum selector where both providers appear authenticated by
@@ -140,6 +137,130 @@ describe('CoreModelSelector.getDepletedModels', () => {
         // Only the per-model entry should appear; the provider-quota entry is suppressed.
         expect(googleEntries).toHaveLength(1);
         expect(googleEntries[0]!.modelId).toBe('gemini-2.0-flash');
+    });
+});
+
+describe('CoreModelSelector.providerFallback', () => {
+    it('falls back to the next available provider when the requested provider is depleted', async () => {
+        const mockAnthropic = {
+            id: 'anthropic',
+            name: 'Anthropic',
+            authMethod: 'none' as const,
+            envKeys: [],
+            executable: true,
+            defaultModel: 'claude-3-7-sonnet',
+            models: [
+                {
+                    id: 'claude-3-7-sonnet',
+                    provider: 'anthropic',
+                    name: 'Claude 3.7 Sonnet',
+                    inputPrice: 0.003,
+                    outputPrice: 0.015,
+                    contextWindow: 200_000,
+                    tier: 'premium',
+                    capabilities: ['coding'],
+                    executable: true,
+                    qualityScore: 9,
+                },
+            ],
+        };
+        const mockOpenai = {
+            id: 'openai',
+            name: 'OpenAI',
+            authMethod: 'none' as const,
+            envKeys: [],
+            executable: true,
+            defaultModel: 'gpt-4o',
+            models: [
+                {
+                    id: 'gpt-4o',
+                    provider: 'openai',
+                    name: 'GPT-4o',
+                    inputPrice: 0.0025,
+                    outputPrice: 0.010,
+                    contextWindow: 128_000,
+                    tier: 'premium',
+                    capabilities: ['coding'],
+                    executable: true,
+                    qualityScore: 8,
+                },
+            ],
+        };
+        
+        const registry = new ProviderRegistry([mockAnthropic, mockOpenai] as any);
+        const quotaService = new NormalizedQuotaService(registry);
+        const selector = new CoreModelSelector({ registry, quotaService });
+
+        // Manually exhaust the preferred provider
+        selector.reportFailure('anthropic', 'claude-3-7-sonnet', {
+            status: 429,
+            message: 'Rate limit exceeded',
+            headers: { 'retry-after': '3600' }
+        });
+
+        // Request a model with anthropic as preferred provider
+        const selection = await selector.selectModel({
+            provider: 'anthropic',
+            taskType: 'coding',
+            systemPrompt: 'You are an AI.',
+        });
+
+        // It should fallback to openai
+        expect(selection.provider).toBe('openai');
+        expect(selection.modelId).toBe('gpt-4o');
+        expect(selection.reason).toBeDefined();
+        
+        // Fallback history should have captured the event
+        const history = selector.getFallbackHistory();
+        expect(history).toHaveLength(1);
+        expect(history[0].requestedProvider).toBe('anthropic');
+        expect(history[0].selectedProvider).toBe('openai');
+        expect(history[0].causeCode).toBe('fallback_provider');
+    });
+
+    it('records an emergency fallback when no providers are available', async () => {
+        const mockOpenai = {
+            id: 'openai',
+            name: 'OpenAI',
+            authMethod: 'none' as const,
+            envKeys: [],
+            executable: true,
+            defaultModel: 'gpt-4o',
+            models: [
+                {
+                    id: 'gpt-4o',
+                    provider: 'openai',
+                    name: 'GPT-4o',
+                    inputPrice: 0.0025,
+                    outputPrice: 0.010,
+                    contextWindow: 128_000,
+                    tier: 'premium',
+                    capabilities: ['coding'],
+                    executable: true,
+                    qualityScore: 8,
+                },
+            ],
+        };
+        
+        const registry = new ProviderRegistry([mockOpenai] as any);
+        const quotaService = new NormalizedQuotaService(registry);
+        const selector = new CoreModelSelector({ registry, quotaService });
+
+        // Exhaust all providers
+        selector.reportFailure('openai', 'gpt-4o', { status: 429, message: 'Too many requests' });
+
+        const selection = await selector.selectModel({
+            provider: 'openai',
+            taskType: 'coding',
+            systemPrompt: 'You are an AI.',
+        });
+
+        // It should return the emergency fallback provider
+        expect(selection.provider).toBe('lmstudio');
+        
+        const history = selector.getFallbackHistory();
+        expect(history).toHaveLength(1);
+        expect(history[0].causeCode).toBe('emergency_fallback');
     });
 });
 

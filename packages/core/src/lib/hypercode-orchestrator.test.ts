@@ -4,9 +4,9 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { resolveBorgConfigDir, resolveBorgLockPath, resolveLockedBorgBase, resolveOrchestratorBase } from './borg-orchestrator.js';
+import { resolveBorgConfigDir, resolveBorgLockPath, resolveLockedBorgBase, resolveOrchestratorBase } from './hypercode-orchestrator.js';
 
-describe('borg orchestrator helpers', () => {
+describe('hypercode orchestrator helpers', () => {
     it('uses explicit env bases before lock-derived values', () => {
         expect(resolveOrchestratorBase({
             BORG_ORCHESTRATOR_URL: 'http://127.0.0.1:4100/',
@@ -19,7 +19,7 @@ describe('borg orchestrator helpers', () => {
     });
 
     it('resolves the live lock-file base before public env fallbacks', () => {
-        const configDir = mkdtempSync(path.join(os.tmpdir(), 'borg-lock-'));
+        const configDir = mkdtempSync(path.join(os.tmpdir(), 'hypercode-lock-'));
         writeFileSync(path.join(configDir, 'lock'), JSON.stringify({ host: '0.0.0.0', port: 4312 }));
 
         expect(resolveBorgConfigDir({ BORG_CONFIG_DIR: configDir })).toBe(configDir);
@@ -32,7 +32,7 @@ describe('borg orchestrator helpers', () => {
     });
 
     it('falls back to configured public envs when no live lock exists', () => {
-        const configDir = mkdtempSync(path.join(os.tmpdir(), 'borg-lock-empty-'));
+        const configDir = mkdtempSync(path.join(os.tmpdir(), 'hypercode-lock-empty-'));
         mkdirSync(configDir, { recursive: true });
 
         expect(resolveOrchestratorBase({

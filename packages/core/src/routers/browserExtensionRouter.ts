@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { t, publicProcedure, adminProcedure } from '../lib/trpc-core.js';
 import { browserDataRepository } from '../db/repositories/browser-data.repo.js';
+import { rethrowSqliteUnavailableAsTrpc } from './sqliteTrpc.js';
 
 /**
  * Memory Browser Extension Router
@@ -131,38 +132,38 @@ function extractMetaFromHtml(html: string): Record<string, string> {
 export const browserExtensionRouter = t.router({
     /**
      * Save a web page as a memory. Called by the browser extension when the
-     * user clicks "Save to Borg" or highlights text.
+     * user clicks "Save to HyperCode" or highlights text.
      */
     saveMemory: adminProcedure
         .input(SaveMemoryInputSchema)
         .mutation(async ({ input }) => {
-            const normalized = normalizeUrl(input.url);
-            
-            // Check for simple dedup based on normalized URL in existing DB
-            // (A more advanced dedup might use insert onConflictDoUpdate)
-            const existingAll = await browserDataRepository.getAllMemories();
-            const existing = existingAll.find(m => m.normalizedUrl === normalized);
-            
-            if (existing) {
-                // Return existing immediately for now to simulate dedup
-                return { id: existing.id, deduplicated: true };
+            try {
+                const normalized = normalizeUrl(input.url);
+                const existingAll = await browserDataRepository.getAllMemories();
+                const existing = existingAll.find(m => m.normalizedUrl === normalized);
+                
+                if (existing) {
+                    return { id: existing.id, deduplicated: true };
+                }
+
+                const memory = await browserDataRepository.saveMemory({
+                    id: `mem_${Date.now()}_${simpleHash(input.url)}`,
+                    url: input.url,
+                    normalizedUrl: normalized,
+                    title: input.title,
+                    content: input.content.substring(0, 50_000),
+                    selectedText: input.selectedText || null,
+                    tags: input.tags ?? [],
+                    favicon: input.favicon || null,
+                    savedAt: new Date(input.timestamp ?? Date.now()),
+                    source: input.source,
+                    contentHash: simpleHash(input.content),
+                });
+
+                return { id: memory.id, deduplicated: false };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Browser memory store is unavailable', error);
             }
-
-            const memory = await browserDataRepository.saveMemory({
-                id: `mem_${Date.now()}_${simpleHash(input.url)}`,
-                url: input.url,
-                normalizedUrl: normalized,
-                title: input.title,
-                content: input.content.substring(0, 50_000), // Cap at 50K chars
-                selectedText: input.selectedText || null,
-                tags: input.tags ?? [],
-                favicon: input.favicon || null,
-                savedAt: new Date(input.timestamp ?? Date.now()),
-                source: input.source,
-                contentHash: simpleHash(input.content),
-            });
-
-            return { id: memory.id, deduplicated: false };
         }),
 
     /**
@@ -200,29 +201,32 @@ export const browserExtensionRouter = t.router({
             offset: z.number().min(0).default(0),
         }))
         .query(async ({ input }) => {
-            const allMemories = await browserDataRepository.getAllMemories();
-            let filtered = [...allMemories];
+            try {
+                const allMemories = await browserDataRepository.getAllMemories();
+                let filtered = [...allMemories];
 
-            if (input.search) {
-                const q = input.search.toLowerCase();
-                filtered = filtered.filter(m =>
-                    m.title.toLowerCase().includes(q) ||
-                    m.url.toLowerCase().includes(q) ||
-                    m.content.toLowerCase().includes(q)
-                );
+                if (input.search) {
+                    const q = input.search.toLowerCase();
+                    filtered = filtered.filter(m =>
+                        m.title.toLowerCase().includes(q) ||
+                        m.url.toLowerCase().includes(q) ||
+                        m.content.toLowerCase().includes(q)
+                    );
+                }
+
+                if (input.tag) {
+                    filtered = filtered.filter(m => m.tags.includes(input.tag!));
+                }
+
+                filtered.sort((a, b) => b.savedAt.getTime() - a.savedAt.getTime());
+
+                return {
+                    items: filtered.slice(input.offset, input.offset + input.limit),
+                    total: filtered.length,
+                };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Browser memory store is unavailable', error);
             }
-
-            if (input.tag) {
-                filtered = filtered.filter(m => m.tags.includes(input.tag!));
-            }
-
-            // Already sorted from DB but ensure consistency
-            filtered.sort((a, b) => b.savedAt.getTime() - a.savedAt.getTime());
-
-            return {
-                items: filtered.slice(input.offset, input.offset + input.limit),
-                total: filtered.length,
-            };
         }),
 
     /**
@@ -231,29 +235,37 @@ export const browserExtensionRouter = t.router({
     deleteMemory: adminProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ input }) => {
-            const deleted = await browserDataRepository.deleteMemory(input.id);
-            return { deleted };
+            try {
+                const deleted = await browserDataRepository.deleteMemory(input.id);
+                return { deleted };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Browser memory store is unavailable', error);
+            }
         }),
 
     /**
      * Get stats about saved web memories.
      */
     stats: publicProcedure.query(async () => {
-        const allMemories = await browserDataRepository.getAllMemories();
-        const tagCounts: Record<string, number> = {};
-        for (const memory of allMemories) {
-            for (const tag of memory.tags) {
-                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        try {
+            const allMemories = await browserDataRepository.getAllMemories();
+            const tagCounts: Record<string, number> = {};
+            for (const memory of allMemories) {
+                for (const tag of memory.tags) {
+                    tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                }
             }
-        }
 
-        return {
-            totalMemories: allMemories.length,
-            uniqueUrls: new Set(allMemories.map(m => m.normalizedUrl)).size,
-            topTags: Object.entries(tagCounts)
-                .sort(([, a], [, b]) => b - a)
-                .slice(0, 20)
-                .map(([tag, count]) => ({ tag, count })),
-        };
+            return {
+                totalMemories: allMemories.length,
+                uniqueUrls: new Set(allMemories.map(m => m.normalizedUrl)).size,
+                topTags: Object.entries(tagCounts)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 20)
+                    .map(([tag, count]) => ({ tag, count })),
+            };
+        } catch (error) {
+            rethrowSqliteUnavailableAsTrpc('Browser memory store is unavailable', error);
+        }
     }),
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent, Button, createReconnectPolicy, getReconnectDelayMs, resolveCoreWsUrl, shouldRetryReconnect } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent, Button, createReconnectPolicy, getReconnectDelayMs, resolveCoreWsUrl, shouldRetryReconnect } from "@hypercode/ui";
 import { Loader2, Globe, Trash2, XCircle, Activity, Search, ExternalLink, Zap, Bug, Network, Camera, FileText, Brain, Database, AlertTriangle } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -35,6 +35,60 @@ type BrowserKnowledgeActivityEvent = {
     url?: string;
     success?: boolean;
 };
+
+type BrowserStatusPayload = {
+    active: boolean;
+    pageCount: number;
+    pageIds: string[];
+};
+
+type QueueSnapshotPayload = {
+    updatedAt?: string | null;
+    totals: {
+        processed: number;
+        pending: number;
+        failed: number;
+    };
+    queue: {
+        pending: QueueEntry[];
+        failed: QueueEntry[];
+        processed: QueueEntry[];
+    };
+};
+
+function isQueueEntry(value: unknown): value is QueueEntry {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { url?: unknown }).url === 'string'
+        && typeof (value as { name?: unknown }).name === 'string';
+}
+
+function isBrowserStatusPayload(value: unknown): value is BrowserStatusPayload {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { active?: unknown }).active === 'boolean'
+        && typeof (value as { pageCount?: unknown }).pageCount === 'number'
+        && Array.isArray((value as { pageIds?: unknown }).pageIds)
+        && ((value as { pageIds: unknown[] }).pageIds.every((item) => typeof item === 'string'));
+}
+
+function isQueueSnapshotPayload(value: unknown): value is QueueSnapshotPayload {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { totals?: unknown }).totals === 'object'
+        && (value as { totals?: unknown }).totals !== null
+        && typeof ((value as { totals: { processed?: unknown } }).totals.processed) === 'number'
+        && typeof ((value as { totals: { pending?: unknown } }).totals.pending) === 'number'
+        && typeof ((value as { totals: { failed?: unknown } }).totals.failed) === 'number'
+        && typeof (value as { queue?: unknown }).queue === 'object'
+        && (value as { queue?: unknown }).queue !== null
+        && Array.isArray(((value as { queue: { pending?: unknown } }).queue.pending))
+        && Array.isArray(((value as { queue: { failed?: unknown } }).queue.failed))
+        && Array.isArray(((value as { queue: { processed?: unknown } }).queue.processed))
+        && ((value as { queue: { pending: unknown[]; failed: unknown[]; processed: unknown[] } }).queue.pending.every(isQueueEntry))
+        && ((value as { queue: { pending: unknown[]; failed: unknown[]; processed: unknown[] } }).queue.failed.every(isQueueEntry))
+        && ((value as { queue: { pending: unknown[]; failed: unknown[]; processed: unknown[] } }).queue.processed.every(isQueueEntry));
+}
 
 function renderUnknownValue(value: unknown, fallback = '—'): string {
     if (value === null || value === undefined) {
@@ -104,7 +158,7 @@ export default function BrowserDashboard() {
     const [proxyBody, setProxyBody] = useState('');
     const [debugMethod, setDebugMethod] = useState('Runtime.evaluate');
     const [debugParams, setDebugParams] = useState('{\n  "expression": "document.title",\n  "returnByValue": true\n}');
-    const { data: status, isLoading, refetch } = trpc.browser.status.useQuery(undefined, { refetchInterval: 3000 });
+    const { data: status, isLoading, error: statusError, refetch } = trpc.browser.status.useQuery(undefined, { refetchInterval: 3000 });
     const queueQuery = trpc.research.ingestionQueue.useQuery(undefined, { refetchInterval: 10000 });
     const historySearch = trpc.browser.searchHistory.useQuery(
         historyRequest ?? { query: '__idle__', maxResults: 10 },
@@ -195,7 +249,7 @@ export default function BrowserDashboard() {
                             timestamp,
                             source,
                             title: String(payload.title ?? 'Captured browser context'),
-                            detail: String(payload.preview ?? 'Saved page context into Borg memory.'),
+                            detail: String(payload.preview ?? 'Saved page context into HyperCode memory.'),
                             subtitle: 'Memory capture',
                             url: String(payload.url ?? ''),
                             success: true,
@@ -320,10 +374,18 @@ export default function BrowserDashboard() {
         }
     };
 
-    const queueTotals = queueQuery.data?.totals;
-    const pendingItems = queueQuery.data?.queue.pending.slice(0, 3) ?? [];
-    const failedItems = queueQuery.data?.queue.failed.slice(0, 3) ?? [];
-    const processedItems = queueQuery.data?.queue.processed.slice(0, 3) ?? [];
+    const statusUnavailable = Boolean(statusError) || (status !== undefined && !isBrowserStatusPayload(status));
+    const statusData = !statusUnavailable && isBrowserStatusPayload(status) ? status : undefined;
+    const queueUnavailable = Boolean(queueQuery.error) || (queueQuery.data !== undefined && !isQueueSnapshotPayload(queueQuery.data));
+    const queueData = !queueUnavailable && isQueueSnapshotPayload(queueQuery.data) ? queueQuery.data : undefined;
+    const queueTotals = queueData?.totals;
+    const pendingItems = queueData?.queue.pending.slice(0, 3) ?? [];
+    const failedItems = queueData?.queue.failed.slice(0, 3) ?? [];
+    const processedItems = queueData?.queue.processed.slice(0, 3) ?? [];
+    const queueError = queueQuery.error?.message ?? null;
+    const browserStatusError = statusError?.message ?? (statusUnavailable ? 'Browser status returned an invalid payload.' : null);
+    const historyUnavailable = Boolean(historySearch.error)
+        || (historySearch.data !== undefined && (!historySearch.data || !Array.isArray(historySearch.data.items)));
 
     return (
         <div className="p-8 space-y-8">
@@ -337,14 +399,14 @@ export default function BrowserDashboard() {
                         Monitor and manage autonomous headless browser sessions
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg">
-                        <Activity className={`h-5 w-5 ${status?.active ? 'text-green-500' : 'text-zinc-600'}`} />
-                        <span className="text-sm font-medium text-zinc-300">
-                            {isLoading ? 'Loading...' : status?.active ? 'Browser Active' : 'Idle'}
-                        </span>
-                    </div>
-                    {status?.active && (
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg">
+                            <Activity className={`h-5 w-5 ${browserStatusError ? 'text-rose-400' : statusData?.active ? 'text-green-500' : 'text-zinc-600'}`} />
+                            <span className="text-sm font-medium text-zinc-300">
+                                {isLoading ? 'Loading...' : browserStatusError ? 'Browser Unavailable' : statusData?.active ? 'Browser Active' : 'Idle'}
+                            </span>
+                        </div>
+                        {statusData?.active && (
                         <Button 
                             variant="destructive" 
                             size="sm" 
@@ -357,6 +419,15 @@ export default function BrowserDashboard() {
                 </div>
             </div>
 
+            {browserStatusError && (
+                <Card className="bg-rose-950/40 border-rose-900/60 shadow-lg">
+                    <CardContent className="pt-6">
+                        <div className="text-sm font-medium text-rose-200">Browser runtime unavailable</div>
+                        <div className="mt-1 text-sm text-rose-300/90">{browserStatusError}</div>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="bg-zinc-900 border-zinc-800 shadow-lg">
@@ -365,7 +436,7 @@ export default function BrowserDashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold text-white">
-                            {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : status?.pageCount || 0}
+                            {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : browserStatusError ? '—' : statusData?.pageCount || 0}
                         </div>
                     </CardContent>
                 </Card>
@@ -384,7 +455,13 @@ export default function BrowserDashboard() {
                         <div className="p-12 flex justify-center">
                             <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
                         </div>
-                    ) : !status?.active || (status.pageIds?.length ?? 0) === 0 ? (
+                    ) : browserStatusError ? (
+                        <div className="p-16 text-center text-rose-300">
+                            <Globe className="h-12 w-12 mx-auto mb-4 opacity-40" />
+                            <p className="text-lg">Browser runtime unavailable.</p>
+                            <p className="text-sm mt-1 text-rose-300/80">{browserStatusError}</p>
+                        </div>
+                    ) : !statusData?.active || statusData.pageIds.length === 0 ? (
                         <div className="p-16 text-center text-zinc-500">
                             <Globe className="h-12 w-12 mx-auto mb-4 opacity-20" />
                             <p className="text-lg">No active browser sessions.</p>
@@ -392,7 +469,7 @@ export default function BrowserDashboard() {
                         </div>
                     ) : (
                         <div className="divide-y divide-zinc-800">
-                            {status.pageIds?.map((id: string) => (
+                            {statusData.pageIds.map((id: string) => (
                                 <div key={id} className="p-4 flex justify-between items-center hover:bg-zinc-800/30 transition-colors">
                                     <div className="flex items-center gap-4">
                                         <div className="h-10 w-10 rounded bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
@@ -448,7 +525,7 @@ export default function BrowserDashboard() {
                         Browser History Search
                     </CardTitle>
                     <p className="text-sm text-zinc-500">
-                        Search recent browser history through the live browser-extension bridge without leaving the Borg dashboard.
+                        Search recent browser history through the live browser-extension bridge without leaving the HyperCode dashboard.
                     </p>
                 </CardHeader>
                 <CardContent className="p-4 space-y-4">
@@ -456,7 +533,7 @@ export default function BrowserDashboard() {
                         <input
                             type="text"
                             className="flex-1 bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-white focus:border-emerald-500 outline-none placeholder:text-zinc-600"
-                            placeholder="Search browser history (e.g. borg, chatgpt, docs)"
+                            placeholder="Search browser history (e.g. hypercode, chatgpt, docs)"
                             value={historyQuery}
                             onChange={(e) => setHistoryQuery(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleHistorySearch()}
@@ -482,7 +559,11 @@ export default function BrowserDashboard() {
                         </Button>
                     </div>
 
-                    {historySearch.data && (
+                    {historyUnavailable ? (
+                        <div className="rounded border border-red-900/30 bg-red-950/10 p-4 text-sm text-red-300">
+                            {historySearch.error?.message ?? 'Browser history search is unavailable.'}
+                        </div>
+                    ) : historySearch.data && (
                         <div className="space-y-3">
                             <div className="text-xs text-zinc-500">
                                 Found {historySearch.data.items.length} history entr{historySearch.data.items.length === 1 ? 'y' : 'ies'} for <span className="text-emerald-400">{historySearch.data.query}</span>
@@ -539,15 +620,15 @@ export default function BrowserDashboard() {
                         </div>
                         <div className="rounded-md border border-emerald-500/20 bg-emerald-950/20 px-3 py-2">
                             <div className="text-[11px] uppercase tracking-wide text-emerald-300/80">Processed URLs</div>
-                            <div className="text-2xl font-semibold text-emerald-300">{queueTotals?.processed ?? 0}</div>
+                            <div className="text-2xl font-semibold text-emerald-300">{queueUnavailable ? '—' : queueTotals?.processed ?? 0}</div>
                         </div>
                         <div className="rounded-md border border-amber-500/20 bg-amber-950/20 px-3 py-2">
                             <div className="text-[11px] uppercase tracking-wide text-amber-300/80">Pending URLs</div>
-                            <div className="text-2xl font-semibold text-amber-300">{queueTotals?.pending ?? 0}</div>
+                            <div className="text-2xl font-semibold text-amber-300">{queueUnavailable ? '—' : queueTotals?.pending ?? 0}</div>
                         </div>
                         <div className="rounded-md border border-rose-500/20 bg-rose-950/20 px-3 py-2">
                             <div className="text-[11px] uppercase tracking-wide text-rose-300/80">Failed URLs</div>
-                            <div className="text-2xl font-semibold text-rose-300">{queueTotals?.failed ?? 0}</div>
+                            <div className="text-2xl font-semibold text-rose-300">{queueUnavailable ? '—' : queueTotals?.failed ?? 0}</div>
                         </div>
                     </div>
 
@@ -605,7 +686,9 @@ export default function BrowserDashboard() {
                                     <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-amber-300/80 mb-2">
                                         <Database className="h-3.5 w-3.5" /> Pending URL ingests
                                     </div>
-                                    {pendingItems.length === 0 ? (
+                                    {queueUnavailable ? (
+                                        <div className="text-xs text-rose-300 break-words">{queueError ?? 'Browser ingestion queue returned an invalid payload.'}</div>
+                                    ) : pendingItems.length === 0 ? (
                                         <div className="text-xs text-zinc-500">No pending browser/discovery URLs right now.</div>
                                     ) : (
                                         <div className="space-y-2">
@@ -623,7 +706,9 @@ export default function BrowserDashboard() {
                                     <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-rose-300/80 mb-2">
                                         <AlertTriangle className="h-3.5 w-3.5" /> Failed URL ingests
                                     </div>
-                                    {failedItems.length === 0 ? (
+                                    {queueUnavailable ? (
+                                        <div className="text-xs text-rose-300 break-words">{queueError ?? 'Browser ingestion queue returned an invalid payload.'}</div>
+                                    ) : failedItems.length === 0 ? (
                                         <div className="text-xs text-zinc-500">No failed URL ingests. The queue is behaving itself.</div>
                                     ) : (
                                         <div className="space-y-2">
@@ -643,7 +728,9 @@ export default function BrowserDashboard() {
 
                                 <div>
                                     <div className="text-xs uppercase tracking-wide text-emerald-300/80 mb-2">Recent processed URLs</div>
-                                    {processedItems.length === 0 ? (
+                                    {queueUnavailable ? (
+                                        <div className="text-xs text-rose-300 break-words">{queueError ?? 'Browser ingestion queue returned an invalid payload.'}</div>
+                                    ) : processedItems.length === 0 ? (
                                         <div className="text-xs text-zinc-500">No processed URLs recorded yet.</div>
                                     ) : (
                                         <div className="space-y-2">
@@ -658,7 +745,7 @@ export default function BrowserDashboard() {
                                 </div>
 
                                 <div className="text-[11px] text-zinc-600 border-t border-zinc-800 pt-3">
-                                    Queue refreshed at {queueQuery.data?.updatedAt ? formatQueueTimestamp(queueQuery.data.updatedAt) : '—'}.
+                                    Queue refreshed at {!queueUnavailable && queueData?.updatedAt ? formatQueueTimestamp(queueData.updatedAt) : '—'}.
                                 </div>
                             </div>
                         </div>

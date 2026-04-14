@@ -9,7 +9,7 @@ import { createClientFactory, FakeMCPClient } from './test-helpers.ts';
 const tempDirs: string[] = [];
 
 function createConfigPath(config: object): string {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-mcp-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-mcp-'));
     tempDirs.push(dir);
     const configPath = path.join(dir, 'mcp.json');
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
@@ -71,7 +71,7 @@ describe('MCP master router aggregation', () => {
         await aggregator.initialize();
 
         await expect(
-            aggregator.executeTool('github__search_issues', { owner: 'borg' }),
+            aggregator.executeTool('github__search_issues', { owner: 'hypercode' }),
         ).rejects.toThrow('tool input invalid');
 
         const servers = await aggregator.listServers();

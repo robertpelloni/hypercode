@@ -3,12 +3,12 @@ import { MCPServer } from '../src/MCPServer.js';
 import path from 'path';
 
 // Mock external packages to prevent deep imports from failing
-vi.mock('@borg/ai', () => ({
+vi.mock('@hypercode/ai', () => ({
     ModelSelector: class { constructor() { } },
     LLMService: class { constructor() { } }
 }));
 
-vi.mock('@borg/agents', () => ({
+vi.mock('@hypercode/agents', () => ({
     Director: class {
         constructor() {
             // @ts-ignore
@@ -22,7 +22,7 @@ vi.mock('../src/services/MetricsService.js', () => ({
     MetricsService: class { constructor() { } startMonitoring() { } }
 }));
 
-vi.mock('@borg/tools', () => ({
+vi.mock('@hypercode/tools', () => ({
     TerminalService: class { constructor() { this.getTools = () => []; } }, // Must return array
     PermissionManager: class { constructor() { } checkPermission() { return true; } },
     AuditService: class { constructor() { } log() { } },

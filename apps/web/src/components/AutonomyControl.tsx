@@ -23,8 +23,10 @@ export function AutonomyControl() {
         }
     });
 
-    // Use server data or default to 'low'
-    const level = getAutonomyQuery.data || 'low';
+    const levelData = getAutonomyQuery.data;
+    const autonomyUnavailable = Boolean(getAutonomyQuery.error)
+        || (levelData !== undefined && levelData !== 'low' && levelData !== 'medium' && levelData !== 'high');
+    const level = !autonomyUnavailable ? levelData : undefined;
 
     const handleSetLevel = (newLevel: 'low' | 'medium' | 'high') => {
         setAutonomyMutation.mutate({ level: newLevel });
@@ -38,9 +40,9 @@ export function AutonomyControl() {
                 </h2>
                 <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${level === 'high' ? 'bg-red-900 text-red-100 animate-pulse' :
                     level === 'medium' ? 'bg-yellow-900 text-yellow-100' :
-                        'bg-green-900 text-green-100'
+                        level === 'low' ? 'bg-green-900 text-green-100' : 'bg-zinc-800 text-zinc-300'
                     }`}>
-                    {level} Autonomy
+                    {autonomyUnavailable ? 'Unavailable' : `${level ?? 'unknown'} Autonomy`}
                 </span>
             </div>
 
@@ -48,9 +50,16 @@ export function AutonomyControl() {
                 Control how much freedom the Director Agent has to execute tools without approval.
             </p>
 
+            {autonomyUnavailable && (
+                <div className="mb-4 rounded border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
+                    Autonomy status unavailable: {getAutonomyQuery.error?.message ?? 'Autonomy level returned an invalid payload.'}
+                </div>
+            )}
+
             <div className="grid grid-cols-3 gap-4">
                 <button
                     onClick={() => handleSetLevel('low')}
+                    disabled={autonomyUnavailable}
                     className={`p-4 rounded-lg border text-center transition-all ${level === 'low'
                         ? 'bg-green-500/20 border-green-500 text-green-200'
                         : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
@@ -62,6 +71,7 @@ export function AutonomyControl() {
 
                 <button
                     onClick={() => handleSetLevel('medium')}
+                    disabled={autonomyUnavailable}
                     className={`p-4 rounded-lg border text-center transition-all ${level === 'medium'
                         ? 'bg-yellow-500/20 border-yellow-500 text-yellow-200'
                         : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
@@ -73,6 +83,7 @@ export function AutonomyControl() {
 
                 <button
                     onClick={() => handleSetLevel('high')}
+                    disabled={autonomyUnavailable}
                     className={`p-4 rounded-lg border text-center transition-all ${level === 'high'
                         ? 'bg-red-500/20 border-red-500 text-red-200 shadow-[0_0_15px_rgba(239,68,68,0.5)]'
                         : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
@@ -94,7 +105,7 @@ export function AutonomyControl() {
                 <h3 className="text-sm font-bold text-white mb-2">🚀 One-Click Activation</h3>
                 <button
                     onClick={() => activateMutation.mutate()}
-                    disabled={activateMutation.isPending}
+                    disabled={autonomyUnavailable || activateMutation.isPending}
                     className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                 >
                     {activateMutation.isPending ? "Activating..." : "Enable Intelligent Supervisor (Full Autonomy)"}

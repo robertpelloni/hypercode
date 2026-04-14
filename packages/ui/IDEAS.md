@@ -1,4 +1,4 @@
-# Ideas for Improvement: @borg/ui
+# Ideas for Improvement: @hypercode/ui
 
 Ambitious visual and interaction ideas to evolve the Mission Control dashboard.
 
@@ -10,10 +10,10 @@ Ambitious visual and interaction ideas to evolve the Mission Control dashboard.
 ## 2. Advanced Interaction Patterns
 - **Temporal Rewind Debugging UI:** A specialized timeline view that allows the operator to "scrub" through past agent actions and see the exact state of the file system and memory at any point in time.
 - **Visual Workflow Architect:** A low-code node-based editor (like Flowise or LangFlow) integrated directly into the dashboard to design complex multi-agent "Squads."
-- **Keyboard-First Omnibar:** A Command-K interface that allows full control of all 60+ Borg services without using the mouse.
+- **Keyboard-First Omnibar:** A Command-K interface that allows full control of all 60+ HyperCode services without using the mouse.
 
 ## 3. Mobile & Edge Experience
-- **Real-time Mobile Companion (Link to @borg/mobile):** Complete the wireframe for the React Native app, allowing remote monitoring, vetoing of agent actions, and quota management from a phone.
+- **Real-time Mobile Companion (Link to @hypercode/mobile):** Complete the wireframe for the React Native app, allowing remote monitoring, vetoing of agent actions, and quota management from a phone.
 - **Progressive Web App (PWA) Evolution:** Full offline support for the dashboard, allowing the operator to browse captured knowledge and logs without a connection to the local orchestrator.
 - **Biometric Action Veto:** Use FaceID/TouchID on the mobile companion to authorize high-risk agent actions (like `rm -rf` or large refactors).
 

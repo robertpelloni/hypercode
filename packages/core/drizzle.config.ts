@@ -8,6 +8,6 @@ export default {
     out: "./drizzle",
     dialect: "sqlite",
     dbCredentials: {
-        url: process.env.DATABASE_URL || "file:metamcp.db",
+        url: process.env.DATABASE_URL || "file:resources.db",
     },
 } satisfies Config;

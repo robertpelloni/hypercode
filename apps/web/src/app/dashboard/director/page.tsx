@@ -1,20 +1,26 @@
 'use client';
 
-import { Card, CardHeader, CardTitle, CardContent } from "@borg/ui";
-import { Badge } from "@borg/ui";
-import { ScrollArea } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent } from "@hypercode/ui";
+import { Badge } from "@hypercode/ui";
+import { ScrollArea } from "@hypercode/ui";
 import { useState, useEffect } from "react";
 import { BrainCircuit, GitBranch, Shield, Zap } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { normalizeDirectorAutonomyLevel, normalizeDirectorPlan } from './director-page-normalizers';
 
 export default function DirectorPage() {
-    const { data: config } = trpc.directorConfig.get.useQuery();
-    const { data: taskStatus } = trpc.getTaskStatus.useQuery({});
-    const { data: autonomyLevel } = trpc.autonomy.getLevel.useQuery();
+    const configQuery = trpc.directorConfig.get.useQuery();
+    const taskStatusQuery = trpc.getTaskStatus.useQuery({});
+    const autonomyQuery = trpc.autonomy.getLevel.useQuery();
+    const { data: config } = configQuery;
+    const { data: taskStatus } = taskStatusQuery;
+    const { data: autonomyLevel } = autonomyQuery;
 
     const plan = normalizeDirectorPlan(config, taskStatus);
     const normalizedAutonomyLevel = normalizeDirectorAutonomyLevel(autonomyLevel);
+    const configUnavailable = configQuery.isError || (config != null && (typeof config !== 'object' || Array.isArray(config)));
+    const taskStatusUnavailable = taskStatusQuery.isError || (taskStatus != null && (typeof taskStatus !== 'object' || Array.isArray(taskStatus)));
+    const autonomyUnavailable = autonomyQuery.isError || (autonomyLevel != null && autonomyLevel !== 'high' && autonomyLevel !== 'medium' && autonomyLevel !== 'low');
 
     return (
         <div className="container mx-auto p-6 space-y-6 max-w-7xl">
@@ -45,26 +51,39 @@ export default function DirectorPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-xl font-medium mb-6 p-4 bg-background/50 rounded border">
-                            "{plan.goal}"
-                        </div>
-
-                        <div className="relative border-l-2 border-muted ml-4 space-y-8 pl-8 py-2">
-                            {plan.steps.length > 0 ? plan.steps.map((step) => (
-                                <div key={step.id} className="relative">
-                                    <div className={`absolute -left-[41px] h-4 w-4 rounded-full border-2 ${step.status === 'DONE' ? 'bg-green-500 border-green-500' :
-                                        step.status === 'RUNNING' ? 'bg-amber-500 border-amber-500 animate-ping' :
-                                            'bg-background border-muted'
-                                        }`} />
-                                    <div className="flex flex-col gap-1">
-                                        <div className="font-mono text-sm text-muted-foreground uppercase">{step.action}</div>
-                                        <div className="font-medium">{step.result}</div>
-                                    </div>
+                        {configUnavailable || taskStatusUnavailable ? (
+                            <div className="rounded-md border border-red-500/30 bg-red-950/20 px-4 py-3 text-sm text-red-300 space-y-2">
+                                {configUnavailable ? (
+                                    <div>Director config unavailable{configQuery.isError ? `: ${configQuery.error.message}` : ' due to malformed data'}.</div>
+                                ) : null}
+                                {taskStatusUnavailable ? (
+                                    <div>Director task status unavailable{taskStatusQuery.isError ? `: ${taskStatusQuery.error.message}` : ' due to malformed data'}.</div>
+                                ) : null}
+                            </div>
+                        ) : (
+                            <>
+                                <div className="text-xl font-medium mb-6 p-4 bg-background/50 rounded border">
+                                    "{plan.goal}"
                                 </div>
-                            )) : (
-                                <div className="text-muted-foreground italic">No active tasks.</div>
-                            )}
-                        </div>
+
+                                <div className="relative border-l-2 border-muted ml-4 space-y-8 pl-8 py-2">
+                                    {plan.steps.length > 0 ? plan.steps.map((step) => (
+                                        <div key={step.id} className="relative">
+                                            <div className={`absolute -left-[41px] h-4 w-4 rounded-full border-2 ${step.status === 'DONE' ? 'bg-green-500 border-green-500' :
+                                                step.status === 'RUNNING' ? 'bg-amber-500 border-amber-500 animate-ping' :
+                                                    'bg-background border-muted'
+                                                }`} />
+                                            <div className="flex flex-col gap-1">
+                                                <div className="font-mono text-sm text-muted-foreground uppercase">{step.action}</div>
+                                                <div className="font-medium">{step.result}</div>
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <div className="text-muted-foreground italic">No active tasks.</div>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -90,12 +109,14 @@ export default function DirectorPage() {
                             <CardTitle className="text-sm uppercase text-muted-foreground">Autonomy Level</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className={`flex items-center gap-2 ${normalizedAutonomyLevel === 'high' ? 'text-green-400' : 'text-yellow-400'}`}>
+                            <div className={`flex items-center gap-2 ${autonomyUnavailable ? 'text-red-300' : normalizedAutonomyLevel === 'high' ? 'text-green-400' : 'text-yellow-400'}`}>
                                 <Shield className="h-5 w-5" />
-                                <span className="font-bold uppercase">{normalizedAutonomyLevel}</span>
+                                <span className="font-bold uppercase">{autonomyUnavailable ? 'unavailable' : normalizedAutonomyLevel}</span>
                             </div>
                             <p className="text-xs text-muted-foreground mt-2">
-                                Director is authorized to recruit squads and perform deep research without explicit approval.
+                                {autonomyUnavailable
+                                    ? `Autonomy level unavailable${autonomyQuery.isError ? `: ${autonomyQuery.error.message}` : ' due to malformed data'}.`
+                                    : 'Director is authorized to recruit squads and perform deep research without explicit approval.'}
                             </p>
                         </CardContent>
                     </Card>

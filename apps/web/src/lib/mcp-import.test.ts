@@ -63,7 +63,7 @@ describe('buildBulkImportServers', () => {
         ]);
     });
 
-    it('normalizes imported server names so bulk import matches Borg validation', () => {
+    it('normalizes imported server names so bulk import matches HyperCode validation', () => {
         const preview = buildBulkImportServers(JSON.stringify({
             mcpServers: {
                 'robertpelloni.com': {

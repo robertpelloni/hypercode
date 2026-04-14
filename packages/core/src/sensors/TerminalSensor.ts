@@ -13,8 +13,8 @@ function shouldIgnoreInternalDiagnostic(message: string): boolean {
         '[TerminalSensor]',
         '[FileSensor]',
         '[EventBus]',
-        '[Borg Core] Unhandled promise rejection:',
-        '[Borg Core] Uncaught exception:',
+        '[HyperCode Core] Unhandled promise rejection:',
+        '[HyperCode Core] Uncaught exception:',
     ];
 
     return internalPrefixes.some((prefix) => trimmed.startsWith(prefix));

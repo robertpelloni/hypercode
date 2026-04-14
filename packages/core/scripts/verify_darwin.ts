@@ -1,6 +1,6 @@
 
 import { DarwinService } from '../src/services/DarwinService.js';
-import { LLMService } from '@borg/ai';
+import { LLMService } from '@hypercode/ai';
 import { MCPServer } from '../src/MCPServer.js';
 
 // Mock LLM

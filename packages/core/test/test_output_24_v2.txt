@@ -1,5 +1,5 @@
 
-[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90mC:/Users/hyper/workspace/borg[39m
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90mC:/Users/hyper/workspace/hypercode[39m
 
 [90mstdout[2m | packages/core/test/Phase24_CodeMode.test.ts[2m > [22m[2mPhase 24: Code Mode V2 (Sandbox Integration)[2m > [22m[2mexecutes javascript code using SandboxService
 [22m[39m[SandboxService] Initialized (Mode: Process Isolation)

@@ -1,5 +1,5 @@
-// Borg MCP configuration
-// This file is Borg-owned and may include cached server metadata under mcpServers.<name>._meta.
+// HyperCode MCP configuration
+// This file is HyperCode-owned and may include cached server metadata under mcpServers.<name>._meta.
 {
   "mcpServers": {
     "test_stdio_import": {

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, Button, Badge, ScrollArea } from "@borg/ui";
+import { Card, CardContent, CardHeader, CardTitle, Button, Badge, ScrollArea } from "@hypercode/ui";
 import { ArrowLeft, Terminal, Loader2, Play, Square, RotateCcw, ActivitySquare, HeartPulse, Link2, Send, Cpu, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -111,19 +111,36 @@ export default function SessionDetailPage() {
     const currentStatus = (session?.status ?? 'created') as SessionStatus;
     const canStart = currentStatus === 'created' || currentStatus === 'stopped' || currentStatus === 'error';
     const canStop = currentStatus === 'running' || currentStatus === 'starting' || currentStatus === 'restarting';
+    const logsPayloadInvalid = logsQuery.data != null && !Array.isArray(logsQuery.data);
 
     const healthSummary = useMemo(() => {
+        if (healthQuery.isError) return `Health unavailable: ${healthQuery.error.message}`;
         if (!healthQuery.data || typeof healthQuery.data !== 'object') return 'No health snapshot';
         const payload = healthQuery.data as Record<string, unknown>;
         if (typeof payload['message'] === 'string') return payload['message'];
         if (typeof payload['status'] === 'string') return payload['status'];
         return 'Health snapshot available';
-    }, [healthQuery.data]);
+    }, [healthQuery.data, healthQuery.error, healthQuery.isError]);
 
     if (sessionQuery.isLoading) {
         return (
             <div className="p-8 flex items-center justify-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+            </div>
+        );
+    }
+
+    if (sessionQuery.isError) {
+        return (
+            <div className="p-8 space-y-6">
+                <Link href="/dashboard/session" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white text-sm">
+                    <ArrowLeft className="h-4 w-4" /> Back to sessions
+                </Link>
+                <Card className="bg-zinc-900 border-zinc-800">
+                    <CardContent className="p-8 text-center text-red-300">
+                        Session details unavailable: {sessionQuery.error.message}
+                    </CardContent>
+                </Card>
             </div>
         );
     }
@@ -244,6 +261,10 @@ export default function SessionDetailPage() {
                     <CardContent className="space-y-3">
                         {attachQuery.isLoading ? (
                             <div className="text-xs text-zinc-500">Loading…</div>
+                        ) : attachQuery.isError ? (
+                            <div className="rounded-md border border-red-900/40 bg-red-950/30 px-3 py-2 text-xs text-red-300">
+                                Process info unavailable: {attachQuery.error.message}
+                            </div>
                         ) : (() => {
                             const info = attachQuery.data as Record<string, unknown> | null | undefined;
                             const attachable = info?.attachable === true;
@@ -273,7 +294,7 @@ export default function SessionDetailPage() {
                                     <div className="flex items-start gap-2 rounded-md border border-zinc-800 bg-zinc-950/50 px-3 py-2">
                                         <Info className="h-3.5 w-3.5 text-zinc-500 mt-0.5 shrink-0" />
                                         <p className="text-xs text-zinc-500 leading-relaxed">
-                                            Borg supervises the session process but does not pass stdin to it.
+                                            HyperCode supervises the session process but does not pass stdin to it.
                                             Use <span className="text-zinc-300 font-medium">Run shell command</span> below to execute commands
                                             in the session&apos;s working directory. For interactive terminal access,
                                             connect directly via the CLI harness.
@@ -293,7 +314,11 @@ export default function SessionDetailPage() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                    {logs.length === 0 ? (
+                    {logsQuery.isError || logsPayloadInvalid ? (
+                        <div className="p-6 text-sm text-red-300">
+                            Logs unavailable{logsQuery.isError ? `: ${logsQuery.error.message}` : ' due to malformed data'}.
+                        </div>
+                    ) : logs.length === 0 ? (
                         <div className="p-6 text-sm text-zinc-500">No logs yet.</div>
                     ) : (
                         <ScrollArea className="max-h-[460px]">

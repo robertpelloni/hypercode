@@ -13,7 +13,7 @@ export async function GET() {
     try {
         const rootDir = getMonorepoRoot();
 
-        const logFile = path.join(rootDir, '.borg', 'data', 'healer_events.jsonl');
+        const logFile = path.join(rootDir, '.hypercode', 'data', 'healer_events.jsonl');
 
         try {
             await fs.access(logFile);

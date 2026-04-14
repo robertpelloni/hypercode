@@ -1,7 +1,7 @@
 {
-  "name": "@borg/browser-extension-pkg",
-  "version": "0.99.1",
-  "description": "Borg Browser Extension for Hub Connectivity",
+  "name": "@hypercode/browser-extension-pkg",
+  "version": "1.0.0-alpha.1",
+  "description": "HyperCode Browser Extension for Hub Connectivity",
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch --emptyOutDir false --clearScreen false"

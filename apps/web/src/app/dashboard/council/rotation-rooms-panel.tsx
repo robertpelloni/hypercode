@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Textarea } from '@borg/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Textarea } from '@hypercode/ui';
 import { Bot, CheckCircle2, Loader2, Play, Plus, Radio, RotateCw, Users } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 
@@ -134,6 +134,8 @@ export function RotationRoomsPanel() {
   const roomsQuery = rotationTrpc.list.useQuery(undefined, {
     refetchInterval: 3000,
   });
+  const roomsUnavailable = roomsQuery.isError || (roomsQuery.data !== undefined && !Array.isArray(roomsQuery.data));
+  const roomsErrorMessage = roomsQuery.error?.message ?? 'Rotation room inventory is unavailable.';
 
   const createRoomMutation = rotationTrpc.create.useMutation({
     onSuccess: (room) => {
@@ -157,7 +159,7 @@ export function RotationRoomsPanel() {
     onSuccess: () => void roomsQuery.refetch(),
   });
 
-  const rooms = (roomsQuery.data ?? []) as RotationRoom[];
+  const rooms = !roomsUnavailable ? (roomsQuery.data ?? []) as RotationRoom[] : [];
   const selectedRoom = useMemo(
     () => rooms.find((room) => room.id === selectedRoomId) ?? rooms[0] ?? null,
     [rooms, selectedRoomId],
@@ -339,6 +341,12 @@ export function RotationRoomsPanel() {
         </CardContent>
       </Card>
 
+      {roomsUnavailable ? (
+        <div className="rounded-lg border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-300">
+          {roomsErrorMessage}
+        </div>
+      ) : null}
+
       <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
         <Card>
           <CardHeader>
@@ -348,7 +356,11 @@ export function RotationRoomsPanel() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {rooms.length === 0 ? (
+            {roomsUnavailable ? (
+              <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-6 text-sm text-red-300">
+                {roomsErrorMessage}
+              </div>
+            ) : rooms.length === 0 ? (
               <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
                 No rotation rooms yet. Create one above, then add Qwen or another model as the supervisor when ready.
               </div>

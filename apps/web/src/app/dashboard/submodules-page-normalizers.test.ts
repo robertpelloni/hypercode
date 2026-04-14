@@ -83,7 +83,7 @@ describe('submodules page normalizers', () => {
             path: ' apps/web ',
             kind: 'app',
             summary: ' Dashboard ',
-            packageName: ' @borg/web ',
+            packageName: ' @hypercode/web ',
             version: ' 0.10.0 ',
           },
           {
@@ -108,7 +108,7 @@ describe('submodules page normalizers', () => {
             path: 'apps/web',
             kind: 'app',
             summary: 'Dashboard',
-            packageName: '@borg/web',
+            packageName: '@hypercode/web',
             version: '0.10.0',
           },
           {

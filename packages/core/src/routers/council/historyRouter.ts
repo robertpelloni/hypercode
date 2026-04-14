@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { t, publicProcedure, adminProcedure } from '../../lib/trpc-core.js';
 import { debateHistory } from '../../orchestrator/council/services/debate-history.js';
+import { rethrowSqliteUnavailableAsTrpc } from '../sqliteTrpc.js';
 
 const debateQueryOptionsSchema = z.object({
   sessionId: z.string().optional(),
@@ -19,12 +20,16 @@ const debateQueryOptionsSchema = z.object({
 
 export const historyRouter = t.router({
   status: publicProcedure.query(async () => {
-    return {
-      enabled: debateHistory.isEnabled(),
-      recordCount: await debateHistory.getRecordCount(),
-      storageSize: debateHistory.getStorageSize(),
-      config: debateHistory.getConfig(),
-    };
+    try {
+      return {
+        enabled: debateHistory.isEnabled(),
+        recordCount: await debateHistory.getRecordCount(),
+        storageSize: debateHistory.getStorageSize(),
+        config: debateHistory.getConfig(),
+      };
+    } catch (error) {
+      rethrowSqliteUnavailableAsTrpc('Council debate history is unavailable', error);
+    }
   }),
 
   getConfig: publicProcedure.query(async () => {
@@ -42,46 +47,74 @@ export const historyRouter = t.router({
   }),
 
   stats: publicProcedure.query(async () => {
-    return debateHistory.getStats();
+    try {
+      return await debateHistory.getStats();
+    } catch (error) {
+      rethrowSqliteUnavailableAsTrpc('Council debate history is unavailable', error);
+    }
   }),
 
   list: publicProcedure.input(debateQueryOptionsSchema).query(async ({ input }) => {
-    const records = await debateHistory.queryDebates(input as any);
-    return {
-      records,
-      meta: {
-        count: records.length,
-        totalRecords: await debateHistory.getRecordCount(),
-      },
-    };
+    try {
+      const records = await debateHistory.queryDebates(input as any);
+      return {
+        records,
+        meta: {
+          count: records.length,
+          totalRecords: await debateHistory.getRecordCount(),
+        },
+      };
+    } catch (error) {
+      rethrowSqliteUnavailableAsTrpc('Council debate history is unavailable', error);
+    }
   }),
 
   get: publicProcedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
-    const record = await debateHistory.getDebate(input.id);
-    if (!record) throw new Error('Debate not found');
-    return record;
+    try {
+      const record = await debateHistory.getDebate(input.id);
+      if (!record) throw new Error('Debate not found');
+      return record;
+    } catch (error) {
+      rethrowSqliteUnavailableAsTrpc('Council debate history is unavailable', error);
+    }
   }),
 
   delete: adminProcedure.input(z.object({ id: z.string() })).mutation(async ({ input }) => {
-    const deleted = await debateHistory.deleteRecord(input.id);
-    if (!deleted) throw new Error('Debate not found');
-    return { deleted: true, id: input.id };
+    try {
+      const deleted = await debateHistory.deleteRecord(input.id);
+      if (!deleted) throw new Error('Debate not found');
+      return { deleted: true, id: input.id };
+    } catch (error) {
+      rethrowSqliteUnavailableAsTrpc('Council debate history is unavailable', error);
+    }
   }),
 
   supervisorHistory: publicProcedure.input(z.object({ name: z.string() })).query(async ({ input }) => {
-    return debateHistory.getSupervisorVoteHistory(input.name);
+    try {
+      return await debateHistory.getSupervisorVoteHistory(input.name);
+    } catch (error) {
+      rethrowSqliteUnavailableAsTrpc('Council debate history is unavailable', error);
+    }
   }),
 
   clear: adminProcedure.mutation(async () => {
-    const count = await debateHistory.clearAll();
-    return { cleared: count };
+    try {
+      const count = await debateHistory.clearAll();
+      return { cleared: count };
+    } catch (error) {
+      rethrowSqliteUnavailableAsTrpc('Council debate history is unavailable', error);
+    }
   }),
 
   initialize: adminProcedure.mutation(async () => {
-    await debateHistory.initialize();
-    return {
-      initialized: true,
-      recordCount: await debateHistory.getRecordCount(),
-    };
+    try {
+      await debateHistory.initialize();
+      return {
+        initialized: true,
+        recordCount: await debateHistory.getRecordCount(),
+      };
+    } catch (error) {
+      rethrowSqliteUnavailableAsTrpc('Council debate history is unavailable', error);
+    }
   }),
 });

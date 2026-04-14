@@ -1,7 +1,7 @@
-import type { IMCPServer, IAgentMemoryService } from "@borg/adk";
-import { LLMService } from "@borg/ai";
+import type { IMCPServer, IAgentMemoryService } from "@hypercode/adk";
+import { LLMService } from "@hypercode/ai";
 import { Council } from "./Council.js";
-import { DIRECTOR_SYSTEM_PROMPT } from "@borg/ai";
+import { DIRECTOR_SYSTEM_PROMPT } from "@hypercode/ai";
 import { WorktreeManager } from "./orchestration/WorktreeManager.js";
 
 interface AgentContext {
@@ -300,7 +300,7 @@ export class Director {
         console.log(`[Director] 🕸️ Delegating task to Swarm: "${task}"`);
 
         // Broadcast TASK_OFFER
-        // Using string type to avoid cyclic dependency on @borg/core definitions
+        // Using string type to avoid cyclic dependency on @hypercode/core definitions
         mesh.broadcast('TASK_OFFER', {
             task,
             requester: 'Director', // Identity

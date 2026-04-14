@@ -1,10 +1,10 @@
-// Borg Director Link - Background Worker
+// HyperCode Director Link - Background Worker
 
 const SOCKET_URL = 'ws://localhost:3001';
 let socket = null;
 let keepAliveInterval = null;
 
-// Connect to Borg Core
+// Connect to HyperCode Core
 function connect() {
     console.log(`[BorgLink] Connecting to ${SOCKET_URL}...`);
     socket = new WebSocket(SOCKET_URL);

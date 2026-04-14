@@ -11,7 +11,7 @@ const rmDir = (dir: string) => {
 };
 
 describe('Phase 23: Deep Data Search (Indexer)', () => {
-    const TEST_DIR = path.join(process.cwd(), '.borg', 'test_indexer_' + Date.now());
+    const TEST_DIR = path.join(process.cwd(), '.hypercode', 'test_indexer_' + Date.now());
     const DATA_DIR = path.join(TEST_DIR, 'mock_codebase');
     let store: LanceDBStore;
     let indexer: Indexer;

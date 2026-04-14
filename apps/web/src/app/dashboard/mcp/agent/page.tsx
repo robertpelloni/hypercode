@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { Card, CardContent } from "@borg/ui";
-import { Button } from "@borg/ui";
+import { Card, CardContent } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
 import { Loader2, Send, Bot, User, Terminal } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -10,7 +10,7 @@ import { PageStatusBanner } from '@/components/PageStatusBanner';
 
 export default function AgentPlayground(): React.JSX.Element {
     const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', content: string, tools?: any[] }>>([
-        { role: 'assistant', content: "Hello! I'm your Borg MCP agent. I can work with the tools currently exposed through your router and session working set. What would you like to do?" }
+        { role: 'assistant', content: "Hello! I'm your HyperCode MCP agent. I can work with the tools currently exposed through your router and session working set. What would you like to do?" }
     ]);
     const [input, setInput] = useState('');
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -51,13 +51,13 @@ export default function AgentPlayground(): React.JSX.Element {
             <PageStatusBanner
                 status="experimental"
                 message="Agent Playground"
-                note="Live agent chat is wired through Borg tools, but orchestration controls, safety rails, and richer session context handling are still evolving."
+                note="Live agent chat is wired through HyperCode tools, but orchestration controls, safety rails, and richer session context handling are still evolving."
             />
             <div className="flex justify-between items-center shrink-0">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white">Agent Playground</h1>
                     <p className="text-zinc-500">
-                        Chat with an agent that can use the tools currently exposed through your Borg MCP router session
+                        Chat with an agent that can use the tools currently exposed through your HyperCode MCP router session
                     </p>
                 </div>
             </div>

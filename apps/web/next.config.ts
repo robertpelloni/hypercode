@@ -34,7 +34,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: repoRoot,
   },
-  transpilePackages: ["@borg/ui"],
+  transpilePackages: ["@hypercode/ui"],
   webpack: (config) => {
     config.resolve ??= {};
     config.resolve.alias = {

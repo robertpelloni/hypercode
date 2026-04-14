@@ -12,10 +12,10 @@ describe('mcpServerDebug', () => {
         expect(isMcpServerDebugEnabled({ BORG_MCP_SERVER_DEBUG: '0' })).toBe(false);
     });
 
-    it('enables logging via the dedicated Borg flag or DEBUG namespace', () => {
+    it('enables logging via the dedicated HyperCode flag or DEBUG namespace', () => {
         expect(isMcpServerDebugEnabled({ BORG_MCP_SERVER_DEBUG: '1' })).toBe(true);
         expect(isMcpServerDebugEnabled({ BORG_MCP_SERVER_DEBUG: 'true' })).toBe(true);
-        expect(isMcpServerDebugEnabled({ DEBUG: 'other,borg:mcp-server' })).toBe(true);
+        expect(isMcpServerDebugEnabled({ DEBUG: 'other,hypercode:mcp-server' })).toBe(true);
     });
 
     it('only writes to console when debug is enabled', () => {

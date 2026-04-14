@@ -59,6 +59,11 @@ export interface DashboardStartupStatus {
             inventoryReady: boolean;
             inventorySource?: 'database' | 'config' | 'empty';
             inventorySnapshotUpdatedAt?: string | null;
+            inventoryPersistence?: {
+                databaseAvailable: boolean;
+                fallbackUsed: boolean;
+                error: string | null;
+            };
             warmupInProgress?: boolean;
         };
         configSync: {
@@ -212,12 +217,19 @@ export interface DashboardHomeViewProps {
     currentTimestamp?: number | null;
     isBootstrapping?: boolean;
     mcpStatus: DashboardStatusSummary;
+    mcpStatusError?: string | null;
     startupStatus: DashboardStartupStatus;
+    startupStatusError?: string | null;
     servers: DashboardServerSummary[];
+    serversError?: string | null;
     traffic: DashboardTrafficSummary[];
+    trafficError?: string | null;
     providers: DashboardProviderSummary[];
+    providersError?: string | null;
     fallbackChain: DashboardFallbackSummary[];
+    fallbackChainError?: string | null;
     sessions: DashboardSessionSummary[];
+    sessionsError?: string | null;
     installSurfaceArtifacts?: DashboardInstallSurfaceArtifact[] | null;
     onStartSession?: (sessionId: string) => void;
     onStopSession?: (sessionId: string) => void;
@@ -688,6 +700,11 @@ export function buildOverviewMetrics(
     sessions: DashboardSessionSummary[],
     providers: DashboardProviderSummary[],
     isBootstrapping = false,
+    options?: {
+        mcpStatusError?: string | null;
+        sessionsError?: string | null;
+        providersError?: string | null;
+    },
 ): OverviewMetric[] {
     if (isBootstrapping) {
         return [
@@ -712,26 +729,31 @@ export function buildOverviewMetrics(
     const runningSessions = sessions.filter((session) => session.status === 'running').length;
     const actionableProviders = providers.filter((provider) => provider.configured).length;
     const degradedProviders = providers.filter((provider) => isProviderDegraded(provider)).length;
+    const mcpStatusUnavailable = Boolean(options?.mcpStatusError);
+    const sessionsUnavailable = Boolean(options?.sessionsError);
+    const providersUnavailable = Boolean(options?.providersError);
 
     return [
         {
             label: 'MCP servers',
-            value: `${mcpStatus.connectedCount}/${mcpStatus.serverCount}`,
-            detail: `${mcpStatus.toolCount} tools indexed across the router`,
+            value: mcpStatusUnavailable ? '—' : `${mcpStatus.connectedCount}/${mcpStatus.serverCount}`,
+            detail: mcpStatusUnavailable ? 'Router telemetry unavailable' : `${mcpStatus.toolCount} tools indexed across the router`,
         },
         {
             label: 'Supervised sessions',
-            value: `${runningSessions}/${sessions.length}`,
-            detail: runningSessions > 0 ? 'running right now' : 'waiting for operator action',
+            value: sessionsUnavailable ? '—' : `${runningSessions}/${sessions.length}`,
+            detail: sessionsUnavailable ? 'Session supervisor inventory unavailable' : (runningSessions > 0 ? 'running right now' : 'waiting for operator action'),
         },
         {
             label: 'Configured providers',
-            value: `${actionableProviders}`,
-            detail: actionableProviders === 0
-                ? 'configure your first provider'
-                : degradedProviders > 0
-                    ? `${degradedProviders} need attention`
-                    : 'all configured providers look healthy',
+            value: providersUnavailable ? '—' : `${actionableProviders}`,
+            detail: providersUnavailable
+                ? 'Provider routing inventory unavailable'
+                : actionableProviders === 0
+                    ? 'configure your first provider'
+                    : degradedProviders > 0
+                        ? `${degradedProviders} need attention`
+                        : 'all configured providers look healthy',
         },
     ];
 }
@@ -856,6 +878,13 @@ export function buildDashboardAlerts(
     sessions: DashboardSessionSummary[],
     isBootstrapping = false,
     installSurfaceArtifacts?: DashboardInstallSurfaceArtifact[] | null,
+    options?: {
+        startupStatusError?: string | null;
+        serversError?: string | null;
+        providersError?: string | null;
+        fallbackChainError?: string | null;
+        sessionsError?: string | null;
+    },
 ): DashboardAlert[] {
     if (isBootstrapping) {
         return [];
@@ -863,10 +892,12 @@ export function buildDashboardAlerts(
 
     const checks = getStartupChecks(startupStatus);
     const alerts: DashboardAlert[] = [];
-    const startupPendingCount = buildStartupChecklist(startupStatus, false, installSurfaceArtifacts).filter((item) => !item.ready).length;
-    const disconnectedServers = servers.filter((server) => server.status !== 'connected').length;
-    const degradedProviders = providers.filter((provider) => isProviderDegraded(provider)).length;
-    const erroredSessions = sessions.filter((session) => session.status === 'error').length;
+    const startupPendingCount = options?.startupStatusError
+        ? 0
+        : buildStartupChecklist(startupStatus, false, installSurfaceArtifacts).filter((item) => !item.ready).length;
+    const disconnectedServers = options?.serversError ? 0 : servers.filter((server) => server.status !== 'connected').length;
+    const degradedProviders = options?.providersError ? 0 : providers.filter((provider) => isProviderDegraded(provider)).length;
+    const erroredSessions = options?.sessionsError ? 0 : sessions.filter((session) => session.status === 'error').length;
     const startupSummary = startupStatus.summary?.trim();
 
     if (!mcpStatus.initialized) {
@@ -904,7 +935,16 @@ export function buildDashboardAlerts(
         });
     }
 
-    if (startupStatus.status === 'degraded') {
+    if (options?.startupStatusError) {
+        alerts.push({
+            id: 'startup-unavailable',
+            severity: 'warning',
+            title: 'Startup telemetry is unavailable',
+            detail: options.startupStatusError,
+            href: '/dashboard/mcp/system',
+            hrefLabel: 'Review startup status',
+        });
+    } else if (startupStatus.status === 'degraded') {
         alerts.push({
             id: 'startup-compat-fallback',
             severity: 'warning',
@@ -924,7 +964,54 @@ export function buildDashboardAlerts(
         });
     }
 
-    if (degradedProviders > 0) {
+    if (options?.serversError) {
+        alerts.push({
+            id: 'server-inventory-unavailable',
+            severity: 'warning',
+            title: 'MCP server inventory is unavailable',
+            detail: options.serversError,
+            href: '/dashboard/mcp',
+            hrefLabel: 'Open server health',
+        });
+    } else if (mcpStatus.initialized && servers.length === 0 && providers.length === 0) {
+        alerts.push({
+            id: 'first-run-setup',
+            severity: 'info',
+            title: 'Welcome to HyperCode! Let\'s get started. 🚀',
+            detail: 'Your workspace is fresh. Start by configuring an AI Provider and connecting an MCP Server to give your models tools.',
+            href: '/dashboard/providers',
+            hrefLabel: 'Configure Providers',
+        });
+    } else if (mcpStatus.initialized && servers.length === 0) {
+        alerts.push({
+            id: 'no-mcp-servers',
+            severity: 'info',
+            title: 'No MCP Servers Connected',
+            detail: 'Your models have no tools available. Add a server from the registry or sync your VS Code/Cursor configuration.',
+            href: '/dashboard/integrations',
+            hrefLabel: 'Add MCP Server',
+        });
+    } else if (mcpStatus.initialized && providers.length === 0) {
+        alerts.push({
+            id: 'no-providers',
+            severity: 'info',
+            title: 'No AI Providers Configured',
+            detail: 'You need to configure an API key (Anthropic, OpenAI, Gemini) to run autonomous sessions.',
+            href: '/dashboard/providers',
+            hrefLabel: 'Configure Providers',
+        });
+    }
+
+    if (options?.providersError) {
+        alerts.push({
+            id: 'provider-inventory-unavailable',
+            severity: 'warning',
+            title: 'Provider routing inventory is unavailable',
+            detail: options.providersError,
+            href: '/dashboard/billing',
+            hrefLabel: 'Review providers',
+        });
+    } else if (degradedProviders > 0) {
         alerts.push({
             id: 'provider-degraded',
             severity: degradedProviders > 1 ? 'critical' : 'warning',
@@ -935,7 +1022,27 @@ export function buildDashboardAlerts(
         });
     }
 
-    if (erroredSessions > 0) {
+    if (options?.fallbackChainError) {
+        alerts.push({
+            id: 'fallback-chain-unavailable',
+            severity: 'warning',
+            title: 'Provider fallback chain is unavailable',
+            detail: options.fallbackChainError,
+            href: '/dashboard/billing',
+            hrefLabel: 'Review providers',
+        });
+    }
+
+    if (options?.sessionsError) {
+        alerts.push({
+            id: 'session-inventory-unavailable',
+            severity: 'warning',
+            title: 'Supervised session inventory is unavailable',
+            detail: options.sessionsError,
+            href: '/dashboard/session',
+            hrefLabel: 'Open sessions',
+        });
+    } else if (erroredSessions > 0) {
         alerts.push({
             id: 'session-errors',
             severity: 'critical',
@@ -1055,32 +1162,53 @@ export function DashboardHomeView({
     currentTimestamp,
     isBootstrapping = false,
     mcpStatus,
+    mcpStatusError,
     startupStatus,
+    startupStatusError,
     servers,
+    serversError,
     traffic,
+    trafficError,
     providers,
+    providersError,
     fallbackChain,
+    fallbackChainError,
     sessions,
+    sessionsError,
     installSurfaceArtifacts,
     onStartSession,
     onStopSession,
     onRestartSession,
     pendingSessionActionId,
 }: DashboardHomeViewProps) {
-    const overviewMetrics = buildOverviewMetrics(mcpStatus, sessions, providers, isBootstrapping);
-    const startupChecklist = buildStartupChecklist(startupStatus, isBootstrapping, installSurfaceArtifacts);
-    const startupBlockingReasons = isBootstrapping
+    const overviewMetrics = buildOverviewMetrics(mcpStatus, sessions, providers, isBootstrapping, {
+        mcpStatusError,
+        sessionsError,
+        providersError,
+    });
+    const startupChecklist = startupStatusError ? [] : buildStartupChecklist(startupStatus, isBootstrapping, installSurfaceArtifacts);
+    const startupBlockingReasons = isBootstrapping || startupStatusError
         ? []
         : getPrioritizedStartupBlockingReasons(getStartupBlockingReasons(startupStatus));
     const startupBlockingReasonGroups = getGroupedStartupBlockingReasons(startupBlockingReasons);
     const startupBlockingPriorityCounts = getStartupBlockingReasonPriorityCounts(startupBlockingReasons);
     const startupBlockingActions = getStartupBlockingReasonActions(startupBlockingReasons);
-    const dashboardAlerts = buildDashboardAlerts(mcpStatus, startupStatus, servers, providers, sessions, isBootstrapping, installSurfaceArtifacts);
+    const dashboardAlerts = buildDashboardAlerts(mcpStatus, startupStatus, servers, providers, sessions, isBootstrapping, installSurfaceArtifacts, {
+        startupStatusError,
+        serversError,
+        providersError,
+        fallbackChainError,
+        sessionsError,
+    });
     const startupSummary = isBootstrapping
         ? 'Connecting to live startup telemetry from core. Initial placeholders stay neutral until the first snapshot arrives.'
+        : startupStatusError
+            ? null
         : startupStatus.summary?.trim();
     const startupToneClass = isBootstrapping
         ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200'
+        : startupStatusError
+            ? 'border-rose-500/30 bg-rose-500/10 text-rose-200'
         : startupStatus.status === 'degraded'
         ? 'border-amber-500/30 bg-amber-500/10 text-amber-200'
         : startupStatus.ready
@@ -1088,15 +1216,17 @@ export function DashboardHomeView({
             : 'border-amber-500/30 bg-amber-500/10 text-amber-200';
     const startupLabel = isBootstrapping
         ? 'Connecting'
+        : startupStatusError
+            ? 'Unavailable'
         : startupStatus.status === 'degraded'
         ? 'Compat fallback'
         : startupStatus.ready
             ? 'Ready'
             : 'Warming up';
-    const routerStatusLabel = isBootstrapping ? 'Connecting' : (mcpStatus.initialized ? 'Initialized' : 'Offline');
+    const routerStatusLabel = isBootstrapping ? 'Connecting' : (mcpStatusError ? 'Unavailable' : (mcpStatus.initialized ? 'Initialized' : 'Offline'));
     const routerStatusTone = isBootstrapping
         ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200'
-        : (mcpStatus.initialized ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : 'border-rose-500/30 bg-rose-500/10 text-rose-200');
+        : (mcpStatusError ? 'border-rose-500/30 bg-rose-500/10 text-rose-200' : (mcpStatus.initialized ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : 'border-rose-500/30 bg-rose-500/10 text-rose-200'));
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -1204,10 +1334,16 @@ export function DashboardHomeView({
                                     <h2 className="mt-2 text-xl font-semibold text-white">Router posture</h2>
                                 <p className="mt-2 text-sm text-slate-400">Quick health readout for first-time operators.</p>
                             </div>
-                            <div className={`rounded-full border px-3 py-1 text-xs font-medium ${routerStatusTone}`}>
-                                {routerStatusLabel}
-                            </div>
+                        <div className={`rounded-full border px-3 py-1 text-xs font-medium ${routerStatusTone}`}>
+                            {routerStatusLabel}
                         </div>
+                    </div>
+
+                        {mcpStatusError ? (
+                            <div className="mt-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+                                {mcpStatusError}
+                            </div>
+                        ) : null}
 
                         <dl className="mt-6 grid gap-4 sm:grid-cols-2">
                             <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
@@ -1220,11 +1356,11 @@ export function DashboardHomeView({
                             </div>
                             <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
                                 <dt className="text-sm text-slate-400">Running sessions</dt>
-                                <dd className="mt-2 text-2xl font-semibold text-white">{isBootstrapping ? '—' : sessions.filter((session) => session.status === 'running').length}</dd>
+                                <dd className="mt-2 text-2xl font-semibold text-white">{isBootstrapping || sessionsError ? '—' : sessions.filter((session) => session.status === 'running').length}</dd>
                             </div>
                             <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
                                 <dt className="text-sm text-slate-400">Configured providers</dt>
-                                <dd className="mt-2 text-2xl font-semibold text-white">{isBootstrapping ? '—' : providers.filter((provider) => provider.configured).length}</dd>
+                                <dd className="mt-2 text-2xl font-semibold text-white">{isBootstrapping || providersError ? '—' : providers.filter((provider) => provider.configured).length}</dd>
                             </div>
                         </dl>
 
@@ -1239,19 +1375,25 @@ export function DashboardHomeView({
                                 </span>
                             </div>
 
-                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                                {startupChecklist.map((item) => (
-                                    <div key={item.label} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 text-sm">
-                                        <div className="flex items-center justify-between gap-3">
-                                            <span className="font-medium text-white">{item.label}</span>
-                                            <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${item.ready ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : 'border-amber-500/30 bg-amber-500/10 text-amber-200'}`}>
-                                                {item.ready ? 'Ready' : 'Pending'}
-                                            </span>
+                            {startupStatusError ? (
+                                <div className="mt-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+                                    {startupStatusError}
+                                </div>
+                            ) : (
+                                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                    {startupChecklist.map((item) => (
+                                        <div key={item.label} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 text-sm">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <span className="font-medium text-white">{item.label}</span>
+                                                <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${item.ready ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : 'border-amber-500/30 bg-amber-500/10 text-amber-200'}`}>
+                                                    {item.ready ? 'Ready' : 'Pending'}
+                                                </span>
+                                            </div>
+                                            <p className="mt-2 text-slate-400">{item.detail}</p>
                                         </div>
-                                        <p className="mt-2 text-slate-400">{item.detail}</p>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
 
                             {startupBlockingReasons.length > 0 ? (
                                 <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
@@ -1416,7 +1558,11 @@ export function DashboardHomeView({
                         </div>
 
                         <div className="mt-6 space-y-3">
-                            {servers.length === 0 ? (
+                            {serversError ? (
+                                <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+                                    {serversError}
+                                </div>
+                            ) : servers.length === 0 ? (
                                 <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/50 p-4 text-sm text-slate-400">
                                     No MCP servers registered yet.
                                 </div>
@@ -1457,7 +1603,9 @@ export function DashboardHomeView({
                             </div>
 
                             <div className="mt-4 space-y-3">
-                                {traffic.length === 0 ? (
+                                {trafficError ? (
+                                    <p className="text-sm text-rose-300">{trafficError}</p>
+                                ) : traffic.length === 0 ? (
                                     <p className="text-sm text-slate-400">No router traffic captured yet.</p>
                                 ) : traffic.slice(0, 5).map((event, index) => (
                                     <div key={`${event.server}-${event.method}-${event.timestamp}-${index}`} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 text-sm">
@@ -1498,7 +1646,11 @@ export function DashboardHomeView({
                         </div>
 
                         <div className="mt-6 space-y-3">
-                            {sessions.length === 0 ? (
+                            {sessionsError ? (
+                                <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+                                    {sessionsError}
+                                </div>
+                            ) : sessions.length === 0 ? (
                                 <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/50 p-4 text-sm text-slate-400">
                                     No supervised sessions are active yet.
                                 </div>
@@ -1601,7 +1753,11 @@ export function DashboardHomeView({
                         </div>
 
                         <div className="mt-6 space-y-3">
-                            {providers.length === 0 ? (
+                            {providersError ? (
+                                <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+                                    {providersError}
+                                </div>
+                            ) : providers.length === 0 ? (
                                 <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/50 p-4 text-sm text-slate-400">
                                     No provider data available yet. Configure an API key or OAuth-backed provider in Billing to unlock fallback routing.
                                 </div>
@@ -1650,7 +1806,9 @@ export function DashboardHomeView({
                         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
                             <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Fallback chain</h3>
                             <div className="mt-4 space-y-2">
-                                {fallbackChain.length === 0 ? (
+                                {fallbackChainError ? (
+                                    <p className="text-sm text-rose-300">{fallbackChainError}</p>
+                                ) : fallbackChain.length === 0 ? (
                                     <p className="text-sm text-slate-400">No fallback chain is exposed yet. Configure providers to populate the routing order.</p>
                                 ) : fallbackChain.map((entry) => (
                                     <div key={`${entry.priority}-${entry.provider}-${entry.model ?? 'default'}`} className="flex items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-sm">

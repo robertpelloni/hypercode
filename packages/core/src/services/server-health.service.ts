@@ -6,6 +6,7 @@ import {
 } from "../types/mcp-admin/index.js";
 
 import { mcpServersRepository } from "../db/repositories/index.js";
+import { formatOptionalSqliteFailure, isSqliteUnavailableError } from "../db/sqliteAvailability.js";
 import { configService } from "./config.service.js";
 import { autoReconnectService } from "./auto-reconnect.service.js";
 import { connectMetaMcpClient } from "./mcp-client.service.js";
@@ -45,11 +46,35 @@ export class ServerHealthService {
         return ServerHealthService.instance;
     }
 
+    private buildUnavailableResult(serverUuid: string, startTime: number, checkedAt: string, error: unknown): HealthCheckResult {
+        return {
+            serverUuid,
+            success: false,
+            responseTimeMs: Date.now() - startTime,
+            errorMessage: formatOptionalSqliteFailure(
+                "Server health persistence is unavailable",
+                error,
+            ),
+            checkedAt,
+        };
+    }
+
     async checkServerHealth(serverUuid: string): Promise<HealthCheckResult> {
         const startTime = Date.now();
         const checkedAt = new Date().toISOString();
 
-        const server = await mcpServersRepository.findByUuid(serverUuid);
+        let server;
+        try {
+            server = await mcpServersRepository.findByUuid(serverUuid);
+        } catch (error) {
+            if (isSqliteUnavailableError(error)) {
+                const result = this.buildUnavailableResult(serverUuid, startTime, checkedAt, error);
+                this.setServerStatus(serverUuid, serverUuid, "UNKNOWN");
+                return result;
+            }
+
+            throw error;
+        }
         if (!server) {
             return {
                 serverUuid,
@@ -190,8 +215,26 @@ export class ServerHealthService {
         let uuidsToCheck = serverUuids;
 
         if (!uuidsToCheck || uuidsToCheck.length === 0) {
-            const allServers = await mcpServersRepository.findAll();
-            uuidsToCheck = allServers.map((s) => s.uuid);
+            try {
+                const allServers = await mcpServersRepository.findAll();
+                uuidsToCheck = allServers.map((s) => s.uuid);
+            } catch (error) {
+                if (isSqliteUnavailableError(error)) {
+                    this.lastFullCheckAt = new Date();
+                    return [{
+                        serverUuid: "catalog",
+                        success: false,
+                        responseTimeMs: 0,
+                        errorMessage: formatOptionalSqliteFailure(
+                            "Server health persistence is unavailable",
+                            error,
+                        ),
+                        checkedAt: new Date().toISOString(),
+                    }];
+                }
+
+                throw error;
+            }
         }
 
         const results = await Promise.allSettled(

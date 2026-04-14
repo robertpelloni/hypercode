@@ -9,7 +9,7 @@ import { createFakeDetectEnvironment, createSpawnStub, FakeProcess } from './tes
 const tempDirs: string[] = [];
 
 function createTempDir() {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-session-supervisor-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-session-supervisor-'));
     tempDirs.push(dir);
     return dir;
 }

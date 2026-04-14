@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { ComponentType } from 'react';
 import Link from 'next/link';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '@borg/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@hypercode/ui';
 import { Bot, Cable, Check, Copy, Download, ExternalLink, FileJson, FolderCode, Globe, Loader2, Puzzle, RefreshCcw, Settings2, Sparkles, TerminalSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageStatusBanner } from '@/components/PageStatusBanner';
@@ -107,16 +107,28 @@ export default function IntegrationsDashboard() {
         isPending: boolean;
         mutate: (input: { client: SupportedClient }) => void;
     };
+    const previewErrorMessage = (previewQuery as { error?: { message?: string } }).error?.message ?? null;
+    const startupStatusUnavailable = startupStatusQuery.isError || (startupStatusQuery.data !== undefined && (!startupStatusQuery.data || typeof startupStatusQuery.data !== 'object' || Array.isArray(startupStatusQuery.data)));
+    const browserStatusUnavailable = browserStatusQuery.isError || (browserStatusQuery.data !== undefined && (!browserStatusQuery.data || typeof browserStatusQuery.data !== 'object' || Array.isArray(browserStatusQuery.data)));
+    const syncTargetsUnavailable = syncTargetsQuery.isError || (syncTargetsQuery.data !== undefined && !Array.isArray(syncTargetsQuery.data));
+    const cliDetectionsUnavailable = cliDetectionsQuery.isError || (cliDetectionsQuery.data !== undefined && !Array.isArray(cliDetectionsQuery.data));
+    const installArtifactsUnavailable = installArtifactsQuery.isError || (installArtifactsQuery.data !== undefined && !Array.isArray(installArtifactsQuery.data));
+    const previewUnavailable = Boolean(previewErrorMessage) || (previewQuery.data !== undefined && (!previewQuery.data || typeof previewQuery.data !== 'object' || Array.isArray(previewQuery.data) || typeof previewQuery.data.json !== 'string'));
+    const safeStartupStatus = startupStatusUnavailable ? null : startupStatus;
+    const safeBrowserStatus = browserStatusUnavailable ? undefined : browserStatusQuery.data;
+    const safeSyncTargets = syncTargetsUnavailable ? undefined : syncTargetsQuery.data;
+    const safeCliDetections = cliDetectionsUnavailable ? undefined : cliDetectionsQuery.data;
+    const safeInstallArtifacts = installArtifactsUnavailable ? undefined : installArtifactsQuery.data;
 
     const overview = getIntegrationOverview(
-        startupStatus,
-        browserStatusQuery.data,
-        syncTargetsQuery.data,
-        cliDetectionsQuery.data,
+        safeStartupStatus,
+        safeBrowserStatus,
+        safeSyncTargets,
+        safeCliDetections,
     );
-    const clientRows = getExternalClientRows(syncTargetsQuery.data);
-    const connectedBridgeClients = getConnectedBridgeClientRows(startupStatus);
-    const installSurfaceRows = getInstallSurfaceRows(installArtifactsQuery.data);
+    const clientRows = getExternalClientRows(safeSyncTargets);
+    const connectedBridgeClients = getConnectedBridgeClientRows(safeStartupStatus);
+    const installSurfaceRows = getInstallSurfaceRows(safeInstallArtifacts);
     const selectedClientRow = clientRows.find((row) => row.id === selectedSyncClient);
     const isPreviewLoading = previewQuery.isLoading || previewQuery.isRefetching;
     const isSyncing = syncMutation.isPending;
@@ -157,7 +169,7 @@ export default function IntegrationsDashboard() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-white">Integration Hub</h1>
                     <p className="mt-2 max-w-3xl text-zinc-500">
-                        Install Borg into the environments you actually use: browser bridges, VS Code, and MCP-aware clients.
+                        Install HyperCode into the environments you actually use: browser bridges, VS Code, and MCP-aware clients.
                         This page centralizes extension package locations, supported MCP client sync targets, and live bridge readiness so setup is less treasure hunt, more control plane.
                     </p>
                 </div>
@@ -178,39 +190,49 @@ export default function IntegrationsDashboard() {
                 </div>
             </div>
 
+            {startupStatusUnavailable || browserStatusUnavailable || syncTargetsUnavailable || cliDetectionsUnavailable || installArtifactsUnavailable ? (
+                <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-4 text-sm text-red-300 space-y-1">
+                    {startupStatusUnavailable ? <div>{startupStatusQuery.error?.message ?? 'Startup integration status is unavailable.'}</div> : null}
+                    {browserStatusUnavailable ? <div>{browserStatusQuery.error?.message ?? 'Browser runtime status is unavailable.'}</div> : null}
+                    {syncTargetsUnavailable ? <div>{syncTargetsQuery.error?.message ?? 'MCP client target detection is unavailable.'}</div> : null}
+                    {cliDetectionsUnavailable ? <div>{cliDetectionsQuery.error?.message ?? 'CLI harness detection is unavailable.'}</div> : null}
+                    {installArtifactsUnavailable ? <div>{installArtifactsQuery.error?.message ?? 'Install surface artifact detection is unavailable.'}</div> : null}
+                </div>
+            ) : null}
+
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
                 <StatCard
                     title="Extension bridge clients"
-                    value={String(overview.extensionClientCount)}
-                    detail={getBridgeClientStatDetail(overview)}
+                    value={startupStatusUnavailable ? '—' : String(overview.extensionClientCount)}
+                    detail={startupStatusUnavailable ? (startupStatusQuery.error?.message ?? 'Extension bridge status unavailable.') : getBridgeClientStatDetail(overview)}
                     icon={Cable}
                     tone="text-cyan-400"
                 />
                 <StatCard
                     title="Browser runtime"
-                    value={overview.browserRuntimeReady ? 'Ready' : 'Offline'}
-                    detail={`${overview.browserPageCount} active page${overview.browserPageCount === 1 ? '' : 's'} tracked`}
+                    value={browserStatusUnavailable ? 'Unavailable' : overview.browserRuntimeReady ? 'Ready' : 'Offline'}
+                    detail={browserStatusUnavailable ? (browserStatusQuery.error?.message ?? 'Browser runtime status unavailable.') : `${overview.browserPageCount} active page${overview.browserPageCount === 1 ? '' : 's'} tracked`}
                     icon={Globe}
                     tone="text-emerald-400"
                 />
                 <StatCard
                     title="Synced MCP clients"
-                    value={String(overview.syncedClientCount)}
-                    detail="Detected config targets with existing Borg-ready files"
+                    value={syncTargetsUnavailable ? '—' : String(overview.syncedClientCount)}
+                    detail={syncTargetsUnavailable ? (syncTargetsQuery.error?.message ?? 'MCP sync target detection unavailable.') : 'Detected config targets with existing HyperCode-ready files'}
                     icon={Settings2}
                     tone="text-violet-400"
                 />
                 <StatCard
                     title="Installed CLI harnesses"
-                    value={`${overview.installedHarnessCount}/${overview.totalHarnessCount}`}
-                    detail="Local coding harnesses discovered on PATH"
+                    value={cliDetectionsUnavailable ? '—/—' : `${overview.installedHarnessCount}/${overview.totalHarnessCount}`}
+                    detail={cliDetectionsUnavailable ? (cliDetectionsQuery.error?.message ?? 'CLI harness detection unavailable.') : 'Local coding harnesses discovered on PATH'}
                     icon={Bot}
                     tone="text-amber-400"
                 />
                 <StatCard
                     title="Execution environment"
-                    value={overview.executionPreferredShell ?? (overview.executionEnvironmentReady ? 'Ready' : 'Pending')}
-                    detail={`${overview.verifiedExecutionToolCount} verified tools${overview.supportsPosixShell ? ' · POSIX available' : ''}`}
+                    value={startupStatusUnavailable ? 'Unavailable' : overview.executionPreferredShell ?? (overview.executionEnvironmentReady ? 'Ready' : 'Pending')}
+                    detail={startupStatusUnavailable ? (startupStatusQuery.error?.message ?? 'Execution environment status unavailable.') : `${overview.verifiedExecutionToolCount} verified tools${overview.supportsPosixShell ? ' · POSIX available' : ''}`}
                     icon={TerminalSquare}
                     tone="text-emerald-400"
                 />
@@ -219,10 +241,14 @@ export default function IntegrationsDashboard() {
             <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-4">
                 <Card className="bg-zinc-900 border-zinc-800">
                     <CardHeader>
-                        <CardTitle className="text-white">Installable Borg surfaces</CardTitle>
+                        <CardTitle className="text-white">Installable HyperCode surfaces</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {installSurfaceRows.map((surface) => (
+                        {installArtifactsUnavailable ? (
+                            <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-4 text-sm text-red-300">
+                                {installArtifactsQuery.error?.message ?? 'Install surface artifact detection is unavailable.'}
+                            </div>
+                        ) : installSurfaceRows.map((surface) => (
                             <div key={surface.id} className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4 space-y-3">
                                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                                     <div>
@@ -332,7 +358,7 @@ export default function IntegrationsDashboard() {
                             <Settings2 className="mt-0.5 h-4 w-4 text-violet-400" />
                             <div>
                                 <div className="font-medium text-white">Client config sync</div>
-                                <div className="mt-1 text-xs text-zinc-400">Preview and write Borg-managed MCP configs for Claude Desktop, Cursor, and VS Code.</div>
+                                <div className="mt-1 text-xs text-zinc-400">Preview and write HyperCode-managed MCP configs for Claude Desktop, Cursor, and VS Code.</div>
                             </div>
                         </Link>
 
@@ -352,7 +378,11 @@ export default function IntegrationsDashboard() {
                     <CardTitle className="text-white">Connected bridge clients</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {connectedBridgeClients.length === 0 ? (
+                    {startupStatusUnavailable ? (
+                        <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-4 text-sm text-red-300">
+                            {startupStatusQuery.error?.message ?? 'Extension bridge status is unavailable.'}
+                        </div>
+                    ) : connectedBridgeClients.length === 0 ? (
                         <div className="rounded-lg border border-dashed border-zinc-800 bg-zinc-950/50 p-4 text-sm text-zinc-400">
                             {getBridgeClientEmptyStateMessage(overview)}
                         </div>
@@ -414,6 +444,10 @@ export default function IntegrationsDashboard() {
                             <Loader2 className="h-5 w-5 animate-spin" />
                             Checking integration targets…
                         </div>
+                    ) : syncTargetsUnavailable ? (
+                        <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-4 text-sm text-red-300">
+                            {syncTargetsQuery.error?.message ?? 'MCP client target detection is unavailable.'}
+                        </div>
                     ) : (
                         <div className="space-y-3">
                             {clientRows.map((row) => (
@@ -442,7 +476,7 @@ export default function IntegrationsDashboard() {
                                                         onClick={() => setSelectedSyncClient(row.id as SupportedClient)}
                                                     >
                                                         <FileJson className="h-3.5 w-3.5" />
-                                                        Preview Borg config
+                                                        Preview HyperCode config
                                                     </button>
                                                     <button
                                                         type="button"
@@ -451,7 +485,7 @@ export default function IntegrationsDashboard() {
                                                         disabled={isSyncing}
                                                     >
                                                         {isSyncing && selectedSyncClient === row.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                                                        Add Borg as MCP server
+                                                        Add HyperCode as MCP server
                                                     </button>
                                                     <button
                                                         type="button"
@@ -466,7 +500,7 @@ export default function IntegrationsDashboard() {
                                         </div>
                                         <div className="flex items-center gap-2 text-xs text-zinc-400">
                                             <FolderCode className="h-4 w-4" />
-                                            {row.detected ? 'Detected on this machine' : 'Not detected from Borg yet'}
+                                            {row.detected ? 'Detected on this machine' : 'Not detected from HyperCode yet'}
                                         </div>
                                     </div>
                                 </div>
@@ -485,7 +519,7 @@ export default function IntegrationsDashboard() {
                         <div>
                             <div className="text-sm font-medium text-white">{CLIENT_LABELS[selectedSyncClient]}</div>
                             <div className="mt-1 text-xs text-zinc-500">
-                                Preview or write Borg-managed MCP config directly from the Integration Hub without leaving this setup flow.
+                                Preview or write HyperCode-managed MCP config directly from the Integration Hub without leaving this setup flow.
                             </div>
                         </div>
 
@@ -499,12 +533,12 @@ export default function IntegrationsDashboard() {
                             <div>
                                 <div className="text-zinc-500">Current status</div>
                                 <div className="text-zinc-300">
-                                    {selectedClientRow?.detected ? 'Existing config detected' : 'Ready to create Borg-managed config'}
+                                    {selectedClientRow?.detected ? 'Existing config detected' : 'Ready to create HyperCode-managed config'}
                                 </div>
                             </div>
                             <div>
                                 <div className="text-zinc-500">MCP servers included</div>
-                                <div className="text-zinc-300">{previewQuery.data?.serverCount ?? 0}</div>
+                                <div className="text-zinc-300">{previewUnavailable ? '—' : previewQuery.data?.serverCount ?? 0}</div>
                             </div>
                         </div>
 
@@ -521,10 +555,10 @@ export default function IntegrationsDashboard() {
                             <Button
                                 onClick={() => handleSyncClient(selectedSyncClient)}
                                 className="bg-blue-600 hover:bg-blue-500 text-white"
-                                disabled={isPreviewLoading || isSyncing}
+                                disabled={isPreviewLoading || isSyncing || syncTargetsUnavailable || previewUnavailable}
                             >
                                 {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                                Add Borg as MCP server
+                                Add HyperCode as MCP server
                             </Button>
                         </div>
                     </div>
@@ -534,10 +568,14 @@ export default function IntegrationsDashboard() {
                             <div>
                                 <div className="text-sm font-medium text-white">Generated preview</div>
                                 <div className="text-xs text-zinc-500">
-                                    This is the exact JSON Borg will merge into {CLIENT_LABELS[selectedSyncClient]}.
+                                    This is the exact JSON HyperCode will merge into {CLIENT_LABELS[selectedSyncClient]}.
                                 </div>
                             </div>
-                            {previewQuery.data?.existed ? (
+                            {previewUnavailable ? (
+                                <span className="rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-xs text-red-300">
+                                    preview unavailable
+                                </span>
+                            ) : previewQuery.data?.existed ? (
                                 <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs text-emerald-300">
                                     merging into existing file
                                 </span>
@@ -551,6 +589,10 @@ export default function IntegrationsDashboard() {
                         {isPreviewLoading ? (
                             <div className="flex justify-center p-12">
                                 <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+                            </div>
+                        ) : previewUnavailable ? (
+                            <div className="rounded-md border border-red-900/40 bg-red-950/20 p-6 text-sm text-red-300">
+                                {previewErrorMessage ?? 'Client config preview is unavailable.'}
                             </div>
                         ) : previewQuery.data ? (
                             <pre className="max-h-[520px] overflow-auto rounded-md border border-zinc-800 bg-black/30 p-4 text-xs text-zinc-200">

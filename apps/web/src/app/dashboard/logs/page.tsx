@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { PageStatusBanner } from '@/components/PageStatusBanner';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@borg/ui";
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@hypercode/ui";
 import { Activity, Trash2, Search, RefreshCcw, BarChart3, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -29,12 +29,12 @@ export default function LogsDashboard() {
         ...(sessionIdFilter.trim().length > 0 ? { sessionId: sessionIdFilter.trim() } : {}),
     };
 
-    const { data: summary, refetch: refetchSummary, isFetching: isFetchingSummary } = trpc.logs.summary.useQuery(
+    const summaryQuery = trpc.logs.summary.useQuery(
         { limit: 5000 },
         { refetchInterval: autoRefresh ? 10_000 : false },
     );
 
-    const { data: logs, refetch: refetchLogs, isFetching: isFetchingLogs } = trpc.logs.list.useQuery(
+    const logsQuery = trpc.logs.list.useQuery(
         listQueryInput,
         { refetchInterval: autoRefresh ? 5_000 : false },
     );
@@ -49,13 +49,17 @@ export default function LogsDashboard() {
     });
 
     const handleRefresh = async () => {
-        await Promise.all([refetchSummary(), refetchLogs()]);
+        await Promise.all([summaryQuery.refetch(), logsQuery.refetch()]);
         toast.success("Logs refreshed");
     };
 
-    const isRefreshing = isFetchingSummary || isFetchingLogs;
-    const normalizedSummary = normalizeLogSummary(summary);
-    const normalizedLogs = normalizeLogEntries(logs);
+    const isRefreshing = summaryQuery.isFetching || logsQuery.isFetching;
+    const summaryUnavailable = summaryQuery.isError || (summaryQuery.data !== undefined && (!summaryQuery.data || typeof summaryQuery.data !== 'object' || Array.isArray(summaryQuery.data)));
+    const logsUnavailable = logsQuery.isError || (logsQuery.data !== undefined && !Array.isArray(logsQuery.data));
+    const normalizedSummary = !summaryUnavailable ? normalizeLogSummary(summaryQuery.data) : normalizeLogSummary(undefined);
+    const normalizedLogs = !logsUnavailable ? normalizeLogEntries(logsQuery.data) : [];
+    const logsErrorMessage = logsQuery.error?.message ?? 'Execution log history is unavailable.';
+    const summaryErrorMessage = summaryQuery.error?.message ?? 'Execution log summary is unavailable.';
 
     const filteredLogs = filterLogEntriesByLevel(filterLogEntries(normalizedLogs, searchQuery), levelFilter);
     const topTools = normalizedSummary.topTools;
@@ -104,6 +108,13 @@ export default function LogsDashboard() {
                 </div>
             </div>
 
+            {summaryUnavailable || logsUnavailable ? (
+                <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-4 text-sm text-red-300 space-y-1">
+                    {summaryUnavailable ? <div>{summaryErrorMessage}</div> : null}
+                    {logsUnavailable ? <div>{logsErrorMessage}</div> : null}
+                </div>
+            ) : null}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Card className="bg-zinc-900 border-zinc-800">
                     <CardContent className="p-6">
@@ -112,7 +123,7 @@ export default function LogsDashboard() {
                             <Activity className="h-4 w-4 text-blue-500" />
                         </div>
                         <div className="text-3xl font-bold text-white mb-1">
-                            {normalizedSummary.totals.totalCalls}
+                            {summaryUnavailable ? '—' : normalizedSummary.totals.totalCalls}
                         </div>
                     </CardContent>
                 </Card>
@@ -123,7 +134,7 @@ export default function LogsDashboard() {
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                         </div>
                         <div className="text-3xl font-bold text-white mb-1">
-                            {normalizedSummary.totals.successRate}%
+                            {summaryUnavailable ? '—' : `${normalizedSummary.totals.successRate}%`}
                         </div>
                     </CardContent>
                 </Card>
@@ -134,7 +145,7 @@ export default function LogsDashboard() {
                             <AlertTriangle className="h-4 w-4 text-red-500" />
                         </div>
                         <div className="text-3xl font-bold text-white mb-1">
-                            {normalizedSummary.totals.errorCount}
+                            {summaryUnavailable ? '—' : normalizedSummary.totals.errorCount}
                         </div>
                     </CardContent>
                 </Card>
@@ -145,7 +156,7 @@ export default function LogsDashboard() {
                             <Clock className="h-4 w-4 text-purple-500" />
                         </div>
                         <div className="text-3xl font-bold text-white mb-1">
-                            {normalizedSummary.totals.avgDurationMs > 0 ? formatDuration(normalizedSummary.totals.avgDurationMs) : '0ms'}
+                            {summaryUnavailable ? '—' : normalizedSummary.totals.avgDurationMs > 0 ? formatDuration(normalizedSummary.totals.avgDurationMs) : '0ms'}
                         </div>
                     </CardContent>
                 </Card>
@@ -176,7 +187,7 @@ export default function LogsDashboard() {
                             className="lg:col-span-3 bg-zinc-900 border-zinc-800 text-white"
                         />
                         <div className="flex items-center gap-2 text-sm text-zinc-500 lg:col-span-3 justify-end">
-                            <span>Showing {filteredLogs.length} of {normalizedLogs.length}</span>
+                            <span>{logsUnavailable ? 'Showing — of —' : `Showing ${filteredLogs.length} of ${normalizedLogs.length}`}</span>
                             <select 
                                 value={limit} 
                                 onChange={(e) => setLimit(Number(e.target.value))}
@@ -216,7 +227,13 @@ export default function LogsDashboard() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {filteredLogs.length === 0 ? (
+                                    {logsUnavailable ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="h-32 text-center text-red-300">
+                                                {logsErrorMessage}
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : filteredLogs.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={7} className="h-32 text-center text-zinc-500">
                                                 No logs found.
@@ -278,7 +295,9 @@ export default function LogsDashboard() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                {topTools.length === 0 ? (
+                                {summaryUnavailable ? (
+                                    <div className="text-center text-sm text-red-300 py-4">{summaryErrorMessage}</div>
+                                ) : topTools.length === 0 ? (
                                     <div className="text-center text-sm text-zinc-600 py-4">No tool activity recorded yet.</div>
                                 ) : (
                                     topTools.map((tool) => (

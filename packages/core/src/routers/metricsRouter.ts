@@ -1,6 +1,21 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { t, getMcpServer } from '../lib/trpc-core.js';
 import os from 'os';
+
+type ProviderBreakdownEntry = {
+    provider: string;
+    cost: number;
+    requests: number;
+};
+
+type ProviderBreakdownResult = {
+    totalCost: number | null;
+    totalRequests: number | null;
+    averageLatency: number | null;
+    providers: ProviderBreakdownEntry[];
+    error?: string;
+};
 
 export const metricsRouter = t.router({
     /** Get aggregated metric stats for a time window */
@@ -84,7 +99,7 @@ export const metricsRouter = t.router({
             const quota = server.llmService.modelSelector.getQuotaService();
             const breakdown = quota.getUsageByModel();
 
-            return {
+            const result: ProviderBreakdownResult = {
                 totalCost: costStats.estimatedCostUSD,
                 totalRequests: costStats.totalRequests ?? 0,
                 averageLatency: costStats.averageLatencyMs ?? 0,
@@ -92,13 +107,16 @@ export const metricsRouter = t.router({
                     { provider: 'No Usage Yet', cost: 0, requests: 0 }
                 ],
             };
-        } catch {
+            return result;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
             return {
-                totalCost: 0,
-                totalRequests: 0,
-                averageLatency: 0,
-                providers: [{ provider: 'System Starting', cost: 0, requests: 0 }],
-            };
+                totalCost: null,
+                totalRequests: null,
+                averageLatency: null,
+                providers: [],
+                error: `Provider metrics unavailable: ${message}`,
+            } satisfies ProviderBreakdownResult;
         }
     }),
 
@@ -128,8 +146,12 @@ export const metricsRouter = t.router({
             const history = server.llmService.getRoutingHistory();
             const limit = input?.limit ?? 20;
             return history.slice(0, limit);
-        } catch {
-            return [];
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `Routing history is unavailable: ${message}`,
+            });
         }
     }),
 });

@@ -1,6 +1,6 @@
 {
-  "name": "@borg/browser-legacy",
-  "version": "0.99.1",
+  "name": "@hypercode/browser-legacy",
+  "version": "1.0.0-alpha.1",
   "scripts": {
     "build": "webpack --config webpack.config.js"
   },

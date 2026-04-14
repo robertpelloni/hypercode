@@ -1,9 +1,11 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import fs from 'node:fs/promises';
 import { t, publicProcedure, adminProcedure, getMcpAggregator, getMcpServer } from '../lib/trpc-core.js';
 import { mcpServerPool } from '../services/mcp-server-pool.service.js';
 import { getCachedToolInventory } from '../mcp/cachedToolInventory.js';
 import { parseNamespacedToolName } from '../mcp/namespaces.js';
+import { isSqliteUnavailableError } from '../db/sqliteAvailability.js';
 import {
     evaluateAutoLoadCandidate,
     rankToolSearchCandidates,
@@ -19,6 +21,7 @@ import {
     readToolPreferencesFromSettings,
     type ToolPreferences,
 } from './mcp-tool-preferences.js';
+import { rethrowSqliteUnavailableAsTrpc } from './sqliteTrpc.js';
 
 type McpToolCallResult = {
     content?: Array<{ type?: string; text?: string }>;
@@ -325,8 +328,15 @@ export const mcpRouter = t.router({
                     },
                 };
             });
-        } catch {
-            return [];
+        } catch (error) {
+            if (isSqliteUnavailableError(error)) {
+                rethrowSqliteUnavailableAsTrpc('MCP inventory is unavailable', error);
+            }
+            const message = error instanceof Error ? error.message : String(error);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `MCP inventory is unavailable: ${message}`,
+            });
         }
     }),
 
@@ -354,8 +364,15 @@ export const mcpRouter = t.router({
                 alwaysOn: Boolean(tool.alwaysOn),
                 inputSchema: tool.inputSchema ?? null,
             }));
-        } catch {
-            return [];
+        } catch (error) {
+            if (isSqliteUnavailableError(error)) {
+                rethrowSqliteUnavailableAsTrpc('MCP inventory is unavailable', error);
+            }
+            const message = error instanceof Error ? error.message : String(error);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `MCP inventory is unavailable: ${message}`,
+            });
         }
     }),
 
@@ -363,8 +380,12 @@ export const mcpRouter = t.router({
         const aggregator = getMcpAggregator();
         try {
             return await aggregator?.getTrafficEvents?.() ?? [];
-        } catch {
-            return [];
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `MCP traffic is unavailable: ${message}`,
+            });
         }
     }),
 
@@ -834,16 +855,20 @@ export const mcpRouter = t.router({
             });
 
             return mergeToolPreferences(mappedLiveTools, preferences, tools);
-        } catch {
+        } catch (error) {
             toolSelectionTelemetry.record({
                 type: 'search',
                 query: input.query,
                 profile: input.profile,
                 latencyMs: toLatencyMs(searchStartedAt),
                 status: 'error',
-                message: 'search failed',
+                message: error instanceof Error ? error.message : 'search failed',
             });
-            return [];
+            const message = error instanceof Error ? error.message : String(error);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `MCP tool search is unavailable: ${message}`,
+            });
         }
     }),
 
@@ -894,8 +919,12 @@ export const mcpRouter = t.router({
                 idleEvicted: boolean;
                 idleDurationMs: number;
             }>>(result, []);
-        } catch {
-            return [];
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `MCP eviction history is unavailable: ${message}`,
+            });
         }
     }),
 
@@ -912,11 +941,12 @@ export const mcpRouter = t.router({
                 ok: true,
                 message: getToolTextContent(result) || 'Eviction history cleared.',
             };
-        } catch {
-            return {
-                ok: false,
-                message: 'Failed to clear eviction history.',
-            };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `Failed to clear eviction history: ${message}`,
+            });
         }
     }),
 
@@ -931,7 +961,7 @@ export const mcpRouter = t.router({
                 const fallbackConfig = await loadBorgMcpConfig();
                 return {
                     path: jsoncPath,
-                    content: `// Borg MCP configuration\n${JSON.stringify(fallbackConfig, null, 2)}\n`,
+                    content: `// HyperCode MCP configuration\n${JSON.stringify(fallbackConfig, null, 2)}\n`,
                 };
             }
             throw error;
@@ -986,9 +1016,9 @@ export const mcpRouter = t.router({
                 }
                 : {},
             target: input.targetKind === 'router'
-                ? 'borg-router'
+                ? 'hypercode-router'
                 : input.serverName ?? 'unknown-server',
-            via: input.targetKind === 'router' ? 'borg-router' : 'direct-downstream',
+            via: input.targetKind === 'router' ? 'hypercode-router' : 'direct-downstream',
         };
 
         if (input.targetKind === 'server' && !input.serverName) {
@@ -1018,9 +1048,9 @@ export const mcpRouter = t.router({
                 success: false,
                 target: {
                     kind: input.targetKind,
-                    displayName: input.targetKind === 'router' ? 'Borg router' : input.serverName ?? 'Unknown downstream server',
+                    displayName: input.targetKind === 'router' ? 'HyperCode router' : input.serverName ?? 'Unknown downstream server',
                     serverName: input.serverName ?? null,
-                    via: input.targetKind === 'router' ? 'borg-router' : 'direct-downstream',
+                    via: input.targetKind === 'router' ? 'hypercode-router' : 'direct-downstream',
                 },
                 operation: input.operation,
                 startedAt,
@@ -1045,7 +1075,7 @@ export const mcpRouter = t.router({
                 } | null;
 
                 if (!aggregator) {
-                    throw new Error('Borg MCP router is not initialized.');
+                    throw new Error('HyperCode MCP router is not initialized.');
                 }
 
                 if (input.operation === 'tools/list') {
@@ -1086,9 +1116,9 @@ export const mcpRouter = t.router({
                 success: true,
                 target: {
                     kind: input.targetKind,
-                    displayName: input.targetKind === 'router' ? 'Borg router' : input.serverName!,
+                    displayName: input.targetKind === 'router' ? 'HyperCode router' : input.serverName!,
                     serverName: input.serverName ?? null,
-                    via: input.targetKind === 'router' ? 'borg-router' : 'direct-downstream',
+                    via: input.targetKind === 'router' ? 'hypercode-router' : 'direct-downstream',
                 },
                 operation: input.operation,
                 startedAt,
@@ -1114,9 +1144,9 @@ export const mcpRouter = t.router({
                 success: false,
                 target: {
                     kind: input.targetKind,
-                    displayName: input.targetKind === 'router' ? 'Borg router' : input.serverName ?? 'Unknown downstream server',
+                    displayName: input.targetKind === 'router' ? 'HyperCode router' : input.serverName ?? 'Unknown downstream server',
                     serverName: input.serverName ?? null,
-                    via: input.targetKind === 'router' ? 'borg-router' : 'direct-downstream',
+                    via: input.targetKind === 'router' ? 'hypercode-router' : 'direct-downstream',
                 },
                 operation: input.operation,
                 startedAt,
@@ -1335,27 +1365,15 @@ export const mcpRouter = t.router({
                     events: lifecycleEvents,
                 },
             };
-        } catch {
-            return {
-                initialized: false,
-                aggregatorStatus: aggregator?.getInitializationStatus?.() ?? null,
-                serverCount: 0,
-                toolCount: 0,
-                connectedCount: 0,
-                pool: {
-                    idle: poolStatus.idle,
-                    active: poolStatus.active,
-                    activeSessionCount: poolStatus.activeSessionIds.length,
-                    currentActiveServerUuid: poolStatus.currentActiveServerUuid,
-                    currentActiveServerName: null,
-                    lastActiveServerSwitchAt: poolStatus.lastActiveServerSwitchAt,
-                },
-                lifecycle: {
-                    lazySessionMode: lifecycleModes.lazySessionMode,
-                    singleActiveServerMode: lifecycleModes.singleActiveServerMode,
-                    events: lifecycleEvents,
-                },
-            };
+        } catch (error) {
+            if (isSqliteUnavailableError(error)) {
+                rethrowSqliteUnavailableAsTrpc('MCP inventory is unavailable', error);
+            }
+            const message = error instanceof Error ? error.message : String(error);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `MCP status is unavailable: ${message}`,
+            });
         }
     }),
 

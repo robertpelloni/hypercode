@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from 'react';
 import mermaid from 'mermaid';
-import { Card, CardContent, CardHeader, CardTitle } from "@borg/ui";
-import { Badge } from "@borg/ui";
-import { Button } from "@borg/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@hypercode/ui";
+import { Badge } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
 import { Maximize2, Download, RefreshCw, Eye } from "lucide-react";
 
 interface VisualArchitectureProps {

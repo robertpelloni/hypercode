@@ -2,32 +2,40 @@
 
 import React, { useMemo } from 'react';
 import { trpc } from '@/utils/trpc';
-import { KnowledgeGraph } from '@borg/ui';
+import { KnowledgeGraph } from '@hypercode/ui';
 import { motion } from 'framer-motion';
 
 export function GraphWidget() {
-    const { data, isLoading, refetch } = trpc.graph.get.useQuery(undefined, {
+    const { data, isLoading, error, refetch } = trpc.graph.get.useQuery(undefined, {
         refetchInterval: 10000,
         refetchOnWindowFocus: false
     });
+    const graphUnavailable = Boolean(error)
+        || (data !== undefined && (
+            !data
+            || typeof data !== 'object'
+            || !Array.isArray((data as { nodes?: unknown }).nodes)
+            || !Array.isArray((data as { links?: unknown }).links)
+        ));
+    const graphData = !graphUnavailable ? data : undefined;
 
     const mappedData = useMemo(() => {
-        if (!data) return { nodes: [], links: [] };
+        if (!graphData) return { nodes: [], links: [] };
 
         return {
-            nodes: data.nodes.map((n: any) => ({
+            nodes: graphData.nodes.map((n: any) => ({
                 id: n.id,
                 label: n.name || n.id.split('/').pop() || n.id,
                 type: (n.group === 1 ? 'topic' : (n.group === 2 ? 'document' : 'concept')) as 'topic' | 'document' | 'concept',
                 val: n.val || 5
             })),
-            links: data.links.map((l: any) => ({
+            links: graphData.links.map((l: any) => ({
                 source: l.source,
                 target: l.target,
                 value: l.value || 1
             }))
         };
-    }, [data]);
+    }, [graphData]);
 
     const openFile = async (rawPath: string) => {
         if (!rawPath) {
@@ -65,10 +73,10 @@ export function GraphWidget() {
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] px-2 py-1 bg-indigo-500/20 text-indigo-400 rounded-full font-mono">
-                            {nodeCount} nodes
+                            {graphUnavailable ? '—' : nodeCount} nodes
                         </span>
                         <span className="text-[10px] px-2 py-1 bg-violet-500/20 text-violet-400 rounded-full font-mono">
-                            {linkCount} links
+                            {graphUnavailable ? '—' : linkCount} links
                         </span>
                         <button
                             onClick={() => refetch()}
@@ -88,6 +96,12 @@ export function GraphWidget() {
                                 transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
                                 className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full"
                             />
+                        </div>
+                    ) : graphUnavailable ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-rose-300">
+                            <span className="text-5xl mb-3 opacity-70">🌐</span>
+                            <p className="text-sm">Graph unavailable</p>
+                            <p className="text-[10px] px-6 text-center text-rose-200/80">{error?.message ?? 'Graph returned an invalid payload.'}</p>
                         </div>
                     ) : nodeCount === 0 ? (
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600">

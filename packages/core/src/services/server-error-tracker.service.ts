@@ -1,5 +1,6 @@
 import { McpServerErrorStatusEnum } from "../types/mcp-admin/index.js";
 import { mcpServersRepository } from "../db/repositories/index.js";
+import { formatOptionalSqliteFailure, isSqliteUnavailableError } from "../db/sqliteAvailability.js";
 import { configService } from "./config.service.js";
 
 export interface ServerCrashInfo {
@@ -51,10 +52,10 @@ export class ServerErrorTracker {
         try {
             return await configService.getMcpMaxAttempts();
         } catch (error) {
-            console.warn(
-                "Failed to get MCP max attempts from config, using fallback:",
+            console.warn(formatOptionalSqliteFailure(
+                "[ServerErrorTracker] Failed to get MCP max attempts from config, using fallback",
                 error,
-            );
+            ));
             return this.fallbackMaxAttempts;
         }
     }
@@ -104,7 +105,10 @@ export class ServerErrorTracker {
                     crashInfo,
                 );
             } catch (error) {
-                console.error(`Failed to mark server ${serverUuid} as ERROR:`, error);
+                console.error(formatOptionalSqliteFailure(
+                    `[ServerErrorTracker] Failed to mark server ${serverUuid} as ERROR`,
+                    error,
+                ));
             }
         }
     }
@@ -122,7 +126,7 @@ export class ServerErrorTracker {
 
             console.error(`Server ${serverUuid} marked as ERROR at server level`);
         } catch (error) {
-            console.error(`Error marking server ${serverUuid} as ERROR:`, error);
+            throw error;
         }
     }
 
@@ -148,10 +152,13 @@ export class ServerErrorTracker {
             const server = await mcpServersRepository.findByUuid(serverUuid);
             return server?.error_status === McpServerErrorStatusEnum.Enum.ERROR;
         } catch (error) {
-            console.error(
-                `Error checking server error state for ${serverUuid}:`,
+            if (isSqliteUnavailableError(error)) {
+                throw error;
+            }
+            console.warn(formatOptionalSqliteFailure(
+                `[ServerErrorTracker] Error checking server error state for ${serverUuid}`,
                 error,
-            );
+            ));
             return false;
         }
     }
@@ -172,10 +179,10 @@ export class ServerErrorTracker {
 
             console.info(`Reset error state for server ${serverUuid}`);
         } catch (error) {
-            console.error(
-                `Error resetting error state for server ${serverUuid}:`,
+            console.warn(formatOptionalSqliteFailure(
+                `[ServerErrorTracker] Error resetting error state for ${serverUuid}`,
                 error,
-            );
+            ));
         }
     }
 }

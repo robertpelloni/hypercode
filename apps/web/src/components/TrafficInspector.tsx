@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
-import { createReconnectPolicy, getReconnectDelayMs, resolveCoreWsUrl, shouldRetryReconnect } from '@borg/ui';
+import { createReconnectPolicy, getReconnectDelayMs, resolveCoreWsUrl, shouldRetryReconnect } from '@hypercode/ui';
 import { trpc } from '@/utils/trpc';
 
 interface Packet {
@@ -106,7 +106,7 @@ export function TrafficInspector() {
                 wsRef.current.close();
             }
 
-            // Connect to Borg Core Bridge
+            // Connect to HyperCode Core Bridge
             const ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
@@ -315,7 +315,9 @@ export function TrafficInspector() {
             {/* Packet Stream */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2 font-mono text-sm">
                 {filteredPackets.length === 0 && (
-                    <div className="text-zinc-600 text-center mt-20">Waiting for traffic...</div>
+                    <div className="text-zinc-600 text-center mt-20">
+                        {isConnected ? 'Waiting for traffic...' : 'Traffic feed unavailable. Reconnecting to the live stream...'}
+                    </div>
                 )}
                 {filteredPackets.map((p, i) => (
                     <PacketRow key={`${p.id}-${p.type}-${i}`} packet={p} />

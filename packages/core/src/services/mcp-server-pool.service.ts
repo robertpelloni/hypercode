@@ -4,6 +4,7 @@ import { configService } from "./config.service.js";
 import { autoReconnectService } from "./auto-reconnect.service.js";
 import { ConnectedClient, connectMetaMcpClient } from "./mcp-client.service.js";
 import { serverErrorTracker } from "./server-error-tracker.service.js";
+import { formatOptionalSqliteFailure, isSqliteUnavailableError } from "../db/sqliteAvailability.js";
 
 export interface McpServerPoolStatus {
     idle: number;
@@ -61,6 +62,7 @@ export class McpServerPool {
 
     // Session cleanup timer
     private cleanupTimer: NodeJS.Timeout | null = null;
+    private sqliteCleanupUnavailableLogged = false;
 
     // Default number of idle sessions per server UUID
     private readonly defaultIdleCount: number;
@@ -864,6 +866,7 @@ export class McpServerPool {
     private async cleanupExpiredSessions(): Promise<void> {
         try {
             const sessionLifetime = await configService.getSessionLifetime();
+            this.sqliteCleanupUnavailableLogged = false;
 
             // If session lifetime is null, sessions are infinite - skip cleanup
             if (sessionLifetime === null) {
@@ -894,6 +897,16 @@ export class McpServerPool {
                 );
             }
         } catch (error) {
+            if (isSqliteUnavailableError(error)) {
+                if (!this.sqliteCleanupUnavailableLogged) {
+                    console.warn(formatOptionalSqliteFailure(
+                        "[McpServerPool] Skipping automatic session cleanup",
+                        error,
+                    ));
+                    this.sqliteCleanupUnavailableLogged = true;
+                }
+                return;
+            }
             console.error("Error during automatic session cleanup:", error);
         }
     }

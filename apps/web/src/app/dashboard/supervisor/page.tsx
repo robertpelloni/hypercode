@@ -2,10 +2,10 @@
 
 import { trpc } from "@/utils/trpc";
 import { useState } from 'react';
-import { Card } from '@borg/ui';
-import { Button } from '@borg/ui';
-import { Input } from '@borg/ui';
-import { Textarea } from '@borg/ui';
+import { Card } from '@hypercode/ui';
+import { Button } from '@hypercode/ui';
+import { Input } from '@hypercode/ui';
+import { Textarea } from '@hypercode/ui';
 import {
     normalizeSupervisorAutonomyLevel,
     normalizeSupervisorPlan,
@@ -19,11 +19,13 @@ export default function SupervisorPage() {
     const [plan, setPlan] = useState<NormalizedSupervisorTask[] | null>(null);
     const [executionLog, setExecutionLog] = useState<string>('');
     const [isExecuting, setIsExecuting] = useState(false);
+    const [planUnavailableMessage, setPlanUnavailableMessage] = useState<string | null>(null);
 
     const decomposeMutation = trpc.supervisor.decompose.useMutation();
     const superviseMutation = trpc.supervisor.supervise.useMutation();
 
-    const { data: autonomyLevel, refetch: refetchAutonomy } = trpc.autonomy.getLevel.useQuery();
+    const autonomyQuery = trpc.autonomy.getLevel.useQuery();
+    const { data: autonomyLevel, refetch: refetchAutonomy } = autonomyQuery;
     const setAutonomyMutation = trpc.autonomy.setLevel.useMutation({
         onSuccess: () => refetchAutonomy()
     });
@@ -35,13 +37,21 @@ export default function SupervisorPage() {
     });
 
     const normalizedAutonomyLevel = normalizeSupervisorAutonomyLevel(autonomyLevel);
+    const autonomyUnavailable = autonomyQuery.isError;
 
     const handleDecompose = async () => {
         if (!goal) return;
         try {
             const result = await decomposeMutation.mutateAsync({ goal });
+            if (!Array.isArray(result)) {
+                setPlan([]);
+                setPlanUnavailableMessage('Supervisor plan unavailable due to malformed data.');
+                return;
+            }
             setPlan(normalizeSupervisorPlan(result));
+            setPlanUnavailableMessage(null);
         } catch (e: any) {
+            setPlanUnavailableMessage(`Supervisor plan unavailable: ${e.message}`);
             setExecutionLog(prev => prev + `\n[Error] Decomposition failed: ${e.message}`);
         }
     };
@@ -79,7 +89,7 @@ export default function SupervisorPage() {
                 <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg p-3 gap-4 items-center">
                     <div className="flex flex-col">
                         <span className="text-xs text-zinc-400 font-medium">Autonomy Level</span>
-                        <div className="text-sm font-bold text-white uppercase">{normalizedAutonomyLevel}</div>
+                        <div className="text-sm font-bold text-white uppercase">{autonomyUnavailable ? 'unavailable' : normalizedAutonomyLevel}</div>
                     </div>
                     <div className="flex gap-2">
                         <select
@@ -88,7 +98,7 @@ export default function SupervisorPage() {
                                 const selectedLevel = normalizeSupervisorAutonomyLevel(e.target.value) as SupervisorAutonomyLevel;
                                 setAutonomyMutation.mutate({ level: selectedLevel });
                             }}
-                            disabled={setAutonomyMutation.isPending}
+                            disabled={setAutonomyMutation.isPending || autonomyUnavailable}
                             className="bg-zinc-950 border border-zinc-700 text-xs rounded px-2 py-1 text-zinc-300"
                         >
                             <option value="low">Low (Requires Approval)</option>
@@ -98,13 +108,19 @@ export default function SupervisorPage() {
                         <Button
                             variant="destructive" size="sm" className="h-7 text-xs"
                             onClick={() => activateFullMutation.mutate()}
-                            disabled={activateFullMutation.isPending || normalizedAutonomyLevel === 'high'}
+                            disabled={activateFullMutation.isPending || autonomyUnavailable || normalizedAutonomyLevel === 'high'}
                         >
                             Activate Full
                         </Button>
                     </div>
                 </div>
             </div>
+
+            {autonomyUnavailable ? (
+                <div className="rounded-md border border-red-500/30 bg-red-950/20 px-3 py-2 text-sm text-red-300">
+                    Autonomy level unavailable: {autonomyQuery.error.message}
+                </div>
+            ) : null}
 
             <Card className="p-6 space-y-4">
                 <h2 className="text-xl font-semibold">Mission Control</h2>
@@ -129,7 +145,12 @@ export default function SupervisorPage() {
                 <Card className="p-6 flex flex-col gap-4 overflow-hidden">
                     <h3 className="font-semibold border-b pb-2">Proposed Plan</h3>
                     <div className="flex-1 overflow-y-auto space-y-4">
-                        {!plan && <div className="text-muted-foreground italic">No plan generated yet.</div>}
+                        {planUnavailableMessage ? (
+                            <div className="rounded-md border border-red-500/30 bg-red-950/20 px-3 py-2 text-sm text-red-300">
+                                {planUnavailableMessage}
+                            </div>
+                        ) : null}
+                        {!plan && !planUnavailableMessage && <div className="text-muted-foreground italic">No plan generated yet.</div>}
                         {plan?.map((task) => (
                             <div key={task.id} className="border rounded p-3 bg-muted/20">
                                 <div className="flex justify-between items-start mb-2">

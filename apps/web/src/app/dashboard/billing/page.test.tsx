@@ -54,7 +54,7 @@ describe('billing dashboard provider portals', () => {
     });
   });
 
-  it('keeps reference links available even when Borg has no local auth state', () => {
+  it('keeps reference links available even when HyperCode has no local auth state', () => {
     const cards = getProviderPortalCards(undefined);
     const providerIds = new Set(cards.map((card) => card.id));
 

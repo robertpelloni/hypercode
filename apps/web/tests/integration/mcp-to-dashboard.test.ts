@@ -43,7 +43,7 @@ describe('dashboard MCP flow integration', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('x-borg-trpc-compat')).toBe('legacy-mcp-dashboard-bridge');
+    expect(response.headers.get('x-hypercode-trpc-compat')).toBe('legacy-mcp-dashboard-bridge');
     expect(payload).toHaveLength(3);
     expect(payload[0]).toEqual({ result: { data: expect.any(Array) } });
     expect(payload[1]).toEqual({ result: { data: expect.any(Array) } });

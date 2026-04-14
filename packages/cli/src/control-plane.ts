@@ -86,7 +86,7 @@ export function resolveControlPlaneLocation(options: {
     };
   }
 
-  const lock = readStartLockRecord(options.dataDir ?? '~/.borg');
+  const lock = readStartLockRecord(options.dataDir ?? '~/.hypercode');
   if (lock) {
     const host = normalizeBrowserHost(lock.host);
     return {
@@ -133,7 +133,7 @@ export async function queryTrpc<TData>(
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Unable to reach Borg control plane at ${location.baseUrl}: ${message}`);
+    throw new Error(`Unable to reach HyperCode control plane at ${location.baseUrl}: ${message}`);
   }
 
   let body: TrpcEnvelope<TData>;
@@ -141,16 +141,16 @@ export async function queryTrpc<TData>(
     body = await response.json() as TrpcEnvelope<TData>;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Borg control plane at ${location.baseUrl} returned invalid JSON: ${message}`);
+    throw new Error(`HyperCode control plane at ${location.baseUrl} returned invalid JSON: ${message}`);
   }
 
   if (!response.ok || body.error) {
     const message = body.error?.message ?? `HTTP ${response.status}`;
-    throw new Error(`Borg control plane query failed for ${procedurePath}: ${message}`);
+    throw new Error(`HyperCode control plane query failed for ${procedurePath}: ${message}`);
   }
 
   if (!body.result || !('data' in body.result)) {
-    throw new Error(`Borg control plane query returned no result for ${procedurePath}`);
+    throw new Error(`HyperCode control plane query returned no result for ${procedurePath}`);
   }
 
   return body.result.data as TData;

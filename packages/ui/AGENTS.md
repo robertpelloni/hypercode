@@ -3,7 +3,7 @@
 **Context:** Next.js (App Router) | React | Tailwind CSS | Custom Server
 
 ## OVERVIEW
-The frontend dashboard for the Borg. It provides a visual interface for monitoring agents, managing skills, and viewing system status. It uses a custom `server.js` to integrate closely with the Core backend.
+The frontend dashboard for the HyperCode. It provides a visual interface for monitoring agents, managing skills, and viewing system status. It uses a custom `server.js` to integrate closely with the Core backend.
 
 ## STRUCTURE
 ```

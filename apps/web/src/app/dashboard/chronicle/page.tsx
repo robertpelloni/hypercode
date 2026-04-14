@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardContent, Badge, Button } from "@borg/ui";
+import { Card, CardContent, Badge, Button } from "@hypercode/ui";
 import { ScrollText, GitCommit, GitBranch, Loader2, RefreshCw, AlertCircle, GitMerge, Plus, Minus } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 
@@ -17,30 +17,58 @@ type StatusEntry = {
     status: string;
 };
 
-function normalizeCommits(data: unknown): CommitEntry[] {
-    if (!Array.isArray(data)) return [];
-    return data.map((entry: unknown) => {
-        if (!entry || typeof entry !== 'object') return { hash: '', message: '' };
+type NormalizedResult<T> = {
+    data: T[];
+    invalid: boolean;
+};
+
+function normalizeCommits(data: unknown): NormalizedResult<CommitEntry> {
+    if (data == null) return { data: [], invalid: false };
+    if (!Array.isArray(data)) return { data: [], invalid: true };
+
+    let invalid = false;
+    const normalized = data.map((entry: unknown) => {
+        if (!entry || typeof entry !== 'object') {
+            invalid = true;
+            return { hash: '', message: '' };
+        }
         const e = entry as Record<string, unknown>;
+        const hash = typeof e['hash'] === 'string' ? e['hash'] : '';
+        const message = typeof e['message'] === 'string' ? e['message'] : '';
+        if (!hash || !message) {
+            invalid = true;
+        }
         return {
-            hash: typeof e['hash'] === 'string' ? e['hash'] : '',
-            message: typeof e['message'] === 'string' ? e['message'] : '',
+            hash,
+            message,
             author: typeof e['author'] === 'string' ? e['author'] : undefined,
             date: typeof e['date'] === 'string' ? e['date'] : undefined,
         };
     });
+
+    return { data: normalized, invalid };
 }
 
-function normalizeStatus(data: unknown): StatusEntry[] {
-    if (!Array.isArray(data)) return [];
-    return data.map((entry: unknown) => {
-        if (!entry || typeof entry !== 'object') return { path: '', status: '' };
+function normalizeStatus(data: unknown): NormalizedResult<StatusEntry> {
+    if (data == null) return { data: [], invalid: false };
+    if (!Array.isArray(data)) return { data: [], invalid: true };
+
+    let invalid = false;
+    const normalized = data.map((entry: unknown) => {
+        if (!entry || typeof entry !== 'object') {
+            invalid = true;
+            return { path: '', status: '' };
+        }
         const e = entry as Record<string, unknown>;
-        return {
-            path: typeof e['path'] === 'string' ? e['path'] : '',
-            status: typeof e['status'] === 'string' ? e['status'] : '?',
-        };
+        const path = typeof e['path'] === 'string' ? e['path'] : '';
+        const status = typeof e['status'] === 'string' ? e['status'] : '?';
+        if (!path || !status) {
+            invalid = true;
+        }
+        return { path, status };
     });
+
+    return { data: normalized, invalid };
 }
 
 function statusColor(status: string): string {
@@ -75,8 +103,12 @@ export default function ChronicleDashboard() {
     const logQuery = trpc.git.getLog.useQuery({ limit });
     const statusQuery = trpc.git.getStatus.useQuery();
 
-    const commits = normalizeCommits(logQuery.data);
-    const statusFiles = normalizeStatus(statusQuery.data);
+    const normalizedCommits = normalizeCommits(logQuery.data);
+    const normalizedStatus = normalizeStatus(statusQuery.data);
+    const commits = normalizedCommits.data;
+    const statusFiles = normalizedStatus.data;
+    const logDataUnavailable = !logQuery.isLoading && !logQuery.isError && normalizedCommits.invalid;
+    const statusDataUnavailable = !statusQuery.isLoading && !statusQuery.isError && normalizedStatus.invalid;
 
     return (
         <div className="p-8 space-y-8">
@@ -87,7 +119,7 @@ export default function ChronicleDashboard() {
                         Chronicle
                     </h1>
                     <p className="text-zinc-500 mt-2">
-                        Git commit log and working-tree status for the active Borg workspace.
+                        Git commit log and working-tree status for the active HyperCode workspace.
                     </p>
                 </div>
                 <Button
@@ -133,6 +165,11 @@ export default function ChronicleDashboard() {
                         <div className="flex items-center gap-3 text-red-400 bg-red-900/10 border border-red-900/40 rounded-lg p-4">
                             <AlertCircle className="h-5 w-5 shrink-0" />
                             <span className="text-sm">Failed to load git log: {logQuery.error.message}</span>
+                        </div>
+                    ) : logDataUnavailable ? (
+                        <div className="flex items-center gap-3 text-red-400 bg-red-900/10 border border-red-900/40 rounded-lg p-4">
+                            <AlertCircle className="h-5 w-5 shrink-0" />
+                            <span className="text-sm">Git log data is unavailable or malformed.</span>
                         </div>
                     ) : commits.length === 0 ? (
                         <div className="text-center p-10 text-zinc-600 text-sm border border-dashed border-zinc-800 rounded-lg">
@@ -188,6 +225,11 @@ export default function ChronicleDashboard() {
                         <div className="flex items-center gap-2 text-red-400 text-sm p-3 bg-red-900/10 rounded-lg border border-red-900/30">
                             <AlertCircle className="h-4 w-4 shrink-0" />
                             {statusQuery.error.message}
+                        </div>
+                    ) : statusDataUnavailable ? (
+                        <div className="flex items-center gap-2 text-red-400 text-sm p-3 bg-red-900/10 rounded-lg border border-red-900/30">
+                            <AlertCircle className="h-4 w-4 shrink-0" />
+                            Working tree status is unavailable or malformed.
                         </div>
                     ) : statusFiles.length === 0 ? (
                         <div className="text-center p-8 text-zinc-600 text-sm border border-dashed border-zinc-800 rounded-lg">

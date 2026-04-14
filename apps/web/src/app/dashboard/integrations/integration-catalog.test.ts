@@ -216,7 +216,7 @@ describe('integration catalog helpers', () => {
                         {
                             clientId: 'client-1',
                             clientType: 'vscode-extension',
-                            clientName: 'Borg VS Code Bridge',
+                            clientName: 'HyperCode VS Code Bridge',
                             platform: 'VS Code 1.99',
                             capabilities: ['chat.inject', 'editor.selection.read'],
                             hookPhases: ['chat.submit', 'editor.selection'],
@@ -230,7 +230,7 @@ describe('integration catalog helpers', () => {
 
         expect(rows).toHaveLength(1);
         expect(rows[0]).toMatchObject({
-            clientName: 'Borg VS Code Bridge',
+            clientName: 'HyperCode VS Code Bridge',
             clientType: 'vscode-extension',
             capabilities: ['chat.inject', 'editor.selection.read'],
             hookPhases: ['chat.submit', 'editor.selection'],
@@ -244,7 +244,7 @@ describe('integration catalog helpers', () => {
             {
                 id: 'browser-extension-chromium',
                 status: 'ready',
-                artifactPath: 'apps/borg-extension/dist-chromium',
+                artifactPath: 'apps/hypercode-extension/dist-chromium',
                 artifactKind: 'Chromium unpacked bundle',
                 detail: 'Unpacked Chromium-compatible browser extension output is available.',
                 declaredVersion: '0.7.3',
@@ -262,13 +262,13 @@ describe('integration catalog helpers', () => {
         ], now);
 
         expect(rows.find((row) => row.id === 'browser-extension-chromium')).toMatchObject({
-            repoPath: 'apps/borg-extension',
-            buildHint: 'pnpm -C apps/borg-extension build',
+            repoPath: 'apps/hypercode-extension',
+            buildHint: 'pnpm -C apps/hypercode-extension build',
             statusLabel: 'artifact ready',
             statusTone: 'success',
             nextStepLabel: 'Load in Chrome / Edge',
             operatorActionLabel: 'Load unpacked directory',
-            operatorActionValue: 'apps/borg-extension/dist-chromium',
+            operatorActionValue: 'apps/hypercode-extension/dist-chromium',
             operatorActionCopyLabel: 'Copy path',
             artifactVersionLabel: 'v0.7.3',
             artifactKindLabel: 'Chromium unpacked bundle',
@@ -277,7 +277,7 @@ describe('integration catalog helpers', () => {
             artifactTimestampLabel: 'Detected 2026-03-11T10:00:00Z',
             artifactStatus: {
                 status: 'ready',
-                artifactPath: 'apps/borg-extension/dist-chromium',
+                artifactPath: 'apps/hypercode-extension/dist-chromium',
                 artifactKind: 'Chromium unpacked bundle',
                 declaredVersion: '0.7.3',
                 lastModifiedAt: '2026-03-11T10:00:00.000Z',
@@ -306,12 +306,12 @@ describe('integration catalog helpers', () => {
         });
 
         expect(rows.find((row) => row.id === 'browser-extension-firefox')).toMatchObject({
-            repoPath: 'apps/borg-extension',
-            buildHint: 'pnpm -C apps/borg-extension build:firefox',
+            repoPath: 'apps/hypercode-extension',
+            buildHint: 'pnpm -C apps/hypercode-extension build:firefox',
             statusLabel: 'build needed',
             nextStepLabel: 'Build Firefox bundle',
             operatorActionLabel: 'Build command',
-            operatorActionValue: 'pnpm -C apps/borg-extension build:firefox',
+            operatorActionValue: 'pnpm -C apps/hypercode-extension build:firefox',
             operatorActionCopyLabel: 'Copy command',
             artifactVersionLabel: 'Not versioned',
             artifactKindLabel: 'Unknown artifact kind',
@@ -322,7 +322,7 @@ describe('integration catalog helpers', () => {
         expect(rows.find((row) => row.id === 'mcp-client-sync')).toMatchObject({
             statusLabel: 'build needed',
             statusTone: 'muted',
-            nextStepLabel: 'Start Borg Core',
+            nextStepLabel: 'Start HyperCode Core',
             operatorActionLabel: 'Bring core online',
             operatorActionValue: 'pnpm run dev',
             operatorActionCopyLabel: 'Copy action',
@@ -345,7 +345,7 @@ describe('integration catalog helpers', () => {
             {
                 id: 'browser-extension-firefox',
                 status: 'ready',
-                artifactPath: 'apps/borg-extension/dist-firefox',
+                artifactPath: 'apps/hypercode-extension/dist-firefox',
                 artifactKind: 'Firefox unpacked bundle',
                 detail: 'Firefox-specific browser extension output is available.',
                 declaredVersion: '0.7.3',
@@ -368,7 +368,7 @@ describe('integration catalog helpers', () => {
             {
                 id: 'browser-extension-firefox',
                 status: 'ready',
-                artifactPath: 'apps/borg-extension/dist-firefox',
+                artifactPath: 'apps/hypercode-extension/dist-firefox',
                 artifactKind: 'Firefox unpacked bundle',
                 detail: 'Firefox-specific browser extension output is available.',
                 declaredVersion: '0.7.3',
@@ -377,7 +377,7 @@ describe('integration catalog helpers', () => {
             {
                 id: 'vscode-extension',
                 status: 'ready',
-                artifactPath: 'packages/vscode/borg-vscode-extension-0.2.0.vsix',
+                artifactPath: 'packages/vscode/hypercode-vscode-extension-0.2.0.vsix',
                 artifactKind: 'VSIX package',
                 detail: 'Packaged VS Code extension artifact is ready to install.',
                 declaredVersion: '0.2.0',
@@ -388,7 +388,7 @@ describe('integration catalog helpers', () => {
                 status: 'ready',
                 artifactPath: 'mcp.jsonc',
                 artifactKind: 'JSONC config source',
-                detail: 'Borg-managed MCP config source is present for dashboard sync and preview flows.',
+                detail: 'HyperCode-managed MCP config source is present for dashboard sync and preview flows.',
                 declaredVersion: null,
                 lastModifiedAt: '2026-03-11T08:00:00.000Z',
             },
@@ -396,13 +396,13 @@ describe('integration catalog helpers', () => {
 
         expect(rows.find((row) => row.id === 'browser-extension-firefox')).toMatchObject({
             operatorActionLabel: 'Manifest to load',
-            operatorActionValue: 'apps/borg-extension/dist-firefox/manifest.json',
+            operatorActionValue: 'apps/hypercode-extension/dist-firefox/manifest.json',
             operatorActionCopyLabel: 'Copy path',
         });
 
         expect(rows.find((row) => row.id === 'vscode-extension')).toMatchObject({
             operatorActionLabel: 'Install command',
-            operatorActionValue: 'code --install-extension packages/vscode/borg-vscode-extension-0.2.0.vsix',
+            operatorActionValue: 'code --install-extension packages/vscode/hypercode-vscode-extension-0.2.0.vsix',
             operatorActionCopyLabel: 'Copy command',
         });
 

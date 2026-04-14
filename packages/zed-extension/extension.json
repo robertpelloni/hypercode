@@ -1,34 +1,34 @@
 {
-    "id": "Borg",
-    "name": "Borg",
+    "id": "HyperCode",
+    "name": "HyperCode",
     "version": "0.1.0",
     "description": "AI Orchestration System integration for Zed",
-    "repository": "https://github.com/Borg/Borg",
-    "authors": ["Borg Team"],
+    "repository": "https://github.com/HyperCode/HyperCode",
+    "authors": ["HyperCode Team"],
     "lib": {
         "kind": "Rust",
         "version": "0.1.0"
     },
     "slash_commands": [
         {
-            "name": "Borg-debate",
+            "name": "HyperCode-debate",
             "description": "Start a council debate on the current selection",
             "requires_argument": true,
             "argument_description": "Description of what to debate"
         },
         {
-            "name": "Borg-architect",
+            "name": "HyperCode-architect",
             "description": "Start an architect mode session",
             "requires_argument": true,
             "argument_description": "Task description for reasoning model"
         },
         {
-            "name": "Borg-analytics",
+            "name": "HyperCode-analytics",
             "description": "View supervisor analytics",
             "requires_argument": false
         },
         {
-            "name": "Borg-templates",
+            "name": "HyperCode-templates",
             "description": "List available debate templates",
             "requires_argument": false
         }

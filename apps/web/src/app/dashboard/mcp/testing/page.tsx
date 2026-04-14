@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { ComponentType } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@borg/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@hypercode/ui';
 import {
     Bot,
     ExternalLink,
@@ -61,7 +61,7 @@ export default function MCPTestingPage() {
                 />
                 <TestingCard
                     title="Server Probes"
-                    description="Interactive client-style probes for every downstream server and for the Borg router itself, with request/response transcripts."
+                    description="Interactive client-style probes for every downstream server and for the HyperCode router itself, with request/response transcripts."
                     href="/dashboard/mcp/testing/servers"
                     icon={Wrench}
                     accentClass="text-cyan-400"
@@ -95,7 +95,7 @@ export default function MCPTestingPage() {
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-zinc-500">
                     <p>
-                        The main MCP page should explain Borg as the <span className="text-zinc-200 font-medium">ultimate MCP aggregator/router</span>: aggregation, semantic search and grouping, lifecycle supervision, observability, and client config sync.
+                        The main MCP page should explain HyperCode as the <span className="text-zinc-200 font-medium">ultimate MCP aggregator/router</span>: aggregation, semantic search and grouping, lifecycle supervision, observability, and client config sync.
                     </p>
                     <p>
                         Inspector, search, and playground surfaces are still valuable, but they belong in a testing lab so the primary dashboard does not read like a bag of random demos.

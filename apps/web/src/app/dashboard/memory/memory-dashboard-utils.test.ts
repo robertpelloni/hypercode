@@ -20,7 +20,7 @@ import {
 
 describe('memory dashboard utils', () => {
     const factRecord = {
-        content: 'Remember that Borg boots the control plane before opening the dashboard.',
+        content: 'Remember that HyperCode boots the control plane before opening the dashboard.',
         createdAt: '2026-03-12T10:00:00.000Z',
         metadata: { source: 'dashboard', type: 'working' },
     };
@@ -52,7 +52,7 @@ describe('memory dashboard utils', () => {
             source: 'user_prompt',
             structuredUserPrompt: {
                 role: 'goal',
-                content: 'Make the memory page reflect one coherent Borg-owned model.',
+                content: 'Make the memory page reflect one coherent HyperCode-owned model.',
                 promptNumber: 4,
                 sessionId: 'session-77',
             },
@@ -94,7 +94,7 @@ describe('memory dashboard utils', () => {
         },
     };
 
-    it('classifies Borg memory record kinds correctly', () => {
+    it('classifies HyperCode memory record kinds correctly', () => {
         expect(getMemoryRecordKind(factRecord)).toBe('fact');
         expect(getMemoryRecordKind(observationRecord)).toBe('observation');
         expect(getMemoryRecordKind(promptRecord)).toBe('prompt');
@@ -113,7 +113,7 @@ describe('memory dashboard utils', () => {
 
     it('builds coherent titles, previews, and badges for each record type', () => {
         expect(getMemoryBadgeLabel(factRecord)).toBe('working');
-        expect(getMemoryTitle(factRecord)).toContain('Remember that Borg boots');
+        expect(getMemoryTitle(factRecord)).toContain('Remember that HyperCode boots');
         expect(getMemoryPreview(factRecord)).toContain('control plane');
 
         expect(getMemoryBadgeLabel(observationRecord)).toBe('discovery');
@@ -122,7 +122,7 @@ describe('memory dashboard utils', () => {
 
         expect(getMemoryBadgeLabel(promptRecord)).toBe('goal');
         expect(getMemoryTitle(promptRecord)).toBe('Prompt #4');
-        expect(getMemoryPreview(promptRecord)).toContain('coherent Borg-owned model');
+        expect(getMemoryPreview(promptRecord)).toContain('coherent HyperCode-owned model');
 
         expect(getMemoryBadgeLabel(summaryRecord)).toBe('running');
         expect(getMemoryTitle(summaryRecord)).toBe('Morning memory review');
@@ -214,7 +214,7 @@ describe('memory dashboard utils', () => {
         expect(getMemoryDetailSections(promptRecord)).toEqual([
             {
                 title: 'Prompt content',
-                body: 'Make the memory page reflect one coherent Borg-owned model.',
+                body: 'Make the memory page reflect one coherent HyperCode-owned model.',
             },
             {
                 title: 'Canonical record',
@@ -377,9 +377,9 @@ describe('memory dashboard utils', () => {
                 title: 'Goal pivots',
                 actions: [
                     {
-                        key: 'goal:Make the memory page reflect one coherent Borg-owned model.',
-                        label: 'Make the memory page reflect one coherent Borg-owned model.',
-                        query: 'Make the memory page reflect one coherent Borg-owned model.',
+                        key: 'goal:Make the memory page reflect one coherent HyperCode-owned model.',
+                        label: 'Make the memory page reflect one coherent HyperCode-owned model.',
+                        query: 'Make the memory page reflect one coherent HyperCode-owned model.',
                         mode: 'all',
                         group: 'goal',
                         description: 'Search all related records anchored to this active goal.',

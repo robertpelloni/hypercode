@@ -14,7 +14,7 @@ export class BorgSupervisor implements Supervisor {
 
   async isAvailable(): Promise<boolean> {
     const llm = getLLMService();
-    // In Borg, availability is checked via ProviderTruth
+    // In HyperCode, availability is checked via ProviderTruth
     const quotaService = (llm.modelSelector as any)?.getQuotaService?.();
     const quota = quotaService?.getQuota?.(this.config.provider);
     return !!quota && quota.authTruth === 'VALID';
@@ -23,8 +23,8 @@ export class BorgSupervisor implements Supervisor {
   async chat(messages: Message[]): Promise<string> {
     const llm = getLLMService();
     
-    // Convert council messages to Borg format if needed
-    // (Assuming Borg generate accepts prompt string or similar)
+    // Convert council messages to HyperCode format if needed
+    // (Assuming HyperCode generate accepts prompt string or similar)
     const prompt = messages.map(m => `[${m.role.toUpperCase()}]: ${m.content}`).join('\n\n');
     
     const response = await (llm as any).generateText(

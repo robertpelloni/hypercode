@@ -2,13 +2,44 @@
 
 import { trpc } from '@/utils/trpc';
 import { useState } from 'react';
-import { Card } from '@borg/ui';
-import { Input } from '@borg/ui';
-import { Button } from '@borg/ui';
-import { ScrollArea } from '@borg/ui';
-import { Badge } from '@borg/ui';
-import { Textarea } from '@borg/ui';
+import { Card } from '@hypercode/ui';
+import { Input } from '@hypercode/ui';
+import { Button } from '@hypercode/ui';
+import { ScrollArea } from '@hypercode/ui';
+import { Badge } from '@hypercode/ui';
+import { Textarea } from '@hypercode/ui';
 import { PageStatusBanner } from '@/components/PageStatusBanner';
+
+function isSymbolResult(value: unknown): value is {
+    kind?: number;
+    name?: string;
+    containerName?: string;
+    location?: { uri?: string; range?: { start?: { line?: number } } };
+} {
+    return typeof value === 'object' && value !== null;
+}
+
+function isCodeModeStatus(value: unknown): value is {
+    enabled: boolean;
+    toolCount: number;
+    tools: Array<{ name: string; description?: string }>;
+    reduction: {
+        traditional: number;
+        codeMode: number;
+        reductionPct: number;
+    };
+} {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { enabled?: unknown }).enabled === 'boolean'
+        && typeof (value as { toolCount?: unknown }).toolCount === 'number'
+        && Array.isArray((value as { tools?: unknown }).tools)
+        && typeof (value as { reduction?: unknown }).reduction === 'object'
+        && (value as { reduction?: unknown }).reduction !== null
+        && typeof ((value as { reduction: { traditional?: unknown } }).reduction.traditional) === 'number'
+        && typeof ((value as { reduction: { codeMode?: unknown } }).reduction.codeMode) === 'number'
+        && typeof ((value as { reduction: { reductionPct?: unknown } }).reduction.reductionPct) === 'number';
+}
 
 export default function CodeDashboard() {
     const [filePath, setFilePath] = useState('packages/core/src/MCPServer.ts');
@@ -34,10 +65,14 @@ export default function CodeDashboard() {
     const disableMutation = trpc.codeMode.disable.useMutation({ onSuccess: () => statusQuery.refetch() });
     const executeMutation = trpc.codeMode.execute.useMutation();
 
-    const results = query ? searchQuery.data : symbolsQuery.data;
+    const rawResults = query ? searchQuery.data : symbolsQuery.data;
     const isPending = query ? searchQuery.isPending : symbolsQuery.isPending;
+    const symbolsError = query ? searchQuery.error : symbolsQuery.error;
+    const resultsUnavailable = Boolean(symbolsError) || (rawResults !== undefined && (!Array.isArray(rawResults) || !rawResults.every(isSymbolResult)));
+    const results = !resultsUnavailable && Array.isArray(rawResults) ? rawResults : [];
 
-    const status = statusQuery.data;
+    const statusUnavailable = Boolean(statusQuery.error) || (statusQuery.data !== undefined && !isCodeModeStatus(statusQuery.data));
+    const status = !statusUnavailable && isCodeModeStatus(statusQuery.data) ? statusQuery.data : undefined;
     const isEnabled = status?.enabled ?? false;
     const togglePending = enableMutation.isPending || disableMutation.isPending;
 
@@ -90,12 +125,16 @@ export default function CodeDashboard() {
                 <ScrollArea className="flex-1 p-4">
                     {isPending && <div className="text-gray-500 animate-pulse">Loading symbols...</div>}
 
-                    {!isPending && (!results || (Array.isArray(results) && results.length === 0)) && (
+                    {!isPending && resultsUnavailable && (
+                        <div className="text-red-300 italic">Symbol search unavailable: {symbolsError?.message ?? 'Symbol search returned an invalid payload.'}</div>
+                    )}
+
+                    {!isPending && !resultsUnavailable && results.length === 0 && (
                         <div className="text-gray-500 italic">No symbols found. Try indexing the project.</div>
                     )}
 
                     <div className="space-y-2">
-                        {Array.isArray(results) && results.map((symbol: any, idx: number) => (
+                        {results.map((symbol: any, idx: number) => (
                             <div key={idx} className="flex items-center justify-between p-2 rounded hover:bg-gray-700/50 group border border-transparent hover:border-gray-600 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <span className={`text-xs px-1.5 py-0.5 rounded border ${symbol.kind === 6 ? 'bg-blue-900/30 text-blue-400 border-blue-800' :
@@ -134,11 +173,15 @@ export default function CodeDashboard() {
                             <span className="font-semibold text-gray-200">
                                 Code Mode is <span className={isEnabled ? 'text-green-400' : 'text-gray-400'}>{isEnabled ? 'ENABLED' : 'DISABLED'}</span>
                             </span>
-                            {status && (
+                            {statusUnavailable ? (
+                                <Badge variant="outline" className="text-xs border-red-800 text-red-300">
+                                    unavailable
+                                </Badge>
+                            ) : status ? (
                                 <Badge variant="outline" className="text-xs border-gray-600 text-gray-400">
                                     {status.toolCount} tools registered
                                 </Badge>
-                            )}
+                            ) : null}
                             {status && isEnabled && (
                                 <Badge variant="outline" className="text-xs border-orange-800 text-orange-400">
                                     {status.reduction.reductionPct}% context reduction
@@ -149,7 +192,7 @@ export default function CodeDashboard() {
                             <Button
                                 size="sm"
                                 variant={isEnabled ? 'outline' : 'default'}
-                                disabled={togglePending || statusQuery.isPending}
+                                disabled={togglePending || statusQuery.isPending || statusUnavailable}
                                 onClick={() => isEnabled ? disableMutation.mutate() : enableMutation.mutate()}
                                 className={isEnabled ? 'border-gray-600' : 'bg-orange-600 hover:bg-orange-500 text-white'}
                             >
@@ -157,6 +200,12 @@ export default function CodeDashboard() {
                             </Button>
                         </div>
                     </div>
+
+                    {statusUnavailable ? (
+                        <div className="mt-3 text-sm text-red-300">
+                            Code Mode status unavailable: {statusQuery.error?.message ?? 'Code Mode status returned an invalid payload.'}
+                        </div>
+                    ) : null}
 
                     {status && isEnabled && (
                         <div className="mt-3 grid grid-cols-3 gap-3 text-center">

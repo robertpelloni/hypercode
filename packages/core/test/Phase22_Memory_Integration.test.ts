@@ -11,7 +11,7 @@ const rmDir = (dir: string) => {
 };
 
 describe('Phase 22: Context Intelligence (Memory Integration)', () => {
-    const TEST_DIR = path.join(process.cwd(), '.borg', 'test_memory_' + Date.now());
+    const TEST_DIR = path.join(process.cwd(), '.hypercode', 'test_memory_' + Date.now());
     let service: AgentMemoryService;
 
     beforeEach(() => {
@@ -39,13 +39,13 @@ describe('Phase 22: Context Intelligence (Memory Integration)', () => {
         // This test requires the VectorStore (LanceDB + Xenova) to actually work.
         // It might be slow on first run due to model download.
 
-        await service.addWorking('Borg is a Neural Operating System designed for autonomy.', 'project');
+        await service.addWorking('HyperCode is a Neural Operating System designed for autonomy.', 'project');
         await service.addWorking('Bananas are rich in potassium.', 'general');
 
         // Allow some time for async vector operations if they are decoupled (though they await in current impl)
 
         // Search
-        const results = await service.search('What is the design philosophy of Borg?');
+        const results = await service.search('What is the design philosophy of HyperCode?');
 
         const match = results.find(r => r.content.includes('Neural Operating System'));
         expect(match).toBeDefined();

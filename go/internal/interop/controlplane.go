@@ -1,4 +1,4 @@
-﻿package interop
+package interop
 
 import (
 	"errors"
@@ -21,8 +21,8 @@ type ControlPlaneStatus struct {
 
 func DiscoverControlPlanes(mainLockPath, goLockPath string) []ControlPlaneStatus {
 	return []ControlPlaneStatus{
-		readStatus("borg-node", mainLockPath),
-		readStatus("borg-go", goLockPath),
+		readStatus("hypercode-node", mainLockPath),
+		readStatus("hypercode-go", goLockPath),
 	}
 }
 

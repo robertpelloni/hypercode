@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { t, publicProcedure, adminProcedure } from '../lib/trpc-core.js';
 import { toolSetsRepository } from '../db/repositories/index.js';
-import { ToolSetSchema } from '../types/metamcp/tool-sets.zod.js';
+import { rethrowSqliteUnavailableAsTrpc } from './sqliteTrpc.js';
 
 const CreateToolSetInput = z.object({
     name: z.string(),
@@ -20,35 +20,55 @@ const UpdateToolSetInput = z.object({
 
 export const toolSetsRouter = t.router({
     list: publicProcedure.query(async () => {
-        return await toolSetsRepository.findAll();
+        try {
+            return await toolSetsRepository.findAll();
+        } catch (error) {
+            rethrowSqliteUnavailableAsTrpc('Tool sets are unavailable', error);
+        }
     }),
 
     get: publicProcedure
         .input(z.object({ uuid: z.string() }))
         .query(async ({ input }) => {
-            return await toolSetsRepository.findByUuid(input.uuid);
+            try {
+                return await toolSetsRepository.findByUuid(input.uuid);
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Tool sets are unavailable', error);
+            }
         }),
 
     create: adminProcedure
         .input(CreateToolSetInput)
         .mutation(async ({ input }) => {
-            return await toolSetsRepository.create(input);
+            try {
+                return await toolSetsRepository.create(input);
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Tool sets are unavailable', error);
+            }
         }),
 
     update: adminProcedure
         .input(UpdateToolSetInput)
         .mutation(async ({ input }) => {
-            const updated = await toolSetsRepository.update(input);
-            if (!updated) {
-                throw new Error("Tool set not found");
+            try {
+                const updated = await toolSetsRepository.update(input);
+                if (!updated) {
+                    throw new Error("Tool set not found");
+                }
+                return updated;
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Tool sets are unavailable', error);
             }
-            return updated;
         }),
 
     delete: adminProcedure
         .input(z.object({ uuid: z.string() }))
         .mutation(async ({ input }) => {
-            await toolSetsRepository.deleteByUuid(input.uuid);
-            return { success: true };
+            try {
+                await toolSetsRepository.deleteByUuid(input.uuid);
+                return { success: true };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Tool sets are unavailable', error);
+            }
         }),
 });

@@ -1,11 +1,12 @@
 import { z } from 'zod';
 import { t, publicProcedure, adminProcedure } from '../lib/trpc-core.js';
 import { browserDataRepository } from '../db/repositories/browser-data.repo.js';
+import { rethrowSqliteUnavailableAsTrpc } from './sqliteTrpc.js';
 
 /**
  * Browser Controls Router (Phase J)
  *
- * Enables Borg to interact with browser content:
+ * Enables HyperCode to interact with browser content:
  * - Scrape web pages (via fetch or headless browser)
  * - Read browser history (from extension bridge)
  * - Intercept console/debug logs (from extension bridge)
@@ -107,7 +108,7 @@ export const browserControlsRouter = t.router({
         .mutation(async ({ input }) => {
             const headers: Record<string, string> = {
                 Accept: 'text/html,application/xhtml+xml',
-                'User-Agent': input.userAgent || 'Borg/BrowserControls (compatible)',
+                'User-Agent': input.userAgent || 'HyperCode/BrowserControls (compatible)',
             };
 
             const response = await fetch(input.url, { headers });
@@ -143,18 +144,22 @@ export const browserControlsRouter = t.router({
             })),
         }))
         .mutation(async ({ input }) => {
-            for (const entry of input.entries) {
-                const domain = new URL(entry.url).hostname;
-                await browserDataRepository.addHistoryEntry({
-                    id: `hist_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                    url: entry.url,
-                    title: entry.title,
-                    domain,
-                    visitedAt: new Date(entry.visitedAt),
-                    visitCount: entry.visitCount,
-                });
+            try {
+                for (const entry of input.entries) {
+                    const domain = new URL(entry.url).hostname;
+                    await browserDataRepository.addHistoryEntry({
+                        id: `hist_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                        url: entry.url,
+                        title: entry.title,
+                        domain,
+                        visitedAt: new Date(entry.visitedAt),
+                        visitCount: entry.visitCount,
+                    });
+                }
+                return { stored: input.entries.length };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Browser data store is unavailable', error);
             }
-            return { stored: input.entries.length };
         }),
 
     /**
@@ -163,30 +168,34 @@ export const browserControlsRouter = t.router({
     queryHistory: publicProcedure
         .input(HistoryQuerySchema)
         .query(async ({ input }) => {
-            const allHistory = await browserDataRepository.getHistory();
-            let filtered = [...allHistory];
+            try {
+                const allHistory = await browserDataRepository.getHistory();
+                let filtered = [...allHistory];
 
-            if (input.query) {
-                const q = input.query.toLowerCase();
-                filtered = filtered.filter(e =>
-                    e.title.toLowerCase().includes(q) || e.url.toLowerCase().includes(q)
-                );
-            }
-            if (input.domain) {
-                filtered = filtered.filter(e => e.domain === input.domain);
-            }
-            if (input.since) {
-                filtered = filtered.filter(e => e.visitedAt.getTime() >= input.since!);
-            }
+                if (input.query) {
+                    const q = input.query.toLowerCase();
+                    filtered = filtered.filter(e =>
+                        e.title.toLowerCase().includes(q) || e.url.toLowerCase().includes(q)
+                    );
+                }
+                if (input.domain) {
+                    filtered = filtered.filter(e => e.domain === input.domain);
+                }
+                if (input.since) {
+                    filtered = filtered.filter(e => e.visitedAt.getTime() >= input.since!);
+                }
 
-            filtered.sort((a, b) => b.visitedAt.getTime() - a.visitedAt.getTime());
-            return {
-                entries: filtered.slice(0, input.limit).map(e => ({
-                    ...e,
-                    visitedAt: e.visitedAt.getTime()
-                })),
-                total: filtered.length
-            };
+                filtered.sort((a, b) => b.visitedAt.getTime() - a.visitedAt.getTime());
+                return {
+                    entries: filtered.slice(0, input.limit).map(e => ({
+                        ...e,
+                        visitedAt: e.visitedAt.getTime()
+                    })),
+                    total: filtered.length
+                };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Browser data store is unavailable', error);
+            }
         }),
 
     /**
@@ -204,18 +213,22 @@ export const browserControlsRouter = t.router({
             })),
         }))
         .mutation(async ({ input }) => {
-            for (const log of input.logs) {
-                await browserDataRepository.addConsoleLog({
-                    id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                    level: log.level,
-                    message: log.message,
-                    source: log.source,
-                    url: log.url || null,
-                    lineNumber: log.lineNumber || null,
-                    timestamp: new Date(log.timestamp),
-                });
+            try {
+                for (const log of input.logs) {
+                    await browserDataRepository.addConsoleLog({
+                        id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                        level: log.level,
+                        message: log.message,
+                        source: log.source,
+                        url: log.url || null,
+                        lineNumber: log.lineNumber || null,
+                        timestamp: new Date(log.timestamp),
+                    });
+                }
+                return { stored: input.logs.length };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Browser data store is unavailable', error);
             }
-            return { stored: input.logs.length };
         }),
 
     /**
@@ -228,39 +241,47 @@ export const browserControlsRouter = t.router({
             limit: z.number().min(1).max(500).default(100),
         }))
         .query(async ({ input }) => {
-            const allLogs = await browserDataRepository.getConsoleLogs({ level: input.level });
-            let filtered = [...allLogs];
-            
-            if (input.search) {
-                const q = input.search.toLowerCase();
-                filtered = filtered.filter(l => l.message.toLowerCase().includes(q));
+            try {
+                const allLogs = await browserDataRepository.getConsoleLogs({ level: input.level });
+                let filtered = [...allLogs];
+                
+                if (input.search) {
+                    const q = input.search.toLowerCase();
+                    filtered = filtered.filter(l => l.message.toLowerCase().includes(q));
+                }
+                
+                filtered.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+                return {
+                    logs: filtered.slice(0, input.limit).map(l => ({
+                        ...l,
+                        timestamp: l.timestamp.getTime()
+                    })),
+                    total: filtered.length
+                };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Browser data store is unavailable', error);
             }
-            
-            filtered.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-            return {
-                logs: filtered.slice(0, input.limit).map(l => ({
-                    ...l,
-                    timestamp: l.timestamp.getTime()
-                })),
-                total: filtered.length
-            };
         }),
 
     /**
      * Stats on collected browser data.
      */
     stats: publicProcedure.query(async () => {
-        const history = await browserDataRepository.getHistory();
-        const logs = await browserDataRepository.getConsoleLogs();
-        
-        const domains = new Set(history.map(e => e.domain));
-        const errorCount = logs.filter(l => l.level === 'error').length;
-        
-        return {
-            historyCount: history.length,
-            uniqueDomains: domains.size,
-            consoleLogCount: logs.length,
-            consoleErrors: errorCount,
-        };
+        try {
+            const history = await browserDataRepository.getHistory();
+            const logs = await browserDataRepository.getConsoleLogs();
+            
+            const domains = new Set(history.map(e => e.domain));
+            const errorCount = logs.filter(l => l.level === 'error').length;
+            
+            return {
+                historyCount: history.length,
+                uniqueDomains: domains.size,
+                consoleLogCount: logs.length,
+                consoleErrors: errorCount,
+            };
+        } catch (error) {
+            rethrowSqliteUnavailableAsTrpc('Browser data store is unavailable', error);
+        }
     }),
 });

@@ -67,7 +67,7 @@ describe('callLoaderTool', () => {
         expect(result.isError).toBeFalsy();
         expect(result.content[0]).toMatchObject({
             type: 'text',
-            text: expect.stringContaining('borg-core-stdio-loader'),
+            text: expect.stringContaining('hypercode-core-stdio-loader'),
         });
     });
 
@@ -79,7 +79,7 @@ describe('callLoaderTool', () => {
             ensureBackgroundCoreRunning: vi.fn().mockResolvedValue({
                 status: 'spawned',
                 pid: 4242,
-                cliEntryPath: 'C:/borg/packages/cli/dist/index.js',
+                cliEntryPath: 'C:/hypercode/packages/cli/dist/index.js',
             }) as any,
             waitForCoreBridge: vi.fn().mockResolvedValue(false) as any,
             proxyToolCall: vi.fn(),

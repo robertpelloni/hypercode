@@ -1,6 +1,6 @@
 
-import { Card, CardHeader, CardTitle, CardContent, Badge } from "@borg/ui";
-import { Avatar, AvatarFallback, AvatarImage } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent, Badge } from "@hypercode/ui";
+import { Avatar, AvatarFallback, AvatarImage } from "@hypercode/ui";
 import { Check, X, Shield, Users, Brain, Activity, Gavel } from "lucide-react";
 
 interface TranscriptEntry {

@@ -19,7 +19,7 @@ vi.mock('fs', async () => {
 describe('ConfigManager', () => {
     let configManager: ConfigManager;
     const mockCwd = '/mock/cwd';
-    const configPath = path.join(mockCwd, '.borg', 'config.json');
+    const configPath = path.join(mockCwd, '.hypercode', 'config.json');
 
     beforeEach(() => {
         vi.spyOn(process, 'cwd').mockReturnValue(mockCwd);
@@ -60,7 +60,7 @@ describe('ConfigManager', () => {
         configManager.saveConfig(newConfig);
 
         // Check mkdir
-        expect(fs.mkdirSync).toHaveBeenCalledWith(expect.stringContaining('.borg'), { recursive: true });
+        expect(fs.mkdirSync).toHaveBeenCalledWith(expect.stringContaining('.hypercode'), { recursive: true });
         // Check write
         expect(fs.writeFileSync).toHaveBeenCalledWith(
             expect.stringContaining('config.json'),

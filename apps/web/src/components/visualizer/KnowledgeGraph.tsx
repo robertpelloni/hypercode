@@ -20,9 +20,10 @@ export function KnowledgeGraph() {
     const { data, error, isLoading } = trpc.knowledge.getGraph.useQuery({ query: undefined, depth: 2 }, {
         refetchOnWindowFocus: false
     });
+    const graphUnavailable = Boolean(error) || (data !== undefined && (!data || typeof data !== 'object' || !Array.isArray((data as { nodes?: unknown }).nodes) || !Array.isArray((data as { edges?: unknown }).edges)));
 
     const graphData = React.useMemo(() => {
-        if (!data) return { nodes: [], links: [] };
+        if (!data || graphUnavailable) return { nodes: [], links: [] };
         return {
             nodes: data.nodes || [],
             links: (data.edges || []).map((e: { source: string; target: string; value?: number }) => ({
@@ -43,9 +44,9 @@ export function KnowledgeGraph() {
             <CardContent className="flex-1 p-0 relative bg-zinc-950 overflow-hidden rounded-b-xl">
                 {isLoading ? (
                     <div className="flex h-full items-center justify-center text-zinc-400">Loading knowledge graph...</div>
-                ) : error ? (
+                ) : graphUnavailable ? (
                     <div className="flex h-full items-center justify-center px-6 text-center text-red-300">
-                        Knowledge graph unavailable: {error.message}
+                        Knowledge graph unavailable: {error?.message ?? 'Knowledge graph returned an invalid payload.'}
                     </div>
                 ) : graphData.nodes.length === 0 ? (
                     <div className="flex h-full items-center justify-center text-zinc-500">No knowledge graph data available.</div>

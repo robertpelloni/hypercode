@@ -1,4 +1,4 @@
-# Ideas for Improvement: @borg/search
+# Ideas for Improvement: @hypercode/search
 
 Evolving the search and RAG layer from basic indexing into a high-intelligence "Semantic Awareness" service.
 
@@ -13,7 +13,7 @@ Evolving the search and RAG layer from basic indexing into a high-intelligence "
 - **Semantic "Diff" Search:** Search not just for current code, but for *changes* in code over time, allowing agents to understand how an architectural pattern has evolved.
 
 ## 3. Decentralized & Swarm Search
-- **P2P Knowledge Mesh Search:** Allow agents to securely query the captured knowledge and "observations" of other Borg nodes in the swarm via the P2P mesh.
+- **P2P Knowledge Mesh Search:** Allow agents to securely query the captured knowledge and "observations" of other HyperCode nodes in the swarm via the P2P mesh.
 - **Verified Fact Index:** A specialized index for facts that have been "verified" by the Council or a human operator, ensuring high-trust retrieval for critical tasks.
 - **Privacy-Preserving Search:** Implement zero-knowledge proofs or differential privacy for swarm-wide search, allowing agents to benefit from collective knowledge without exposing sensitive local data.
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@borg/ui";
-import { Button } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
 import { CheckCircle2, Download, FileJson, Loader2, RefreshCcw, Save, RotateCcw } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -36,14 +36,18 @@ const CLIENT_LABELS: Record<SupportedClient, string> = {
 
 export default function MCPSettings() {
     const mcpServersClient = trpc.mcpServers as any;
-    const { data: rawConfig, isLoading, refetch } = trpc.config.list.useQuery();
+    const configQuery = trpc.config.list.useQuery();
+    const { data: rawConfig, isLoading, refetch } = configQuery;
     const {
         data: rawSyncTargets,
         isLoading: areTargetsLoading,
         refetch: refetchTargets,
+        error: syncTargetsError,
     } = mcpServersClient.syncTargets.useQuery();
     const config = normalizeConfigItems(rawConfig);
     const syncTargets = normalizeSyncTargets(rawSyncTargets);
+    const configUnavailable = configQuery.isError || (rawConfig != null && !Array.isArray(rawConfig));
+    const syncTargetsUnavailable = Boolean(syncTargetsError) || (rawSyncTargets != null && !Array.isArray(rawSyncTargets));
     const [editing, setEditing] = useState<Record<string, string>>({});
     const [selectedClient, setSelectedClient] = useState<SupportedClient>('claude-desktop');
 
@@ -105,6 +109,7 @@ export default function MCPSettings() {
     const serverCount = previewDocument?.serverCount ?? 0;
     const isPreviewLoading = previewQuery.isLoading || previewQuery.isRefetching;
     const isSyncing = syncMutation.isPending;
+    const previewUnavailable = previewQuery.data != null && (typeof previewQuery.data !== 'object' || Array.isArray(previewQuery.data));
 
     return (
         <div className="p-8 space-y-8">
@@ -164,6 +169,10 @@ export default function MCPSettings() {
                         <div className="flex justify-center p-8">
                             <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
                         </div>
+                    ) : syncTargetsUnavailable ? (
+                        <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-4 text-sm text-red-300">
+                            Sync targets unavailable{syncTargetsError ? `: ${syncTargetsError.message}` : ' due to malformed data'}.
+                        </div>
                     ) : syncTargets.length === 0 ? (
                         <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4 text-sm text-zinc-500">
                             No supported MCP client targets were detected.
@@ -174,7 +183,7 @@ export default function MCPSettings() {
                                 <div>
                                     <div className="text-sm font-medium text-white">{CLIENT_LABELS[selectedClient]}</div>
                                     <div className="mt-1 text-xs text-zinc-500">
-                                        Borg will merge the current MCP server registry into this client config without discarding unrelated settings.
+                                        HyperCode will merge the current MCP server registry into this client config without discarding unrelated settings.
                                     </div>
                                 </div>
 
@@ -223,7 +232,7 @@ export default function MCPSettings() {
                                     <div>
                                         <div className="text-sm font-medium text-white">Generated preview</div>
                                         <div className="text-xs text-zinc-500">
-                                            This is the exact JSON Borg will write for {CLIENT_LABELS[selectedClient]}.
+                                            This is the exact JSON HyperCode will write for {CLIENT_LABELS[selectedClient]}.
                                         </div>
                                     </div>
                                     {previewDocument?.existed ? (
@@ -240,6 +249,10 @@ export default function MCPSettings() {
                                 {isPreviewLoading ? (
                                     <div className="flex justify-center p-12">
                                         <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+                                    </div>
+                                ) : previewUnavailable ? (
+                                    <div className="rounded-md border border-red-900/40 bg-red-950/20 p-6 text-sm text-red-300">
+                                        Preview unavailable due to malformed data.
                                     </div>
                                 ) : previewDocument ? (
                                     <pre className="max-h-[520px] overflow-auto rounded-md border border-zinc-800 bg-black/30 p-4 text-xs text-zinc-200">
@@ -264,6 +277,10 @@ export default function MCPSettings() {
                     {isLoading ? (
                         <div className="flex justify-center p-12">
                             <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+                        </div>
+                    ) : configUnavailable ? (
+                        <div className="text-center p-8 text-red-300 bg-red-950/20 rounded-lg border border-red-900/40">
+                            Configuration inventory unavailable{configQuery.isError ? `: ${configQuery.error.message}` : ' due to malformed data'}.
                         </div>
                     ) : config.length === 0 ? (
                         <div className="text-center p-8 text-zinc-500">

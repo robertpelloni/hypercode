@@ -19,7 +19,7 @@ export function resolveBorgConfigDir(): string {
     return configuredDir;
   }
 
-  return path.join(os.homedir(), '.borg');
+  return path.join(os.homedir(), '.hypercode');
 }
 
 export function resolveBorgLockPath(): string {

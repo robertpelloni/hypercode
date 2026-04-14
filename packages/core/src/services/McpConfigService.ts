@@ -113,9 +113,15 @@ export class McpConfigService {
     }
 
     private async syncStoredMetadataTools(serverUuid: string, serverConfig: unknown): Promise<void> {
+        // Do not overwrite database tools if the config doesn't have tools populated.
+        // This prevents wiping out tools (and their always_on status) that were discovered by the daemon.
         const metadataTools = Array.isArray((serverConfig as { _meta?: { tools?: unknown[] } })?._meta?.tools)
             ? (serverConfig as { _meta?: { tools?: Array<Record<string, unknown>> } })._meta?.tools ?? []
             : [];
+
+        if (metadataTools.length === 0) {
+            return; // Skip syncing tools if mcp.jsonc doesn't have any cached tools for this server
+        }
 
         await toolsRepository.syncTools({
             mcpServerUuid: serverUuid,

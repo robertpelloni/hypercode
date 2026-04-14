@@ -1,3 +1,4 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { adminProcedure, t, publicProcedure, getLLMService } from '../lib/trpc-core.js';
 import type { ProviderRoutingStrategy, ProviderTaskType } from '../providers/types.js';
@@ -44,6 +45,20 @@ interface BillingSelectorRuntime {
     getTaskRoutingRules?: () => Record<ProviderTaskType, ProviderRoutingStrategy>;
     setTaskRoutingStrategy?: (taskType: ProviderTaskType, strategy: ProviderRoutingStrategy) => void;
     resetTaskRoutingStrategy?: (taskType: ProviderTaskType) => void;
+    getFallbackHistory?: (limit?: number) => ProviderFallbackEventRuntime[];
+    clearFallbackHistory?: () => void;
+}
+
+interface ProviderFallbackEventRuntime {
+    id: number;
+    timestamp: number;
+    requestedProvider?: string;
+    selectedProvider: string;
+    selectedModelId: string;
+    taskType: ProviderTaskType;
+    strategy: ProviderRoutingStrategy;
+    reason: string;
+    causeCode: 'preference_honored' | 'fallback_provider' | 'budget_forced_local' | 'emergency_fallback';
 }
 
 interface BillingModelRuntime {
@@ -65,6 +80,14 @@ interface FallbackEntryRuntime {
 
 export const TASK_TYPE_VALUES = ['coding', 'planning', 'research', 'general', 'worker', 'supervisor'] as const satisfies readonly ProviderTaskType[];
 const TASK_TYPES: ProviderTaskType[] = [...TASK_TYPE_VALUES];
+
+function buildBillingUnavailableError(label: string, error: unknown): TRPCError {
+    const message = error instanceof Error ? error.message : String(error);
+    return new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: `${label} is unavailable: ${message}`,
+    });
+}
 
 export function buildFallbackChainResponse(
     selector: BillingSelectorRuntime,
@@ -324,8 +347,8 @@ export const billingRouter = t.router({
         const llm = getLLMService();
         try {
             return llm.modelSelector.getDepletedModels?.() ?? [];
-        } catch {
-            return [];
+        } catch (error) {
+            throw buildBillingUnavailableError('Depleted model status', error);
         }
     }),
 
@@ -337,7 +360,7 @@ export const billingRouter = t.router({
      * available at all).  Returns entries in reverse-chronological order.
      *
      * The billing dashboard "Recent Fallback Decisions" card consumes this to let
-     * operators understand why Borg substituted a different provider/model than
+     * operators understand why HyperCode substituted a different provider/model than
      * configured.
      */
     getFallbackHistory: publicProcedure
@@ -359,8 +382,8 @@ export const billingRouter = t.router({
                     }>;
                 };
                 return selector.getFallbackHistory?.(input?.limit ?? 20) ?? [];
-            } catch {
-                return [];
+            } catch (error) {
+                throw buildBillingUnavailableError('Fallback history', error);
             }
         }),
 
@@ -374,8 +397,8 @@ export const billingRouter = t.router({
                 };
                 selector.clearFallbackHistory?.();
                 return { ok: true };
-            } catch {
-                return { ok: false };
+            } catch (error) {
+                throw buildBillingUnavailableError('Fallback history clearing', error);
             }
         }),
 });

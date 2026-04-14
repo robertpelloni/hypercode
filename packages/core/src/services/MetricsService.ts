@@ -259,6 +259,17 @@ export class MetricsService extends EventEmitter {
         if (this.events.length > this.MAX_EVENTS) {
             this.events = this.events.slice(-this.MAX_EVENTS / 2);
         }
+
+        // Bridge to typed metrics
+        if (type === 'duration' || type === 'tool_execution') {
+            const name = tags?.tool || tags?.name || type;
+            this.observeHistogram(`duration_${name}`, value);
+        } else if (type === 'memory_heap' || type === 'memory_rss' || type === 'system_load' || type === 'system_free_mem') {
+            this.setGauge(type, value, tags);
+        } else {
+            const name = tags?.tool || tags?.name || type;
+            this.incCounter(name, value, tags);
+        }
     }
 
     trackDuration(name: string, ms: number, tags?: Record<string, string>) {
@@ -274,20 +285,28 @@ export class MetricsService extends EventEmitter {
 
         relevant.forEach(e => {
             const key = e.type;
-            counts[key] = (counts[key] || 0) + 1;
+            counts[key] = (counts[key] || 0) + e.value; // For tool_call, value is usually 1, but we should sum it
             sums[key] = (sums[key] || 0) + e.value;
         });
 
         const averages: Record<string, number> = {};
         Object.keys(sums).forEach(k => {
-            averages[k] = sums[k] / counts[k];
+            averages[k] = sums[k] / (relevant.filter(e => e.type === k).length || 1);
         });
+
+        // Enrich with detailed histograms and typed stats
+        const typedStats = this.getAll();
 
         return {
             windowMs,
             totalEvents: relevant.length,
             counts,
             averages,
+            counters: typedStats.counters,
+            gauges: typedStats.gauges,
+            histograms: typedStats.histograms
+        };
+    }
             series: this.downsample(relevant, 60)
         };
     }

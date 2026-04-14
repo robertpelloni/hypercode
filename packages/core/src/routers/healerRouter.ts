@@ -36,7 +36,7 @@ export const healerRouter = t.router({
             };
             // Safely fetch internal EventBus from active Orchestrator Context
             const server = getHealerService() as any; 
-            // In Borg, either the server or generic system holds event bus. We use MCPServer fallback.
+            // In HyperCode, either the server or generic system holds event bus. We use MCPServer fallback.
             const mcpServer = (global as any).mcpServerInstance;
             if (mcpServer && mcpServer.eventBus) {
                 mcpServer.eventBus.on('system:llm_quota_exhausted', onEvent);

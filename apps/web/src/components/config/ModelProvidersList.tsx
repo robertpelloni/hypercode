@@ -2,7 +2,36 @@
 
 import { useState } from 'react';
 import { trpc } from '@/utils/trpc';
-import { Button, Input, Card } from '@borg/ui';
+import { Button, Input, Card } from '@hypercode/ui';
+
+type ProviderListItem = {
+    id: string;
+    name: string;
+    configured: boolean;
+    envVar: string;
+    keyPreview?: string;
+};
+
+function normalizeProviders(value: unknown): ProviderListItem[] | null {
+    if (!Array.isArray(value)) {
+        return null;
+    }
+
+    return value.filter((entry): entry is ProviderListItem => {
+        if (!entry || typeof entry !== 'object') {
+            return false;
+        }
+
+        const provider = entry as Partial<ProviderListItem>;
+        return (
+            typeof provider.id === 'string'
+            && typeof provider.name === 'string'
+            && typeof provider.configured === 'boolean'
+            && typeof provider.envVar === 'string'
+            && (provider.keyPreview === undefined || typeof provider.keyPreview === 'string')
+        );
+    });
+}
 
 export function ModelProvidersList() {
     const providersQuery = trpc.settings.getProviders.useQuery();
@@ -14,6 +43,8 @@ export function ModelProvidersList() {
     const [editingProvider, setEditingProvider] = useState<string | null>(null);
     const [editValue, setEditValue] = useState('');
     const [testResults, setTestResults] = useState<Record<string, { success: boolean; ms?: number; err?: string }>>({});
+    const providers = normalizeProviders(providersQuery.data);
+    const providersUnavailable = Boolean(providersQuery.error) || (providersQuery.data !== undefined && providers === null);
 
     const handleSave = async (providerId: string) => {
         if (!editValue.trim()) return;
@@ -36,13 +67,21 @@ export function ModelProvidersList() {
         return <div className="p-4 text-gray-500 font-mono animate-pulse">Loading providers...</div>;
     }
 
+    if (providersUnavailable) {
+        return <div className="p-4 text-red-400 font-mono">Provider settings unavailable: {providersQuery.error?.message ?? 'Provider settings returned an invalid payload.'}</div>;
+    }
+
     return (
         <div className="space-y-4">
             <h2 className="text-xl font-bold text-white mb-2">Model Providers</h2>
             <p className="text-sm text-gray-400 mb-6">Manage API keys for LLM providers. Keys are stored locally in your <code>.env</code> file.</p>
             
+            {providers && providers.length === 0 ? (
+                <div className="text-sm text-gray-500">No model providers available.</div>
+            ) : null}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {providersQuery.data?.map((p) => (
+                {(providers ?? []).map((p) => (
                     <Card key={p.id} className="p-4 bg-gray-900 border-gray-800 flex flex-col space-y-3">
                         <div className="flex justify-between items-start">
                             <h3 className="font-semibold text-gray-200">{p.name}</h3>

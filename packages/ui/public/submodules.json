@@ -652,9 +652,9 @@
       "isInstalled": true
     },
     {
-      "name": "borg",
-      "path": "borg",
-      "url": "https://github.com/robertpelloni/borg",
+      "name": "hypercode",
+      "path": "hypercode",
+      "url": "https://github.com/robertpelloni/hypercode",
       "status": "modified",
       "commit": "ad1103c",
       "category": "Other",

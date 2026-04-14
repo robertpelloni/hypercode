@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-const LOG_FILE_PATH = path.join(os.homedir(), '.borg', 'logs', 'supervisor.log');
+const LOG_FILE_PATH = path.join(os.homedir(), '.hypercode', 'logs', 'supervisor.log');
 export const LogTools = [
     {
         name: "read_supervisor_logs",

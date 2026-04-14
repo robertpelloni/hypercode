@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sheet, SheetContent, SheetTrigger, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@borg/ui";
-import { Button } from "@borg/ui";
+import { Sheet, SheetContent, SheetTrigger, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
 import { Menu, ChevronDown, FlaskConical } from "lucide-react";
 import { useState } from "react";
 
@@ -34,7 +34,7 @@ const LABS_NAV_ITEMS = [
 export function Navigation() {
     const pathname = usePathname() || '';
     const [open, setOpen] = useState(false);
-    const versionLabel = (process.env.NEXT_PUBLIC_BORG_VERSION ?? '0.99.1').replace(/^v/i, '');
+    const versionLabel = (process.env.NEXT_PUBLIC_BORG_VERSION ?? '1.0.0-alpha.1').replace(/^v/i, '');
 
     const isActive = (path: string) => {
         if (path === '/') return pathname === '/';
@@ -45,7 +45,7 @@ export function Navigation() {
         <nav suppressHydrationWarning className="w-full bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
             <div className="flex items-center gap-6">
                 <div className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-                    BORG
+                    HYPERCODE
                 </div>
 
                 {/* Desktop Navigation */}

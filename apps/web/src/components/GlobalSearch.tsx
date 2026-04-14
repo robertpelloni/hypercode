@@ -51,6 +51,10 @@ export const GlobalSearch: React.FC = () => {
 
         try {
             const { data: symbols } = await searchQuery.refetch();
+            if (symbols !== undefined && !Array.isArray(symbols)) {
+                setResults([{ file: 'Search unavailable', snippet: 'Symbol search returned an invalid payload.' }]);
+                return;
+            }
             const normalizedSymbols = normalizeSymbols(symbols);
             const mapped: SearchResult[] = normalizedSymbols.slice(0, 50).map((s) => {
                 const uri: string = String(s?.location?.uri ?? '');
@@ -66,17 +70,17 @@ export const GlobalSearch: React.FC = () => {
                 };
             });
 
-            setResults(mapped.length > 0 ? mapped : [{ file: 'No results', snippet: 'No matching symbols found in LSP index.' }]);
+            setResults(mapped.length > 0 ? mapped : [{ file: 'No results', snippet: 'No matching symbols found in the symbol index.' }]);
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : 'Unable to query symbol index.';
-            setResults([{ file: 'Search failed', snippet: message }]);
+            setResults([{ file: 'Search unavailable', snippet: message }]);
         } finally {
             setIsSearching(false);
         }
     };
 
     const handleOpenFile = async (res: SearchResult) => {
-        if (!res.file || res.file === 'No results' || res.file === 'Search failed') {
+        if (!res.file || res.file === 'No results' || res.file === 'Search unavailable') {
             return;
         }
 

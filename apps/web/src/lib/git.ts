@@ -51,6 +51,10 @@ export async function getSubmodules(workspaceRoot: string): Promise<SubmoduleInf
             }
         }
 
+        if (submodules.length === 0 && content.trim().length > 0) {
+            throw new Error('Malformed .gitmodules file');
+        }
+
         // Now check status for each (in parallel chunks to likely improve perf but not kill CPU)
         // Limiting concurrency is good practice.
         const results = await Promise.all(submodules.map(async sub => {
@@ -60,9 +64,13 @@ export async function getSubmodules(workspaceRoot: string): Promise<SubmoduleInf
 
         return results;
 
-    } catch {
-        // console.error("Error reading .gitmodules:", e); // Silent fail safe
-        return [];
+    } catch (error) {
+        const errorCode = (error as NodeJS.ErrnoException | undefined)?.code;
+        if (errorCode === 'ENOENT') {
+            return [];
+        }
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Submodule inventory is unavailable: ${message}`);
     }
 }
 

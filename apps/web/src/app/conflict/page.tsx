@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { AlertTriangle, GitMerge, FileWarning, Check, X, FileDiff, ArrowRight } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@borg/ui';
-import { Button } from '@borg/ui';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@borg/ui';
-import { Badge } from '@borg/ui';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@hypercode/ui';
+import { Button } from '@hypercode/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@hypercode/ui';
+import { Badge } from '@hypercode/ui';
 import { toast } from 'sonner';
 
 // Mock data to simulate an active pipeline conflict between agents or threads

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AGENTS — Borg Contributor & Agent Guide
 
 **Mandatory reading first:** `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`
@@ -207,3 +208,27 @@ You are the core routing engine for the Borg operating system. Your primary func
 * **State & Transport Persistence:** You are communicating via standard input/output streams (`stdio`). You must wait for the server to return a `result` or `error` object before assuming a task is complete. Do not prematurely close the transport loop.
 * **Payload Accuracy:** When invoking a tool on a local server, ensure your `arguments` payload matches the server's predefined JSON schema exactly. No missing keys, no hallucinated parameters.
 * **Graceful Failures:** If an MCP server returns an error via `stderr` or fails to respond within the timeout window, log the failure state immediately. Do not attempt to guess or hallucinate the tool's output.
+=======
+# AGENTS — HyperCode Contributor & Agent Guide
+
+> **CRITICAL: ALL AGENTS MUST READ `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` BEFORE PROCEEDING.**
+
+This file serves as a reference point for multi-agent workflows (Claude -> Gemini -> GPT) and human operators orchestrating autonomous sessions.
+
+## 1. Multi-Agent Workflows
+
+1. **Handoffs:** Agents communicate primarily through `HANDOFF.md`. When your turn finishes, document exactly what you did, what failed, and what the next agent must do.
+2. **Specializations:**
+   - **Gemini:** Speed, recursive scripts, massive context processing, repo maintenance.
+   - **Claude:** Deep implementation, UI/UX perfection, documentation, styling.
+   - **GPT:** Architecture, systemic debugging, strict type enforcement.
+3. **Iteration Cycle:** Read -> Strategize -> Execute -> Validate -> Commit -> Handoff. Never stop the party.
+
+## 2. Universal Protocol
+
+- Every session begins by verifying the current project version (`VERSION` file) and ensuring it matches across `package.json`, `CHANGELOG.md`, and dashboard UI displays.
+- All major updates to dependencies or architecture must be noted in `CHANGELOG.md` and `HANDOFF.md`.
+- Read the instructions located in `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` for specific rules regarding truthfulness, scope, and validation.
+
+*For model-specific quirks, refer to `CLAUDE.md`, `GEMINI.md`, `GPT.md`, and `copilot-instructions.md`.*
+>>>>>>> main

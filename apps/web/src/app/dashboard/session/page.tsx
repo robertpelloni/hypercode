@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+<<<<<<< HEAD
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@borg/ui";
 import { Loader2, Activity, Play, Square, Target, Crosshair, HelpCircle, ActivitySquare, RotateCcw } from "lucide-react";
+=======
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@hypercode/ui";
+import { Loader2, Activity, Play, Square, Target, Crosshair, HelpCircle, ActivitySquare, RotateCcw, Layers } from "lucide-react";
+>>>>>>> main
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
 import { PageStatusBanner } from '@/components/PageStatusBanner';
@@ -168,6 +173,9 @@ export default function SessionDashboard() {
     const sessionsPayloadInvalid = sessionsQuery.data != null && (!Array.isArray(sessionsQuery.data) || !sessionsQuery.data.every(isSessionRowPayload));
     const catalogPayloadInvalid = catalogQuery.data != null && (!Array.isArray(catalogQuery.data) || !catalogQuery.data.every(isSessionCatalogEntryPayload));
     const sessionsUnavailable = sessionsQuery.isError || sessionsPayloadInvalid;
+
+    const workspacesQuery = trpc.workspace.list.useQuery();
+    const workspaces = workspacesQuery.data || [];
     const catalogUnavailable = catalogQuery.isError || catalogPayloadInvalid;
     const stateUnavailable = sessionStateQuery.isError || statePayloadInvalid;
 
@@ -287,6 +295,39 @@ export default function SessionDashboard() {
                                 <pre className="text-xs text-green-400 font-mono overflow-auto overflow-wrap-anywhere">
                                     {JSON.stringify(sessionState, null, 2)}
                                 </pre>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Workspaces */}
+                <Card className="bg-zinc-900 border-zinc-800 shadow-xl flex flex-col">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-lg font-bold flex items-center gap-2 text-emerald-400">
+                            <Layers className="h-5 w-5" />
+                            Recent Workspaces
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-1 overflow-y-auto max-h-[300px]">
+                        {workspacesQuery.isLoading ? (
+                            <div className="flex items-center justify-center p-4 text-sm text-zinc-500">
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading...
+                            </div>
+                        ) : workspaces.length === 0 ? (
+                            <div className="text-sm text-zinc-500 italic p-4 text-center border border-dashed border-zinc-800 rounded-lg">
+                                No recent workspaces found.
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {workspaces.map((ws: any) => (
+                                    <div key={ws.path} className="flex flex-col rounded-lg border border-zinc-800 bg-black/40 p-3 hover:border-emerald-500/30 transition-colors">
+                                        <span className="font-semibold text-zinc-200 text-sm truncate">{ws.name}</span>
+                                        <span className="font-mono text-xs text-zinc-500 truncate" title={ws.path}>{ws.path}</span>
+                                        <div className="mt-1 flex items-center gap-2 text-[10px] text-zinc-600 uppercase tracking-wider">
+                                            <span>Last active: {formatRelativeTimestamp(ws.lastAccessedAt, currentTimestamp)}</span>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </CardContent>

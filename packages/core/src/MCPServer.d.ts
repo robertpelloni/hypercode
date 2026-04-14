@@ -1,5 +1,5 @@
 import './debug_marker.js';
-import { ModelSelector } from "@borg/ai";
+import { ModelSelector } from "@hypercode/ai";
 import { PermissionManager } from "./security/PermissionManager.js";
 export declare class MCPServer {
     private server;

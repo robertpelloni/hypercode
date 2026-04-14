@@ -1,7 +1,7 @@
 # MCP Registry Intelligence Research Notes (2026-03-20)
 
 ## Why this note exists
-This captures implementation patterns from external MCP ecosystem projects and maps them to Borg P0 catalog/validation work.
+This captures implementation patterns from external MCP ecosystem projects and maps them to HyperCode P0 catalog/validation work.
 
 ## External patterns worth adopting
 
@@ -10,7 +10,7 @@ Observed in MCPProxy docs:
 - explicit server-type split (`stdio`, `http`, OAuth-backed HTTP)
 - consistent per-server shape: `name`, `command/url`, `args`, `env`, `enabled`, optional OAuth, optional isolation
 
-Adopt in Borg:
+Adopt in HyperCode:
 - canonical normalized shape per published server variant
 - transport and auth modeled independently from install method
 
@@ -21,7 +21,7 @@ Observed in MCPProxy docker isolation:
 - explicit lifecycle handling and cleanup labels
 - security hardening knobs (`network_mode`, capability dropping)
 
-Adopt in Borg:
+Adopt in HyperCode:
 - validation harness should support isolation profiles
 - classify results by profile (`native`, `isolated`, `network-none`)
 
@@ -29,7 +29,7 @@ Adopt in Borg:
 Observed in MCPProxy quarantine model:
 - newly added servers may start in quarantined state
 
-Adopt in Borg:
+Adopt in HyperCode:
 - published catalog state machine includes non-promoted state before installability claims
 - optional manual review gate for risky auth/execution patterns
 
@@ -40,7 +40,7 @@ Observed in MCPProxy sensitive-data docs:
 - redaction in activity logs
 - compliance export flows
 
-Adopt in Borg:
+Adopt in HyperCode:
 - validation run logs should store detections as redacted findings, not raw secrets
 - add severity-based badge/warnings in catalog UI
 
@@ -50,7 +50,7 @@ Observed in MetaMCP and MCPHub:
 - expose unified endpoint and scoped endpoints
 - selective tool curation per namespace
 
-Adopt in Borg:
+Adopt in HyperCode:
 - config recipes should support grouping/composition metadata
 - published catalog should track if a server is best used standalone vs grouped
 
@@ -58,10 +58,10 @@ Adopt in Borg:
 Observed in mcp-use:
 - disallowed tools, server manager, bounded steps, memory toggles
 
-Adopt in Borg:
+Adopt in HyperCode:
 - operator flow should include optional safe defaults for tool exposure when first enabling a server
 
-## Proposed Borg data model additions (P0)
+## Proposed HyperCode data model additions (P0)
 
 1. `published_mcp_servers`
 - canonical_id, display_name, normalized_transport, install_method, auth_model

@@ -4,7 +4,7 @@
  * electron-orchestrator Dashboard Page
  *
  * Shows status and controls for the electron-orchestrator desktop shell.
- * electron-orchestrator is the native desktop companion for Borg — providing system tray
+ * electron-orchestrator is the native desktop companion for HyperCode — providing system tray
  * controls, OS-level integration, and native orchestration capabilities.
  *
  * This page checks whether electron-orchestrator is running by probing its IPC or HTTP
@@ -38,19 +38,40 @@ interface MaestroHealth {
     electronVersion?: string;
 }
 
+function isMaestroHealthPayload(value: unknown): value is MaestroHealth {
+    return typeof value === "object"
+        && value !== null
+        && !Array.isArray(value)
+        && ((value as { version?: unknown }).version === undefined || typeof (value as { version?: unknown }).version === "string")
+        && ((value as { uptime?: unknown }).uptime === undefined || typeof (value as { uptime?: unknown }).uptime === "number")
+        && ((value as { platform?: unknown }).platform === undefined || typeof (value as { platform?: unknown }).platform === "string")
+        && ((value as { arch?: unknown }).arch === undefined || typeof (value as { arch?: unknown }).arch === "string")
+        && ((value as { nodeVersion?: unknown }).nodeVersion === undefined || typeof (value as { nodeVersion?: unknown }).nodeVersion === "string")
+        && ((value as { electronVersion?: unknown }).electronVersion === undefined || typeof (value as { electronVersion?: unknown }).electronVersion === "string");
+}
+
 export default function MaestroDashboardPage() {
-    const [status, setStatus] = useState<"checking" | "online" | "offline">("checking");
+    const [status, setStatus] = useState<"checking" | "online" | "offline" | "unavailable">("checking");
     const [health, setHealth] = useState<MaestroHealth | null>(null);
     const [lastCheck, setLastCheck] = useState<string>("");
+    const [lastError, setLastError] = useState<string>("");
 
     const checkHealth = useCallback(async () => {
         setStatus("checking");
+        setLastError("");
         try {
             const res = await fetch(`${MAESTRO_URL}/api/health/server`, {
                 signal: AbortSignal.timeout(3000),
             });
             if (res.ok) {
-                const data = await res.json().catch(() => ({}));
+                const data: unknown = await res.json().catch(() => null);
+                if (!isMaestroHealthPayload(data)) {
+                    setHealth(null);
+                    setStatus("unavailable");
+                    setLastError("electron-orchestrator health returned an invalid payload.");
+                    setLastCheck(new Date().toLocaleTimeString());
+                    return;
+                }
                 setHealth({
                     version: data.version,
                     uptime: data.uptime,
@@ -61,10 +82,14 @@ export default function MaestroDashboardPage() {
                 });
                 setStatus("online");
             } else {
-                setStatus("offline");
+                setHealth(null);
+                setStatus("unavailable");
+                setLastError(`Health check returned HTTP ${res.status}.`);
             }
-        } catch {
-            setStatus("offline");
+        } catch (error) {
+            setHealth(null);
+            setStatus("unavailable");
+            setLastError(error instanceof Error ? error.message : "electron-orchestrator health check failed.");
         }
         setLastCheck(new Date().toLocaleTimeString());
     }, []);
@@ -85,7 +110,7 @@ export default function MaestroDashboardPage() {
                         electron-orchestrator
                     </h1>
                     <p className="text-zinc-400 text-sm">
-                        Native desktop shell for Borg — system tray, OS integration, and local orchestration
+                        Native desktop shell for HyperCode — system tray, OS integration, and local orchestration
                     </p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -95,6 +120,8 @@ export default function MaestroDashboardPage() {
                                 ? "bg-emerald-400 animate-pulse"
                                 : status === "checking"
                                   ? "bg-yellow-400 animate-pulse"
+                                  : status === "unavailable"
+                                    ? "bg-red-400 animate-pulse"
                                   : "bg-zinc-600"
                         }`}
                     />
@@ -103,6 +130,8 @@ export default function MaestroDashboardPage() {
                             ? `Online — ${MAESTRO_URL}`
                             : status === "checking"
                               ? "Checking…"
+                              : status === "unavailable"
+                                ? "Unavailable"
                               : "Offline"}
                     </span>
                     <button
@@ -121,12 +150,24 @@ export default function MaestroDashboardPage() {
                 <PageStatusBanner
                     status="experimental"
                     message="electron-orchestrator desktop integration"
-                    note="The electron-orchestrator desktop shell is an experimental companion app. It shares the Borg backend on port 3847 and provides native OS capabilities."
+                    note="The electron-orchestrator desktop shell is an experimental companion app. It shares the HyperCode backend on port 3847 and provides native OS capabilities."
                 />
             </div>
 
             <div className="flex-1 p-4 space-y-4">
                 {/* Status Card */}
+                {status === "unavailable" && (
+                    <div className="border border-red-900/40 bg-red-950/20 rounded-lg px-4 py-3 flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-red-400 mt-0.5 shrink-0" />
+                        <div>
+                            <p className="text-red-200 font-medium text-sm">electron-orchestrator status is unavailable</p>
+                            <p className="text-red-300/80 text-xs mt-1">
+                                {lastError || `Failed to read electron-orchestrator health from ${MAESTRO_URL}.`}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {status === "offline" && (
                     <div className="border border-amber-700/50 bg-amber-950/20 rounded-lg px-4 py-3 flex items-start gap-3">
                         <AlertCircle className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
@@ -134,7 +175,7 @@ export default function MaestroDashboardPage() {
                             <p className="text-amber-200 font-medium text-sm">electron-orchestrator is not running</p>
                             <p className="text-amber-300/70 text-xs mt-1">
                                 Start electron-orchestrator from the <code className="bg-amber-950/50 px-1 rounded">apps/maestro</code> directory,
-                                or launch it from the system tray. electron-orchestrator connects to the Borg backend at{" "}
+                                or launch it from the system tray. electron-orchestrator connects to the HyperCode backend at{" "}
                                 <code className="bg-amber-950/50 px-1 rounded">{MAESTRO_URL}</code>.
                             </p>
                             <div className="flex flex-wrap gap-2 mt-3">
@@ -175,7 +216,7 @@ export default function MaestroDashboardPage() {
                             <div>
                                 <p className="text-emerald-200 font-medium text-sm">electron-orchestrator is running</p>
                                 <p className="text-emerald-300/70 text-xs mt-1">
-                                    Connected to Borg backend at {MAESTRO_URL}
+                                    Connected to HyperCode backend at {MAESTRO_URL}
                                 </p>
                             </div>
                         </div>

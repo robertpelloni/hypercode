@@ -1,3 +1,4 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { t, getGitService } from '../lib/trpc-core.js';
 
@@ -23,10 +24,21 @@ export const gitRouter = t.router({
                     active: false
                 });
             }
+            if (modules.length === 0 && content.trim().length > 0) {
+                throw new Error('Malformed .gitmodules file');
+            }
             return modules;
         } catch (e) {
-            console.error("Failed to read .gitmodules", e);
-            return [];
+            const errorCode = (e as NodeJS.ErrnoException | undefined)?.code;
+            if (errorCode === 'ENOENT') {
+                return [];
+            }
+            const message = e instanceof Error ? e.message : String(e);
+            console.error('Failed to read .gitmodules', e);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `Git modules are unavailable: ${message}`,
+            });
         }
     }),
     getLog: t.procedure.input(z.object({ limit: z.number().optional() })).query(async ({ input }) => {

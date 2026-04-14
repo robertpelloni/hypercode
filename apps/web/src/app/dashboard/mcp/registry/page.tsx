@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardContent } from "@borg/ui";
-import { Button } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
 import { Loader2, Globe, Download, ExternalLink, Database, ArrowRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -62,7 +62,7 @@ export default function RegistryDashboard() {
 
     // We can use this to check which are already installed
     const { data: installedServers } = trpc.mcpServers.list.useQuery();
-    const { data: registry, isLoading: loadingRegistry } = trpc.mcpServers.registrySnapshot.useQuery();
+    const { data: registry, isLoading: loadingRegistry, error: registryError } = trpc.mcpServers.registrySnapshot.useQuery();
     const { data: catalogStats } = trpc.catalog.stats.useQuery(undefined, {
         staleTime: 30_000,
         refetchOnWindowFocus: false,
@@ -70,6 +70,9 @@ export default function RegistryDashboard() {
 
     const installedServerNames = getInstalledServerNames(installedServers);
     const liveRegistry: RegistryItem[] = normalizeRegistryItems(registry);
+    const installedServersUnavailable = installedServers != null && !Array.isArray(installedServers);
+    const registryUnavailable = Boolean(registryError) || (registry != null && !Array.isArray(registry));
+    const catalogStatsUnavailable = catalogStats != null && (typeof catalogStats !== 'object' || Array.isArray(catalogStats));
 
     const source = liveRegistry.length > 0 ? liveRegistry : QUICK_INSTALL_TEMPLATES;
     const filtered = source.filter((item) =>
@@ -88,9 +91,17 @@ export default function RegistryDashboard() {
                 </div>
                 <div className="text-xs text-zinc-500 flex items-center gap-2">
                     <Database className="h-4 w-4" />
-                    {liveRegistry.length > 0 ? `Live index (${liveRegistry.length})` : 'Fallback templates'}
+                    {registryUnavailable ? 'Registry unavailable' : liveRegistry.length > 0 ? `Live index (${liveRegistry.length})` : 'Fallback templates'}
                 </div>
             </div>
+
+            {registryUnavailable ? (
+                <Card className="border-red-900/50 bg-red-950/20">
+                    <CardContent className="pt-6 text-sm text-red-300">
+                        {registryError?.message ?? 'Registry unavailable due to malformed data.'}
+                    </CardContent>
+                </Card>
+            ) : null}
 
             <div className="relative">
                 <Card className="mb-6 bg-zinc-900/40 border-zinc-800">
@@ -109,25 +120,25 @@ export default function RegistryDashboard() {
                         <p className="text-sm text-zinc-400 mb-3">
                             Use this page for quick installs. Use the full catalog for provenance, validation history, and confidence-ranked discovery.
                         </p>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                            <div className="rounded border border-zinc-800 bg-zinc-950/40 px-3 py-2">
-                                <div className="text-zinc-500 text-xs">Catalog total</div>
-                                <div className="text-zinc-100 font-semibold">{catalogStats?.total ?? 0}</div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                <div className="rounded border border-zinc-800 bg-zinc-950/40 px-3 py-2">
+                                    <div className="text-zinc-500 text-xs">Catalog total</div>
+                                    <div className="text-zinc-100 font-semibold">{catalogStatsUnavailable ? '—' : catalogStats?.total ?? 0}</div>
+                                </div>
+                                <div className="rounded border border-emerald-900/60 bg-emerald-950/20 px-3 py-2">
+                                    <div className="text-emerald-300 text-xs inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Validated</div>
+                                    <div className="text-emerald-100 font-semibold">{catalogStatsUnavailable ? '—' : catalogStats?.validated ?? 0}</div>
+                                </div>
+                                <div className="rounded border border-red-900/60 bg-red-950/20 px-3 py-2">
+                                    <div className="text-red-300 text-xs inline-flex items-center gap-1"><AlertCircle className="h-3 w-3" />Broken</div>
+                                    <div className="text-red-100 font-semibold">{catalogStatsUnavailable ? '—' : catalogStats?.broken ?? 0}</div>
+                                </div>
+                                <div className="rounded border border-amber-900/60 bg-amber-950/20 px-3 py-2">
+                                    <div className="text-amber-300 text-xs">Updated 24h</div>
+                                    <div className="text-amber-100 font-semibold">{catalogStatsUnavailable ? '—' : catalogStats?.recentlyUpdated ?? 0}</div>
+                                </div>
                             </div>
-                            <div className="rounded border border-emerald-900/60 bg-emerald-950/20 px-3 py-2">
-                                <div className="text-emerald-300 text-xs inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Validated</div>
-                                <div className="text-emerald-100 font-semibold">{catalogStats?.validated ?? 0}</div>
-                            </div>
-                            <div className="rounded border border-red-900/60 bg-red-950/20 px-3 py-2">
-                                <div className="text-red-300 text-xs inline-flex items-center gap-1"><AlertCircle className="h-3 w-3" />Broken</div>
-                                <div className="text-red-100 font-semibold">{catalogStats?.broken ?? 0}</div>
-                            </div>
-                            <div className="rounded border border-amber-900/60 bg-amber-950/20 px-3 py-2">
-                                <div className="text-amber-300 text-xs">Updated 24h</div>
-                                <div className="text-amber-100 font-semibold">{catalogStats?.recentlyUpdated ?? 0}</div>
-                            </div>
-                        </div>
-                    </CardContent>
+                        </CardContent>
                 </Card>
 
                 <input
@@ -147,7 +158,7 @@ export default function RegistryDashboard() {
                     <RegistryCard
                         key={item.id || item.name}
                         item={item}
-                        isInstalled={installedServerNames.has(item.name)}
+                        isInstalled={!installedServersUnavailable && installedServerNames.has(item.name)}
                     />
                 ))}
             </div>

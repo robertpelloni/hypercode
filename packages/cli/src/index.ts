@@ -1,11 +1,20 @@
 #!/usr/bin/env node
 /**
+<<<<<<< HEAD
  * borg CLI - The Neural Operating System Command Interface
  * @module @borg/cli
  * @version dynamic (root VERSION)
  *
  * Main entry point for the `borg` command. Provides comprehensive CLI access
  * to all borg subsystems: MCP router, memory, agents, sessions, providers,
+=======
+ * HyperCode CLI - The Neural Operating System Command Interface
+ * @module @hypercode/cli
+ * @version dynamic (root VERSION)
+ *
+ * Main entry point for the `hypercode` command. Provides comprehensive CLI access
+ * to all HyperCode subsystems: MCP router, memory, agents, sessions, providers,
+>>>>>>> main
  * tools, skills, configuration, and the web dashboard.
  */
 
@@ -33,11 +42,17 @@ const version = readCanonicalVersion(__dirname);
 const program = new Command();
 
 program
+<<<<<<< HEAD
   .name('borg')
   .description('borg — The Neural Operating System\n\nThe ultimate AI tool dashboard & development orchestrator.\nManage MCP servers, memory, agents, sessions, providers, and more.')
   .version(version, '-v, --version', 'Display the current borg version')
+=======
+  .name('hypercode')
+  .description('HyperCode — The Neural Operating System\n\nThe ultimate AI tool dashboard & development orchestrator.\nManage MCP servers, memory, agents, sessions, providers, and more.')
+  .version(version, '-v, --version', 'Display the current HyperCode version')
+>>>>>>> main
   .option('--json', 'Output results as JSON (applies to list/status commands)')
-  .option('--config <path>', 'Path to borg config file', '~/.borg/config.jsonc')
+  .option('--config <path>', 'Path to hypercode config file', '~/.hypercode/config.jsonc')
   .option('--log-level <level>', 'Log level: debug, info, warn, error', 'info')
   .option('--no-color', 'Disable colored output');
 

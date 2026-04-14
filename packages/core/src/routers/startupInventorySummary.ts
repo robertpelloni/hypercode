@@ -13,5 +13,8 @@ export function summarizeCachedInventory(cachedInventory: Awaited<ReturnType<typ
         toolCount,
         alwaysOnServerCount,
         alwaysOnToolCount,
+        databaseAvailable: cachedInventory.databaseAvailable,
+        databaseError: cachedInventory.databaseError,
+        fallbackUsed: cachedInventory.fallbackUsed,
     };
 }

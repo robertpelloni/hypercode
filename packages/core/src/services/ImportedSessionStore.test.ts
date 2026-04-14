@@ -8,6 +8,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let sqliteForTest: Database.Database;
 const tempRoots: string[] = [];
+const sqliteAvailable = (() => {
+    try {
+        const db = new Database(':memory:');
+        db.close();
+        return true;
+    } catch {
+        return false;
+    }
+})();
 
 vi.mock('../db/index.js', () => ({
     get sqliteInstance() {
@@ -108,17 +117,45 @@ function createSessionInput(hash: string, transcript: string, memoryContent: str
 
 describe('ImportedSessionStore', () => {
     beforeEach(() => {
+        if (!sqliteAvailable) {
+            return;
+        }
         sqliteForTest = new Database(':memory:');
         createSchema(sqliteForTest);
     });
 
     afterEach(async () => {
-        sqliteForTest.close();
+        sqliteForTest?.close();
         await Promise.all(tempRoots.splice(0).map((root) => fs.rm(root, { recursive: true, force: true })));
         vi.restoreAllMocks();
     });
 
+    it('returns false and logs a concise warning when transcript deduplication is unavailable', async () => {
+        vi.resetModules();
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        vi.doMock('../db/index.js', () => ({
+            get sqliteInstance() {
+                return {
+                    prepare() {
+                        throw new Error('SQLite runtime is unavailable for HyperCode DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)');
+                    },
+                };
+            },
+        }));
+
+        const { ImportedSessionStore } = await import('./ImportedSessionStore.js') as ImportedSessionStoreModule;
+        const store = new ImportedSessionStore(await createTempRoot());
+
+        expect(store.hasTranscriptHash('hash-missing-sqlite')).toBe(false);
+        expect(warnSpy).toHaveBeenCalledWith(
+            '[ImportedSessionStore] Transcript deduplication is unavailable: SQLite runtime is unavailable for this run.',
+        );
+    });
+
     it('upserts, lists, and fetches imported sessions with parsed memories', async () => {
+        if (!sqliteAvailable) {
+            return;
+        }
         const { ImportedSessionStore } = await import('./ImportedSessionStore.js') as ImportedSessionStoreModule;
         const store = new ImportedSessionStore(await createTempRoot());
         const input = createSessionInput('hash-a', 'User: keep imports truthful.', 'Keep imports truthful.');
@@ -141,6 +178,9 @@ describe('ImportedSessionStore', () => {
     });
 
     it('reuses the same session row for an existing transcript hash and replaces parsed memories', async () => {
+        if (!sqliteAvailable) {
+            return;
+        }
         const { ImportedSessionStore } = await import('./ImportedSessionStore.js') as ImportedSessionStoreModule;
         const store = new ImportedSessionStore(await createTempRoot());
 
@@ -170,6 +210,9 @@ describe('ImportedSessionStore', () => {
     });
 
     it('lists only instruction memories in newest-first order', async () => {
+        if (!sqliteAvailable) {
+            return;
+        }
         const nowSpy = vi.spyOn(Date, 'now');
         nowSpy.mockReturnValueOnce(1_700_000_000_100).mockReturnValueOnce(1_700_000_000_200);
 
@@ -190,6 +233,9 @@ describe('ImportedSessionStore', () => {
     });
 
     it('compacts legacy inline transcripts into gzip archives and keeps them readable', async () => {
+        if (!sqliteAvailable) {
+            return;
+        }
         const { ImportedSessionStore } = await import('./ImportedSessionStore.js') as ImportedSessionStoreModule;
         const archiveRoot = await createTempRoot();
         const store = new ImportedSessionStore(archiveRoot);
@@ -259,6 +305,9 @@ describe('ImportedSessionStore', () => {
     });
 
     it('writes retention summary into compressed archive metadata sidecars', async () => {
+        if (!sqliteAvailable) {
+            return;
+        }
         const { ImportedSessionStore } = await import('./ImportedSessionStore.js') as ImportedSessionStoreModule;
         const archiveRoot = await createTempRoot();
         const store = new ImportedSessionStore(archiveRoot);
@@ -289,6 +338,9 @@ describe('ImportedSessionStore', () => {
     });
 
     it('reports maintenance stats for inline, archived, and missing-retention sessions', async () => {
+        if (!sqliteAvailable) {
+            return;
+        }
         const { ImportedSessionStore } = await import('./ImportedSessionStore.js') as ImportedSessionStoreModule;
         const archiveRoot = await createTempRoot();
         const store = new ImportedSessionStore(archiveRoot);
@@ -363,6 +415,9 @@ describe('ImportedSessionStore', () => {
     });
 
     it('backfills retention summaries for legacy archived sessions', async () => {
+        if (!sqliteAvailable) {
+            return;
+        }
         const { ImportedSessionStore } = await import('./ImportedSessionStore.js') as ImportedSessionStoreModule;
         const archiveRoot = await createTempRoot();
         const store = new ImportedSessionStore(archiveRoot);

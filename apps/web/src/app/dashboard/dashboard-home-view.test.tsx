@@ -202,6 +202,41 @@ describe('dashboard home helpers', () => {
     });
   });
 
+  it('renders unavailable overview metrics when upstream inventories fail', () => {
+    expect(buildOverviewMetrics(
+      {
+        initialized: true,
+        serverCount: 5,
+        toolCount: 42,
+        connectedCount: 4,
+      },
+      [],
+      [],
+      false,
+      {
+        mcpStatusError: 'router down',
+        sessionsError: 'sessions unavailable',
+        providersError: 'providers unavailable',
+      },
+    )).toEqual([
+      {
+        label: 'MCP servers',
+        value: '—',
+        detail: 'Router telemetry unavailable',
+      },
+      {
+        label: 'Supervised sessions',
+        value: '—',
+        detail: 'Session supervisor inventory unavailable',
+      },
+      {
+        label: 'Configured providers',
+        value: '—',
+        detail: 'Provider routing inventory unavailable',
+      },
+    ]);
+  });
+
   it('formats traffic summaries and quota usage safely', () => {
     expect(summarizeTrafficEvent({
       server: 'github',
@@ -1094,6 +1129,76 @@ describe('dashboard home helpers', () => {
     expect(alerts.find((alert) => alert.id === 'startup-pending')).toBeUndefined();
   });
 
+  it('surfaces unavailable inventory alerts when homepage queries fail', () => {
+    const alerts = buildDashboardAlerts(
+      {
+        initialized: true,
+        serverCount: 0,
+        toolCount: 0,
+        connectedCount: 0,
+      },
+      {
+        status: 'running',
+        ready: true,
+        uptime: 42,
+        checks: {
+          mcpAggregator: {
+            ready: true,
+            liveReady: true,
+            residentReady: true,
+            serverCount: 0,
+            connectedCount: 0,
+            residentConnectedCount: 0,
+            initialization: null,
+            persistedServerCount: 0,
+            persistedToolCount: 0,
+            advertisedAlwaysOnServerCount: 0,
+            advertisedAlwaysOnToolCount: 0,
+            inventoryReady: true,
+          },
+          configSync: { ready: true, status: null },
+          memory: { ready: true, initialized: true, agentMemory: true },
+          browser: { ready: true, active: false, pageCount: 0 },
+          sessionSupervisor: { ready: true, sessionCount: 0, restore: null },
+          extensionBridge: { ready: true, clientCount: 0 },
+          executionEnvironment: {
+            ready: true,
+            preferredShellId: null,
+            preferredShellLabel: null,
+            shellCount: 0,
+            verifiedShellCount: 0,
+            toolCount: 0,
+            verifiedToolCount: 0,
+            harnessCount: 0,
+            verifiedHarnessCount: 0,
+            supportsPowerShell: false,
+            supportsPosixShell: false,
+          },
+        },
+      },
+      [],
+      [],
+      [],
+      false,
+      undefined,
+      {
+        startupStatusError: 'startup unavailable',
+        serversError: 'servers unavailable',
+        providersError: 'providers unavailable',
+        fallbackChainError: 'fallback unavailable',
+        sessionsError: 'sessions unavailable',
+      },
+    );
+
+    expect(alerts.map((alert) => alert.id)).toEqual([
+      'startup-unavailable',
+      'server-inventory-unavailable',
+      'provider-inventory-unavailable',
+      'fallback-chain-unavailable',
+      'session-inventory-unavailable',
+    ]);
+  });
+
   it('includes resident MCP warmup posture in startup checklist details', () => {
     const startupStatus = {
       status: 'running',
@@ -1167,7 +1272,7 @@ describe('dashboard home helpers', () => {
     });
   });
 
-  it('surfaces borg-memory seeding state in memory/context startup details', () => {
+  it('surfaces hypercode-memory seeding state in memory/context startup details', () => {
     const startupStatus = {
       status: 'running',
       ready: false,
@@ -1487,6 +1592,75 @@ describe('dashboard home helpers', () => {
 });
 
 describe('DashboardHomeView', () => {
+  it('renders explicit unavailable states instead of empty homepage inventories', () => {
+    const html = renderToStaticMarkup(
+      <DashboardHomeView
+        generatedAtLabel="12:00:00 PM"
+        currentTimestamp={1_700_000_060_000}
+        mcpStatus={{ initialized: true, serverCount: 2, toolCount: 14, connectedCount: 1 }}
+        startupStatus={{
+          status: 'running',
+          ready: true,
+          uptime: 120,
+          checks: {
+            mcpAggregator: {
+              ready: true,
+              liveReady: true,
+              residentReady: true,
+              serverCount: 2,
+              connectedCount: 1,
+              residentConnectedCount: 1,
+              initialization: null,
+              persistedServerCount: 2,
+              persistedToolCount: 14,
+              advertisedAlwaysOnServerCount: 0,
+              advertisedAlwaysOnToolCount: 0,
+              inventoryReady: true,
+            },
+            configSync: { ready: true, status: null },
+            memory: { ready: true, initialized: true, agentMemory: true },
+            browser: { ready: true, active: false, pageCount: 0 },
+            sessionSupervisor: { ready: true, sessionCount: 0, restore: null },
+            extensionBridge: { ready: true, clientCount: 0 },
+            executionEnvironment: {
+              ready: true,
+              preferredShellId: null,
+              preferredShellLabel: null,
+              shellCount: 0,
+              verifiedShellCount: 0,
+              toolCount: 0,
+              verifiedToolCount: 0,
+              harnessCount: 0,
+              verifiedHarnessCount: 0,
+              supportsPowerShell: false,
+              supportsPosixShell: false,
+            },
+          },
+        }}
+        startupStatusError="Startup unavailable"
+        servers={[]}
+        serversError="Servers unavailable"
+        traffic={[]}
+        providers={[]}
+        providersError="Providers unavailable"
+        fallbackChain={[]}
+        fallbackChainError="Fallback unavailable"
+        sessions={[]}
+        sessionsError="Sessions unavailable"
+      />,
+    );
+
+    expect(html).toContain('Startup unavailable');
+    expect(html).toContain('Servers unavailable');
+    expect(html).toContain('Providers unavailable');
+    expect(html).toContain('Fallback unavailable');
+    expect(html).toContain('Sessions unavailable');
+    expect(html).not.toContain('No MCP servers registered yet.');
+    expect(html).not.toContain('No supervised sessions are active yet.');
+    expect(html).not.toContain('No provider data available yet.');
+    expect(html).not.toContain('No fallback chain is exposed yet.');
+  });
+
   it('renders all four v1 panels with live-style content', () => {
     const html = renderToStaticMarkup(
       <DashboardHomeView
@@ -1633,7 +1807,7 @@ describe('DashboardHomeView', () => {
     expect(html).toContain('Integration Hub');
     expect(html).toContain('Server health and traffic');
     expect(html).toContain('Startup readiness');
-    expect(html).toContain('Install &amp; connect Borg');
+    expect(html).toContain('Install &amp; connect HyperCode');
     expect(html).toContain('Browser extensions');
     expect(html).toContain('Editor surfaces');
     expect(html).toContain('Client config sync');

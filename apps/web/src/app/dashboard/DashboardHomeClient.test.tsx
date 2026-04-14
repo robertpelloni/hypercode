@@ -281,4 +281,175 @@ describe('DashboardHomeClient', () => {
     expect(html).toContain('create_issue');
     expect(html.indexOf('Crashed workspace')).toBeLessThan(html.indexOf('Healthy workspace'));
   });
+
+  it('surfaces MCP traffic query failures instead of pretending traffic is empty', async () => {
+    vi.doMock('../../utils/trpc', () => {
+      const createUseQuery = <T,>(data: T, error?: { message: string }) => () => ({ data, error });
+      const createUseMutation = () => () => ({ mutate: vi.fn() });
+
+      return {
+        trpc: {
+          useContext: () => ({
+            startupStatus: { invalidate },
+            mcp: {
+              getStatus: { invalidate },
+              listServers: { invalidate },
+              traffic: { invalidate },
+            },
+            billing: {
+              getProviderQuotas: { invalidate },
+              getFallbackChain: { invalidate },
+            },
+            session: {
+              list: { invalidate },
+            },
+          }),
+          useUtils: () => ({
+            startupStatus: { invalidate },
+            mcp: {
+              getStatus: { invalidate },
+              listServers: { invalidate },
+              traffic: { invalidate },
+            },
+            billing: {
+              getProviderQuotas: { invalidate },
+              getFallbackChain: { invalidate },
+            },
+            session: {
+              list: { invalidate },
+            },
+          }),
+          mcp: {
+            getStatus: {
+              useQuery: createUseQuery({ initialized: true, serverCount: 0, toolCount: 0, connectedCount: 0 }),
+            },
+            listServers: {
+              useQuery: createUseQuery([]),
+            },
+            traffic: {
+              useQuery: createUseQuery([], { message: 'MCP traffic is unavailable: traffic stream offline' }),
+            },
+          },
+          startupStatus: {
+            useQuery: createUseQuery({
+              status: 'running',
+              ready: true,
+              uptime: 1,
+              checks: {
+                mcpAggregator: { ready: true, liveReady: true, residentReady: true, serverCount: 0, connectedCount: 0, residentConnectedCount: 0, initialization: null, persistedServerCount: 0, persistedToolCount: 0, configuredServerCount: 0, advertisedServerCount: 0, advertisedToolCount: 0, advertisedAlwaysOnServerCount: 0, advertisedAlwaysOnToolCount: 0, inventoryReady: true },
+                configSync: { ready: true, status: null },
+                memory: { ready: true, initialized: true, agentMemory: true },
+                browser: { ready: true, active: false, pageCount: 0 },
+                sessionSupervisor: { ready: true, sessionCount: 0, restore: null },
+                extensionBridge: { ready: true, acceptingConnections: false, clientCount: 0, hasConnectedClients: false },
+                executionEnvironment: { ready: true, preferredShellId: null, preferredShellLabel: null, shellCount: 0, verifiedShellCount: 0, toolCount: 0, verifiedToolCount: 0, harnessCount: 0, verifiedHarnessCount: 0, supportsPowerShell: true, supportsPosixShell: false, notes: [] },
+              },
+            }),
+          },
+          billing: {
+            getProviderQuotas: { useQuery: createUseQuery([]) },
+            getFallbackChain: { useQuery: createUseQuery({ chain: [] }) },
+          },
+          session: {
+            list: { useQuery: createUseQuery([]) },
+            start: { useMutation: createUseMutation() },
+            stop: { useMutation: createUseMutation() },
+            restart: { useMutation: createUseMutation() },
+          },
+        },
+      };
+    });
+
+    vi.resetModules();
+    const { DashboardHomeClient: ReloadedDashboardHomeClient } = await import('./DashboardHomeClient');
+    const html = renderToStaticMarkup(<ReloadedDashboardHomeClient />);
+
+    expect(html).toContain('MCP traffic is unavailable: traffic stream offline');
+  });
+
+  it('surfaces MCP status query failures instead of pretending the router is simply cold', async () => {
+    vi.doMock('../../utils/trpc', () => {
+      const createUseQuery = <T,>(data: T, error?: { message: string }) => () => ({ data, error });
+      const createUseMutation = () => () => ({ mutate: vi.fn() });
+
+      return {
+        trpc: {
+          useContext: () => ({
+            startupStatus: { invalidate },
+            mcp: {
+              getStatus: { invalidate },
+              listServers: { invalidate },
+              traffic: { invalidate },
+            },
+            billing: {
+              getProviderQuotas: { invalidate },
+              getFallbackChain: { invalidate },
+            },
+            session: {
+              list: { invalidate },
+            },
+          }),
+          useUtils: () => ({
+            startupStatus: { invalidate },
+            mcp: {
+              getStatus: { invalidate },
+              listServers: { invalidate },
+              traffic: { invalidate },
+            },
+            billing: {
+              getProviderQuotas: { invalidate },
+              getFallbackChain: { invalidate },
+            },
+            session: {
+              list: { invalidate },
+            },
+          }),
+          mcp: {
+            getStatus: {
+              useQuery: createUseQuery({ initialized: false, serverCount: 0, toolCount: 0, connectedCount: 0 }, { message: 'MCP status is unavailable: aggregator unavailable' }),
+            },
+            listServers: {
+              useQuery: createUseQuery([]),
+            },
+            traffic: {
+              useQuery: createUseQuery([]),
+            },
+          },
+          startupStatus: {
+            useQuery: createUseQuery({
+              status: 'running',
+              ready: true,
+              uptime: 1,
+              checks: {
+                mcpAggregator: { ready: true, liveReady: true, residentReady: true, serverCount: 0, connectedCount: 0, residentConnectedCount: 0, initialization: null, persistedServerCount: 0, persistedToolCount: 0, configuredServerCount: 0, advertisedServerCount: 0, advertisedToolCount: 0, advertisedAlwaysOnServerCount: 0, advertisedAlwaysOnToolCount: 0, inventoryReady: true },
+                configSync: { ready: true, status: null },
+                memory: { ready: true, initialized: true, agentMemory: true },
+                browser: { ready: true, active: false, pageCount: 0 },
+                sessionSupervisor: { ready: true, sessionCount: 0, restore: null },
+                extensionBridge: { ready: true, acceptingConnections: false, clientCount: 0, hasConnectedClients: false },
+                executionEnvironment: { ready: true, preferredShellId: null, preferredShellLabel: null, shellCount: 0, verifiedShellCount: 0, toolCount: 0, verifiedToolCount: 0, harnessCount: 0, verifiedHarnessCount: 0, supportsPowerShell: true, supportsPosixShell: false, notes: [] },
+              },
+            }),
+          },
+          billing: {
+            getProviderQuotas: { useQuery: createUseQuery([]) },
+            getFallbackChain: { useQuery: createUseQuery({ chain: [] }) },
+          },
+          session: {
+            list: { useQuery: createUseQuery([]) },
+            start: { useMutation: createUseMutation() },
+            stop: { useMutation: createUseMutation() },
+            restart: { useMutation: createUseMutation() },
+          },
+        },
+      };
+    });
+
+    vi.resetModules();
+    const { DashboardHomeClient: ReloadedDashboardHomeClient } = await import('./DashboardHomeClient');
+    const html = renderToStaticMarkup(<ReloadedDashboardHomeClient />);
+
+    expect(html).toContain('MCP status is unavailable: aggregator unavailable');
+    expect(html).toContain('Unavailable');
+  });
 });

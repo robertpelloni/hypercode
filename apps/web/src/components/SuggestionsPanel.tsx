@@ -9,16 +9,19 @@ export default function SuggestionsPanel() {
     const suggestionsQuery = trpc.suggestions.list.useQuery(undefined, {
         refetchInterval: 2000 // Poll every 2s
     });
+    const suggestionsUnavailable = Boolean(suggestionsQuery.error)
+        || (suggestionsQuery.data !== undefined && !Array.isArray(suggestionsQuery.data));
+    const suggestions = !suggestionsUnavailable ? (suggestionsQuery.data ?? []) : [];
 
     const [isMuted, setIsMuted] = useState(false);
     const lastSpeakId = useRef<string | null>(null);
 
     // TTS Logic
     useEffect(() => {
-        if (!suggestionsQuery.data || suggestionsQuery.data.length === 0 || isMuted) return;
+        if (suggestions.length === 0 || isMuted) return;
 
         // Get most recent suggestion
-        const latest = suggestionsQuery.data[0];
+        const latest = suggestions[0];
 
         // Speak if new
         if (latest.id !== lastSpeakId.current) {
@@ -36,7 +39,7 @@ export default function SuggestionsPanel() {
                 window.speechSynthesis.speak(utterance);
             }
         }
-    }, [suggestionsQuery.data, isMuted]);
+    }, [suggestions, isMuted]);
 
     const resolveMutation = trpc.suggestions.resolve.useMutation({
         onSuccess: () => {
@@ -50,7 +53,17 @@ export default function SuggestionsPanel() {
         }
     });
 
-    if (!suggestionsQuery.data || suggestionsQuery.data.length === 0) {
+    if (suggestionsUnavailable) {
+        return (
+            <div className="w-full max-w-4xl mx-auto mb-8 relative">
+                <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+                    Pending authorizations unavailable: {suggestionsQuery.error?.message ?? 'Suggestions returned an invalid payload.'}
+                </div>
+            </div>
+        );
+    }
+
+    if (suggestions.length === 0) {
         return null; // Hidden if empty
     }
 
@@ -79,7 +92,7 @@ export default function SuggestionsPanel() {
 
             <div className="space-y-3">
                 <AnimatePresence>
-                    {suggestionsQuery.data.map((s: any) => (
+                    {suggestions.map((s: any) => (
                         <motion.div
                             key={s.id}
                             initial={{ opacity: 0, y: 10 }}

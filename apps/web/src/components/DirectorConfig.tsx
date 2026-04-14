@@ -3,6 +3,17 @@
 import { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 
+function isDirectorConfigPayload(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isDirectorTestPayload(value: unknown): value is { directorReady: boolean; llmServiceReady: boolean } {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { directorReady?: unknown }).directorReady === 'boolean'
+        && typeof (value as { llmServiceReady?: unknown }).llmServiceReady === 'boolean';
+}
+
 export default function DirectorConfig() {
     const configQuery = trpc.directorConfig.get.useQuery(undefined, {
         refetchInterval: 5000 // Refresh every 5s to see changes
@@ -24,8 +35,8 @@ export default function DirectorConfig() {
         setDiagnosticStatus(null);
         try {
             const result = await testQuery.refetch();
-            if (!result.data) {
-                setDiagnosticStatus('Failed • No response payload');
+            if (!isDirectorTestPayload(result.data)) {
+                setDiagnosticStatus('Failed • Invalid response payload');
                 return;
             }
 
@@ -40,10 +51,12 @@ export default function DirectorConfig() {
 
     // Sync form with data when loaded (only if not editing)
     useEffect(() => {
-        if (configQuery.data && !isEditing) {
+        if (isDirectorConfigPayload(configQuery.data) && !isEditing) {
             setFormState(configQuery.data);
         }
     }, [configQuery.data, isEditing]);
+
+    const configUnavailable = Boolean(configQuery.error) || (configQuery.data !== undefined && !isDirectorConfigPayload(configQuery.data));
 
     const handleChange = (field: string, value: any) => {
         setIsEditing(true);
@@ -57,12 +70,12 @@ export default function DirectorConfig() {
 
     if (configQuery.isLoading) return <div className="p-4 bg-gray-900/50 rounded animate-pulse">Loading config...</div>;
 
-    if (configQuery.error) {
+    if (configUnavailable) {
         return (
             <div className="bg-gray-900 border border-red-500/30 rounded-lg p-4 space-y-2 text-red-200">
                 <h2 className="text-xl font-bold">Director Configuration</h2>
                 <p>Director configuration unavailable.</p>
-                <p className="text-sm opacity-90">{configQuery.error.message}</p>
+                <p className="text-sm opacity-90">{configQuery.error?.message ?? 'Director configuration returned an invalid payload.'}</p>
             </div>
         );
     }

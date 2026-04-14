@@ -33,7 +33,7 @@ function createToolSetStore(overrides: Partial<{
 }
 
 describe('directModeCompatibility', () => {
-    it('advertises MetaMCP-compatible direct-mode aliases in Borg', () => {
+    it('advertises MetaMCP-compatible direct-mode aliases in HyperCode', () => {
         expect(getDirectModeCompatibilityTools()).toEqual(expect.arrayContaining([
             expect.objectContaining({ name: 'run_code' }),
             expect.objectContaining({ name: 'run_python' }),
@@ -76,7 +76,7 @@ describe('directModeCompatibility', () => {
 
         const result = await tryHandleDirectModeCompatibilityTool('run_code', {
             code: 'return 1;',
-            context: { repo: 'borg' },
+            context: { repo: 'hypercode' },
         }, {
             enable,
             disable,
@@ -92,7 +92,7 @@ describe('directModeCompatibility', () => {
         }, createToolSetStore(), createNativeSessionStub(), undefined, undefined, undefined);
 
         expect(enable).toHaveBeenCalledTimes(1);
-        expect(executeCode).toHaveBeenCalledWith('return 1;', { repo: 'borg' });
+        expect(executeCode).toHaveBeenCalledWith('return 1;', { repo: 'hypercode' });
         expect(disable).toHaveBeenCalledTimes(1);
         expect(result?.isError).toBe(false);
         expect(JSON.parse(result!.content[0].text)).toEqual(expect.objectContaining({
@@ -119,7 +119,7 @@ describe('directModeCompatibility', () => {
         expect(result).toBeNull();
     });
 
-    it('runs run_agent through the Borg-native autonomous agent compatibility path', async () => {
+    it('runs run_agent through the HyperCode-native autonomous agent compatibility path', async () => {
         const runAgent = vi.fn(async (_task, toolCallback: (toolName: string, toolArgs: unknown, meta?: Record<string, unknown>) => Promise<unknown>) => ({
             analysis: 'Inspect the loaded tools first.',
             toolResult: await toolCallback('toolset_list', {}, { policyId: 'policy-123' }),
@@ -191,7 +191,7 @@ describe('directModeCompatibility', () => {
         expect(result?.content[0].text).toContain('Recursive agent calls restricted.');
     });
 
-    it('builds a native direct-mode agent runner from Borg llm service', async () => {
+    it('builds a native direct-mode agent runner from HyperCode llm service', async () => {
         const runner = createDirectModeAgentRunner({
             modelSelector: {
                 selectModel: vi.fn().mockResolvedValue({ provider: 'openai', modelId: 'gpt-test' }),
@@ -229,7 +229,7 @@ describe('directModeCompatibility', () => {
         })).toBeNull();
     });
 
-    it('routes run_python through the Borg sandbox compatibility path', async () => {
+    it('routes run_python through the HyperCode sandbox compatibility path', async () => {
         const execute = vi.fn().mockResolvedValue({ output: 'hello from python' });
 
         const result = await tryHandleDirectModeCompatibilityTool('run_python', {
@@ -255,7 +255,7 @@ describe('directModeCompatibility', () => {
         });
     });
 
-    it('imports MCP config through the Borg native config import service', async () => {
+    it('imports MCP config through the HyperCode native config import service', async () => {
         const importClaudeConfig = vi.fn().mockResolvedValue({ imported: 2, skipped: ['bad-server'] });
 
         const result = await tryHandleDirectModeCompatibilityTool('import_mcp_config', {
@@ -281,7 +281,7 @@ describe('directModeCompatibility', () => {
         });
     });
 
-    it('routes save_memory through Borg native agent memory storage', async () => {
+    it('routes save_memory through HyperCode native agent memory storage', async () => {
         const add = vi.fn().mockResolvedValue({ id: 'mem-1' });
 
         const result = await tryHandleDirectModeCompatibilityTool('save_memory', {
@@ -309,7 +309,7 @@ describe('directModeCompatibility', () => {
         });
     });
 
-    it('routes search_memory through Borg native agent memory search', async () => {
+    it('routes search_memory through HyperCode native agent memory search', async () => {
         const search = vi.fn().mockResolvedValue([{ id: 'mem-1', content: 'remember this' }]);
 
         const result = await tryHandleDirectModeCompatibilityTool('search_memory', {
@@ -340,7 +340,7 @@ describe('directModeCompatibility', () => {
         });
     });
 
-    it('saves scripts through Borg managed config storage', async () => {
+    it('saves scripts through HyperCode managed config storage', async () => {
         const saveScript = vi.fn().mockResolvedValue(undefined);
 
         const result = await tryHandleDirectModeCompatibilityTool('save_script', {
@@ -372,7 +372,7 @@ describe('directModeCompatibility', () => {
         });
     });
 
-    it('saves tool sets from the current Borg session working set', async () => {
+    it('saves tool sets from the current HyperCode session working set', async () => {
         const saveToolSet = vi.fn().mockResolvedValue(undefined);
         const toolSetStore = createToolSetStore({ saveToolSet });
 
@@ -406,7 +406,7 @@ describe('directModeCompatibility', () => {
         });
     });
 
-    it('loads saved tool sets into the current Borg session working set', async () => {
+    it('loads saved tool sets into the current HyperCode session working set', async () => {
         const loadToolIntoSession = vi.fn(() => ({ loaded: true, evicted: [] }));
         const toolSetStore = createToolSetStore({
             loadToolSets: vi.fn().mockResolvedValue([
@@ -448,7 +448,7 @@ describe('directModeCompatibility', () => {
         });
     });
 
-    it('lists saved Borg-managed tool sets', async () => {
+    it('lists saved HyperCode-managed tool sets', async () => {
         const toolSetStore = createToolSetStore({
             loadToolSets: vi.fn().mockResolvedValue([
                 {
@@ -489,7 +489,7 @@ describe('directModeCompatibility', () => {
         });
     });
 
-    it('executes saved script tools through the Borg sandbox path', async () => {
+    it('executes saved script tools through the HyperCode sandbox path', async () => {
         executeCodeMock.mockResolvedValueOnce('script output');
 
         const result = await tryHandleDirectModeCompatibilityTool('script__cleanup', {}, {

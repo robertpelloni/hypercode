@@ -10,7 +10,7 @@ import {
 } from '../types/mcp-admin/index.js';
 import { loadBorgMcpConfig } from '../mcp/mcpJsonConfig.js';
 import { clientConfigSyncService, SUPPORTED_MCP_CLIENTS } from '../mcp/clientConfigSync.js';
-import { formatOptionalSqliteFailure, isSqliteUnavailableError } from '../db/sqliteAvailability.js';
+import { rethrowSqliteUnavailableAsTrpc } from './sqliteTrpc.js';
 
 const MASTER_INDEX_PATH = path.join(process.cwd(), 'BORG_MASTER_INDEX.jsonc');
 
@@ -36,17 +36,6 @@ function getContextUserId(ctx: unknown): string | undefined {
     return typeof userId === 'string' && userId.trim().length > 0
         ? userId
         : undefined;
-}
-
-function rethrowSqliteUnavailableAsTrpc(action: string, error: unknown): never {
-    if (isSqliteUnavailableError(error)) {
-        throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: formatOptionalSqliteFailure(action, error),
-        });
-    }
-
-    throw error;
 }
 
 export const mcpServersRouter = t.router({
@@ -238,8 +227,22 @@ export const mcpServersRouter = t.router({
             }
 
             return Array.from(deduped.values()).slice(0, 300);
-        } catch {
-            return [];
+        } catch (error) {
+            const errorCode = (error as NodeJS.ErrnoException | undefined)?.code;
+            if (errorCode === 'ENOENT') {
+                return [];
+            }
+
+            const detail = error instanceof SyntaxError
+                ? 'BORG_MASTER_INDEX.jsonc contains invalid JSON.'
+                : error instanceof Error
+                    ? error.message
+                    : String(error);
+
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `Registry snapshot is unavailable: ${detail}`,
+            });
         }
     }),
 

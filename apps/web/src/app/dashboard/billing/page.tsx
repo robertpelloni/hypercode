@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@borg/ui';
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@hypercode/ui';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { Loader2, DollarSign, Activity, Settings, Key, Zap, AlertCircle, Database, Shield, ExternalLink, WalletCards } from 'lucide-react';
 import { toast } from 'sonner';
@@ -18,8 +18,8 @@ import {
     type BillingTaskRoutingRuleSummary,
     type BillingProviderQuotaSummary,
 } from './billing-portal-data';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@borg/ui';
-import { Input } from '@borg/ui';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@hypercode/ui';
+import { Input } from '@hypercode/ui';
 import { PageStatusBanner } from '@/components/PageStatusBanner';
 import {
     formatFallbackCauseLabel,
@@ -37,6 +37,54 @@ import type { BillingAuthTruth, BillingQuotaConfidence, BillingQuotaTableRow } f
 import { ProviderDetailPanel } from './ProviderDetailPanel';
 
 const FALLBACK_TASK_OPTIONS: BillingTaskRoutingRuleSummary['taskType'][] = ['general', 'coding', 'planning', 'research', 'worker', 'supervisor'];
+const FALLBACK_HISTORY_CAUSE_CODES = ['fallback_provider', 'budget_forced_local', 'emergency_fallback', 'preference_honored'] as const;
+
+function isBillingQuotaSummary(value: unknown): value is BillingProviderQuotaSummary {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { provider?: unknown }).provider === 'string'
+        && typeof (value as { name?: unknown }).name === 'string'
+        && typeof (value as { configured?: unknown }).configured === 'boolean';
+}
+
+function isFallbackHistoryRow(value: unknown): value is {
+    id: number;
+    timestamp: number;
+    requestedProvider?: string;
+    selectedProvider: string;
+    selectedModelId: string;
+    taskType: BillingTaskRoutingRuleSummary['taskType'];
+    strategy: string;
+    reason: string;
+    causeCode: 'fallback_provider' | 'budget_forced_local' | 'emergency_fallback' | 'preference_honored';
+} {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { id?: unknown }).id === 'number'
+        && typeof (value as { timestamp?: unknown }).timestamp === 'number'
+        && typeof (value as { selectedProvider?: unknown }).selectedProvider === 'string'
+        && typeof (value as { selectedModelId?: unknown }).selectedModelId === 'string'
+        && FALLBACK_TASK_OPTIONS.includes((value as { taskType?: unknown }).taskType as BillingTaskRoutingRuleSummary['taskType'])
+        && typeof (value as { strategy?: unknown }).strategy === 'string'
+        && typeof (value as { reason?: unknown }).reason === 'string'
+        && FALLBACK_HISTORY_CAUSE_CODES.includes((value as { causeCode?: unknown }).causeCode as (typeof FALLBACK_HISTORY_CAUSE_CODES)[number])
+        && (
+            (value as { requestedProvider?: unknown }).requestedProvider === undefined
+            || typeof (value as { requestedProvider?: unknown }).requestedProvider === 'string'
+        );
+}
+
+type FallbackHistoryRow = {
+    id: number;
+    timestamp: number;
+    requestedProvider?: string;
+    selectedProvider: string;
+    selectedModelId: string;
+    taskType: BillingTaskRoutingRuleSummary['taskType'];
+    strategy: string;
+    reason: string;
+    causeCode: (typeof FALLBACK_HISTORY_CAUSE_CODES)[number];
+};
 
 export default function ProviderAuthBillingMatrix() {
     const [historyDays, setHistoryDays] = useState(30);
@@ -54,14 +102,14 @@ export default function ProviderAuthBillingMatrix() {
     
     const utils = trpc.useUtils();
 
-    const { data: status, isLoading: isStatusLoading } = trpc.billing.getStatus.useQuery();
-    const { data: quotas, isLoading: isQuotasLoading } = trpc.billing.getProviderQuotas.useQuery();
-    const { data: costHistory, isLoading: isHistoryLoading } = trpc.billing.getCostHistory.useQuery({ days: historyDays });
-    const { data: pricing, isLoading: isPricingLoading } = trpc.billing.getModelPricing.useQuery();
-    const { data: fallback, isLoading: isFallbackLoading } = trpc.billing.getFallbackChain.useQuery({ taskType: fallbackTaskType });
-    const { data: taskRouting, isLoading: isTaskRoutingLoading } = trpc.billing.getTaskRoutingRules.useQuery();
-    const { data: depletedModels } = trpc.billing.getDepletedModels.useQuery(undefined, { refetchInterval: 15000 });
-    const { data: fallbackHistory } = trpc.billing.getFallbackHistory.useQuery({ limit: 20 }, { refetchInterval: 10000 });
+    const { data: status, isLoading: isStatusLoading, error: statusError } = trpc.billing.getStatus.useQuery();
+    const { data: quotas, isLoading: isQuotasLoading, error: quotasError } = trpc.billing.getProviderQuotas.useQuery();
+    const { data: costHistory, isLoading: isHistoryLoading, error: costHistoryError } = trpc.billing.getCostHistory.useQuery({ days: historyDays });
+    const { data: pricing, isLoading: isPricingLoading, error: pricingError } = trpc.billing.getModelPricing.useQuery();
+    const { data: fallback, isLoading: isFallbackLoading, error: fallbackError } = trpc.billing.getFallbackChain.useQuery({ taskType: fallbackTaskType });
+    const { data: taskRouting, isLoading: isTaskRoutingLoading, error: taskRoutingError } = trpc.billing.getTaskRoutingRules.useQuery();
+    const { data: depletedModels, error: depletedModelsError } = trpc.billing.getDepletedModels.useQuery(undefined, { refetchInterval: 15000 });
+    const { data: fallbackHistory, error: fallbackHistoryError } = trpc.billing.getFallbackHistory.useQuery({ limit: 20 }, { refetchInterval: 10000 });
     const clearFallbackHistoryMutation = trpc.billing.clearFallbackHistory.useMutation({
         onSuccess: async (result) => {
             if (result?.ok) {
@@ -124,8 +172,12 @@ export default function ProviderAuthBillingMatrix() {
         }
     });
 
-    const providerPortalCards = getProviderPortalCards(quotas as BillingProviderQuotaSummary[] | undefined);
-    const providerQuickAccessSections = getProviderQuickAccessSections(quotas as BillingProviderQuotaSummary[] | undefined);
+    const quotasUnavailable = Boolean(quotasError) || (quotas !== undefined && (!Array.isArray(quotas) || !quotas.every(isBillingQuotaSummary)));
+    const safeQuotaSummaries = !quotasUnavailable && Array.isArray(quotas)
+        ? quotas
+        : undefined;
+    const providerPortalCards = getProviderPortalCards(safeQuotaSummaries);
+    const providerQuickAccessSections = getProviderQuickAccessSections(safeQuotaSummaries);
     const usageSummary = getBillingUsageSummary(status);
     const quotaRows = normalizeBillingQuotaRows(quotas);
     const authenticatedProviderCount = quotaRows.filter((row) => row.authenticated).length;
@@ -143,17 +195,11 @@ export default function ProviderAuthBillingMatrix() {
     const activeRoutingMutationTask = setTaskRoutingRuleMutation.variables && 'taskType' in setTaskRoutingRuleMutation.variables
         ? setTaskRoutingRuleMutation.variables.taskType
         : undefined;
-    const fallbackHistoryRows = (fallbackHistory ?? []) as Array<{
-        id: number;
-        timestamp: number;
-        requestedProvider?: string;
-        selectedProvider: string;
-        selectedModelId: string;
-        taskType: BillingTaskRoutingRuleSummary['taskType'];
-        strategy: string;
-        reason: string;
-        causeCode: 'fallback_provider' | 'budget_forced_local' | 'emergency_fallback' | 'preference_honored';
-    }>;
+    const fallbackHistoryUnavailable = Boolean(fallbackHistoryError)
+        || (fallbackHistory !== undefined && (!Array.isArray(fallbackHistory) || !fallbackHistory.every(isFallbackHistoryRow)));
+    const fallbackHistoryRows: FallbackHistoryRow[] = !fallbackHistoryUnavailable && Array.isArray(fallbackHistory)
+        ? (fallbackHistory as unknown[]).filter(isFallbackHistoryRow)
+        : [];
     const fallbackHistoryTaskOptions = Array.from(new Set(fallbackHistoryRows.map((event) => event.taskType))).sort();
     const fallbackHistoryCauseCounts = fallbackHistoryRows.reduce((accumulator, event) => {
         accumulator[event.causeCode] = (accumulator[event.causeCode] ?? 0) + 1;
@@ -188,8 +234,15 @@ export default function ProviderAuthBillingMatrix() {
         updateKeyMutation.mutate({ provider: activePortalId, key: newKeyValue });
     };
 
+    const primaryBillingError = statusError ?? quotasError ?? costHistoryError ?? pricingError ?? fallbackError ?? taskRoutingError;
+    const costHistoryUnavailable = Boolean(costHistoryError) || (costHistory !== undefined && (!costHistory || !Array.isArray(costHistory.history)));
+    const fallbackUnavailable = Boolean(fallbackError) || (fallback !== undefined && (!fallback || !Array.isArray((fallback as { chain?: unknown }).chain)));
+    const routingUnavailable = Boolean(taskRoutingError) || (taskRouting !== undefined && (!taskRouting || !Array.isArray((taskRouting as { rules?: unknown }).rules)));
+    const pricingUnavailable = Boolean(pricingError) || (pricing !== undefined && !Array.isArray(pricing));
+
     const renderCostChart = () => {
         if (isHistoryLoading) return <div className="h-48 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>;
+        if (costHistoryUnavailable) return <div className="h-48 flex items-center justify-center text-red-300">{costHistoryError?.message ?? 'Cost history is unavailable.'}</div>;
         if (!costHistory?.history || costHistory.history.length === 0) return <div className="h-48 flex items-center justify-center text-zinc-500">No cost history data.</div>;
 
         return (
@@ -246,6 +299,14 @@ export default function ProviderAuthBillingMatrix() {
                     </Button>
                 </div>
             </div>
+
+            {primaryBillingError ? (
+                <Card className="border border-red-900/30 bg-red-950/10">
+                    <CardContent className="p-4 text-sm text-red-200">
+                        {primaryBillingError.message}
+                    </CardContent>
+                </Card>
+            ) : null}
 
             <Card className="bg-zinc-900 border-zinc-800 shadow-xl">
                 <CardHeader className="pb-2">
@@ -307,24 +368,26 @@ export default function ProviderAuthBillingMatrix() {
                         <CardContent>
                             <div className="flex items-end gap-2 mb-2">
                                 <span className="text-4xl font-mono text-white font-bold">
-                                    ${isStatusLoading ? '0.00' : usageSummary.currentMonth.toFixed(2)}
+                                    ${isStatusLoading || statusError ? '—' : usageSummary.currentMonth.toFixed(2)}
                                 </span>
                                 <span className="text-sm text-zinc-500 mb-1 font-mono">
-                                    / ${isStatusLoading ? '0.00' : usageSummary.limit.toFixed(2)} Limit
+                                    / ${isStatusLoading || statusError ? '—' : usageSummary.limit.toFixed(2)} Limit
                                 </span>
                             </div>
 
                             {/* Simple usage bar */}
                             <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden mt-4">
                                 <div
-                                    className="h-full bg-emerald-500 transition-all duration-1000"
-                                    style={{ width: `${Math.min(100, ((usageSummary.currentMonth / (usageSummary.limit || 100)) * 100))}%` }}
+                                    className={`h-full transition-all duration-1000 ${statusError ? 'bg-red-500/60' : 'bg-emerald-500'}`}
+                                    style={{ width: `${statusError ? 100 : Math.min(100, ((usageSummary.currentMonth / (usageSummary.limit || 100)) * 100))}%` }}
                                 />
                             </div>
 
                             <div className="mt-6 space-y-3">
                                 <div className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Cost Breakdown</div>
-                                {usageSummary.breakdown.map((item, i: number) => (
+                                {statusError ? (
+                                    <div className="text-sm text-red-300">{statusError.message}</div>
+                                ) : usageSummary.breakdown.map((item, i: number) => (
                                     <div key={i} className="flex justify-between items-center text-sm">
                                         <span className="text-zinc-300 capitalize flex items-center gap-2">
                                             {item.provider}
@@ -340,7 +403,13 @@ export default function ProviderAuthBillingMatrix() {
                     </Card>
 
                         {/* Blocked / Cooling-Down Models */}
-                        {depletedModels && depletedModels.length > 0 && (
+                        {depletedModelsError ? (
+                            <Card className="bg-zinc-900 border-red-900/40 shadow-xl">
+                                <CardContent className="pt-6 text-sm text-red-300">
+                                    {depletedModelsError.message}
+                                </CardContent>
+                            </Card>
+                        ) : depletedModels && depletedModels.length > 0 && (
                             <Card className="bg-zinc-900 border-red-900/40 shadow-xl">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm font-bold text-red-400 uppercase tracking-widest flex items-center gap-2">
@@ -368,7 +437,19 @@ export default function ProviderAuthBillingMatrix() {
                         )}
 
                     {/* Recent Fallback Decisions — ring-buffer from CoreModelSelector showing provider substitutions */}
-                    {fallbackHistory && fallbackHistory.length > 0 && (
+                    {fallbackHistoryError ? (
+                        <Card className="bg-zinc-900 border-red-900/40 shadow-xl">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-bold text-red-400 uppercase tracking-widest flex items-center gap-2">
+                                    <AlertCircle className="h-4 w-4 text-red-400" />
+                                    Recent Fallback Decisions
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-2 text-sm text-red-300">
+                                {fallbackHistoryError.message}
+                            </CardContent>
+                        </Card>
+                    ) : fallbackHistory && fallbackHistory.length > 0 && (
                         <Card className="bg-zinc-900 border-amber-900/30 shadow-xl">
                             <CardHeader className="pb-2 flex flex-row items-center justify-between gap-3">
                                 <CardTitle className="text-sm font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2">
@@ -519,6 +600,10 @@ export default function ProviderAuthBillingMatrix() {
                         <CardContent className="pt-2">
                             {isFallbackLoading ? (
                                 <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>
+                            ) : fallbackUnavailable ? (
+                                <div className="rounded-lg border border-red-900/30 bg-red-950/10 px-3 py-4 text-sm text-red-300">
+                                    {fallbackError?.message ?? 'Fallback chain is unavailable.'}
+                                </div>
                             ) : (
                                 <div className="space-y-3">
                                     <div className="rounded-lg border border-zinc-800/60 bg-black/30 px-3 py-2 text-[11px] text-zinc-500">
@@ -557,6 +642,10 @@ export default function ProviderAuthBillingMatrix() {
                         <CardContent className="pt-2">
                             {isTaskRoutingLoading ? (
                                 <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>
+                            ) : routingUnavailable ? (
+                                <div className="rounded-lg border border-red-900/30 bg-red-950/10 px-3 py-4 text-sm text-red-300">
+                                    {taskRoutingError?.message ?? 'Task routing data is unavailable.'}
+                                </div>
                             ) : (
                                 <div className="space-y-3">
                                     <div className="rounded-lg border border-zinc-800/60 bg-black/30 px-3 py-3 text-xs text-zinc-500 space-y-3">
@@ -580,7 +669,7 @@ export default function ProviderAuthBillingMatrix() {
                                             </div>
                                         </div>
                                         <div className="text-[11px] text-zinc-500">
-                                            Changes apply to the next model-selection decision immediately, so you can tune cost vs quality without restarting Borg.
+                                            Changes apply to the next model-selection decision immediately, so you can tune cost vs quality without restarting HyperCode.
                                         </div>
                                     </div>
                                     {routingRules.map((rule) => (
@@ -674,6 +763,8 @@ export default function ProviderAuthBillingMatrix() {
                                 <tbody className="divide-y divide-zinc-800/50">
                                     {isQuotasLoading ? (
                                         <tr><td colSpan={5} className="px-6 py-12 text-center text-zinc-500"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></td></tr>
+                                    ) : quotasUnavailable ? (
+                                        <tr><td colSpan={5} className="px-6 py-12 text-center text-red-300">{quotasError?.message ?? 'Provider quota data is unavailable.'}</td></tr>
                                     ) : quotaRows.map((q) => (
                                         <tr 
                                             key={q.provider} 
@@ -761,8 +852,12 @@ export default function ProviderAuthBillingMatrix() {
                         </CardHeader>
                         <CardContent className="p-6 border-b border-white/5">
                             <div className="grid gap-4 xl:grid-cols-3">
-                                {providerQuickAccessSections.map((section) => (
-                                    <div key={section.id} className="rounded-xl border border-zinc-800 bg-black/30 p-4 shadow-sm">
+                                    {quotasUnavailable ? (
+                                        <div className="rounded-lg border border-red-900/30 bg-red-950/10 p-4 text-sm text-red-300 xl:col-span-3">
+                                            {quotasError?.message ?? 'Provider shortcut inventory is unavailable.'}
+                                        </div>
+                                    ) : providerQuickAccessSections.map((section) => (
+                                        <div key={section.id} className="rounded-xl border border-zinc-800 bg-black/30 p-4 shadow-sm">
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
                                                 <h3 className="text-sm font-semibold text-zinc-100">{section.title}</h3>
@@ -794,7 +889,7 @@ export default function ProviderAuthBillingMatrix() {
                                             ))}
                                         </div>
                                     </div>
-                                ))}
+                                    ))}
                             </div>
                         </CardContent>
                     </Card>
@@ -806,12 +901,16 @@ export default function ProviderAuthBillingMatrix() {
                                 Provider Portals & Subscriptions
                             </CardTitle>
                             <p className="text-sm text-zinc-500 mt-2">
-                                Jump straight to API keys, usage dashboards, billing consoles, and plan-management pages for the providers Borg knows about.
+                                Jump straight to API keys, usage dashboards, billing consoles, and plan-management pages for the providers HyperCode knows about.
                             </p>
                         </CardHeader>
                         <CardContent className="p-6">
                             <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-                                {providerPortalCards.map((portal) => (
+                                {quotasUnavailable ? (
+                                    <div className="rounded-lg border border-red-900/30 bg-red-950/10 p-4 text-sm text-red-300 lg:col-span-2 2xl:col-span-3">
+                                        {quotasError?.message ?? 'Provider portal inventory is unavailable.'}
+                                    </div>
+                                ) : providerPortalCards.map((portal) => (
                                     <div key={portal.id} className="rounded-xl border border-zinc-800 bg-black/30 p-4 shadow-sm">
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
@@ -892,6 +991,8 @@ export default function ProviderAuthBillingMatrix() {
                                 <tbody className="divide-y divide-zinc-800/50">
                                     {isPricingLoading ? (
                                         <tr><td colSpan={4} className="px-6 py-12 text-center text-zinc-500"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></td></tr>
+                                    ) : pricingUnavailable ? (
+                                        <tr><td colSpan={4} className="px-6 py-12 text-center text-red-300">{pricingError?.message ?? 'Pricing catalog is unavailable.'}</td></tr>
                                     ) : pricingModels.filter((m) => m.inputPrice !== null).map((m) => (
                                         <tr key={m.id} className="hover:bg-white/[0.02] transition-colors">
                                             <td className="px-6 py-3">

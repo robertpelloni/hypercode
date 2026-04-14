@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { contextHarvester } from '../services/ContextHarvester.js';
 
 export class ContextManager {
     private pinnedFiles: Set<string> = new Set();
@@ -50,19 +51,29 @@ export class ContextManager {
     }
 
     public getContextPrompt(): string {
-        if (this.pinnedFiles.size === 0) return "";
+        let context = "";
 
-        let context = "📌 **PINNED CONTEXT (High Priority)**\n\n";
+        if (this.pinnedFiles.size > 0) {
+            context += "📌 **PINNED CONTEXT (High Priority)**\n\n";
+            for (const file of this.pinnedFiles) {
+                try {
+                    const content = fs.readFileSync(file, 'utf-8');
+                    // Basic truncation to prevent exploding context
+                    const truncated = content.length > 20000 ? content.substring(0, 20000) + "\n... (truncated)" : content;
+                    context += `file: ${path.basename(file)}\n\`\`\`\n${truncated}\n\`\`\`\n\n`;
+                } catch (e: any) {
+                    context += `file: ${path.basename(file)} (Error reading: ${e.message})\n\n`;
+                }
+            }
+        }
 
-        for (const file of this.pinnedFiles) {
-            try {
-                const content = fs.readFileSync(file, 'utf-8');
-                // Basic truncation to prevent exploding context
-                const truncated = content.length > 20000 ? content.substring(0, 20000) + "\n... (truncated)" : content;
-
-                context += `file: ${path.basename(file)}\n\`\`\`\n${truncated}\n\`\`\`\n\n`;
-            } catch (e: any) {
-                context += `file: ${path.basename(file)} (Error reading: ${e.message})\n\n`;
+        // Inject Auto-Harvested Context Chunks (Files modified recently)
+        const harvestedChunks = contextHarvester.retrieve('', 4000); // 4000 token budget for dynamic context
+        if (harvestedChunks.length > 0) {
+            context += "🌾 **AUTO-HARVESTED CONTEXT (Recent Changes)**\n\n";
+            for (const chunk of harvestedChunks) {
+                const sourceInfo = chunk.metadata?.path || chunk.source;
+                context += `[Source: ${sourceInfo} | Score: ${chunk.relevanceScore.toFixed(2)}]\n\`\`\`\n${chunk.content}\n\`\`\`\n\n`;
             }
         }
 

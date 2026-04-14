@@ -2,11 +2,11 @@
 
 import React from "react";
 import { trpc } from "@/utils/trpc";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@borg/ui";
-import { Badge } from "@borg/ui";
-import { Button } from "@borg/ui";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@borg/ui";
-import { ScrollArea } from "@borg/ui";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@hypercode/ui";
+import { Badge } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@hypercode/ui";
+import { ScrollArea } from "@hypercode/ui";
 import { Bot, Wrench, Server, Cpu, Activity, Zap, Loader2, RefreshCw, AlertTriangle, Chrome, Globe, PlugZap, Route, LayoutPanelTop, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { PageStatusBanner } from "@/components/PageStatusBanner";
 
@@ -39,49 +39,55 @@ type CapabilityItem = {
 };
 
 const PLATFORM_SUPPORT: PlatformSupport[] = [
-    { name: 'ChatGPT', host: 'chatgpt.com', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Page capture, chat paste, logs, screenshot, history/debug tooling, plus Borg sidebar/input detection.' },
-    { name: 'Claude', host: 'claude.ai', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Bridge surface active with Borg sidebar scaffold; Claude-specific automation loops are a later slice.' },
+    { name: 'ChatGPT', host: 'chatgpt.com', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Page capture, chat paste, logs, screenshot, history/debug tooling, plus HyperCode sidebar/input detection.' },
+    { name: 'Claude', host: 'claude.ai', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Bridge surface active with HyperCode sidebar scaffold; Claude-specific automation loops are a later slice.' },
     { name: 'Gemini', host: 'gemini.google.com', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Current bridge can ingest/scrape/paste and detect input/submit controls while deeper automation remains pending.' },
-    { name: 'Google AI Studio', host: 'aistudio.google.com', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Newly included in Borg manifest parity footprint with sidebar shell support.' },
+    { name: 'Google AI Studio', host: 'aistudio.google.com', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Newly included in HyperCode manifest parity footprint with sidebar shell support.' },
     { name: 'Perplexity', host: 'perplexity.ai', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Bridge available across both bare and www hostnames with adapter registry coverage.' },
-    { name: 'Grok', host: 'grok.com', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Ready for Borg-side browser bridge features and injected sidebar actions.' },
+    { name: 'Grok', host: 'grok.com', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Ready for HyperCode-side browser bridge features and injected sidebar actions.' },
     { name: 'DeepSeek', host: 'chat.deepseek.com', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Bridge footprint now matches the MCP-SA reference surface and mounts the adapter shell.' },
-    { name: 'OpenRouter', host: 'openrouter.ai', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Transport-agnostic bridge support with Borg’s current sidebar scaffold.' },
-    { name: 'T3 Chat', host: 't3.chat', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Manifest-level parity plus inline Borg sidebar actions.' },
+    { name: 'OpenRouter', host: 'openrouter.ai', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Transport-agnostic bridge support with HyperCode’s current sidebar scaffold.' },
+    { name: 'T3 Chat', host: 't3.chat', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Manifest-level parity plus inline HyperCode sidebar actions.' },
     { name: 'GitHub Copilot', host: 'github.com/copilot', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Bridge injected on Copilot web routes; richer DOM semantics come later.' },
-    { name: 'Mistral', host: 'chat.mistral.ai', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Borg bridge now mounts here as part of the common chat footprint and sidebar slice.' },
-    { name: 'Kimi', host: 'kimi.com', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Reference-compatible surface enabled with Borg adapter shell.' },
-    { name: 'Qwen Chat', host: 'chat.qwen.ai', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Manifest-level compatibility plus scaffolded Borg inline controls.' },
+    { name: 'Mistral', host: 'chat.mistral.ai', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'HyperCode bridge now mounts here as part of the common chat footprint and sidebar slice.' },
+    { name: 'Kimi', host: 'kimi.com', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Reference-compatible surface enabled with HyperCode adapter shell.' },
+    { name: 'Qwen Chat', host: 'chat.qwen.ai', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Manifest-level compatibility plus scaffolded HyperCode inline controls.' },
     { name: 'Z.ai', host: 'chat.z.ai', browsers: ['Chrome', 'Edge', 'Firefox'], supportLevel: 'Adapter scaffold live', note: 'Reference-compatible bridge footprint with sidebar shell enabled.' },
 ];
 
 const IMPLEMENTED_CAPABILITIES: CapabilityItem[] = [
     { title: 'Generic browser-chat bridge', status: 'shipped', note: 'Content script and background bridge now mount across the MCP-SA-style platform set.' },
-    { title: 'Host-aware adapter registry', status: 'shipped', note: 'Supported browser-chat surfaces now resolve through Borg’s first-pass adapter registry with per-host input and submit selectors.' },
-    { title: 'Injected sidebar shell', status: 'shipped', note: 'A Borg shadow-DOM sidebar now mounts directly inside supported chat surfaces with quick actions and runtime status.' },
-    { title: 'Chat-surface observer scaffold', status: 'shipped', note: 'Supported surfaces now emit stable DOM-backed message IDs when available, adapter-aware best-effort message roles/streaming flags, closed or still-streaming fenced tool-call parameters, plain-text hints, structured function-result summaries, and a lightweight execution timeline with per-execution streaming state into the Borg traffic inspector via the extension bridge.' },
-    { title: 'Knowledge capture + RAG ingest', status: 'shipped', note: 'Popup actions send absorbed page content and URL/text ingestion into Borg core.' },
+    { title: 'Host-aware adapter registry', status: 'shipped', note: 'Supported browser-chat surfaces now resolve through HyperCode’s first-pass adapter registry with per-host input and submit selectors.' },
+    { title: 'Injected sidebar shell', status: 'shipped', note: 'A HyperCode shadow-DOM sidebar now mounts directly inside supported chat surfaces with quick actions and runtime status.' },
+    { title: 'Chat-surface observer scaffold', status: 'shipped', note: 'Supported surfaces now emit stable DOM-backed message IDs when available, adapter-aware best-effort message roles/streaming flags, closed or still-streaming fenced tool-call parameters, plain-text hints, structured function-result summaries, and a lightweight execution timeline with per-execution streaming state into the HyperCode traffic inspector via the extension bridge.' },
+    { title: 'Knowledge capture + RAG ingest', status: 'shipped', note: 'Popup actions send absorbed page content and URL/text ingestion into HyperCode core.' },
     { title: 'Chat paste / remote control bridge', status: 'shipped', note: 'Core can push text back into the active browser surface via the extension channel, now preferring adapter-aware input insertion before page fallbacks.' },
-    { title: 'History, screenshot, proxy fetch, CDP debug', status: 'shipped', note: 'Backed by Borg bridge methods and surfaced in the Browser dashboard.' },
+    { title: 'History, screenshot, proxy fetch, CDP debug', status: 'shipped', note: 'Backed by HyperCode bridge methods and surfaced in the Browser dashboard.' },
     { title: 'Manifest-level cross-browser footprint', status: 'shipped', note: 'Chrome, Edge, and Firefox now share the widened chat host coverage.' },
 ];
 
 const NEXT_CAPABILITIES: CapabilityItem[] = [
     { title: 'Per-site DOM automation depth', status: 'next', note: 'The current registry now uses adapter-aware role and streaming heuristics for key surfaces, detects inputs, submit controls, and both structured fenced/plain-text tool-call or function-result snapshots—including unfinished streaming fences—but richer per-site observers and deep capability negotiation are still pending.' },
     { title: 'Auto-execute / auto-insert / auto-submit loops', status: 'next', note: 'Automation toggles and trusted-tool governance are not yet extension-native.' },
-    { title: 'Prompt templates / context manager / macro builder', status: 'next', note: 'Those UX systems need Borg-native versions wired into the browser extension.' },
-    { title: 'Function-call parser + tool result widgets', status: 'next', note: 'Borg now captures lightweight result status/field summaries plus execution correlation, but the full AST/render prescript layer and inline widgets have not been assimilated yet.' },
+    { title: 'Prompt templates / context manager / macro builder', status: 'next', note: 'Those UX systems need HyperCode-native versions wired into the browser extension.' },
+    { title: 'Function-call parser + tool result widgets', status: 'next', note: 'HyperCode now captures lightweight result status/field summaries plus execution correlation, but the full AST/render prescript layer and inline widgets have not been assimilated yet.' },
 ];
 
 const TRANSPORTS = [
-    { name: 'HTTP control plane', note: 'Health checks, knowledge capture, URL ingest, and RAG ingest route over Borg core HTTP endpoints.' },
-    { name: 'WebSocket event bridge', note: 'Live browser logs, mirror updates, chat control, and debugger traffic stream through the Borg core bridge.' },
+    { name: 'HTTP control plane', note: 'Health checks, knowledge capture, URL ingest, and RAG ingest route over HyperCode core HTTP endpoints.' },
+    { name: 'WebSocket event bridge', note: 'Live browser logs, mirror updates, chat control, and debugger traffic stream through the HyperCode core bridge.' },
     { name: 'Dashboard/operator bridge', note: 'The Browser dashboard already exposes screenshot, scrape, history search, proxy fetch, and CDP commands via tRPC.' },
 ];
 
-function normalizeArray<T>(value: unknown): T[] {
-    if (!Array.isArray(value)) return [];
-    return value as T[];
+type NormalizedArrayResult<T> = {
+    data: T[];
+    invalid: boolean;
+};
+
+function normalizeArray<T>(value: unknown): NormalizedArrayResult<T> {
+    if (value == null) return { data: [], invalid: false };
+    if (!Array.isArray(value)) return { data: [], invalid: true };
+    return { data: value as T[], invalid: false };
 }
 
 export default function SuperAssistantDashboardPage() {
@@ -94,14 +100,31 @@ export default function SuperAssistantDashboardPage() {
     const rawServers = serversQuery.data;
     const rawSkills = skillsQuery.data;
 
-    const tools = normalizeArray<ToolItem>(rawTools);
-    const servers = normalizeArray<ServerItem>(rawServers);
-    const skills = normalizeArray<{ id: string; name: string; description: string }>(rawSkills);
+    const normalizedTools = normalizeArray<ToolItem>(rawTools);
+    const normalizedServers = normalizeArray<ServerItem>(rawServers);
+    const normalizedSkills = normalizeArray<{ id: string; name: string; description: string }>(rawSkills);
+    const tools = normalizedTools.data;
+    const servers = normalizedServers.data;
+    const skills = normalizedSkills.data;
     const browserStatus = browserStatusQuery.data;
 
     const activeServers = servers.filter((s) => s.status === "connected" || s.status === "active");
-    const hasErrors = toolsQuery.isError || serversQuery.isError || skillsQuery.isError || browserStatusQuery.isError;
+    const toolInventoryUnavailable = toolsQuery.isError || normalizedTools.invalid;
+    const serverInventoryUnavailable = serversQuery.isError || normalizedServers.invalid;
+    const skillInventoryUnavailable = skillsQuery.isError || normalizedSkills.invalid;
+    const browserStatusUnavailable = browserStatusQuery.isError;
+    const failedSources = [
+        toolInventoryUnavailable ? 'Tools' : null,
+        serverInventoryUnavailable ? 'Servers' : null,
+        skillInventoryUnavailable ? 'Skills' : null,
+        browserStatusUnavailable ? 'Browser status' : null,
+    ].filter((value): value is string => Boolean(value));
+    const hasErrors = failedSources.length > 0;
     const isLoading = toolsQuery.isLoading || serversQuery.isLoading || skillsQuery.isLoading || browserStatusQuery.isLoading;
+    const toolInventoryError = toolsQuery.error?.message ?? 'Tool inventory is unavailable.';
+    const serverInventoryError = serversQuery.error?.message ?? 'Server inventory is unavailable.';
+    const skillInventoryError = skillsQuery.error?.message ?? 'Skill inventory is unavailable.';
+    const browserStatusError = browserStatusQuery.error?.message ?? 'Browser bridge status is unavailable.';
 
     const handleRefresh = async () => {
         await Promise.all([
@@ -124,7 +147,7 @@ export default function SuperAssistantDashboardPage() {
                         <Badge variant="outline" className="border-purple-500/30 text-purple-400 bg-purple-500/10 text-xs">Beta</Badge>
                     </div>
                     <p className="text-gray-400 text-sm mt-1">
-                        Borg browser-extension assimilation surface — shared platform footprint first, per-site adapter parity next.
+                        HyperCode browser-extension assimilation surface — shared platform footprint first, per-site adapter parity next.
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -142,10 +165,10 @@ export default function SuperAssistantDashboardPage() {
                         <Chrome className="w-3 h-3 mr-1" /> {PLATFORM_SUPPORT.length} Surfaces
                     </Badge>
                     <Badge variant="outline" className="border-green-600 text-green-400">
-                        <Activity className="w-3 h-3 mr-1" /> {browserStatus?.available ? 'Bridge Ready' : 'Bridge Offline'}
+                        <Activity className="w-3 h-3 mr-1" /> {browserStatusUnavailable ? 'Bridge unavailable' : browserStatus?.available ? 'Bridge Ready' : 'Bridge Offline'}
                     </Badge>
                     <Badge variant="outline" className="border-purple-600 text-purple-400">
-                        <Zap className="w-3 h-3 mr-1" /> {tools.length} Tools
+                        <Zap className="w-3 h-3 mr-1" /> {toolInventoryUnavailable ? '— Tools' : `${tools.length} Tools`}
                     </Badge>
                     <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleRefresh}>
                         <RefreshCw className="w-3 h-3 mr-1" /> Refresh
@@ -156,7 +179,9 @@ export default function SuperAssistantDashboardPage() {
             <div className="flex-1 p-6 overflow-auto">
                 {hasErrors ? (
                     <div className="mb-4 rounded-md border border-rose-500/30 bg-rose-950/20 px-3 py-2 text-xs text-rose-300 flex items-center justify-between gap-3">
-                        <span>One or more data sources failed to load. Displaying partial results where available.</span>
+                        <span>
+                            Failed to load: {failedSources.join(', ')}. {browserStatusUnavailable ? browserStatusError : 'Showing only data sources that returned valid results.'}
+                        </span>
                         <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleRefresh}>
                             Retry fetch
                         </Button>
@@ -190,8 +215,8 @@ export default function SuperAssistantDashboardPage() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-3xl font-bold text-white">{browserStatus?.available ? 'Ready' : 'Offline'}</div>
-                                    <p className="text-xs text-gray-400 mt-1">{browserStatus?.active ? `${browserStatus.pageCount} active browser page(s)` : 'No active browser service pages'}</p>
+                                    <div className="text-3xl font-bold text-white">{browserStatusUnavailable ? 'Unavailable' : browserStatus?.available ? 'Ready' : 'Offline'}</div>
+                                    <p className="text-xs text-gray-400 mt-1">{browserStatusUnavailable ? 'Browser bridge status query failed.' : browserStatus?.active ? `${browserStatus.pageCount} active browser page(s)` : 'No active browser service pages'}</p>
                                 </CardContent>
                             </Card>
                             <Card>
@@ -202,7 +227,7 @@ export default function SuperAssistantDashboardPage() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-3xl font-bold text-white">{IMPLEMENTED_CAPABILITIES.length}</div>
-                                    <p className="text-xs text-gray-400 mt-1">Bridge and operator-facing capabilities already live in Borg</p>
+                                    <p className="text-xs text-gray-400 mt-1">Bridge and operator-facing capabilities already live in HyperCode</p>
                                 </CardContent>
                             </Card>
                             <Card>
@@ -225,12 +250,12 @@ export default function SuperAssistantDashboardPage() {
                                         <Route className="w-4 h-4 text-purple-400" /> Why this slice matters
                                     </CardTitle>
                                     <CardDescription>
-                                        Borg now claims the browser-chat territory directly and ships a real inline sidebar shell without pretending the full automation stack is already done.
+                                        HyperCode now claims the browser-chat territory directly and ships a real inline sidebar shell without pretending the full automation stack is already done.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3 text-sm text-zinc-300">
                                     <p>
-                                        This slice broadens the actual extension injection footprint to the reference platform set, adds a host-aware adapter registry, and mounts a Borg-native sidebar directly into supported chat surfaces.
+                                        This slice broadens the actual extension injection footprint to the reference platform set, adds a host-aware adapter registry, and mounts a HyperCode-native sidebar directly into supported chat surfaces.
                                     </p>
                                     <p>
                                         In other words: the bridge and sidebar are real now, while the heavier automation loops and render/widget subsystems still come next. No cardboard cutouts, no vaporware confetti.
@@ -244,7 +269,7 @@ export default function SuperAssistantDashboardPage() {
                                         <LayoutPanelTop className="w-4 h-4 text-cyan-400" /> Active transports
                                     </CardTitle>
                                     <CardDescription>
-                                        Current Borg-native routes carrying extension/browser traffic.
+                                        Current HyperCode-native routes carrying extension/browser traffic.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
@@ -263,7 +288,7 @@ export default function SuperAssistantDashboardPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Supported Browser Chat Platforms</CardTitle>
-                                <CardDescription>The current Borg browser-extension footprint across supported chat surfaces.</CardDescription>
+                                <CardDescription>The current HyperCode browser-extension footprint across supported chat surfaces.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <ScrollArea className="h-[500px]">
@@ -299,7 +324,7 @@ export default function SuperAssistantDashboardPage() {
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Implemented in Borg Now</CardTitle>
+                                    <CardTitle>Implemented in HyperCode Now</CardTitle>
                                     <CardDescription>Operator-visible pieces already assimilated.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
@@ -318,7 +343,7 @@ export default function SuperAssistantDashboardPage() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Next Assimilation Slices</CardTitle>
-                                    <CardDescription>Remaining browser-bridge differentiators to build Borg-native.</CardDescription>
+                                    <CardDescription>Remaining browser-bridge differentiators to build HyperCode-native.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                     {NEXT_CAPABILITIES.map((capability) => (
@@ -340,18 +365,21 @@ export default function SuperAssistantDashboardPage() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>MCP Tool Registry</CardTitle>
-                                    <CardDescription>Live Borg tool inventory currently reachable.</CardDescription>
+                                    <CardDescription>Live HyperCode tool inventory currently reachable.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <ScrollArea className="h-[420px]">
                                         <div className="space-y-2">
+                                            {toolInventoryUnavailable ? (
+                                                <p className="text-rose-400 italic">{toolInventoryError}</p>
+                                            ) : null}
                                             {tools.map((tool) => (
                                                 <div key={tool.uuid} className="rounded border border-zinc-800 bg-zinc-900/50 px-3 py-3">
                                                     <div className="font-mono text-sm text-white">{tool.name}</div>
                                                     <div className="text-xs text-gray-400 mt-1">{tool.description || 'No description'}</div>
                                                 </div>
                                             ))}
-                                            {tools.length === 0 && <p className="text-gray-500 italic">No tools registered yet.</p>}
+                                            {!toolInventoryUnavailable && tools.length === 0 && <p className="text-gray-500 italic">No tools registered yet.</p>}
                                         </div>
                                     </ScrollArea>
                                 </CardContent>
@@ -360,10 +388,13 @@ export default function SuperAssistantDashboardPage() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Server Pool</CardTitle>
-                                    <CardDescription>Connected MCP servers Borg can expose through the bridge.</CardDescription>
+                                    <CardDescription>Connected MCP servers HyperCode can expose through the bridge.</CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-2">
+                                    <CardContent>
+                                        <div className="space-y-2">
+                                            {serverInventoryUnavailable ? (
+                                            <p className="text-rose-400 italic">{serverInventoryError}</p>
+                                        ) : null}
                                         {servers.map((server) => (
                                             <div key={server.id} className="flex items-center justify-between p-3 rounded border border-zinc-800 bg-zinc-900/50">
                                                 <div>
@@ -375,7 +406,7 @@ export default function SuperAssistantDashboardPage() {
                                                 </Badge>
                                             </div>
                                         ))}
-                                        {servers.length === 0 && <p className="text-gray-500 italic">No MCP servers configured.</p>}
+                                        {!serverInventoryUnavailable && servers.length === 0 && <p className="text-gray-500 italic">No MCP servers configured.</p>}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -383,10 +414,13 @@ export default function SuperAssistantDashboardPage() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Assimilated Skills</CardTitle>
-                                    <CardDescription>Live Borg skill inventory adjacent to the extension/browser stack.</CardDescription>
+                                    <CardDescription>Live HyperCode skill inventory adjacent to the extension/browser stack.</CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-2">
+                                    <CardContent>
+                                        <div className="space-y-2">
+                                            {skillInventoryUnavailable ? (
+                                            <p className="text-rose-400 italic">{skillInventoryError}</p>
+                                        ) : null}
                                         {skills.map((skill) => (
                                             <div key={skill.id} className="flex items-center justify-between p-3 rounded border border-zinc-800 bg-zinc-900/50">
                                                 <div>
@@ -396,7 +430,7 @@ export default function SuperAssistantDashboardPage() {
                                                 <Badge variant="outline" className="text-green-400">Active</Badge>
                                             </div>
                                         ))}
-                                        {skills.length === 0 && <p className="text-gray-500 italic">No skills assimilated.</p>}
+                                        {!skillInventoryUnavailable && skills.length === 0 && <p className="text-gray-500 italic">No skills assimilated.</p>}
                                     </div>
                                 </CardContent>
                             </Card>

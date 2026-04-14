@@ -1,11 +1,11 @@
 /**
  * @file metamcp-schema.pg.ts
- * @description PostgreSQL schema definition for MetaMCP integration into Borg.
+ * @description PostgreSQL schema definition for MetaMCP integration into HyperCode.
  * @module packages/core/src/db/metamcp-schema.pg
  *
  * WHAT:
  * This file defines the EXACT PostgreSQL schema used by the original MetaMCP project.
- * It is the "source of truth" for the data model when running Borg with a Postgres backend
+ * It is the "source of truth" for the data model when running HyperCode with a Postgres backend
  * (e.g. in production or docker-compose environments).
  *
  * WHY:

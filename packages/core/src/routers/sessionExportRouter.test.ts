@@ -103,7 +103,7 @@ describe('sessionExportRouter orchestrator base resolution', () => {
     });
 
     it('reports a clear error when importing without an orchestrator base', async () => {
-        const configDir = mkdtempSync(`${os.tmpdir()}\\borg-export-empty-`);
+        const configDir = mkdtempSync(`${os.tmpdir()}\\hypercode-export-empty-`);
         mkdirSync(configDir, { recursive: true });
         process.env.BORG_CONFIG_DIR = configDir;
 
@@ -117,7 +117,7 @@ describe('sessionExportRouter orchestrator base resolution', () => {
                 sessions: [{
                     id: 'sess-import-1',
                     name: 'Imported Session',
-                    cliType: 'borg',
+                    cliType: 'hypercode',
                     status: 'stopped',
                     createdAt: 1234,
                     workingDirectory: 'C:\\temp',
@@ -133,13 +133,13 @@ describe('sessionExportRouter orchestrator base resolution', () => {
         expect(fetchSpy).not.toHaveBeenCalled();
         expect(result.imported).toBe(0);
         expect(result.errors).toEqual([
-            'Failed to import session sess-import-1: No Borg Orchestrator base configured.',
+            'Failed to import session sess-import-1: No HyperCode Orchestrator base configured.',
         ]);
         expect(result.details).toEqual([
             {
                 sessionId: 'sess-import-1',
                 action: 'error',
-                reason: 'No Borg Orchestrator base configured.',
+                reason: 'No HyperCode Orchestrator base configured.',
             },
         ]);
     });

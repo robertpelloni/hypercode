@@ -1,4 +1,4 @@
-# BORG v0.9.1: Total Project Analysis & Audit
+# HYPERCODE v0.9.1: Total Project Analysis & Audit
 
 ## 1. Harness Compatibility Audit (1:1 Parity)
 
@@ -51,9 +51,9 @@
 - **Target**: Interactive D3.js force-graph for live cognitive mapping.
 
 ## 5. The "No-Go" List (Explicit Exclusions)
-- **Standalone IDE**: Borg will NOT become an editor. It is an operations layer.
-- **Model Training**: Borg provides context for inference; it does not train models.
-- **Vendor Specificity**: Borg will never prioritize one cloud provider over others.
+- **Standalone IDE**: HyperCode will NOT become an editor. It is an operations layer.
+- **Model Training**: HyperCode provides context for inference; it does not train models.
+- **Vendor Specificity**: HyperCode will never prioritize one cloud provider over others.
 
 ## 6. Release Roadmap to v1.0
 1. [ ] **Sandbox v1**: First-class WASM execution for the standard library.
@@ -62,4 +62,4 @@
 4. [ ] **Unified Search**: Search tools, memories, and files in a single modal.
 
 ---
-*Borg v0.9.1 is stable, streamlined, and 1:1 compatible with the official tools models were born to use. Resistance to this standard is final.*
+*HyperCode v0.9.1 is stable, streamlined, and 1:1 compatible with the official tools models were born to use. Resistance to this standard is final.*

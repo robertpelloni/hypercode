@@ -9,7 +9,7 @@ import { createFakeDetectEnvironment, FakeWorktreeManager } from './test-helpers
 const tempDirs: string[] = [];
 
 function createTempDir() {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-session-worktree-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-session-worktree-'));
     tempDirs.push(dir);
     return dir;
 }

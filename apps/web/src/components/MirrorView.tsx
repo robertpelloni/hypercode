@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
-import { createReconnectPolicy, getReconnectDelayMs, resolveCoreWsUrl, shouldRetryReconnect } from '@borg/ui';
+import { createReconnectPolicy, getReconnectDelayMs, resolveCoreWsUrl, shouldRetryReconnect } from '@hypercode/ui';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function MirrorView() {
     const [screenshot, setScreenshot] = useState<string | null>(null);
     const [isMirroring, setIsMirroring] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
+    const [isConnecting, setIsConnecting] = useState(false);
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectAttemptsRef = useRef(0);
     const reconnectPolicy = createReconnectPolicy();
@@ -22,10 +23,12 @@ export function MirrorView() {
             return;
         }
 
+        setIsConnecting(true);
         const ws = new WebSocket(wsUrlRef.current);
 
         ws.onopen = () => {
             setIsConnected(true);
+            setIsConnecting(false);
             reconnectAttemptsRef.current = 0;
             // If mirroring was previously active (e.g. on reconnect), re-enable
             if (isMirroring) {
@@ -35,6 +38,7 @@ export function MirrorView() {
 
         ws.onclose = () => {
             setIsConnected(false);
+            setIsConnecting(false);
             wsRef.current = null;
             if (isMirroring && shouldRetryReconnect(reconnectAttemptsRef.current, reconnectPolicy)) {
                 reconnectAttemptsRef.current += 1;
@@ -126,16 +130,16 @@ export function MirrorView() {
 
             {/* Viewport */}
             <div className="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
-                {!isConnected ? (
-                    <div className="text-zinc-600 flex flex-col items-center gap-2">
-                        <div className="w-8 h-8 border-2 border-zinc-800 border-t-zinc-500 rounded-full animate-spin" />
-                        <span>Connecting to Core...</span>
-                    </div>
-                ) : !isMirroring ? (
+                {!isMirroring ? (
                     <div className="text-zinc-500 text-center p-8">
                         <div className="text-4xl mb-4 opacity-20">📡</div>
                         <p>Tab Mirroring is currently inactive.</p>
                         <p className="text-sm mt-2 opacity-60">Enable mirroring to see exactly what the agent sees.</p>
+                    </div>
+                ) : !isConnected ? (
+                    <div className="text-zinc-600 flex flex-col items-center gap-2">
+                        <div className="w-8 h-8 border-2 border-zinc-800 border-t-zinc-500 rounded-full animate-spin" />
+                        <span>{isConnecting ? 'Connecting mirror feed...' : 'Mirror feed unavailable. Retrying connection...'}</span>
                     </div>
                 ) : !screenshot ? (
                     <div className="text-zinc-600 animate-pulse">Waiting for first frame...</div>
@@ -155,7 +159,7 @@ export function MirrorView() {
                 {/* Overlay Status */}
                 <div className="absolute bottom-2 left-2 flex gap-2">
                     <div className="bg-black/60 backdrop-blur text-[10px] text-zinc-400 px-2 py-1 rounded">
-                        {isConnected ? '🟢 Core Connected' : '🔴 Core Offline'}
+                        {!isMirroring ? '⚪ Mirror idle' : isConnected ? '🟢 Core Connected' : '🔴 Core Offline'}
                     </div>
                 </div>
             </div>

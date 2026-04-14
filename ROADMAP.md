@@ -1,6 +1,6 @@
 # Roadmap
 
-_Last updated: 2026-03-25_
+_Last updated: 2026-04-02_
 
 ## Status legend
 
@@ -17,65 +17,48 @@ borg has two jobs at once:
 
 This roadmap keeps those jobs separate.
 
-## Current objective (Now)
+## Completed (v1.0.0-alpha.1)
 
-Deliver a trustworthy `v1.0.0` centered on:
+Deliverables officially achieved and stabilized in the `1.0.0-alpha.1` milestone:
 
-1. MCP control plane reliability
-2. Provider routing correctness
-3. Memory usefulness
-4. Dashboard truthfulness
+### 1. Stabilize the core wedge
+- **MCP control plane**: Resolved the split-brain config cache, guaranteeing native tools and manual JSON configs synchronize without destructive DB wipes.
+- **Provider routing and billing visibility**: Deployed fully functional `CoreModelSelector` fallback logic (handling `EMERGENCY_FALLBACK` and `budget_forced_local` states), seamlessly wired to the TRPC router and the active dashboard.
+- **Session supervision**: Confirmed `SessionSupervisor` auto-restart functionality via active regression testing, validating isolated PTY recovery.
+- **Memory inspection and continuity**: Deployed Vector Memory manipulation across `search_memory` and `add_memory` MCP tools, connecting universal memory directly to LLMs.
+- **System observability**: Deployed robust `McpTrafficInspector` memory ring buffers, actively parsing latency thresholds.
 
-### Current priorities
+### 2. Dashboard convergence
+- completed high-value data-binding work for MCP Server Health, Integrations, and Traffic inspection.
+- removed or clearly labeled misleading states (e.g. `hypercode mcp import` now gracefully errors on missing files instead of printing fake success messages).
+- improved empty states and setup guidance (e.g. "Welcome to HyperCode! Let's get started" first-run banners now guide operators correctly).
 
-#### 1. Stabilize the core wedge
-Focus on the strongest product shape already present:
-- MCP control plane
-- provider routing and billing visibility
-- session supervision
-- memory inspection and continuity
-- system observability
+### 3. Extension and runtime reliability
+- fixed storage access failures across the SQLite database connections.
+- reduced workspace build failures (re-aligned `pnpm-workspace.yaml` boundaries for proper transitive closure calculation).
+- formalized internal daemon architecture (`hypercoded`, `hypermcpd`, `hyperingest`, `hyperharnessd`) and placed boundaries in `packages/core/src/daemons/`.
+- successfully assimilated `bobbybookmarks` deduplication engines, absorbing 12,000+ validated external URLs and 900+ verified MCP catalogs into the robust internal `.hypercode` store.
 
-#### 2. Dashboard convergence
-- complete high-value data-binding work
-- remove or clearly label misleading states
-- improve empty states and error behavior
-- reduce duplicate or low-value surfaces
-
-#### 3. Extension and runtime reliability
-- fix storage access failures
-- reduce SSE or subscription edge cases
-- remove startup and port mismatch drift
-- improve honest degradation when services are unavailable
-- harden published MCP catalog ingestion against stale third-party registry endpoints and misleading HTML/error-page responses
-
-#### 4. Release discipline
-- unify version story
-- tighten release criteria
-- improve documentation accuracy
-- reduce contradictory status messaging
+### 4. Release discipline
+- unified version story across all packages, dashboards, and CLIs (`1.0.0-alpha.1`).
+- synchronized LLM instructions (merged all `CLAUDE.md`, `GEMINI.md`, etc., to point to `docs/UNIVERSAL_LLM_INSTRUCTIONS.md`).
+- improved documentation accuracy (`GO_SIDECAR_API.md` explicitly defines what Go natively executes vs proxies).
 
 ## Next
 
 ### A. MCP operator improvements
 - better tool grouping and search
 - stronger import/export clarity
-- clearer runtime health reporting
 - better working-set management
-- groundwork for a canonical internal MCP server library with ingestion, dedupe, and provenance tracking
 - groundwork for benchmarking, ranking, and operator review loops across discovered MCP servers
 - keep registry-source adapters truthful about source drift, partial availability, and non-fatal ingestion failures instead of treating stale registries as healthy empty catalogs
 
 ### B. Memory quality
-- better provenance
 - better retrieval tuning
 - stronger import/export ergonomics
-- better memory inspection UX
 
 ### C. Session workflow quality
 - cleaner create/edit flows
-- stronger attach/restart ergonomics
-- clearer crash/recovery visibility
 - clearer isolation behavior
 - converge primary CLI harness support around first-class borg identities, starting with `borg`
 

@@ -1,11 +1,11 @@
 <idea-plugin>
-    <id>com.Borg.plugin</id>
+    <id>com.HyperCode.plugin</id>
 <<<<<<< HEAD
-    <name>Borg - AI Orchestration System</name>
-    <vendor email="support@Borg.dev" url="https://Borg.dev">Borg Team</vendor>
+    <name>HyperCode - AI Orchestration System</name>
+    <vendor email="support@HyperCode.dev" url="https://HyperCode.dev">HyperCode Team</vendor>
 
     <description><![CDATA[
-    Connect your JetBrains IDE to Borg Hub for AI-powered development assistance.
+    Connect your JetBrains IDE to HyperCode Hub for AI-powered development assistance.
     
     Features:
     <ul>
@@ -23,7 +23,7 @@
     </ul>
     ]]></change-notes>
 =======
-    <name>Borg</name>
+    <name>HyperCode</name>
     <vendor>OhMyOpenCode</vendor>
 >>>>>>> a3fab027fd172b66d6a0ec76e91f86354afa48e0
 
@@ -31,52 +31,52 @@
 
     <extensions defaultExtensionNs="com.intellij">
 <<<<<<< HEAD
-        <toolWindow id="Borg" secondary="true" icon="AllIcons.Toolwindows.ToolWindowMessages"
-                    anchor="right" factoryClass="com.Borg.plugin.BorgToolWindowFactory"/>
-        <projectService serviceImplementation="com.Borg.plugin.BorgService"/>
-        <notificationGroup id="Borg Notifications" displayType="BALLOON"/>
+        <toolWindow id="HyperCode" secondary="true" icon="AllIcons.Toolwindows.ToolWindowMessages"
+                    anchor="right" factoryClass="com.HyperCode.plugin.BorgToolWindowFactory"/>
+        <projectService serviceImplementation="com.HyperCode.plugin.BorgService"/>
+        <notificationGroup id="HyperCode Notifications" displayType="BALLOON"/>
     </extensions>
 
     <actions>
-        <group id="BorgActionGroup" text="Borg" description="Borg Actions" popup="true">
+        <group id="BorgActionGroup" text="HyperCode" description="HyperCode Actions" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             
-            <action id="Borg.Connect" class="com.Borg.plugin.actions.ConnectAction"
-                    text="Connect to Hub" description="Connect to Borg Hub"/>
-            <action id="Borg.Disconnect" class="com.Borg.plugin.actions.DisconnectAction"
-                    text="Disconnect" description="Disconnect from Borg Hub"/>
+            <action id="HyperCode.Connect" class="com.HyperCode.plugin.actions.ConnectAction"
+                    text="Connect to Hub" description="Connect to HyperCode Hub"/>
+            <action id="HyperCode.Disconnect" class="com.HyperCode.plugin.actions.DisconnectAction"
+                    text="Disconnect" description="Disconnect from HyperCode Hub"/>
             <separator/>
-            <action id="Borg.StartDebate" class="com.Borg.plugin.actions.StartDebateAction"
+            <action id="HyperCode.StartDebate" class="com.HyperCode.plugin.actions.StartDebateAction"
                     text="Start Council Debate" description="Start a council debate on selected code"/>
-            <action id="Borg.ArchitectMode" class="com.Borg.plugin.actions.ArchitectModeAction"
+            <action id="HyperCode.ArchitectMode" class="com.HyperCode.plugin.actions.ArchitectModeAction"
                     text="Architect Mode" description="Start two-model reasoning session"/>
-            <action id="Borg.ViewAnalytics" class="com.Borg.plugin.actions.ViewAnalyticsAction"
+            <action id="HyperCode.ViewAnalytics" class="com.HyperCode.plugin.actions.ViewAnalyticsAction"
                     text="View Analytics" description="View supervisor analytics"/>
             <separator/>
-            <action id="Borg.RunAgent" class="com.Borg.plugin.actions.RunAgentAction"
+            <action id="HyperCode.RunAgent" class="com.HyperCode.plugin.actions.RunAgentAction"
                     text="Run Agent" description="Run an AI agent on current file"/>
-            <action id="Borg.SearchMemory" class="com.Borg.plugin.actions.SearchMemoryAction"
-                    text="Search Memory" description="Search Borg memory"/>
+            <action id="HyperCode.SearchMemory" class="com.HyperCode.plugin.actions.SearchMemoryAction"
+                    text="Search Memory" description="Search HyperCode memory"/>
         </group>
         
-        <action id="Borg.QuickDebate" class="com.Borg.plugin.actions.StartDebateAction"
-                text="Borg: Quick Debate" description="Start council debate on selection">
+        <action id="HyperCode.QuickDebate" class="com.HyperCode.plugin.actions.StartDebateAction"
+                text="HyperCode: Quick Debate" description="Start council debate on selection">
             <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt D"/>
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </action>
 =======
-        <toolWindow id="Borg" secondary="true" icon="AllIcons.General.Information" anchor="right"
-                    factoryClass="com.Borg.plugin.BorgToolWindowFactory"/>
+        <toolWindow id="HyperCode" secondary="true" icon="AllIcons.General.Information" anchor="right"
+                    factoryClass="com.HyperCode.plugin.BorgToolWindowFactory"/>
     </extensions>
 
     <actions>
-        <group id="Borg.Menu" text="Borg" description="Borg Actions">
+        <group id="HyperCode.Menu" text="HyperCode" description="HyperCode Actions">
             <add-to-group group-id="MainMenu" anchor="last"/>
-            <action id="Borg.StartDebate" class="com.Borg.plugin.actions.StartDebateAction" text="Start Council Debate"
+            <action id="HyperCode.StartDebate" class="com.HyperCode.plugin.actions.StartDebateAction" text="Start Council Debate"
                     description="Starts a new AI Council debate">
                 <keyboard-shortcut keymap="$default" first-keystroke="control alt D"/>
             </action>
-            <action id="Borg.ArchitectMode" class="com.Borg.plugin.actions.ArchitectModeAction" text="Open Architect Mode"
+            <action id="HyperCode.ArchitectMode" class="com.HyperCode.plugin.actions.ArchitectModeAction" text="Open Architect Mode"
                     description="Opens Architect Mode for complex tasks"/>
         </group>
 >>>>>>> a3fab027fd172b66d6a0ec76e91f86354afa48e0

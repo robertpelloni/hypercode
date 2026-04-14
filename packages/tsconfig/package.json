@@ -1,6 +1,6 @@
 {
-    "name": "@borg/tsconfig",
-    "version": "0.99.1",
+    "name": "@hypercode/tsconfig",
+    "version": "1.0.0-alpha.1",
     "private": true,
     "files": [
         "base.json",

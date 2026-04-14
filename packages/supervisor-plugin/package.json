@@ -1,6 +1,6 @@
 {
-    "name": "@borg/supervisor-plugin",
-    "version": "0.99.1",
+    "name": "@hypercode/supervisor-plugin",
+    "version": "1.0.0-alpha.1",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

@@ -1,6 +1,6 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { GraphMemory } from '@borg/memory';
+import { GraphMemory } from '@hypercode/memory';
 import fs from 'fs/promises';
 import path from 'path';
 

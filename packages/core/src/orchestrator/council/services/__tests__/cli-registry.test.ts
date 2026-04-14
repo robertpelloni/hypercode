@@ -1,4 +1,5 @@
-import { splitCommandSpec } from '../cli-registry.js';
+import type { CLIType } from '../../types.js';
+import { CLI_DEFINITIONS, splitCommandSpec } from '../cli-registry.js';
 import { describe, test, expect, beforeEach } from 'vitest';
 
 // Create a testable version of the CLI registry
@@ -227,6 +228,63 @@ describe('CLIRegistry', () => {
         command: 'C:\\Program Files\\Tool\\tool.exe',
         args: ['serve'],
       });
+    });
+  });
+
+  describe('definition parity', () => {
+    test('covers every supported CLI type except custom', () => {
+      const expectedTypes: CLIType[] = [
+        'hypercode',
+        'opencode',
+        'antigravity',
+        'claude',
+        'aider',
+        'cursor',
+        'continue',
+        'cody',
+        'copilot',
+        'adrenaline',
+        'amazon-q',
+        'amazon-q-developer',
+        'amp-code',
+        'auggie',
+        'azure-openai',
+        'bito',
+        'byterover',
+        'claude-code',
+        'code-codex',
+        'codebuff',
+        'codemachine',
+        'codex',
+        'crush',
+        'dolt',
+        'factory',
+        'factory-droid',
+        'gemini',
+        'goose',
+        'grok',
+        'jules',
+        'kilo-code',
+        'kimi',
+        'llm',
+        'litellm',
+        'llamafile',
+        'manus',
+        'mistral-vibe',
+        'ollama',
+        'open-interpreter',
+        'pi',
+        'qwen-code',
+        'rowboatx',
+        'rovo',
+        'shell-pilot',
+        'smithery',
+        'superai-cli',
+        'trae',
+        'warp',
+      ];
+
+      expect(CLI_DEFINITIONS.map((definition) => definition.type).sort()).toEqual(expectedTypes.sort());
     });
   });
 });

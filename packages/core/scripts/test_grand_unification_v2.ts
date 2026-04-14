@@ -12,7 +12,7 @@ async function runGrandUnificationV2() {
 
     try {
         console.log("\n[1/5] 💾 Session Persistence Test...");
-        const sessionFile = path.join(process.cwd(), '.borg-session.json');
+        const sessionFile = path.join(process.cwd(), '.hypercode-session.json');
 
         // Clean start
         if (fs.existsSync(sessionFile)) fs.unlinkSync(sessionFile);

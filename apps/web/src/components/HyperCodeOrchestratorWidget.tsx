@@ -70,6 +70,51 @@ interface ServerHealth {
     version?: string;
 }
 
+function isSupervisorInfo(value: unknown): value is SupervisorInfo {
+    return typeof value === "object"
+        && value !== null
+        && typeof (value as { id?: unknown }).id === "string"
+        && typeof (value as { name?: unknown }).name === "string";
+}
+
+function isAutopilotSession(value: unknown): value is AutopilotSession {
+    return typeof value === "object"
+        && value !== null
+        && typeof (value as { id?: unknown }).id === "string"
+        && typeof (value as { cliType?: unknown }).cliType === "string"
+        && typeof (value as { status?: unknown }).status === "string";
+}
+
+function isCliTool(value: unknown): value is CliTool {
+    return typeof value === "object"
+        && value !== null
+        && typeof (value as { type?: unknown }).type === "string"
+        && typeof (value as { name?: unknown }).name === "string"
+        && typeof (value as { installed?: unknown }).installed === "boolean";
+}
+
+function isVetoPending(value: unknown): value is VetoPending {
+    return typeof value === "object"
+        && value !== null
+        && typeof (value as { id?: unknown }).id === "string";
+}
+
+function isDebateEntry(value: unknown): value is DebateEntry {
+    return typeof value === "object" && value !== null;
+}
+
+function getArrayPayload<T>(value: unknown, key: string, guard: (item: unknown) => item is T): T[] | null {
+    const list = Array.isArray(value)
+        ? value
+        : (typeof value === "object" && value !== null && Array.isArray((value as Record<string, unknown>)[key])
+            ? (value as Record<string, unknown>)[key] as unknown[]
+            : null);
+    if (!list) {
+        return null;
+    }
+    return list.every(guard) ? list : null;
+}
+
 const CONSENSUS_MODES = [
     "simple-majority", "supermajority", "unanimous", "weighted",
     "ceo-override", "ceo-veto", "hybrid-ceo-majority", "ranked-choice"
@@ -218,44 +263,73 @@ export function borgOrchestratorWidget() {
         if (councilRes.ok) {
             const d = councilRes.data;
             const councilData = ((d as any)?.council ?? d) as Partial<CouncilStatus> | undefined;
-            setCouncil({
-                enabled: typeof councilData?.enabled === "boolean" ? councilData.enabled : undefined,
-                supervisors: Array.isArray(councilData?.supervisors) ? councilData.supervisors : [],
-                consensusMode: typeof councilData?.consensusMode === "string" ? councilData.consensusMode : "simple-majority",
-            });
+            const supervisors = Array.isArray(councilData?.supervisors) && councilData.supervisors.every(isSupervisorInfo)
+                ? councilData.supervisors
+                : null;
+            const consensusMode = typeof councilData?.consensusMode === "string" ? councilData.consensusMode : null;
+            if (supervisors && consensusMode) {
+                setCouncil({
+                    enabled: typeof councilData?.enabled === "boolean" ? councilData.enabled : undefined,
+                    supervisors,
+                    consensusMode,
+                });
+            } else {
+                setCouncil(null);
+                setCouncilError("Council status returned an invalid payload.");
+            }
         } else {
             setCouncil(null);
             setCouncilError(councilRes.error ?? "Council status is unavailable.");
         }
 
         if (sessionsRes.ok) {
-            const d = sessionsRes.data;
-            setSessions(Array.isArray(d) ? (d as AutopilotSession[]) : ((d as any)?.sessions ?? []));
+            const sessionList = getArrayPayload(sessionsRes.data, "sessions", isAutopilotSession);
+            if (sessionList) {
+                setSessions(sessionList);
+            } else {
+                setSessions([]);
+                setSessionsError("Session inventory returned an invalid payload.");
+            }
         } else {
             setSessions([]);
             setSessionsError(sessionsRes.error ?? "Session inventory is unavailable.");
         }
 
         if (cliRes.ok) {
-            const d = cliRes.data;
-            setCliTools(Array.isArray(d) ? (d as CliTool[]) : ((d as any)?.tools ?? []));
+            const toolList = getArrayPayload(cliRes.data, "tools", isCliTool);
+            if (toolList) {
+                setCliTools(toolList);
+            } else {
+                setCliTools([]);
+                setCliToolsError("CLI tool inventory returned an invalid payload.");
+            }
         } else {
             setCliTools([]);
             setCliToolsError(cliRes.error ?? "CLI tool inventory is unavailable.");
         }
 
         if (vetoRes.ok) {
-            const d = vetoRes.data;
-            setVetoPending(Array.isArray(d) ? (d as VetoPending[]) : ((d as any)?.pending ?? []));
+            const vetoList = getArrayPayload(vetoRes.data, "pending", isVetoPending);
+            if (vetoList) {
+                setVetoPending(vetoList);
+            } else {
+                setVetoPending([]);
+                setVetoError("Pending vetoes returned an invalid payload.");
+            }
         } else {
             setVetoPending([]);
             setVetoError(vetoRes.error ?? "Pending vetoes are unavailable.");
         }
 
         if (debateRes.ok) {
-            const d = debateRes.data;
-            const list: DebateEntry[] = Array.isArray(d) ? (d as DebateEntry[]) : ((d as any)?.entries ?? (d as any)?.debates ?? []);
-            setDebateHistory(list.slice(0, 20));
+            const list = getArrayPayload(debateRes.data, "entries", isDebateEntry)
+                ?? getArrayPayload(debateRes.data, "debates", isDebateEntry);
+            if (list) {
+                setDebateHistory(list.slice(0, 20));
+            } else {
+                setDebateHistory([]);
+                setDebateHistoryError("Debate history returned an invalid payload.");
+            }
         } else {
             setDebateHistory([]);
             setDebateHistoryError(debateRes.error ?? "Debate history is unavailable.");
@@ -466,7 +540,7 @@ export function borgOrchestratorWidget() {
                     )}
                 </SectionCard>
 
-                <SectionCard title={`Active Swarm (${sessions.length})`} icon={<Terminal className="h-4 w-4" />}>
+                <SectionCard title={`Active Swarm (${sessionsError ? "—" : sessions.length})`} icon={<Terminal className="h-4 w-4" />}>
                     {showNewSession ? (
                         <div className="border border-slate-700 rounded-lg p-3 bg-slate-900 mb-3">
                             <p className="text-xs font-semibold text-slate-300 mb-2">Deploy New Agent</p>
@@ -524,7 +598,7 @@ export function borgOrchestratorWidget() {
                 </SectionCard>
 
                 {(vetoPending.length > 0 || vetoError) && (
-                    <SectionCard title={`Pending Vetoes (${vetoPending.length})`} icon={<Gavel className="h-4 w-4 text-amber-400" />}>
+                    <SectionCard title={`Pending Vetoes (${vetoError ? "—" : vetoPending.length})`} icon={<Gavel className="h-4 w-4 text-amber-400" />}>
                         {vetoError ? (
                             <p className="text-xs text-rose-300">{vetoError}</p>
                         ) : (

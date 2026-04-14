@@ -38,6 +38,7 @@ export function useHealerStream() {
 
     return {
         events,
-        isLoading: historyQuery.isLoading
+        isLoading: historyQuery.isLoading,
+        error: historyQuery.error?.message ?? null,
     };
 }

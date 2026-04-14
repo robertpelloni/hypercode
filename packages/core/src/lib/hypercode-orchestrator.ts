@@ -33,7 +33,7 @@ export function resolveBorgConfigDir(env: OrchestratorEnv = process.env): string
         return configuredDir;
     }
 
-    return path.join(os.homedir(), '.borg');
+    return path.join(os.homedir(), '.hypercode');
 }
 
 export function resolveBorgLockPath(env: OrchestratorEnv = process.env): string {

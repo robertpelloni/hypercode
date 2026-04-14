@@ -1,4 +1,4 @@
-import { LLMService } from "@borg/ai";
+import { LLMService } from "@hypercode/ai";
 
 export interface RiskResult {
     score: number;
@@ -41,7 +41,7 @@ export class RiskEvaluator {
             const response = await this.llmService.generateText(
                 selection.provider,
                 selection.modelId,
-                'You are a Borg risk evaluator. Return concise JSON only.',
+                'You are a HyperCode risk evaluator. Return concise JSON only.',
                 prompt,
                 {
                     taskType: 'supervisor',
@@ -88,7 +88,7 @@ export class RiskEvaluator {
             const response = await this.llmService.generateText(
                 selection.provider,
                 selection.modelId,
-                'You are a Borg implementation risk evaluator. Return concise JSON only.',
+                'You are a HyperCode implementation risk evaluator. Return concise JSON only.',
                 prompt,
                 {
                     taskType: 'supervisor',

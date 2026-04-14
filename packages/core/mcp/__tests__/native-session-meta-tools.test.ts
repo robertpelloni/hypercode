@@ -39,7 +39,7 @@ describe('NativeSessionMetaTools', () => {
         expect(visible[0].description).toContain('[Deferred]');
     });
 
-    it('hydrates and unloads tools in the Borg session working set', async () => {
+    it('hydrates and unloads tools in the HyperCode session working set', async () => {
         const manager = new NativeSessionMetaTools();
         manager.refreshCatalog([
             {

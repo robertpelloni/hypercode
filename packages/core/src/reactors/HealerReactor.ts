@@ -32,6 +32,9 @@ export function shouldIgnoreExpectedStartupError(errorLog: string): boolean {
         'not available on path',
         'failed to capture tool observation',
         'failed to infer data type',
+        'sqlite runtime is unavailable',
+        'could not locate the bindings file',
+        'better_sqlite3.node',
     ];
 
     return ignoredFragments.some((fragment) => normalized.includes(fragment));

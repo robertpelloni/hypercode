@@ -80,7 +80,7 @@ Output Format:
 **URL**: [URL]
 **Summary**: Detailed summary of what this tool/article is.
 **Key Features**: Bullet list of features or insights.
-**Borg Relevance**: How this might be useful for the Borg project (Coding, AI, Agents).
+**HyperCode Relevance**: How this might be useful for the HyperCode project (Coding, AI, Agents).
 `;
             const userPrompt = `Content from ${task.url}:\n\n${content.substring(0, 50000)}`; // Token limit safety
 

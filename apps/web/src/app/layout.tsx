@@ -3,14 +3,14 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Borg",
-    template: "%s | Borg",
+    default: "HyperCode",
+    template: "%s | HyperCode",
   },
   description: "Local AI operations control plane for MCP routing, provider fallback, session supervision, and a unified dashboard.",
 };
 
 import { TRPCProvider } from "../utils/TRPCProvider";
-import { Toaster, ProviderExhaustionBanner } from "@borg/ui";
+import { Toaster, ProviderExhaustionBanner } from "@hypercode/ui";
 import { Navigation } from "../components/Navigation";
 
 export default function RootLayout({

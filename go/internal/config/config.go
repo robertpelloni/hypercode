@@ -31,10 +31,10 @@ func DefaultConfigDir() string {
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return ".borg-go"
+		return ".hypercode-go"
 	}
 
-	return filepath.Join(homeDir, ".borg-go")
+	return filepath.Join(homeDir, ".hypercode-go")
 }
 
 func DefaultMainConfigDir() string {
@@ -44,10 +44,10 @@ func DefaultMainConfigDir() string {
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return ".borg"
+		return ".hypercode"
 	}
 
-	return filepath.Join(homeDir, ".borg")
+	return filepath.Join(homeDir, ".hypercode")
 }
 
 func DefaultWorkspaceRoot() string {
@@ -76,7 +76,7 @@ func (c Config) MainLockPath() string {
 }
 
 func (c Config) ImportedInstructionsPath() string {
-	return filepath.Join(c.WorkspaceRoot, ".borg", "imported_sessions", "docs", "auto-imported-agent-instructions.md")
+	return filepath.Join(c.WorkspaceRoot, ".hypercode", "imported_sessions", "docs", "auto-imported-agent-instructions.md")
 }
 
 func browserHost(host string) string {

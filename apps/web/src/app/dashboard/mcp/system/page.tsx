@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardContent } from "@borg/ui";
-import { Button } from "@borg/ui";
+import { Card, CardContent } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
 import { Activity, Server, Cpu, HardDrive, Network, Globe, Radio, Puzzle } from "lucide-react";
 import { useEffect, useState } from 'react';
 import { trpc } from '@/utils/trpc';
@@ -24,7 +24,7 @@ function getStatusCardColor(status: string): string {
 
 export default function SystemStatusDashboard() {
     const [dashboardPort, setDashboardPort] = useState<number | null>(null);
-    const { data: status, refetch } = trpc.mcp.getStatus.useQuery();
+    const { data: status, error: statusError, refetch } = trpc.mcp.getStatus.useQuery();
     const toolsClient = trpc.tools as any;
     const { data: startupStatus, refetch: refetchStartup } = trpc.startupStatus.useQuery(undefined, { refetchInterval: 5000 });
     const { data: browserStatus, refetch: refetchBrowser } = trpc.browser.status.useQuery(undefined, { refetchInterval: 5000 });
@@ -53,6 +53,13 @@ export default function SystemStatusDashboard() {
     const environmentRows = buildSystemEnvironmentRows(startupSnapshot);
     const startupNotice = buildSystemStartupNotice(startupSnapshot);
     const statusCards = buildSystemStatusCards(startupSnapshot, Boolean(status?.initialized), installArtifactsQuery.data, dashboardPort);
+    const effectiveStatusCards = statusError
+        ? {
+            ...statusCards,
+            mcpServer: { status: 'Unavailable', detail: statusError.message },
+            cachedInventory: { status: 'Unavailable', detail: statusError.message },
+        }
+        : statusCards;
 
     useEffect(() => {
         const currentPort = Number(window.location.port);
@@ -73,34 +80,42 @@ export default function SystemStatusDashboard() {
                 </Button>
             </div>
 
+            {statusError ? (
+                <Card className="border border-red-900/30 bg-red-950/10">
+                    <CardContent className="p-4 text-sm text-red-200">
+                        {statusError.message}
+                    </CardContent>
+                </Card>
+            ) : null}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatusCard
                     title="MCP Server"
-                    status={statusCards.mcpServer.status}
+                    status={effectiveStatusCards.mcpServer.status}
                     icon={Server}
-                    color={getStatusCardColor(statusCards.mcpServer.status)}
-                    detail={statusCards.mcpServer.detail}
+                    color={statusError ? 'text-red-400' : getStatusCardColor(effectiveStatusCards.mcpServer.status)}
+                    detail={effectiveStatusCards.mcpServer.detail}
                 />
                 <StatusCard
                     title="Cached inventory"
-                    status={statusCards.cachedInventory.status}
+                    status={effectiveStatusCards.cachedInventory.status}
                     icon={HardDrive}
-                    color={getStatusCardColor(statusCards.cachedInventory.status)}
-                    detail={statusCards.cachedInventory.detail}
+                    color={statusError ? 'text-red-400' : getStatusCardColor(effectiveStatusCards.cachedInventory.status)}
+                    detail={effectiveStatusCards.cachedInventory.detail}
                 />
                 <StatusCard
                     title="Extension bridge"
-                    status={statusCards.extensionBridge.status}
+                    status={effectiveStatusCards.extensionBridge.status}
                     icon={Cpu}
-                    color={getStatusCardColor(statusCards.extensionBridge.status)}
-                    detail={statusCards.extensionBridge.detail}
+                    color={getStatusCardColor(effectiveStatusCards.extensionBridge.status)}
+                    detail={effectiveStatusCards.extensionBridge.detail}
                 />
                 <StatusCard
                     title="Extension artifacts"
-                    status={statusCards.extensionArtifacts.status}
+                    status={effectiveStatusCards.extensionArtifacts.status}
                     icon={Puzzle}
-                    color={getStatusCardColor(statusCards.extensionArtifacts.status)}
-                    detail={statusCards.extensionArtifacts.detail}
+                    color={getStatusCardColor(effectiveStatusCards.extensionArtifacts.status)}
+                    detail={effectiveStatusCards.extensionArtifacts.detail}
                 />
                 <StatusCard
                     title="Network"
@@ -111,10 +126,10 @@ export default function SystemStatusDashboard() {
                 />
                 <StatusCard
                     title="Startup Readiness"
-                    status={statusCards.startupReadiness.status}
+                    status={effectiveStatusCards.startupReadiness.status}
                     icon={Radio}
-                    color={getStatusCardColor(statusCards.startupReadiness.status)}
-                    detail={statusCards.startupReadiness.detail}
+                    color={getStatusCardColor(effectiveStatusCards.startupReadiness.status)}
+                    detail={effectiveStatusCards.startupReadiness.detail}
                 />
             </div>
 
@@ -191,7 +206,7 @@ export default function SystemStatusDashboard() {
                         <div className="space-y-4">
                             {startupChecks.length === 0 ? (
                                 <div className="rounded border border-zinc-800 bg-zinc-950 p-4 text-sm text-zinc-500">
-                                    Connecting to live startup telemetry from Borg Core…
+                                    Connecting to live startup telemetry from HyperCode Core…
                                 </div>
                             ) : startupChecks.map((check) => (
                                 <HealthRow key={check.name} name={check.name} status={check.status} latency={check.latency} detail={check.detail} />

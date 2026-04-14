@@ -1,4 +1,4 @@
-package com.Borg.plugin
+package com.HyperCode.plugin
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
@@ -20,7 +20,7 @@ class BorgToolWindowFactory : ToolWindowFactory {
 =======
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val panel = JPanel(BorderLayout())
-        val textArea = JTextArea("Borg Hub Status: Connected\n\nWaiting for activity...")
+        val textArea = JTextArea("HyperCode Hub Status: Connected\n\nWaiting for activity...")
         textArea.isEditable = false
         
         val scrollPane = JScrollPane(textArea)
@@ -54,7 +54,7 @@ class BorgToolWindowPanel(private val project: Project) : JPanel(BorderLayout())
     init {
         val topPanel = JPanel().apply {
             layout = BoxLayout(this, BoxLayout.X_AXIS)
-            add(JBLabel("Borg Hub: "))
+            add(JBLabel("HyperCode Hub: "))
             add(statusLabel)
             add(Box.createHorizontalGlue())
             add(JButton("Connect").apply {
@@ -83,11 +83,11 @@ class BorgToolWindowPanel(private val project: Project) : JPanel(BorderLayout())
     private fun connect() {
         if (service.connect()) {
             statusLabel.text = "Connected"
-            appendOutput("Connected to Borg Hub")
+            appendOutput("Connected to HyperCode Hub")
             refreshAnalytics()
         } else {
             statusLabel.text = "Connection Failed"
-            appendOutput("Failed to connect to Borg Hub")
+            appendOutput("Failed to connect to HyperCode Hub")
         }
     }
     

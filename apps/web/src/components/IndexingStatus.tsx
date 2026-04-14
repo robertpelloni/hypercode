@@ -17,16 +17,21 @@ function normalizeIndexingStatus(value: unknown): IndexingStatusData | null {
     const filesIndexed = (value as { filesIndexed?: unknown }).filesIndexed;
     const totalFiles = (value as { totalFiles?: unknown }).totalFiles;
 
+    if (typeof status !== 'string' || typeof filesIndexed !== 'number' || typeof totalFiles !== 'number') {
+        return null;
+    }
+
     return {
-        status: typeof status === 'string' ? status : 'loading',
-        filesIndexed: typeof filesIndexed === 'number' ? filesIndexed : 0,
-        totalFiles: typeof totalFiles === 'number' ? totalFiles : 0,
+        status,
+        filesIndexed,
+        totalFiles,
     };
 }
 
 export default function IndexingStatus() {
     const status = trpc.indexingStatus.useQuery(undefined, { refetchInterval: 3000 });
     const statusData = normalizeIndexingStatus(status.data);
+    const statusUnavailable = Boolean(status.error) || (status.data !== undefined && statusData === null);
 
     const progress = statusData
         ? Math.round((statusData.filesIndexed / Math.max(statusData.totalFiles || 1, 1)) * 100)
@@ -51,7 +56,12 @@ export default function IndexingStatus() {
                     </span>
                 </div>
 
-                {!statusData ? (
+                {statusUnavailable ? (
+                    <div className="text-red-300 space-y-2">
+                        <div className="font-semibold">Indexer unavailable</div>
+                        <div className="text-sm text-red-200/80">{status.error?.message ?? 'Indexer returned an invalid payload.'}</div>
+                    </div>
+                ) : !statusData ? (
                     <div className="flex items-center gap-2 text-zinc-400">
                         <motion.div
                             animate={{ rotate: 360 }}

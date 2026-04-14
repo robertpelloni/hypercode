@@ -20,7 +20,7 @@ export type BorgConfig = z.infer<typeof BorgConfigSchema>;
 export class BorgConfigLoader {
     private static getConfigPath(): string {
         // Look in current working directory (project root)
-        return path.join(process.cwd(), 'borg.config.json');
+        return path.join(process.cwd(), 'hypercode.config.json');
     }
 
     public static loadConfig(): BorgConfig {

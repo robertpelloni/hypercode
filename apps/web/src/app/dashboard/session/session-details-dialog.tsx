@@ -15,7 +15,7 @@ import {
     TabsContent,
     TabsList,
     TabsTrigger,
-} from '@borg/ui';
+} from '@hypercode/ui';
 import { ActivitySquare, Check, Copy, Loader2, TerminalSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -38,6 +38,33 @@ type ObservationRecord = {
             filesModified?: string[];
         };
     };
+};
+
+type SessionLogEntry = {
+    timestamp: number;
+    stream: 'stdout' | 'stderr' | 'system';
+    message: string;
+};
+
+type SessionHealth = {
+    status: string;
+    lastCheck: number;
+    consecutiveFailures: number;
+    restartCount: number;
+    lastRestartAt?: number;
+    nextRestartAt?: number;
+    lastExitCode?: number;
+    lastExitSignal?: string;
+    errorMessage?: string;
+};
+
+type SessionAttachInfo = {
+    cwd: string;
+    command: string;
+    args: string[];
+    pid?: number;
+    attachReadiness?: string;
+    attachReadinessReason?: string;
 };
 
 export type SessionDetailsDialogSession = {
@@ -94,6 +121,37 @@ function getLogTone(stream: 'stdout' | 'stderr' | 'system'): string {
     }
 }
 
+function isSessionLogEntry(value: unknown): value is SessionLogEntry {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { timestamp?: unknown }).timestamp === 'number'
+        && typeof (value as { message?: unknown }).message === 'string'
+        && ((value as { stream?: unknown }).stream === 'stdout'
+            || (value as { stream?: unknown }).stream === 'stderr'
+            || (value as { stream?: unknown }).stream === 'system');
+}
+
+function isSessionHealth(value: unknown): value is SessionHealth {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { status?: unknown }).status === 'string'
+        && typeof (value as { lastCheck?: unknown }).lastCheck === 'number'
+        && typeof (value as { consecutiveFailures?: unknown }).consecutiveFailures === 'number'
+        && typeof (value as { restartCount?: unknown }).restartCount === 'number';
+}
+
+function isObservationRecord(value: unknown): value is ObservationRecord {
+    return typeof value === 'object' && value !== null;
+}
+
+function isSessionAttachInfo(value: unknown): value is SessionAttachInfo {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { cwd?: unknown }).cwd === 'string'
+        && typeof (value as { command?: unknown }).command === 'string'
+        && Array.isArray((value as { args?: unknown }).args);
+}
+
 export function SessionDetailsDialog({ session, currentTimestamp }: SessionDetailsDialogProps) {
     const [open, setOpen] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -146,7 +204,7 @@ export function SessionDetailsDialog({ session, currentTimestamp }: SessionDetai
     });
 
     const attachCommand = useMemo(() => {
-        if (!attachInfoQuery.data) {
+        if (!isSessionAttachInfo(attachInfoQuery.data)) {
             return null;
         }
 
@@ -158,8 +216,16 @@ export function SessionDetailsDialog({ session, currentTimestamp }: SessionDetai
         );
     }, [attachInfoQuery.data]);
 
-    const logs = logsQuery.data ?? [];
-    const observations = (observationsQuery.data ?? []) as ObservationRecord[];
+    const logsUnavailable = Boolean(logsQuery.error) || (logsQuery.data !== undefined && !Array.isArray(logsQuery.data));
+    const healthUnavailable = Boolean(healthQuery.error) || (healthQuery.data !== undefined && !isSessionHealth(healthQuery.data));
+    const attachUnavailable = Boolean(attachInfoQuery.error) || (attachInfoQuery.data !== undefined && !isSessionAttachInfo(attachInfoQuery.data));
+    const observationsUnavailable = Boolean(observationsQuery.error) || (observationsQuery.data !== undefined && !Array.isArray(observationsQuery.data));
+    const logs = !logsUnavailable && Array.isArray(logsQuery.data) ? logsQuery.data.filter(isSessionLogEntry) : [];
+    const healthData = !healthUnavailable && isSessionHealth(healthQuery.data) ? healthQuery.data : undefined;
+    const attachInfo = !attachUnavailable && isSessionAttachInfo(attachInfoQuery.data) ? (attachInfoQuery.data as SessionAttachInfo) : undefined;
+    const observations = !observationsUnavailable && Array.isArray(observationsQuery.data)
+        ? observationsQuery.data.filter(isObservationRecord)
+        : [];
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -193,12 +259,14 @@ export function SessionDetailsDialog({ session, currentTimestamp }: SessionDetai
 
                     <TabsContent value="logs" className="mt-4 min-h-0 flex-1">
                         <div className="mb-3 flex items-center justify-between gap-3 text-xs text-zinc-500">
-                            <span>{logs.length} buffered log entries</span>
+                            <span>{logsUnavailable ? '—' : logs.length} buffered log entries</span>
                             {logsQuery.isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                         </div>
                         <ScrollArea className="h-[48vh] rounded-xl border border-zinc-800 bg-black/40 p-4">
                             <div className="space-y-3">
-                                {logs.length === 0 ? (
+                                {logsUnavailable ? (
+                                    <p className="text-sm text-red-300">Session logs unavailable: {logsQuery.error?.message ?? 'Session logs returned an invalid payload.'}</p>
+                                ) : logs.length === 0 ? (
                                     <p className="text-sm text-zinc-500">No logs captured yet. Start the session or wait for fresh supervisor output.</p>
                                 ) : logs.map((entry) => (
                                     <div key={`${entry.timestamp}-${entry.stream}-${entry.message.slice(0, 24)}`} className={`rounded-lg border p-3 ${getLogTone(entry.stream)}`}>
@@ -222,28 +290,30 @@ export function SessionDetailsDialog({ session, currentTimestamp }: SessionDetai
                                 </div>
                                 {healthQuery.isLoading ? (
                                     <div className="flex items-center gap-2 text-sm text-zinc-400"><Loader2 className="h-4 w-4 animate-spin" /> Loading health…</div>
-                                ) : healthQuery.data ? (
+                                ) : healthUnavailable ? (
+                                    <p className="text-sm text-red-300">Supervisor health unavailable: {healthQuery.error?.message ?? 'Session health returned an invalid payload.'}</p>
+                                ) : healthData ? (
                                     <div className="space-y-3 text-sm text-zinc-300">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <Badge className={getHealthTone(healthQuery.data.status)}>{healthQuery.data.status}</Badge>
-                                            <span className="text-zinc-500">Last check {formatRelativeTimestamp(healthQuery.data.lastCheck, currentTimestamp)}</span>
+                                            <Badge className={getHealthTone(healthData.status)}>{healthData.status}</Badge>
+                                            <span className="text-zinc-500">Last check {formatRelativeTimestamp(healthData.lastCheck, currentTimestamp)}</span>
                                         </div>
-                                        <p>Consecutive failures: {healthQuery.data.consecutiveFailures}</p>
-                                        <p>Restart count: {healthQuery.data.restartCount}</p>
-                                        {healthQuery.data.lastRestartAt ? (
-                                            <p>Last restart: {formatRelativeTimestamp(healthQuery.data.lastRestartAt, currentTimestamp)}</p>
+                                        <p>Consecutive failures: {healthData.consecutiveFailures}</p>
+                                        <p>Restart count: {healthData.restartCount}</p>
+                                        {healthData.lastRestartAt ? (
+                                            <p>Last restart: {formatRelativeTimestamp(healthData.lastRestartAt, currentTimestamp)}</p>
                                         ) : null}
-                                        {healthQuery.data.nextRestartAt ? (
-                                            <p>Queued restart: {formatRestartCountdown(healthQuery.data.nextRestartAt, currentTimestamp)}</p>
+                                        {healthData.nextRestartAt ? (
+                                            <p>Queued restart: {formatRestartCountdown(healthData.nextRestartAt, currentTimestamp)}</p>
                                         ) : null}
-                                        {typeof healthQuery.data.lastExitCode === 'number' || healthQuery.data.lastExitSignal ? (
+                                        {typeof healthData.lastExitCode === 'number' || healthData.lastExitSignal ? (
                                             <p>
-                                                Last exit: {typeof healthQuery.data.lastExitCode === 'number' ? `code ${healthQuery.data.lastExitCode}` : 'code unknown'}
-                                                {healthQuery.data.lastExitSignal ? ` (${healthQuery.data.lastExitSignal})` : ''}
+                                                Last exit: {typeof healthData.lastExitCode === 'number' ? `code ${healthData.lastExitCode}` : 'code unknown'}
+                                                {healthData.lastExitSignal ? ` (${healthData.lastExitSignal})` : ''}
                                             </p>
                                         ) : null}
-                                        {healthQuery.data.errorMessage ? (
-                                            <p className="text-red-300">{healthQuery.data.errorMessage}</p>
+                                        {healthData.errorMessage ? (
+                                            <p className="text-red-300">{healthData.errorMessage}</p>
                                         ) : null}
                                     </div>
                                 ) : (
@@ -304,7 +374,7 @@ export function SessionDetailsDialog({ session, currentTimestamp }: SessionDetai
                                     ) : null}
                                 </div>
                                 <p className="mb-3 text-xs text-zinc-500">
-                                    This is the compact context Borg prepared when the session started, using recent summaries and observations from the native memory pipeline.
+                                    This is the compact context HyperCode prepared when the session started, using recent summaries and observations from the native memory pipeline.
                                 </p>
                                 <pre className="whitespace-pre-wrap break-words rounded-lg border border-white/5 bg-black/30 p-3 font-mono text-xs text-zinc-200">
                                     {session.metadata.memoryBootstrap.prompt}
@@ -318,17 +388,19 @@ export function SessionDetailsDialog({ session, currentTimestamp }: SessionDetai
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm font-semibold text-emerald-300">Recent runtime observations</span>
                                         <Badge variant="outline" className="border-emerald-500/30 text-emerald-200">
-                                            {observations.length} visible
+                                            {observationsUnavailable ? '—' : observations.length} visible
                                         </Badge>
                                     </div>
                                     <p className="mt-1 text-xs text-zinc-500">
-                                        Borg records structured observations after tool execution; this view shows the latest memory events from that native runtime pipeline.
+                                        HyperCode records structured observations after tool execution; this view shows the latest memory events from that native runtime pipeline.
                                     </p>
                                 </div>
                                 {observationsQuery.isFetching ? <Loader2 className="h-4 w-4 animate-spin text-zinc-500" /> : null}
                             </div>
 
-                            {observations.length === 0 ? (
+                            {observationsUnavailable ? (
+                                <p className="text-xs text-red-300">Runtime observations unavailable: {observationsQuery.error?.message ?? 'Runtime observations returned an invalid payload.'}</p>
+                            ) : observations.length === 0 ? (
                                 <p className="text-xs text-zinc-500">No runtime observations recorded yet.</p>
                             ) : (
                                 <div className="space-y-3">
@@ -379,13 +451,15 @@ export function SessionDetailsDialog({ session, currentTimestamp }: SessionDetai
                         <div className="rounded-xl border border-zinc-800 bg-black/40 p-4 text-sm text-zinc-300">
                             {attachInfoQuery.isLoading ? (
                                 <div className="flex items-center gap-2 text-sm text-zinc-400"><Loader2 className="h-4 w-4 animate-spin" /> Loading attach info…</div>
-                            ) : attachInfoQuery.data ? (
+                            ) : attachUnavailable ? (
+                                <p className="text-sm text-red-300">Attach information unavailable: {attachInfoQuery.error?.message ?? 'Attach information returned an invalid payload.'}</p>
+                            ) : attachInfo ? (
                                 <div className="space-y-4">
                                     <div className="flex flex-wrap items-center gap-2">
                                         {/* Nuanced attach readiness indicator */}
                                         {(() => {
-                                            const readiness = (attachInfoQuery.data as any)?.attachReadiness;
-                                            const reason = (attachInfoQuery.data as any)?.attachReadinessReason;
+                                            const readiness = attachInfo.attachReadiness;
+                                            const reason = attachInfo.attachReadinessReason;
                                             
                                             if (readiness === 'ready') {
                                                 return (
@@ -410,34 +484,34 @@ export function SessionDetailsDialog({ session, currentTimestamp }: SessionDetai
                                                 );
                                             }
                                         })()}
-                                        {attachInfoQuery.data.pid ? <Badge variant="outline" className="border-zinc-700 text-zinc-300">PID {attachInfoQuery.data.pid}</Badge> : null}
+                                        {attachInfo.pid ? <Badge variant="outline" className="border-zinc-700 text-zinc-300">PID {attachInfo.pid}</Badge> : null}
                                     </div>
                                     <div className="space-y-2">
-                                        <p>Command: <span className="font-mono text-xs text-zinc-100">{attachInfoQuery.data.command}</span></p>
-                                        <p>Args: <span className="font-mono text-xs text-zinc-100">{attachInfoQuery.data.args.join(' ') || '—'}</span></p>
-                                        <p className="break-all">CWD: <span className="font-mono text-xs text-zinc-100">{attachInfoQuery.data.cwd}</span></p>
-                                        {(attachInfoQuery.data as any)?.attachReadinessReason ? (
+                                        <p>Command: <span className="font-mono text-xs text-zinc-100">{attachInfo.command}</span></p>
+                                        <p>Args: <span className="font-mono text-xs text-zinc-100">{attachInfo.args.join(' ') || '—'}</span></p>
+                                        <p className="break-all">CWD: <span className="font-mono text-xs text-zinc-100">{attachInfo.cwd}</span></p>
+                                        {attachInfo.attachReadinessReason ? (
                                             <p className="text-xs text-zinc-500">
-                                                Status: <span className="text-zinc-400">{(attachInfoQuery.data as any).attachReadinessReason.replace(/-/g, ' ')}</span>
+                                                Status: <span className="text-zinc-400">{attachInfo.attachReadinessReason.replace(/-/g, ' ')}</span>
                                             </p>
                                         ) : null}
                                     </div>
 
-                                    {((attachInfoQuery.data as any)?.attachReadiness === 'ready') && (
+                                    {(attachInfo.attachReadiness === 'ready') && (
                                         <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
                                             <p className="text-xs font-semibold text-emerald-300 mb-2">Process is live and attachable</p>
                                             <p className="text-xs text-emerald-200/70">You can connect to this process using the attach command below or interact via shell commands.</p>
                                         </div>
                                     )}
 
-                                    {((attachInfoQuery.data as any)?.attachReadiness === 'pending') && (
+                                    {(attachInfo.attachReadiness === 'pending') && (
                                         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
                                             <p className="text-xs font-semibold text-amber-300 mb-2">Session in transition</p>
-                                            <p className="text-xs text-amber-200/70">The session is {(attachInfoQuery.data as any).attachReadinessReason}. Attach will be available once the transition completes.</p>
+                                            <p className="text-xs text-amber-200/70">The session is {attachInfo.attachReadinessReason}. Attach will be available once the transition completes.</p>
                                         </div>
                                     )}
 
-                                    {attachCommand && ((attachInfoQuery.data as any)?.attachReadiness === 'ready') ? (
+                                    {attachCommand && (attachInfo.attachReadiness === 'ready') ? (
                                         <div className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-3">
                                             <div className="mb-2 flex items-center justify-between gap-3">
                                                 <span className="text-xs uppercase tracking-[0.18em] text-zinc-500">Attach / relaunch command</span>
@@ -464,7 +538,7 @@ export function SessionDetailsDialog({ session, currentTimestamp }: SessionDetai
                                         </div>
                                     ) : null}
 
-                                    {((attachInfoQuery.data as any)?.attachReadiness === 'ready') && (
+                                    {(attachInfo.attachReadiness === 'ready') && (
                                     <div className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-3">
                                         <div className="mb-2 flex items-center justify-between gap-3">
                                             <span className="text-xs uppercase tracking-[0.18em] text-zinc-500">Run one-shot shell command</span>
@@ -490,7 +564,7 @@ export function SessionDetailsDialog({ session, currentTimestamp }: SessionDetai
                                             </Button>
                                         </div>
                                         <p className="mt-2 text-xs text-zinc-500">
-                                            Runs inside the session workspace using the selected Borg execution policy.
+                                            Runs inside the session workspace using the selected HyperCode execution policy.
                                         </p>
                                         {shellResult ? (
                                             <div className="mt-3 rounded-md border border-white/5 bg-black/30 p-3">

@@ -20,9 +20,9 @@ describe('orchestrator path resolution', () => {
     vi.spyOn(fs, 'existsSync').mockImplementation((target) => {
       const normalized = String(target).replace(/\//g, '\\');
       return normalized === 'C:\\repo\\turbo.json'
-        || normalized === 'C:\\repo\\packages\\borg-supervisor\\dist\\index.js';
+        || normalized === 'C:\\repo\\packages\\hypercode-supervisor\\dist\\index.js';
     });
 
-    expect(resolveSupervisorEntryPath('C:\\repo\\packages\\cli')).toBe('C:\\repo\\packages\\borg-supervisor\\dist\\index.js');
+    expect(resolveSupervisorEntryPath('C:\\repo\\packages\\cli')).toBe('C:\\repo\\packages\\hypercode-supervisor\\dist\\index.js');
   });
 });

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { t, publicProcedure, adminProcedure } from '../lib/trpc-core.js';
 import { toolChainsRepository } from '../db/repositories/tool-chains.repo.js';
+import { rethrowSqliteUnavailableAsTrpc } from './sqliteTrpc.js';
 
 /**
  * Tool Call Chaining & Renaming Router (Phase M)
@@ -92,38 +93,46 @@ export const toolChainingRouter = t.router({
     createAlias: adminProcedure
         .input(ToolRenameSchema)
         .mutation(async ({ input }) => {
-            const existing = await toolChainsRepository.getAliasById(input.alias);
-            if (existing) {
-                throw new Error(`Alias '${input.alias}' already exists for ${existing.targetTool}`);
+            try {
+                const existing = await toolChainsRepository.getAliasById(input.alias);
+                if (existing) {
+                    throw new Error(`Alias '${input.alias}' already exists for ${existing.targetTool}`);
+                }
+
+                const alias = await toolChainsRepository.upsertAlias({
+                    alias: input.alias,
+                    targetTool: input.originalName,
+                    description: input.description,
+                });
+
+                return {
+                    serverId: input.serverId,
+                    originalName: alias.targetTool,
+                    alias: alias.alias,
+                    description: alias.description || undefined,
+                    createdAt: alias.createdAt.getTime(),
+                };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Tool alias store is unavailable', error);
             }
-
-            const alias = await toolChainsRepository.upsertAlias({
-                alias: input.alias,
-                targetTool: input.originalName,
-                description: input.description,
-            });
-
-            return {
-                serverId: input.serverId,
-                originalName: alias.targetTool,
-                alias: alias.alias,
-                description: alias.description || undefined,
-                createdAt: alias.createdAt.getTime(),
-            };
         }),
 
     /**
      * List all tool aliases.
      */
     listAliases: publicProcedure.query(async () => {
-        const aliases = await toolChainsRepository.getAliases();
-        return aliases.map(a => ({
-            serverId: 'unknown', // Lost in abstraction but generally available via registry resolution
-            originalName: a.targetTool,
-            alias: a.alias,
-            description: a.description || undefined,
-            createdAt: a.createdAt.getTime(),
-        }));
+        try {
+            const aliases = await toolChainsRepository.getAliases();
+            return aliases.map(a => ({
+                serverId: 'unknown',
+                originalName: a.targetTool,
+                alias: a.alias,
+                description: a.description || undefined,
+                createdAt: a.createdAt.getTime(),
+            }));
+        } catch (error) {
+            rethrowSqliteUnavailableAsTrpc('Tool alias store is unavailable', error);
+        }
     }),
 
     /**
@@ -132,8 +141,12 @@ export const toolChainingRouter = t.router({
     removeAlias: adminProcedure
         .input(z.object({ alias: z.string() }))
         .mutation(async ({ input }) => {
-            const removed = await toolChainsRepository.deleteAlias(input.alias);
-            return { removed };
+            try {
+                const removed = await toolChainsRepository.deleteAlias(input.alias);
+                return { removed };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Tool alias store is unavailable', error);
+            }
         }),
 
     /**
@@ -142,18 +155,22 @@ export const toolChainingRouter = t.router({
     resolveAlias: publicProcedure
         .input(z.object({ name: z.string() }))
         .query(async ({ input }) => {
-            const alias = await toolChainsRepository.getAliasById(input.name);
-            if (alias) {
-                return {
-                    resolved: true,
-                    serverId: 'unknown',
-                    originalName: alias.targetTool,
-                    alias: alias.alias,
-                    description: alias.description || undefined,
-                    createdAt: alias.createdAt.getTime(),
-                };
+            try {
+                const alias = await toolChainsRepository.getAliasById(input.name);
+                if (alias) {
+                    return {
+                        resolved: true,
+                        serverId: 'unknown',
+                        originalName: alias.targetTool,
+                        alias: alias.alias,
+                        description: alias.description || undefined,
+                        createdAt: alias.createdAt.getTime(),
+                    };
+                }
+                return { resolved: false };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Tool alias store is unavailable', error);
             }
-            return { resolved: false };
         }),
 
     // ─── Tool Call Chaining ───
@@ -164,61 +181,42 @@ export const toolChainingRouter = t.router({
     createChain: adminProcedure
         .input(ToolChainSchema)
         .mutation(async ({ input }) => {
-            const id = `chain_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+            try {
+                const id = `chain_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-            const saved = await toolChainsRepository.createChain(
-                {
-                    id,
-                    name: input.name,
-                    description: input.description,
-                },
-                input.steps.map((step, idx) => ({
-                    id: `step_${id}_${idx}`,
-                    chainId: id,
-                    stepOrder: idx,
-                    toolName: step.toolName,
-                    argumentsTemplate: step.inputMapping || {},
-                }))
-            );
+                const saved = await toolChainsRepository.createChain(
+                    {
+                        id,
+                        name: input.name,
+                        description: input.description,
+                    },
+                    input.steps.map((step, idx) => ({
+                        id: `step_${id}_${idx}`,
+                        chainId: id,
+                        stepOrder: idx,
+                        toolName: step.toolName,
+                        argumentsTemplate: step.inputMapping || {},
+                    }))
+                );
 
-            return {
-                ...saved,
-                failurePolicy: input.failurePolicy,
-                maxRetries: input.maxRetries,
-                runCount: 0,
-            };
+                return {
+                    ...saved,
+                    failurePolicy: input.failurePolicy,
+                    maxRetries: input.maxRetries,
+                    runCount: 0,
+                };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Tool chain store is unavailable', error);
+            }
         }),
 
     /**
      * List all tool chains.
      */
     listChains: publicProcedure.query(async () => {
-        const chains = await toolChainsRepository.getAllChains();
-        return chains.map(chain => ({
-            id: chain.id,
-            name: chain.name,
-            description: chain.description || undefined,
-            steps: chain.steps.map(s => ({
-                toolName: s.toolName,
-                inputMapping: s.argumentsTemplate as Record<string, string>,
-            })),
-            failurePolicy: 'stop',
-            maxRetries: 1,
-            createdAt: chain.createdAt.getTime(),
-            runCount: 0,
-        }));
-    }),
-
-    /**
-     * Get a specific chain by ID.
-     */
-    getChain: publicProcedure
-        .input(z.object({ id: z.string() }))
-        .query(async ({ input }) => {
-            const chain = await toolChainsRepository.getChainById(input.id);
-            if (!chain) throw new Error(`Chain '${input.id}' not found`);
-            
-            return {
+        try {
+            const chains = await toolChainsRepository.getAllChains();
+            return chains.map(chain => ({
                 id: chain.id,
                 name: chain.name,
                 description: chain.description || undefined,
@@ -230,7 +228,38 @@ export const toolChainingRouter = t.router({
                 maxRetries: 1,
                 createdAt: chain.createdAt.getTime(),
                 runCount: 0,
-            };
+            }));
+        } catch (error) {
+            rethrowSqliteUnavailableAsTrpc('Tool chain store is unavailable', error);
+        }
+    }),
+
+    /**
+     * Get a specific chain by ID.
+     */
+    getChain: publicProcedure
+        .input(z.object({ id: z.string() }))
+        .query(async ({ input }) => {
+            try {
+                const chain = await toolChainsRepository.getChainById(input.id);
+                if (!chain) throw new Error(`Chain '${input.id}' not found`);
+                
+                return {
+                    id: chain.id,
+                    name: chain.name,
+                    description: chain.description || undefined,
+                    steps: chain.steps.map(s => ({
+                        toolName: s.toolName,
+                        inputMapping: s.argumentsTemplate as Record<string, string>,
+                    })),
+                    failurePolicy: 'stop',
+                    maxRetries: 1,
+                    createdAt: chain.createdAt.getTime(),
+                    runCount: 0,
+                };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Tool chain store is unavailable', error);
+            }
         }),
 
     /**
@@ -242,39 +271,41 @@ export const toolChainingRouter = t.router({
             initialInput: z.record(z.unknown()).optional(),
         }))
         .mutation(async ({ input }) => {
-            const chain = await toolChainsRepository.getChainById(input.chainId);
-            if (!chain) throw new Error(`Chain '${input.chainId}' not found`);
+            try {
+                const chain = await toolChainsRepository.getChainById(input.chainId);
+                if (!chain) throw new Error(`Chain '${input.chainId}' not found`);
 
-            const startTime = Date.now();
-            const results: Record<string, unknown> = { ...input.initialInput };
-            const errors: string[] = [];
-            let stepsCompleted = 0;
+                const startTime = Date.now();
+                const results: Record<string, unknown> = { ...input.initialInput };
+                const errors: string[] = [];
+                let stepsCompleted = 0;
 
-            for (const step of chain.steps) {
-                try {
-                    // In production: resolve tool via MCP runtime and execute
-                    // For now, record the step as attempted
-                    const outputKey = `step_${stepsCompleted}`;
-                    results[outputKey] = { tool: step.toolName, status: 'executed', input: step.argumentsTemplate };
-                    stepsCompleted++;
-                } catch (error) {
-                    const msg = error instanceof Error ? error.message : String(error);
-                    errors.push(`Step ${stepsCompleted}: ${msg}`);
-                    break;
+                for (const step of chain.steps) {
+                    try {
+                        const outputKey = `step_${stepsCompleted}`;
+                        results[outputKey] = { tool: step.toolName, status: 'executed', input: step.argumentsTemplate };
+                        stepsCompleted++;
+                    } catch (error) {
+                        const msg = error instanceof Error ? error.message : String(error);
+                        errors.push(`Step ${stepsCompleted}: ${msg}`);
+                        break;
+                    }
                 }
+
+                const result: ChainExecutionResult = {
+                    chainId: chain.id,
+                    success: errors.length === 0,
+                    stepsCompleted,
+                    totalSteps: chain.steps.length,
+                    results,
+                    errors,
+                    executionTimeMs: Date.now() - startTime,
+                };
+
+                return result;
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Tool chain store is unavailable', error);
             }
-
-            const result: ChainExecutionResult = {
-                chainId: chain.id,
-                success: errors.length === 0,
-                stepsCompleted,
-                totalSteps: chain.steps.length,
-                results,
-                errors,
-                executionTimeMs: Date.now() - startTime,
-            };
-
-            return result;
         }),
 
     /**
@@ -283,8 +314,12 @@ export const toolChainingRouter = t.router({
     deleteChain: adminProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ input }) => {
-            const deleted = await toolChainsRepository.deleteChain(input.id);
-            return { deleted };
+            try {
+                const deleted = await toolChainsRepository.deleteChain(input.id);
+                return { deleted };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc('Tool chain store is unavailable', error);
+            }
         }),
 
     // ─── Lazy Loading / Deferred Startup ───

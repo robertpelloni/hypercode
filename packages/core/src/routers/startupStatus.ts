@@ -86,6 +86,11 @@ type StartupStatusInput = {
     persistedAlwaysOnToolCount: number;
     inventorySource?: 'database' | 'config' | 'empty';
     inventorySnapshotUpdatedAt?: string | null;
+    inventoryPersistence?: {
+        databaseAvailable: boolean;
+        fallbackUsed: boolean;
+        error: string | null;
+    } | null;
     executionEnvironment?: ExecutionEnvironmentSummary | null;
     sectionedMemory?: {
         enabled: boolean;
@@ -144,6 +149,7 @@ export async function buildStartupStatusSnapshot(input: StartupStatusInput) {
         persistedAlwaysOnToolCount,
         inventorySource,
         inventorySnapshotUpdatedAt,
+        inventoryPersistence,
         executionEnvironment,
         sectionedMemory,
         importedSessions,
@@ -250,7 +256,9 @@ export async function buildStartupStatusSnapshot(input: StartupStatusInput) {
     if (!inventoryReady) {
         blockingReasons.push({
             code: 'mcp_inventory_not_ready',
-            detail: 'Cached MCP inventory has not been populated yet.',
+            detail: inventoryPersistence?.databaseAvailable === false && inventoryPersistence.error
+                ? inventoryPersistence.error
+                : 'Cached MCP inventory has not been populated yet.',
         });
     }
 
@@ -318,9 +326,15 @@ export async function buildStartupStatusSnapshot(input: StartupStatusInput) {
         });
     }
 
+    const degradedDetails = [
+        inventoryPersistence?.databaseAvailable === false ? inventoryPersistence.error : null,
+    ].filter((detail): detail is string => typeof detail === 'string' && detail.trim().length > 0);
+
     const summary = blockingReasons.length === 0
-        ? 'All startup checks passed.'
-        : `Startup pending: ${blockingReasons.map((reason) => reason.detail).join(' ')}`;
+        ? degradedDetails.length === 0
+            ? 'All startup checks passed.'
+            : `Startup ready with degraded persistence: ${degradedDetails.join(' ')}`
+        : `Startup pending: ${blockingReasons.map((reason) => reason.detail).join(' ')}${degradedDetails.length > 0 ? ` Degraded services: ${degradedDetails.join(' ')}` : ''}`;
 
     const version = await getBorgVersion();
 
@@ -366,6 +380,11 @@ export async function buildStartupStatusSnapshot(input: StartupStatusInput) {
                 inventoryReady,
                 inventorySource: inventorySource ?? (inventoryReady ? 'database' : 'empty'),
                 inventorySnapshotUpdatedAt: inventorySnapshotUpdatedAt ?? null,
+                inventoryPersistence: {
+                    databaseAvailable: inventoryPersistence?.databaseAvailable !== false,
+                    fallbackUsed: Boolean(inventoryPersistence?.fallbackUsed),
+                    error: inventoryPersistence?.error ?? null,
+                },
                 warmupInProgress: mcpWarmupInProgress,
             },
             configSync: {

@@ -1,13 +1,15 @@
 "use client";
 
 import { trpc } from '@/utils/trpc';
-import { Card, CardHeader, CardTitle, CardContent } from '@borg/ui';
+import { Card, CardHeader, CardTitle, CardContent } from '@hypercode/ui';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 export function MetricsCharts() {
-    const { data: timeline } = trpc.metrics.getTimeline.useQuery({ windowMs: 1800000, buckets: 30 }, { refetchInterval: 10000 });
+    const { data: timeline, error } = trpc.metrics.getTimeline.useQuery({ windowMs: 1800000, buckets: 30 }, { refetchInterval: 10000 });
+    const timelineUnavailable = Boolean(error)
+        || (timeline !== undefined && (!timeline || typeof timeline !== 'object' || !Array.isArray((timeline as { series?: unknown }).series)));
 
-    const series = timeline?.series || [];
+    const series = !timelineUnavailable ? (timeline?.series || []) : [];
 
     const formatTime = (ts: number) => {
         return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -60,6 +62,10 @@ export function MetricsCharts() {
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
+                    ) : timelineUnavailable ? (
+                        <div className="flex items-center justify-center h-full text-rose-300 text-sm text-center px-4">
+                            Metrics timeline unavailable. {error?.message ?? 'Metrics timeline returned an invalid payload.'}
+                        </div>
                     ) : (
                         <div className="flex items-center justify-center h-full text-zinc-500 text-sm italic">
                             Awaiting telemetry points...

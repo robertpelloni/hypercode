@@ -7,16 +7,16 @@ async function main() {
     const graph = new GraphMemory();
 
     try {
-        console.log("Adding fact: 'Borg uses Cognee for memory.'");
-        await graph.add("Borg uses Cognee for memory.", "test_dataset");
+        console.log("Adding fact: 'HyperCode uses Cognee for memory.'");
+        await graph.add("HyperCode uses Cognee for memory.", "test_dataset");
 
         console.log("Adding fact: 'Cognee is a knowledge graph library.'");
         await graph.add("Cognee is a knowledge graph library.", "test_dataset");
 
         // Give it a moment (simulated async processing)
 
-        console.log("Searching for 'Borg'...");
-        const results = await graph.search("Borg");
+        console.log("Searching for 'HyperCode'...");
+        const results = await graph.search("HyperCode");
         console.log("Results:", results);
 
         if (results.length > 0) {

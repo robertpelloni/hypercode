@@ -9,7 +9,7 @@ import { createClientFactory, FakeMCPClient } from './test-helpers.ts';
 const tempDirs: string[] = [];
 
 function createConfigPath(config: object): string {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'borg-mcp-lifecycle-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hypercode-mcp-lifecycle-'));
     tempDirs.push(dir);
     const configPath = path.join(dir, 'mcp.json');
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));

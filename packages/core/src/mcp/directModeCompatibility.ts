@@ -84,15 +84,15 @@ export function createDirectModeAgentRunner(llm: import('./compatibilityToolRunt
 export function getDirectModeCompatibilityTools(): Tool[] {
     return getCompatibilityToolDefinitions({
         descriptions: {
-            run_code: 'MetaMCP-compatible alias for one-shot Borg code execution without manually enabling Code Mode.',
-            run_python: 'MetaMCP-compatible alias for Borg sandboxed Python execution.',
-            run_agent: 'MetaMCP-compatible autonomous tool-using agent loop backed by Borg native LLM and tool execution surfaces.',
-            save_memory: 'MetaMCP-compatible alias for persisting agent memory through Borg native memory services.',
-            search_memory: 'MetaMCP-compatible alias for searching Borg native memory services.',
-            save_script: 'MetaMCP-compatible alias for persisting reusable scripts in Borg managed config.',
-            save_tool_set: 'MetaMCP-compatible alias for saving the currently loaded Borg session tools as a named tool set.',
-            load_tool_set: 'MetaMCP-compatible alias for loading a saved Borg tool set into the current session working set.',
-            toolset_list: 'List Borg-managed saved tool sets available to the current direct-mode session.',
+            run_code: 'MetaMCP-compatible alias for one-shot HyperCode code execution without manually enabling Code Mode.',
+            run_python: 'MetaMCP-compatible alias for HyperCode sandboxed Python execution.',
+            run_agent: 'MetaMCP-compatible autonomous tool-using agent loop backed by HyperCode native LLM and tool execution surfaces.',
+            save_memory: 'MetaMCP-compatible alias for persisting agent memory through HyperCode native memory services.',
+            search_memory: 'MetaMCP-compatible alias for searching HyperCode native memory services.',
+            save_script: 'MetaMCP-compatible alias for persisting reusable scripts in HyperCode managed config.',
+            save_tool_set: 'MetaMCP-compatible alias for saving the currently loaded HyperCode session tools as a named tool set.',
+            load_tool_set: 'MetaMCP-compatible alias for loading a saved HyperCode tool set into the current session working set.',
+            toolset_list: 'List HyperCode-managed saved tool sets available to the current direct-mode session.',
             import_mcp_config: 'MetaMCP-compatible alias for importing MCP servers from Claude-style JSON config content.',
         },
     });
@@ -145,7 +145,7 @@ export async function tryHandleDirectModeCompatibilityTool(
             args,
             agentRunner,
             delegatedToolCaller,
-            'Agent runner not available in Borg direct mode.',
+            'Agent runner not available in HyperCode direct mode.',
         );
     }
 
@@ -177,7 +177,7 @@ export async function tryHandleDirectModeCompatibilityTool(
         return await executeCompatibleImportConfig(
             args,
             configImportService,
-            'Config import service not available in Borg direct mode.',
+            'Config import service not available in HyperCode direct mode.',
         );
     }
 

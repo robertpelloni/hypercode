@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 import os from "os";
 
-const MEMORY_DIR = path.join(os.homedir(), '.borg', 'memory');
+const MEMORY_DIR = path.join(os.homedir(), '.hypercode', 'memory');
 
 async function ensureMemoryDir() {
     await fs.mkdir(MEMORY_DIR, { recursive: true });

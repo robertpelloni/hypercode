@@ -1,4 +1,5 @@
 
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { t, publicProcedure, getSquadService } from '../lib/trpc-core.js';
 
@@ -47,13 +48,23 @@ export const squadRouter = t.router({
         .input(z.object({ enabled: z.boolean() }))
         .mutation(async ({ input }) => {
             const service = getSquadService();
-            if (!service) return false;
+            if (!service) {
+                throw new TRPCError({
+                    code: 'SERVICE_UNAVAILABLE',
+                    message: 'Squad service is not initialized; cannot toggle the indexer.',
+                });
+            }
             return await service.toggleIndexer(input.enabled);
         }),
 
     getIndexerStatus: publicProcedure.query(() => {
         const service = getSquadService();
-        if (!service) return { running: false, indexing: false };
+        if (!service) {
+            throw new TRPCError({
+                code: 'SERVICE_UNAVAILABLE',
+                message: 'Squad service is not initialized.',
+            });
+        }
         return service.getIndexerStatus();
     })
 });

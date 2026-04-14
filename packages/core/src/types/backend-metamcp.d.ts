@@ -3,7 +3,7 @@
  *
  * The `backend` workspace package (external/MetaMCP/apps/backend) is bundled
  * without declaration files to avoid complex Express type-portability issues.
- * This shim re-declares only the minimal surface area consumed by @borg/core.
+ * This shim re-declares only the minimal surface area consumed by @hypercode/core.
  *
  * Add more declarations here as you import more from backend/metamcp.
  */
@@ -18,9 +18,9 @@ declare module "backend/metamcp" {
      * configured downstream MCP servers.
      *
      * @param server         The MCP Server to augment.
-     * @param namespaceUuid  Namespace identifier (e.g. "borg-core-namespace").
-     * @param sessionId      Session identifier (e.g. "borg-core-session").
-     * @param nativeTools    Tools already implemented natively by Borg.
+     * @param namespaceUuid  Namespace identifier (e.g. "hypercode-core-namespace").
+     * @param sessionId      Session identifier (e.g. "hypercode-core-session").
+     * @param nativeTools    Tools already implemented natively by HyperCode.
      * @param nativeHandler  Callback used to execute those native tools.
      * @param includeInact   Whether to include inactive / disabled servers.
      * @returns An object with a `cleanup()` async function to tear down.

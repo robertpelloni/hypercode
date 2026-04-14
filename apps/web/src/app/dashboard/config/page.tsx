@@ -3,7 +3,7 @@
 import DirectorConfig from "@/components/DirectorConfig";
 import { ModelProvidersList } from "@/components/config/ModelProvidersList";
 import { SystemLimitsPanel } from "@/components/config/SystemLimitsPanel";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@borg/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@hypercode/ui";
 
 export default function ConfigPage() {
     return (

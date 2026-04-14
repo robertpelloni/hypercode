@@ -1,12 +1,12 @@
 /**
- * `borg dashboard` - Open the web dashboard
+ * `hypercode dashboard` - Open the web dashboard
  *
  * Launches the borg WebUI dashboard in the default browser.
  * If the server isn't running, optionally starts it first.
  *
  * @example
- *   borg dashboard            # Open dashboard in browser
- *   borg dashboard --port 8080
+ *   hypercode dashboard            # Open dashboard in browser
+ *   hypercode dashboard --port 8080
  */
 
 import type { Command } from 'commander';
@@ -39,10 +39,10 @@ The dashboard provides a comprehensive visual interface to all borg subsystems:
   - Submodule dashboard
 
 Examples:
-  $ borg dashboard                  Open in browser at localhost:3000
-  $ borg dashboard --port 8080      Custom port
-  $ borg dashboard --dev            Development mode with HMR
-  $ borg dashboard --no-open        Start without opening browser
+  $ hypercode dashboard                  Open in browser at localhost:3000
+  $ hypercode dashboard --port 8080      Custom port
+  $ hypercode dashboard --dev            Development mode with HMR
+  $ hypercode dashboard --no-open        Start without opening browser
     `)
     .action(async (opts) => {
       const chalk = (await import('chalk')).default;
@@ -79,8 +79,8 @@ Examples:
           name: 'borg',
           subtitle: 'The Neural Operating System',
           version,
-          packages: ['@borg/core', '@borg/cli', '@borg/types', '@borg/ai', '@borg/agents', '@borg/tools', '@borg/search', '@borg/memory', '@borg/adk'],
-          repository: 'https://github.com/robertpelloni/borg',
+          packages: ['@hypercode/core', '@hypercode/cli', '@hypercode/types', '@hypercode/ai', '@hypercode/agents', '@hypercode/tools', '@hypercode/search', '@hypercode/memory', '@hypercode/adk'],
+          repository: 'https://github.com/robertpelloni/hypercode',
         }, null, 2));
         return;
       }
@@ -91,22 +91,22 @@ Examples:
 
       console.log(chalk.bold('  Packages:'));
       const pkgs = [
-        ['@borg/core', 'Backend server, MCP router, orchestrator'],
-        ['@borg/cli', 'Command-line interface'],
-        ['@borg/types', 'Shared TypeScript types & Zod schemas'],
-        ['@borg/ai', 'LLM service, model selector'],
-        ['@borg/agents', 'Director, Council, Supervisor'],
-        ['@borg/tools', 'File, terminal, browser, chain executor'],
-        ['@borg/search', 'Semantic & text search service'],
-        ['@borg/memory', 'Multi-backend memory system'],
-        ['@borg/adk', 'Agent Development Kit'],
+        ['@hypercode/core', 'Backend server, MCP router, orchestrator'],
+        ['@hypercode/cli', 'Command-line interface'],
+        ['@hypercode/types', 'Shared TypeScript types & Zod schemas'],
+        ['@hypercode/ai', 'LLM service, model selector'],
+        ['@hypercode/agents', 'Director, Council, Supervisor'],
+        ['@hypercode/tools', 'File, terminal, browser, chain executor'],
+        ['@hypercode/search', 'Semantic & text search service'],
+        ['@hypercode/memory', 'Multi-backend memory system'],
+        ['@hypercode/adk', 'Agent Development Kit'],
       ];
 
       for (const [name, desc] of pkgs) {
         console.log(chalk.cyan(`    ${name.padEnd(20)}`) + chalk.dim(desc));
       }
 
-      console.log(chalk.dim('\n  Repository: https://github.com/robertpelloni/borg'));
+      console.log(chalk.dim('\n  Repository: https://github.com/robertpelloni/hypercode'));
       console.log(chalk.dim('  License: MIT\n'));
     });
 }

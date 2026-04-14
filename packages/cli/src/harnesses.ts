@@ -68,8 +68,13 @@ export const CLI_HARNESS_DEFINITIONS: Record<CliHarness, CliHarnessDefinition> =
     upstream: 'https://github.com/robertpelloni/borg',
     runtime: 'Go / Cobra / TUI',
     launchCommand: 'go run .',
+<<<<<<< HEAD
     capabilities: ['repl', 'pipe', 'borg-adapter', 'tool-registry'],
     parityNotes: 'borg can read borg tool calls directly from the assimilated submodule source.',
+=======
+    capabilities: ['repl', 'pipe', 'hypercode-adapter', 'tool-registry'],
+    parityNotes: 'HyperCode can read HyperCode tool calls directly from the assimilated submodule source.',
+>>>>>>> main
   },
   aider: {
     id: 'aider',

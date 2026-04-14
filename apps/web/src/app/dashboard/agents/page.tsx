@@ -4,7 +4,7 @@ import { Activity, Brain, Database, Network, Terminal } from 'lucide-react';
 import { PageStatusBanner } from '@/components/PageStatusBanner';
 import { AgentPlayground } from '@/components/agents/AgentPlayground';
 import { trpc } from '@/utils/trpc';
-import { Card, CardHeader, CardTitle, CardContent, Badge, Button } from '@borg/ui';
+import { Card, CardHeader, CardTitle, CardContent, Badge, Button } from '@hypercode/ui';
 import Link from 'next/link';
 import { normalizeAgentsDashboardStatus } from './agents-page-normalizers';
 
@@ -23,7 +23,7 @@ export default function AgentsDashboard() {
                         Agent Command Center
                     </h1>
                     <p className="text-zinc-500 mt-2">
-                        Direct interface to the Borg LLM orchestration layer and active agent pool
+                        Direct interface to the HyperCode LLM orchestration layer and active agent pool
                     </p>
                 </div>
                 <div className="flex gap-4">

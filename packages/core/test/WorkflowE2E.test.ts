@@ -33,7 +33,7 @@ describe('Workflow E2E (System Workflows)', () => {
             })
         };
 
-        const testDir = path.join(process.cwd(), '.borg', 'workflows_test_' + Date.now());
+        const testDir = path.join(process.cwd(), '.hypercode', 'workflows_test_' + Date.now());
         engine = new WorkflowEngine({ persistDir: testDir });
         registerSystemWorkflows(engine, runner);
     });

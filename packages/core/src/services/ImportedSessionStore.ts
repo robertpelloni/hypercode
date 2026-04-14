@@ -4,6 +4,7 @@ import path from 'path';
 import zlib from 'zlib';
 
 import { sqliteInstance } from '../db/index.js';
+import { formatOptionalSqliteFailure, isSqliteUnavailableError } from '../db/sqliteAvailability.js';
 
 export type ImportedSessionMemoryKind = 'memory' | 'instruction';
 export type ImportedSessionMemorySource = 'llm' | 'heuristic';
@@ -220,11 +221,23 @@ export class ImportedSessionStore {
     }
 
     hasTranscriptHash(transcriptHash: string): boolean {
-        const row = sqliteInstance
-            .prepare('SELECT uuid FROM imported_sessions WHERE transcript_hash = ? LIMIT 1')
-            .get(transcriptHash) as Record<string, unknown> | undefined;
+        try {
+            const row = sqliteInstance
+                .prepare('SELECT uuid FROM imported_sessions WHERE transcript_hash = ? LIMIT 1')
+                .get(transcriptHash) as Record<string, unknown> | undefined;
 
-        return Boolean(row?.uuid);
+            return Boolean(row?.uuid);
+        } catch (error) {
+            if (isSqliteUnavailableError(error)) {
+                console.warn(formatOptionalSqliteFailure(
+                    '[ImportedSessionStore] Transcript deduplication is unavailable',
+                    error,
+                ));
+                return false;
+            }
+
+            throw error;
+        }
     }
 
     compactInlineTranscripts(limit: number = 100): number {

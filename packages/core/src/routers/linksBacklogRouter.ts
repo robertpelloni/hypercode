@@ -2,6 +2,7 @@ import { z } from "zod";
 import { t, publicProcedure, adminProcedure } from "../lib/trpc-core.js";
 import { linksBacklogRepository } from "../db/repositories/links-backlog.repo.js";
 import { BobbyBookmarksBacklogAdapter } from "../services/bobby-bookmarks-adapter.js";
+import { rethrowSqliteUnavailableAsTrpc } from "./sqliteTrpc.js";
 
 export const linksBacklogRouter = t.router({
     list: publicProcedure
@@ -17,22 +18,34 @@ export const linksBacklogRouter = t.router({
             }).optional()
         )
         .query(async ({ input }) => {
-            const [items, total] = await Promise.all([
-                linksBacklogRepository.listLinks(input),
-                linksBacklogRepository.countLinks(input),
-            ]);
+            try {
+                const [items, total] = await Promise.all([
+                    linksBacklogRepository.listLinks(input),
+                    linksBacklogRepository.countLinks(input),
+                ]);
 
-            return { items, total };
+                return { items, total };
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc("Links backlog is unavailable", error);
+            }
         }),
 
     stats: publicProcedure.query(async () => {
-        return linksBacklogRepository.getStats();
+        try {
+            return await linksBacklogRepository.getStats();
+        } catch (error) {
+            rethrowSqliteUnavailableAsTrpc("Links backlog is unavailable", error);
+        }
     }),
 
     get: publicProcedure
         .input(z.object({ uuid: z.string() }))
         .query(async ({ input }) => {
-            return linksBacklogRepository.findByUuid(input.uuid) ?? null;
+            try {
+                return await linksBacklogRepository.findByUuid(input.uuid) ?? null;
+            } catch (error) {
+                rethrowSqliteUnavailableAsTrpc("Links backlog is unavailable", error);
+            }
         }),
 
     syncFromBobbyBookmarks: adminProcedure

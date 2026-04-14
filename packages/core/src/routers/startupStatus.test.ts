@@ -1172,4 +1172,159 @@ describe('buildStartupStatusSnapshot', () => {
                 ]),
             );
         });
+    it('reports degraded persistence when startup falls back to config inventory because DB-backed inventory is unavailable', async () => {
+        const snapshot = await buildStartupStatusSnapshot({
+            mcpServer: {
+                memoryManager: {},
+                isMemoryInitialized: true,
+                getBridgeStatus: () => ({
+                    ready: true,
+                    clientCount: 0,
+                    clients: [],
+                    supportedCapabilities: [],
+                    supportedHookPhases: [],
+                }),
+            },
+            aggregator: {
+                getInitializationStatus: () => ({
+                    inProgress: false,
+                    initialized: true,
+                    connectedClientCount: 0,
+                    configuredServerCount: 2,
+                }),
+            },
+            agentMemory: {},
+            browserService: {},
+            browserStatus: { active: false, pageCount: 0, pageIds: [] },
+            sessionSupervisor: {
+                getRestoreStatus: () => ({
+                    lastRestoreAt: 1_700_000_000_000,
+                    restoredSessionCount: 0,
+                    autoResumeCount: 0,
+                }),
+            },
+            sessionCount: 0,
+            mcpConfigService: {
+                getStatus: () => ({
+                    inProgress: false,
+                    lastCompletedAt: 1_700_000_000_000,
+                    lastSuccessAt: 1_700_000_000_000,
+                    lastServerCount: 2,
+                    lastToolCount: 8,
+                }),
+            },
+            liveServerCount: 0,
+            persistedServerCount: 2,
+            persistedToolCount: 8,
+            persistedAlwaysOnServerCount: 1,
+            persistedAlwaysOnToolCount: 3,
+            inventorySource: 'config',
+            inventoryPersistence: {
+                databaseAvailable: false,
+                fallbackUsed: true,
+                error: 'Persisted MCP inventory is unavailable: SQLite runtime is unavailable for this run.',
+            },
+            executionEnvironment: {
+                ready: true,
+                preferredShellId: 'pwsh',
+                preferredShellLabel: 'PowerShell 7',
+                shellCount: 1,
+                verifiedShellCount: 1,
+                toolCount: 2,
+                verifiedToolCount: 2,
+                harnessCount: 1,
+                verifiedHarnessCount: 1,
+                supportsPowerShell: true,
+                supportsPosixShell: false,
+                notes: [],
+            },
+        });
+
+        expect(snapshot.ready).toBe(false);
+        expect(snapshot.summary).toContain('Degraded services: Persisted MCP inventory is unavailable: SQLite runtime is unavailable for this run.');
+        expect(snapshot.checks.mcpAggregator.inventoryPersistence).toEqual({
+            databaseAvailable: false,
+            fallbackUsed: true,
+            error: 'Persisted MCP inventory is unavailable: SQLite runtime is unavailable for this run.',
+        });
+    });
+
+    it('uses persistence degradation detail for the inventory blocker when no fallback inventory is available', async () => {
+        const snapshot = await buildStartupStatusSnapshot({
+            mcpServer: {
+                memoryManager: {},
+                isMemoryInitialized: true,
+                getBridgeStatus: () => ({
+                    ready: true,
+                    clientCount: 0,
+                    clients: [],
+                    supportedCapabilities: [],
+                    supportedHookPhases: [],
+                }),
+            },
+            aggregator: {
+                getInitializationStatus: () => ({
+                    inProgress: false,
+                    initialized: true,
+                    connectedClientCount: 0,
+                    configuredServerCount: 1,
+                }),
+            },
+            agentMemory: {},
+            browserService: {},
+            browserStatus: { active: false, pageCount: 0, pageIds: [] },
+            sessionSupervisor: {
+                getRestoreStatus: () => ({
+                    lastRestoreAt: 1_700_000_000_000,
+                    restoredSessionCount: 0,
+                    autoResumeCount: 0,
+                }),
+            },
+            sessionCount: 0,
+            mcpConfigService: {
+                getStatus: () => ({
+                    inProgress: false,
+                    lastCompletedAt: 1_700_000_000_000,
+                    lastSuccessAt: 1_700_000_000_000,
+                    lastServerCount: 1,
+                    lastToolCount: 0,
+                }),
+            },
+            liveServerCount: 0,
+            persistedServerCount: 0,
+            persistedToolCount: 0,
+            persistedAlwaysOnServerCount: 0,
+            persistedAlwaysOnToolCount: 0,
+            inventorySource: 'empty',
+            inventoryPersistence: {
+                databaseAvailable: false,
+                fallbackUsed: true,
+                error: 'Persisted MCP inventory is unavailable: SQLite runtime is unavailable for this run.',
+            },
+            executionEnvironment: {
+                ready: true,
+                preferredShellId: 'pwsh',
+                preferredShellLabel: 'PowerShell 7',
+                shellCount: 1,
+                verifiedShellCount: 1,
+                toolCount: 2,
+                verifiedToolCount: 2,
+                harnessCount: 1,
+                verifiedHarnessCount: 1,
+                supportsPowerShell: true,
+                supportsPosixShell: false,
+                notes: [],
+            },
+        });
+
+        expect(snapshot.blockingReasons).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    code: 'mcp_inventory_not_ready',
+                    detail: 'Persisted MCP inventory is unavailable: SQLite runtime is unavailable for this run.',
+                }),
+            ]),
+        );
+        expect(snapshot.checks.mcpAggregator.inventoryPersistence.databaseAvailable).toBe(false);
+    });
 });

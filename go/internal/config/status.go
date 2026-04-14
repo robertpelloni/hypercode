@@ -35,14 +35,20 @@ func Snapshot(cfg Config) Status {
 		WorkspaceRoot:        buildPathStatus(cfg.WorkspaceRoot),
 		ConfigDir:            buildPathStatus(cfg.ConfigDir),
 		MainConfigDir:        buildPathStatus(cfg.MainConfigDir),
-		BorgConfigFile:       buildPathStatus(filepath.Join(cfg.WorkspaceRoot, "borg.config.json")),
+		BorgConfigFile:       buildPathStatus(filepath.Join(cfg.WorkspaceRoot, "hypercode.config.json")),
 		MCPConfigFile:        buildPathStatus(filepath.Join(cfg.WorkspaceRoot, "mcp.jsonc")),
 		GoLockPath:           buildPathStatus(cfg.LockPath()),
 		MainLockPath:         buildPathStatus(cfg.MainLockPath()),
 		ImportedInstructions: buildPathStatus(cfg.ImportedInstructionsPath()),
+<<<<<<< HEAD
 		SectionedMemoryStore: buildPathStatus(filepath.Join(cfg.WorkspaceRoot, ".borg", "sectioned_memory.json")),
 		LegacyMemoryStore:    buildPathStatus(filepath.Join(cfg.WorkspaceRoot, ".borg", "claude_mem.json")),
 		borgSubmodule:   buildPathStatus(filepath.Join(cfg.WorkspaceRoot, "submodules", "borg")),
+=======
+		SectionedMemoryStore: buildPathStatus(filepath.Join(cfg.WorkspaceRoot, ".hypercode", "sectioned_memory.json")),
+		LegacyMemoryStore:    buildPathStatus(filepath.Join(cfg.WorkspaceRoot, ".hypercode", "claude_mem.json")),
+		HypercodeSubmodule:   buildPathStatus(filepath.Join(cfg.WorkspaceRoot, "submodules", "hypercode")),
+>>>>>>> main
 	}
 }
 

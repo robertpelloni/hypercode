@@ -56,6 +56,7 @@ describe('compatibilityToolDefinitions', () => {
             'get_tool_context',
             'unload_tool',
             'list_loaded_tools',
+            'list_all_tools',
             'set_capacity',
             'get_eviction_history',
             'clear_eviction_history',

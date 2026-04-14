@@ -1,5 +1,5 @@
 
-import { ReaderTools } from '@borg/tools';
+import { ReaderTools } from '@hypercode/tools';
 import fs from 'fs';
 
 async function main() {

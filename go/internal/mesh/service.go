@@ -1,4 +1,4 @@
-﻿package mesh
+package mesh
 
 import (
 	"context"
@@ -206,7 +206,7 @@ func (s *Service) localCapabilities() []string {
 
 func deriveLocalNodeID(cfg config.Config) string {
 	sum := sha1.Sum([]byte(cfg.ConfigDir + "|" + cfg.WorkspaceRoot))
-	return "borg-go-" + hex.EncodeToString(sum[:6])
+	return "hypercode-go-" + hex.EncodeToString(sum[:6])
 }
 
 func normalizeCapabilities(values []string) []string {

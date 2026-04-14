@@ -122,13 +122,13 @@ export default function RegistryPage() {
     const utils = trpc.useContext();
 
     // Stats
-    const { data: stats } = trpc.catalog.stats.useQuery(undefined, {
+    const statsQuery = trpc.catalog.stats.useQuery(undefined, {
         refetchOnWindowFocus: false,
         staleTime: 60_000,
     });
 
     // List query
-    const { data, isLoading, isFetching } = trpc.catalog.list.useQuery(
+    const listQuery = trpc.catalog.list.useQuery(
         {
             limit: PAGE_SIZE,
             offset: page * PAGE_SIZE,
@@ -140,9 +140,14 @@ export default function RegistryPage() {
             staleTime: 30_000,
         }
     );
+    const stats = statsQuery.data;
+    const registryStatsUnavailable = statsQuery.isError || (statsQuery.data !== undefined && (!statsQuery.data || typeof statsQuery.data !== "object" || Array.isArray(statsQuery.data)));
+    const registryListUnavailable = listQuery.isError || (listQuery.data !== undefined && (!listQuery.data || typeof listQuery.data !== "object" || Array.isArray(listQuery.data) || !Array.isArray((listQuery.data as { servers?: unknown[] }).servers)));
+    const isLoading = listQuery.isLoading;
+    const isFetching = listQuery.isFetching;
 
-    const servers = data?.servers ?? [];
-    const total = data?.total ?? 0;
+    const servers = !registryListUnavailable ? listQuery.data?.servers ?? [] : [];
+    const total = !registryListUnavailable ? listQuery.data?.total ?? 0 : 0;
     const totalPages = Math.ceil(total / PAGE_SIZE);
 
     // Ingestion trigger
@@ -233,7 +238,9 @@ export default function RegistryPage() {
                     <h1 className="text-2xl font-bold text-white tracking-tight">MCP Registry</h1>
                     <p className="text-zinc-400 text-sm mt-1">
                         Published catalog of known MCP servers from external registries.
-                        {stats && (
+                        {registryStatsUnavailable ? (
+                            <span className="ml-2 text-red-300">{statsQuery.error?.message ?? "Registry stats unavailable."}</span>
+                        ) : stats && (
                             <span className="ml-2 text-zinc-500">
                                 {stats.total.toLocaleString()} total · {stats.validated} validated · {stats.broken} broken
                             </span>
@@ -261,8 +268,14 @@ export default function RegistryPage() {
                 </div>
             </div>
 
+            {registryListUnavailable ? (
+                <div className="rounded-lg border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-300">
+                    {listQuery.error?.message ?? "Registry catalog is unavailable."}
+                </div>
+            ) : null}
+
             {/* Stats cards */}
-            {stats && (
+            {!registryStatsUnavailable && stats ? (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <StatCard label="Total" value={stats.total} color="zinc" />
                     <StatCard label="Validated" value={stats.validated} color="emerald" />
@@ -274,7 +287,7 @@ export default function RegistryPage() {
                     />
                     <StatCard label="Updated 24h" value={stats.recentlyUpdated ?? 0} color="amber" />
                 </div>
-            )}
+            ) : null}
 
             {/* Filters */}
             <div className="flex flex-wrap gap-3 items-center">
@@ -331,6 +344,12 @@ export default function RegistryPage() {
                                     <td colSpan={7} className="text-center py-16 text-zinc-500">
                                         <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
                                         Loading catalog…
+                                    </td>
+                                </tr>
+                            ) : registryListUnavailable ? (
+                                <tr>
+                                    <td colSpan={7} className="text-center py-16 text-red-300">
+                                        {listQuery.error?.message ?? "Registry catalog is unavailable."}
                                     </td>
                                 </tr>
                             ) : servers.length === 0 ? (

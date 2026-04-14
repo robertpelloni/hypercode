@@ -1,3 +1,4 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { t, publicProcedure, getBrowserService, getMcpServer } from '../lib/trpc-core.js';
 
@@ -90,7 +91,10 @@ export const browserRouter = t.router({
         .mutation(async ({ input }) => {
             const service = getBrowserService();
             if (!service) {
-                return { success: false, error: 'Browser service unavailable' };
+                throw new TRPCError({
+                    code: 'SERVICE_UNAVAILABLE',
+                    message: 'Browser service unavailable',
+                });
             }
 
             await service.close(input.pageId);
@@ -100,7 +104,10 @@ export const browserRouter = t.router({
     closeAll: publicProcedure.mutation(async () => {
         const service = getBrowserService();
         if (!service) {
-            return { success: false, error: 'Browser service unavailable' };
+            throw new TRPCError({
+                code: 'SERVICE_UNAVAILABLE',
+                message: 'Browser service unavailable',
+            });
         }
 
         await service.closeAll();

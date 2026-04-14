@@ -6,8 +6,13 @@ import path from 'path';
 import Database from 'better-sqlite3';
 import fg from 'fast-glob';
 
+<<<<<<< HEAD
 import { LLMService } from '@borg/ai';
 import { formatOptionalSqliteFailure } from '../db/sqliteAvailability.js';
+=======
+import { LLMService } from '@hypercode/ai';
+import { formatOptionalSqliteFailure, isSqliteUnavailableError } from '../db/sqliteAvailability.js';
+>>>>>>> main
 
 import AgentMemoryService from './AgentMemoryService.js';
 import {
@@ -842,6 +847,15 @@ export class SessionImportService {
             } catch (error) {
                 if (isMissingFileError(error)) {
                     console.warn(`[SessionImport] Skipping vanished session source ${candidate.sourcePath}`);
+                    skippedCount += 1;
+                    continue;
+                }
+
+                if (isSqliteUnavailableError(error)) {
+                    console.warn(formatOptionalSqliteFailure(
+                        `[SessionImport] Skipping imported-session persistence for ${candidate.sourcePath}`,
+                        error,
+                    ));
                     skippedCount += 1;
                     continue;
                 }

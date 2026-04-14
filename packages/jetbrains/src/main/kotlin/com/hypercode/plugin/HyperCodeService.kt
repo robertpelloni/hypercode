@@ -1,4 +1,4 @@
-package com.Borg.plugin
+package com.HyperCode.plugin
 
 <<<<<<< HEAD
 =======

@@ -32,6 +32,7 @@ const DEFAULT_PASSTHROUGH_VARS = [
 const CLI_SPECIFIC_VARS: Record<CLIType, string[]> = {
   borg: [],
   opencode: ['OPENCODE_*', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY'],
+  antigravity: ['ANTIGRAVITY_*', 'GOOGLE_API_KEY'],
   claude: ['ANTHROPIC_API_KEY', 'CLAUDE_*'],
   aider: ['AIDER_*', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY'],
   cursor: ['CURSOR_*', 'OPENAI_API_KEY'],
@@ -230,6 +231,7 @@ class EnvironmentManager {
     const required: Record<CLIType, string[]> = {
       borg: [],
       opencode: [],
+      antigravity: [],
       claude: ['ANTHROPIC_API_KEY'],
       aider: ['OPENAI_API_KEY'],
       cursor: [],

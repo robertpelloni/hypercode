@@ -33,10 +33,12 @@ export const CouncilWidget: React.FC = () => {
     const [topic, setTopic] = useState('');
     const [isDebating, setIsDebating] = useState(false);
 
-    const { data: sessions, refetch } = trpc.council.sessions.list.useQuery(undefined, {
+    const { data: sessions, error, refetch } = trpc.council.sessions.list.useQuery(undefined, {
         enabled: true,
         refetchInterval: isDebating ? 1000 : 5000
     });
+    const sessionsUnavailable = Boolean(error) || (sessions !== undefined && !Array.isArray(sessions));
+    const safeSessions = !sessionsUnavailable ? (sessions ?? []) : [];
 
     const runSessionMutation = trpc.council.sessions.start.useMutation({
         onSuccess: () => {
@@ -62,7 +64,7 @@ export const CouncilWidget: React.FC = () => {
         });
     };
 
-    const latestSession = [...(sessions ?? [])]
+    const latestSession = [...safeSessions]
         .sort((a, b) => (b.startedAt ?? 0) - (a.startedAt ?? 0))[0];
 
     const transcriptEntries = normalizeTranscripts(latestSession);
@@ -77,14 +79,21 @@ export const CouncilWidget: React.FC = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1 scrollbar-thin scrollbar-thumb-zinc-700">
-                {!latestSession && !isDebating && (
+                {sessionsUnavailable && !isDebating && (
+                    <div className="text-center text-red-300 mt-20">
+                        <p>Council sessions unavailable.</p>
+                        <p className="text-sm text-red-200/80">{error?.message ?? 'Council sessions returned an invalid payload.'}</p>
+                    </div>
+                )}
+
+                {!sessionsUnavailable && !latestSession && !isDebating && (
                     <div className="text-center text-zinc-500 mt-20">
                         <p>No consensus session active.</p>
                         <p className="text-sm">Propose a topic to convene the Council.</p>
                     </div>
                 )}
 
-                {latestSession && (
+                {!sessionsUnavailable && latestSession && (
                     <div className="space-y-4">
                         {transcriptEntries.map((entry, idx) => (
                             <motion.div

@@ -23,10 +23,11 @@ export function TraceViewer() {
     const [autoScroll, setAutoScroll] = useState(true);
     const bottomRef = useRef<HTMLDivElement>(null);
 
-    const { data: rawLogs, isLoading } = trpc.audit.list.useQuery(
+    const { data: rawLogs, error, isLoading } = trpc.audit.list.useQuery(
         { limit: 100 },
         { refetchInterval: 3000 } // Poll every 3s for live feel
     );
+    const logsUnavailable = Boolean(error) || (rawLogs !== undefined && !Array.isArray(rawLogs));
     const logs = normalizeTraceLogs(rawLogs);
 
     useEffect(() => {
@@ -41,7 +42,7 @@ export function TraceViewer() {
                 <div>
                     <h2 className="text-xl font-bold text-white mb-1">Supervisor Trace</h2>
                     <p className="text-gray-400 text-sm">
-                        {logs ? `${logs.length} audit entries` : 'Live loop activity and autonomous decisions'}
+                        {logsUnavailable ? 'Audit trace unavailable' : `${logs.length} audit entries`}
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -61,6 +62,11 @@ export function TraceViewer() {
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-500">
                         <p className="text-sm">Loading audit logs...</p>
+                    </div>
+                ) : logsUnavailable ? (
+                    <div className="flex flex-col items-center justify-center h-full text-red-300">
+                        <p className="text-lg font-medium">Audit log unavailable</p>
+                        <p className="text-sm mt-1">{error?.message ?? 'Audit log returned an invalid payload.'}</p>
                     </div>
                 ) : logs && logs.length > 0 ? (
                     <div className="space-y-1">

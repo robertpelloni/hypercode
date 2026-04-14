@@ -45,7 +45,7 @@ describe('downstreamDiscovery', () => {
         vi.mocked(getMcpServers).mockResolvedValue({
             self: {
                 uuid: 'self',
-                name: 'metamcp-unified-borg-core-namespace',
+                name: 'metamcp-unified-hypercode-core-namespace',
                 type: 'STDIO',
                 status: 'active',
                 error_status: 'none',
@@ -63,15 +63,15 @@ describe('downstreamDiscovery', () => {
 
         const result = await listDownstreamPrompts({
             context: {
-                namespaceUuid: 'borg-core-namespace',
-                sessionId: 'borg-core-session',
+                namespaceUuid: 'hypercode-core-namespace',
+                sessionId: 'hypercode-core-session',
             },
             promptToClient: {},
         });
 
         expect(result.prompts).toEqual([]);
         expect(mcpServerPool.getSession).not.toHaveBeenCalled();
-        expect(isSameServerInstance({ name: 'metamcp-unified-borg-core-namespace' }, 'borg-core-namespace')).toBe(true);
+        expect(isSameServerInstance({ name: 'metamcp-unified-hypercode-core-namespace' }, 'hypercode-core-namespace')).toBe(true);
     });
 
     it('lists prompts and caches prompt ownership by prefixed name', async () => {
@@ -108,8 +108,8 @@ describe('downstreamDiscovery', () => {
 
         const result = await listDownstreamPrompts({
             context: {
-                namespaceUuid: 'borg-core-namespace',
-                sessionId: 'borg-core-session',
+                namespaceUuid: 'hypercode-core-namespace',
+                sessionId: 'hypercode-core-session',
             },
             cursor: 'cursor-1',
             meta: { trace: true },
@@ -123,7 +123,7 @@ describe('downstreamDiscovery', () => {
         expect(promptToClient).toHaveProperty('GitHubCloud__summarize_issue', session);
     });
 
-    it('fetches a prompt by stripping the Borg server prefix', async () => {
+    it('fetches a prompt by stripping the HyperCode server prefix', async () => {
         const session = createSession({
             serverName: 'GitHub Cloud',
             capabilities: { prompts: {} },
@@ -198,8 +198,8 @@ describe('downstreamDiscovery', () => {
 
         const listResult = await listDownstreamResources({
             context: {
-                namespaceUuid: 'borg-core-namespace',
-                sessionId: 'borg-core-session',
+                namespaceUuid: 'hypercode-core-namespace',
+                sessionId: 'hypercode-core-session',
             },
             resourceToClient: resourceToClient as never,
         });
@@ -251,8 +251,8 @@ describe('downstreamDiscovery', () => {
 
         const result = await listDownstreamResourceTemplates({
             context: {
-                namespaceUuid: 'borg-core-namespace',
-                sessionId: 'borg-core-session',
+                namespaceUuid: 'hypercode-core-namespace',
+                sessionId: 'hypercode-core-session',
             },
         });
 

@@ -13,18 +13,46 @@ interface Stats {
     };
 }
 
+function isStatsPayload(value: unknown): value is Stats {
+    return typeof value === 'object'
+        && value !== null
+        && typeof (value as { brain?: unknown }).brain === 'object'
+        && (value as { brain?: unknown }).brain !== null
+        && typeof ((value as { brain: { totalMemories?: unknown } }).brain.totalMemories) === 'number'
+        && typeof ((value as { brain: { status?: unknown } }).brain.status) === 'string'
+        && typeof (value as { ingestion?: unknown }).ingestion === 'object'
+        && (value as { ingestion?: unknown }).ingestion !== null
+        && typeof ((value as { ingestion: { lastBatch?: unknown } }).ingestion.lastBatch) === 'string'
+        && typeof ((value as { ingestion: { status?: unknown } }).ingestion.status) === 'string';
+}
+
 export default function IngestionStatus() {
     const [stats, setStats] = useState<Stats | null>(null);
+    const [statsError, setStatsError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
                 const res = await fetch('/api/monitoring/stats');
-                if (res.ok) {
-                    setStats(await res.json());
+                if (!res.ok) {
+                    setStats(null);
+                    setStatsError(`Stats unavailable: HTTP ${res.status}`);
+                    return;
                 }
+
+                const payload: unknown = await res.json();
+                if (!isStatsPayload(payload)) {
+                    setStats(null);
+                    setStatsError('Stats unavailable: invalid payload');
+                    return;
+                }
+
+                setStats(payload);
+                setStatsError(null);
             } catch (e) {
                 console.error("Failed to fetch stats", e);
+                setStats(null);
+                setStatsError(e instanceof Error ? `Stats unavailable: ${e.message}` : 'Stats unavailable');
             }
         };
 
@@ -46,7 +74,11 @@ export default function IngestionStatus() {
                     </h2>
                 </div>
 
-                {!stats ? (
+                {statsError ? (
+                    <div className="text-sm text-rose-300">
+                        {statsError}
+                    </div>
+                ) : !stats ? (
                     <div className="flex items-center gap-2 text-zinc-400">
                         <motion.div
                             animate={{ rotate: 360 }}

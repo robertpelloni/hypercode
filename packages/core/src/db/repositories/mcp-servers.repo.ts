@@ -49,6 +49,7 @@ import {
 } from "../../mcp/serverMetadataCache.js";
 import { deriveSemanticCatalogForServer } from "../../mcp/catalogMetadata.js";
 import { toolsRepository } from "./tools.repo.js";
+import { formatOptionalSqliteFailure, isSqliteUnavailableError } from "../sqliteAvailability.js";
 
 
 // Keep console-backed logger until centralized logger wiring is introduced in this package.
@@ -99,6 +100,11 @@ function handleDatabaseError(
     operation: string,
     serverName?: string,
 ): never {
+    if (isSqliteUnavailableError(error)) {
+        logger.warn(formatOptionalSqliteFailure(`[McpServersRepository] ${operation} is unavailable`, error));
+        throw new Error(formatOptionalSqliteFailure('MCP server registry is unavailable', error));
+    }
+
     logger.error(`Database error in ${operation}:`, error);
 
     // Simplified error handling for Phase 1
@@ -178,7 +184,7 @@ export class McpServersRepository {
             }
 
             if (!options?.skipSync) {
-                await this.syncToMcpJson(discovery ? { [createdServer.name]: discovery.metadata } : {});
+                await this.exportToolCache(discovery ? { [createdServer.name]: discovery.metadata } : {});
             }
             return createdServer;
         } catch (error) {
@@ -305,7 +311,7 @@ export class McpServersRepository {
             .where(eq(mcpServersTable.uuid, uuid))
             .returning();
 
-        await this.syncToMcpJson();
+        await this.exportToolCache();
         return deletedServer;
     }
 
@@ -338,7 +344,7 @@ export class McpServersRepository {
             }
 
             if (!options?.skipSync) {
-                await this.syncToMcpJson(discovery ? { [updatedServer.name]: discovery.metadata } : {});
+                await this.exportToolCache(discovery ? { [updatedServer.name]: discovery.metadata } : {});
             }
             return updatedServer;
         } catch (error) {
@@ -369,7 +375,7 @@ export class McpServersRepository {
             await this.persistDiscoveredTools(server.uuid, discovery.tools);
         }
 
-        await this.syncToMcpJson({ [server.name]: discovery.metadata });
+        await this.exportToolCache({ [server.name]: discovery.metadata });
 
         return {
             server,
@@ -405,7 +411,7 @@ export class McpServersRepository {
             error: `Cache cleared at ${clearedAt}`,
         };
 
-        await this.syncToMcpJson({ [server.name]: metadata });
+        await this.exportToolCache({ [server.name]: metadata });
 
         return {
             server,
@@ -436,14 +442,10 @@ export class McpServersRepository {
             for (const server of servers) {
                 result.push(await this.create(server, { skipSync: true }));
             }
-            await this.syncToMcpJson();
+            await this.exportToolCache();
             return result;
         } catch (error: unknown) {
-            // Simplified bulk error handling
-            console.error("Database error in bulk create:", error);
-            throw new Error(
-                "Failed to bulk create MCP servers. Please check your input and try again.",
-            );
+            handleDatabaseError(error, "bulkCreate");
         }
     }
 
@@ -463,7 +465,7 @@ export class McpServersRepository {
         return updatedServer;
     }
 
-    public async syncToMcpJson(metadataOverrides: Record<string, BorgMcpServerDiscoveryMetadata> = {}): Promise<void> {
+    public async exportToolCache(metadataOverrides: Record<string, BorgMcpServerDiscoveryMetadata> = {}): Promise<void> {
         try {
             const [allServers, allTools, existingConfig] = await Promise.all([
                 this.findAll(),
@@ -471,9 +473,10 @@ export class McpServersRepository {
                 loadBorgMcpConfig(),
             ]);
 
+            // Create a unified cache of both manual (mcp.jsonc) and DB servers
             const jsonOutput: BorgMcpJsonConfig = {
                 ...existingConfig,
-                mcpServers: {},
+                mcpServers: { ...existingConfig.mcpServers },
             };
 
             const toolsByServerUuid = new Map<string, BorgMcpToolMetadata[]>();
@@ -493,27 +496,7 @@ export class McpServersRepository {
             }
 
             for (const server of allServers) {
-                // Skip if name is invalid or missing
                 if (!server.name) continue;
-
-                const config: any = {
-                    command: server.command,
-                    args: server.args,
-                    env: server.env,
-                };
-
-                // Only include fields if they are relevant/present
-                if (!config.command) delete config.command;
-                if (!config.args || config.args.length === 0) delete config.args;
-                if (!config.env || Object.keys(config.env).length === 0) delete config.env;
-
-                // Handle different types if needed (e.g. SSE url)
-                if (server.type !== 'STDIO' && server.url) {
-                    config.url = server.url;
-                }
-
-                config.description = server.description;
-                config.type = server.type;
 
                 const existingServerConfig = existingConfig.mcpServers?.[server.name];
                 const tools = toolsByServerUuid.get(server.uuid) ?? [];
@@ -524,6 +507,7 @@ export class McpServersRepository {
                     alwaysOn: server.always_on ?? false,
                     tools,
                 });
+                
                 const metadata = overrideMetadata ?? {
                     ...(existingServerConfig?._meta ?? {}),
                     ...buildBaseServerMetadata(server),
@@ -551,17 +535,27 @@ export class McpServersRepository {
                     metadata.toolCount = derivedCatalog.tools.length;
                 }
 
-                config._meta = metadata;
+                // Create a synthetic server entry for DB servers not in mcp.jsonc
+                const config: any = existingServerConfig ? { ...existingServerConfig } : {
+                    command: server.command,
+                    args: server.args,
+                    env: server.env,
+                    type: server.type,
+                    description: server.description
+                };
 
-                // If specialized type, might iterate on schema
-                // For now, mapping simplified 'stdio' style config
+                if (server.type !== 'STDIO' && server.url) {
+                    config.url = server.url;
+                }
+
+                config._meta = metadata;
                 jsonOutput.mcpServers[server.name] = config;
             }
 
-            await writeBorgMcpConfig(jsonOutput);
+            const { writeToolCache } = await import('../../mcp/mcpJsonConfig.js');
+            await writeToolCache(jsonOutput);
         } catch (error) {
-            console.error("Failed to sync mcp.jsonc:", error);
-            // Don't throw, as DB operation succeeded
+            console.error("Failed to export tool cache:", error);
         }
     }
 
@@ -745,7 +739,7 @@ export class McpServersRepository {
                         server,
                         'failed',
                         new Date().toISOString(),
-                        'STDIO server is missing a command, so Borg could not discover tools.',
+                        'STDIO server is missing a command, so HyperCode could not discover tools.',
                     ),
                     tools: [],
                     decision: 'binary-fresh',
@@ -758,7 +752,7 @@ export class McpServersRepository {
                         server,
                         'failed',
                         new Date().toISOString(),
-                        `${server.type} server is missing a URL, so Borg could not discover tools.`,
+                        `${server.type} server is missing a URL, so HyperCode could not discover tools.`,
                     ),
                     tools: [],
                     decision: 'binary-fresh',
@@ -875,7 +869,7 @@ export class McpServersRepository {
             }
 
             client = new Client(
-                { name: `borg-discovery-${server.name}`, version: '1.0.0' },
+                { name: `hypercode-discovery-${server.name}`, version: '1.0.0' },
                 { capabilities: {} },
             );
 

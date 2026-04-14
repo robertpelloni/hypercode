@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { t, publicProcedure, getContextManager } from '../lib/trpc-core.js';
+import { contextHarvester, type ContextChunk, type HarvestReport } from '../services/ContextHarvester.js';
 
 export const contextRouter = t.router({
     list: publicProcedure
@@ -32,6 +33,24 @@ export const contextRouter = t.router({
 
     getPrompt: publicProcedure.query(() => {
         return getContextManager()?.getContextPrompt() ?? '';
+    }),
+
+    getHarvestedContext: publicProcedure.query((): ContextChunk[] => {
+        return contextHarvester.getChunks();
+    }),
+
+    getHarvestStats: publicProcedure.query((): HarvestReport => {
+        return contextHarvester.getReport();
+    }),
+
+    compact: publicProcedure.mutation((): HarvestReport => {
+        contextHarvester.compact();
+        return contextHarvester.getReport();
+    }),
+
+    prune: publicProcedure.mutation((): HarvestReport => {
+        contextHarvester.prune();
+        return contextHarvester.getReport();
     }),
 });
 

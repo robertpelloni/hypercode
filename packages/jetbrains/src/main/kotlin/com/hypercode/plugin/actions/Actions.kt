@@ -1,6 +1,6 @@
-package com.Borg.plugin.actions
+package com.HyperCode.plugin.actions
 
-import com.Borg.plugin.BorgService
+import com.HyperCode.plugin.BorgService
 <<<<<<< HEAD
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -19,8 +19,8 @@ class ConnectAction : AnAction() {
         
         val url = Messages.showInputDialog(
             project,
-            "Enter Borg Hub URL:",
-            "Connect to Borg Hub",
+            "Enter HyperCode Hub URL:",
+            "Connect to HyperCode Hub",
             null,
             "http://localhost:3000",
             null
@@ -28,15 +28,15 @@ class ConnectAction : AnAction() {
         
         service.setHubUrl(url)
         if (service.connect()) {
-            notify(project, "Connected to Borg Hub", NotificationType.INFORMATION)
+            notify(project, "Connected to HyperCode Hub", NotificationType.INFORMATION)
         } else {
-            notify(project, "Failed to connect to Borg Hub", NotificationType.ERROR)
+            notify(project, "Failed to connect to HyperCode Hub", NotificationType.ERROR)
         }
     }
     
     private fun notify(project: com.intellij.openapi.project.Project, message: String, type: NotificationType) {
         NotificationGroupManager.getInstance()
-            .getNotificationGroup("Borg Notifications")
+            .getNotificationGroup("HyperCode Notifications")
             .createNotification(message, type)
             .notify(project)
     }
@@ -49,8 +49,8 @@ class DisconnectAction : AnAction() {
         service.disconnect()
         
         NotificationGroupManager.getInstance()
-            .getNotificationGroup("Borg Notifications")
-            .createNotification("Disconnected from Borg Hub", NotificationType.INFORMATION)
+            .getNotificationGroup("HyperCode Notifications")
+            .createNotification("Disconnected from HyperCode Hub", NotificationType.INFORMATION)
             .notify(project)
     }
 }
@@ -63,7 +63,7 @@ class StartDebateAction : AnAction() {
         val service = project.getService(BorgService::class.java)
         
         if (!service.isConnected()) {
-            Messages.showErrorDialog(project, "Not connected to Borg Hub", "Borg")
+            Messages.showErrorDialog(project, "Not connected to HyperCode Hub", "HyperCode")
             return
         }
         
@@ -90,7 +90,7 @@ class StartDebateAction : AnAction() {
                 "Council Debate Result"
             )
         } else {
-            Messages.showErrorDialog(project, "Debate failed", "Borg")
+            Messages.showErrorDialog(project, "Debate failed", "HyperCode")
 =======
 class StartDebateAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
@@ -116,7 +116,7 @@ class ArchitectModeAction : AnAction() {
         val service = project.getService(BorgService::class.java)
         
         if (!service.isConnected()) {
-            Messages.showErrorDialog(project, "Not connected to Borg Hub", "Borg")
+            Messages.showErrorDialog(project, "Not connected to HyperCode Hub", "HyperCode")
             return
         }
         
@@ -140,12 +140,12 @@ class ArchitectModeAction : AnAction() {
             if (approve == Messages.YES) {
                 service.approveArchitectPlan(session.sessionId)
                 NotificationGroupManager.getInstance()
-                    .getNotificationGroup("Borg Notifications")
+                    .getNotificationGroup("HyperCode Notifications")
                     .createNotification("Plan approved", NotificationType.INFORMATION)
                     .notify(project)
             }
         } else {
-            Messages.showErrorDialog(project, "Failed to start architect session", "Borg")
+            Messages.showErrorDialog(project, "Failed to start architect session", "HyperCode")
         }
     }
 }
@@ -156,7 +156,7 @@ class ViewAnalyticsAction : AnAction() {
         val service = project.getService(BorgService::class.java)
         
         if (!service.isConnected()) {
-            Messages.showErrorDialog(project, "Not connected to Borg Hub", "Borg")
+            Messages.showErrorDialog(project, "Not connected to HyperCode Hub", "HyperCode")
             return
         }
         
@@ -176,7 +176,7 @@ class ViewAnalyticsAction : AnAction() {
                 "Supervisor Analytics"
             )
         } else {
-            Messages.showErrorDialog(project, "Failed to fetch analytics", "Borg")
+            Messages.showErrorDialog(project, "Failed to fetch analytics", "HyperCode")
         }
     }
 }
@@ -184,14 +184,14 @@ class ViewAnalyticsAction : AnAction() {
 class RunAgentAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        Messages.showInfoMessage(project, "Run Agent feature coming soon", "Borg")
+        Messages.showInfoMessage(project, "Run Agent feature coming soon", "HyperCode")
     }
 }
 
 class SearchMemoryAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        Messages.showInfoMessage(project, "Search Memory feature coming soon", "Borg")
+        Messages.showInfoMessage(project, "Search Memory feature coming soon", "HyperCode")
     }
 }
 =======

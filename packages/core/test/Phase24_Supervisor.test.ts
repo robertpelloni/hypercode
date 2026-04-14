@@ -5,7 +5,7 @@ import { Supervisor } from '../../agents/src/Supervisor';
 const mockGenerateText = vi.fn();
 const mockSelectModel = vi.fn();
 
-vi.mock('@borg/ai', () => ({
+vi.mock('@hypercode/ai', () => ({
     LLMService: class {
         generateText = mockGenerateText;
     }

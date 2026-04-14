@@ -232,4 +232,28 @@ describe('unifiedDirectoryRouter', () => {
         expect(stats.backlog.total).toBe(80);
         expect(stats.combined_total).toBe(200);
     });
+
+    it('surfaces a clear error for list when SQLite is unavailable', async () => {
+        vi.spyOn(publishedCatalogRepository, 'listServers').mockRejectedValue(
+            new Error('SQLite runtime is unavailable for HyperCode DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)'),
+        );
+
+        const caller = createCaller();
+
+        await expect(caller.list({ source: 'catalog', limit: 10, offset: 0 })).rejects.toMatchObject({
+            message: 'Unified directory is unavailable: SQLite runtime is unavailable for this run.',
+        });
+    });
+
+    it('surfaces a clear error for stats when SQLite is unavailable', async () => {
+        vi.spyOn(publishedCatalogRepository, 'countServers').mockRejectedValue(
+            new Error('SQLite runtime is unavailable for HyperCode DB-backed features (Could not locate the bindings file. Tried: better-sqlite3.node)'),
+        );
+
+        const caller = createCaller();
+
+        await expect(caller.stats()).rejects.toMatchObject({
+            message: 'Unified directory is unavailable: SQLite runtime is unavailable for this run.',
+        });
+    });
 });

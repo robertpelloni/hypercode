@@ -2,9 +2,9 @@
 
 import { trpc } from '@/utils/trpc';
 import { useState, useEffect } from 'react';
-import { Card } from '@borg/ui';
-import { Button } from '@borg/ui';
-import { Textarea } from '@borg/ui';
+import { Card } from '@hypercode/ui';
+import { Button } from '@hypercode/ui';
+import { Textarea } from '@hypercode/ui';
 import { formatSettingsConfig, getSettingsSaveErrorMessage } from './settings-page-normalizers';
 
 export default function SettingsDashboard() {
@@ -14,6 +14,8 @@ export default function SettingsDashboard() {
     // Fetch settings
     const settingsQuery = trpc.settings.get.useQuery();
     const updateMutation = trpc.settings.update.useMutation();
+    const settingsUnavailable = settingsQuery.isError;
+    const settingsErrorMessage = settingsQuery.error?.message ?? 'Configuration is unavailable.';
 
     useEffect(() => {
         if (settingsQuery.data !== undefined) {
@@ -37,11 +39,11 @@ export default function SettingsDashboard() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-yellow-400">System Settings</h1>
-                    <p className="text-muted-foreground">Manage core configuration (.borg/config.json)</p>
+                    <p className="text-muted-foreground">Manage core configuration (.hypercode/config.json)</p>
                 </div>
                 <Button
                     onClick={handleSave}
-                    disabled={updateMutation.isPending}
+                    disabled={updateMutation.isPending || settingsUnavailable}
                     className="bg-yellow-600 hover:bg-yellow-500"
                 >
                     {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
@@ -55,8 +57,21 @@ export default function SettingsDashboard() {
                     </div>
                 )}
 
+                {settingsUnavailable ? (
+                    <div className="rounded border border-red-900/40 bg-red-950/20 p-3 text-sm text-red-300">
+                        Settings unavailable: {settingsErrorMessage}
+                    </div>
+                ) : null}
+
                 {settingsQuery.isPending ? (
                     <div className="text-gray-500 font-mono">Loading configuration...</div>
+                ) : settingsUnavailable ? (
+                    <Textarea
+                        value={`// ERROR: Failed to load configuration\n// ${settingsErrorMessage}`}
+                        readOnly
+                        className="flex-1 font-mono text-sm bg-black border-red-900/40 text-red-300 leading-relaxed resize-none"
+                        spellCheck={false}
+                    />
                 ) : (
                     <Textarea
                         value={configJson}

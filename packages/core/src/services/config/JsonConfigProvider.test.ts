@@ -10,7 +10,7 @@ import { loadBorgMcpConfig } from '../../mcp/mcpJsonConfig.js';
 const tempDirs: string[] = [];
 
 async function createTempWorkspace(): Promise<string> {
-    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'borg-json-config-provider-'));
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'hypercode-json-config-provider-'));
     tempDirs.push(dir);
     return dir;
 }

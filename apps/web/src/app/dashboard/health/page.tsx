@@ -1,9 +1,9 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@borg/ui";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@hypercode/ui";
 import { PageStatusBanner } from '@/components/PageStatusBanner';
-import { Badge } from "@borg/ui";
-import { Button } from "@borg/ui";
+import { Badge } from "@hypercode/ui";
+import { Button } from "@hypercode/ui";
 import { Activity, Server, AlertTriangle, RefreshCcw, HardDrive, Cpu, Network, Radio } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -19,7 +19,7 @@ export default function HealthDashboard() {
     const utils = trpc.useUtils();
     const toolsClient = trpc.tools as any;
 
-    const { data: mcpStatus, refetch: refetchMcpStatus } = trpc.mcp.getStatus.useQuery();
+    const { data: mcpStatus, error: mcpStatusError, refetch: refetchMcpStatus } = trpc.mcp.getStatus.useQuery();
     const { data: startupStatus, refetch: refetchStartup } = trpc.startupStatus.useQuery(undefined, { refetchInterval: 5000 });
     const { data: servers, refetch: refetchServers } = trpc.mcpServers.list.useQuery();
     const installArtifactsQuery = toolsClient?.detectInstallSurfaces?.useQuery
@@ -46,9 +46,10 @@ export default function HealthDashboard() {
     };
 
     const startupSnapshot = startupStatus as DashboardStartupStatus | undefined;
+    const inventoryPersistence = startupSnapshot?.checks?.mcpAggregator?.inventoryPersistence;
     const startupViewModel = buildHealthStartupViewModel(
         startupSnapshot,
-        Boolean(mcpStatus?.initialized),
+        !mcpStatusError && Boolean(mcpStatus?.initialized),
         installArtifactsQuery.data,
     );
     const startupChecks = startupViewModel.startupChecks;
@@ -56,9 +57,34 @@ export default function HealthDashboard() {
     const startupNotice = buildSystemStartupNotice(startupSnapshot);
     const statusCards = startupViewModel.statusCards;
     const eventBusMetric = getEventBusMetric(startupSnapshot);
-    const mcpRouterMetric = getMcpRouterMetric(startupSnapshot, Boolean(mcpStatus?.initialized));
+    const mcpRouterMetric = mcpStatusError
+        ? {
+            status: 'Unavailable',
+            color: 'text-red-400',
+            detail: mcpStatusError.message,
+        }
+        : getMcpRouterMetric(startupSnapshot, Boolean(mcpStatus?.initialized));
     const connectedServers = getConnectedServerKeys(mcpStatus);
     const normalizedServers = normalizeHealthServers(servers);
+    const serversUnavailable = !normalizedServers.length && Boolean(servers) && !Array.isArray(servers);
+    const databaseUnavailable = inventoryPersistence?.databaseAvailable === false;
+    const databaseMetric = databaseUnavailable
+        ? {
+            status: 'Unavailable',
+            color: 'text-red-400',
+            detail: inventoryPersistence?.error ?? 'SQLite-backed inventory persistence is unavailable.',
+        }
+        : inventoryPersistence?.fallbackUsed
+            ? {
+                status: 'Degraded',
+                color: 'text-amber-400',
+                detail: inventoryPersistence?.error ?? 'Using config fallback instead of persisted SQLite inventory.',
+            }
+            : {
+                status: 'Connected',
+                color: 'text-green-500',
+                detail: 'SQLite (local)',
+            };
 
     return (
         <div className="p-8 space-y-8 h-full overflow-y-auto">
@@ -70,7 +96,7 @@ export default function HealthDashboard() {
                         System Health
                     </h1>
                     <p className="text-zinc-500 mt-1">
-                        Monitor Borg infrastructure status, component uptime, and server crash rates.
+                        Monitor HyperCode infrastructure status, component uptime, and server crash rates.
                     </p>
                 </div>
                 <Button 
@@ -84,6 +110,14 @@ export default function HealthDashboard() {
                 </Button>
             </div>
 
+            {mcpStatusError ? (
+                <Card className="border border-red-900/30 bg-red-950/10">
+                    <CardContent className="p-4 text-sm text-red-200">
+                        {mcpStatusError.message}
+                    </CardContent>
+                </Card>
+            ) : null}
+
             {/* Top Level System Metrics (Imported logic from System Status) */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <MetricCard
@@ -95,10 +129,10 @@ export default function HealthDashboard() {
                 />
                 <MetricCard
                     title="Database"
-                    status="Connected"
+                    status={databaseMetric.status}
                     icon={HardDrive}
-                    color="text-green-500"
-                    detail="SQLite (local)"
+                    color={databaseMetric.color}
+                    detail={databaseMetric.detail}
                 />
                 <MetricCard
                     title="Event Bus"
@@ -143,7 +177,11 @@ export default function HealthDashboard() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
-                                {normalizedServers.length === 0 ? (
+                                {serversUnavailable ? (
+                                    <div className="text-red-300 text-center py-8 bg-red-950/10 rounded border border-red-900/30">
+                                        MCP server inventory is unavailable.
+                                    </div>
+                                ) : normalizedServers.length === 0 ? (
                                     <div className="text-zinc-500 text-center py-8 bg-zinc-950/50 rounded border border-zinc-800/50 border-dashed">
                                         No MCP servers configured or detected.
                                     </div>
@@ -221,7 +259,7 @@ function MetricCard({ title, status, icon: Icon, color, detail }: { title: strin
 }
 
 function ServerHealthRow({ server, isConnected }: { server: any, isConnected: boolean }) {
-    const { data: health, refetch } = trpc.serverHealth.check.useQuery({ serverUuid: server.uuid }, { refetchInterval: 5000 });
+    const { data: health, error: healthError, refetch } = trpc.serverHealth.check.useQuery({ serverUuid: server.uuid }, { refetchInterval: 5000 });
     const resetHealth = trpc.serverHealth.reset.useMutation({
         onSuccess: () => {
             toast.success(`Reset health state for ${server.configKey}`);
@@ -235,12 +273,14 @@ function ServerHealthRow({ server, isConnected }: { server: any, isConnected: bo
     const isError = health?.status === 'ERROR';
     const isHealthy = health?.status === 'HEALTHY' && isConnected;
     const isOffline = health?.status === 'HEALTHY' && !isConnected;
+    const isUnavailable = Boolean(healthError);
 
     return (
-        <div className={`flex items-center justify-between p-4 rounded border ${isError ? 'bg-red-950/10 border-red-900/30' : 'bg-zinc-950 border-zinc-800'}`}>
+        <div className={`flex items-center justify-between p-4 rounded border ${isUnavailable ? 'bg-red-950/10 border-red-900/30' : isError ? 'bg-red-950/10 border-red-900/30' : 'bg-zinc-950 border-zinc-800'}`}>
             <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
                     <span className="text-zinc-200 font-medium">{server.name || server.configKey}</span>
+                    {isUnavailable && <Badge variant="destructive" className="h-5 text-[10px]">UNAVAILABLE</Badge>}
                     {isError && <Badge variant="destructive" className="h-5 text-[10px]">ERROR</Badge>}
                     {isHealthy && <Badge variant="outline" className="h-5 text-[10px] border-green-500/30 text-green-400 bg-green-500/10">CONNECTED</Badge>}
                     {isOffline && <Badge variant="outline" className="h-5 text-[10px] border-zinc-700 text-zinc-400">OFFLINE</Badge>}
@@ -248,13 +288,18 @@ function ServerHealthRow({ server, isConnected }: { server: any, isConnected: bo
                 <div className="text-xs font-mono text-zinc-500 truncate max-w-[300px]">
                     {server.configKey} ({server.transportType})
                 </div>
+                {healthError ? (
+                    <div className="text-xs text-red-300 max-w-[360px] truncate">
+                        {healthError.message}
+                    </div>
+                ) : null}
             </div>
 
             <div className="flex items-center gap-6">
                 <div className="flex flex-col items-end gap-1">
                     <span className="text-xs text-zinc-500">Crashes</span>
-                    <span className={`text-sm font-mono ${health?.crashCount && health.crashCount > 0 ? 'text-yellow-500' : 'text-zinc-400'}`}>
-                        {health?.crashCount ?? 0} / {health?.maxAttempts ?? 3}
+                    <span className={`text-sm font-mono ${isUnavailable ? 'text-red-300' : health?.crashCount && health.crashCount > 0 ? 'text-yellow-500' : 'text-zinc-400'}`}>
+                        {isUnavailable ? '— / —' : `${health?.crashCount ?? 0} / ${health?.maxAttempts ?? 3}`}
                     </span>
                 </div>
                 
@@ -262,7 +307,7 @@ function ServerHealthRow({ server, isConnected }: { server: any, isConnected: bo
                     size="sm" 
                     variant="outline" 
                     className={`h-8 text-xs ${isError ? 'border-red-500/50 text-red-400 hover:bg-red-950 hover:text-red-300' : 'border-zinc-700'}`}
-                    disabled={!isError || resetHealth.isPending}
+                    disabled={isUnavailable || !isError || resetHealth.isPending}
                     onClick={() => resetHealth.mutate({ serverUuid: server.uuid })}
                 >
                     Reset Health

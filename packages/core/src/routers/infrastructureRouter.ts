@@ -13,7 +13,7 @@ const INFRA_SUBMODULE_DIR = process.env.BORG_INFRA_SUBMODULE?.trim() || LEGACY_I
 
 export const infrastructureRouter = t.router({
     /**
-     * Get the current status of the Borg infrastructure daemon / binary.
+     * Get the current status of the HyperCode infrastructure daemon / binary.
      */
     getInfrastructureStatus: publicProcedure.query(async () => {
         try {

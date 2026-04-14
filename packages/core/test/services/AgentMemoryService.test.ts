@@ -54,7 +54,7 @@ describe('AgentMemoryService', () => {
     let tempDir: string;
 
     beforeEach(() => {
-        tempDir = path.join(os.tmpdir(), `borg-test-${Date.now()}`);
+        tempDir = path.join(os.tmpdir(), `hypercode-test-${Date.now()}`);
         if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
 
         mockMemoryManager = new MockMemoryManager();
@@ -187,7 +187,7 @@ describe('AgentMemoryService', () => {
 
         await memoryService.recordObservation({
             toolName: 'apply_patch',
-            narrative: 'Implemented structured observation recording for Borg memory ingestion.',
+            narrative: 'Implemented structured observation recording for HyperCode memory ingestion.',
             concepts: ['observation-pipeline', 'implementation'],
             filesModified: ['packages/core/src/services/AgentMemoryService.ts'],
         });

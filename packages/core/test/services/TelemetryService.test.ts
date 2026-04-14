@@ -70,7 +70,7 @@ describe('TelemetryService', () => {
 
     it('should include service name attribute', () => {
       const span = telemetry.startSpan('test');
-      expect(span.attributes['service.name']).toBe('borg-core');
+      expect(span.attributes['service.name']).toBe('hypercode-core');
       telemetry.endSpan(span.spanId);
     });
   });

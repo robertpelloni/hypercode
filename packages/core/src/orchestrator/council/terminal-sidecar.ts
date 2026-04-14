@@ -2,7 +2,7 @@ import * as pty from 'node-pty';
 import { createServer } from 'net';
 
 /**
- * Terminal Sidecar - Integrated into Borg Core
+ * Terminal Sidecar - Integrated into HyperCode Core
  * 
  * This is a standalone process that manages a PTY session.
  * It allows the main Orchestrator to restart without killing the CLI process.

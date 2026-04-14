@@ -1,7 +1,7 @@
-import { ModelSelector } from "@borg/ai";
-import { IAgent } from "@borg/ai";
-import { IMCPServer, ICouncilService, IAgentMemoryService } from "@borg/adk";
-import { COUNCIL_PROMPTS } from "@borg/ai";
+import { ModelSelector } from "@hypercode/ai";
+import { IAgent } from "@hypercode/ai";
+import { IMCPServer, ICouncilService, IAgentMemoryService } from "@hypercode/adk";
+import { COUNCIL_PROMPTS } from "@hypercode/ai";
 
 export enum CouncilRole {
     ARCHITECT = 'Architect',

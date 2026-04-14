@@ -192,7 +192,7 @@ vi.mock('next/link', () => ({
   default: ({ children, ...props }: any) => <a {...props}>{children}</a>,
 }));
 
-vi.mock('@borg/ui', () => ({
+vi.mock('@hypercode/ui', () => ({
   Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
   Card: ({ children, ...props }: any) => <section {...props}>{children}</section>,
   CardHeader: ({ children, ...props }: any) => <header {...props}>{children}</header>,

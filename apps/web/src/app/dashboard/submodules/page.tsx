@@ -1,9 +1,9 @@
 'use client';
 
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, Tabs, TabsContent, TabsList, TabsTrigger } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, Tabs, TabsContent, TabsList, TabsTrigger } from "@hypercode/ui";
 import { useEffect, useState } from "react";
 import { fetchSubmodulesAction, healSubmodulesAction, fetchUserLinksAction, fetchWorkspaceInventoryAction } from "./actions";
-import { Button } from "@borg/ui";
+import { Button } from "@hypercode/ui";
 import { Loader2, RefreshCw, GitCommit, Calendar, ExternalLink, Copy, Check, FolderTree, Package2, ScrollText } from "lucide-react";
 import {
     normalizeSubmodules,
@@ -19,19 +19,65 @@ export default function SubmodulesPage() {
     const [submodules, setSubmodules] = useState<NormalizedSubmoduleInfo[]>([]);
     const [userLinks, setUserLinks] = useState<NormalizedLinkCategory[]>([]);
     const [workspaceInventory, setWorkspaceInventory] = useState<NormalizedWorkspaceInventorySection[]>([]);
+    const [submoduleError, setSubmoduleError] = useState<string | null>(null);
+    const [resourcesError, setResourcesError] = useState<string | null>(null);
+    const [workspaceInventoryError, setWorkspaceInventoryError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        Promise.all([
+        let cancelled = false;
+        Promise.allSettled([
             fetchSubmodulesAction(),
             fetchUserLinksAction(),
             fetchWorkspaceInventoryAction(),
         ]).then(([subs, links, inventory]) => {
-            setSubmodules(normalizeSubmodules(subs));
-            setUserLinks(normalizeUserLinks(links));
-            setWorkspaceInventory(normalizeWorkspaceInventory(inventory));
+            if (cancelled) {
+                return;
+            }
+
+            if (subs.status === 'fulfilled') {
+                if (Array.isArray(subs.value)) {
+                    setSubmodules(normalizeSubmodules(subs.value));
+                    setSubmoduleError(null);
+                } else {
+                    setSubmodules([]);
+                    setSubmoduleError('Submodule inventory unavailable due to malformed data.');
+                }
+            } else {
+                setSubmodules([]);
+                setSubmoduleError(subs.reason instanceof Error ? subs.reason.message : String(subs.reason));
+            }
+
+            if (links.status === 'fulfilled') {
+                if (Array.isArray(links.value)) {
+                    setUserLinks(normalizeUserLinks(links.value));
+                    setResourcesError(null);
+                } else {
+                    setUserLinks([]);
+                    setResourcesError('User resources unavailable due to malformed data.');
+                }
+            } else {
+                setUserLinks([]);
+                setResourcesError(links.reason instanceof Error ? links.reason.message : String(links.reason));
+            }
+
+            if (inventory.status === 'fulfilled') {
+                if (Array.isArray(inventory.value)) {
+                    setWorkspaceInventory(normalizeWorkspaceInventory(inventory.value));
+                    setWorkspaceInventoryError(null);
+                } else {
+                    setWorkspaceInventory([]);
+                    setWorkspaceInventoryError('Workspace inventory unavailable due to malformed data.');
+                }
+            } else {
+                setWorkspaceInventory([]);
+                setWorkspaceInventoryError(inventory.reason instanceof Error ? inventory.reason.message : String(inventory.reason));
+            }
             setLoading(false);
         });
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     const summaryCounts = summarizeSubmoduleCounts(submodules, userLinks);
@@ -47,10 +93,10 @@ export default function SubmodulesPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatusCard title="Clean" value={summaryCounts.clean} color="text-green-500" />
-                <StatusCard title="Dirty" value={summaryCounts.dirty} color="text-yellow-500" />
-                <StatusCard title="Missing" value={summaryCounts.missing} color="text-red-500" />
-                <StatusCard title="Resources" value={summaryCounts.resources} color="text-blue-500" />
+                <StatusCard title="Clean" value={submoduleError ? '—' : summaryCounts.clean} color="text-green-500" />
+                <StatusCard title="Dirty" value={submoduleError ? '—' : summaryCounts.dirty} color="text-yellow-500" />
+                <StatusCard title="Missing" value={submoduleError ? '—' : summaryCounts.missing} color="text-red-500" />
+                <StatusCard title="Resources" value={resourcesError ? '—' : summaryCounts.resources} color="text-blue-500" />
             </div>
 
             <Tabs defaultValue="modules" className="space-y-4">
@@ -63,7 +109,7 @@ export default function SubmodulesPage() {
                 <TabsContent value="modules" className="space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Repository Map ({submodules.length})</CardTitle>
+                            <CardTitle>Repository Map ({submoduleError ? '—' : submodules.length})</CardTitle>
                             <CardDescription>
                                 Active git submodules tracked in .gitmodules
                             </CardDescription>
@@ -73,6 +119,10 @@ export default function SubmodulesPage() {
                                 <div className="flex items-center justify-center p-8 text-muted-foreground gap-2">
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                     Scanning repository...
+                                </div>
+                            ) : submoduleError ? (
+                                <div className="rounded-md border border-red-900/40 bg-red-950/20 p-4 text-sm text-red-300">
+                                    {submoduleError}
                                 </div>
                             ) : (
                                 <div className="rounded-md border overflow-hidden">
@@ -146,20 +196,29 @@ export default function SubmodulesPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                                {userLinks.map((cat, idx) => (
-                                    <Card key={idx} className="h-fit">
-                                        <CardHeader className="pb-3">
-                                            <CardTitle className="text-base font-semibold">{cat.name}</CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="grid gap-2 text-sm">
-                                            {cat.links.map((link, i) => (
-                                                <ResourceLink key={i} url={link} />
-                                            ))}
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </div>
+                            {resourcesError ? (
+                                <div className="rounded-md border border-red-900/40 bg-red-950/20 p-4 text-sm text-red-300">
+                                    {resourcesError}
+                                </div>
+                            ) : (
+                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                    {userLinks.map((cat, idx) => (
+                                        <Card key={idx} className="h-fit">
+                                            <CardHeader className="pb-3">
+                                                <CardTitle className="text-base font-semibold">{cat.name}</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="grid gap-2 text-sm">
+                                                {cat.links.map((link, i) => (
+                                                    <ResourceLink key={i} url={link} />
+                                                ))}
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                    {userLinks.length === 0 ? (
+                                        <div className="text-sm text-muted-foreground italic">No user resources documented.</div>
+                                    ) : null}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -168,19 +227,23 @@ export default function SubmodulesPage() {
                     <div className="space-y-4">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Borg Project Structure</CardTitle>
+                                <CardTitle>HyperCode Project Structure</CardTitle>
                                 <CardDescription>
                                     Live workspace inventory for apps, packages, docs, scripts, and reference repos.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-4 md:grid-cols-3">
-                                <StatusCard title="Sections" value={workspaceInventory.length} color="text-cyan-500" />
-                                <StatusCard title="Tracked entries" value={workspaceInventory.reduce((sum, section) => sum + section.entries.length, 0)} color="text-violet-500" />
-                                <StatusCard title="Documented resources" value={userLinks.length} color="text-amber-500" />
+                                <StatusCard title="Sections" value={workspaceInventoryError ? '—' : workspaceInventory.length} color="text-cyan-500" />
+                                <StatusCard title="Tracked entries" value={workspaceInventoryError ? '—' : workspaceInventory.reduce((sum, section) => sum + section.entries.length, 0)} color="text-violet-500" />
+                                <StatusCard title="Documented resources" value={resourcesError ? '—' : userLinks.length} color="text-amber-500" />
                             </CardContent>
                         </Card>
 
-                        {workspaceInventory.map((section) => (
+                        {workspaceInventoryError ? (
+                            <div className="rounded-md border border-red-900/40 bg-red-950/20 p-4 text-sm text-red-300">
+                                {workspaceInventoryError}
+                            </div>
+                        ) : workspaceInventory.map((section) => (
                             <Card key={section.id}>
                                 <CardHeader>
                                     <div className="flex items-center gap-2">
@@ -221,6 +284,9 @@ export default function SubmodulesPage() {
                                 </CardContent>
                             </Card>
                         ))}
+                        {!workspaceInventoryError && workspaceInventory.length === 0 ? (
+                            <div className="text-sm text-muted-foreground italic">No workspace inventory sections reported.</div>
+                        ) : null}
                     </div>
                 </TabsContent>
             </Tabs>
@@ -270,7 +336,7 @@ function ResourceLink({ url }: { url: string }) {
     )
 }
 
-function StatusCard({ title, value, color }: { title: string, value: number, color: string }) {
+function StatusCard({ title, value, color }: { title: string, value: number | string, color: string }) {
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

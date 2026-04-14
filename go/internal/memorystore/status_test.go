@@ -14,7 +14,7 @@ func TestReadStatusReturnsEmptyShapeWhenStoreMissing(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	expectedPath := filepath.Join(tempDir, ".borg", "sectioned_memory.json")
+	expectedPath := filepath.Join(tempDir, ".hypercode", "sectioned_memory.json")
 	if status.Exists {
 		t.Fatalf("expected missing store")
 	}
@@ -31,7 +31,7 @@ func TestReadStatusReturnsEmptyShapeWhenStoreMissing(t *testing.T) {
 
 func TestReadStatusSummarizesSectionedStore(t *testing.T) {
 	tempDir := t.TempDir()
-	storePath := filepath.Join(tempDir, ".borg", "sectioned_memory.json")
+	storePath := filepath.Join(tempDir, ".hypercode", "sectioned_memory.json")
 	if err := os.MkdirAll(filepath.Dir(storePath), 0o755); err != nil {
 		t.Fatalf("failed to create store dir: %v", err)
 	}
@@ -63,7 +63,7 @@ func TestReadStatusSummarizesSectionedStore(t *testing.T) {
 
 func TestReadStatusFallsBackToLegacyStore(t *testing.T) {
 	tempDir := t.TempDir()
-	legacyPath := filepath.Join(tempDir, ".borg", "claude_mem.json")
+	legacyPath := filepath.Join(tempDir, ".hypercode", "claude_mem.json")
 	if err := os.MkdirAll(filepath.Dir(legacyPath), 0o755); err != nil {
 		t.Fatalf("failed to create legacy dir: %v", err)
 	}
@@ -82,7 +82,7 @@ func TestReadStatusFallsBackToLegacyStore(t *testing.T) {
 	if status.SectionCount != 1 {
 		t.Fatalf("expected 1 section, got %d", status.SectionCount)
 	}
-	if status.StorePath != filepath.Join(tempDir, ".borg", "sectioned_memory.json") {
+	if status.StorePath != filepath.Join(tempDir, ".hypercode", "sectioned_memory.json") {
 		t.Fatalf("expected canonical store path, got %q", status.StorePath)
 	}
 }

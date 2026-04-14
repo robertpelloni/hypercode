@@ -1,9 +1,9 @@
-# Ideas for Improvement: @borg/memory
+# Ideas for Improvement: @hypercode/memory
 
 Ambitious features to evolve the "Long-Term Memory" and context persistence layer.
 
 ## 1. Decentralized & Swarm Memory
-- **P2P Memory Swarm:** Allow multiple Borg nodes to securely share and "gossip" learned facts, code symbols, and architectural patterns via the P2P mesh.
+- **P2P Memory Swarm:** Allow multiple HyperCode nodes to securely share and "gossip" learned facts, code symbols, and architectural patterns via the P2P mesh.
 - **Collective Intelligence Ledger:** A conceptual system where successful agent strategies are recorded on a global, verifiable ledger (Bobcoin integration) for all swarm members to benefit from.
 - **Recursive Knowledge Harvesting:** Agents that can autonomously "read" and summarize entire libraries or documentation sites and store the resulting knowledge in the shared swarm memory.
 

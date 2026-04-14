@@ -33,14 +33,14 @@ describe('legacyProxyMode', () => {
         expect(isToolNotFoundError(new Error('socket hang up'))).toBe(false);
     });
 
-    it('prefers Borg aggregator execution for namespaced downstream tools', () => {
+    it('prefers HyperCode aggregator execution for namespaced downstream tools', () => {
         expect(shouldPreferAggregatorExecution('github__create_issue')).toBe(true);
         expect(shouldPreferAggregatorExecution('memory__store_fact')).toBe(true);
         expect(shouldPreferAggregatorExecution('search_tools')).toBe(false);
         expect(shouldPreferAggregatorExecution('run_code')).toBe(false);
     });
 
-    it('prefers Borg aggregator execution for plain tool names already present in the aggregated inventory', () => {
+    it('prefers HyperCode aggregator execution for plain tool names already present in the aggregated inventory', () => {
         expect(shouldPreferAggregatorExecution('create_issue', [
             { name: 'github__create_issue', _originalName: 'create_issue' },
         ])).toBe(true);
@@ -55,7 +55,7 @@ describe('legacyProxyMode', () => {
         expect(shouldUseDirectMCPHandlers({ legacyProxyEnabled: true, legacyProxyInitFailed: false })).toBe(false);
     });
 
-    it('attempts legacy proxy execution only when Borg is not already handling the tool natively', () => {
+    it('attempts legacy proxy execution only when HyperCode is not already handling the tool natively', () => {
         expect(shouldAttemptLegacyProxyExecution({ legacyProxyEnabled: true, prefersAggregatorExecution: false })).toBe(true);
         expect(shouldAttemptLegacyProxyExecution({ legacyProxyEnabled: true, prefersAggregatorExecution: true })).toBe(false);
         expect(shouldAttemptLegacyProxyExecution({ legacyProxyEnabled: false, prefersAggregatorExecution: false })).toBe(false);

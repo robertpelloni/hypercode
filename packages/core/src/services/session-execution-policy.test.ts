@@ -107,7 +107,7 @@ describe('selectSessionExecutionPolicy', () => {
         expect(policy.reason).toContain('falling back to PowerShell 7');
     });
 
-    it('exports reserved Borg execution environment variables', () => {
+    it('exports reserved HyperCode execution environment variables', () => {
         const policy = selectSessionExecutionPolicy(createEnvironment(), 'compatibility');
         const env = buildExecutionPolicyEnv(policy);
 

@@ -1,6 +1,6 @@
 {
-    "name": "borg-monorepo",
-    "version": "0.99.1",
+    "name": "hypercode-monorepo",
+    "version": "1.0.0-alpha.1",
     "private": true,
     "packageManager": "pnpm@10.28.0",
     "scripts": {
@@ -9,9 +9,9 @@
         "build:workspace": "node scripts/build_all.mjs --workspace-only",
         "build:extensions": "node scripts/build_all.mjs --extensions-only",
         "dev": "node scripts/dev_tabby_ready.mjs",
-        "dev:turbo": "set CI=true&& set TURBO_DAEMON=false&& turbo run dev --concurrency 22 --filter=!@borg/cli --filter=!@repo/*",
+        "dev:turbo": "set CI=true&& set TURBO_DAEMON=false&& turbo run dev --concurrency 22 --filter=!@hypercode/cli --filter=!@repo/*",
         "dev:server": "set TURBO_DAEMON=false&& turbo run dev:server --parallel --filter=!@repo/*",
-        "dev:web": "set TURBO_DAEMON=false&& turbo run dev --filter @borg/web",
+        "dev:web": "set TURBO_DAEMON=false&& turbo run dev --filter @hypercode/web",
         "dev:orchestrator": "set BORG_ORCHESTRATOR_PORT=3847&& npx tsx packages/core/src/orchestrator/council/node-index.ts",
         "lint": "pnpm run check:placeholders",
         "lint:turbo": "set TURBO_DAEMON=false&& turbo run lint --output-logs=errors-only",

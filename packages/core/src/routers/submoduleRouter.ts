@@ -1,11 +1,26 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { t, publicProcedure, adminProcedure, getSubmoduleService } from '../lib/trpc-core.js';
 
 export const submoduleRouter = t.router({
     list: publicProcedure.query(async () => {
         const service = getSubmoduleService();
-        if (service) return await service.listSubmodules();
-        return [];
+        if (!service) {
+            throw new TRPCError({
+                code: 'SERVICE_UNAVAILABLE',
+                message: 'Submodule inventory is unavailable: SubmoduleService not available',
+            });
+        }
+
+        try {
+            return await service.listSubmodules();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: `Submodule inventory is unavailable: ${message}`,
+            });
+        }
     }),
     updateAll: adminProcedure.mutation(async () => {
         const service = getSubmoduleService();

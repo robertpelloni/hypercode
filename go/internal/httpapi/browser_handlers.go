@@ -21,8 +21,9 @@ func (s *Server) handleBrowserStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
+	writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+		"success": false,
+		"error":   "Browser runtime is unavailable: upstream browser service is not available locally.",
 		"data": map[string]any{
 			"available": false,
 			"active":    false,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button } from "@borg/ui";
+import { Card, CardHeader, CardTitle, CardContent, Button } from "@hypercode/ui";
 import { Loader2, Code2, Trash2, Pin, Search, StickyNote, Star, Trash } from "lucide-react";
 import { trpc } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -9,7 +9,7 @@ import { filterSymbols, normalizeSymbols, type NormalizedSymbol, type SymbolType
 import { PageStatusBanner } from '@/components/PageStatusBanner';
 
 export default function SymbolsDashboard() {
-    const { data: symbols, isLoading, refetch } = trpc.symbols.list.useQuery();
+    const { data: symbols, isLoading, error, refetch } = trpc.symbols.list.useQuery();
     const [searchQuery, setSearchQuery] = useState('');
 
     const unpinMutation = trpc.symbols.unpin.useMutation({
@@ -34,6 +34,7 @@ export default function SymbolsDashboard() {
 
     const normalizedSymbols = normalizeSymbols(symbols);
     const filteredSymbols = filterSymbols(normalizedSymbols, searchQuery);
+    const symbolsUnavailable = Boolean(error) || (symbols != null && !Array.isArray(symbols));
 
     return (
         <div className="p-8 space-y-8">
@@ -54,7 +55,7 @@ export default function SymbolsDashboard() {
                         size="sm" 
                         className="text-zinc-400 hover:text-red-400 border-zinc-800"
                         onClick={() => { if(confirm("Clear all pins?")) clearMutation.mutate(); }}
-                        disabled={clearMutation.isPending || normalizedSymbols.length === 0}
+                        disabled={clearMutation.isPending || symbolsUnavailable || normalizedSymbols.length === 0}
                     >
                         <Trash className="mr-2 h-4 w-4" /> Clear All
                     </Button>
@@ -78,6 +79,12 @@ export default function SymbolsDashboard() {
                 {isLoading ? (
                     <div className="col-span-full flex justify-center p-12">
                         <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+                    </div>
+                ) : symbolsUnavailable ? (
+                    <div className="col-span-full text-center p-20 bg-red-500/10 rounded-lg border border-red-500/20">
+                        <Pin className="h-12 w-12 mx-auto mb-4 opacity-40 text-red-300" />
+                        <p className="text-lg font-medium text-red-200">Symbol data unavailable.</p>
+                        <p className="text-sm mt-1 text-red-300/80">{error?.message ?? 'Malformed symbol payload.'}</p>
                     </div>
                 ) : filteredSymbols.length === 0 ? (
                     <div className="col-span-full text-center p-20 bg-zinc-900/30 rounded-lg border border-zinc-800 border-dashed">

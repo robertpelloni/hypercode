@@ -1,3 +1,4 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { t, publicProcedure, adminProcedure } from '../../lib/trpc-core.js';
 import { sessionRouter } from './sessionRouter.js';
@@ -35,7 +36,7 @@ function getCouncilConfigPath(): string {
 }
 
 /**
- * Council router — the central tRPC namespace for the Borg Council of Agents.
+ * Council router — the central tRPC namespace for the HyperCode Council of Agents.
  *
  * Top-level procedures:
  *   - `members` — reads agent definitions from config/council.json
@@ -67,9 +68,22 @@ export const councilRouter = t.router({
         const raw = readFileSync(configPath, 'utf-8');
         const parsed = JSON.parse(raw);
         return parsed.members || [];
-      } catch (e) {
-        console.warn('[councilRouter] Failed to read council.json:', e);
-        return [];
+      } catch (error) {
+        const errorCode = (error as NodeJS.ErrnoException | undefined)?.code;
+        if (errorCode === 'ENOENT') {
+          return [];
+        }
+
+        const detail = error instanceof SyntaxError
+          ? 'council.json contains invalid JSON.'
+          : error instanceof Error
+            ? error.message
+            : String(error);
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Council configuration is unavailable: ${detail}`,
+        });
       }
     }),
 

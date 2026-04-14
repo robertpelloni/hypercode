@@ -32,8 +32,8 @@ describe('detectLocalExecutionEnvironment', () => {
             },
             runCommand: async (command, args) => {
                 const joined = `${command} ${args.join(' ')}`;
-                if (joined.includes('borg-ready')) {
-                    return 'borg-ready';
+                if (joined.includes('hypercode-ready')) {
+                    return 'hypercode-ready';
                 }
                 if (joined.includes('PSVersionTable')) {
                     return '7.5.0';
