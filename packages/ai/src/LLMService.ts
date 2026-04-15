@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+export type ModelCapability = 'vision' | 'tools' | 'long-context' | 'fast' | 'reasoning' | 'json';
+
 export interface LLMResponse {
     content: string;
     usage?: {

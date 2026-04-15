@@ -1,4 +1,4 @@
-import { ChatMessage } from '../../../../ai/src/providers/ProviderInterface';
+import { ChatMessage } from '@hypercode/ai';
 
 export class ContextGroomer {
     private maxTokens: number;

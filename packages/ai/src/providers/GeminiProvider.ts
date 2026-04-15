@@ -1,4 +1,4 @@
-import { IAIProvider, AIProviderConfig, ChatMessage, AIProviderResponse } from './ProviderInterface';
+import { IAIProvider, AIProviderConfig, ChatMessage, AIProviderResponse } from './ProviderInterface.js';
 
 export class GeminiProvider implements IAIProvider {
     name = 'gemini';

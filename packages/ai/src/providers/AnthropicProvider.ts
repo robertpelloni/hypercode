@@ -1,4 +1,4 @@
-import { IAIProvider, AIProviderConfig, ChatMessage, AIProviderResponse } from './ProviderInterface';
+import { IAIProvider, AIProviderConfig, ChatMessage, AIProviderResponse } from './ProviderInterface.js';
 
 export class AnthropicProvider implements IAIProvider {
     name = 'anthropic';

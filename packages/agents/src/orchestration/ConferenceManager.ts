@@ -1,4 +1,4 @@
-import { DebateEngine, DebateParticipant } from './DebateEngine';
+import { DebateEngine, DebateParticipant } from './DebateEngine.js';
 
 export class ConferenceManager {
     private engine: DebateEngine;

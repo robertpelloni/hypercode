@@ -1,16 +1,13 @@
 import { ModelCapability } from '../LLMService.js';
-
 export interface AIProviderConfig {
     apiKey: string;
     organization?: string;
     baseUrl?: string;
 }
-
 export interface ChatMessage {
     role: 'system' | 'user' | 'assistant';
     content: string;
 }
-
 export interface AIProviderResponse {
     content: string;
     usage?: {
@@ -20,20 +17,13 @@ export interface AIProviderResponse {
     };
     raw?: any;
 }
-
 export interface IAIProvider {
     name: string;
     capabilities: ModelCapability[];
-
     initialize(config: AIProviderConfig): void;
-
-    generateContent(
-        modelId: string,
-        messages: ChatMessage[],
-        options?: {
-            temperature?: number;
-            maxTokens?: number;
-            systemPrompt?: string;
-        }
-    ): Promise<AIProviderResponse>;
+    generateContent(modelId: string, messages: ChatMessage[], options?: {
+        temperature?: number;
+        maxTokens?: number;
+        systemPrompt?: string;
+    }): Promise<AIProviderResponse>;
 }

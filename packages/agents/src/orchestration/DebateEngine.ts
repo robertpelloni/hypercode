@@ -1,4 +1,4 @@
-import { ChatMessage } from '../../../ai/src/providers/ProviderInterface';
+import { ChatMessage } from '../../../ai/src/providers/ProviderInterface.js';
 
 export interface DebateParticipant {
     id: string;

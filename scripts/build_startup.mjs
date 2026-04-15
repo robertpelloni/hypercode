@@ -68,6 +68,16 @@ function runGoPrimaryBuild() {
   printStep('Running Go-primary startup build (Go control plane + CLI)...');
 
   // Build core first since CLI depends on its dist output
+  const aiBuild = runPnpm(['-C', 'packages/ai', 'run', 'build']);
+  if ((aiBuild.status ?? 1) !== 0) {
+    fail('AI startup build failed', aiBuild);
+  }
+
+  const agentsBuild = runPnpm(['-C', 'packages/agents', 'run', 'build']);
+  if ((agentsBuild.status ?? 1) !== 0) {
+    fail('Agents startup build failed', agentsBuild);
+  }
+
   const coreBuild = runPnpm(['-C', 'packages/core', 'run', 'build']);
   if ((coreBuild.status ?? 1) !== 0) {
     fail('Core startup build failed', coreBuild);
