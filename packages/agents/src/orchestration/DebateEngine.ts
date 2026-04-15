@@ -1,4 +1,4 @@
-import { ChatMessage } from '../../../ai/src/providers/ProviderInterface.js';
+import { ChatMessage } from '@hypercode/ai';
 
 export interface DebateParticipant {
     id: string;
