@@ -1,30 +1,32 @@
-[submodule "external/MetaMCP"]
-        path = external/MetaMCP
-        url = https://github.com/robertpelloni/MetaMCP
-[submodule "submodules/mcpproxy"]
-	path = archive/submodules/mcpproxy
-        url = https://github.com/Dumbris/mcpproxy
-[submodule "submodules/litellm"]
-	path = archive/submodules/litellm
-        url = https://github.com/BerriAI/litellm
-[submodule "external/claude-mem"]
-	path = archive/claude-mem
-        url = https://github.com/robertpelloni/claude-mem
-[submodule "external/OmniRoute"]
-	path = archive/OmniRoute
-        url = https://github.com/diegosouzapw/OmniRoute
-[submodule "packages/claude-mem"]
-        path = packages/claude-mem
-        url = https://github.com/robertpelloni/claude-mem
-[submodule "apps/maestro"]
-	path = apps/maestro
-	url = https://github.com/robertpelloni/Maestro
-[submodule "apps/cloud-orchestrator"]
-	path = apps/cloud-orchestrator
-	url = https://github.com/robertpelloni/jules-autopilot
-[submodule "submodules/prism-mcp"]
-	path = submodules/prism-mcp
-	url = https://github.com/dcostenco/prism-mcp
-[submodule "submodules/hyperharness"]
-	path = submodules/hyperharness
+[submodule "hyperharness/research/hyperharness"]
+	path = hyperharness/research/hyperharness
 	url = https://github.com/robertpelloni/hyperharness.git
+	branch = main
+[submodule "hypermcp/research/prism-mcp"]
+	path = hypermcp/research/prism-mcp
+	url = https://github.com/dcostenco/prism-mcp.git
+	branch = main
+[submodule "hypermem/research/claude-mem"]
+	path = hypermem/research/claude-mem
+	url = https://github.com/robertpelloni/claude-mem.git
+	branch = main
+[submodule "hypercode/research/maestro"]
+	path = hypercode/research/maestro
+	url = https://github.com/robertpelloni/Maestro.git
+	branch = main
+[submodule "hypercode/research/cloud-orchestrator"]
+	path = hypercode/research/cloud-orchestrator
+	url = https://github.com/robertpelloni/jules-autopilot.git
+	branch = main
+[submodule "hypermcp/research/mcpproxy"]
+	path = hypermcp/research/mcpproxy
+	url = https://github.com/Dumbris/mcpproxy.git
+	branch = main
+[submodule "hyperingest/research/litellm"]
+	path = hyperingest/research/litellm
+	url = https://github.com/BerriAI/litellm.git
+	branch = main
+[submodule "hyperingest/research/OmniRoute"]
+	path = hyperingest/research/OmniRoute
+	url = https://github.com/diegosouzapw/OmniRoute.git
+	branch = main

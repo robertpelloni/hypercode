@@ -154,9 +154,9 @@ set HYPERCODE_STARTUP_BUILD_DECISION=%BUILD_DECISION%
 set HYPERCODE_STARTUP_BUILD_REASON=%BUILD_REASON%
 
 echo Starting Hub...
-echo Maestro is now launched separately. Use "pnpm -C apps/maestro start" when needed.
+echo Maestro is now launched separately. Use "pnpm -C hypercode/research/maestro start" when needed.
 
-set CLI_ENTRY=packages\cli\dist\cli\src\index.js
+set CLI_ENTRY=hypercode\packages\ts\cli\dist\cli\src\index.js
 if exist "%CLI_ENTRY%" (
     echo Launching HyperCode via built CLI entrypoint ^(%CLI_ENTRY%^)...
     node "%CLI_ENTRY%" start %*

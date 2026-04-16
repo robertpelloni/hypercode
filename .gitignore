@@ -115,3 +115,7 @@ audit-*.jsonl
 screenshot*.png
 .hypercode/skills/
 go/hypercode
+
+# Go internal symlinks (sources live in domain folders)
+go/internal/*
+!go/internal/.gitkeep
