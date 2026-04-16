@@ -41,7 +41,7 @@ export const toolSetsRouter = t.router({
         .input(CreateToolSetInput)
         .mutation(async ({ input }) => {
             try {
-                return await toolSetsRepository.create(input);
+                return await toolSetsRepository.create(input as any);
             } catch (error) {
                 rethrowSqliteUnavailableAsTrpc('Tool sets are unavailable', error);
             }
@@ -51,7 +51,7 @@ export const toolSetsRouter = t.router({
         .input(UpdateToolSetInput)
         .mutation(async ({ input }) => {
             try {
-                const updated = await toolSetsRepository.update(input);
+                const updated = await toolSetsRepository.update(input as any);
                 if (!updated) {
                     throw new Error("Tool set not found");
                 }

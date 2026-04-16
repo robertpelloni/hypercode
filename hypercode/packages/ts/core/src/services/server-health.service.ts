@@ -144,9 +144,7 @@ export class ServerHealthService {
                 toolCount: connectionResult.success
                     ? connectionResult.toolCount
                     : undefined,
-                errorMessage: connectionResult.success
-                    ? undefined
-                    : connectionResult.errorMessage,
+                errorMessage: 'errorMessage' in connectionResult ? connectionResult.errorMessage : undefined,
                 checkedAt,
             };
 

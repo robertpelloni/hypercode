@@ -37,7 +37,12 @@ export const workflowRouter = t.router({
                     });
                     return { id: input.id };
                 } else {
-                    const res = await visualWorkflowsRepo.createWorkflow(input);
+                    const res = await visualWorkflowsRepo.createWorkflow({
+                        name: input.name ?? '',
+                        description: input.description,
+                        nodes: input.nodes ?? [],
+                        edges: input.edges ?? [],
+                    });
                     return { id: res.id };
                 }
             } catch (error) {

@@ -495,8 +495,8 @@ export const attachTo = async (
         // downstream binaries. This keeps server loading invisible and lazy.
         const cachedInventory = await getCachedToolInventory().catch(() => null);
         if (cachedInventory && cachedInventory.tools.length > 0) {
-            const serverUuidByName = new Map(
-                cachedInventory.servers.map((server) => [server.name, server.uuid]),
+            const serverUuidByName = new Map<string, string>(
+                cachedInventory.servers.map((server: any) => [server.name, server.uuid]),
             );
 
             cachedInventory.tools.forEach((tool) => {

@@ -865,7 +865,7 @@ Examples:
       const cliDir = dirname(fileURLToPath(import.meta.url));
       const hypercodeVersion = readCanonicalVersion(cliDir);
       const repoRoot = resolveRepoRoot(cliDir) ?? resolve(cliDir, '..', '..', '..', '..', '..');
-      const webRoot = join(repoRoot, 'apps', 'web');
+      const webRoot = join(repoRoot, 'hypercode', 'apps', 'web');
       console.log(chalk.bold.cyan(`\n  ⬡ HyperCode v${hypercodeVersion}`));
       console.log(chalk.dim('  The Neural Operating System\n'));
 

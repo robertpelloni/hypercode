@@ -172,13 +172,13 @@
       "id": "13",
       "subject": "Fix hypercode-supervisor module resolution path",
       "description": "The runtime still resolves supervisor to packages/hypercode-supervisor/dist/index.js instead of hypercode/packages/ts/supervisor/dist/index.js. The mcp.jsonc was fixed but the compiled runtime code or package resolution may still use old paths.",
-      "status": "in_progress",
+      "status": "completed",
       "activeForm": "Fixing hypercode-supervisor path in compiled runtime",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1776362798268,
-      "updatedAt": 1776362906437
+      "updatedAt": 1776363127978
     }
   ]
 }
