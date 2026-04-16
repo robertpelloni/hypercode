@@ -86,8 +86,8 @@ export class AutoConfig {
     }
 
     private static resolveCoreEntry(workspaceRoot: string): { command: string; args: string[] } {
-        const distEntry = path.join(workspaceRoot, 'packages', 'core', 'dist', 'index.js');
-        const srcEntry = path.join(workspaceRoot, 'packages', 'core', 'src', 'index.ts');
+        const distEntry = path.join(workspaceRoot, 'hypercode', 'packages', 'ts', 'core', 'dist', 'index.js');
+        const srcEntry = path.join(workspaceRoot, 'hypercode', 'packages', 'ts', 'core', 'src', 'index.ts');
 
         if (existsSync(distEntry)) {
             return { command: process.execPath, args: [distEntry] };

@@ -18,7 +18,7 @@ export class Researcher {
 
     constructor(server: MCPServer) {
         this.server = server;
-        this.outputPath = path.join(process.cwd(), 'packages', 'core', 'data', 'raw_skills');
+        this.outputPath = path.join(process.cwd(), 'hypercode', 'packages', 'ts', 'core', 'data', 'raw_skills');
     }
 
     async loadQueue(csvPath: string) {

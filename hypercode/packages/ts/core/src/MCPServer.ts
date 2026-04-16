@@ -609,7 +609,7 @@ export class MCPServer {
         this.healerService = new HealerService(this.llmService, this);
         this.promptRegistry = new PromptRegistry();
         this.skillRegistry = new SkillRegistry([
-            path.join(process.cwd(), 'packages', 'core', 'src', 'skills'),
+            path.join(process.cwd(), 'hypercode', 'packages', 'ts', 'core', 'src', 'skills'),
             path.join(process.cwd(), '.hypercode', 'skills')
         ]);
         // SearchService is needed for DeepResearchService types
@@ -4242,7 +4242,7 @@ ${env.tools.filter((tool) => tool.installed).map((tool) => `- **${tool.name}**: 
             const rootDir = this.findMonorepoRoot(__dirname);
             mcpServerDebugLog(`[MCPServer] DEBUG rootDir: ${rootDir}`);
             if (rootDir) {
-                const supervisorPath = path.join(rootDir, 'packages', 'hypercode-supervisor', 'dist', 'index.js');
+                const supervisorPath = path.join(rootDir, 'hypercode', 'packages', 'ts', 'supervisor', 'dist', 'index.js');
                 mcpServerDebugLog(`[MCPServer] Supervisor Path Resolved: ${supervisorPath}`);
 
                 await this.router.connectToServer('hypercode-supervisor', 'node', [supervisorPath]);

@@ -16,10 +16,12 @@ export class FileSensor {
         if (watchPaths) {
             this.watchPaths = watchPaths.map(p => p.split(path.sep).join('/'));
         } else {
-            // Default: Watch src directories for code changes
+            // Default: Watch src directories for code changes (domain-folder layout)
             this.watchPaths = [
-                path.join(this.rootDir, 'packages', '*', 'src', '**', '*.ts').split(path.sep).join('/'),
-                path.join(this.rootDir, 'apps', '*', 'src', '**', '*.tsx').split(path.sep).join('/')
+                path.join(this.rootDir, 'hypercode', 'packages', 'ts', '*', 'src', '**', '*.ts').split(path.sep).join('/'),
+                path.join(this.rootDir, 'hypermcp', 'packages', 'ts', '*', 'src', '**', '*.ts').split(path.sep).join('/'),
+                path.join(this.rootDir, 'hyperharness', 'packages', 'ts', '*', 'src', '**', '*.ts').split(path.sep).join('/'),
+                path.join(this.rootDir, 'hypercode', 'apps', '*', 'src', '**', '*.tsx').split(path.sep).join('/')
             ];
         }
     }

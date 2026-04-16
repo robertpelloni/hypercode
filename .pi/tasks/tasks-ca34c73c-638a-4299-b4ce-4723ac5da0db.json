@@ -1,5 +1,5 @@
 {
-  "nextId": 11,
+  "nextId": 14,
   "tasks": [
     {
       "id": "1",
@@ -143,6 +143,42 @@
       ],
       "createdAt": 1776312190430,
       "updatedAt": 1776315484145
+    },
+    {
+      "id": "11",
+      "subject": "Fix BobbyBookmarks missing data/ directory",
+      "description": "The BobbyBookmarksSyncWorker tries to open a SQLite DB in data/ but the directory doesn't exist. Fix by either ensuring the directory is created at startup or creating it now.",
+      "status": "completed",
+      "activeForm": "Fixing BobbyBookmarks data directory",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1776362783888,
+      "updatedAt": 1776362861408
+    },
+    {
+      "id": "12",
+      "subject": "Fix FileSensor stale watch globs in source code",
+      "description": "FileSensor watches use old paths packages/*/src/**/*.ts and apps/*/src/**/*.tsx. Update to new domain-folder structure: hypercode/packages/ts/*/src/**/*.ts, etc.",
+      "status": "completed",
+      "activeForm": "Fixing FileSensor watch globs",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1776362790424,
+      "updatedAt": 1776362902727
+    },
+    {
+      "id": "13",
+      "subject": "Fix hypercode-supervisor module resolution path",
+      "description": "The runtime still resolves supervisor to packages/hypercode-supervisor/dist/index.js instead of hypercode/packages/ts/supervisor/dist/index.js. The mcp.jsonc was fixed but the compiled runtime code or package resolution may still use old paths.",
+      "status": "in_progress",
+      "activeForm": "Fixing hypercode-supervisor path in compiled runtime",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1776362798268,
+      "updatedAt": 1776362906437
     }
   ]
 }

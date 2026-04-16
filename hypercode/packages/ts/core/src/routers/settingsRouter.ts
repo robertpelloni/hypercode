@@ -185,7 +185,7 @@ export const settingsRouter = t.router({
             console.log(`[settingsRouter] Persisted ${envKey} to .env`);
 
             // Check if we also need to update packages/core/.env for development
-            const coreEnvPath = path.join(rootDir, 'packages', 'core', '.env');
+            const coreEnvPath = path.join(rootDir, 'hypercode', 'packages', 'ts', 'core', '.env');
             if (fs.existsSync(coreEnvPath)) {
                 let coreEnvContent = fs.readFileSync(coreEnvPath, 'utf8');
                 coreEnvContent = upsertEnvValue(coreEnvContent, envKey, envValue);
@@ -219,7 +219,7 @@ export const settingsRouter = t.router({
                 console.log(`[settingsRouter] Removed ${envKey} from .env`);
             }
 
-            const coreEnvPath = path.join(rootDir, 'packages', 'core', '.env');
+            const coreEnvPath = path.join(rootDir, 'hypercode', 'packages', 'ts', 'core', '.env');
             if (fs.existsSync(coreEnvPath)) {
                 const coreEnvContent = fs.readFileSync(coreEnvPath, 'utf8');
                 const updated = removeEnvValue(coreEnvContent, envKey);

@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-import fs from 'fs/promises';
+import fs from 'fs';
+import fsp from 'fs/promises';
 import { randomUUID } from 'crypto';
 import { linksBacklogRepository, type UpsertLinkBacklogInput } from '../../db/repositories/links-backlog.repo.js';
 import { formatOptionalSqliteFailure, isSqliteUnavailableError } from '../../db/sqliteAvailability.js';
@@ -47,6 +48,16 @@ export class BobbyBookmarksSyncWorker {
 
     private async syncFromDb(): Promise<void> {
         try {
+            // Ensure parent directory exists (better-sqlite3 won't create it)
+            const dbDir = path.dirname(this.dbPath);
+            await fsp.mkdir(dbDir, { recursive: true });
+            if (!fs.existsSync(this.dbPath)) {
+                if (!this.sqliteUnavailableLogged) {
+                    console.warn(`[HyperIngest] BobbyBookmarks DB not found at ${this.dbPath}. Skipping DB sync.`);
+                    this.sqliteUnavailableLogged = true;
+                }
+                return;
+            }
             const db = new Database(this.dbPath, { readonly: true });
             
             // We just need the basic details from the local DB
@@ -112,7 +123,7 @@ export class BobbyBookmarksSyncWorker {
 
     private async syncFromTxt(): Promise<void> {
         try {
-            const content = await fs.readFile(this.txtPath, 'utf-8');
+            const content = await fsp.readFile(this.txtPath, 'utf-8');
             const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith('#'));
 
             console.log(`[HyperIngest] Found ${lines.length} URLs in ${this.txtPath}. Syncing to HyperCode...`);
