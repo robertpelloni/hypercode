@@ -29,8 +29,5 @@ packages:
   - 'hypermcp/research/prism-mcp/packages/*'
   - 'hyperingest/research/litellm/*'
 
-  # legacy locked dir (to be removed)
-  - 'apps/web'
-
   # exclusions
   - '!archive/**'

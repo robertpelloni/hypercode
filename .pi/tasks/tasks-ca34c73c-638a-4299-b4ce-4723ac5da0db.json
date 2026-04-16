@@ -50,7 +50,7 @@
       "id": "5",
       "subject": "Design the new monorepo folder structure",
       "description": "Create a plan for reorganizing the monorepo into 5 top-level project domains: hypercode, hypermcp, hypermem, hyperingest, hyperharness. Each with research/, packages/go/, packages/ts/ subfolders. Map every current file/folder to its new location.",
-      "status": "in_progress",
+      "status": "completed",
       "activeForm": "Designing folder structure",
       "metadata": {},
       "blocks": [
@@ -61,13 +61,13 @@
       ],
       "blockedBy": [],
       "createdAt": 1776312145959,
-      "updatedAt": 1776312358992
+      "updatedAt": 1776315446118
     },
     {
       "id": "6",
       "subject": "Relocate git submodules to domain research/ folders",
       "description": "Use git submodule deinit + add (or mv) to relocate each submodule to its correct domain's research/ folder. Submodules: hyperharness→hyperharness/research/, prism-mcp→hypermcp/research/, litellm→hyperingest/research/, mcpproxy→hypermcp/research/, MetaMCP→hypermcp/research/, claude-mem→hypermem/research/, OmniRoute→hyperingest/research/, maestro→hypercode/research/, cloud-orchestrator→hypercode/research/",
-      "status": "pending",
+      "status": "completed",
       "activeForm": "Moving submodules",
       "metadata": {},
       "blocks": [
@@ -77,13 +77,13 @@
         "5"
       ],
       "createdAt": 1776312153655,
-      "updatedAt": 1776312217849
+      "updatedAt": 1776315451477
     },
     {
       "id": "7",
       "subject": "Relocate TypeScript packages to domain packages/ts/ folders",
       "description": "Move each TS package from packages/ to the correct domain's packages/ts/ folder. Update all import paths, workspace references, tsconfig paths, and package.json dependencies.",
-      "status": "pending",
+      "status": "completed",
       "activeForm": "Moving TypeScript packages",
       "metadata": {},
       "blocks": [
@@ -93,13 +93,13 @@
         "5"
       ],
       "createdAt": 1776312160706,
-      "updatedAt": 1776312217849
+      "updatedAt": 1776315458263
     },
     {
       "id": "8",
       "subject": "Relocate Go packages to domain packages/go/ folders",
       "description": "Move each Go internal package from go/internal/ to the correct domain's packages/go/ folder. Each domain gets its own go.mod or they share via Go workspace (go.work).",
-      "status": "pending",
+      "status": "completed",
       "activeForm": "Moving Go packages",
       "metadata": {},
       "blocks": [
@@ -109,13 +109,13 @@
         "5"
       ],
       "createdAt": 1776312171217,
-      "updatedAt": 1776312217849
+      "updatedAt": 1776315467030
     },
     {
       "id": "9",
       "subject": "Relocate apps, scripts, docs, and root config",
       "description": "Move apps/ (web, maestro, etc.) to hypercode/apps/, move scripts/, docs/, data/ to shared infra. Update root config files (package.json, pnpm-workspace.yaml, turbo.json, start.bat/sh).",
-      "status": "pending",
+      "status": "completed",
       "activeForm": "Moving apps and shared infra",
       "metadata": {},
       "blocks": [
@@ -125,13 +125,13 @@
         "5"
       ],
       "createdAt": 1776312181983,
-      "updatedAt": 1776312217849
+      "updatedAt": 1776315475847
     },
     {
       "id": "10",
       "subject": "Fix all cross-references and verify builds",
       "description": "After all moves: fix pnpm-workspace.yaml, tsconfig references, Go import paths, build scripts, start.bat/sh. Verify TypeScript builds and Go builds pass.",
-      "status": "pending",
+      "status": "completed",
       "activeForm": "Fixing build and references",
       "metadata": {},
       "blocks": [],
@@ -142,7 +142,7 @@
         "9"
       ],
       "createdAt": 1776312190430,
-      "updatedAt": 1776312217849
+      "updatedAt": 1776315484145
     }
   ]
 }
