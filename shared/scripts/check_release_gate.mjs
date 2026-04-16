@@ -129,7 +129,7 @@ async function main() {
   }
 
   printStep("Running core typecheck...");
-  const typecheck = runPnpm("core-typecheck", ["-C", "packages/core", "exec", "tsc", "--noEmit"], {
+  const typecheck = runPnpm("core-typecheck", ["-C", "hypercode/packages/ts/core", "exec", "tsc", "--noEmit"], {
     stdio: "inherit",
   });
 

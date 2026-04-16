@@ -42,7 +42,7 @@ if "%SKIP_INSTALL%"=="1" (
     set INSTALL_REQUIRED=1
     if /I "%STARTUP_INSTALL_PROFILE%"=="go-primary" if /I not "%HYPERCODE_FORCE_INSTALL%"=="1" (
         echo Checking whether Go-primary startup dependencies are already ready...
-        call node scripts\check_startup_install.mjs --profile=go-primary
+        call node shared\scripts\check_startup_install.mjs --profile=go-primary
         set INSTALL_CHECK_EXIT=!ERRORLEVEL!
         if "!INSTALL_CHECK_EXIT!"=="0" (
             set INSTALL_REQUIRED=0
@@ -79,7 +79,7 @@ if "%SKIP_NATIVE_PREFLIGHT%"=="1" (
     echo Skipping native runtime preflight ^(HYPERCODE_SKIP_NATIVE_PREFLIGHT=1^)...
 ) else (
     echo Checking native runtime prerequisites...
-    call node scripts\ensure_native_runtime.mjs
+    call node shared\scripts\ensure_native_runtime.mjs
     if errorlevel 1 exit /b 1
 )
 
@@ -99,7 +99,7 @@ if "%SKIP_BUILD%"=="1" (
     set BUILD_REQUIRED=1
     if /I "%BUILD_TARGET%"=="build:startup-go" if /I not "%HYPERCODE_FORCE_BUILD%"=="1" (
         echo Checking whether Go-primary startup build artifacts are already current...
-        call node scripts\check_startup_build.mjs --profile=go-primary
+        call node shared\scripts\check_startup_build.mjs --profile=go-primary
         set BUILD_CHECK_EXIT=!ERRORLEVEL!
         if "!BUILD_CHECK_EXIT!"=="0" (
             set BUILD_REQUIRED=0

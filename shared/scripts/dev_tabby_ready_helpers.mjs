@@ -116,9 +116,9 @@ export function isLikelyHypercodeCoreCommand(commandLine) {
 
   const hypercodeMarkers = [
     '@hypercode/',
-    'packages/core',
+    'hypercode/packages/ts/core',
     'packages\\core',
-    'packages/cli',
+    'hypercode/packages/ts/cli',
     'packages\\cli',
     '/hypercode/',
     '\\hypercode\\',

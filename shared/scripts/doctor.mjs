@@ -151,8 +151,8 @@ check('Build artifacts', () => {
         return { status: 'pass', message: 'CLI and core build artifacts present' };
     }
     const missing = [];
-    if (!cliOk) missing.push('packages/cli/dist');
-    if (!coreOk) missing.push('packages/core/dist');
+    if (!cliOk) missing.push('hypercode/packages/ts/cli/dist');
+    if (!coreOk) missing.push('hypercode/packages/ts/core/dist');
     return {
         status: 'warn',
         message: `Missing: ${missing.join(', ')}`,

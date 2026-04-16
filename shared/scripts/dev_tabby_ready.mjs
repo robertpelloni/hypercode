@@ -480,7 +480,7 @@ function spawnCliDev() {
 
   const { command, args, cwd } = getPnpmSpawnSpec([
     '-C',
-    'packages/cli',
+    'hypercode/packages/ts/cli',
     'exec',
     'tsx',
     'src/index.ts',

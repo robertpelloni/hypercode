@@ -17,14 +17,14 @@ const textFiles = [
 const codeFiles = [
     'apps/web/src/components/Navigation.tsx',
     'apps/web/src/components/mcp/nav-config.ts',
-    'packages/cli/src/version.ts',
-    'packages/core/src/Router.ts',
-    'packages/core/src/MCPServer.ts',
-    'packages/core/src/stdioLoader.ts',
-    'packages/core/src/routers/openWebUIRouter.ts',
-    'packages/core/src/services/AgentMemoryService.ts',
-    'packages/core/src/services/mcp-client.service.ts',
-    'packages/core/src/bridge/bridge-manifest.test.ts'
+    'hypercode/packages/ts/cli/src/version.ts',
+    'hypercode/packages/ts/core/src/Router.ts',
+    'hypercode/packages/ts/core/src/MCPServer.ts',
+    'hypercode/packages/ts/core/src/stdioLoader.ts',
+    'hypercode/packages/ts/core/src/routers/openWebUIRouter.ts',
+    'hypercode/packages/ts/core/src/services/AgentMemoryService.ts',
+    'hypercode/packages/ts/core/src/services/mcp-client.service.ts',
+    'hypercode/packages/ts/core/src/bridge/bridge-manifest.test.ts'
 ];
 
 function replaceVersions(files, isCode) {
