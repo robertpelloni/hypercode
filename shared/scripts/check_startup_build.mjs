@@ -78,8 +78,8 @@ function runGoPrimaryChecks() {
     needsBuild('HYPERCODE_STARTUP_BUILD_WEB=1 requests additional dashboard validation, so the Go-primary build step must run.');
   }
 
-  const cliEntry = path.join(repoRoot, 'packages', 'cli', 'dist', 'cli', 'src', 'index.js');
-  const cliRoot = path.join(repoRoot, 'packages', 'cli');
+  const cliEntry = path.join(repoRoot, 'hypercode', 'packages', 'ts', 'cli', 'dist', 'cli', 'src', 'index.js');
+  const cliRoot = path.join(repoRoot, 'hypercode', 'packages', 'ts', 'cli');
   const goBinary = process.platform === 'win32'
     ? path.join(repoRoot, 'go', 'hypercode.exe')
     : path.join(repoRoot, 'go', 'hypercode');
