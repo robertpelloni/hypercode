@@ -8,7 +8,7 @@ import { createRequire } from 'node:module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '..');
+const repoRoot = path.resolve(__dirname, '..', '..');
 const require = createRequire(import.meta.url);
 
 function log(message) {
@@ -85,7 +85,7 @@ function ensureElectronRuntime() {
   let packageJsonPath;
 
   try {
-    packageJsonPath = resolveWorkspacePackage('electron/package.json', path.join(repoRoot, 'apps', 'maestro'));
+    packageJsonPath = resolveWorkspacePackage('electron/package.json', path.join(repoRoot, 'hypercode', 'apps', 'maestro-go'));
   } catch (error) {
     warn('Electron is not currently resolvable from apps\\maestro; skipping Maestro runtime repair.');
     return true;
