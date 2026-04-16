@@ -58,12 +58,12 @@ function ensureLockNotNewerThanModules() {
 
 function runGoPrimaryChecks() {
   ensureFile(path.join(repoRoot, 'node_modules', '.modules.yaml'), 'pnpm modules state');
-  ensureFile(path.join(repoRoot, 'packages', 'cli', 'tsconfig.json'), 'CLI tsconfig');
+  ensureFile(path.join(repoRoot, 'hypercode', 'packages', 'ts', 'cli', 'tsconfig.json'), 'CLI tsconfig');
   ensureFile(path.join(repoRoot, 'go', 'go.mod'), 'Go module file');
   ensureFile(path.join(repoRoot, 'go', 'cmd', 'hypercode', 'main.go'), 'Go control-plane entrypoint');
   ensureLockNotNewerThanModules();
 
-  const cliRoot = path.join(repoRoot, 'packages', 'cli');
+  const cliRoot = path.join(repoRoot, 'hypercode', 'packages', 'ts', 'cli');
   ensureResolvable('typescript/package.json', cliRoot);
   ensureResolvable('commander', cliRoot);
   ensureResolvable('chalk', cliRoot);
