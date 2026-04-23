@@ -9,7 +9,7 @@ import { apiRateLimit } from '../middleware/rate-limit.js';
 const app = new Hono();
 
 app.get('/swarm/:sessionId', apiRateLimit(), (c) => {
-  const sessionId = c.req.param('sessionId');
+  const sessionId = c.req.param('sessionId') || '';
   const plans = smartPilot.getActivePlans();
   const plan = plans.get(sessionId);
 

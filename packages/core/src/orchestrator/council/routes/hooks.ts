@@ -49,7 +49,7 @@ hooksRoutes.post('/register', apiRateLimit(), apiKeyAuth, async (c) => {
 });
 
 hooksRoutes.delete('/:id', apiRateLimit(), apiKeyAuth, (c) => {
-  const id = c.req.param('id');
+  const id = c.req.param('id') || '';
   const removed = autoContinueHooks.unregister(id);
   
   if (removed) {

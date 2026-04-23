@@ -17,7 +17,7 @@ package repograph
 import (
 	"bufio"
 	"context"
-	"fmt"
+
 	"os"
 	"path/filepath"
 	"regexp"
@@ -33,7 +33,7 @@ type NodeType string
 const (
 	NodeFile       NodeType = "file"
 	NodeFunction   NodeType = "function"
-	NodeType       NodeType = "type"
+	NodeTypeValue  NodeType = "type"
 	NodeInterface  NodeType = "interface"
 	NodeImport     NodeType = "import"
 	NodePackage    NodeType = "package"
@@ -142,7 +142,7 @@ func (rgs *RepoGraphService) Build(ctx context.Context) (*Graph, error) {
 	graph.Stats = GraphStats{
 		TotalFiles:     rgs.countByType(graph, NodeFile),
 		TotalFunctions: rgs.countByType(graph, NodeFunction),
-		TotalTypes:     rgs.countByType(graph, NodeType),
+		TotalTypes:     rgs.countByType(graph, NodeTypeValue),
 		TotalImports:   rgs.countByType(graph, NodeImport),
 		TotalEdges:     len(graph.Edges),
 	}
@@ -354,7 +354,7 @@ func (rgs *RepoGraphService) indexGoFile(graph *Graph, relPath, content string) 
 		// Types
 		if matches := goTypeRe.FindStringSubmatch(line); len(matches) > 1 {
 			name := matches[1]
-			nodeType := NodeType
+			nodeType := NodeTypeValue
  if matches[2] == "interface" {
 				nodeType = NodeInterface
 			}
@@ -409,7 +409,7 @@ func (rgs *RepoGraphService) indexTSFile(graph *Graph, relPath, content string) 
 			name := matches[1]
 			graph.Nodes[relPath+"#"+name] = &Node{
 				ID:         relPath + "#" + name,
-				Type:       NodeType,
+				Type:       NodeTypeValue,
 				Name:       name,
 				Path:       relPath,
 				LineStart:  lineNum,
@@ -470,7 +470,7 @@ func (rgs *RepoGraphService) indexPythonFile(graph *Graph, relPath, content stri
 			name := matches[1]
 			graph.Nodes[relPath+"#"+name] = &Node{
 				ID:         relPath + "#" + name,
-				Type:       NodeType,
+				Type:       NodeTypeValue,
 				Name:       name,
 				Path:       relPath,
 				LineStart:  lineNum,
@@ -506,7 +506,7 @@ func (rgs *RepoGraphService) indexRustFile(graph *Graph, relPath, content string
 			name := matches[1]
 			graph.Nodes[relPath+"#"+name] = &Node{
 				ID:         relPath + "#" + name,
-				Type:       NodeType,
+				Type:       NodeTypeValue,
 				Name:       name,
 				Path:       relPath,
 				LineStart:  lineNum,

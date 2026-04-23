@@ -17,6 +17,7 @@
         "lint": "pnpm run check:placeholders",
         "lint:turbo": "set TURBO_DAEMON=false&& turbo run lint --output-logs=errors-only",
         "test": "set TURBO_DAEMON=false&& turbo run test",
+        "benchmark": "pnpm -C packages/core exec vitest bench bench/",
         "test:ci": "pnpm -C packages/ai run test && pnpm -C packages/cli exec vitest run src/commands/start.test.ts && pnpm -C packages/core exec vitest run src/orchestrator-listen.test.ts && pnpm -C packages/mcp-client run test && pnpm -C packages/mcp-registry run test",
         "check:placeholders": "node scripts/check-placeholder-regressions.mjs",
         "check:screenshots": "node scripts/check-screenshots.mjs",

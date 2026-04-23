@@ -37,8 +37,8 @@ func (s *Server) handleMCPStatus(w http.ResponseWriter, r *http.Request) {
 			"connectedCount":           summary.SourceBackedHarnessCount,
 			"sourceBackedHarnessCount": summary.SourceBackedHarnessCount,
 			"source":                   "source-backed-local-summary",
-			"lazySessionMode":          s.lifecycleModes["lazySessionMode"],
-			"singleActiveServerMode":   s.lifecycleModes["singleActiveServerMode"],
+			"lazySessionMode":          false,
+			"singleActiveServerMode":   false,
 		},
 		"bridge": map[string]any{
 			"fallback":  "go-local-mcp",

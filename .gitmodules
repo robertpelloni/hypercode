@@ -25,3 +25,24 @@
 [submodule "submodules/hyperharness"]
 	path = submodules/hyperharness
 	url = https://github.com/robertpelloni/hyperharness.git
+[submodule "submodules/multica"]
+	path = submodules/multica
+	url = https://github.com/multica-ai/multica
+[submodule "submodules/unifyroute"]
+	path = submodules/unifyroute
+	url = https://github.com/unifyroute/unifyroute
+[submodule "submodules/coding_agent_usage_tracker"]
+	path = submodules/coding_agent_usage_tracker
+	url = https://github.com/Dicklesworthstone/coding_agent_usage_tracker
+[submodule "submodules/CLIProxyAPIPlus"]
+	path = submodules/CLIProxyAPIPlus
+	url = https://github.com/robertpelloni/CLIProxyAPIPlus
+[submodule "submodules/LinJun"]
+	path = submodules/LinJun
+	url = https://github.com/wangdabaoqq/LinJun
+[submodule "submodules/HyperHarness"]
+	path = submodules/HyperHarness
+	url = https://github.com/robertpelloni/HyperHarness
+[submodule "submodules/pi-mono"]
+	path = submodules/pi-mono
+	url = https://github.com/robertpelloni/pi-mono

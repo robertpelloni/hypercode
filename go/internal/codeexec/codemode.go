@@ -112,7 +112,7 @@ func (cme *CodeModeEngine) Execute(ctx context.Context, code string, language La
 	if err != nil {
 		return &CodeModeResult{
 			IsError:  true,
-			Error:    err.Error(),
+
 			Duration: time.Since(start).String(),
 		}, nil
 	}
@@ -240,7 +240,7 @@ func (cme *CodeModeEngine) parseToolCallResults(stdout string) []ToolCallResult 
 func GenerateToolCallScript(calls []ToolCall, language Language) string {
 	switch language {
 	case JavaScript, TypeScript:
-		return generateJSToolCallScript(calls)
+		return generateJSToolScript(calls)
 	default:
 		return ""
 	}

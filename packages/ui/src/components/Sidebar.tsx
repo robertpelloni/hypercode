@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  Target,
+  Database,
+  Code2,
   LayoutDashboard,
   Terminal,
   Book,
@@ -32,6 +35,9 @@ const navigation = [
   { name: 'Hardware', href: '/hardware', icon: Cpu },
   { name: 'Council', href: '/council', icon: Terminal },
   { name: 'Brain', href: '/dashboard/brain', icon: Network },
+  { name: 'Decision Engine', href: '/mcp-decision', icon: Target },
+  { name: 'Memory Bank', href: '/memory-manager', icon: Database },
+  { name: 'Go Sandbox', href: '/code-executor', icon: Code2 },
   { name: 'Workshop', href: '/dashboard/workshop', icon: Box },
   { name: 'Library', href: '/dashboard/library', icon: Book },
   { name: 'Chronicle', href: '/dashboard/chronicle', icon: HistoryIcon },

@@ -4618,3 +4618,22 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **Core Infrastructure**: Registered LSP, Code Mode, and Plan Mode tools in MCPServer.
 - **Verification**: Added `CoreInfra.test.ts`.
 - **Broader Harness Catalog Alignment**: Expanded the TypeScript supervisor catalog, council CLI registry, compiled CLI harness list, and Go sidecar harness registry so HyperCode now tracks `hypercode`, `aider`, `cursor`, `copilot`, `qwen`, `superai-cli`, `codebuff`, `codemachine`, and `factory-droid` more consistently across session catalog and `/api/cli/harnesses` surfaces, while keeping non-HyperCode parity claims explicitly limited to install/runtime metadata.
+
+## [1.0.0-alpha.25] - 2026-04-11
+
+### Changed
+- Converted experimental `TODO` endpoints in `go/internal/httpapi/cloud_orchestrator_handlers.go` into functional TS bridges with local Go fallbacks.
+- Fully assimilated Jules-Autopilot orchestration (`RiskEvaluator`, `DebateEngine`, `ConferenceManager`) into native `@hypercode/agents`.
+- Assimilated AI provider wrappers (Anthropic, OpenAI, Gemini) into native `@hypercode/ai` providers.
+- Assimilated BobbyBookmarks workers (`ResearchWorker`, `AutoTagger`) into `@hypercode/core/Memory`.
+- Assimalated Maestro logic (`AgentDiscovery`, `ContextGroomer`, `DirectorNotes`) natively into `@hypercode/core`.
+- Updated `TODO.md` to check off A2A protocol implementation, dashboard verifications, and multi-model chatroom progress.
+
+## [v1.0.0-alpha.32] - 2026-04-17
+### Added
+- **Go Port**: Fully wired `MemoryManager` and `CodeExecutor` services into the Go HTTP Server (`/api/native/memory/*` and `/api/code/exec`).
+- **Go Port**: Implemented the MCP Decision System (`mcp.DecisionSystem`) featuring unified SearchAndCall logic, ranked tool discovery, auto-loading, and LRU eviction. Supported 29 cross-harness tool aliases.
+- **Testing**: Fixed legacy strict assertions in `ctxharvester` and `hsync` Go test suites to align with new memory decay implementations.
+
+### Fixed
+- Resolved `Server` struct cyclic mock issues and invalid import pointers inside `go/internal/httpapi/server.go`.

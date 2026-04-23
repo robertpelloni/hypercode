@@ -90,12 +90,12 @@ func TestCrawlPendingLinksProcessesPendingBacklogEntries(t *testing.T) {
 	classifierCalls := 0
 	report, err := CrawlPendingLinks(context.Background(), dbPath, LinkCrawlerOptions{
 		Limit: 5,
-		Classifier: func(ctx context.Context, title, description, content string) ([]string, error) {
+		Classifier: func(ctx context.Context, title, description, content string) (*LinkAnalysis, error) {
 			classifierCalls++
 			if title != "Go Native Link Crawler" {
 				t.Fatalf("unexpected title passed to classifier: %q", title)
 			}
-			return []string{"go", "crawler", "backlog"}, nil
+			return &LinkAnalysis{Tags: []string{"go", "crawler", "backlog"}}, nil
 		},
 	})
 	if err != nil {
@@ -114,11 +114,11 @@ func TestCrawlPendingLinksProcessesPendingBacklogEntries(t *testing.T) {
 	if report.Failed != 0 {
 		t.Fatalf("expected 0 failed links, got %d", report.Failed)
 	}
-	if report.Tagged != 1 {
-		t.Fatalf("expected 1 newly tagged link, got %d", report.Tagged)
+	if report.Tagged != 2 {
+		t.Fatalf("expected 2 newly tagged links, got %d", report.Tagged)
 	}
-	if classifierCalls != 1 {
-		t.Fatalf("expected classifier to be called once, got %d", classifierCalls)
+	if classifierCalls != 2 {
+		t.Fatalf("expected classifier to be called twice, got %d", classifierCalls)
 	}
 
 	db, err := sql.Open("sqlite", dbPath)

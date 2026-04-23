@@ -46,7 +46,7 @@ app.post('/facts', apiRateLimit(), async (c) => {
 
 app.get('/recall/:key', apiRateLimit(), async (c) => {
   try {
-    const key = c.req.param('key');
+    const key = c.req.param('key') || '';
     const facts = await collectiveMemory.recallFact(key);
     return c.json({ success: true, data: facts });
   } catch (error) {

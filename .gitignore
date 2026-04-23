@@ -114,3 +114,4 @@ docs/sessions/*.json
 audit-*.jsonl
 screenshot*.png
 .hypercode/skills/
+go/hypercode

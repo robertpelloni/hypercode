@@ -1,6 +1,6 @@
 # Roadmap
 
-_Last updated: 2026-04-08, version 1.0.0-alpha.11_
+_Last updated: 2026-04-08, version 1.0.0-alpha.12_
 
 ## Status legend
 

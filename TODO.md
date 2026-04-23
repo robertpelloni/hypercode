@@ -1,6 +1,6 @@
 # TODO
 
-_Last updated: 2026-04-08, version 1.0.0-alpha.24_
+_Last updated: 2026-04-08, version 1.0.0-alpha.25_
 
 ## P0 — Must do now
 
@@ -10,7 +10,7 @@ _Last updated: 2026-04-08, version 1.0.0-alpha.24_
 - [x] Add `/api/scripts` REST bridge to fix dashboard 404s
 - [x] Restart server and verify SQLite-dependent features work (BobbyBookmarks, catalog, session import)
 - [x] Fix catalog ingestion — glama.ai returns HTML now, mcp.run returns 404
-- [ ] Verify all dashboard pages show real state after SQLite fix (in progress)
+- [x] Verify all dashboard pages show real state after SQLite fix
 - [x] Add `pnpm rebuild better-sqlite3` to startup script for Node 24 safety
 - [x] Test `/api/scripts` endpoints actually return saved script data
 
@@ -34,7 +34,7 @@ _Last updated: 2026-04-08, version 1.0.0-alpha.24_
 - [x] Progressive skill disclosure (same architecture as tool disclosure)
 - [x] Browser extension (Chrome/Firefox) manual sync and export
 - [x] Multi-model chatroom — shared context between rotating models (PairOrchestrator)
-- [ ] A2A protocol implementation
+- [x] A2A protocol implementation
 - [x] Continue Go parity per PORTING_MAP.md (Provider, Session, Scripts, Health, Directory, HighValue, A2A, Swarm)
 
 ## P2 — Helpful but not urgent
@@ -66,9 +66,9 @@ _Last updated: 2026-04-08, version 1.0.0-alpha.24_
 - [ ] Council or debate maturation
 - [ ] Mesh or federation ideas
 - [ ] Browser extension for MCP superassistant
-- [ ] Multi-model shared-context chatroom
+- [x] Multi-model shared-context chatroom
 - [ ] Native lightweight UI (no Electron)
-- [ ] A2A protocol implementation
+- [x] A2A protocol implementation
 - [ ] Mobile remote control of sessions
 
 ## Decision heuristic

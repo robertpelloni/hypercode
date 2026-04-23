@@ -1,7 +1,7 @@
 package mcp
 
 /**
- * @file decision.go
+	"strings"
  * @module go/internal/mcp
  *
  * WHAT: The HyperCode MCP Decision System — a ranked discovery, auto-load,

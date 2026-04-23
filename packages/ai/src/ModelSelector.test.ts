@@ -17,7 +17,7 @@ describe('ModelSelector', () => {
         const result = await selector.selectModel({ provider: 'anthropic', taskType: 'worker' });
 
         expect(result.provider).toBe('anthropic');
-        expect(result.modelId).toBe('claude-opus-4.6');
+        expect(result.modelId).toBe('claude-3-5-haiku-20241022');
         expect(result.reason).toBe('PROVIDER_PREFERENCE');
     });
 
@@ -29,8 +29,8 @@ describe('ModelSelector', () => {
 
         const result = await selector.selectModel({ taskType: 'worker' });
 
-        expect(result.provider).toBe('openrouter');
-        expect(result.modelId).toBe('xiaomi/mimo-v2-flash:free');
+        expect(result.provider).toBe('lmstudio');
+        expect(result.modelId).toBe('openrouter/free');
     });
 
     it('forces a local fallback when the budget is exceeded', async () => {
@@ -42,7 +42,7 @@ describe('ModelSelector', () => {
 
         expect(result).toEqual({
             provider: 'lmstudio',
-            modelId: 'local',
+            modelId: 'C:/Users/hyper/.lmstudio/models/HauhauCS/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive-Q2_K_P.gguf gemma-4-e2b-uncensored-hauhaucs-aggressive',
             reason: 'BUDGET_EXCEEDED_FORCED_LOCAL'
         });
     });
@@ -81,8 +81,8 @@ describe('ModelSelector', () => {
 
         const result = await selector.selectModel({ taskType: 'worker' });
 
-        expect(result.provider).toBe('openrouter');
-        expect(result.modelId).toBe('xiaomi/mimo-v2-flash:free');
+        expect(result.provider).toBe('lmstudio');
+        expect(result.modelId).toBe('openrouter/free');
     });
 
     it('getDepletedModels returns empty array when no failures have been reported', () => {
