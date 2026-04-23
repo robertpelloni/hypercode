@@ -30,3 +30,6 @@
 	path = hyperingest/research/OmniRoute
 	url = https://github.com/diegosouzapw/OmniRoute.git
 	branch = main
+[submodule "jules-autopilot"]
+	path = jules-autopilot
+	url = https://github.com/robertpelloni/jules-autopilot
