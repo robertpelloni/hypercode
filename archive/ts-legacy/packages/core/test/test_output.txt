@@ -1,0 +1,109 @@
+<<<<<<< HEAD:archive/ts-legacy/packages/core/test/test_output.txt
+
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90mC:/Users/hyper/workspace/hypercode[39m
+
+[90mstdout[2m | packages/core/test/Phase22_Memory_Integration.test.ts[2m > [22m[2mPhase 22: Context Intelligence (Memory Integration)[2m > [22m[2mstores and retrieves working memory
+[22m[39m[MemoryManager] Initializing Vector Backend...
+
+[90mstdout[2m | packages/core/test/Phase22_Memory_Integration.test.ts[2m > [22m[2mPhase 22: Context Intelligence (Memory Integration)[2m > [22m[2mperforms semantic search (Integration with VectorStore)
+[22m[39m[MemoryManager] Initializing Vector Backend...
+
+ [31mΓ¥»[39m packages/core/test/Phase22_Memory_Integration.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 1071[2mms[22m[39m
+[31m     [31m├ù[31m stores and retrieves working memory[39m[33m 1061[2mms[22m[39m
+[31m     [31m├ù[31m performs semantic search (Integration with VectorStore)[39m[32m 7[2mms[22m[39m
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Tests 2 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ FAIL  packages/core/test/Phase22_Memory_Integration.test.ts > Phase 22: Context Intelligence (Memory Integration) > stores and retrieves working memory
+TypeError: GraphMemory is not a constructor
+ Γ¥» MemoryManager.initialize packages/core/src/services/MemoryManager.ts:30:22
+     28|         // @ts-ignore - The types might not match perfectly yet, actinΓÇª
+     29|         const store = new VectorStore(this.dbPath);
+     30|         this.graph = new GraphMemory();
+       |                      ^
+     31| 
+     32|         this.provider = {
+ Γ¥» MemoryManager.saveContext packages/core/src/services/MemoryManager.ts:85:32
+ Γ¥» AgentMemoryService.add packages/core/src/services/AgentMemoryService.ts:194:13
+ Γ¥» AgentMemoryService.addWorking packages/core/src/services/AgentMemoryService.ts:352:16
+ Γ¥» packages/core/test/Phase22_Memory_Integration.test.ts:28:24
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/2]ΓÄ»
+
+ FAIL  packages/core/test/Phase22_Memory_Integration.test.ts > Phase 22: Context Intelligence (Memory Integration) > performs semantic search (Integration with VectorStore)
+TypeError: GraphMemory is not a constructor
+ Γ¥» MemoryManager.initialize packages/core/src/services/MemoryManager.ts:30:22
+     28|         // @ts-ignore - The types might not match perfectly yet, actinΓÇª
+     29|         const store = new VectorStore(this.dbPath);
+     30|         this.graph = new GraphMemory();
+       |                      ^
+     31| 
+     32|         this.provider = {
+ Γ¥» MemoryManager.saveContext packages/core/src/services/MemoryManager.ts:85:32
+ Γ¥» AgentMemoryService.add packages/core/src/services/AgentMemoryService.ts:194:13
+ Γ¥» AgentMemoryService.addWorking packages/core/src/services/AgentMemoryService.ts:352:16
+ Γ¥» packages/core/test/Phase22_Memory_Integration.test.ts:42:9
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/2]ΓÄ»
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m   Start at [22m 22:38:00
+[2m   Duration [22m 1.98s[2m (transform 202ms, setup 0ms, import 228ms, tests 1.07s, environment 0ms)[22m
+
+=======
+
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90mC:/Users/hyper/workspace/borg[39m
+
+[90mstdout[2m | packages/core/test/Phase22_Memory_Integration.test.ts[2m > [22m[2mPhase 22: Context Intelligence (Memory Integration)[2m > [22m[2mstores and retrieves working memory
+[22m[39m[MemoryManager] Initializing Vector Backend...
+
+[90mstdout[2m | packages/core/test/Phase22_Memory_Integration.test.ts[2m > [22m[2mPhase 22: Context Intelligence (Memory Integration)[2m > [22m[2mperforms semantic search (Integration with VectorStore)
+[22m[39m[MemoryManager] Initializing Vector Backend...
+
+ [31mΓ¥»[39m packages/core/test/Phase22_Memory_Integration.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 1071[2mms[22m[39m
+[31m     [31m├ù[31m stores and retrieves working memory[39m[33m 1061[2mms[22m[39m
+[31m     [31m├ù[31m performs semantic search (Integration with VectorStore)[39m[32m 7[2mms[22m[39m
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Tests 2 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ FAIL  packages/core/test/Phase22_Memory_Integration.test.ts > Phase 22: Context Intelligence (Memory Integration) > stores and retrieves working memory
+TypeError: GraphMemory is not a constructor
+ Γ¥» MemoryManager.initialize packages/core/src/services/MemoryManager.ts:30:22
+     28|         // @ts-ignore - The types might not match perfectly yet, actinΓÇª
+     29|         const store = new VectorStore(this.dbPath);
+     30|         this.graph = new GraphMemory();
+       |                      ^
+     31| 
+     32|         this.provider = {
+ Γ¥» MemoryManager.saveContext packages/core/src/services/MemoryManager.ts:85:32
+ Γ¥» AgentMemoryService.add packages/core/src/services/AgentMemoryService.ts:194:13
+ Γ¥» AgentMemoryService.addWorking packages/core/src/services/AgentMemoryService.ts:352:16
+ Γ¥» packages/core/test/Phase22_Memory_Integration.test.ts:28:24
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/2]ΓÄ»
+
+ FAIL  packages/core/test/Phase22_Memory_Integration.test.ts > Phase 22: Context Intelligence (Memory Integration) > performs semantic search (Integration with VectorStore)
+TypeError: GraphMemory is not a constructor
+ Γ¥» MemoryManager.initialize packages/core/src/services/MemoryManager.ts:30:22
+     28|         // @ts-ignore - The types might not match perfectly yet, actinΓÇª
+     29|         const store = new VectorStore(this.dbPath);
+     30|         this.graph = new GraphMemory();
+       |                      ^
+     31| 
+     32|         this.provider = {
+ Γ¥» MemoryManager.saveContext packages/core/src/services/MemoryManager.ts:85:32
+ Γ¥» AgentMemoryService.add packages/core/src/services/AgentMemoryService.ts:194:13
+ Γ¥» AgentMemoryService.addWorking packages/core/src/services/AgentMemoryService.ts:352:16
+ Γ¥» packages/core/test/Phase22_Memory_Integration.test.ts:42:9
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/2]ΓÄ»
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m   Start at [22m 22:38:00
+[2m   Duration [22m 1.98s[2m (transform 202ms, setup 0ms, import 228ms, tests 1.07s, environment 0ms)[22m
+
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/test/test_output.txt

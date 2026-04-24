@@ -1,0 +1,37 @@
+{
+  "name": "@jules/cli",
+<<<<<<< HEAD
+  "version": "1.0.0-alpha.31",
+=======
+  "version": "3.6.0",
+>>>>>>> 9036bd431280e2dbe1b3965d959f898d9cb70b95
+  "description": "Jules Autopilot TUI - Terminal cockpit for Jules AI agent management",
+  "type": "module",
+  "bin": {
+    "jules": "./dist/cli.js"
+  },
+  "scripts": {
+    "dev": "bun --watch src/cli.tsx",
+    "build": "bun build src/cli.tsx --outdir dist --target node",
+    "start": "bun src/cli.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@jules/shared": "workspace:*",
+    "ink": "^5.2.0",
+    "@inkjs/ui": "^2.0.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "lucide-react": "^0.555.0",
+    "axios": "^1.13.2",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

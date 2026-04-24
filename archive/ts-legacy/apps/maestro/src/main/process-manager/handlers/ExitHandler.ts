@@ -1,0 +1,328 @@
+// src/main/process-manager/handlers/ExitHandler.ts
+
+import { EventEmitter } from 'events';
+import { logger } from '../../utils/logger';
+import { matchSshErrorPattern } from '../../parsers/error-patterns';
+import { aggregateModelUsage } from '../../parsers/usage-aggregator';
+import { cleanupTempFiles } from '../utils/imageUtils';
+import type { ManagedProcess, AgentError } from '../types';
+import type { DataBufferManager } from './DataBufferManager';
+
+interface ExitHandlerDependencies {
+	processes: Map<string, ManagedProcess>;
+	emitter: EventEmitter;
+	bufferManager: DataBufferManager;
+}
+
+/**
+ * Handles process exit events for child processes.
+ * Processes final batch mode output, detects errors, and emits events.
+ */
+export class ExitHandler {
+	private processes: Map<string, ManagedProcess>;
+	private emitter: EventEmitter;
+	private bufferManager: DataBufferManager;
+
+	constructor(deps: ExitHandlerDependencies) {
+		this.processes = deps.processes;
+		this.emitter = deps.emitter;
+		this.bufferManager = deps.bufferManager;
+	}
+
+	/**
+	 * Handle process exit event
+	 */
+	handleExit(sessionId: string, code: number): void {
+		const managedProcess = this.processes.get(sessionId);
+		if (!managedProcess) {
+			this.emitter.emit('exit', sessionId, code);
+			return;
+		}
+
+		const { isBatchMode, isStreamJsonMode, outputParser, toolType } = managedProcess;
+
+		// Flush any remaining buffered data before exit
+		this.bufferManager.flushDataBuffer(sessionId);
+
+		logger.debug('[ProcessManager] Child process exit event', 'ProcessManager', {
+			sessionId,
+			code,
+			isBatchMode,
+			isStreamJsonMode,
+			jsonBufferLength: managedProcess.jsonBuffer?.length || 0,
+			jsonBufferPreview: managedProcess.jsonBuffer?.substring(0, 200),
+		});
+
+		// Debug: Log exit details for synopsis sessions
+		if (sessionId.includes('-synopsis-')) {
+			logger.info('[ProcessManager] Synopsis session exit', 'ProcessManager', {
+				sessionId,
+				exitCode: code,
+				resultEmitted: managedProcess.resultEmitted,
+				streamedTextLength: managedProcess.streamedText?.length || 0,
+				streamedTextPreview: managedProcess.streamedText?.substring(0, 200) || '(empty)',
+				stdoutBufferLength: managedProcess.stdoutBuffer?.length || 0,
+				stderrBufferLength: managedProcess.stderrBuffer?.length || 0,
+				stderrPreview: managedProcess.stderrBuffer?.substring(0, 200) || '(empty)',
+			});
+		}
+
+		// Handle regular batch mode (not stream-json)
+		if (isBatchMode && !isStreamJsonMode && managedProcess.jsonBuffer) {
+			this.handleBatchModeExit(sessionId, managedProcess);
+		}
+
+		// Handle stream-json mode: process any remaining jsonBuffer content
+		// The jsonBuffer may contain the last line if it didn't end with \n.
+		// Without this, short-lived processes (tab-naming, batch ops) can lose
+		// their result message if it's the last line without a trailing newline.
+		if (isStreamJsonMode && managedProcess.jsonBuffer?.trim() && outputParser) {
+			const remainingLine = managedProcess.jsonBuffer.trim();
+			managedProcess.jsonBuffer = '';
+			logger.debug('[ProcessManager] Processing remaining jsonBuffer at exit', 'ProcessManager', {
+				sessionId,
+				remainingLineLength: remainingLine.length,
+				remainingLinePreview: remainingLine.substring(0, 200),
+			});
+			try {
+				const event = outputParser.parseJsonLine(remainingLine);
+				if (event && outputParser.isResultMessage(event) && !managedProcess.resultEmitted) {
+					managedProcess.resultEmitted = true;
+					const resultText = event.text || managedProcess.streamedText || '';
+					if (resultText) {
+						this.bufferManager.emitDataBuffered(sessionId, resultText);
+					}
+				}
+			} catch {
+				// If parsing fails, emit the raw line as data
+				this.bufferManager.emitDataBuffered(sessionId, remainingLine);
+			}
+		}
+
+		// Handle stream-json mode: emit accumulated streamed text if no result was emitted
+		// Some agents (like Factory Droid) don't send explicit "done" events, they just exit
+		if (isStreamJsonMode && !managedProcess.resultEmitted && managedProcess.streamedText) {
+			managedProcess.resultEmitted = true;
+			logger.debug(
+				'[ProcessManager] Emitting streamed text at exit (no result event)',
+				'ProcessManager',
+				{
+					sessionId,
+					streamedTextLength: managedProcess.streamedText.length,
+				}
+			);
+			this.bufferManager.emitDataBuffered(sessionId, managedProcess.streamedText);
+		}
+
+		// Check for errors using the parser (if not already emitted)
+		if (outputParser && !managedProcess.errorEmitted) {
+			const agentError = outputParser.detectErrorFromExit(
+				code,
+				managedProcess.stderrBuffer || '',
+				managedProcess.stdoutBuffer || managedProcess.streamedText || ''
+			);
+			if (agentError) {
+				managedProcess.errorEmitted = true;
+				agentError.sessionId = sessionId;
+				logger.debug('[ProcessManager] Error detected from exit', 'ProcessManager', {
+					sessionId,
+					exitCode: code,
+					errorType: agentError.type,
+					errorMessage: agentError.message,
+				});
+				this.emitter.emit('agent-error', sessionId, agentError);
+			}
+		}
+
+		// Check for SSH-specific errors at exit (only when running via SSH remote)
+		if (
+			!managedProcess.errorEmitted &&
+			managedProcess.sshRemoteId &&
+			(code !== 0 || managedProcess.stderrBuffer)
+		) {
+			// SSH errors can appear in stdout OR stderr, so check both
+			const stderrToCheck = managedProcess.stderrBuffer || '';
+			const stdoutToCheck = managedProcess.stdoutBuffer || managedProcess.streamedText || '';
+			const combinedOutput = `${stdoutToCheck}\n${stderrToCheck}`;
+
+			// Log detailed info before SSH error check to help debug shell parse errors
+			logger.info('[ProcessManager] Checking for SSH errors at exit', 'ProcessManager', {
+				sessionId,
+				exitCode: code,
+				sshRemoteId: managedProcess.sshRemoteId,
+				stderrLength: stderrToCheck.length,
+				stderrPreview: stderrToCheck.substring(0, 300),
+				stdoutLength: stdoutToCheck.length,
+				combinedLength: combinedOutput.length,
+			});
+
+			const sshError = matchSshErrorPattern(combinedOutput);
+			if (sshError) {
+				// Check if we should automatically retry (e.g. for connection reset/timeout)
+				const retryCount = managedProcess.retryCount || 0;
+				const maxRetries = 3;
+
+				if (sshError.recoverable && retryCount < maxRetries && managedProcess.config) {
+					managedProcess.retryCount = retryCount + 1;
+					logger.info('[ProcessManager] Recoverable SSH error, signaling retry', 'ProcessManager', {
+						sessionId,
+						retryCount: managedProcess.retryCount,
+						errorType: sshError.type,
+					});
+					this.emitter.emit('retry-required', sessionId, managedProcess);
+					return; // Stop exit processing, wait for retry spawn
+				}
+
+				managedProcess.errorEmitted = true;
+				const agentError: AgentError = {
+					type: sshError.type,
+					message: sshError.message,
+					recoverable: sshError.recoverable,
+					agentId: toolType,
+					sessionId,
+					timestamp: Date.now(),
+					raw: {
+						exitCode: code,
+						stderr: stderrToCheck,
+						stdout: stdoutToCheck.substring(0, 1000), // Truncate for log size
+					},
+				};
+				// Log at INFO level so it's visible in system logs
+				logger.info('[ProcessManager] SSH error detected at exit', 'ProcessManager', {
+					sessionId,
+					exitCode: code,
+					errorType: sshError.type,
+					errorMessage: sshError.message,
+					stdoutPreview: stdoutToCheck.substring(0, 500),
+					stderrPreview: stderrToCheck.substring(0, 500),
+				});
+				this.emitter.emit('agent-error', sessionId, agentError);
+			} else if (code !== 0) {
+				// Log SSH failures even if no pattern matched, to help debug
+				logger.warn(
+					'[ProcessManager] SSH command failed without matching error pattern',
+					'ProcessManager',
+					{
+						sessionId,
+						exitCode: code,
+						sshRemoteId: managedProcess.sshRemoteId,
+						stdoutPreview: stdoutToCheck.substring(0, 500),
+						stderrPreview: stderrToCheck.substring(0, 500),
+					}
+				);
+			}
+		}
+
+		// Clean up temp image files if any
+		if (managedProcess.tempImageFiles && managedProcess.tempImageFiles.length > 0) {
+			cleanupTempFiles(managedProcess.tempImageFiles);
+		}
+
+		// Emit query-complete event for batch mode processes (for stats tracking)
+		if (isBatchMode && managedProcess.querySource) {
+			const duration = Date.now() - managedProcess.startTime;
+			this.emitter.emit('query-complete', sessionId, {
+				sessionId,
+				agentType: toolType,
+				source: managedProcess.querySource,
+				startTime: managedProcess.startTime,
+				duration,
+				projectPath: managedProcess.projectPath,
+				tabId: managedProcess.tabId,
+			});
+			logger.debug('[ProcessManager] Query complete event emitted', 'ProcessManager', {
+				sessionId,
+				duration,
+				source: managedProcess.querySource,
+			});
+		}
+
+		// Final flush: ensure any data buffered during exit processing
+		// (e.g., from jsonBuffer remainder or streamedText fallback) is emitted
+		// before the exit event, so listeners see all data before exit fires.
+		this.bufferManager.flushDataBuffer(sessionId);
+
+		this.emitter.emit('exit', sessionId, code);
+		this.processes.delete(sessionId);
+	}
+
+	/**
+	 * Handle batch mode exit - parse accumulated JSON
+	 */
+	private handleBatchModeExit(sessionId: string, managedProcess: ManagedProcess): void {
+		try {
+			const jsonResponse = JSON.parse(managedProcess.jsonBuffer!);
+
+			// Emit the result text (only once per process)
+			if (jsonResponse.result && !managedProcess.resultEmitted) {
+				managedProcess.resultEmitted = true;
+				this.emitter.emit('data', sessionId, jsonResponse.result);
+			}
+
+			// Emit session_id if present (only once per process)
+			if (jsonResponse.session_id && !managedProcess.sessionIdEmitted) {
+				managedProcess.sessionIdEmitted = true;
+				this.emitter.emit('session-id', sessionId, jsonResponse.session_id);
+			}
+
+			// Extract and emit usage statistics
+			if (
+				jsonResponse.modelUsage ||
+				jsonResponse.usage ||
+				jsonResponse.total_cost_usd !== undefined
+			) {
+				const usageStats = aggregateModelUsage(
+					jsonResponse.modelUsage,
+					jsonResponse.usage || {},
+					jsonResponse.total_cost_usd || 0
+				);
+				this.emitter.emit('usage', sessionId, usageStats);
+			}
+		} catch (error) {
+			logger.error('[ProcessManager] Failed to parse JSON response', 'ProcessManager', {
+				sessionId,
+				error: String(error),
+			});
+			// Emit raw buffer as fallback
+			this.emitter.emit('data', sessionId, managedProcess.jsonBuffer!);
+		}
+	}
+
+	/**
+	 * Handle process error event (spawn failures, etc.)
+	 */
+	handleError(sessionId: string, error: Error): void {
+		const managedProcess = this.processes.get(sessionId);
+
+		logger.error('[ProcessManager] Child process error', 'ProcessManager', {
+			sessionId,
+			error: error.message,
+		});
+
+		// Emit agent error for process spawn failures
+		if (managedProcess && !managedProcess.errorEmitted) {
+			managedProcess.errorEmitted = true;
+			const agentError: AgentError = {
+				type: 'agent_crashed',
+				message: `Agent process error: ${error.message}`,
+				recoverable: true,
+				agentId: managedProcess.toolType,
+				sessionId,
+				timestamp: Date.now(),
+				raw: {
+					stderr: error.message,
+				},
+			};
+			this.emitter.emit('agent-error', sessionId, agentError);
+		}
+
+		// Clean up temp image files if any
+		if (managedProcess?.tempImageFiles && managedProcess.tempImageFiles.length > 0) {
+			cleanupTempFiles(managedProcess.tempImageFiles);
+		}
+
+		this.emitter.emit('data', sessionId, `[error] ${error.message}`);
+		this.emitter.emit('exit', sessionId, 1);
+		this.processes.delete(sessionId);
+	}
+}

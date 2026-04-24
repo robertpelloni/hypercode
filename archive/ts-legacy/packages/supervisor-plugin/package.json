@@ -1,0 +1,26 @@
+{
+<<<<<<< HEAD:archive/ts-legacy/packages/supervisor-plugin/package.json
+    "name": "@hypercode/supervisor-plugin",
+    "version": "1.0.0-alpha.32",
+=======
+    "name": "@borg/supervisor-plugin",
+    "version": "1.0.0-alpha.1",
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/supervisor-plugin/package.json
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": "./dist/index.js"
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc -w --preserveWatchOutput"
+    },
+    "dependencies": {
+        "socket.io": "^4.7.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "typescript": "^5.9.3"
+    }
+}

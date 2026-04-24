@@ -156,6 +156,7 @@ console.log('Import result:', importResult);
 
 // Export configuration
 const hypercodeFormat = await configService.exportConfigs('hypercode');
+const borgFormat = await configService.exportConfigs('borg');
 const claudeFormat = await configService.exportConfigs('claude');
 const openaiFormat = await configService.exportConfigs('openai');
 ```
@@ -224,6 +225,7 @@ bun run src/examples/05-complete-workflow.ts
 1. **Resolve McpProxyManager TypeScript Errors**: Fix pre-existing syntax errors in the file
 2. **Proceed with Integration**: Once errors are resolved, follow integration guide
 3. **Add CLI Commands**: Create `hypercode mcp install`, `hypercode mcp update`, etc.
+3. **Add CLI Commands**: Create `borg mcp install`, `borg mcp update`, etc.
 4. **Build UI**: Create server management dashboard
 
 ---

@@ -1,0 +1,383 @@
+import { z } from 'zod';
+import { t, publicProcedure, adminProcedure } from '../lib/trpc-core.js';
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/routers/sessionExportRouter.ts
+import { resolveOrchestratorBase } from '../lib/hypercode-orchestrator.js';
+=======
+import { resolveOrchestratorBase } from '../lib/borg-orchestrator.js';
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/routers/sessionExportRouter.ts
+
+/**
+ * Session Export/Import Router
+ *
+ * Provides the ability to:
+ * - Export sessions and memories to portable JSON/ZIP formats
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/routers/sessionExportRouter.ts
+ * - Import sessions from other HyperCode instances or environments
+=======
+ * - Import sessions from other borg instances or environments
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/routers/sessionExportRouter.ts
+ * - Auto-detect session formats from various CLI tools
+ * - Cross-environment memory transfer
+ */
+
+const ExportFormatSchema = z.enum(['json', 'jsonl', 'zip']);
+
+const ExportOptionsSchema = z.object({
+    format: ExportFormatSchema.default('json'),
+    includeMemories: z.boolean().default(true),
+    includeLogs: z.boolean().default(true),
+    includeMetadata: z.boolean().default(true),
+    sessionIds: z.array(z.string()).optional(), // If empty, export all
+    dateRange: z.object({
+        from: z.number().optional(),
+        to: z.number().optional(),
+    }).optional(),
+});
+
+const ImportOptionsSchema = z.object({
+    data: z.string(), // JSON string of exported data
+    merge: z.boolean().default(true), // Merge with existing or replace
+    dryRun: z.boolean().default(false), // Preview without applying
+    sourceEnvironment: z.string().optional(),
+});
+
+export interface ExportedSession {
+    id: string;
+    name: string;
+    cliType: string;
+    status: string;
+    createdAt: number;
+    stoppedAt?: number;
+    workingDirectory: string;
+    metadata: Record<string, unknown>;
+    logs: Array<{ timestamp: number; level: string; message: string }>;
+    memories: Array<{
+        key: string;
+        value: string;
+        category: string;
+        createdAt: number;
+    }>;
+}
+
+export interface ExportPackage {
+    version: '1.0';
+    exportedAt: number;
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/routers/sessionExportRouter.ts
+    hypercodeVersion: string;
+=======
+    borgVersion: string;
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/routers/sessionExportRouter.ts
+    environment: string;
+    sessionCount: number;
+    sessions: ExportedSession[];
+    globalMemories: Array<{
+        key: string;
+        value: string;
+        category: string;
+        createdAt: number;
+    }>;
+}
+
+export interface ImportReport {
+    imported: number;
+    skipped: number;
+    merged: number;
+    errors: string[];
+    dryRun: boolean;
+    details: Array<{
+        sessionId: string;
+        action: 'imported' | 'merged' | 'skipped' | 'error';
+        reason?: string;
+    }>;
+}
+
+type OrchestratorSessionRecord = {
+    id?: string;
+    currentTask?: string;
+    status?: string;
+    startTime?: number;
+};
+
+// Session format auto-detection
+const SESSION_FORMAT_SIGNATURES: Record<string, { paths: string[]; type: string }> = {
+    'claude-code': { paths: ['.claude', '.claude/sessions'], type: 'claude-code' },
+    'cursor': { paths: ['.cursor', '.cursor/sessions'], type: 'cursor' },
+    'opencode': { paths: ['.docs/ai-logs'], type: 'opencode' },
+    'aider': { paths: ['.aider.chat.history.md', '.aider.tags.cache'], type: 'aider' },
+    'windsurf': { paths: ['.windsurf', '.docs/ai-logs'], type: 'windsurf' },
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/routers/sessionExportRouter.ts
+    'hypercode': { paths: ['.hypercode', '.hypercode/sessions'], type: 'hypercode' },
+=======
+    'borg': { paths: ['.borg', '.borg/sessions'], type: 'borg' },
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/routers/sessionExportRouter.ts
+    'continue': { paths: ['.continue', '.continue/sessions'], type: 'continue' },
+    'copilot': { paths: ['.github/copilot'], type: 'copilot' },
+};
+
+function detectSessionFormat(data: unknown): string {
+    if (!data || typeof data !== 'object') return 'unknown';
+
+    const record = data as Record<string, unknown>;
+
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/routers/sessionExportRouter.ts
+    // Check for HyperCode export format
+    if (record.version === '1.0' && Array.isArray(record.sessions)) return 'hypercode-export';
+=======
+    // Check for borg export format
+    if (record.version === '1.0' && Array.isArray(record.sessions)) return 'borg-export';
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/routers/sessionExportRouter.ts
+
+    // Check for Claude Code format  
+    if (record.type === 'conversation' && record.messages) return 'claude-code';
+
+    // Check for Aider format
+    if (typeof record === 'string' && (record as string).includes('# aider chat')) return 'aider';
+
+    // Check for generic session array
+    if (Array.isArray(record) && record.length > 0 && record[0]?.id) return 'generic-sessions';
+
+    return 'unknown';
+}
+
+function parseImportData(rawData: string): { format: string; sessions: ExportedSession[] } {
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(rawData);
+    } catch {
+        return { format: 'invalid', sessions: [] };
+    }
+
+    const format = detectSessionFormat(parsed);
+
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/routers/sessionExportRouter.ts
+    if (format === 'hypercode-export') {
+=======
+    if (format === 'borg-export') {
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/routers/sessionExportRouter.ts
+        const pkg = parsed as ExportPackage;
+        return { format, sessions: pkg.sessions };
+    }
+
+    if (format === 'generic-sessions') {
+        const arr = parsed as Array<Record<string, unknown>>;
+        return {
+            format,
+            sessions: arr.map(item => ({
+                id: String(item.id || `imported_${Date.now()}`),
+                name: String(item.name || 'Imported Session'),
+                cliType: String(item.cliType || 'unknown'),
+                status: 'stopped',
+                createdAt: Number(item.createdAt || Date.now()),
+                workingDirectory: String(item.workingDirectory || process.cwd()),
+                metadata: (item.metadata as Record<string, unknown>) || {},
+                logs: [],
+                memories: [],
+            })),
+        };
+    }
+
+    return { format, sessions: [] };
+}
+
+export async function loadExportableOrchestratorSessions(
+    fetchImpl: typeof fetch = fetch,
+    orchestratorBase: string | null = resolveOrchestratorBase(),
+    sessionIds?: string[],
+): Promise<ExportedSession[]> {
+    if (!orchestratorBase) {
+        return [];
+    }
+
+    const res = await fetchImpl(`${orchestratorBase}/api/sessions`);
+    if (!res.ok) {
+        return [];
+    }
+
+    const data = await res.json();
+    if (!Array.isArray(data)) {
+        return [];
+    }
+
+    const normalizedSessionIds = sessionIds?.length
+        ? new Set(sessionIds.map((id) => id.trim()).filter(Boolean))
+        : null;
+
+    return (data as OrchestratorSessionRecord[])
+        .filter((record) => {
+            if (!normalizedSessionIds) {
+                return true;
+            }
+
+            return normalizedSessionIds.has(String(record.id ?? '').trim());
+        })
+        .map((record) => ({
+        id: String(record.id ?? `exported_${Date.now()}`),
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/routers/sessionExportRouter.ts
+        name: String(record.currentTask || 'HyperCode Session'),
+        cliType: 'hypercode',
+=======
+        name: String(record.currentTask || 'borg Session'),
+        cliType: 'borg',
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/routers/sessionExportRouter.ts
+        status: String(record.status || 'unknown'),
+        createdAt: typeof record.startTime === 'number' ? record.startTime : Date.now(),
+        workingDirectory: process.cwd(),
+        metadata: {},
+        logs: [],
+        memories: [],
+    }));
+}
+
+export async function restoreSessionViaOrchestrator(
+    session: ExportedSession,
+    fetchImpl: typeof fetch = fetch,
+    orchestratorBase: string | null = resolveOrchestratorBase(),
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+    if (!orchestratorBase) {
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/routers/sessionExportRouter.ts
+        return { ok: false, reason: 'No HyperCode Orchestrator base configured.' };
+=======
+        return { ok: false, reason: 'No borg Orchestrator base configured.' };
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/routers/sessionExportRouter.ts
+    }
+
+    try {
+        const res = await fetchImpl(`${orchestratorBase}/api/sessions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                task: { description: `Restore of ${session.name}` },
+                workingDirectory: session.workingDirectory || process.cwd()
+            })
+        });
+
+        if (res.ok) {
+            return { ok: true };
+        }
+
+        return { ok: false, reason: `API returned ${res.status}` };
+    } catch (e: any) {
+        return { ok: false, reason: e.message };
+    }
+}
+
+// In-memory export store
+const exportHistory: Array<{ id: string; format: string; sessionCount: number; exportedAt: number }> = [];
+
+export const sessionExportRouter = t.router({
+    /**
+     * Export sessions to a portable format.
+     */
+    export: adminProcedure
+        .input(ExportOptionsSchema)
+        .mutation(async ({ input }) => {
+            const pkg: ExportPackage = {
+                version: '1.0',
+                exportedAt: Date.now(),
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/routers/sessionExportRouter.ts
+                hypercodeVersion: '0.90.5',
+=======
+                borgVersion: '0.90.5',
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/routers/sessionExportRouter.ts
+                environment: process.platform,
+                sessionCount: 0,
+                sessions: [],
+                globalMemories: [],
+            };
+
+            try {
+                pkg.sessions = await loadExportableOrchestratorSessions(fetch, undefined, input.sessionIds);
+                pkg.sessionCount = pkg.sessions.length;
+            } catch (e: any) {
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/routers/sessionExportRouter.ts
+                console.warn(`[SessionExport] HyperCode Orchestrator unavailable (${e.message}). Exporting empty sessions list.`);
+=======
+                console.warn(`[SessionExport] borg Orchestrator unavailable (${e.message}). Exporting empty sessions list.`);
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/routers/sessionExportRouter.ts
+            }
+
+            const exportId = `export_${Date.now()}`;
+            exportHistory.push({
+                id: exportId,
+                format: input.format,
+                sessionCount: pkg.sessionCount,
+                exportedAt: pkg.exportedAt,
+            });
+
+            return { id: exportId, package: pkg, format: input.format };
+        }),
+
+    /**
+     * Import sessions from another environment.
+     */
+    import: adminProcedure
+        .input(ImportOptionsSchema)
+        .mutation(async ({ input }) => {
+            const { format, sessions } = parseImportData(input.data);
+
+            const report: ImportReport = {
+                imported: 0,
+                skipped: 0,
+                merged: 0,
+                errors: [],
+                dryRun: input.dryRun,
+                details: [],
+            };
+
+            if (format === 'invalid') {
+                report.errors.push('Invalid import data — could not parse JSON');
+                return report;
+            }
+
+            for (const session of sessions) {
+                if (input.dryRun) {
+                    report.details.push({ sessionId: session.id, action: 'imported', reason: 'dry-run preview' });
+                    report.imported++;
+                } else {
+                    const result = await restoreSessionViaOrchestrator(session);
+
+                    if (result.ok) {
+                        report.details.push({ sessionId: session.id, action: 'imported' });
+                        report.imported++;
+                    } else {
+                        report.details.push({ sessionId: session.id, action: 'error', reason: result.reason });
+                        report.errors.push(`Failed to import session ${session.id}: ${result.reason}`);
+                    }
+                }
+            }
+
+            return report;
+        }),
+
+    /**
+     * Auto-detect session format from raw data.
+     */
+    detectFormat: publicProcedure
+        .input(z.object({ data: z.string().max(100_000) }))
+        .mutation(async ({ input }) => {
+            try {
+                const parsed = JSON.parse(input.data);
+                return { format: detectSessionFormat(parsed), valid: true };
+            } catch {
+                return { format: 'invalid', valid: false };
+            }
+        }),
+
+    /**
+     * List known session format signatures for auto-detection.
+     */
+    knownFormats: publicProcedure.query(async () => {
+        return Object.entries(SESSION_FORMAT_SIGNATURES).map(([id, sig]) => ({
+            id,
+            type: sig.type,
+            paths: sig.paths,
+        }));
+    }),
+
+    /**
+     * Get export history.
+     */
+    history: publicProcedure.query(async () => {
+        return exportHistory.slice(-50);
+    }),
+});

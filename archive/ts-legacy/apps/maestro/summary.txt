@@ -1,0 +1,25 @@
+[PROJECT_MEMORY]
+# Maestro Architecture & Project State
+
+## High-Level Architecture
+- **Framework Transition**: Maestro is actively transitioning from a legacy Node.js/Electron stack to a high-performance Go/TypeScript hybrid architecture powered by Wails v3.
+- **Frontend Stack**: The UI is built entirely in React, utilizing Vite as the bundler. State management is heavily centralized using Zustand stores (e.g., `useSessionStore`, `useSettingsStore`). UI styling is exclusively Tailwind CSS, with animations powered by Framer Motion.
+- **Backend Stack**: The new backend services are written in Go and reside in `go/internal/`. They include core modules for Filesystem (`fs.go`), Git (`git_service.go`), SSH (`ssh.go`), Persistence (`persistence.go`), Process Management (`process_manager.go`), and Agent Detection (`agents.go`).
+- **Communication Layer**: The frontend interacts with the backend via Wails IPC bindings (bound directly to Go structs like `AgentsService`). Legacy Electron `ipcMain.handle` endpoints (located in `src/main/ipc/handlers/`) are systematically being deprecated and replaced by their Go counterparts.
+
+## Core Domain Models
+- **Agent Definitions**: The project supports an ever-expanding roster of CLI-based AI coding agents (Claude Code, Gemini CLI, OpenCode, Codex, Factory Droid, plus ~30 newly added ones like Aider, GitHub Copilot, Amazon Q, etc.). These definitions are mapped in `src/main/agents/definitions.ts` and `go/internal/agents/models.go`, detailing execution commands, batch modes, JSON output flags, and context window sizes.
+- **Terminal Tabs vs. AI Tabs**: The application differentiates between `TerminalTab` (persistent PTY-backed shells rendered via xterm.js) and `AITab` (which stores parsed JSON log history for AI interactions).
+- **Worktree Management**: Maestro features advanced "Git Worktrees" support, allowing parallel execution of AI agents on isolated git branches. The state model uses a parent-child relationship (`parentSessionId`, `worktreeConfig`) to manage these parallel environments, deprecating the older `worktreeParentPath` legacy polling mechanism.
+
+## Technical Debt & Ongoing Migrations
+- **Terminal Logs**: Legacy `shellLogs` fields were previously used to manually append shell command history into React state. This proved highly inefficient and was entirely eradicated during this phase. Commands like `runCommand` have been refactored to write directly to PTY streams (`spawnTerminalTab`), relying on xterm.js for scrollback buffering.
+- **Go Syntax Quirk Resiliency**: During the initial automated conversion from TypeScript to Go, many structs retained trailing commas before the closing brace without the necessary `nil` return values required by Go compilation rules (e.g., `return &GitDiff{}, \n}`). These syntax errors require manual intervention or precise AST parsing to fix permanently.
+
+## Documentation Standards
+- **Source of Truth**: All AI models must refer to `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` as the definitive guide for project standards.
+- **Project Context Tracking**: Project status is maintained dynamically via multiple Markdown files. `TODO.md` tracks granular technical debt and features, `ROADMAP.md` tracks long-term structural milestones (like native UI ports or global RAG integration), and `CHANGELOG.md`/`VERSION` handle versioning protocols. `HANDOFF.md` ensures smooth context transfer between parallel AI model iterations.
+
+## Future Plans
+- **Native UIs**: Post Go/Wails port, the architectural separation clears the path for true native frontends (macOS Swift, Windows C#/.NET).
+- **Ecosystem Expansion**: With the backend stabilized in Go, the system is primed to execute large-scale, multi-agent "Playbooks" and "Symphony" orchestrations to automate PRs, bug hunting, and comprehensive repository refactoring autonomously.

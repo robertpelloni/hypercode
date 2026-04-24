@@ -1,0 +1,169 @@
+# Go Porting Status
+
+## Goal
+Move backend responsibilities from the TypeScript/Bun daemon into the Go backend. **This is now fully complete.** The legacy `server/` directory has been deleted, cementing Go as the sole backend runtime.
+
+## Newly Ported in This Pass (v1.3.0)
+- Notification Center service with full CRUD, filtering, and auto-generation from keeper events
+- Immutable Audit Trail service with structured logging and aggregate statistics
+- Notification API routes (7 endpoints) and Audit API routes (2 endpoints)
+- Health/Metrics enhanced with notification and audit totals
+- Scheduler notification cleanup (90-day retention)
+- Comprehensive Go test suite (50+ test cases across 5 test files)
+- In-memory SQLite test database helper (`db.InitTestDB()`)
+
+## Existing Go Coverage
+- API manifest served from canonical root `VERSION`
+- `GET /api/ping`
+- `GET /api/manifest`
+- `GET /api/fleet/summary`
+- `GET /api/system/submodules`
+- `GET /api/sessions/:id/replay`
+- `POST /api/webhooks/borg`
+- `POST /api/webhooks/hypercode`
+- Main Go backend now listens on `:8080` for easier drop-in parity with the TypeScript daemon
+- Queue worker compile issues fixed (`os` / `strings` imports, QueueJob struct tag fix)
+- Go realtime event/log bridge (`backend-go/services/realtime.go`) for Keeper-style websocket emission from automation paths
+- Go `handleCheckSession` automation path with:
+  - live session refresh from Jules
+  - activity-update event emission
+  - inactivity-based nudges
+  - completed-session memory sync enqueueing
+  - conservative low-risk plan auto-approval
+  - high-risk escalation event emission
+- Go `handleIndexCodebase` with:
+  - project-root aware file discovery
+  - repository traversal across `src`, `lib`, `server`, `components`, and `packages`
+  - `.ts`/`.tsx`/`.js`/`.jsx`/`.md` chunking
+  - checksum-based chunk deduplication
+  - OpenAI embeddings ingestion
+  - SQLite `CodeChunk` upserts
+- Go `handleCheckIssues` with:
+  - GitHub issue fetching
+  - duplicate-title filtering against active sessions
+  - hybrid issue evaluation (provider-backed JSON triage when available, conservative heuristic fallback otherwise)
+  - autonomous Jules session creation for high-confidence issues
+  - Keeper log coverage for evaluation and spawn lifecycle events
+- Go provider-backed council review in `handleCheckSession` with:
+  - multi-role debate turns
+  - moderator synthesis
+  - provider-backed risk rescoring
+  - approval/rejection feedback sent back to the Jules session
+  - persisted debate records in SQLite
+  - `session_debate_resolved` payloads carrying risk/summary/decision data
+- Shared Go LLM provider layer in `backend-go/services/llm.go` for OpenAI, Anthropic, and Gemini-backed text generation
+- Go semantic retrieval layer in `backend-go/services/rag.go` with:
+  - OpenAI query embedding generation
+  - cosine similarity search across both `CodeChunk` and `MemoryChunk`
+  - combined codebase/history ranked results
+- `POST /api/rag/query` now exists in the Go API
+- Go `check_session` nudges can now include retrieved local context snippets
+- Explicit Go lifecycle event emission for:
+  - codebase indexing start/completion
+  - issue-check start
+  - issue evaluation
+  - autonomous issue-session spawning
+  - failed-session recovery start/completion
+- Frontend/shared websocket layer updated to understand those Go-originated lifecycle events
+- Go failed-session recovery path that:
+  - detects `FAILED` sessions
+  - generates provider-backed recovery guidance
+  - can append Go-native RAG context
+  - messages recovery instructions back into the Jules session
+- Go session patch/update support via `PATCH /api/sessions/:id`
+- Go direct session/activity read routes via:
+  - `GET /api/sessions/:id`
+  - `GET /api/sessions/:id/activities`
+- Go-native `POST /api/rag/reindex`
+- Go filesystem utility routes via:
+  - `GET /api/fs/list`
+  - `GET /api/fs/read`
+- Go template CRUD routes via:
+  - `GET /api/templates`
+  - `POST /api/templates`
+  - `PUT /api/templates/:id`
+  - `DELETE /api/templates/:id`
+- Go review routes via:
+  - `POST /api/review`
+  - `POST /api/local/review`
+- Go review service with:
+  - simple review mode
+  - comprehensive persona-based review mode
+  - structured JSON review mode
+- Go portability routes via:
+  - `GET /api/export`
+  - `POST /api/import`
+- Go debate routes via:
+  - `POST /api/debate`
+  - `GET /api/debate/history`
+  - `GET /api/debate/:id`
+  - `DELETE /api/debate/:id`
+- Go debate execution/persistence service in `backend-go/services/debate.go`
+- Go observability routes via:
+  - `GET /metrics`
+  - `GET /healthz`
+  - `GET /api/health`
+- Go daemon-running introspection for observability reporting
+- Shared Go LLM/provider helper tightening for:
+  - provider normalization
+  - provider-default model resolution
+  - structured JSON response extraction
+  - reusable risk-score generation
+- Fleet Intelligence UI now consumes Go `GET /api/health` output for operator-visible runtime health
+- Go runtime now serves built frontend assets and SPA index fallback via `backend-go/main.go`
+- Dedicated dashboard Health view now consumes Go health data and metrics preview helpers
+- Go websocket runtime now emits `connected` and protocol-compatible `pong` responses for frontend daemon websocket health/reconnect behavior
+- Go API handlers now support resilient degraded-mode fallbacks (mock sessions, critical-err sessions) matching Bun server behavior
+- TypeScript `JulesClient` now supports dual property mappings for both Google-style and Go-native session/activity models
+- Go runtime now supports graceful shutdown (signal handling) for coordinated service cleanup
+- Go runtime now includes a background scheduler for periodic maintenance tasks (indexing, triage, cleanup)
+- Go webhook handler now has parity with Bun for dependency alerts, log cleanup, and issue detection triggers
+- Go now includes a standalone CLI indexer at `backend-go/cmd/index-repo/main.go`
+- Go now includes a standalone CLI key generator at `backend-go/cmd/create-key/main.go`
+- Go runtime now supports API Key CRUD and management UI (v3.0 Roadmap)
+- Go API routes now support request-scoped Jules auth via `X-Jules-Api-Key` / `X-Goog-Api-Key` headers
+- Go runtime now applies Bun-like permissive CORS middleware for cross-origin API use
+- Go runtime now loads `.env` from detected project root and applies centralized Fiber error handling for API-oriented responses
+- Go daemon + worker lifecycle is now more Bun-aligned via:
+  - conditional boot startup when Keeper is enabled
+  - coordinated start/stop through daemon-status control
+  - restartable worker lifecycle management
+  - worker-running observability in health/metrics output
+- Go Jules client support for source discovery, GitHub issues, and session creation
+- `POST /api/sessions/:id/nudge` now sends a real activity instead of returning a stub response
+- `POST /api/sessions/:id:approvePlan` is now supported through the generic Go session action handler
+- `POST /api/fleet/sync` now also enqueues issue-check jobs and a codebase indexing job
+- Go daemon loop now mirrors more Bun orchestration behavior by:
+  - honoring Keeper `checkIntervalSeconds`
+  - resolving Jules credentials from env or stored Keeper settings
+  - scheduling `check_session` jobs from live Jules sessions
+  - scheduling `check_issues` jobs from discovered Jules sources when smart pilot is enabled
+  - opportunistically enqueueing `index_codebase` when no indexing job is already pending/processing
+  - emitting Keeper-log telemetry for daemon poll/scheduling outcomes
+- **Notification Center** (v5.0) with full Go backend + React frontend:
+  - `backend-go/services/notification.go` - notification CRUD, auto-generation from keeper events
+  - 7 notification API endpoints
+  - Real-time WebSocket push
+  - Frontend notification panel with filtering, read/dismiss, priority badges
+- **Immutable Audit Trail** (v4.0) with Go backend + React frontend:
+  - `backend-go/services/audit.go` - structured audit logging with metadata
+  - 2 audit API endpoints (list with filtering + aggregate stats)
+  - Frontend paginated audit trail view with stats dashboard
+- **Self-Healing Circuit Breakers** for LLM providers with automatic fallback routing
+
+## Existing Go Coverage
+- Keeper settings routes
+- Daemon status routes
+- Session listing / activity creation
+- Export to repo / save memory
+- Broadcast route
+- Fleet sync route
+- SQLite-backed queue worker scaffold
+- WebSocket broadcasting
+
+## Still Pending / Partial
+- Deeper metrics drill-downs for the Health dashboard if operations require it
+- Implementation of new roadmap items (v1.5+) atop the stable Go foundation
+
+## Recommended Next Go Porting Steps
+The migration is complete. Future work will focus on adding new features to the Go runtime rather than porting legacy behavior.

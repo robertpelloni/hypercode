@@ -1,35 +1,120 @@
-[submodule "hyperharness/research/hyperharness"]
-	path = hyperharness/research/hyperharness
-	url = https://github.com/robertpelloni/hyperharness.git
-	branch = main
-[submodule "hypermcp/research/prism-mcp"]
-	path = hypermcp/research/prism-mcp
-	url = https://github.com/dcostenco/prism-mcp.git
-	branch = main
-[submodule "hypermem/research/claude-mem"]
-	path = hypermem/research/claude-mem
-	url = https://github.com/robertpelloni/claude-mem.git
-	branch = main
-[submodule "hypercode/research/maestro"]
-	path = hypercode/research/maestro
-	url = https://github.com/robertpelloni/Maestro.git
-	branch = main
-[submodule "hypercode/research/cloud-orchestrator"]
-	path = hypercode/research/cloud-orchestrator
-	url = https://github.com/robertpelloni/jules-autopilot.git
-	branch = main
-[submodule "hypermcp/research/mcpproxy"]
-	path = hypermcp/research/mcpproxy
-	url = https://github.com/Dumbris/mcpproxy.git
-	branch = main
-[submodule "hyperingest/research/litellm"]
-	path = hyperingest/research/litellm
-	url = https://github.com/BerriAI/litellm.git
-	branch = main
-[submodule "hyperingest/research/OmniRoute"]
-	path = hyperingest/research/OmniRoute
-	url = https://github.com/diegosouzapw/OmniRoute.git
-	branch = main
-[submodule "jules-autopilot"]
-	path = jules-autopilot
+[submodule "adrenaline"]
+	path = adrenaline
+	url = https://github.com/shobrook/adrenaline
+[submodule "auggie"]
+	path = auggie
+	url = https://github.com/augmentcode/auggie
+[submodule "azure-ai-cli"]
+	path = azure-ai-cli
+	url = https://github.com/Azure/azure-ai-cli
+[submodule "aider"]
+	path = aider
+	url = https://github.com/paul-gauthier/aider
+[submodule "code-cli"]
+	path = code-cli
+	url = https://github.com/just-every/code
+[submodule "dolt"]
+	path = dolt
+	url = https://github.com/dolthub/dolt
+[submodule "goose"]
+	path = goose
+	url = https://github.com/block/goose
+[submodule "llm-cli"]
+	path = llm-cli
+	url = https://github.com/simonw/llm
+[submodule "litellm"]
+	path = litellm
+	url = https://github.com/BerriAI/litellm
+[submodule "llamafile"]
+	path = llamafile
+	url = https://github.com/Mozilla-Ocho/llamafile
+[submodule "ollama"]
+	path = ollama
+	url = https://github.com/ollama/ollama
+[submodule "open-interpreter"]
+	path = open-interpreter
+	url = https://github.com/OpenInterpreter/open-interpreter
+[submodule "pi-cli"]
+	path = pi-cli
+	url = https://github.com/badlogic/pi-mono
+[submodule "rowboat"]
+	path = rowboat
+	url = https://github.com/rowboatlabs/rowboat
+[submodule "mistral-vibe"]
+	path = mistral-vibe
+	url = https://github.com/mistralai/mistral-vibe
+[submodule "smithery-cli"]
+	path = smithery-cli
+	url = https://github.com/smithery-ai/cli
+[submodule "opencode"]
+	path = opencode
+	url = https://github.com/anomalyco/opencode
+[submodule "kilocode"]
+	path = kilocode
+	url = https://github.com/Kilo-Org/kilocode
+[submodule "bito-cli"]
+	path = bito-cli
+	url = https://github.com/gitbito/CLI
+[submodule "byterover-cli"]
+	path = byterover-cli
+	url = https://github.com/campfirein/byterover-cli
+[submodule "claude-code-templates"]
+	path = claude-code-templates
+	url = https://github.com/davila7/claude-code-templates
+[submodule "claude-code"]
+	path = claude-code
+	url = https://github.com/yasasbanukaofficial/claude-code
+[submodule "copilot-cli"]
+	path = copilot-cli
+	url = https://github.com/github/copilot-cli
+[submodule "crush"]
+	path = crush
+	url = https://github.com/charmbracelet/crush
+[submodule "factory-cli"]
+	path = factory-cli
+	url = https://github.com/Factory-AI/factory
+[submodule "gemini-cli"]
+	path = gemini-cli
+	url = https://github.com/google-gemini/gemini-cli
+[submodule "grok-cli"]
+	path = grok-cli
+	url = https://github.com/superagent-ai/grok-cli
+[submodule "jules-extension"]
+	path = jules-extension
+	url = https://github.com/gemini-cli-extensions/jules
+[submodule "kimi-cli"]
+	path = kimi-cli
+	url = https://github.com/MoonshotAI/kimi-cli
+[submodule "qwen-code-cli"]
+	path = qwen-code-cli
+	url = https://github.com/dinoanderson/qwen_cli_coder
+[submodule "external/MetaMCP"]
+        path = external/MetaMCP
+        url = https://github.com/robertpelloni/MetaMCP
+[submodule "submodules/mcpproxy"]
+	path = archive/submodules/mcpproxy
+        url = https://github.com/Dumbris/mcpproxy
+[submodule "submodules/litellm"]
+	path = archive/submodules/litellm
+        url = https://github.com/BerriAI/litellm
+[submodule "external/claude-mem"]
+	path = archive/claude-mem
+        url = https://github.com/robertpelloni/claude-mem
+[submodule "external/OmniRoute"]
+	path = archive/OmniRoute
+        url = https://github.com/diegosouzapw/OmniRoute
+[submodule "packages/claude-mem"]
+        path = packages/claude-mem
+        url = https://github.com/robertpelloni/claude-mem
+[submodule "apps/maestro"]
+	path = apps/maestro
+	url = https://github.com/robertpelloni/Maestro
+[submodule "apps/cloud-orchestrator"]
+	path = apps/cloud-orchestrator
 	url = https://github.com/robertpelloni/jules-autopilot
+[submodule "submodules/prism-mcp"]
+	path = submodules/prism-mcp
+	url = https://github.com/dcostenco/prism-mcp
+[submodule "submodules/borg"]
+	path = submodules/borg
+	url = https://github.com/robertpelloni/borg.git

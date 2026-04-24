@@ -1,0 +1,2 @@
+1. Implement the remaining Go/Wails hooks and migrate terminal tabs.
+2. Integrate native UI systems if requested.

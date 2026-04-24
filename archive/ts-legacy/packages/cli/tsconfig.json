@@ -1,0 +1,36 @@
+{
+  "extends": "../../packages/tsconfig/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "paths": {
+<<<<<<< HEAD:archive/ts-legacy/packages/cli/tsconfig.json
+      "@hypercode/core": [
+        "../core/src/index.ts"
+      ],
+      "@hypercode/core/*": [
+=======
+      "@borg/core": [
+        "../core/src/index.ts"
+      ],
+      "@borg/core/*": [
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/cli/tsconfig.json
+        "../core/src/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "../core/src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "../core/src/**/*.test.ts",
+    "../core/src/**/*.spec.ts",
+    "../core/src/**/__tests__/**/*"
+  ]
+}

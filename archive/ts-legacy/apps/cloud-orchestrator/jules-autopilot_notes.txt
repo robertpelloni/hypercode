@@ -1,0 +1,29 @@
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+
+Please include https://github.com/robertpelloni/jules-autopilot as a dashboard for integrating google jules cloud dev env, and also https://github.com/robertpelloni/opencode-autopilot, and please also make a dashboard with links to all convenient major AI tools, like a section for the billing for API key for gemini/vertex/aistudio/cloud, azure, openrouter, chatgpt/openai api key, claude api key, and then also links to the pro plan membership subscription management page, and then use the spreadsheet i linked with all the ai tools on another dashboard page to detect all installed tools and link to their homepage, and then detect whether they are connected using account oauth or api key, and show usage for each provider both account and api key and show budgets, copilot plus subscription, and then also make a dashboard page similar to the jules-app page for copilot cloud, claude chrome, claude cloud, openai codex cloud, and other providers like blocks, basically useful dashboard pages that organize everything into one place both locally and remote.
+
+jules-autopilot:
+i don't think all the messages are showing up in the session chat histor
+there still isn't a logs button or logs pane
+i don't think the auto accept plan function is workin
+the version number doesn't seem to have been increased in a while despite several change
+i'm not sure if the broadcast function is actually working or not but it should force send messages to every session regardless of statu
+it should let me force send a message to a failed or completed session
+
+

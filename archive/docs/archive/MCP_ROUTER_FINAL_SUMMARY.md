@@ -2,6 +2,7 @@
 
 **Date**: 2026-01-17
 **Task**: Implement Ultimate MCP Router for Hypercode
+**Task**: Implement Ultimate MCP Router for Borg
 **Status**: ✅ COMPLETE
 
 ---
@@ -25,6 +26,8 @@
 3. **ConfigurationService** (`packages/core/src/services/ConfigurationService.ts`)
    - Auto-detect .mcp.json, .hypercode.json config files
    - Multi-format support (Claude, OpenAI, Google, Hypercode)
+   - Auto-detect .mcp.json, .borg.json config files
+   - Multi-format support (Claude, OpenAI, Google, Borg)
    - Environment variable expansion ($VAR)
    - Secret expansion ({secret:NAME})
    - Import/export and validation
@@ -161,6 +164,7 @@ console.log('Import result:', importResult);
 
 // Export configuration
 const hypercodeFormat = await configService.exportConfigs('hypercode');
+const borgFormat = await configService.exportConfigs('borg');
 const claudeFormat = await configService.exportConfigs('claude');
 const openaiFormat = await configService.exportConfigs('openai');
 const googleFormat = await configService.exportConfigs('google');
@@ -229,6 +233,7 @@ bun run src/examples/05-complete-workflow.ts
 1. **Resolve McpProxyManager Errors**: Fix TypeScript syntax errors in existing file
 2. **Proceed with Integration**: Once errors resolved, follow integration guide
 3. **Add CLI Commands**: Create `hypercode mcp install`, `hypercode mcp update`, etc.
+3. **Add CLI Commands**: Create `borg mcp install`, `borg mcp update`, etc.
 4. **Build UI**: Create server management dashboard
 
 ---
@@ -297,6 +302,7 @@ bun run src/examples/05-complete-workflow.ts
 
 ```
 hypercode/
+borg/
 ├── packages/core/src/services/
 │   ├── MCPRegistryService.ts         ✅ NEW
 │   ├── ServerRegistryService.ts      ✅ NEW
@@ -331,6 +337,9 @@ The implementation is COMPLETE. Optional enhancements:
    - Add `hypercode mcp install <server>` command
    - Add `hypercode mcp update <server>` command
    - Add `hypercode mcp list` command
+   - Add `borg mcp install <server>` command
+   - Add `borg mcp update <server>` command
+   - Add `borg mcp list` command
 
 3. **UI/Dashboard**
    - Server management interface
@@ -360,6 +369,7 @@ The implementation is COMPLETE. Optional enhancements:
 
 ### Configuration
 - Multi-format support (Claude, OpenAI, Google, Hypercode)
+- Multi-format support (Claude, OpenAI, Google, Borg)
 - Environment variable expansion ($VAR)
 - Secret expansion ({secret:NAME})
 - Auto-detection on startup

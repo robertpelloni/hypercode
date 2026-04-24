@@ -1,0 +1,9 @@
+# Ignore backend and database from Vercel deployment detection
+server/
+packages/
+prisma/
+scripts/
+submodules/
+.hypercode/
+.git/
+node_modules/

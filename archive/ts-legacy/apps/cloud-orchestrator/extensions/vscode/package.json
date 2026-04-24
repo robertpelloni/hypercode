@@ -1,0 +1,60 @@
+{
+  "name": "jules-autopilot",
+  "displayName": "Jules Autopilot",
+  "description": "IDE Integration Bridge for Jules Autopilot Orchestrator — real-time session monitoring, keeper controls, and shadow pilot alerts.",
+  "version": "1.0.0-alpha.31",
+  "publisher": "jules-autopilot",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "jules.startSession",
+        "title": "Jules: Start New Session"
+      },
+      {
+        "command": "jules.pauseKeeper",
+        "title": "Jules: Pause Keeper"
+      },
+      {
+        "command": "jules.resumeKeeper",
+        "title": "Jules: Resume Keeper"
+      },
+      {
+        "command": "jules.viewLogs",
+        "title": "Jules: View Logs"
+      }
+    ],
+    "configuration": {
+      "title": "Jules Autopilot",
+      "properties": {
+        "jules.daemonUrl": {
+          "type": "string",
+          "default": "ws://localhost:8080/ws",
+          "description": "WebSocket URL for the Jules Autopilot daemon."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}

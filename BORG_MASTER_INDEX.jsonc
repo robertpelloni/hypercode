@@ -4,6 +4,10 @@
   "last_updated": "2026-03-19",
   "project": {
     "name": "HYPERCODE",
+  "schema": "borg-master-index/v2.1",
+  "last_updated": "2026-03-19",
+  "project": {
+    "name": "BORG",
     "description": "Multi-agent orchestration platform with built-in tools parity tracking",
     "status": "active"
   },
@@ -355,6 +359,8 @@
         "task": "Integrate AJV schema validation into CI workflow"
       },
       "update_hypercode_master_index": {
+      "update_hypercode_master_index": {
+      "update_borg_master_index": {
         "status": "🚀 In Progress",
         "started": "2026-03-19",
         "task": "Document evidence lock state and platform tracking"

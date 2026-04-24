@@ -1,0 +1,39 @@
+{
+  "name": "@jules/shared",
+<<<<<<< HEAD
+  "version": "1.0.0-alpha.31",
+=======
+  "version": "3.6.0",
+>>>>>>> 9036bd431280e2dbe1b3965d959f898d9cb70b95
+  "description": "Shared types and utilities for Jules Autopilot",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.4.0"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "anthropic": "^0.0.0",
+    "openai": "^6.18.0",
+    "zod": "^4.3.5"
+  }
+}

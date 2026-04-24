@@ -9,7 +9,11 @@
 From `TODO.md` item #4, the session supervisor has spawning, restart/backoff, persistence, and dashboard controls, but:
 - Worktree isolation is not guaranteed in all runtime paths
 - There is no true terminal attach workflow
+<<<<<<< HEAD:archive/tasks/completed/003-session-detail-and-worktree-reliability.md
 - Operators can't easily tell when Hypercode will or will not auto-restart a session
+=======
+- Operators can't easily tell when Borg will or will not auto-restart a session
+>>>>>>> origin/rewrite/main-sanitized:tasks/backlog/003-session-detail-and-worktree-reliability.md
 
 ## Requirements
 
@@ -19,7 +23,11 @@ From `TODO.md` item #4, the session supervisor has spawning, restart/backoff, pe
    - Session metadata: harness, model, worktree path, restart policy
    - Explicit restart/stop/force-kill controls
    - Restart history with timestamps and exit codes
+<<<<<<< HEAD:archive/tasks/completed/003-session-detail-and-worktree-reliability.md
 3. Decide what "terminal attach" means for Hypercode 1.0: buffered I/O viewer (read-only) or write-capable REPL bridge.
+=======
+3. Decide what "terminal attach" means for Borg 1.0: buffered I/O viewer (read-only) or write-capable REPL bridge.
+>>>>>>> origin/rewrite/main-sanitized:tasks/backlog/003-session-detail-and-worktree-reliability.md
 
 ## Acceptance Criteria
 

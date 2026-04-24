@@ -1,128 +1,183 @@
-# Deploy — HyperCode Local Development
+# Deployment Instructions
 
-_Last updated: 2026-04-08, version 1.0.0-alpha.4_
+<<<<<<< HEAD
+## borg `1.0.0-alpha.1`
+=======
+> **Version**: 0.9.0-beta
+> **Scope**: Local Development & Production Deployment
+>>>>>>> origin/rewrite/main-sanitized
 
-## Prerequisites
+### 1. Build Requirements
+- Node.js >= 24
+- pnpm >= 10.28
+- Go >= 1.23 (For experimental sidecar)
 
-- **Node.js** v24.x (tested on v24.10.0)
-- **pnpm** v10.x
-- **Go** 1.23+ (for Go-native handlers)
-- **Python** 3.12+ (for some tooling scripts)
-- **Git** with submodule support
-- **Windows** 10/11 (primary dev platform; Linux/macOS should work)
-
-## Quick Start
-
+### 2. Standard Build & Run
 ```bash
-# 1. Clone with submodules
-git clone --recurse-submodules https://github.com/hypercodehq/hypercode.git
-cd hypercode
-
-# 2. Install dependencies
+<<<<<<< HEAD
+pnpm install
+pnpm run build
+pnpm run start
+=======
+# 1. Install dependencies
 pnpm install
 
-# 3. CRITICAL: Rebuild native bindings for Node 24
-pnpm rebuild better-sqlite3
+# 2. Start the Borg dev readiness launcher
+pnpm run dev
 
-# 4. Build CLI entrypoint (Go-primary startup)
-pnpm run build:startup-go
+# 3. Verify cross-service readiness
+node scripts/verify_dev_readiness.mjs
 
-# 5. Start the server
-# Windows:
-.\start.bat
-# Linux/macOS:
-./start.sh
+# Optional machine-readable output
+node scripts/verify_dev_readiness.mjs --json --soft
+>>>>>>> origin/rewrite/main-sanitized
 ```
+This will compile the TypeScript monorepo, build the web assets, and launch the primary Node.js `cli-orchestrator` along with the web dashboard on port `3000`.
 
-## What starts
+<<<<<<< HEAD
+### 3. Experimental Go Sidecar
+To run the Go bridge alongside the main control plane:
+=======
+`pnpm run dev` launches Borg's readiness-aware development wrapper rather than a bare workspace watch. It brings up the core bridge, the dashboard, supporting package watchers, and reports a truthful ready summary once the live startup contract is satisfied.
 
-1. **HyperCode Core** (Node.js) on `http://0.0.0.0:4000`
-   - tRPC API at `/trpc`
-   - REST API at `/api/*`
-   - Health check at `/health`
-2. **MCP WebSocket Bridge** on `ws://localhost:3001`
-3. **Next.js Dashboard** on `http://localhost:3000/dashboard`
-4. **HyperCode Supervisor** (MCP stdio child process)
+### Access Points
+- **Dashboard**: `http://127.0.0.1:<detected-port>/dashboard`
+  - the dev wrapper prefers the marked Next.js dev port and may fall back among `3000`, `3010`, `3020`, `3030`, or `3040`
+- **Core bridge / core HTTP probe**: `http://127.0.0.1:3001`
+- **Core WebSocket bridge**: `ws://127.0.0.1:3001`
+- **Startup status probe**: `http://127.0.0.1:3001/api/trpc/startupStatus?input=%7B%7D`
+- **MCP status probe**: `http://127.0.0.1:3001/api/trpc/mcp.getStatus?input=%7B%7D`
+- **MCP server**: `stdio` via the CLI entrypoint or the core bridge transport surface
 
-## Environment Variables
+Notes:
 
-Copy `.env.example` to `.env` and configure:
+- The dashboard root redirects from `/` to `/dashboard`.
+- The readiness wrapper can automatically open the detected dashboard URL unless `BORG_DEV_READY_OPEN_BROWSER=0` is set.
+- If an existing Borg-owned core bridge is already healthy on port `3001`, the wrapper reuses it instead of spawning a duplicate core process.
 
-| Variable | Required | Description |
-|---|---|---|
-| `OPENAI_API_KEY` | No | OpenAI API key (GPT-4o, GPT-4o-mini) |
-| `GOOGLE_API_KEY` or `GEMINI_API_KEY` | Recommended | Google AI API key (Gemini 2.5 Flash is **free tier**) |
-| `ANTHROPIC_API_KEY` | No | Anthropic API key (Claude Sonnet 4) |
-| `DEEPSEEK_API_KEY` | No | DeepSeek API key |
-| `OPENROUTER_API_KEY` | No | OpenRouter API key (free models available) |
-| `HYPERCODE_CONFIG_DIR` | No | Override config directory (default: `~/.hypercode`) |
-| `HYPERCODE_RUNTIME` | No | `node`, `go`, or `auto` (default: `auto`) |
+---
 
-## Key Configuration Files
+## 3. Production Deployment (Self-Hosting)
 
-- `mcp.jsonc` — MCP server definitions (34K+ lines, comprehensive)
-- `llm_config.json` — LLM provider configuration
-- `packages/core/config/council.json` — Council member definitions
-- `hypercode.config.json` — Core service configuration
+### Docker (Recommended)
 
-## Troubleshooting
+Borg ships with a multi-stage `Dockerfile.prod` that creates separate container targets for the core API and the web dashboard.
 
-### better-sqlite3 fails to load
+#### Build Targets
+
+| Target | Base Image | Exposes | Purpose |
+|--------|-----------|---------|---------|
+| `core-runner` | node:20-slim | 3000 | Borg Core API + WebSocket server |
+| `web-runner` | node:20-slim | 8080 | Next.js standalone dashboard |
+
+#### Build & Run
+>>>>>>> origin/rewrite/main-sanitized
 ```bash
-pnpm rebuild better-sqlite3
-# Verify:
-node -e "require('better-sqlite3')(':memory:'); console.log('OK')"
+cd go
+go run ./cmd/borg serve
 ```
 
-### Port 4000 already in use
+<<<<<<< HEAD
+### 4. Extensions
+To build extensions (VS Code, Chrome):
 ```bash
-# Check what's using it
-netstat -ano | findstr :4000
-# Kill the process (get PID from above)
-taskkill /PID <PID> /F
+pnpm run build:extensions
+=======
+Both containers include built-in healthchecks (30s interval, 5s timeout, 3 retries).
+
+### Manual Server Deployment
+1. **Build**:
+   ```bash
+   pnpm install
+   pnpm run build
+   ```
+2. **Environment Variables**:
+  Create a `.env` file where your chosen deployment path expects it. For the current local control-plane defaults, the important values are:
+   ```env
+   # Core
+   PORT=3001
+   DATABASE_URL=file:./dev.db
+   JWT_SECRET=your_secret_key
+   
+   # Web
+   NEXT_PUBLIC_API_URL=http://localhost:3001
+   ```
+3. **Start**:
+   ```bash
+  # Root production-style build
+  pnpm run build
+
+  # Root CLI start path
+  node packages/cli/dist/index.js start
+   ```
+
+---
+
+## 4. MCP Server Integration
+
+To use Borg as an MCP Server inside **Claude Desktop** or **Cursor**:
+
+### Claude Desktop Config
+Edit `%APPDATA%\Claude\claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "borg-core": {
+      "command": "node",
+      "args": [
+        "C:/path/to/borg/packages/cli/dist/index.js",
+        "mcp",
+        "start"
+      ]
+    }
+  }
+}
+>>>>>>> origin/rewrite/main-sanitized
 ```
 
-### Dashboard shows empty data
-- The dashboard fetches from the control plane API on port 4000
-- Make sure the core server started successfully (check for `Core loaded: orchestrator started`)
-- SQLite must be working for most data (see better-sqlite3 troubleshooting above)
-
-### All LLM providers fail with quota errors
-- This means all paid API keys have exhausted their quotas
-- Add a Google API key for Gemini 2.5 Flash (free tier with generous limits)
-- Or add an OpenRouter API key for free model access
-
-## Architecture
-
-```
-hypercode/
-├── packages/core/       # Main TypeScript control plane (593 .ts)
-├── packages/cli/        # CLI entrypoint (28 .ts)
-├── apps/web/            # Next.js 16 dashboard (311 .ts/.tsx)
-├── go/                  # Go-native server bridge (139 .go)
-├── apps/maestro/        # Electron/Wails visual orchestrator (submodule)
-├── apps/cloud-orchestrator/ # Jules autopilot (submodule)
-├── submodules/          # Reference submodules
-│   ├── hyperharness/    # LLM harness
-│   └── prism-mcp/       # Prism MCP reference
-├── packages/claude-mem/ # Claude memory bridge (submodule)
-├── docs/                # Documentation
-├── data/                # Runtime data
-├── scripts/             # Build and utility scripts
-└── mcp.jsonc            # MCP server configuration
-```
-
-## Deployment (Docker)
-
+### 5. Production Docker
 ```bash
-# Build production image
-docker build -f Dockerfile.prod -t hypercode:latest .
-
-# Run with docker-compose
-docker-compose up -d
+docker build -f Dockerfile.prod -t borg:latest .
+docker run -p 3000:3000 -p 4000:4000 -v borg-data:/root/.borg borg:latest
 ```
 
-The Docker setup exposes:
-- Port 4000 (API/control plane)
-- Port 3000 (dashboard)
-- Port 3001 (MCP WebSocket)
+<<<<<<< HEAD
+## Health Checks
+- `http://localhost:4000/api/config/status` - Main control plane health
+- `http://localhost:3000` - Dashboard
+=======
+---
+
+## 5. Troubleshooting
+
+- **Port 3001 In Use**: The core server creates a WebSocket on 3001. Ensure no other instance is running.
+- **Dashboard on an unexpected port**: `pnpm run dev` may move the dashboard off `3000` if that port is occupied. Use the ready summary from the launcher or rerun `node scripts/verify_dev_readiness.mjs` to discover the active dashboard URL.
+- **Circular Dependencies**: If `pnpm build` fails, check `packages/core` for circular imports (Ref: Phase 63 fix).
+- **Database Locks**: SQLite may lock if multiple processes access `dev.db` in write mode.
+- **Docker Build Fails**: Ensure `turbo` can prune the workspace. Run `pnpm dlx turbo prune @borg/web @borg/core --docker` locally first to validate.
+
+### Optional verbose Borg core startup logs
+
+Normal `pnpm run dev` keeps `packages/core/src/MCPServer.ts` boot logging quiet unless you opt in.
+
+Use either flag when you want verbose startup/import tracing:
+
+```powershell
+$env:BORG_MCP_SERVER_DEBUG='1'; pnpm run dev
+```
+
+```powershell
+$env:DEBUG='borg:mcp-server'; pnpm run dev
+```
+
+To clear them again in the current PowerShell session:
+
+```powershell
+Remove-Item Env:BORG_MCP_SERVER_DEBUG -ErrorAction SilentlyContinue
+Remove-Item Env:DEBUG -ErrorAction SilentlyContinue
+```
+
+---
+
+*"Assimilate your infrastructure."*
+>>>>>>> origin/rewrite/main-sanitized

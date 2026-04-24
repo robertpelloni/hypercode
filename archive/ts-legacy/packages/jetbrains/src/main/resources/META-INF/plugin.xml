@@ -1,0 +1,159 @@
+<<<<<<< HEAD:archive/ts-legacy/packages/jetbrains/src/main/resources/META-INF/plugin.xml
+<idea-plugin>
+    <id>com.HyperCode.plugin</id>
+    <name>HyperCode - AI Orchestration System</name>
+    <vendor email="support@HyperCode.dev" url="https://HyperCode.dev">HyperCode Team</vendor>
+
+    <description><![CDATA[
+    Connect your JetBrains IDE to HyperCode Hub for AI-powered development assistance.
+    
+    Features:
+    <ul>
+        <li>Council Debates - Multi-model code review and decision making</li>
+        <li>Architect Mode - Two-model reasoning and editing</li>
+        <li>Supervisor Analytics - Performance tracking</li>
+        <li>Memory Search - Semantic code search</li>
+        <li>Agent Execution - Run AI agents on your code</li>
+    </ul>
+    ]]></description>
+
+    <change-notes><![CDATA[
+    <ul>
+        <li>0.1.0 - Initial release with Council integration</li>
+    </ul>
+    ]]></change-notes>
+    <name>HyperCode</name>
+    <vendor>OhMyOpenCode</vendor>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="HyperCode" secondary="true" icon="AllIcons.Toolwindows.ToolWindowMessages"
+                    anchor="right" factoryClass="com.HyperCode.plugin.HypercodeToolWindowFactory"/>
+        <projectService serviceImplementation="com.HyperCode.plugin.HypercodeService"/>
+        <notificationGroup id="HyperCode Notifications" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <group id="HypercodeActionGroup" text="HyperCode" description="HyperCode Actions" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            
+            <action id="HyperCode.Connect" class="com.HyperCode.plugin.actions.ConnectAction"
+                    text="Connect to Hub" description="Connect to HyperCode Hub"/>
+            <action id="HyperCode.Disconnect" class="com.HyperCode.plugin.actions.DisconnectAction"
+                    text="Disconnect" description="Disconnect from HyperCode Hub"/>
+            <separator/>
+            <action id="HyperCode.StartDebate" class="com.HyperCode.plugin.actions.StartDebateAction"
+                    text="Start Council Debate" description="Start a council debate on selected code"/>
+            <action id="HyperCode.ArchitectMode" class="com.HyperCode.plugin.actions.ArchitectModeAction"
+                    text="Architect Mode" description="Start two-model reasoning session"/>
+            <action id="HyperCode.ViewAnalytics" class="com.HyperCode.plugin.actions.ViewAnalyticsAction"
+                    text="View Analytics" description="View supervisor analytics"/>
+            <separator/>
+            <action id="HyperCode.RunAgent" class="com.HyperCode.plugin.actions.RunAgentAction"
+                    text="Run Agent" description="Run an AI agent on current file"/>
+            <action id="HyperCode.SearchMemory" class="com.HyperCode.plugin.actions.SearchMemoryAction"
+                    text="Search Memory" description="Search HyperCode memory"/>
+        </group>
+        
+        <action id="HyperCode.QuickDebate" class="com.HyperCode.plugin.actions.StartDebateAction"
+                text="HyperCode: Quick Debate" description="Start council debate on selection">
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt D"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+        <toolWindow id="HyperCode" secondary="true" icon="AllIcons.General.Information" anchor="right"
+                    factoryClass="com.HyperCode.plugin.HypercodeToolWindowFactory"/>
+    </extensions>
+
+    <actions>
+        <group id="HyperCode.Menu" text="HyperCode" description="HyperCode Actions">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+            <action id="HyperCode.StartDebate" class="com.HyperCode.plugin.actions.StartDebateAction" text="Start Council Debate"
+                    description="Starts a new AI Council debate">
+                <keyboard-shortcut keymap="$default" first-keystroke="control alt D"/>
+            </action>
+            <action id="HyperCode.ArchitectMode" class="com.HyperCode.plugin.actions.ArchitectModeAction" text="Open Architect Mode"
+                    description="Opens Architect Mode for complex tasks"/>
+        </group>
+    </actions>
+</idea-plugin>
+=======
+<idea-plugin>
+    <id>com.borg.plugin</id>
+    <name>borg - AI Orchestration System</name>
+    <vendor email="support@borg.dev" url="https://borg.dev">borg Team</vendor>
+
+    <description><![CDATA[
+    Connect your JetBrains IDE to borg Hub for AI-powered development assistance.
+    
+    Features:
+    <ul>
+        <li>Council Debates - Multi-model code review and decision making</li>
+        <li>Architect Mode - Two-model reasoning and editing</li>
+        <li>Supervisor Analytics - Performance tracking</li>
+        <li>Memory Search - Semantic code search</li>
+        <li>Agent Execution - Run AI agents on your code</li>
+    </ul>
+    ]]></description>
+
+    <change-notes><![CDATA[
+    <ul>
+        <li>0.1.0 - Initial release with Council integration</li>
+    </ul>
+    ]]></change-notes>
+    <name>borg</name>
+    <vendor>OhMyOpenCode</vendor>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="borg" secondary="true" icon="AllIcons.Toolwindows.ToolWindowMessages"
+                    anchor="right" factoryClass="com.borg.plugin.BorgToolWindowFactory"/>
+        <projectService serviceImplementation="com.borg.plugin.BorgService"/>
+        <notificationGroup id="borg Notifications" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <group id="BorgActionGroup" text="borg" description="borg Actions" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            
+            <action id="borg.Connect" class="com.borg.plugin.actions.ConnectAction"
+                    text="Connect to Hub" description="Connect to borg Hub"/>
+            <action id="borg.Disconnect" class="com.borg.plugin.actions.DisconnectAction"
+                    text="Disconnect" description="Disconnect from borg Hub"/>
+            <separator/>
+            <action id="borg.StartDebate" class="com.borg.plugin.actions.StartDebateAction"
+                    text="Start Council Debate" description="Start a council debate on selected code"/>
+            <action id="borg.ArchitectMode" class="com.borg.plugin.actions.ArchitectModeAction"
+                    text="Architect Mode" description="Start two-model reasoning session"/>
+            <action id="borg.ViewAnalytics" class="com.borg.plugin.actions.ViewAnalyticsAction"
+                    text="View Analytics" description="View supervisor analytics"/>
+            <separator/>
+            <action id="borg.RunAgent" class="com.borg.plugin.actions.RunAgentAction"
+                    text="Run Agent" description="Run an AI agent on current file"/>
+            <action id="borg.SearchMemory" class="com.borg.plugin.actions.SearchMemoryAction"
+                    text="Search Memory" description="Search borg memory"/>
+        </group>
+        
+        <action id="borg.QuickDebate" class="com.borg.plugin.actions.StartDebateAction"
+                text="borg: Quick Debate" description="Start council debate on selection">
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt D"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+        <toolWindow id="borg" secondary="true" icon="AllIcons.General.Information" anchor="right"
+                    factoryClass="com.borg.plugin.BorgToolWindowFactory"/>
+    </extensions>
+
+    <actions>
+        <group id="borg.Menu" text="borg" description="borg Actions">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+            <action id="borg.StartDebate" class="com.borg.plugin.actions.StartDebateAction" text="Start Council Debate"
+                    description="Starts a new AI Council debate">
+                <keyboard-shortcut keymap="$default" first-keystroke="control alt D"/>
+            </action>
+            <action id="borg.ArchitectMode" class="com.borg.plugin.actions.ArchitectModeAction" text="Open Architect Mode"
+                    description="Opens Architect Mode for complex tasks"/>
+        </group>
+    </actions>
+</idea-plugin>
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/jetbrains/src/main/resources/META-INF/plugin.xml

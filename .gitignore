@@ -115,7 +115,119 @@ audit-*.jsonl
 screenshot*.png
 .hypercode/skills/
 go/hypercode
+# Dependencies
+node_modules/
+.pnpm-store/
 
-# Go internal symlinks (sources live in domain folders)
-go/internal/*
-!go/internal/.gitkeep
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Environment and secrets
+.env
+.env.local
+.secrets.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local hidden tool state (keep tracked repo config like .github/, .gitignore, .dockerignore, .env.example)
+.claude/
+**/.claude/
+.copilot/
+**/.copilot/
+.git-rewrite/
+**/.git-rewrite/
+.oc/
+**/.oc/
+.vibe-config.json
+.autopilot/
+**/.autopilot/
+.build-output.log
+**/.build-output.log
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Temporary
+tmp/
+temp/
+verification/
+reader_output.json
+reader_error.txt
+
+# Specific ignores
+packages/core/core.log
+packages/ui/ui.log
+.next/
+.next-dev*/
+**/.next-dev*/
+.borg/
+**/.borg/
+.turbo/
+**/.turbo/
+.antigravity/
+.borg-session.json
+.tmp-borg-dist-probe.mjs
+chat2.json
+resources.db
+**/resources.db
+**/context.db
+push_err.txt
+push_out.txt
+test_logs/
+logs/
+apps/web/.borg-dev-port.json
+apps/web/.tsc-current.txt
+packages/cli/audit-*.jsonl
+packages/core/.tsc-output.txt
+.chunkhound/
+**/.chunkhound/
+.chunkhound.json
+.borg_startup_marker
+**/.borg_startup_marker
+.cli_startup_marker
+**/.cli_startup_marker
+.borg_boot_check
+**/.borg_boot_check
+.borg/.borg/
+.borg/db/
+.borg/agent_memory/
+.borg/handoffs/
+.borg/memory/
+.borg/worktrees/
+.borg/workflows_test_*/
+.borg/shell_history.json
+.borg/policy.json
+.borg/imported_sessions/docs/
+**/dist-chromium/
+**/dist-firefox/
+**/__pycache__/
+**/playwright-report/
+**/test-results/
+
+# Copilot/AI session history and local dev chat logs (personal data, not for public repo)
+chat.json
+chat2.json
+docs/sessions/chat.json
+docs/sessions/*.json
+audit-*.jsonl
+screenshot*.png
+.borg/skills/

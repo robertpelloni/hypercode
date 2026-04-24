@@ -1,27 +1,32 @@
 # 🧪 Phase P: FULL ASSIMILATION Porting Map
 
 This document outlines the strategic migration of logic from reference submodules into the native **@hypercode** monorepo packages.
+This document outlines the strategic migration of logic from reference submodules into the native **@borg** monorepo packages.
 
 ## 🧬 Core Strategy
 Move from "integration" (wrapping external tools) to "assimilation" (native implementation). This enables:
 1. **Total Autonomy**: No reliance on external repository states or drift.
 2. **Infinite Context**: Direct integration with HyperCode's internal session and memory managers.
+2. **Infinite Context**: Direct integration with Borg's internal session and memory managers.
 3. **Unified Performance**: Single-process orchestration without IPC bottlenecks.
 
 ---
 
 ## 🛰️ Jules-Autopilot -> @hypercode/agents & @hypercode/core
+## 🛰️ Jules-Autopilot -> @borg/agents & @borg/core
 
 | Logic Component | Source File | Target Location | Rationale |
 | :--- | :--- | :--- | :--- |
 | **Risk Scoring** | `packages/shared/src/orchestration/supervisor.ts` | `packages/agents/src/orchestration/RiskEvaluator.ts` | Native safety gating for autonomous changes. |
 | **Multi-Agent Debate** | `packages/shared/src/orchestration/debate.ts` | `packages/agents/src/orchestration/DebateEngine.ts` | High-fidelity consensus mechanism for the HyperCode Council. |
+| **Multi-Agent Debate** | `packages/shared/src/orchestration/debate.ts` | `packages/agents/src/orchestration/DebateEngine.ts` | High-fidelity consensus mechanism for the Borg Council. |
 | **Conference Logic** | `packages/shared/src/orchestration/debate.ts` | `packages/agents/src/orchestration/ConferenceManager.ts` | Team-wide sync points for complex plan validation. |
 | **Provider Wrappers** | `packages/shared/src/orchestration/providers/*` | `packages/ai/src/providers/*` | Unify AI provider logic (Gemini, Anthropic, OpenAI). |
 
 ---
 
 ## 🔖 BobbyBookmarks -> @hypercode/core (Memory)
+## 🔖 BobbyBookmarks -> @borg/core (Memory)
 
 | Logic Component | Source File | Target Location | Rationale |
 | :--- | :--- | :--- | :--- |
@@ -33,6 +38,11 @@ Move from "integration" (wrapping external tools) to "assimilation" (native impl
 ---
 
 ## 🏛️ Maestro -> @hypercode/core & @hypercode/ui
+| **DB Sync Logic** | `sync_dbs.py` | `packages/core/src/services/Memory/PeerSync.ts` | Distributed memory synchronization across Borg nodes. |
+
+---
+
+## 🏛️ Maestro -> @borg/core & @borg/ui
 
 | Logic Component | Source File | Target Location | Rationale |
 | :--- | :--- | :--- | :--- |
@@ -50,5 +60,10 @@ Move from "integration" (wrapping external tools) to "assimilation" (native impl
 3. **Memory**: Port Research and Tagging logic to `@hypercode/core/Memory`.
 4. **Interface**: Port Process Management and Agent Discovery to `@hypercode/core`.
 5. **Visualization**: Port React Flow components to `@hypercode/ui`.
+1. **Foundation**: Port AI Provider unification from Jules-Autopilot to `@borg/ai`.
+2. **Intelligence**: Port Debate and Risk logic to `@borg/agents`.
+3. **Memory**: Port Research and Tagging logic to `@borg/core/Memory`.
+4. **Interface**: Port Process Management and Agent Discovery to `@borg/core`.
+5. **Visualization**: Port React Flow components to `@borg/ui`.
 
 **DON'T STOP THE PARTY. THE COLLECTIVE GROWS.**

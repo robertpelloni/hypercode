@@ -1,5 +1,5 @@
 {
-  "nextId": 14,
+  "nextId": 8,
   "tasks": [
     {
       "id": "1",
@@ -48,137 +48,39 @@
     },
     {
       "id": "5",
-      "subject": "Design the new monorepo folder structure",
-      "description": "Create a plan for reorganizing the monorepo into 5 top-level project domains: hypercode, hypermcp, hypermem, hyperingest, hyperharness. Each with research/, packages/go/, packages/ts/ subfolders. Map every current file/folder to its new location.",
+      "subject": "Pull latest and merge all feature branches",
+      "description": "git fetch --all, git pull, merge any feature branches into main",
       "status": "completed",
-      "activeForm": "Designing folder structure",
+      "activeForm": "Pulling and merging branches",
       "metadata": {},
-      "blocks": [
-        "6",
-        "7",
-        "8",
-        "9"
-      ],
+      "blocks": [],
       "blockedBy": [],
-      "createdAt": 1776312145959,
-      "updatedAt": 1776315446118
+      "createdAt": 1777049558630,
+      "updatedAt": 1777049973604
     },
     {
       "id": "6",
-      "subject": "Relocate git submodules to domain research/ folders",
-      "description": "Use git submodule deinit + add (or mv) to relocate each submodule to its correct domain's research/ folder. Submodules: hyperharness→hyperharness/research/, prism-mcp→hypermcp/research/, litellm→hyperingest/research/, mcpproxy→hypermcp/research/, MetaMCP→hypermcp/research/, claude-mem→hypermem/research/, OmniRoute→hyperingest/research/, maestro→hypercode/research/, cloud-orchestrator→hypercode/research/",
-      "status": "completed",
-      "activeForm": "Moving submodules",
+      "subject": "Rename all HyperCode references back to borg",
+      "description": "Find all references to HyperCode, hypercode, @hypercode, hypercodehq, etc. and rename to borg equivalents. This includes package names, imports, URLs, display strings, config, docs, folder names, etc.",
+      "status": "in_progress",
+      "activeForm": "Renaming HyperCode to borg across codebase",
       "metadata": {},
-      "blocks": [
-        "10"
-      ],
-      "blockedBy": [
-        "5"
-      ],
-      "createdAt": 1776312153655,
-      "updatedAt": 1776315451477
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1777049567748,
+      "updatedAt": 1777049979496
     },
     {
       "id": "7",
-      "subject": "Relocate TypeScript packages to domain packages/ts/ folders",
-      "description": "Move each TS package from packages/ to the correct domain's packages/ts/ folder. Update all import paths, workspace references, tsconfig paths, and package.json dependencies.",
-      "status": "completed",
-      "activeForm": "Moving TypeScript packages",
-      "metadata": {},
-      "blocks": [
-        "10"
-      ],
-      "blockedBy": [
-        "5"
-      ],
-      "createdAt": 1776312160706,
-      "updatedAt": 1776315458263
-    },
-    {
-      "id": "8",
-      "subject": "Relocate Go packages to domain packages/go/ folders",
-      "description": "Move each Go internal package from go/internal/ to the correct domain's packages/go/ folder. Each domain gets its own go.mod or they share via Go workspace (go.work).",
-      "status": "completed",
-      "activeForm": "Moving Go packages",
-      "metadata": {},
-      "blocks": [
-        "10"
-      ],
-      "blockedBy": [
-        "5"
-      ],
-      "createdAt": 1776312171217,
-      "updatedAt": 1776315467030
-    },
-    {
-      "id": "9",
-      "subject": "Relocate apps, scripts, docs, and root config",
-      "description": "Move apps/ (web, maestro, etc.) to hypercode/apps/, move scripts/, docs/, data/ to shared infra. Update root config files (package.json, pnpm-workspace.yaml, turbo.json, start.bat/sh).",
-      "status": "completed",
-      "activeForm": "Moving apps and shared infra",
-      "metadata": {},
-      "blocks": [
-        "10"
-      ],
-      "blockedBy": [
-        "5"
-      ],
-      "createdAt": 1776312181983,
-      "updatedAt": 1776315475847
-    },
-    {
-      "id": "10",
-      "subject": "Fix all cross-references and verify builds",
-      "description": "After all moves: fix pnpm-workspace.yaml, tsconfig references, Go import paths, build scripts, start.bat/sh. Verify TypeScript builds and Go builds pass.",
-      "status": "completed",
-      "activeForm": "Fixing build and references",
-      "metadata": {},
-      "blocks": [],
-      "blockedBy": [
-        "6",
-        "7",
-        "8",
-        "9"
-      ],
-      "createdAt": 1776312190430,
-      "updatedAt": 1776315484145
-    },
-    {
-      "id": "11",
-      "subject": "Fix BobbyBookmarks missing data/ directory",
-      "description": "The BobbyBookmarksSyncWorker tries to open a SQLite DB in data/ but the directory doesn't exist. Fix by either ensuring the directory is created at startup or creating it now.",
-      "status": "completed",
-      "activeForm": "Fixing BobbyBookmarks data directory",
+      "subject": "Rebuild, verify, and push",
+      "description": "After rename, rebuild core + CLI, verify server starts, push to both remotes",
+      "status": "pending",
+      "activeForm": "Rebuilding and verifying",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
-      "createdAt": 1776362783888,
-      "updatedAt": 1776362861408
-    },
-    {
-      "id": "12",
-      "subject": "Fix FileSensor stale watch globs in source code",
-      "description": "FileSensor watches use old paths packages/*/src/**/*.ts and apps/*/src/**/*.tsx. Update to new domain-folder structure: hypercode/packages/ts/*/src/**/*.ts, etc.",
-      "status": "completed",
-      "activeForm": "Fixing FileSensor watch globs",
-      "metadata": {},
-      "blocks": [],
-      "blockedBy": [],
-      "createdAt": 1776362790424,
-      "updatedAt": 1776362902727
-    },
-    {
-      "id": "13",
-      "subject": "Fix hypercode-supervisor module resolution path",
-      "description": "The runtime still resolves supervisor to packages/hypercode-supervisor/dist/index.js instead of hypercode/packages/ts/supervisor/dist/index.js. The mcp.jsonc was fixed but the compiled runtime code or package resolution may still use old paths.",
-      "status": "completed",
-      "activeForm": "Fixing hypercode-supervisor path in compiled runtime",
-      "metadata": {},
-      "blocks": [],
-      "blockedBy": [],
-      "createdAt": 1776362798268,
-      "updatedAt": 1776363127978
+      "createdAt": 1777049573070,
+      "updatedAt": 1777049573070
     }
   ]
 }

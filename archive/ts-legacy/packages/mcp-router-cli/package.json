@@ -1,0 +1,25 @@
+{
+<<<<<<< HEAD:archive/ts-legacy/packages/mcp-router-cli/package.json
+    "name": "@hypercode/mcp-router-cli",
+    "version": "1.0.0-alpha.32",
+    "description": "HyperCode MCP Router CLI - Manage MCP servers, configurations, and sessions",
+=======
+    "name": "@borg/mcp-router-cli",
+    "version": "1.0.0-alpha.1",
+    "description": "borg MCP Router CLI - Manage MCP servers, configurations, and sessions",
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/mcp-router-cli/package.json
+    "type": "module",
+    "bin": {
+        "mcp-router": "./mcp-router-cli.ts"
+    },
+    "exports": {
+        ".": "./mcp-router-cli.ts"
+    },
+    "engines": {
+        "bun": ">=1.0.0"
+    },
+    "dependencies": {
+        "@borg/core": "workspace:*",
+        "commander": "^12.1.0"
+    }
+}

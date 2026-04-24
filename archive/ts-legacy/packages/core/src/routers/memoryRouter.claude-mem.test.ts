@@ -1,0 +1,98 @@
+import path from 'path';
+import { describe, expect, it } from 'vitest';
+
+import { summarizeClaudeMemRuntimePipeline, summarizeClaudeMemStore } from './memoryRouter.claude-mem.js';
+
+describe('summarizeClaudeMemStore', () => {
+    it('summarizes section counts and latest update timestamps', () => {
+        const result = summarizeClaudeMemStore(
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/routers/memoryRouter.claude-mem.test.ts
+            path.join('C:', 'hypercode', '.hypercode', 'claude_mem.json'),
+=======
+            path.join('C:', 'borg', '.borg', 'claude_mem.json'),
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/routers/memoryRouter.claude-mem.test.ts
+            {
+                sections: [
+                    {
+                        section: 'project_context',
+                        entries: [
+                            { createdAt: '2026-03-10T10:00:00.000Z' },
+                            { createdAt: '2026-03-10T11:00:00.000Z' },
+                        ],
+                    },
+                    {
+                        section: 'commands',
+                        entries: [{ createdAt: '2026-03-09T09:00:00.000Z' }],
+                    },
+                ],
+            },
+        );
+
+        expect(result).toEqual({
+            exists: true,
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/routers/memoryRouter.claude-mem.test.ts
+            storePath: path.join('C:', 'hypercode', '.hypercode', 'claude_mem.json'),
+=======
+            storePath: path.join('C:', 'borg', '.borg', 'claude_mem.json'),
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/routers/memoryRouter.claude-mem.test.ts
+            totalEntries: 3,
+            sectionCount: 2,
+            defaultSectionCount: 5,
+            presentDefaultSectionCount: 2,
+            populatedSectionCount: 2,
+            missingSections: ['user_facts', 'style_preferences', 'general'],
+            runtimePipeline: {
+                configuredMode: 'unknown',
+                providerNames: [],
+                providerCount: 0,
+                sectionedStoreEnabled: false,
+            },
+            sections: [
+                { section: 'project_context', entryCount: 2 },
+                { section: 'commands', entryCount: 1 },
+            ],
+            lastUpdatedAt: '2026-03-10T11:00:00.000Z',
+        });
+    });
+
+    it('returns an empty status shape when the store is missing', () => {
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/routers/memoryRouter.claude-mem.test.ts
+        expect(summarizeClaudeMemStore('C:/hypercode/.hypercode/claude_mem.json', null)).toEqual({
+            exists: false,
+            storePath: 'C:/hypercode/.hypercode/claude_mem.json',
+=======
+        expect(summarizeClaudeMemStore('C:/borg/.borg/claude_mem.json', null)).toEqual({
+            exists: false,
+            storePath: 'C:/borg/.borg/claude_mem.json',
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/routers/memoryRouter.claude-mem.test.ts
+            totalEntries: 0,
+            sectionCount: 0,
+            defaultSectionCount: 5,
+            presentDefaultSectionCount: 0,
+            populatedSectionCount: 0,
+            missingSections: ['project_context', 'user_facts', 'style_preferences', 'commands', 'general'],
+            runtimePipeline: {
+                configuredMode: 'unknown',
+                providerNames: [],
+                providerCount: 0,
+                sectionedStoreEnabled: false,
+            },
+            sections: [],
+            lastUpdatedAt: null,
+        });
+    });
+
+    it('summarizes when claude-mem is part of the active memory pipeline', () => {
+        expect(summarizeClaudeMemRuntimePipeline({
+            configuredMode: 'redundant',
+            providerNames: ['json', 'claude-mem'],
+            providerCount: 2,
+            sectionedStoreEnabled: true,
+        })).toEqual({
+            configuredMode: 'redundant',
+            providerNames: ['json', 'claude-mem'],
+            providerCount: 2,
+            sectionedStoreEnabled: true,
+        });
+    });
+});

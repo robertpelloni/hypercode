@@ -1,6 +1,10 @@
 # Task: MCP Router Progressive Disclosure — Complete Working Set Story
 
+<<<<<<< HEAD:archive/tasks/completed/002-mcp-working-set-hydration-ux.md
 **Track:** B — Hypercode-native MCP router maturity  
+=======
+**Track:** B — Borg-native MCP router maturity  
+>>>>>>> origin/rewrite/main-sanitized:tasks/backlog/002-mcp-working-set-hydration-ux.md
 **Priority:** P0 item #3 (ongoing)  
 **Status:** Ready for implementation slice
 

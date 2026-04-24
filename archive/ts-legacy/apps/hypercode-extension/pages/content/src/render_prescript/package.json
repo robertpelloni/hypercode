@@ -1,0 +1,35 @@
+{
+  "name": "function-call-renderer",
+<<<<<<<< HEAD:archive/ts-legacy/apps/hypercode-extension/pages/content/src/render_prescript/package.json
+  "version": "1.0.0-alpha.31",
+========
+  "version": "0.7.2",
+>>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:apps/borg-extension/pages/content/src/render_prescript/package.json
+  "description": "Renders function call blocks from preformatted text",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "bundle": "rollup -c",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@extension/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@types/trusted-types": "^2.0.7",
+    "@extension/tsconfig": "workspace:*",
+    "@types/chrome": "0.0.304",
+    "rollup": "^2.79.2",
+    "rollup-plugin-terser": "^7.0.2",
+    "typescript": "^5.9.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "author": "",
+  "license": "ISC"
+}

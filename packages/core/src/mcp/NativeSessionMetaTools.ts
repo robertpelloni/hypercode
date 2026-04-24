@@ -1,0 +1,243 @@
+import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
+
+import { SessionToolWorkingSet } from './SessionToolWorkingSet.js';
+import { getToolLoadingDefinitions } from './toolLoadingDefinitions.js';
+import {
+    executeGetToolSchemaCompatibility,
+    executeListLoadedToolsCompatibility,
+    executeLoadToolCompatibility,
+    executeSearchToolsCompatibility,
+    executeUnloadToolCompatibility,
+} from './toolLoadingCompatibility.js';
+import {
+    pickAutoLoadCandidate,
+    rankToolSearchCandidates,
+    type RankedToolSearchResult,
+} from './toolSearchRanking.js';
+import type { ToolContextPayload } from '../services/toolContextMemory.js';
+
+type SearchableTool = Tool & {
+    server?: string;
+    serverDisplayName?: string;
+    originalName?: string;
+    advertisedName?: string;
+    serverTags?: string[];
+    toolTags?: string[];
+    semanticGroup?: string;
+    semanticGroupLabel?: string;
+    keywords?: string[];
+    alwaysOn?: boolean;
+};
+
+function createTextResult(text: string, isError = false): CallToolResult {
+    return {
+        content: [{ type: 'text', text }],
+        isError,
+    };
+}
+
+export class NativeSessionMetaTools {
+    private readonly workingSet: SessionToolWorkingSet;
+    private readonly catalog = new Map<string, Tool>();
+    private toolContextResolver?: (input: { toolName: string; args?: Record<string, unknown> }) => ToolContextPayload | null;
+
+    constructor(
+        workingSet: SessionToolWorkingSet = new SessionToolWorkingSet(),
+        options: {
+            toolContextResolver?: (input: { toolName: string; args?: Record<string, unknown> }) => ToolContextPayload | null;
+        } = {},
+    ) {
+        this.workingSet = workingSet;
+        this.toolContextResolver = options.toolContextResolver;
+    }
+
+    public setToolContextResolver(
+        resolver?: (input: { toolName: string; args?: Record<string, unknown> }) => ToolContextPayload | null,
+    ): void {
+        this.toolContextResolver = resolver;
+    }
+
+    public refreshCatalog(tools: Tool[]): void {
+        this.catalog.clear();
+        tools.forEach((tool) => {
+            this.catalog.set(tool.name, tool);
+        });
+    }
+
+    public listToolDefinitions(): Tool[] {
+        return getToolLoadingDefinitions();
+    }
+
+    public getVisibleLoadedTools(): Tool[] {
+        return this.workingSet.listLoadedTools()
+            .map((entry) => {
+                const tool = this.catalog.get(entry.name);
+                if (!tool) {
+                    return null;
+                }
+
+                if (entry.hydrated) {
+                    return tool;
+                }
+
+                return this.toMinimalTool(tool);
+            })
+            .filter((tool): tool is Tool => tool !== null);
+    }
+
+    public getLoadedToolNames(): string[] {
+        return this.workingSet.getLoadedToolNames();
+    }
+
+    public setAlwaysLoadedTools(names: string[]): void {
+        this.workingSet.setAlwaysLoadedTools(names.filter((name) => this.catalog.has(name)));
+    }
+
+    public hasTool(name: string): boolean {
+        return this.catalog.has(name);
+    }
+
+    public loadToolIntoSession(name: string): { loaded: boolean; evicted: string[] } {
+        if (!this.catalog.has(name)) {
+            return { loaded: false, evicted: [] };
+        }
+
+        return {
+            loaded: true,
+            evicted: this.workingSet.loadTool(name),
+        };
+    }
+
+    public touchLoadedTool(name: string): boolean {
+        return this.workingSet.touchTool(name);
+    }
+
+    public async handleToolCall(name: string, args: Record<string, unknown>): Promise<CallToolResult | null> {
+        if (name === 'search_tools') {
+            return await executeSearchToolsCompatibility(args, (query, limit) => this.searchTools(query, limit));
+        }
+
+        if (name === 'load_tool') {
+            return await executeLoadToolCompatibility(args, (toolName) => this.catalog.has(toolName), this.workingSet);
+        }
+
+        if (name === 'get_tool_schema') {
+            return await executeGetToolSchemaCompatibility(
+                args,
+                (toolName) => this.catalog.get(toolName) ?? null,
+                this.workingSet,
+                (tool, evictedHydratedTools) => ({
+                    name: tool.name,
+                    description: tool.description ?? '',
+                    inputSchema: tool.inputSchema ?? { type: 'object', properties: {} },
+                    evictedHydratedTools,
+                }),
+            );
+        }
+
+        if (name === 'get_tool_context') {
+            const toolName = typeof args.name === 'string' ? args.name : '';
+            if (!toolName) {
+                return createTextResult('Tool context lookup requires a downstream tool name.', true);
+            }
+
+            if (!this.toolContextResolver) {
+                return createTextResult('Tool context resolver is not available in this Borg session.', true);
+            }
+
+            const payload = this.toolContextResolver({
+                toolName,
+                args: typeof args.arguments === 'object' && args.arguments !== null
+                    ? args.arguments as Record<string, unknown>
+                    : undefined,
+            });
+
+            return createTextResult(JSON.stringify(payload ?? {
+                toolName,
+                query: toolName,
+                matchedPaths: [],
+                observationCount: 0,
+                summaryCount: 0,
+                prompt: `JIT tool context for ${toolName}:\nNo relevant prior memory was found.`,
+            }));
+        }
+
+        if (name === 'unload_tool') {
+            return await executeUnloadToolCompatibility(args, this.workingSet);
+        }
+
+        if (name === 'list_loaded_tools') {
+            return await executeListLoadedToolsCompatibility(this.workingSet);
+        }
+
+        return null;
+    }
+
+    private searchTools(query: string, limit: number): RankedToolSearchResult[] {
+        const rankedResults = rankToolSearchCandidates(
+            Array.from(this.catalog.values()).map((tool) => {
+                const searchableTool = tool as SearchableTool;
+                return {
+                name: tool.name,
+                description: tool.description ?? '',
+                serverName: searchableTool.server,
+                serverDisplayName: searchableTool.serverDisplayName,
+                originalName: searchableTool.originalName,
+                advertisedName: searchableTool.advertisedName,
+                serverTags: searchableTool.serverTags,
+                toolTags: searchableTool.toolTags,
+                semanticGroup: searchableTool.semanticGroup,
+                semanticGroupLabel: searchableTool.semanticGroupLabel,
+                keywords: searchableTool.keywords,
+                alwaysOn: searchableTool.alwaysOn,
+                loaded: this.workingSet.isLoaded(tool.name),
+                hydrated: this.workingSet.isHydrated(tool.name),
+                deferred: !this.workingSet.isHydrated(tool.name),
+                };
+            }),
+            query,
+            limit,
+        );
+
+        const autoLoadDecision = pickAutoLoadCandidate(rankedResults, query);
+        if (!autoLoadDecision) {
+            return rankedResults;
+        }
+
+        const { loaded, evicted } = this.loadToolIntoSession(autoLoadDecision.toolName);
+        if (!loaded) {
+            return rankedResults;
+        }
+
+        return rankedResults.map((result) => {
+            if (result.name === autoLoadDecision.toolName) {
+                return {
+                    ...result,
+                    loaded: true,
+                    autoLoaded: true,
+                    matchReason: `${result.matchReason}; ${autoLoadDecision.reason}`,
+                };
+            }
+
+            if (evicted.includes(result.name)) {
+                return {
+                    ...result,
+                    loaded: false,
+                };
+            }
+
+            return result;
+        });
+    }
+
+    private toMinimalTool(tool: Tool): Tool {
+        return {
+            name: tool.name,
+            description: `[Deferred] ${tool.description ?? 'No description'}`,
+            inputSchema: {
+                type: 'object',
+                properties: {},
+            },
+        };
+    }
+}

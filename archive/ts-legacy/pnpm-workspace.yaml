@@ -1,0 +1,16 @@
+packages:
+  - 'apps/*'
+<<<<<<< HEAD:archive/ts-legacy/pnpm-workspace.yaml
+  - '!apps/hypercode-extension'
+  - '!apps/hypercode-extension'
+=======
+  - '!apps/borg-extension'
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:pnpm-workspace.yaml
+  - '!apps/vscode'
+  - 'packages/*'
+  - 'external/MetaMCP/packages/*'
+  - 'external/MetaMCP/apps/*'
+  - 'apps/cloud-orchestrator/apps/*'
+  - 'apps/cloud-orchestrator/packages/*'
+  - 'apps/cloud-orchestrator/server'
+  - '!archive/**'

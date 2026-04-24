@@ -1,0 +1,71 @@
+# dependencies
+node_modules/
+**/node_modules/
+.pnp
+.pnp.*
+
+# testing
+/coverage
+
+# vite / build
+/dist
+/dist-ssr
+*.local
+
+# next.js (legacy)
+/.next/
+/out/
+
+# production (legacy)
+/build
+
+# misc
+.DS_Store
+*.pem
+*.log
+daemon.log
+.hypercode_startup_marker
+.cli_startup_marker
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# workspace
+/workspace
+
+# claude code artifacts
+/.claude
+
+# git worktrees
+/.worktrees
+
+# temporary files
+*.png
+!public/**/*.png
+.aider*
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Database
+/lib/generated/prisma
+dev.db
+dev.db-journal
+dev.db-shm
+dev.db-wal

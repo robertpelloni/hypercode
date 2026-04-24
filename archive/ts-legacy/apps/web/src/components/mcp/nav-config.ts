@@ -1,0 +1,379 @@
+import {
+    Server,
+    LayoutDashboard,
+    Globe,
+    Key,
+    Layers,
+    Shield,
+    FileCode,
+    FileText,
+    Settings,
+    Search,
+    BookOpen,
+    Activity,
+    Database,
+    Zap,
+    Bot,
+    Wrench,
+    Download,
+    Rocket,
+    Brain,
+    FlaskConical,
+    Terminal,
+    FileSearch,
+    Settings2,
+    Workflow,
+    Library,
+    BookOpenText,
+    BarChart3,
+    Hammer,
+    Users,
+    Eye,
+    Heart,
+    BookMarked,
+    Building2,
+    Lightbulb,
+    Cog,
+    FileCode2,
+    ScrollText,
+    Sparkles,
+    Radio,
+    Network,
+    ShoppingBag,
+    Code2,
+    Puzzle,
+    MonitorPlay,
+    FolderOpen,
+<<<<<<< HEAD:archive/ts-legacy/apps/web/src/components/mcp/nav-config.ts
+    Scale,
+=======
+>>>>>>> origin/rewrite/main-sanitized:apps/web/src/components/mcp/nav-config.ts
+} from "lucide-react";
+
+export interface NavItem {
+    title: string;
+    href: string;
+    icon: any;
+    description?: string;
+    variant: "default" | "ghost";
+    /** Optional maturity badge shown in the sidebar nav. */
+    badge?: 'beta' | 'experimental' | 'embed';
+}
+
+export interface NavSection {
+    title: string;
+    items: NavItem[];
+}
+
+export const MCP_CONTROL_PLANE_NAV: NavItem[] = [
+    {
+        title: "MCP Router",
+        href: "/dashboard/mcp",
+        icon: Server,
+        description: "Control plane for MCP routing, server health, and aggregation status.",
+        variant: "default",
+        badge: "beta",
+    },
+    {
+        title: "API Keys",
+        href: "/dashboard/mcp/api-keys",
+        icon: Key,
+        description: "Review and manage API keys and auth tokens for MCP integrations.",
+        variant: "ghost",
+    },
+    {
+        title: "Tool Sets",
+        href: "/dashboard/mcp/tool-sets",
+        icon: Layers,
+        description: "Create reusable bundles of tools for specific workflows and contexts.",
+        variant: "ghost",
+    },
+    {
+        title: "Policies",
+        href: "/dashboard/mcp/policies",
+        icon: Shield,
+        description: "Define access and execution policies for tools, routes, and agents.",
+        variant: "ghost",
+    },
+    {
+        title: "Internal Scripts",
+        href: "/dashboard/mcp/scripts",
+        icon: FileCode,
+        description: "Inspect and manage built-in operational scripts used by borg MCP.",
+        variant: "ghost",
+    },
+    {
+        title: "System Audit",
+        href: "/dashboard/mcp/audit",
+        icon: FileText,
+        description: "Audit trail for critical operations, changes, and policy decisions.",
+        variant: "ghost",
+    },
+    {
+        title: "Logs",
+        href: "/dashboard/mcp/logs",
+        icon: Activity,
+        description: "Browse runtime logs for MCP servers, routing, and execution events.",
+        variant: "ghost",
+    },
+    {
+        title: "Observability",
+        href: "/dashboard/mcp/observability",
+        icon: Zap,
+        description: "Real-time observability, latency telemetry, and performance indicators.",
+        variant: "ghost",
+    },
+    {
+        title: "System",
+        href: "/dashboard/mcp/system",
+        icon: Activity,
+        description: "System-level MCP runtime diagnostics and environment status.",
+        variant: "ghost",
+    },
+    {
+        title: "Registry",
+        href: "/dashboard/mcp/registry",
+        icon: Download,
+        description: "Server registry and installation pipeline for MCP integrations.",
+        variant: "ghost",
+    },
+    {
+        title: "Documentation",
+        href: "/dashboard/mcp/docs",
+        icon: BookOpen,
+        description: "MCP feature documentation, usage guides, and protocol references.",
+        variant: "ghost",
+    },
+    {
+        title: "Configuration",
+        href: "/dashboard/mcp/settings",
+        icon: Settings,
+        description: "Fine-grained MCP settings for routing, discovery, and behavior.",
+        variant: "ghost",
+    },
+];
+
+export const MCP_TESTING_NAV: NavItem[] = [
+    {
+        title: "Testing Lab",
+        href: "/dashboard/mcp/testing",
+        icon: FlaskConical,
+        description: "Sandbox for validating MCP connectivity, calls, and tool behavior.",
+        variant: "default",
+    },
+    {
+        title: "Search",
+        href: "/dashboard/mcp/search",
+        icon: Search,
+        description: "Semantic tool discovery with ranking, loading, and telemetry.",
+        variant: "ghost",
+        badge: "beta",
+    },
+    {
+        title: "Inspector",
+        href: "/dashboard/mcp/inspector",
+        icon: Wrench,
+        description: "Interactive inspector for tool schemas, args, responses, and traces.",
+        variant: "ghost",
+        badge: "beta",
+    },
+    {
+        title: "Agent Playground",
+        href: "/dashboard/mcp/agent",
+        icon: Bot,
+        description: "Experiment with agent-assisted MCP execution and orchestration flows.",
+        variant: "ghost",
+        badge: "experimental",
+    },
+    {
+        title: "AI Tools",
+        href: "/dashboard/mcp/ai-tools",
+        icon: Sparkles,
+        description: "AI-enhanced tooling utilities and automation helpers for MCP workflows.",
+        variant: "ghost",
+        badge: "experimental",
+    },
+    {
+        title: "Tool Catalog",
+        href: "/dashboard/mcp/catalog",
+        icon: Search,
+        description: "Catalog view of available tools with metadata and filtering support.",
+        variant: "ghost",
+    },
+    {
+        title: "Unified Directory",
+        href: "/dashboard/mcp/unified-directory",
+        icon: Database,
+        description: "Merged view of published MCP catalog entries and BobbyBookmarks backlog items.",
+        variant: "ghost",
+        badge: "beta",
+    },
+];
+
+export const HYPERCODE_MCP_NAV: NavItem[] = [
+    ...MCP_CONTROL_PLANE_NAV,
+    ...MCP_TESTING_NAV,
+];
+
+export const INTEGRATIONS_NAV: NavItem[] = [
+    {
+        title: "Integration Hub",
+        href: "/dashboard/integrations",
+        icon: Puzzle,
+        description: "Install/connect borg across browser, editor, and MCP client environments from one operator surface.",
+        variant: "default",
+        badge: "beta",
+    },
+    {
+        title: "Open-WebUI",
+        href: "/dashboard/webui",
+        icon: Bot,
+        description: "Integration status and controls for Open-WebUI connections.",
+        variant: "default",
+        badge: "embed",
+    },
+    {
+        title: "CLI Orchestrator",
+        href: "/dashboard/orchestrator",
+        icon: Sparkles,
+        description: "Council governance and session-supervision control plane for the CLI orchestrator, with legacy autopilot compatibility.",
+        variant: "ghost",
+        badge: "experimental",
+    },
+    {
+        title: "cloud-orchestrator",
+        href: "/dashboard/jules",
+        icon: Rocket,
+        description: "cloud-orchestrator controls for Jules, Spark, Copilot Cloud, Codex Cloud, and Blocks.",
+        variant: "ghost",
+        badge: "experimental",
+    },
+    {
+        title: "electron-orchestrator",
+        href: "/dashboard/maestro",
+        icon: MonitorPlay,
+        description: "Electron desktop orchestrator shell with system tray controls, deep OS integration, and native orchestration.",
+        variant: "ghost",
+        badge: "experimental",
+    },
+    {
+        title: "DeerFlow Harness",
+        href: "/dashboard/deer-flow",
+        icon: Network,
+        description: "Harness view for DeerFlow-compatible execution paths.",
+        variant: "ghost",
+        badge: "experimental",
+    },
+    {
+        title: "Memory Explorer",
+        href: "/dashboard/memory/vector",
+        icon: Network,
+        description: "Explore vector memory collections, embeddings, and retrieval health.",
+        variant: "ghost",
+    },
+];
+
+export const CORE_DASHBOARD_NAV: NavItem[] = [
+    { title: "Mission Control", href: "/", icon: LayoutDashboard, variant: "ghost" },
+<<<<<<< HEAD:archive/ts-legacy/apps/web/src/components/mcp/nav-config.ts
+    { title: "Supervisor", href: "/dashboard/supervisor", icon: Eye, variant: "ghost", badge: "beta" },
+    { title: "Sessions", href: "/dashboard/session", icon: MonitorPlay, description: "Manage supervised AI coding sessions, harness configurations, and restart policies.", variant: "ghost", badge: "beta" },
+    { title: "Providers", href: "/dashboard/billing", icon: Key, variant: "ghost", badge: "beta" },
+    { title: "AI Providers Hub", href: "/dashboard/providers", icon: Key, description: "Central hub for AI provider API keys, billing portals, subscriptions, and cloud coding environments.", variant: "ghost", badge: "beta" },
+    { title: "Health", href: "/dashboard/health", icon: Activity, variant: "ghost", badge: "beta" },
+    { title: "Logs", href: "/dashboard/logs", icon: Terminal, variant: "ghost", badge: "beta" },
+    { title: "Audit", href: "/dashboard/audit", icon: FileText, variant: "ghost", badge: "beta" },
+    { title: "System", href: "/dashboard/system", icon: Server, description: "Operator console: uptime, subsystem health, boot status.", variant: "ghost", badge: "beta" },
+=======
+    { title: "Supervisor", href: "/dashboard/supervisor", icon: Eye, variant: "ghost" },
+    { title: "Sessions", href: "/dashboard/session", icon: MonitorPlay, description: "Manage supervised AI coding sessions, harness configurations, and restart policies.", variant: "ghost" },
+    { title: "Providers", href: "/dashboard/billing", icon: Key, variant: "ghost" },
+    { title: "Health", href: "/dashboard/health", icon: Activity, variant: "ghost" },
+    { title: "Logs", href: "/dashboard/logs", icon: Terminal, variant: "ghost" },
+    { title: "Audit", href: "/dashboard/audit", icon: FileText, variant: "ghost" },
+>>>>>>> origin/rewrite/main-sanitized:apps/web/src/components/mcp/nav-config.ts
+    { title: "Documentation", href: "/docs", icon: BookOpen, variant: "ghost" },
+    { title: "Settings", href: "/dashboard/settings", icon: Settings2, variant: "ghost" },
+    { title: "Secrets Vault", href: "/dashboard/settings/secrets", icon: Key, description: "Manage environment variables and API credentials injected into MCP servers.", variant: "ghost" },
+    { title: "Link Backlog", href: "/dashboard/links", icon: BookMarked, description: "Canonical BobbyBookmarks-powered backlog and future universal MCP directory feed.", variant: "ghost", badge: "beta" },
+];
+
+export const LABS_DASHBOARD_NAV: NavItem[] = [
+    { title: "Director", href: "/dashboard/director", icon: Bot, variant: "ghost" },
+    { title: "Council", href: "/dashboard/council", icon: Users, variant: "ghost" },
+    { title: "Expert Squad", href: "/dashboard/experts", icon: Bot, variant: "ghost" },
+    { title: "Squads", href: "/dashboard/squads", icon: Users, variant: "ghost" },
+    { title: "Brain", href: "/dashboard/brain", icon: Brain, variant: "ghost" },
+    { title: "Memory", href: "/dashboard/memory", icon: Brain, variant: "ghost" },
+    { title: "Knowledge", href: "/dashboard/knowledge", icon: Network, variant: "ghost" },
+    { title: "Cognitive Intake", href: "/dashboard/intake", icon: Database, variant: "ghost" },
+    { title: "Project Laws", href: "/dashboard/project", icon: Scale, variant: "ghost" },
+    { title: "Research", href: "/dashboard/research", icon: FlaskConical, variant: "ghost" },
+    { title: "Browser", href: "/dashboard/browser", icon: Globe, variant: "ghost" },
+<<<<<<< HEAD:archive/ts-legacy/apps/web/src/components/mcp/nav-config.ts
+    { title: "Symbols", href: "/dashboard/symbols", icon: Code2, description: "Browse pinned code symbols and architectural references.", variant: "ghost", badge: "beta" },
+    { title: "Code", href: "/dashboard/code", icon: FileCode2, description: "LSP symbol navigation and search across the active workspace.", variant: "ghost", badge: "beta" },
+    { title: "Context Manager", href: "/dashboard/context", icon: FolderOpen, description: "Manage files injected into the borg context prompt for active AI sessions.", variant: "ghost" },
+    { title: "Command", href: "/dashboard/command", icon: Terminal, description: "Execute slash commands and explore registered command handlers via a live REPL.", variant: "ghost" },
+    { title: "Tests", href: "/dashboard/tests", icon: FlaskConical, description: "Auto-test watcher: start/stop file-watch mode, view per-file pass/fail results.", variant: "ghost", badge: "beta" },
+=======
+    { title: "Symbols", href: "/dashboard/symbols", icon: Code2, description: "Browse pinned code symbols and architectural references.", variant: "ghost" },
+    { title: "Code", href: "/dashboard/code", icon: FileCode2, description: "LSP symbol navigation and search across the active workspace.", variant: "ghost" },
+    { title: "Context Manager", href: "/dashboard/context", icon: FolderOpen, description: "Manage files injected into the Borg context prompt for active AI sessions.", variant: "ghost" },
+    { title: "Command", href: "/dashboard/command", icon: Terminal, description: "Execute slash commands and explore registered command handlers via a live REPL.", variant: "ghost" },
+    { title: "Tests", href: "/dashboard/tests", icon: FlaskConical, description: "Auto-test watcher: start/stop file-watch mode, view per-file pass/fail results.", variant: "ghost" },
+>>>>>>> origin/rewrite/main-sanitized:apps/web/src/components/mcp/nav-config.ts
+    { title: "Traffic Inspector", href: "/dashboard/inspector", icon: FileSearch, variant: "ghost" },
+    { title: "Workflows", href: "/dashboard/workflows", icon: Workflow, variant: "ghost", badge: "beta" },
+    { title: "Swarm", href: "/dashboard/swarm", icon: Users, description: "Horizontal multi-model delegation, adversarial debates, and consensus voting.", variant: "ghost", badge: "experimental" },
+    { title: "Library", href: "/dashboard/library", icon: Library, description: "Resource hub for scripts, prompts, skills, tool sets, memory, plans, and documentation.", variant: "ghost" },
+    { title: "Manual", href: "/dashboard/manual", icon: BookOpenText, variant: "ghost" },
+    { title: "Plans", href: "/dashboard/plans", icon: Lightbulb, variant: "ghost" },
+    { title: "Metrics", href: "/dashboard/metrics", icon: BarChart3, variant: "ghost" },
+    { title: "Marketplace", href: "/dashboard/marketplace", icon: ShoppingBag, variant: "ghost" },
+        { title: "Published Catalog", href: "/dashboard/registry", icon: Globe, description: "Browse, search, and validate the indexed public MCP server catalog.", variant: "ghost", badge: "beta" },
+    { title: "Skills", href: "/dashboard/skills", icon: Hammer, variant: "ghost" },
+    { title: "Healer", href: "/dashboard/healer", icon: Heart, variant: "ghost" },
+    { title: "Security", href: "/dashboard/security", icon: Shield, variant: "ghost" },
+    { title: "Events", href: "/dashboard/events", icon: Activity, variant: "ghost" },
+    { title: "Pulse", href: "/dashboard/pulse", icon: Radio, variant: "ghost" },
+    { title: "Reader", href: "/dashboard/reader", icon: BookMarked, variant: "ghost" },
+    { title: "Architecture", href: "/dashboard/architecture", icon: Building2, variant: "ghost" },
+    { title: "Infrastructure", href: "/dashboard/infrastructure", icon: Server, variant: "ghost" },
+    { title: "Evolution", href: "/dashboard/evolution", icon: Sparkles, variant: "ghost" },
+<<<<<<< HEAD:archive/ts-legacy/apps/web/src/components/mcp/nav-config.ts
+    { title: "Chronicle", href: "/dashboard/chronicle", icon: ScrollText, description: "Git commit log and working-tree status for the active borg workspace.", variant: "ghost" },
+=======
+    { title: "Chronicle", href: "/dashboard/chronicle", icon: ScrollText, variant: "ghost" },
+    { title: "Chronicle", href: "/dashboard/chronicle", icon: ScrollText, description: "Git commit log and working-tree status for the active Borg workspace.", variant: "ghost" },
+    { title: "Library", href: "/dashboard/library", icon: Library, description: "Resource hub for scripts, skills, tool sets, memory, plans, and documentation.", variant: "ghost" },
+>>>>>>> origin/rewrite/main-sanitized:apps/web/src/components/mcp/nav-config.ts
+    { title: "Submodules", href: "/dashboard/submodules", icon: FileCode, variant: "ghost" },
+    { title: "Workshop", href: "/dashboard/workshop", icon: Wrench, variant: "ghost" },
+    { title: "Auto-Dev", href: "/dashboard/workshop/auto-dev", icon: Bot, variant: "ghost" },
+    { title: "Browser Bridge", href: "/dashboard/super-assistant", icon: Bot, variant: "ghost", badge: "beta" },
+    { title: "Agents", href: "/dashboard/agents", icon: Brain, variant: "ghost", badge: "experimental", description: "Agent pool, memory access, and AgentPlayground. Full orchestration controls are a later slice." },
+];
+
+export const SIDEBAR_SECTIONS: NavSection[] = [
+    {
+        title: "MCP Control Plane",
+        items: MCP_CONTROL_PLANE_NAV,
+    },
+    {
+        title: "MCP Testing Lab",
+        items: MCP_TESTING_NAV,
+    },
+    {
+        title: "Integrations",
+        items: INTEGRATIONS_NAV,
+    },
+    {
+        title: "borg 0.99.9 Core",
+        items: CORE_DASHBOARD_NAV,
+    },
+    {
+        title: "Labs & Experimental",
+        items: LABS_DASHBOARD_NAV,
+    },
+];

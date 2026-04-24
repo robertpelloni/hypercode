@@ -1,18 +1,19 @@
 #!/bin/bash
-echo "Starting HyperCode..."
+set -e
 
-# Check for pnpm
-if ! command -v pnpm &> /dev/null
+echo "Starting HyperCode 1.0.0-alpha.32 (Go Native Core)..."
+
+if ! command -v go &> /dev/null
 then
-    echo "pnpm could not be found. Installing..."
-    npm install -g pnpm
+    echo "go could not be found. Please install Go 1.22+."
+    exit 1
 fi
 
-echo "Installing dependencies..."
-pnpm install
+VER="1.0.0-alpha.32"
+echo "Building HyperCode Go Control Plane..."
+cd go
+go build -ldflags "-X internal/buildinfo.Version=$VER" -buildvcs=false -o ../bin/hypercode ./cmd/hypercode
+cd ..
 
-echo "Building..."
-pnpm run build
-
-echo "Starting Hub..."
-pnpm start
+echo "Launching HyperCode..."
+./bin/hypercode "$@"

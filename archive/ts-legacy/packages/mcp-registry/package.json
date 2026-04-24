@@ -1,0 +1,26 @@
+{
+<<<<<<< HEAD:archive/ts-legacy/packages/mcp-registry/package.json
+    "name": "@hypercode/mcp-registry",
+    "version": "1.0.0-alpha.32",
+=======
+    "name": "@borg/mcp-registry",
+    "version": "1.0.0-alpha.1",
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/mcp-registry/package.json
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch --preserveWatchOutput",
+        "lint": "eslint",
+        "test": "vitest --passWithNoTests"
+    },
+    "dependencies": {
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "@types/node": "^20.10.0",
+        "typescript": "^5.9.3",
+        "vitest": "^1.0.0"
+    }
+}

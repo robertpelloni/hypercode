@@ -1,0 +1,1657 @@
+<<<<<<< HEAD:archive/ts-legacy/packages/cli/mcp.jsonc
+// HyperCode MCP configuration
+// This file is HyperCode-owned and may include cached server metadata under mcpServers.<name>._meta.
+=======
+// borg MCP configuration
+// This file is borg-owned and may include cached server metadata under mcpServers.<name>._meta.
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/cli/mcp.jsonc
+{
+  "mcpServers": {
+    "test_stdio_import": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "description": null,
+      "type": "STDIO",
+      "_meta": {
+        "metadataVersion": 2,
+        "configFingerprint": "bc9e0a84d62becfd493b0ad77202b217c133847e3235971e37bc7783d78f6f50",
+        "transportType": "STDIO",
+        "serverName": "test_stdio_import",
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-memory"
+        ],
+        "envKeys": [],
+        "url": null,
+        "headerKeys": [],
+        "status": "ready",
+        "metadataSource": "derived",
+        "reloadableFromCache": true,
+        "toolCount": 9,
+        "tools": [
+          {
+            "name": "add_observations",
+            "description": "Add new observations to existing entities in the knowledge graph",
+            "inputSchema": {
+              "properties": {
+                "observations": {
+                  "items": {
+                    "properties": {
+                      "contents": {
+                        "description": "An array of observation contents to add",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "entityName": {
+                        "description": "The name of the entity to add the observations to",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "entityName",
+                      "contents"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "observations"
+              ]
+            }
+          },
+          {
+            "name": "create_entities",
+            "description": "Create multiple new entities in the knowledge graph",
+            "inputSchema": {
+              "properties": {
+                "entities": {
+                  "items": {
+                    "properties": {
+                      "entityType": {
+                        "description": "The type of the entity",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "The name of the entity",
+                        "type": "string"
+                      },
+                      "observations": {
+                        "description": "An array of observation contents associated with the entity",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "entityType",
+                      "observations"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "entities"
+              ]
+            }
+          },
+          {
+            "name": "create_relations",
+            "description": "Create multiple new relations between entities in the knowledge graph. Relations should be in active voice",
+            "inputSchema": {
+              "properties": {
+                "relations": {
+                  "items": {
+                    "properties": {
+                      "from": {
+                        "description": "The name of the entity where the relation starts",
+                        "type": "string"
+                      },
+                      "relationType": {
+                        "description": "The type of the relation",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "The name of the entity where the relation ends",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "from",
+                      "to",
+                      "relationType"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "relations"
+              ]
+            }
+          },
+          {
+            "name": "delete_entities",
+            "description": "Delete multiple entities and their associated relations from the knowledge graph",
+            "inputSchema": {
+              "properties": {
+                "entityNames": {
+                  "description": "An array of entity names to delete",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "entityNames"
+              ]
+            }
+          },
+          {
+            "name": "delete_observations",
+            "description": "Delete specific observations from entities in the knowledge graph",
+            "inputSchema": {
+              "properties": {
+                "deletions": {
+                  "items": {
+                    "properties": {
+                      "entityName": {
+                        "description": "The name of the entity containing the observations",
+                        "type": "string"
+                      },
+                      "observations": {
+                        "description": "An array of observations to delete",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "entityName",
+                      "observations"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "deletions"
+              ]
+            }
+          },
+          {
+            "name": "delete_relations",
+            "description": "Delete multiple relations from the knowledge graph",
+            "inputSchema": {
+              "properties": {
+                "relations": {
+                  "description": "An array of relations to delete",
+                  "items": {
+                    "properties": {
+                      "from": {
+                        "description": "The name of the entity where the relation starts",
+                        "type": "string"
+                      },
+                      "relationType": {
+                        "description": "The type of the relation",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "The name of the entity where the relation ends",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "from",
+                      "to",
+                      "relationType"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "relations"
+              ]
+            }
+          },
+          {
+            "name": "open_nodes",
+            "description": "Open specific nodes in the knowledge graph by their names",
+            "inputSchema": {
+              "properties": {
+                "names": {
+                  "description": "An array of entity names to retrieve",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "names"
+              ]
+            }
+          },
+          {
+            "name": "read_graph",
+            "description": "Read the entire knowledge graph",
+            "inputSchema": {
+              "properties": {}
+            }
+          },
+          {
+            "name": "search_nodes",
+            "description": "Search for nodes in the knowledge graph based on a query",
+            "inputSchema": {
+              "properties": {
+                "query": {
+                  "description": "The search query to match against entity names, types, and observation content",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "robertpelloni-com": {
+      "url": "https://example.com/sse",
+      "description": null,
+      "type": "SSE",
+      "_meta": {
+        "metadataVersion": 2,
+        "configFingerprint": "cf4a3e7fef33485b03325d8d11a93be1aec610806359c7e17b10216b60293cec",
+        "transportType": "SSE",
+        "serverName": "robertpelloni-com",
+        "command": null,
+        "args": [],
+        "envKeys": [],
+        "url": "https://example.com/sse",
+        "headerKeys": [],
+        "status": "pending",
+        "reloadableFromCache": false,
+        "toolCount": 0,
+        "tools": []
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem@latest",
+        "C:\\Users\\hyper\\workspace\\"
+      ],
+      "description": null,
+      "type": "STDIO",
+      "_meta": {
+        "metadataVersion": 2,
+        "configFingerprint": "100cf134085e76275dd25b9181a0e3ec9efd042ffb5c224654781e78a4fa34e6",
+        "transportType": "STDIO",
+        "serverName": "filesystem",
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem@latest",
+          "C:\\Users\\hyper\\workspace\\"
+        ],
+        "envKeys": [],
+        "url": null,
+        "headerKeys": [],
+        "status": "ready",
+        "metadataSource": "binary",
+        "discoveredAt": "2026-03-12T00:36:57.227Z",
+        "lastAttemptedBinaryLoadAt": "2026-03-12T00:36:57.227Z",
+        "lastSuccessfulBinaryLoadAt": "2026-03-12T00:36:57.227Z",
+        "reloadableFromCache": true,
+        "toolCount": 14,
+        "tools": [
+          {
+            "name": "read_file",
+            "title": "Read File (Deprecated)",
+            "description": "Read the complete contents of a file as text. DEPRECATED: Use read_text_file instead.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {
+                "head": {
+                  "description": "If provided, returns only the first N lines of the file",
+                  "type": "number"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "tail": {
+                  "description": "If provided, returns only the last N lines of the file",
+                  "type": "number"
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "readOnlyHint": true
+            },
+            "raw": {
+              "annotations": {
+                "readOnlyHint": true
+              },
+              "description": "Read the complete contents of a file as text. DEPRECATED: Use read_text_file instead.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                  "head": {
+                    "description": "If provided, returns only the first N lines of the file",
+                    "type": "number"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "tail": {
+                    "description": "If provided, returns only the last N lines of the file",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "name": "read_file",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "Read File (Deprecated)"
+            }
+          },
+          {
+            "name": "read_text_file",
+            "title": "Read Text File",
+            "description": "Read the complete contents of a file from the file system as text. Handles various text encodings and provides detailed error messages if the file cannot be read. Use this tool when you need to examine the contents of a single file. Use the 'head' parameter to read only the first N lines of a file, or the 'tail' parameter to read only the last N lines of a file. Operates on the file as text regardless of extension. Only works within allowed directories.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {
+                "head": {
+                  "description": "If provided, returns only the first N lines of the file",
+                  "type": "number"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "tail": {
+                  "description": "If provided, returns only the last N lines of the file",
+                  "type": "number"
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "readOnlyHint": true
+            },
+            "raw": {
+              "annotations": {
+                "readOnlyHint": true
+              },
+              "description": "Read the complete contents of a file from the file system as text. Handles various text encodings and provides detailed error messages if the file cannot be read. Use this tool when you need to examine the contents of a single file. Use the 'head' parameter to read only the first N lines of a file, or the 'tail' parameter to read only the last N lines of a file. Operates on the file as text regardless of extension. Only works within allowed directories.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                  "head": {
+                    "description": "If provided, returns only the first N lines of the file",
+                    "type": "number"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "tail": {
+                    "description": "If provided, returns only the last N lines of the file",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "name": "read_text_file",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "Read Text File"
+            }
+          },
+          {
+            "name": "read_media_file",
+            "title": "Read Media File",
+            "description": "Read an image or audio file. Returns the base64 encoded data and MIME type. Only works within allowed directories.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "data": {
+                        "type": "string"
+                      },
+                      "mimeType": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "enum": [
+                          "image",
+                          "audio",
+                          "blob"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data",
+                      "mimeType"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "readOnlyHint": true
+            },
+            "raw": {
+              "annotations": {
+                "readOnlyHint": true
+              },
+              "description": "Read an image or audio file. Returns the base64 encoded data and MIME type. Only works within allowed directories.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "name": "read_media_file",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "data": {
+                          "type": "string"
+                        },
+                        "mimeType": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "enum": [
+                            "image",
+                            "audio",
+                            "blob"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "data",
+                        "mimeType"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "Read Media File"
+            }
+          },
+          {
+            "name": "read_multiple_files",
+            "title": "Read Multiple Files",
+            "description": "Read the contents of multiple files simultaneously. This is more efficient than reading files one by one when you need to analyze or compare multiple files. Each file's content is returned with its path as a reference. Failed reads for individual files won't stop the entire operation. Only works within allowed directories.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {
+                "paths": {
+                  "description": "Array of file paths to read. Each path must be a string pointing to a valid file within allowed directories.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                }
+              },
+              "required": [
+                "paths"
+              ],
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "readOnlyHint": true
+            },
+            "raw": {
+              "annotations": {
+                "readOnlyHint": true
+              },
+              "description": "Read the contents of multiple files simultaneously. This is more efficient than reading files one by one when you need to analyze or compare multiple files. Each file's content is returned with its path as a reference. Failed reads for individual files won't stop the entire operation. Only works within allowed directories.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                  "paths": {
+                    "description": "Array of file paths to read. Each path must be a string pointing to a valid file within allowed directories.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "paths"
+                ],
+                "type": "object"
+              },
+              "name": "read_multiple_files",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "Read Multiple Files"
+            }
+          },
+          {
+            "name": "write_file",
+            "title": "Write File",
+            "description": "Create a new file or completely overwrite an existing file with new content. Use with caution as it will overwrite existing files without warning. Handles text content with proper encoding. Only works within allowed directories.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "content"
+              ],
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "destructiveHint": true,
+              "idempotentHint": true,
+              "readOnlyHint": false
+            },
+            "raw": {
+              "annotations": {
+                "destructiveHint": true,
+                "idempotentHint": true,
+                "readOnlyHint": false
+              },
+              "description": "Create a new file or completely overwrite an existing file with new content. Use with caution as it will overwrite existing files without warning. Handles text content with proper encoding. Only works within allowed directories.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ],
+                "type": "object"
+              },
+              "name": "write_file",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "Write File"
+            }
+          },
+          {
+            "name": "edit_file",
+            "title": "Edit File",
+            "description": "Make line-based edits to a text file. Each edit replaces exact line sequences with new content. Returns a git-style diff showing the changes made. Only works within allowed directories.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {
+                "dryRun": {
+                  "default": false,
+                  "description": "Preview changes using git-style diff format",
+                  "type": "boolean"
+                },
+                "edits": {
+                  "items": {
+                    "properties": {
+                      "newText": {
+                        "description": "Text to replace with",
+                        "type": "string"
+                      },
+                      "oldText": {
+                        "description": "Text to search for - must match exactly",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "oldText",
+                      "newText"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "edits"
+              ],
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "destructiveHint": true,
+              "idempotentHint": false,
+              "readOnlyHint": false
+            },
+            "raw": {
+              "annotations": {
+                "destructiveHint": true,
+                "idempotentHint": false,
+                "readOnlyHint": false
+              },
+              "description": "Make line-based edits to a text file. Each edit replaces exact line sequences with new content. Returns a git-style diff showing the changes made. Only works within allowed directories.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                  "dryRun": {
+                    "default": false,
+                    "description": "Preview changes using git-style diff format",
+                    "type": "boolean"
+                  },
+                  "edits": {
+                    "items": {
+                      "properties": {
+                        "newText": {
+                          "description": "Text to replace with",
+                          "type": "string"
+                        },
+                        "oldText": {
+                          "description": "Text to search for - must match exactly",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "oldText",
+                        "newText"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "path": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "edits"
+                ],
+                "type": "object"
+              },
+              "name": "edit_file",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "Edit File"
+            }
+          },
+          {
+            "name": "create_directory",
+            "title": "Create Directory",
+            "description": "Create a new directory or ensure a directory exists. Can create multiple nested directories in one operation. If the directory already exists, this operation will succeed silently. Perfect for setting up directory structures for projects or ensuring required paths exist. Only works within allowed directories.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "destructiveHint": false,
+              "idempotentHint": true,
+              "readOnlyHint": false
+            },
+            "raw": {
+              "annotations": {
+                "destructiveHint": false,
+                "idempotentHint": true,
+                "readOnlyHint": false
+              },
+              "description": "Create a new directory or ensure a directory exists. Can create multiple nested directories in one operation. If the directory already exists, this operation will succeed silently. Perfect for setting up directory structures for projects or ensuring required paths exist. Only works within allowed directories.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "name": "create_directory",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "Create Directory"
+            }
+          },
+          {
+            "name": "list_directory",
+            "title": "List Directory",
+            "description": "Get a detailed listing of all files and directories in a specified path. Results clearly distinguish between files and directories with [FILE] and [DIR] prefixes. This tool is essential for understanding directory structure and finding specific files within a directory. Only works within allowed directories.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "readOnlyHint": true
+            },
+            "raw": {
+              "annotations": {
+                "readOnlyHint": true
+              },
+              "description": "Get a detailed listing of all files and directories in a specified path. Results clearly distinguish between files and directories with [FILE] and [DIR] prefixes. This tool is essential for understanding directory structure and finding specific files within a directory. Only works within allowed directories.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "name": "list_directory",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "List Directory"
+            }
+          },
+          {
+            "name": "list_directory_with_sizes",
+            "title": "List Directory with Sizes",
+            "description": "Get a detailed listing of all files and directories in a specified path, including sizes. Results clearly distinguish between files and directories with [FILE] and [DIR] prefixes. This tool is useful for understanding directory structure and finding specific files within a directory. Only works within allowed directories.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "sortBy": {
+                  "default": "name",
+                  "description": "Sort entries by name or size",
+                  "enum": [
+                    "name",
+                    "size"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "readOnlyHint": true
+            },
+            "raw": {
+              "annotations": {
+                "readOnlyHint": true
+              },
+              "description": "Get a detailed listing of all files and directories in a specified path, including sizes. Results clearly distinguish between files and directories with [FILE] and [DIR] prefixes. This tool is useful for understanding directory structure and finding specific files within a directory. Only works within allowed directories.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "sortBy": {
+                    "default": "name",
+                    "description": "Sort entries by name or size",
+                    "enum": [
+                      "name",
+                      "size"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "name": "list_directory_with_sizes",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "List Directory with Sizes"
+            }
+          },
+          {
+            "name": "directory_tree",
+            "title": "Directory Tree",
+            "description": "Get a recursive tree view of files and directories as a JSON structure. Each entry includes 'name', 'type' (file/directory), and 'children' for directories. Files have no children array, while directories always have a children array (which may be empty). The output is formatted with 2-space indentation for readability. Only works within allowed directories.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {
+                "excludePatterns": {
+                  "default": [],
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "readOnlyHint": true
+            },
+            "raw": {
+              "annotations": {
+                "readOnlyHint": true
+              },
+              "description": "Get a recursive tree view of files and directories as a JSON structure. Each entry includes 'name', 'type' (file/directory), and 'children' for directories. Files have no children array, while directories always have a children array (which may be empty). The output is formatted with 2-space indentation for readability. Only works within allowed directories.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                  "excludePatterns": {
+                    "default": [],
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "path": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "name": "directory_tree",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "Directory Tree"
+            }
+          },
+          {
+            "name": "move_file",
+            "title": "Move File",
+            "description": "Move or rename files and directories. Can move files between directories and rename them in a single operation. If the destination exists, the operation will fail. Works across different directories and can be used for simple renaming within the same directory. Both source and destination must be within allowed directories.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {
+                "destination": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "source",
+                "destination"
+              ],
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "destructiveHint": false,
+              "idempotentHint": false,
+              "readOnlyHint": false
+            },
+            "raw": {
+              "annotations": {
+                "destructiveHint": false,
+                "idempotentHint": false,
+                "readOnlyHint": false
+              },
+              "description": "Move or rename files and directories. Can move files between directories and rename them in a single operation. If the destination exists, the operation will fail. Works across different directories and can be used for simple renaming within the same directory. Both source and destination must be within allowed directories.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                  "destination": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "source",
+                  "destination"
+                ],
+                "type": "object"
+              },
+              "name": "move_file",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "Move File"
+            }
+          },
+          {
+            "name": "search_files",
+            "title": "Search Files",
+            "description": "Recursively search for files and directories matching a pattern. The patterns should be glob-style patterns that match paths relative to the working directory. Use pattern like '*.ext' to match files in current directory, and '**/*.ext' to match files in all subdirectories. Returns full paths to all matching items. Great for finding files when you don't know their exact location. Only searches within allowed directories.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {
+                "excludePatterns": {
+                  "default": [],
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "pattern": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "pattern"
+              ],
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "readOnlyHint": true
+            },
+            "raw": {
+              "annotations": {
+                "readOnlyHint": true
+              },
+              "description": "Recursively search for files and directories matching a pattern. The patterns should be glob-style patterns that match paths relative to the working directory. Use pattern like '*.ext' to match files in current directory, and '**/*.ext' to match files in all subdirectories. Returns full paths to all matching items. Great for finding files when you don't know their exact location. Only searches within allowed directories.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                  "excludePatterns": {
+                    "default": [],
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "pattern": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "pattern"
+                ],
+                "type": "object"
+              },
+              "name": "search_files",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "Search Files"
+            }
+          },
+          {
+            "name": "get_file_info",
+            "title": "Get File Info",
+            "description": "Retrieve detailed metadata about a file or directory. Returns comprehensive information including size, creation time, last modified time, permissions, and type. This tool is perfect for understanding file characteristics without reading the actual content. Only works within allowed directories.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "readOnlyHint": true
+            },
+            "raw": {
+              "annotations": {
+                "readOnlyHint": true
+              },
+              "description": "Retrieve detailed metadata about a file or directory. Returns comprehensive information including size, creation time, last modified time, permissions, and type. This tool is perfect for understanding file characteristics without reading the actual content. Only works within allowed directories.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "name": "get_file_info",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "Get File Info"
+            }
+          },
+          {
+            "name": "list_allowed_directories",
+            "title": "List Allowed Directories",
+            "description": "Returns the list of directories that this server is allowed to access. Subdirectories within these allowed directories are also accessible. Use this to understand which directories and their nested paths are available before trying to access files.",
+            "inputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "properties": {},
+              "type": "object"
+            },
+            "outputSchema": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content"
+              ],
+              "type": "object"
+            },
+            "annotations": {
+              "readOnlyHint": true
+            },
+            "raw": {
+              "annotations": {
+                "readOnlyHint": true
+              },
+              "description": "Returns the list of directories that this server is allowed to access. Subdirectories within these allowed directories are also accessible. Use this to understand which directories and their nested paths are available before trying to access files.",
+              "execution": {
+                "taskSupport": "forbidden"
+              },
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {},
+                "type": "object"
+              },
+              "name": "list_allowed_directories",
+              "outputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              },
+              "title": "List Allowed Directories"
+            }
+          }
+        ]
+      }
+    },
+    "github": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "description": null,
+      "type": "STREAMABLE_HTTP",
+      "_meta": {
+        "metadataVersion": 2,
+        "configFingerprint": "8dc471a7d9be34bca477b96eefb18e3257bdd6895d76b774449bcd5c14478a9d",
+        "transportType": "STREAMABLE_HTTP",
+        "serverName": "github",
+        "command": null,
+        "args": [],
+        "envKeys": [],
+        "url": "https://api.githubcopilot.com/mcp/",
+        "headerKeys": [],
+        "status": "pending",
+        "reloadableFromCache": false,
+        "toolCount": 0,
+        "tools": []
+      }
+    },
+    "dbhub": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@bytebase/dbhub@latest",
+        "--transport",
+        "stdio",
+        "--dsn",
+        "postgres://user:password@localhost:5432/dbname"
+      ],
+      "description": null,
+      "type": "STDIO",
+      "_meta": {
+        "metadataVersion": 2,
+        "configFingerprint": "04df5cb08d145fbd96aad85d94280c7c67e712c5f444e113d3064577619123f9",
+        "transportType": "STDIO",
+        "serverName": "dbhub",
+        "command": "npx",
+        "args": [
+          "-y",
+          "@bytebase/dbhub@latest",
+          "--transport",
+          "stdio",
+          "--dsn",
+          "postgres://user:password@localhost:5432/dbname"
+        ],
+        "envKeys": [],
+        "url": null,
+        "headerKeys": [],
+        "status": "pending",
+        "reloadableFromCache": false,
+        "toolCount": 0,
+        "tools": []
+      }
+    },
+    "supabase": {
+      "url": "https://mcp.supabase.com/mcp?project_ref=qqnannkelftsgavibczq",
+      "description": null,
+      "type": "STREAMABLE_HTTP",
+      "_meta": {
+        "metadataVersion": 2,
+        "configFingerprint": "8c3e10fdf2b45b48597897375acfbc5f4663a25d4f3ba855fa0f31d009fbe8a3",
+        "transportType": "STREAMABLE_HTTP",
+        "serverName": "supabase",
+        "command": null,
+        "args": [],
+        "envKeys": [],
+        "url": "https://mcp.supabase.com/mcp?project_ref=qqnannkelftsgavibczq",
+        "headerKeys": [],
+        "status": "pending",
+        "reloadableFromCache": false,
+        "toolCount": 0,
+        "tools": []
+      }
+    },
+    "anyquery": {
+      "command": "C:\\Users\\hyper\\AppData\\Local\\Microsoft\\WinGet\\Packages\\JulienCagniart.anyquery_Microsoft.Winget.Source_8wekyb3d8bbwe\\anyquery.exe",
+      "args": [
+        "mcp",
+        "--stdio",
+        "--database",
+        "sqlite.db"
+      ],
+      "description": null,
+      "type": "STDIO",
+      "_meta": {
+        "metadataVersion": 2,
+        "configFingerprint": "5eac083f1c1ac04b5abb69c53453793a38b2454cd5eea6957ca76dc5beb13a9b",
+        "transportType": "STDIO",
+        "serverName": "anyquery",
+        "command": "C:\\Users\\hyper\\AppData\\Local\\Microsoft\\WinGet\\Packages\\JulienCagniart.anyquery_Microsoft.Winget.Source_8wekyb3d8bbwe\\anyquery.exe",
+        "args": [
+          "mcp",
+          "--stdio",
+          "--database",
+          "sqlite.db"
+        ],
+        "envKeys": [],
+        "url": null,
+        "headerKeys": [],
+        "status": "ready",
+        "metadataSource": "derived",
+        "reloadableFromCache": true,
+        "toolCount": 3,
+        "tools": [
+          {
+            "name": "describeTable",
+            "description": "Describes a table. It returns the columns of the table, the supported operations, and the SQL examples. Before calling executeQuery, you must call this endpoint for each table you want to interact with.",
+            "inputSchema": {
+              "properties": {
+                "tableName": {
+                  "description": "The name of the table to describe",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "tableName"
+              ]
+            }
+          },
+          {
+            "name": "executeQuery",
+            "description": "Executes a query on the SQL database. The query can be a SELECT, INSERT, UPDATE or DELETE query. Refer to the schema of each table to learn about the columns, their types, and whether the table supports INSERT, UPDATE or DELETE operations.\nBefore calling this endpoint, you must call listTables and describeTable for each table you want to interact with. This method will return the result of the query as a markdown table for SELECT queries, and the number of rows affected for INSERT, UPDATE and DELETE queries.\n\nAnyquery is a SQL query engine for personal data. Using SELECT, INSERT, UPDATE, and DELETE, it can query and update data from various apps and SaaS used by its users (such as GitHub, Spotify, Notion, etc.). It runs on the local computer of the user, and you can access it using a few methods.\nWhen a user requests some data, check if Anyquery can fulfill this need. Moreover, when the user requests a modification on an app, check if Anyquery has a table to do this update.\n\nYou have access to three methods:\n- listTables\n- describeTable\n- executeQuery\n\nlistTables allows you to list all the SQL tables of Anyquery. When a user requests some data (e.g., check my emails) or wants you to update something (e.g., remind me to buy milk, add a new contact, etc.), run this method to check if a table fits the user's request.\n\nFor each table that fits the user's request, run a describeTable for the table. It will help you learn more about the schema and the required parameters for the table. Each field will have a description to help you constructing the query.\n\nOnce you have run listTables, and describeTable for each table of your query, you can run executeQuery. The SQL dialect is SQLite.\nYou must always follow the order listTables => describeTable => executeQuery. You cannot run a method before running the one that precedes it.\n\nAnyquery uses the concept of table parameters like in SQLite. When you describeTable, you might come across fields that are specified as parameter, or required parameters.\nRequired parameters must be passed in the table argument for SELECT queries (\"SELECT * FROM table(arg1, ..., argn)\", in the WHERE condition for UPDATE/DELETE, and in \"VALUES\" for INSERTs.\nFor example, for the table github_repositories_from_user, you'll run \"SELECT * FROM github_repositories_from_user('torvalds');\" because the column user is set as a required parameter.\n\nThe omission of a required parameter will result in the \"no query solution\" error. If this error appears, double-check the parameters of the queried tables.\n\nWhen you run describeTable, you might come across examples where the table name differs from the one you passed in the parameters of describeTable. You must still use the table name in the parameters.\n\nYou may uses JOIN, WHERE conditions, LIMIT clauses to reduce the amount of data sent.\n\nWhen a user requests data and the filtered column is not a parameter, use \"lower\" on both sides of the \"=\" to make a non-case-sensitive comparison. (e.g. \"SELECT * FROM myTable WHERE lower(lang) = lower('userValue');\")\nUse the \"CONCAT\" function to concat strings. Do not use \"||\".\n\nSome columns might be returned as a JSON object or a JSON array. To extract a field of a JSON object, use the \"->>\" operator, and pass the JSON path (e.g. \"SELECT col1 ->> ' $.myField.mySubField'\").\nFor a JSON array, you may also use the \"->>\" operator. You can also create a new table with one row per element of the JSON array using the \"json_each\" table (e.g.  \"SELECT j.value, a.* FROM myTable a, json_each(a.jsonArrayField)\"); Finally, you can filter by the value of a JSON array using the \"json_has\" function (e.g. SELECT * FROM myTable WHERE json_has(jsonArrayField, 5) -- Returns rows where the JSON array jsonArrayField contains 5;\").\n\nTypes handled by Anyquery are:\n-  Text (a string)\n-  Int\n-  Float\n-  Byte (returned as their hex representation)\n-  DateTime (RFC3339)\n-  Date (YYYY-MM-DD)\n-  Time (HH:MM:SS)\n-  JSON (can be an object or an array)\n\nTo reduce the amount of data transferred, please specify the column name in the SELECT statements. Avoid using the \"*\" wildcard for the columns as much as possible.\n\nYou have access to all the functions of the SQLite standard library such as the math functions, date functions, json functions, etc.\n\nTo handle datetime, use the \"datetime(time-value, modifier, modifier, ...)\" of SQLite. If no \"time-value\" is specified, it defaults to the current time. It supports several modifiers ± (e.g. \"+ 7 years\",\"- 2 months\",\"+ 4 days\",\"- 3 hours\",\"+ 7 minutes\", \"+ 32 seconds\".\n\nColumn names and table names with backticks. For example, SELECT `Équipe` FROM `my_table`;\n\nTo install Anyquery, the user must follow the tutorial at https://anyquery.dev/docs/#installation.\n\nBy default, Anyquery does not have any integrations. The user must visit https://anyquery.dev/integrations to find some integrations they might like and follow the instructions to add them.\n",
+            "inputSchema": {
+              "properties": {
+                "query": {
+                  "description": "The SQL query to execute",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            }
+          },
+          {
+            "name": "listTables",
+            "description": "Lists all the tables available. When the user requests data, or wants an action (insert/update/delete), call this endpoint to check if a table corresponds to the user's request.",
+            "inputSchema": {}
+          }
+        ]
+      }
+    }
+  }
+}

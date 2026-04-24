@@ -1,0 +1,86 @@
+{
+<<<<<<< HEAD:archive/ts-legacy/package.json
+    "name": "hypercode-monorepo",
+    "version": "1.0.0-alpha.32",
+=======
+    "name": "borg-monorepo",
+    "version": "1.0.0-alpha.1",
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:package.json
+    "private": true,
+    "packageManager": "pnpm@10.28.0",
+    "scripts": {
+        "start": "node packages/cli/dist/cli/src/index.js start",
+        "build": "node scripts/build_all.mjs",
+        "build:workspace": "node scripts/build_all.mjs --workspace-only",
+        "build:startup-go": "node scripts/build_startup.mjs --profile=go-primary",
+        "build:extensions": "node scripts/build_all.mjs --extensions-only",
+        "dev": "node scripts/dev_tabby_ready.mjs",
+        "dev:turbo": "set CI=true&& set TURBO_DAEMON=false&& turbo run dev --concurrency 22 --filter=!@borg/cli --filter=!@repo/*",
+        "dev:server": "set TURBO_DAEMON=false&& turbo run dev:server --parallel --filter=!@repo/*",
+<<<<<<< HEAD:archive/ts-legacy/package.json
+        "dev:web": "set TURBO_DAEMON=false&& turbo run dev --filter @hypercode/web",
+        "dev:orchestrator": "set HYPERCODE_ORCHESTRATOR_PORT=3847&& npx tsx packages/core/src/orchestrator/council/node-index.ts",
+=======
+        "dev:web": "set TURBO_DAEMON=false&& turbo run dev --filter @borg/web",
+        "dev:orchestrator": "set BORG_ORCHESTRATOR_PORT=3847&& npx tsx packages/core/src/orchestrator/council/node-index.ts",
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:package.json
+        "lint": "pnpm run check:placeholders",
+        "lint:turbo": "set TURBO_DAEMON=false&& turbo run lint --output-logs=errors-only",
+        "test": "set TURBO_DAEMON=false&& turbo run test",
+        "benchmark": "pnpm -C packages/core exec vitest bench bench/",
+        "test:ci": "pnpm -C packages/ai run test && pnpm -C packages/cli exec vitest run src/commands/start.test.ts && pnpm -C packages/core exec vitest run src/orchestrator-listen.test.ts && pnpm -C packages/mcp-client run test && pnpm -C packages/mcp-registry run test",
+        "check:placeholders": "node scripts/check-placeholder-regressions.mjs",
+        "check:screenshots": "node scripts/check-screenshots.mjs",
+        "check:screenshots:strict": "node scripts/check-screenshots.mjs --strict",
+        "sync:screenshot-status": "node scripts/sync-screenshot-status.mjs",
+        "check:screenshot-status-sync": "node scripts/sync-screenshot-status.mjs --check",
+        "visuals:refresh": "pnpm run sync:screenshot-status && pnpm run check:screenshots",
+        "visuals:refresh:strict": "pnpm run sync:screenshot-status && pnpm run check:screenshots:strict",
+        "visuals:verify": "pnpm run check:screenshot-status-sync && pnpm run check:screenshots",
+        "visuals:verify:strict": "pnpm run check:screenshot-status-sync && pnpm run check:screenshots:strict",
+        "visuals:all": "pnpm run visuals:refresh && pnpm run check:screenshot-status-sync",
+        "visuals:all:strict": "pnpm run visuals:refresh:strict && pnpm run check:screenshot-status-sync",
+        "check:dev-readiness": "node scripts/verify_dev_readiness.mjs",
+        "check:release-gate": "node scripts/check_release_gate.mjs",
+        "check:release-gate:strict-visuals": "node scripts/check_release_gate.mjs --with-visuals --strict-visuals",
+        "check:release-gate:ci": "node scripts/check_release_gate.mjs --skip-readiness --with-turbo-lint",
+        "check:release-gate:ci:strict-visuals": "node scripts/check_release_gate.mjs --skip-readiness --with-turbo-lint --with-visuals --strict-visuals",
+        "index:sync": "node scripts/sync_master_index.mjs",
+        "index:update": "node scripts/update_ingestion_status.mjs",
+        "submodules:prune-orphans": "node scripts/prune_orphaned_gitlinks.mjs",
+        "submodules:check": "node scripts/check_submodule_versions.mjs",
+        "clean": "set TURBO_DAEMON=false&& turbo run clean",
+        "typecheck": "set TURBO_DAEMON=false&& turbo run typecheck"
+    },
+    "devDependencies": {
+        "@rollup/rollup-win32-x64-msvc": "4.55.1",
+        "@types/node": "^20.10.0",
+        "@typescript-eslint/eslint-plugin": "^8.53.0",
+        "@typescript-eslint/parser": "^8.53.0",
+        "@vitest/coverage-v8": "^4.0.16",
+        "better-sqlite3": "^12.6.2",
+        "eslint": "^8.57.1",
+        "turbo": "^2.8.3",
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.16"
+    },
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "better-sqlite3",
+            "electron",
+            "node-pty"
+        ],
+        "overrides": {
+            "glob": ">=10.5.0",
+            "sharp": "0.34.5",
+            "esbuild": ">=0.25.0",
+            "qs": ">=6.14.1",
+            "@modelcontextprotocol/sdk": ">=1.25.2",
+            "@types/react": "18.3.3",
+            "@types/react-dom": "18.3.0"
+        }
+    },
+    "dependencies": {
+        "@vscode/ripgrep": "^1.17.0"
+    }
+}

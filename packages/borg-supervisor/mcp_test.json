@@ -1,0 +1,30 @@
+{
+    "servers": {
+        "existing-server": {
+            "command": "echo",
+            "args": [
+                "hello"
+            ],
+            "disabled": false,
+            "autoApprove": []
+        },
+<<<<<<<< HEAD:archive/ts-legacy/packages/hypercode-supervisor/mcp_test.json
+        "hypercode-supervisor": {
+            "command": "node",
+            "args": [
+                "C:\\Users\\hyper\\workspace\\hypercode\\packages\\hypercode-supervisor\\dist\\index.js"
+========
+        "borg-supervisor": {
+            "command": "node",
+            "args": [
+                "C:\\Users\\hyper\\workspace\\borg\\packages\\borg-supervisor\\dist\\index.js"
+>>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/borg-supervisor/mcp_test.json
+            ],
+            "env": {
+                "NODE_ENV": "production"
+            },
+            "disabled": false,
+            "autoApprove": []
+        }
+    }
+}

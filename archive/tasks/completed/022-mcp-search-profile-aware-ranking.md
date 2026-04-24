@@ -1,6 +1,10 @@
 # Task: MCP Search Profile-Aware Ranking
 
+<<<<<<< HEAD:archive/tasks/completed/022-mcp-search-profile-aware-ranking.md
 **Track:** B — Hypercode-native MCP router maturity  
+=======
+**Track:** B — Borg-native MCP router maturity  
+>>>>>>> origin/rewrite/main-sanitized:tasks/completed/022-mcp-search-profile-aware-ranking.md
 **Priority:** P1 implementation slice  
 **Status:** Completed (2026-03-14)
 

@@ -1,0 +1,14 @@
+{
+	"$schema": "https://wails.io/schemas/config.v2.json",
+	"name": "Maestro",
+	"outputfilename": "maestro",
+	"frontend:dir": "../src/renderer",
+	"frontend:install": "npm install",
+	"frontend:build": "npm run build:renderer",
+	"frontend:dev:watcher": "npm run dev:renderer",
+	"frontend:dev:serverUrl": "http://localhost:5173",
+	"author": {
+		"name": "Pedram Amini",
+		"email": "pedram@runmaestro.ai"
+	}
+}

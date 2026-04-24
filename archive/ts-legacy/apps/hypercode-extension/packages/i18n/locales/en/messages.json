@@ -1,0 +1,86 @@
+{
+  "extensionDescription": {
+    "description": "Extension description",
+    "message": "Supercharge your AI chat with MCP tools and automations"
+  },
+  "extensionName": {
+    "description": "Extension name",
+<<<<<<<< HEAD:archive/ts-legacy/apps/hypercode-extension/packages/i18n/locales/en/messages.json
+    "message": "HyperCode Extension"
+========
+    "message": "borg Extension"
+>>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:apps/borg-extension/packages/i18n/locales/en/messages.json
+  },
+  "navDashboard": {
+    "message": "Dashboard"
+  },
+  "navChat": {
+    "message": "Chat"
+  },
+  "navTools": {
+    "message": "Tools"
+  },
+  "navResources": {
+    "message": "Resources"
+  },
+  "navMacros": {
+    "message": "Macros"
+  },
+  "navContext": {
+    "message": "Context"
+  },
+  "navTemplates": {
+    "message": "Templates"
+  },
+  "navActivity": {
+    "message": "Activity"
+  },
+  "navDebugger": {
+    "message": "Debugger"
+  },
+  "navSettings": {
+    "message": "Settings"
+  },
+  "navHelp": {
+    "message": "Help"
+  },
+  "settingsTitle": {
+    "message": "Settings"
+  },
+  "settingsGeneral": {
+    "message": "General"
+  },
+  "settingsAdvanced": {
+    "message": "Advanced"
+  },
+  "settingsAbout": {
+    "message": "About"
+  },
+  "settingsTheme": {
+    "message": "Theme"
+  },
+  "settingsThemeSystem": {
+    "message": "System"
+  },
+  "settingsThemeLight": {
+    "message": "Light"
+  },
+  "settingsThemeDark": {
+    "message": "Dark"
+  },
+  "serverStatus": {
+    "message": "Server Status"
+  },
+  "serverStatusConnected": {
+    "message": "Connected"
+  },
+  "serverStatusDisconnected": {
+    "message": "Disconnected"
+  },
+  "actionSave": {
+    "message": "Save"
+  },
+  "actionCancel": {
+    "message": "Cancel"
+  }
+}

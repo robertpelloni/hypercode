@@ -1,0 +1,12 @@
+{
+  "name": "test-server",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+<<<<<<< HEAD
+    "@modelcontextprotocol/sdk": "^1.25.2"
+=======
+    "@modelcontextprotocol/sdk": "^1.26.0"
+>>>>>>> origin/dependabot/npm_and_yarn/modelcontextprotocol/sdk-1.26.0
+  }
+}

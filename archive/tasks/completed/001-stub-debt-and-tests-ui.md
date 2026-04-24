@@ -1,6 +1,10 @@
 # Task: Reduce Stub Debt and Promote Context-Router UI
 
+<<<<<<< HEAD:archive/tasks/completed/001-stub-debt-and-tests-ui.md
 **Track:** B — Hypercode-native MCP router maturity / P2 Cleanup  
+=======
+**Track:** B — Borg-native MCP router maturity / P2 Cleanup  
+>>>>>>> origin/rewrite/main-sanitized:tasks/backlog/001-stub-debt-and-tests-ui.md
 **Priority:** P2 — Cleanup and coherence  
 **Status:** Ready for implementation
 

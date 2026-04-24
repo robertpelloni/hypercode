@@ -1,0 +1,27 @@
+{
+<<<<<<< HEAD:archive/ts-legacy/packages/browser/manifest.json
+  "name": "hypercode Browser Extension",
+  "version": "0.1.0",
+  "manifest_version": 3,
+  "description": "Connects Chrome to hypercode Hub",
+=======
+  "name": "borg Browser Extension",
+  "version": "0.1.0",
+  "manifest_version": 3,
+  "description": "Connects Chrome to borg Hub",
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/browser/manifest.json
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["http://localhost:3000/*"],
+  "action": {
+    "default_popup": "public/popup.html"
+  },
+  "background": {
+    "service_worker": "dist/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["dist/content.js"]
+    }
+  ]
+}

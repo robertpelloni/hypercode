@@ -1,12 +1,20 @@
 # Task: MCP Search Auto-Load Confidence Threshold
 
+<<<<<<< HEAD:archive/tasks/completed/023-mcp-search-auto-load-confidence-threshold.md
 **Track:** B — Hypercode-native MCP router maturity  
+=======
+**Track:** B — Borg-native MCP router maturity  
+>>>>>>> origin/rewrite/main-sanitized:tasks/completed/023-mcp-search-auto-load-confidence-threshold.md
 **Priority:** P1 implementation slice  
 **Status:** Completed (2026-03-14)
 
 ## Context
 
+<<<<<<< HEAD:archive/tasks/completed/023-mcp-search-auto-load-confidence-threshold.md
 Auto-load decisions in cached ranking already exposed confidence telemetry, but operators could not control the minimum confidence required before Hypercode auto-loaded the top candidate. This made tuning difficult for different workflows and risk tolerance levels.
+=======
+Auto-load decisions in cached ranking already exposed confidence telemetry, but operators could not control the minimum confidence required before Borg auto-loaded the top candidate. This made tuning difficult for different workflows and risk tolerance levels.
+>>>>>>> origin/rewrite/main-sanitized:tasks/completed/023-mcp-search-auto-load-confidence-threshold.md
 
 ## Changes Implemented
 
@@ -40,4 +48,8 @@ Auto-load decisions in cached ranking already exposed confidence telemetry, but 
 
 ## Outcome
 
+<<<<<<< HEAD:archive/tasks/completed/023-mcp-search-auto-load-confidence-threshold.md
 Hypercode’s MCP search auto-load behavior is now tunable by operators. Teams can keep aggressive auto-loading for high-speed workflows or raise the confidence bar to reduce accidental tool loads in ambiguous searches, while retaining existing telemetry explainability.
+=======
+Borg’s MCP search auto-load behavior is now tunable by operators. Teams can keep aggressive auto-loading for high-speed workflows or raise the confidence bar to reduce accidental tool loads in ambiguous searches, while retaining existing telemetry explainability.
+>>>>>>> origin/rewrite/main-sanitized:tasks/completed/023-mcp-search-auto-load-confidence-threshold.md

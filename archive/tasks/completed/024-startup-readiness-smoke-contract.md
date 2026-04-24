@@ -2,6 +2,7 @@
 
 ## Context
 Hypercode exposes a startup/readiness contract, but release confidence requires repeatable smoke verification that launcher behavior, dashboard state, and startup API semantics stay aligned.
+Borg exposes a startup/readiness contract, but release confidence requires repeatable smoke verification that launcher behavior, dashboard state, and startup API semantics stay aligned.
 
 ## Scope
 - `scripts/dev_tabby_ready.mjs`
@@ -40,6 +41,8 @@ Hypercode exposes a startup/readiness contract, but release confidence requires 
 - Extension artifacts verified present:
 	- `apps/hypercode-extension/dist-chromium`
 	- `apps/hypercode-extension/dist-firefox`
+	- `apps/borg-extension/dist-chromium`
+	- `apps/borg-extension/dist-firefox`
 
 ## Focused startup/readiness tests (2026-03-17)
 

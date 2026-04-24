@@ -1,47 +1,79 @@
 # Task: Ecosystem Assimilation Consolidation
 
 ## Context
+<<<<<<< HEAD:archive/tasks/completed/015-ecosystem-assimilation-consolidation.md
 The repository and recent user directives reference large upstream capability sets from MetaMCP, Claude-mem, MCP-SuperAssistant, Jules-Autopilot, and adjacent session-manager/autopilot projects. Those asks overlap heavily, conflict with Hypercode 1.0 focus if taken literally, and currently risk creating broad parity claims without one Hypercode-native implementation plan.
 
 This task consolidates those asks into one staged Hypercode roadmap so future implementation can be evaluated against capability contracts instead of repo-by-repo cloning.
 
 ## Requirements
 1. Define one Hypercode-native consolidation plan for the following capability families:
+=======
+The repository and recent user directives reference large upstream capability sets from MetaMCP, Claude-mem, MCP-SuperAssistant, Jules-Autopilot, and adjacent session-manager/autopilot projects. Those asks overlap heavily, conflict with Borg 1.0 focus if taken literally, and currently risk creating broad parity claims without one Borg-native implementation plan.
+
+This task consolidates those asks into one staged Borg roadmap so future implementation can be evaluated against capability contracts instead of repo-by-repo cloning.
+
+## Requirements
+1. Define one Borg-native consolidation plan for the following capability families:
+>>>>>>> origin/rewrite/main-sanitized:tasks/completed/015-ecosystem-assimilation-consolidation.md
    - boot-ready control plane and startup truthfulness
    - MCP router progressive disclosure / semantic tool search / middleware
    - browser-extension memory, chat injection, automation, and transport bridge
    - Claude Code / IDE / CLI memory capture, hook events, observation compression, and session context
    - supervised tool+model sessions with portable context/history across providers and tools
 2. Explicitly separate what belongs in:
+<<<<<<< HEAD:archive/tasks/completed/015-ecosystem-assimilation-consolidation.md
    - Hypercode 1.0 release blocking work
    - Hypercode 1.5 memory + extension work
    - Hypercode 2.0 swarm / marketplace / autonomous orchestration work
 3. Treat upstream projects as reference inputs, not product requirements. Hypercode should assimilate only the capability that materially improves the Hypercode control plane.
 4. Avoid vague “full parity” language; every adopted feature must map to a Hypercode-owned subsystem, operator workflow, and test surface.
+=======
+   - Borg 1.0 release blocking work
+   - Borg 1.5 memory + extension work
+   - Borg 2.0 swarm / marketplace / autonomous orchestration work
+3. Treat upstream projects as reference inputs, not product requirements. Borg should assimilate only the capability that materially improves the Borg control plane.
+4. Avoid vague “full parity” language; every adopted feature must map to a Borg-owned subsystem, operator workflow, and test surface.
+>>>>>>> origin/rewrite/main-sanitized:tasks/completed/015-ecosystem-assimilation-consolidation.md
 5. Record the current major gap clusters so future tasks can be carved into small implementation slices.
 
 ## Consolidated capability tracks
 
+<<<<<<< HEAD:archive/tasks/completed/015-ecosystem-assimilation-consolidation.md
 ### Track A — Boot-ready control plane (Hypercode 1.0)
+=======
+### Track A — Boot-ready control plane (Borg 1.0)
+>>>>>>> origin/rewrite/main-sanitized:tasks/completed/015-ecosystem-assimilation-consolidation.md
 - deterministic `pnpm run dev` / Docker startup contract
 - cached MCP inventory available before full live hydration
 - truthful dashboard readiness across core, memory, session supervisor, and extension bridge
 - lightweight always-on MCP advertisement, non-blocking server warmup, and last-known-good config reporting
 
+<<<<<<< HEAD:archive/tasks/completed/015-ecosystem-assimilation-consolidation.md
 ### Track B — Hypercode-native MCP router maturity (Hypercode 1.0 → 1.5)
+=======
+### Track B — Borg-native MCP router maturity (Borg 1.0 → 1.5)
+>>>>>>> origin/rewrite/main-sanitized:tasks/completed/015-ecosystem-assimilation-consolidation.md
 - progressive disclosure (`search -> load -> use -> unload`)
 - semantic tool search and ranking over large inventories
 - explicit always-on / pinned tools
 - optional middleware pipeline for logging, policy, filtering, and tool overrides
+<<<<<<< HEAD:archive/tasks/completed/015-ecosystem-assimilation-consolidation.md
 - Hypercode-owned direct runtime first; MetaMCP bridge only where still required
 
 ### Track C — Browser extension platform (Hypercode 1.5)
+=======
+- Borg-owned direct runtime first; MetaMCP bridge only where still required
+
+### Track C — Browser extension platform (Borg 1.5)
+>>>>>>> origin/rewrite/main-sanitized:tasks/completed/015-ecosystem-assimilation-consolidation.md
 - Chrome / Edge / Firefox install flow from the dashboard
 - extension-scoped context/activity/memory persistence
 - browser bridge to core for memory, session export/import, debug telemetry, and browser control
 - multi-site chat-surface adapters, tool/result parsing, and automation loop only after bridge + memory capture are stable
 - resource browser, prompt templates, context manager, debugger, and macros only when tied to core-backed workflows
 
+<<<<<<< HEAD:archive/tasks/completed/015-ecosystem-assimilation-consolidation.md
 ### Track D — IDE / CLI / hook-based memory capture (Hypercode 1.5)
 - Claude Code, VS Code, OpenCode, Gemini CLI, Codex, and similar environments should connect to Hypercode Core rather than maintain isolated memory silos
 - hook events / session lifecycle integration for prompt capture, tool observation capture, summaries, and handoff artifacts
@@ -50,12 +82,26 @@ This task consolidates those asks into one staged Hypercode roadmap so future im
 - transcript/session compression only if needed after observation capture is proven valuable
 
 ### Track E — Session fabric and model/tool portability (Hypercode 1.5 → 2.0)
+=======
+### Track D — IDE / CLI / hook-based memory capture (Borg 1.5)
+- Claude Code, VS Code, OpenCode, Gemini CLI, Codex, and similar environments should connect to Borg Core rather than maintain isolated memory silos
+- hook events / session lifecycle integration for prompt capture, tool observation capture, summaries, and handoff artifacts
+- Borg-native structured observation schema with dedupe, provenance, files, concepts, and summaries
+- progressive context injection based on token budget and relevance
+- transcript/session compression only if needed after observation capture is proven valuable
+
+### Track E — Session fabric and model/tool portability (Borg 1.5 → 2.0)
+>>>>>>> origin/rewrite/main-sanitized:tasks/completed/015-ecosystem-assimilation-consolidation.md
 - sessions become a commodity fabric where jobs, history, notes, and artifacts can move between models and tool harnesses
 - tool sessions and model sessions share a portable context/history envelope
 - multiple agents can annotate work, leave notes, and hand jobs across tools without losing state
 - benchmark, diff, replay, and autonomous babysitting features are deferred until the supervised-session core is trustworthy
 
+<<<<<<< HEAD:archive/tasks/completed/015-ecosystem-assimilation-consolidation.md
 ### Track F — Advanced autonomy and marketplace (Hypercode 2.0)
+=======
+### Track F — Advanced autonomy and marketplace (Borg 2.0)
+>>>>>>> origin/rewrite/main-sanitized:tasks/completed/015-ecosystem-assimilation-consolidation.md
 - plugin marketplace / registry
 - session keeper / babysitter / shadow pilot
 - consensus, debate, swarm scaling, CI fix agent, scheduled tasks
@@ -68,6 +114,7 @@ This task consolidates those asks into one staged Hypercode roadmap so future im
 - last-known-good MCP inventory and always-on advertisement should remain available even when full core warmup is incomplete
 
 ### 2. MCP router gaps
+<<<<<<< HEAD:archive/tasks/completed/015-ecosystem-assimilation-consolidation.md
 - Hypercode still lacks fully mature progressive disclosure and semantic tool search compared with the strongest external references
 - middleware/policy/filter chains are incomplete and should be adopted only where they improve operator trust or security
 
@@ -77,6 +124,17 @@ This task consolidates those asks into one staged Hypercode roadmap so future im
 ### 4. Claude-mem style capture gaps
 - no first-class Claude Code hook registration or equivalent hook framework in Hypercode yet
 - no Hypercode-native structured observation compression pipeline at claude-mem depth
+=======
+- Borg still lacks fully mature progressive disclosure and semantic tool search compared with the strongest external references
+- middleware/policy/filter chains are incomplete and should be adopted only where they improve operator trust or security
+
+### 3. Browser-extension gaps
+- Borg now has real browser memory capture foundations, but not yet full browser chat injection parity, multi-platform automation, resource browsing, or macro orchestration tied back to core
+
+### 4. Claude-mem style capture gaps
+- no first-class Claude Code hook registration or equivalent hook framework in Borg yet
+- no Borg-native structured observation compression pipeline at claude-mem depth
+>>>>>>> origin/rewrite/main-sanitized:tasks/completed/015-ecosystem-assimilation-consolidation.md
 - no complete progressive disclosure context injection pipeline over those observations yet
 
 ### 5. Session portability gaps
@@ -84,7 +142,11 @@ This task consolidates those asks into one staged Hypercode roadmap so future im
 
 ## Acceptance criteria
 - [x] A follow-up implementation task can point at one of the capability tracks above instead of restating the entire assimilation request
+<<<<<<< HEAD:archive/tasks/completed/015-ecosystem-assimilation-consolidation.md
 - [x] Hypercode 1.0, 1.5, and 2.0 boundaries are explicit
+=======
+- [x] Borg 1.0, 1.5, and 2.0 boundaries are explicit
+>>>>>>> origin/rewrite/main-sanitized:tasks/completed/015-ecosystem-assimilation-consolidation.md
 - [x] No repo-wide parity claim remains implied by planning language alone
 - [x] Future work can be decomposed into small tasks against this brief
 

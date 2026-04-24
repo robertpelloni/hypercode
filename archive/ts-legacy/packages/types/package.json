@@ -1,0 +1,20 @@
+{
+<<<<<<< HEAD:archive/ts-legacy/packages/types/package.json
+    "name": "@hypercode/types",
+    "version": "1.0.0-alpha.32",
+=======
+    "name": "@borg/types",
+    "version": "1.0.0-alpha.1",
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/types/package.json
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc"
+    },
+    "dependencies": {
+        "zod": "^3.24.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.9.3"
+    }
+}

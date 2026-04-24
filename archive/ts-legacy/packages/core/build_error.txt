@@ -1,0 +1,21 @@
+<<<<<<< HEAD:archive/ts-legacy/packages/core/build_error.txt
+
+> @hypercode/core@0.1.0 build
+> tsc
+
+src/MCPServer.ts(1286,92): error TS2339: Property 'id' does not exist on type 'Promise<Memory>'.
+src/MCPServer.ts(1294,30): error TS2339: Property 'length' does not exist on type 'Promise<Memory[]>'.
+src/MCPServer.ts(1297,48): error TS2339: Property 'map' does not exist on type 'Promise<Memory[]>'.
+src/MCPServer.ts(1297,52): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/MCPServer.ts(1300,82): error TS2339: Property 'length' does not exist on type 'Promise<Memory[]>'.
+=======
+
+> @borg/core@0.1.0 build
+> tsc
+
+src/MCPServer.ts(1286,92): error TS2339: Property 'id' does not exist on type 'Promise<Memory>'.
+src/MCPServer.ts(1294,30): error TS2339: Property 'length' does not exist on type 'Promise<Memory[]>'.
+src/MCPServer.ts(1297,48): error TS2339: Property 'map' does not exist on type 'Promise<Memory[]>'.
+src/MCPServer.ts(1297,52): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/MCPServer.ts(1300,82): error TS2339: Property 'length' does not exist on type 'Promise<Memory[]>'.
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/build_error.txt

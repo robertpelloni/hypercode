@@ -276,7 +276,12 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ## [1.0.0-alpha.1] - 2026-04-02
 
 ### Added
-- **Global Workspace Tracker**: Added a `WorkspaceTracker` daemon service that automatically registers new session directories into `~/.hypercode/workspaces.json`. The web dashboard (`/dashboard/session`) now prominently features a "Recent Workspaces" visualization for fast multi-project hopping.
+- **Prompt Library Integration**: Fully assimilated the `PromptRegistry` into the core TRPC router (`promptsRouter.ts`). The dashboard's Prompt Library component now securely accesses the local file system templates via TRPC instead of a hardcoded, hacky Next.js API route. The prompt dashboard has also been moved out of an orphaned URL into the main Dashboard shell.
+
+## [1.0.0-alpha.1] - 2026-04-02
+
+### Added
+- **Global Workspace Tracker**: Added a `WorkspaceTracker` daemon service that automatically registers new session directories into `~/.borg/workspaces.json`. The web dashboard (`/dashboard/session`) now prominently features a "Recent Workspaces" visualization for fast multi-project hopping.
 - **Robust Regression Coverage**: Created dedicated Vitest suites in `cachedToolInventory.test.ts` to strictly validate MCP discovery fallback behavior under simulated SQLite failures.
 
 ## [1.0.0-alpha.1] - 2026-04-02
@@ -293,8 +298,8 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ## [1.0.0-alpha.1] - 2026-04-02
 
 ### Added
-- **HyperIngest Daemon Processes**: Implemented the first standalone daemon package boundaries for `hyperingest` via `BobbyBookmarksSyncWorker` and `LinkCrawlerWorker`.
-- **Autonomous Link Crawler**: HyperCode now autonomously crawls pending URLs in the Links Backlog using `jsdom` to extract OpenGraph tags, favicons, and page descriptions, feeding the raw text to a configured LLM to automatically generate semantic tags and categories without user intervention.
+- **borgingest Daemon Processes**: Implemented the first standalone daemon package boundaries for `borgingest` via `BobbyBookmarksSyncWorker` and `LinkCrawlerWorker`.
+- **Autonomous Link Crawler**: borg now autonomously crawls pending URLs in the Links Backlog using `jsdom` to extract OpenGraph tags, favicons, and page descriptions, feeding the raw text to a configured LLM to automatically generate semantic tags and categories without user intervention.
 - **Cross-Database Backlog Sync**: Built a background daemon worker to seamlessly and safely synchronize the external `resources.db` bookmarks fed by the Python ecosystem into the canonical `metamcp.db` `links_backlog` table.
 
 ## [1.0.0-alpha.1] - 2026-04-02
@@ -309,10 +314,148 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **MCP Database Destructive Sync**: Fixed a critical bug in `McpConfigService.syncWithDatabase()` that was wiping out SQLite tool records (and resetting their `always_on` status) when `mcp.jsonc` was empty.
 - **Config Directory Resolution**: Changed `getHyperCodeConfigDir()` to respect local workspace `mcp.jsonc` configs, improving the loader's ability to find active tool caches.
 - **Split-Brain MCP Loader**: Fixed the `stdioLoader` returning 0 tools by caching the database inventory to `.hypercode/mcp-cache.json` during synchronization via `exportToolCache()`, allowing the lightweight proxy to serve both manually configured servers and database-discovered directories without slowing down initialization.
+- **Config Directory Resolution**: Changed `getBorgConfigDir()` to respect local workspace `mcp.jsonc` configs, improving the loader's ability to find active tool caches.
+- **Split-Brain MCP Loader**: Fixed the `stdioLoader` returning 0 tools by caching the database inventory to `.borg/mcp-cache.json` during synchronization via `exportToolCache()`, allowing the lightweight proxy to serve both manually configured servers and database-discovered directories without slowing down initialization.
 - **Tool Inventory Merging**: Fixed `getCachedToolInventory()` to correctly merge database snapshots with `mcp.jsonc` snapshots instead of treating them as mutually exclusive.
+
+## [2.7.130] — 2026-03-14
+
+- fixed(mcp/config): local dashboard compatibility-mode MCP config writes now target Borg config home (`~/.borg/mcp.jsonc` + `~/.borg/mcp.json`) instead of repo-root files.
+- changed(mcp/config): local compatibility-mode reads now prioritize Borg config home and retain repo-root `mcp.jsonc`/`mcp.json` as legacy fallback read sources only.
+- test(mcp/config): updated tRPC route compatibility tests to run against an isolated temporary `BORG_CONFIG_DIR`, validating local managed-server actions without mutating workspace-root config files.
+- changed(mcp/search-ui): MCP JSONC editor tooltip now reflects Borg config-home save location rather than claiming root-repo writes.
+
+## [2.7.129] — 2026-03-14
+
+- changed(mcp/search-ui): added telemetry triage presets in `/dashboard/mcp/search` (`Errors now`, `Runtime failures`, `Load incidents`, `Hydration failures`, `Live aggregator`) so operators can jump to common incident scopes in one click.
+- changed(mcp/search-ui): added active telemetry filter chips with one-click per-chip clear actions (`type`, `status`, `window`, `source`) for faster iterative diagnosis without resetting everything.
+- changed(mcp/search-ui): reset action now disables when filters are already at default scope, reducing no-op clicks during telemetry triage.
+
+## [2.7.128] — 2026-03-14
+
+- changed(mcp/search-ui): telemetry filters now sync to URL query parameters (`telemetryType`, `telemetryStatus`, `telemetryWindow`, `telemetrySource`) so triage views are shareable and reproducible.
+- changed(mcp/search-ui): added `Copy link` action in `/dashboard/mcp/search` telemetry controls to copy the current filter-scoped diagnostics URL.
+- changed(mcp/search-ui): URL filter values now take precedence on load, with local-storage preferences used as fallback when no URL filter state is present.
+
+## [2.7.127] — 2026-03-14
+
+- changed(mcp/search-ui): persisted telemetry triage filters (`type`, `status`, `window`, `source`) in local browser storage so `/dashboard/mcp/search` keeps operator context across reloads.
+- changed(mcp/search-ui): added one-click `Reset filters` action that restores default telemetry scope (`all` + `15m`) and clears persisted filter state.
+- changed(mcp/search-ui): strengthened filter-state resilience by ignoring invalid persisted payloads and falling back to safe defaults.
+
+## [2.7.126] — 2026-03-14
+
+- changed(mcp/search-ui): added telemetry source filtering (`all`, `runtime-search`, `cached-ranking`, `live-aggregator`) in `/dashboard/mcp/search` so operators can isolate source-specific behavior without leaving the panel.
+- changed(mcp/search-ui): added a status-over-time trend strip that shows per-bucket success/error ratio for the selected telemetry scope, improving quick detection of error-heavy windows.
+- changed(mcp/search-ui): per-source rows now include a one-click `Focus failures` action that sets source + error filters together for faster failure triage.
+
+## [2.7.125] — 2026-03-14
+
+- changed(mcp/search-ui): added per-source time-bucket trend strips in `/dashboard/mcp/search` so operators can quickly spot momentum shifts in `runtime-search`, `cached-ranking`, and `live-aggregator` traffic.
+- changed(mcp/search-ui): trend buckets inherit the active telemetry window preset and display event + error intensity per bucket, improving fast diagnosis of bursty failures versus steady-state traffic.
+- changed(mcp/search-ui): per-source telemetry rows now combine volume bar, success/error counts, average latency, and short bucketed trend context in a single triage panel.
+
+## [2.7.124] — 2026-03-14
+
+- changed(mcp/search-ui): added telemetry time-window presets (`all`, `5m`, `15m`, `1h`, `24h`) in `/dashboard/mcp/search` so operators can triage routing events by recent incident window instead of scanning a single rolling list.
+- changed(mcp/search-ui): telemetry summary chips now reflect the active filter window/type/status scope, making `total/success/error` counts match the currently visible slice.
+- changed(mcp/search-ui): added a per-source telemetry breakdown panel (runtime-search, cached-ranking, live-aggregator) with event-volume bars plus success/error and average-latency context to speed up source-level ranking diagnostics.
+
+## [2.7.123] — 2026-03-14
+
+- changed(mcp/search-ui): added telemetry summary chips (`total`, `success`, `errors`) to `/dashboard/mcp/search` for at-a-glance event health.
+- changed(mcp/search-ui): added in-panel telemetry filters by event type (`search`, `load`, `hydrate`, `unload`) and status (`success`, `error`) so operators can isolate decision and failure events faster.
+- changed(mcp/search-ui): telemetry list now applies the selected filters before rendering the latest entries, reducing noise during routing diagnostics.
+
+## [2.7.122] — 2026-03-14
+
+- changed(mcp/search): cached-ranking telemetry now records auto-load execution state (`success`, `error`, `not-attempted`) so decision telemetry distinguishes selection from runtime load execution.
+- changed(mcp/search): auto-load `load_tool` failures are now captured as explicit `load` telemetry events with error status/message instead of being silently swallowed.
+- changed(mcp/search-ui): `/dashboard/mcp/search` telemetry cards now show auto-load execution status and any load failure message for faster operator triage of ranking-vs-runtime issues.
+
+## [2.7.121] — 2026-03-14
+
+- changed(mcp/search): enriched search telemetry with second-candidate context (`secondResultName`, `secondMatchReason`, `secondScore`) and explicit score-gap capture across runtime-search, cached-ranking, and live-aggregator paths.
+- changed(mcp/search-ui): `/dashboard/mcp/search` telemetry cards now render top-vs-second candidate details so operators can diagnose ambiguity and near-tie ranking behavior without leaving the page.
+- changed(mcp/decision-observability): live-aggregator telemetry now records top score and score gap consistently with cached/runtime paths, improving apples-to-apples routing diagnostics.
+
+## [2.7.120] — 2026-03-14
+
+- changed(mcp/working-set): added new `clear_eviction_history` meta-tool so operators can reset recent working-set eviction events without restarting the session.
+- changed(mcp/router): added `mcp.clearWorkingSetEvictionHistory` mutation that calls the new meta-tool and returns a user-facing clear confirmation message.
+- changed(mcp/search-ui): added a `Clear` action in the `/dashboard/mcp/search` **Recent evictions** panel to clear eviction history in-place and refresh the panel immediately.
+- test(core): updated `compatibility-tool-definitions.test.ts` expected tool-loading order to include `clear_eviction_history`.
+
+## [2.7.119] — 2026-03-14
+
+- changed(mcp/search): added explicit auto-load evaluation outcomes (`loaded`, `skipped`, `not-applicable`) so search telemetry now records whether an auto-load decision was actually evaluated and what happened.
+- changed(mcp/search): cached-ranking telemetry now captures auto-load skip rationale (for example, confidence floor not met or ambiguous match), plus the configured minimum confidence used during evaluation.
+- changed(mcp/search-ui): `/dashboard/mcp/search` telemetry cards now render auto-load outcome, confidence floor, and skip reasons for clearer operator diagnosis of “why this did/didn’t auto-load”.
+- test(core): expanded `toolSearchRanking.test.ts` with coverage for `evaluateAutoLoadCandidate(...)` not-applicable/skipped outcomes while preserving existing auto-load decision behavior.
+
+## [2.7.118] — 2026-03-14
+
+- changed(mcp/working-set): added operator-configurable working-set capacity controls — `maxLoadedTools` (4..64, default 16) and `maxHydratedSchemas` (2..32, default 8) are now persisted in `mcp.jsonc` preferences.
+- changed(mcp/working-set): `SessionToolWorkingSet` gained a `reconfigure()` method so capacity changes take effect on the live session immediately after saving preferences, without a restart.
+- changed(mcp/working-set): added a bounded eviction-history ring buffer (last 20 events) with `getEvictionHistory()` / `clearEvictionHistory()` — each entry records the evicted tool name, timestamp, and tier (`loaded` | `hydrated`).
+- changed(mcp/meta-tools): added two new meta-tools — `set_capacity` (reconfigures the working-set limits at runtime) and `get_eviction_history` (returns the bounded recent eviction log). Registered in `toolLoadingDefinitions.ts` and handled in `metamcp-proxy.service.ts`.
+- changed(mcp/search): `/dashboard/mcp/search` now includes a "Working-set capacity" panel with sliders for `maxLoadedTools`/`maxHydratedSchemas` that save immediately to preferences and apply to the live session.
+- changed(mcp/search): `/dashboard/mcp/search` now shows a "Recent evictions" panel (conditionally visible) listing the last up to 10 evicted tools with their tier and relative timestamp, polling every 8 s.
+- test(core): updated `metamcp-session-working-set.service.test.ts` with focused coverage for `reconfigure()`, eviction history recording, and `clearEvictionHistory()`.
+
+## [2.7.117] — 2026-03-14
+
+- changed(mcp/search): added persisted `autoLoadMinConfidence` tool-selection preference (default `0.85`, bounded `0.50..0.99`) so auto-load behavior is explicitly operator-controlled instead of hardcoded.
+- changed(mcp/search): cached-ranking auto-load now respects the configured confidence floor before issuing `load_tool`, reducing unintended eager loads for ambiguous results.
+- changed(mcp/search): `/dashboard/mcp/search` now includes an auto-load confidence threshold control (slider + numeric input) and saves it with the existing important/keep-warm tool preferences.
+- changed(mcp/inspector): inspector always-on toggles now preserve the current auto-load confidence preference when updating tool-selection settings.
+- test(core): updated tool-preference and JSON-config provider tests for the new confidence field and stabilized the provider test import path to use source modules.
+
+## [2.7.116] — 2026-03-14
+
+- changed(mcp/search): added task-profile-aware search ranking (`web-research`, `repo-coding`, `browser-automation`, `local-ops`, `database`) so tool discovery can bias toward the current workflow instead of generic scoring alone.
+- changed(mcp/search): `/dashboard/mcp/search` now includes a task profile selector that threads profile context into search requests and surfaces the active profile in search guidance and telemetry entries.
+- changed(mcp/search): search telemetry now records the selected profile across runtime, cached, and live-aggregator search paths for clearer explainability of ranking behavior.
+
+## [2.7.115] — 2026-03-14
+
+- changed(mcp/search): expanded decision telemetry to include search/load/hydrate/unload latency, top score, score gap, auto-load reason, and auto-load confidence so routing behavior is operator-explainable.
+- changed(mcp/search): telemetry panel now renders score-gap/confidence/latency fields, making it easier to diagnose ambiguity vs latency as the root cause of poor tool selection outcomes.
+
+## [2.7.114] — 2026-03-14
+
+- changed(policies): `/dashboard/mcp/policies` now shows an explicit audit/preview-mode banner clarifying that policy rules are editable but runtime allow/deny enforcement is currently pass-through in this build.
+- docs(core): `policy.service.stub.ts` now includes explicit compatibility comments documenting its non-enforcing placeholder behavior to reduce accidental assumptions in future UI/runtime work.
+
+## [2.7.113] — 2026-03-14
+
+- changed(mcp/search): added direct `Hydrate schema` actions on both search-result cards and loaded working-set cards, so operators can hydrate metadata-only tools without leaving `/dashboard/mcp/search`.
+- changed(mcp/search): split loaded tool display into explicit `Server always-on`, `Keep warm profile`, and `Dynamic loaded` sections for clearer operator understanding of why tools are resident.
+- changed(mcp/search): distinguished badges for server-advertised always-on tools vs user keep-warm preferences, avoiding the prior conflation of both under a single "always on" label.
+- changed(mcp/search): load/unload/hydrate actions now invalidate working-set, search, and tool-selection telemetry queries together for immediate UI state consistency.
+
+## [2.7.112] — 2026-03-14
+
+- feat(dashboard): added `/dashboard/tests` — Auto-Test Runner page backed by `tests` tRPC procedures (`status`, `start`, `stop`, `results`) with watcher controls and per-file output inspection.
+- feat(session): added `/dashboard/session/[id]` — session detail page with metadata, attach-info panel, health snapshot, live log tail, and contextual shell execution via `session.executeShell`.
+- changed(session): added `View Details` action button on `/dashboard/session` cards linking directly to the new dynamic session detail route.
+- changed(nav): added `Tests` entry to Labs navigation so the test-runner surface is reachable from sidebar navigation.
+
+## [2.7.111] — 2026-03-14
+
+- feat(dashboard): added `/dashboard/command` — Command Center page with live slash-command list, REPL execution via `commands` tRPC namespace, and arrow-key history navigation.
+- feat(dashboard): added `/dashboard/chronicle` — Git Chronicle page with configurable commit log and working-tree status via `git` tRPC namespace.
+- feat(dashboard): added `/dashboard/library` — Resource Library hub linking to scripts, skills, tool sets, memory, plans, manual, chronicle, and architecture with live item counts from `savedScripts` and `skills` tRPC namespaces.
+- feat(dashboard): added `/dashboard/context` — Context Manager page for add/remove/clear of context files and assembled context prompt viewer via `borgContext` tRPC namespace.
+- changed(nav): added "Sessions" link to `CORE_DASHBOARD_NAV` pointing to `/dashboard/session` so the session supervisor is reachable from the main nav section.
+- changed(nav): added "Context Manager" entry to `LABS_DASHBOARD_NAV` pointing to `/dashboard/context`.
+- changed(nav): added inline descriptions for `Command`, `Symbols`, `Code`, `Chronicle`, and `Library` nav items.
+- changed(nav): imported `MonitorPlay` and `FolderOpen` icons for new Session and Context nav entries.
+- task(tracking): seeded `tasks/backlog/` with three new implementation-ready task briefs: stub-debt reduction, MCP working-set hydration UX, and session detail/worktree reliability.
 
 ## [Unreleased]
 
+<<<<<<< HEAD
 ### Added
 - **Repo-wide HyperCode Rename**: Executed the broad "borg" → "hypercode" rename across the entire repository (200+ files), including Go module name, imports, environment variables, directories, and documentation.
 - **Go-Native Catalog Ingestion**: Ported the MCP catalog ingestion core and Glama adapter to Go, enabling native listing from external registries.
@@ -386,6 +529,54 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **CLI Tool Detail Surface**: `hypercode tools info <name>` now queries the live control plane via `tools.get`, supports JSON output, and renders real server/schema detail instead of a placeholder message.
 - **CLI Tools Operator Surface**: `hypercode tools list` and `hypercode tools search` now query the live control plane via `mcp.listTools` and `mcp.searchTools` instead of placeholder output, including JSON mode, list filters, top-k limiting, ranked search result state, and actionable control-plane error reporting.
 - **Architecture Rollout Map**: Documented the recommended HyperCode binary family, ownership boundaries, binary-to-package evolution, and first preferred extraction seams (`hypercoded` first, then `hypermcpd`) across `AGENTS.md`, `HANDOFF.md`, `CLAUDE.md`, `GEMINI.md`, `README.md`, `ROADMAP.md`, and `TODO.md` so future implementation work converges on one modular-monolith-first plan.
+- **Supervisor Decision Regression Coverage**: `packages/borg-supervisor` now has built-in Node test coverage for the pure Antigravity decision logic that detects approval/composer hints and resolves action labels, reducing the chance that future generic tweaks reintroduce dropdown-style or terminal-target regressions.
+- **Antigravity-First Supervisor Simplification**: `packages/borg-supervisor` now narrows its live action/composer path for browser-hosted coding chats by rejecting menu/dropdown-style pseudo-buttons, filtering terminal-like `Document`/`Edit` surfaces such as `@terminal:pwsh` out of chat-composer selection, re-focusing the chosen composer before submission, and promoting generic browser windows to the `antigravity` profile when visible approval/composer hints match that UI.
+- **Supervisor Targeted Surface Probe API**: `detect_chat_surface` now accepts `windowTitle` and `processName` so operators can directly probe non-foreground windows instead of only the active surface, matching the runtime's targeted detection support.
+- **Supervisor Targeted Surface Detection**: `packages/borg-supervisor` now derives surface profiles from the same targeted window used by inspection/click/type/submit operations when `windowTitle` or `processName` is supplied, so profile defaults no longer come from an unrelated active window.
+- **Supervisor Override Plumbing**: `surfaceOverride` is now honored consistently across `click_action_buttons`, `set_chat_input`, and `submit_chat_input`, closing the gap between the MCP schemas and the actual runtime profile selection path.
+- **Supervisor Surface Overrides**: `packages/borg-supervisor` now exposes `list_surface_profiles` and supports `surfaceOverride` on detection/advance flows so higher-level automation can force the intended fork profile when heuristic surface detection is ambiguous.
+- **Supervisor Input Targeting Profiles**: `packages/borg-supervisor` now uses each detected surface profile to choose composer control preference order for `set_chat_input` and `submit_chat_input`, so browser-like chats keep preferring `Document` controls while editor-like chats can prefer `Edit` controls.
+- **Supervisor Surface Profiles**: `packages/borg-supervisor` now attaches a small fork-aware surface profile to each detected chat surface (`antigravity`, `gemini-web`, `claude-web`, `chatgpt-web`, `copilot`, `cursor`, `browser-chat`, `vscode`), and `advance_chat` / `detect_chat_state` / `click_action_buttons` now use those profiles to choose default action labels, submit chords, and input-preference hints instead of relying on one generic fallback path.
+- **Supervisor Settings & Exact Action Matching**: `packages/borg-supervisor` now persists operator defaults for bump text, action labels, submit behavior, and timing in `~/.borg/supervisor-settings.json`, and `click_action_buttons` now requires normalized exact label matches instead of loose substring scoring so labels like `Run` no longer drift toward unrelated affordances such as `Always Run`.
+- **Supervisor UI Automation Bridge**: `packages/borg-supervisor` now exposes a real Windows UI Automation bridge for chat surfaces instead of only a blind SendKeys shim. The MCP surface now includes `detect_chat_surface`, `inspect_window_ui`, `detect_chat_state`, `click_action_buttons`, `set_chat_input`, `submit_chat_input`, and `advance_chat`, using control-type-aware inspection/clicking so action buttons like Run/Expand/Accept are targeted more truthfully without treating generic dropdowns as buttons.
+- **CLI MCP Auto-Start Truthfulness**: `borg mcp add` now supports a real `--no-auto-start` path, so registry creation can truthfully persist either `always_on: true` or `always_on: false` instead of only behaving like always-on registration.
+- **CLI MCP Namespace Truthfulness**: `borg mcp add --namespace <ns>` now fails explicitly for non-default namespaces because the live `mcpServers.create` contract still has no namespace field or mapping mutation; the CLI no longer echoes namespace assignment as if it succeeded.
+- **CLI Provider Fallback Mutation Truthfulness**: `borg provider fallback --strategy` now calls the live billing mutation path for both global and task-specific routing (`billing.setRoutingStrategy` and `billing.setTaskRoutingRule` when `--task-type` is supplied) using the backend's real strategy set (`cheapest`, `best`, `round-robin`), while unsupported `provider fallback --set` still fails explicitly instead of printing success-shaped guidance for a nonexistent fallback-chain mutation route.
+- **CLI Session Broadcast Truthfulness**: `borg session broadcast --cloud` now calls the live `cloudDev.broadcastMessage` control-plane mutation with structured `--json` output, while unsupported local-session broadcast and `session cloud --transfer` now fail explicitly instead of printing fake success or soft placeholder copy.
+- **CLI Remaining Stub Hardening**: `borg session pause`, `tools rename`, `mcp start`, `mcp stop`, `mcp restart`, and `mcp install` no longer print fabricated success. They now fail explicitly with structured live-unavailable errors because the control plane still has no real pause, rename, MCP lifecycle, or MCP install routes behind those commands.
+- **CLI Agent Truthfulness Hardening**: `borg agent list`, `agent spawn`, `agent stop`, `agent status`, and `agent chat` no longer fabricate agent inventory, fake agent ids, fake stop success, fake empty running-agent state, or a fake attached interactive shell. They now fail explicitly with structured live-unavailable errors, while the already-real `agent council --status` path remains available.
+- **CLI Provider Write Surface**: `borg provider add` and `borg provider remove` now use live provider settings routes instead of printing fabricated success, wiring API-key-backed providers through `settings.getProviders`, `settings.updateProviderKey`, and `settings.removeProviderKey`, adding a new core `removeProviderKey` mutation for env-backed provider removal, and failing explicitly for unsupported placeholder-only options like OAuth, custom base URLs, and model allowlists.
+- **CLI MCP Config IO Surface**: `borg mcp export`, `borg mcp import`, and `borg mcp sync` now use live control-plane routes for raw JSONC config export/import and supported client config preview/sync (`claude-desktop`, `cursor`, `vscode`), perform real local file IO, support structured `--json` output, and fail explicitly for unsupported placeholder-only options like `mcp import --merge` or unsupported sync clients instead of printing fabricated success.
+- **CLI Memory Write Surfaces**: `borg memory add`, `borg memory export`, and `borg memory import` now call live `memory.addFact`, `memory.exportMemories`, and `memory.importMemories` control-plane routes, perform real file IO for import/export, and fail explicitly for unsupported placeholder-only flags instead of printing fabricated success messages.
+- **CLI Config Reset/Init Surface**: `borg config reset` and `borg config init` now call live `config.reset` and `config.init` control-plane mutations, with scoped reset support, real config-file initialization, and structured `--json` output instead of fabricated success messages.
+- **CLI Session Import Surface**: `borg session import <file>` now reads the local export file, calls the live `sessionExport.import` control-plane mutation, supports `--dry-run`, `--replace`, `--source-environment`, and structured `--json` output instead of printing a fabricated success message.
+- **CLI Session Export Surface**: `borg session export <id>` now calls the live `sessionExport.export` control-plane mutation, passes the requested `sessionIds` filter through to the core export path, writes the returned portable package to disk, and supports truthful `--json` output instead of a fabricated success message.
+- **CLI MCP Registry Write Surface**: `borg mcp add` and `borg mcp remove` now call the live `mcpServers.create`, `mcpServers.list`, and `mcpServers.delete` control-plane routes instead of printing fabricated success messages, with structured `--json` output and truthful registry mutation results.
+- **CLI Tool Group Write Surface**: `borg tools groups --create` and `borg tools groups --delete` now call the live `toolSets.create` and `toolSets.delete` control-plane mutations instead of printing fabricated success messages, with structured `--json` output and truthful group mutation results.
+- **CLI Tool Toggle Surface**: `borg tools enable <name>` and `borg tools disable <name>` now call the live `tools.setAlwaysOn` control-plane mutation instead of printing fabricated success messages, with structured `--json` output and truthful always-on tool state updates.
+- **CLI Session Resume Surface**: `borg session resume <id>` now calls the live `session.restart` control-plane mutation instead of printing a fabricated success message, with structured `--json` output and truthful resumed-session status reporting.
+- **CLI Session Stop Surface**: `borg session stop <id>` now calls the live `session.stop` control-plane mutation instead of printing a fabricated success message, with `--force`, structured `--json` output, and truthful stopped-session status reporting.
+- **CLI Session Start Surface**: `borg session start <workdir>` now calls the live `session.create` and `session.start` control-plane mutations instead of fabricating a timestamp-based session id, with structured `--json` output, truthful started-session metadata, and actionable control-plane error reporting.
+- **CLI Provider Fallback Default Surface**: `borg provider fallback` without `--show` now reads the live `billing.getFallbackChain` route instead of printing a fabricated "not configured" summary, so the default read path is truthful and consistent with `--show`.
+- **CLI Secrets Write Surface**: `borg config secrets --set` and `borg config secrets --delete` now call the live `secrets.set` and `secrets.delete` control-plane mutations instead of printing placeholder success, with scriptable `--value` support, structured `--json` output, non-interactive safeguards, and actionable control-plane error reporting.
+- **CLI Provider Readiness Surface**: `borg provider test <name>` now queries the live `settings.getProviders` and `billing.getProviderQuotas` control-plane routes instead of printing a fabricated connectivity check, with structured `--json` output, truthful configured/authenticated/availability reporting, and actionable control-plane error reporting.
+- **CLI MCP Traffic Surface**: `borg mcp traffic` now reads the live `mcp.traffic` route instead of printing a static watcher banner, with structured `--json` output, server/method filtering, bounded history, and actionable control-plane error reporting.
+- **CLI MCP Inspect Surface**: `borg mcp inspect <name>` now reads the live `mcp.listServers` and `mcp.listTools` inventories instead of printing a fabricated stopped/zero-tools snapshot, with structured `--json` output and actionable control-plane error reporting.
+- **CLI MCP Config Surface**: `borg mcp config` now reads the live `config.list` MCP section instead of printing a fabricated router config, with structured `--json` output and actionable control-plane error reporting.
+- **CLI Agent Council Status Surface**: `borg agent council --status` now queries the live `director.status`, `supervisor.status`, and `council.status` control-plane routes instead of printing hardcoded "not configured" state, with structured `--json` output and actionable control-plane error reporting.
+- **CLI Provider Fallback Surface**: `borg provider fallback --show` now queries the live `billing.getFallbackChain` control-plane route instead of printing a fabricated "not configured" chain, with structured `--json` output, task-type filtering, and actionable control-plane error reporting.
+- **CLI Secrets Inventory Surface**: `borg config secrets --list` now queries the live `secrets.list` control-plane route instead of always printing a fake empty state, with structured `--json` output, masked table rendering, and actionable control-plane error reporting.
+- **CLI Tool Group Surface**: `borg tools groups` now queries live tool-set inventory from the control plane instead of always printing an empty-state placeholder, with structured `--json` output and actionable control-plane error reporting.
+- **CLI Memory Read Surfaces**: `borg memory search`, `borg memory list`, and `borg memory stats` now query live control-plane memory routes instead of fabricated empty or zero state, with structured `--json` output and actionable control-plane error reporting.
+- **CLI Cloud Session Surface**: `borg session cloud` now queries live cloud provider, session, and aggregate stats routes instead of always printing an empty-state placeholder, with structured `--json` output and actionable control-plane error reporting.
+- **CLI Session Inventory Surface**: `borg session list` now queries live local supervisor sessions and live cloud-dev sessions instead of always printing an empty-state placeholder, with merged JSON output, active-only filtering, cloud-only filtering, and actionable control-plane error reporting.
+- **CLI Status Operator Surface**: `borg status` now queries live control-plane startup, MCP, session, and provider routes instead of inventing a fake summary, with JSON output and actionable control-plane error reporting.
+- **CLI Provider Operator Surface**: `borg provider list` and `borg provider quota` now query live control-plane provider and billing routes instead of placeholder output, including JSON mode, merged configured/authenticated/quota state, provider filtering, and actionable control-plane error reporting.
+- **CLI Config Operator Surface**: `borg config show`, `borg config get`, and `borg config set` now query live control-plane configuration routes instead of invented defaults and placeholder output, with JSON mode, section selection, typed value reconstruction for display, and actionable control-plane error reporting.
+- **CLI MCP Operator Surface**: `borg mcp list`, `borg mcp tools`, and `borg mcp search` now query live control-plane MCP inventory and registry snapshot surfaces instead of placeholder empty-state output, including JSON mode, server/namespace filtering, registry-category filtering, and actionable control-plane error reporting.
+- **CLI Tool Detail Surface**: `borg tools info <name>` now queries the live control plane via `tools.get`, supports JSON output, and renders real server/schema detail instead of a placeholder message.
+- **CLI Tools Operator Surface**: `borg tools list` and `borg tools search` now query the live control plane via `mcp.listTools` and `mcp.searchTools` instead of placeholder output, including JSON mode, list filters, top-k limiting, ranked search result state, and actionable control-plane error reporting.
+- **Architecture Rollout Map**: Documented the recommended borg binary family, ownership boundaries, binary-to-package evolution, and first preferred extraction seams (`borgd` first, then `borgmcpd`) across `AGENTS.md`, `HANDOFF.md`, `CLAUDE.md`, `GEMINI.md`, `README.md`, `ROADMAP.md`, and `TODO.md` so future implementation work converges on one modular-monolith-first plan.
 - **Go Skills Summary Route**: The experimental Go workspace now exposes `/api/skills/summary`, a progressive-disclosure skill catalog that trims the bridged TypeScript skill registry down to compact `id`, `name`, `folder`, and `path` metadata with optional query filtering instead of eagerly exposing full description/content payloads.
 - **Go MCP Auto-Call Bridge**: The experimental Go workspace now exposes `/api/mcp/tools/auto-call`, a dedicated bridge that wraps the TypeScript `auto_call_tool` meta-tool so sidecar and operator surfaces can request one-shot semantic tool discovery and execution without manually constructing the inner `mcp.callTool` payload.
 - **Go Session Scanner Unit Coverage**: Added direct `go/internal/sessionimport/scanner_test.go` coverage for `sessionimport.Scanner` root reporting, candidate discovery, overlapping-root deduplication, and directory-skip behavior so automatic import discovery is validated below the HTTP layer instead of only through sidecar route tests.
@@ -413,6 +604,18 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **Antigravity Harness Visibility**: HyperCode's CLI and Go harness inventories now include Antigravity as a docs-backed metadata-only editor harness, while explicitly withholding source-backed tool/session parity claims until a real shell contract exists.
 - **Experimental Go Port Workspace**: Added an isolated `go/` sidecar workspace for feasibility testing a Go-native HyperCode control-plane slice without disturbing the existing Node/Next fork. The initial port exposes health, sessions, and CLI-tools endpoints plus a separate `.hypercode-go` lock/config path.
 - **Go Sidecar Interop**: The experimental Go workspace now reports both the main Node HyperCode lock and the Go sidecar lock via `/api/runtime/locks`, so coexistence can be tested without rewiring the primary startup path.
+- **Supervisor Base Resolution & Go Bridge Surface**: Core supervisor routing now resolves the borg orchestrator base from explicit env, live lock-file state, or configured public URLs instead of hardcoding `localhost:3847`, and the experimental Go workspace now exposes `/api/supervisor/decompose`, `/api/supervisor/supervise`, `/api/supervisor/status`, `/api/supervisor/tasks`, and `/api/supervisor/cancel` as truthful bridges to that TypeScript surface.
+- **Session Export Base Resolution**: Core session export/import now reuses the shared orchestrator base resolver instead of hardcoding `localhost:3847`, so the already-ported Go `/api/session-export/*` bridge follows live lock-file/env routing and reports missing orchestrator configuration explicitly during restore attempts.
+- **Swarm Council Base Resolution**: Core swarm orchestration helpers (`SwarmOrchestrator`, `DebateProtocol`, and `ConsensusEngine`) now reuse the shared orchestrator base resolver instead of hardcoding `localhost:3847`, so already-ported swarm/council Go surfaces follow live lock/env routing while preserving existing local fallbacks when no orchestrator base is available.
+- **Go Session Bridge Default Cleanup**: The Go sidecar's upstream tRPC session bridge no longer blind-probes `127.0.0.1:3847/trpc` as a default fallback; it now relies on the live main lock file, explicit `BORG_TRPC_UPSTREAM`, and the remaining active default ports instead of stale legacy probing.
+- **Go Config Router Bridge Surface**: The experimental Go workspace now exposes the compact TypeScript `config` router under `/api/config/*`, including key/value CRUD, MCP timeout controls, session lifetime, signup/auth flags, auth providers, and always-visible tools, while keeping the native `/api/config/status` snapshot as the Go-owned path/config health surface.
+- **Orchestrator Terminology Alignment**: Updated live operator-facing labels and service names to prefer `electron-orchestrator`, `cloud-orchestrator`, and `cli-orchestrator`, while preserving legacy paths and upstream URLs where deeper migrations are not yet complete.
+- **borg Harness Assimilation**: Added `submodules/borg` as a tracked upstream and introduced a shared borg CLI harness registry so `borg` is now the primary `borg session` harness identity.
+- **borg Tool Inventory Visibility**: borg CLI and the Go sidecar harness registry now surface borg's source-backed tool calls by reading `submodules/borg/tools/*.go`, while keeping other external harnesses labeled as install/runtime metadata only until deeper bridge contracts exist.
+- **CLI Mesh Operator Surface**: Added a real `borg mesh` command group with `status`, `peers`, `capabilities`, and `find` subcommands backed by the live tRPC control plane via `BORG_TRPC_UPSTREAM` or the borg startup lock instead of placeholder output.
+- **Antigravity Harness Visibility**: borg's CLI and Go harness inventories now include Antigravity as a docs-backed metadata-only editor harness, while explicitly withholding source-backed tool/session parity claims until a real shell contract exists.
+- **Experimental Go Port Workspace**: Added an isolated `go/` sidecar workspace for feasibility testing a Go-native borg control-plane slice without disturbing the existing Node/Next fork. The initial port exposes health, sessions, and CLI-tools endpoints plus a separate `.borg-go` lock/config path.
+- **Go Sidecar Interop**: The experimental Go workspace now reports both the main Node borg lock and the Go sidecar lock via `/api/runtime/locks`, so coexistence can be tested without rewiring the primary startup path.
 - **Go Runtime Status Summary**: The experimental Go workspace now exposes `/api/runtime/status`, a read-only summary endpoint that combines sidecar health, lock visibility plus compact running counts, config-path health, total and available CLI tool/harness counts, imported-instructions availability, provider totals plus configured/authenticated/executable counts and auth/task buckets, memory availability plus default-section and per-section entry breakdowns, discovered-session counts plus session task/model-hint breakdowns and TypeScript supervisor-bridge visibility, import-root health, and import-source candidates plus compact valid/invalid, aggregate estimated size, source-type, model-hint, and error buckets for easier coexistence checks.
 - **Go Session Supervisor Bridge**: The experimental Go workspace now exposes `/api/sessions/supervisor/catalog`, `/list`, `/get`, `/create`, `/start`, `/stop`, `/restart`, `/logs`, `/execute-shell`, `/attach-info`, `/health`, `/state`, `/update-state`, `/clear`, `/heartbeat`, and `/restore` as bridge routes into the existing TypeScript `sessionRouter`, so the sidecar can drive supervised-session lifecycle, diagnostics, and shared session-state flows through the live main control plane instead of staying discovery-only.
 - **Go MCP Admin Bridge**: The experimental Go workspace now also exposes `/api/mcp/lifecycle-modes`, `/api/mcp/runtime-servers/add`, and `/api/mcp/runtime-servers/remove` as bridge routes into the existing TypeScript `mcpRouter`, so sidecar operators can update MCP pool lifecycle modes and add or remove downstream runtime servers without leaving the Go control-plane surface.
@@ -441,6 +644,15 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **Go CLI Summary Surface**: The experimental Go workspace now exposes `/api/cli/summary`, a compact read-only summary of detected CLI tools, installed harnesses, and the current primary harness so operators can inspect sidecar CLI readiness in one call.
 - **Go Discovered Sessions Surface**: The experimental Go workspace now exposes discovered session artifacts through `/api/sessions`, returning read-only `discovered` entries with source path, format, validation state, and detected model hints instead of an always-empty session list.
 - **Go Config Status Surface**: The experimental Go workspace now exposes `/api/config/status`, a read-only summary of sidecar wiring including workspace, config, lock, repo-level HyperCode and MCP config files, imported-instructions, memory-store, and hypercode-submodule paths.
+- **Go Memory Bridge**: The experimental Go workspace now exposes the main fork's auto-imported instructions document via `/api/runtime/imported-instructions`, giving the sidecar port a read-only continuity bridge into borg's existing session-import output.
+- **Go Session Source Scanner**: The experimental Go workspace now exposes `/api/import/roots` and `/api/import/sources`, a read-only view of explicit borg-style discovery roots plus discovered artifacts across `.claude`, `.copilot/session-state`, and broader workspace/home OpenAI or ChatGPT export folders including `.chatgpt`, `ChatGPT`, and `OpenAI`.
+- **Go Session Summary Surface**: The experimental Go workspace now exposes `/api/sessions/summary`, a compact read-only summary of discovered sessions grouped by CLI type, session format, inferred task, and detected model hints.
+- **Go Sectioned Memory Status**: The experimental Go workspace now exposes `/api/memory/borg-memory/status`, a read-only summary of borg's sectioned-memory store with legacy `claude_mem.json` fallback, section counts, missing default buckets, and latest update timestamps.
+- **Go Import Validation Surface**: The experimental Go workspace now exposes `/api/import/validate`, `/api/import/candidates`, `/api/import/manifest`, and `/api/import/summary`, so discovered session artifacts can be validated, enriched with format/model metadata, exported as a structured read-only manifest, and summarized by source tool, format, validity, model hints, and validation-error buckets.
+- **Go Harness Registry Surface**: The experimental Go workspace now exposes `/api/cli/harnesses`, a read-only harness registry that mirrors the main CLI lane's harness identities, maturity labels, runtime metadata, and install visibility for `borg`, `opencode`, `claude`, `codex`, `gemini`, `goose`, and `custom`.
+- **Go CLI Summary Surface**: The experimental Go workspace now exposes `/api/cli/summary`, a compact read-only summary of detected CLI tools, installed harnesses, and the current primary harness so operators can inspect sidecar CLI readiness in one call.
+- **Go Discovered Sessions Surface**: The experimental Go workspace now exposes discovered session artifacts through `/api/sessions`, returning read-only `discovered` entries with source path, format, validation state, and detected model hints instead of an always-empty session list.
+- **Go Config Status Surface**: The experimental Go workspace now exposes `/api/config/status`, a read-only summary of sidecar wiring including workspace, config, lock, repo-level borg and MCP config files, imported-instructions, memory-store, and borg-submodule paths.
 - **Go Provider Status Surface**: The experimental Go workspace now exposes `/api/providers/status`, a read-only provider credential summary covering configured/authenticated state and auth-method hints for the current sidecar environment.
 - **Go Provider Catalog Surface**: The experimental Go workspace now exposes `/api/providers/catalog`, a read-only provider metadata view covering default models, auth methods, preferred tasks, executability, and current sidecar credential visibility.
 - **Go Provider Summary Surface**: The experimental Go workspace now exposes `/api/providers/summary`, a compact read-only provider rollup covering provider counts, configuration counts, executability, auth-method buckets, and preferred-task buckets.
@@ -453,12 +665,19 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **Harness Parity Summaries**: `hypercode session harnesses`, Go `/api/cli/summary`, and Go `/api/runtime/status` now publish explicit source-backed vs metadata-only vs operator-defined harness counts plus enumerated source-backed tool totals, so parity claims stay measurable instead of implied.
 - **HyperCode Runtime Metadata**: Advanced the HyperCode submodule to its Go/Cobra implementation and updated HyperCode docs to describe the current upstream truth: default TUI REPL, `pipe` command, and HyperCode-aware adapter package, still labeled **Experimental**.
 - **Session Import Coverage**: Extended imported-session discovery to include Simon Willison `llm` CLI `logs.db` histories, converting logged conversations and standalone responses into imported HyperCode sessions with preserved tool-call/result markers and token metadata.
+- **CLI Harness Visibility**: Added `borg session harnesses` and expanded `borg session start` help/output so harness maturity, upstream source, launch command, and the borg primary-lane designation are visible from the compiled CLI.
+- **Core Harness Detection Modes**: `@borg/core` harness detection now distinguishes command-detected vs manual/docs-backed harnesses, so Antigravity can appear in core inventory surfaces without being misrepresented as a PATH CLI or supervised shell target.
+- **Harness Parity Summaries**: `borg session harnesses`, Go `/api/cli/summary`, and Go `/api/runtime/status` now publish explicit source-backed vs metadata-only vs operator-defined harness counts plus enumerated source-backed tool totals, so parity claims stay measurable instead of implied.
+- **borg Runtime Metadata**: Advanced the borg submodule to its Go/Cobra implementation and updated borg docs to describe the current upstream truth: default TUI REPL, `pipe` command, and borg-aware adapter package, still labeled **Experimental**.
+- **Session Import Coverage**: Extended imported-session discovery to include Simon Willison `llm` CLI `logs.db` histories, converting logged conversations and standalone responses into imported borg sessions with preserved tool-call/result markers and token metadata.
 - **Experimental Antigravity Import Coverage**: Imported-session discovery now probes the reverse-engineered `~/.gemini/antigravity/brain` root for local Antigravity artifacts/logs, labels imported sessions as experimental metadata, and broadens JSON log text extraction so nested request/response-style records import more truthfully without claiming a stable Antigravity transcript contract.
 - **ChatGPT Export Coverage**: Imported-session discovery now expands exported ChatGPT `conversations.json` mapping trees into per-conversation sessions, following the active `current_node` branch instead of flattening whole export bundles into one transcript.
 - **VS Code Extension Import Coverage**: Imported-session discovery now scans workspace `.vscode` and VS Code `globalStorage` extension files for session-like transcripts while explicitly skipping the Copilot Chat roots already covered by dedicated import rules.
 - **Orchestrator Naming Convergence**: Updated top-level docs and operator-facing dashboard labels to present the desktop lane as `electron-orchestrator`, the cloud lane as `cloud-orchestrator`, and the local terminal lane as `cli-orchestrator`, while preserving existing code paths and legacy aliases during the transition.
 - **Go Sidecar Framing**: Updated the experimental Go sidecar help text and startup log to describe that workspace explicitly as the `cli-orchestrator` port instead of a generic HyperCode control plane.
 - **Parity Framing**: Tightened root documentation so HyperCode no longer implies `electron-orchestrator` and `cli-orchestrator` already have 100% feature parity; the desktop lane is broader today, while the CLI lane remains the cleaner control-plane and Go-port target.
+- **Go Sidecar Framing**: Updated the experimental Go sidecar help text and startup log to describe that workspace explicitly as the `cli-orchestrator` port instead of a generic borg control plane.
+- **Parity Framing**: Tightened root documentation so borg no longer implies `electron-orchestrator` and `cli-orchestrator` already have 100% feature parity; the desktop lane is broader today, while the CLI lane remains the cleaner control-plane and Go-port target.
 
 ### Fixed
 - **Maestro Native ABI Truthfulness**: Electron-native `better-sqlite3` failures in `apps/maestro` now report both the isolated `native-modules` load failure and the shared-module fallback failure, the Windows build guide now explains that `scripts/ensure-native-runtime.mjs` is the real startup preflight/repair path, and the stats integration coverage now matches the isolated-or-shared native binding reality instead of assuming only the shared `node_modules` layout.
@@ -474,6 +693,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **Extension Storage Restricted-Page Truthfulness**: The content-script extension storage adapter no longer falls back to page `localStorage` after real extension storage access is denied, so restricted pages stop silently mirroring extension state into page-scoped storage while true non-extension/test environments still keep the legacy fallback.
 - **Extension Execution-History Restricted-Page Truthfulness**: The render-prescript executed-function history path now uses in-memory session state in extension-backed contexts instead of relying on page `localStorage` for synchronous duplicate checks, preserving immediate auto-execution guards without keeping restricted pages coupled to page-scoped persistence.
 - **Extension Dead Permission Storage Cleanup**: Removed the unused `ToolPermission` localStorage helper path from `apps/hypercode-extension/pages/content/src/utils/storage.ts`, eliminating the last obvious dead page-storage abstraction from the live content utility layer.
+- **Extension Dead Permission Storage Cleanup**: Removed the unused `ToolPermission` localStorage helper path from `apps/borg-extension/pages/content/src/utils/storage.ts`, eliminating the last obvious dead page-storage abstraction from the live content utility layer.
 - **Extension Storage Audit Closeout**: Updated the remaining render-prescript history comment and handoff/plan notes to reflect current reality: the checked-in content runtime no longer has live restricted-page storage coupling beyond intentional non-extension fallback helpers, with the leftover `localStorage` references now mostly limited to tests and documentation.
 - **BobbyBookmarks URL Canonicalization**: The TypeScript BobbyBookmarks backlog adapter now matches the shared BobbyBookmarks dedup normalization rules more closely by lowercasing host/path, stripping broader tracking params, removing default ports, normalizing trailing slashes, and adding `https://` to bare URLs before backlog upserts.
 - **Maestro Tailwind CSS Warning**: Stopped Tailwind from generating an invalid `.\[-\:\\s\|\] { -: \s|; }` rule from a markdown-table separator regex in `documentStats.ts`, eliminating the `Expected identifier but found "-"` CSS minification warning while preserving table stripping behavior.
@@ -488,6 +708,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **ConnectionPoolService**: Generic connection pool with factory/destroyer/validator lifecycle, bounded acquire with timeout/backpressure, graceful drain, and `ConnectionPoolManager` static registry.
 - **TelemetryService**: W3C Trace Context compatible distributed tracing with span lifecycle, attributes, events, async `trace()` wrapper, traceparent export/parse, and ring-buffered completed spans.
 - **Prism MCP Reference Submodule**: Added `submodules/prism-mcp` so HyperCode can track upstream Prism memory/dashboard work as a first-class reference repository during assimilation.
+- **Prism MCP Reference Submodule**: Added `submodules/prism-mcp` so borg can track upstream Prism memory/dashboard work as a first-class reference repository during assimilation.
 
 ### Fixed
 - **Core Test Suite Stabilization**: Reduced test failures from 49 to 3 (407→450+ tests pass). Fixed 14 test files:
@@ -509,6 +730,13 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **Memory Bootstrap Idempotency**: Hardened `@hypercode/memory` LanceDB startup so concurrent first writes no longer crash HyperCode with `Table 'memories' already exists`; the adapter now retries `openTable()` after a competing creator wins the race.
 - **Import Throughput + Coverage**: Imported-session discovery now includes home-directory `~/.opencode` and `~/.aider` roots, and session-memory extraction falls back straight to heuristics when no OpenAI key is configured instead of stalling on provider fallback.
 - **LanceDB Schema Drift Tolerance**: Existing `memories` tables created with older metadata schemas no longer reject new import fields like `sourceTool`; HyperCode now constrains append rows to the live LanceDB schema when needed.
+  - `McpmInstaller.test.ts` — Added `@borg/mcp-registry` mock
+- **Session Import Coverage**: Extended imported-session discovery to include VS Code and VS Code Insiders Copilot Chat transcripts from `emptyWindowChatSessions`, while excluding known Cursor workspace metadata files that are not real chat sessions.
+- **OpenAI Session Import Coverage**: borg now discovers OpenAI or ChatGPT export JSON histories from explicit `.openai` / `.chatgpt` / `ChatGPT` / `OpenAI` roots and normalizes them into readable user/assistant transcripts with tool-call markers.
+- **Prism Session Import Coverage**: borg can now ingest Prism local `~/.prism-mcp/data.db` ledger and handoff rows as imported sessions, including behavioral `event_type` / `confidence_score` / `importance` metadata and derived correction warnings.
+- **Memory Bootstrap Idempotency**: Hardened `@borg/memory` LanceDB startup so concurrent first writes no longer crash borg with `Table 'memories' already exists`; the adapter now retries `openTable()` after a competing creator wins the race.
+- **Import Throughput + Coverage**: Imported-session discovery now includes home-directory `~/.opencode` and `~/.aider` roots, and session-memory extraction falls back straight to heuristics when no OpenAI key is configured instead of stalling on provider fallback.
+- **LanceDB Schema Drift Tolerance**: Existing `memories` tables created with older metadata schemas no longer reject new import fields like `sourceTool`; borg now constrains append rows to the live LanceDB schema when needed.
 - **Startup Hardening**: Maestro's postinstall native rebuild wrapper now downgrades known Windows `EPERM` file-lock failures on `better-sqlite3` to warnings, so workspace install can continue while startup preflight still verifies actual Electron runtime readiness.
 
 ### Version
@@ -518,6 +746,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 ### Added
 - **Complete Roadmap Vision**: Generated and updated `IDEAS.md` files for all remaining repositories and packages (`adk`, `agents`, `search`, `tools`, `memory`, `vscode`, `mobile`). This provides a comprehensive, high-intelligence roadmap for every component of the HyperCode ecosystem.
+- **Complete Roadmap Vision**: Generated and updated `IDEAS.md` files for all remaining repositories and packages (`adk`, `agents`, `search`, `tools`, `memory`, `vscode`, `mobile`). This provides a comprehensive, high-intelligence roadmap for every component of the borg ecosystem.
 - **Mobile Companion Hardening**: Updated `apps/mobile` connectivity to correctly point to the standardized port `3847`, enabling real-time telemetry and monitoring from the React Native wireframes.
 
 ### Version
@@ -546,6 +775,10 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 ### Fixed
 - **Port 3847 Harmonization**: Standardized the `HYPERCODE_ORCHESTRATOR_PORT` to `3847` across all packages (`packages/ui`, `apps/web`, `apps/maestro`), resolving persistent `ERR_CONNECTION_REFUSED` errors from legacy port 3001 references.
+- **Ambitious Roadmap Expansion**: Seeded `IDEAS.md` files across all major repositories (`ai`, `core`, `mcp-client`, `ui`, `web`, `maestro`, `borg-extension`) with high-intelligence proposals including a Rust micro-kernel, P2P Hive Mind, and Bobcoin integration.
+
+### Fixed
+- **Port 3847 Harmonization**: Standardized the `BORG_ORCHESTRATOR_PORT` to `3847` across all packages (`packages/ui`, `apps/web`, `apps/maestro`), resolving persistent `ERR_CONNECTION_REFUSED` errors from legacy port 3001 references.
 - **CI/CD Stabilization**: Restored GitHub frontpage "Green" status by resolving linting and type errors in `apps/maestro`:
     - Installed missing `@types/mdast` dependency.
     - Removed redundant `@ts-expect-error` directives.
@@ -560,6 +793,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 ### Added
 - **System Configuration Dashboard:** Completely expanded `/dashboard/config` from a simple 14-line wrapper into a comprehensive System Configuration surface using a multi-tab layout (`@hypercode/ui` Tabs).
+- **System Configuration Dashboard:** Completely expanded `/dashboard/config` from a simple 14-line wrapper into a comprehensive System Configuration surface using a multi-tab layout (`@borg/ui` Tabs).
 - **Model Providers Panel:** Added `ModelProvidersList` to manage LLM API keys natively in the dashboard, persisting directly to the workspace `.env` file via `settingsRouter`.
 - **System Limits Panel:** Added `SystemLimitsPanel` to manage authentication boundaries (disable signups, SSO, basic auth) and MCP execution limits (timeout resets) via `configRouter`.
 
@@ -572,6 +806,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ## [0.99.2] — 2026-03-24
 
 - **Council Router Build Error:** Rewrote `packages/core/src/routers/council/index.ts` to expose `members` and `updateMembers` as direct top-level procedures. These were previously orphaned in `routers/councilRouter.ts` (never imported by `trpc.ts`), causing TypeScript errors in `providers/routing/page.tsx`. Both `@hypercode/core` and `@hypercode/web` now typecheck cleanly.
+- **Council Router Build Error:** Rewrote `packages/core/src/routers/council/index.ts` to expose `members` and `updateMembers` as direct top-level procedures. These were previously orphaned in `routers/councilRouter.ts` (never imported by `trpc.ts`), causing TypeScript errors in `providers/routing/page.tsx`. Both `@borg/core` and `@borg/web` now typecheck cleanly.
 
 ### Changed
 - **Branch Cleanup:** Deleted 96 of 104 local feature branches (94 already-merged, 2 legacy v2.7.x pre-Phase-Bankruptcy). Pruned orphaned git worktree. Repository now has a single clean `main` branch.
@@ -636,6 +871,11 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 ### Documentation
 - docs: Updated `DEPLOY.md` with MCP configuration path (`~/.hypercode/`), Always On tools documentation, and ports reference table.
+- fix(web): Merged `Textarea` import from non-existent `@/components/ui/textarea` into `@borg/ui` in `swarm/page.tsx`.
+- fix: Cleaned autopilot bump text corruption from `process-managed.transport.js`.
+
+### Documentation
+- docs: Updated `DEPLOY.md` with MCP configuration path (`~/.borg/`), Always On tools documentation, and ports reference table.
 - docs: Updated `TODO.md` — marked tool semantic search/RAG as complete.
 
 ## [0.99.1] — 2026-03-22
@@ -643,6 +883,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **TOON Parser Engine:** Replaced the stub JSON serializer in `core/mcp` with a full Tool-Optimized Output Notation parser that compresses LLM context by stripping redundant braces/quotes into a lightweight pseudo-YAML payload framed by `<toon>` tags.
 - **Traffic Inspector TOON Renderer:** Added `<ToonRenderer />` to the dashboard's MCP Traffic Inspector. Raw JSON tool arguments and results are now automatically detected and syntax-highlighted inside an elegant custom emerald component.
 - **Dependency:** Added `yaml` to `@hypercode/core` to support lossless parsing and serialization.
+- **Dependency:** Added `yaml` to `@borg/core` to support lossless parsing and serialization.
 - **Stability:** Hardened yaml ESM imports to use explicit named destructured imports (`parse, stringify`) natively avoiding `default` package resolution mismatch across monorepos.
 
 ## [0.99.1] — 2026-03-22
@@ -662,6 +903,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Dashboard & MCP Router
 
 - feat(web/dashboard): Promoted `hypercode-orchestrator` (opencode-autopilot) to a first-class feature by creating a standalone `HyperCodeOrchestratorWidget` and refactoring the main dashboard grid to give it half the page real estate.
+- feat(web/dashboard): Promoted `borg-orchestrator` (opencode-autopilot) to a first-class feature by creating a standalone `BorgOrchestratorWidget` and refactoring the main dashboard grid to give it half the page real estate.
 - feat(dev): Integrated the Orchestrator server into the standard `pnpm dev` stack. The `dev_tabby_ready.mjs` script now automatically spawns the orchestrator process and validates its health before declaring the stack ready.
 - feat(core/mcp): Implemented Last-Known-Good (LKG) configuration persistence in `MCPConfigStore`. The system now maintains an `mcp_servers.lkg.json` backup that is automatically updated on successful reads/writes.
 - feat(core/mcp): Updated `MCPAggregator` to fallback to LKG configuration if the primary `mcp_servers.json` is missing or corrupted, ensuring immediate availability of known servers during flaky environment injections.
@@ -678,6 +920,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - feat(web/billing): Updated the main provider capabilities table to be interactive; clicking a row now opens the detail subpanel for that provider.
 - feat(web/billing): Extended `normalizeBillingQuotaRows` to include `windows` and `resetDate` data, enabling rich drilldown views.
 - refactor(ui): Added `indicatorClassName` support to the shared `Progress` component in `@hypercode/ui`, allowing for semantic progress bar coloring (e.g., emerald for healthy, amber for warning, red for exhausted).
+- refactor(ui): Added `indicatorClassName` support to the shared `Progress` component in `@borg/ui`, allowing for semantic progress bar coloring (e.g., emerald for healthy, amber for warning, red for exhausted).
 - chore: Bumped `VERSION` to `0.99.1`.
 
 ## [0.99.1] — 2026-03-21
@@ -1145,6 +1388,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - docs(deploy): Created `DEPLOY.md` to provide exact startup and deployment instructions.
 - docs(agents): Unified LLM instructions into `docs/UNIVERSAL_LLM_INSTRUCTIONS.md` and updated `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`, `GPT.md`, and `copilot-instructions.md` to inherit from this universal base.
 - feat(council): Completed the 100% assimilation of opencode-autopilot into HyperCode core (now HyperCode Orchestrator), bringing multi-model debate, PTY session supervision, and the Roundtable dashboard natively into the platform. Submodule removed.
+- feat(council): Completed the 100% assimilation of opencode-autopilot into borg core (now borg Orchestrator), bringing multi-model debate, PTY session supervision, and the Roundtable dashboard natively into the platform. Submodule removed.
 
 ## [0.9.13] — 2026-03-20
 
@@ -1293,6 +1537,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - fix(test): Added missing `scoreBreakdown` property to test fixtures in `toolSearchRanking.test.ts`:
   - Updated 4 test objects to include required `ToolSearchScoreBreakdown` property
   - Resolved TS2741 compilation errors in @hypercode/cli build
+  - Resolved TS2741 compilation errors in @borg/cli build
   - All test cases now provide complete, type-safe ranking result objects
 
 - chore(build): Full monorepo build now succeeds — all 26 packages compile without errors
@@ -1375,6 +1620,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - feat(web/registry): Server name cells in registry table are now **clickable** — navigate to `/dashboard/registry/[uuid]` on click, with hover color change to indicate interactivity
 
 - chore(branding): Renamed all remaining `AIOS`/`aios` legacy references to `hypercode`/`HyperCode` across `archive/` SDKs (Python, Rust, Go), nvim plugin, archive docs and handoff files, `AGENTS.md`, and `UNIVERSAL_LLM_INSTRUCTIONS.md`
+- chore(branding): Renamed all remaining `AIOS`/`aios` legacy references to `borg`/`borg` across `archive/` SDKs (Python, Rust, Go), nvim plugin, archive docs and handoff files, `AGENTS.md`, and `UNIVERSAL_LLM_INSTRUCTIONS.md`
 
 - chore(version): Bumped `VERSION` from `0.9.1` → `0.9.4` to sync with CHANGELOG, then to `0.9.5` for this release
 
@@ -1514,6 +1760,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
   - `PROJECT_ROUNDTABLE_SCORECARD_TEMPLATE.md`
 - docs(roundtable): The new brief inventories the repo’s major apps/packages/submodules, distinguishes implemented vs partial vs planned feature families, captures the actual active task queue from `archive/tasks/active/`, and explicitly calls out current documentation drift (missing root canonical files, archive-vs-live path mismatch, and index references to non-existent docs).
 - docs(index): Added the new roundtable documentation set to `HYPERCODE_MASTER_INDEX.jsonc` so future sessions and reviewers can discover the current debate materials without relying on stale archived copies.
+- docs(index): Added the new roundtable documentation set to `BORG_MASTER_INDEX.jsonc` so future sessions and reviewers can discover the current debate materials without relying on stale archived copies.
 - chore(version): Synchronized active version references to `0.9.1` across `VERSION`, `VERSION.md`, active `package.json` manifests, visible UI/runtime literals, and the README heading.
 
 ## [2.7.334] — 2026-03-18
@@ -1644,6 +1891,8 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - chore(version): Updated `.vibe-config.json` version from "1.0.0" to canonical "2.7.318" for consistency across all version sources.
 - chore(branding): Replaced "Codename: AIOS (AI Operating System)" with "Codename: HyperCode" in AGENTS.md version headers. Removed all AIOS references from planning/discussion sections.
 - chore(compatibility): Verified backward compatibility maintained — legacy `.legacy_config.json` and `legacy` format exports continue to work as aliases to `hypercode` via ConfigurationService normalization.
+- chore(branding): Replaced "Codename: AIOS (AI Operating System)" with "Codename: borg" in AGENTS.md version headers. Removed all AIOS references from planning/discussion sections.
+- chore(compatibility): Verified backward compatibility maintained — legacy `.legacy_config.json` and `legacy` format exports continue to work as aliases to `borg` via ConfigurationService normalization.
 - validation: CLI already uses canonical `readCanonicalVersion()` from VERSION file; no hardcoded version strings found in active code paths.
 
 ## [2.7.318] — 2026-03-17
@@ -1668,6 +1917,10 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - chore(cli/compat): Maintained export-format compatibility by treating `hypercode` as the primary format while preserving legacy internal format handling in `mcp-router-cli`, avoiding abrupt behavior breaks.
 - chore(core/config): Updated active MCP router core config handling to prefer `.hypercode.json` / `hypercode` while keeping legacy `.legacy_config.json` / `legacy` aliases for backward compatibility (`cli/mcp-router-cli/packages/core/src/services/ConfigurationService.js`).
 - chore(core/db): Switched MCP router DB startup to prefer `hypercode.db` while auto-falling back to `legacy_hypercode.db`; new API keys now use `hypercode_` prefix (`cli/mcp-router-cli/packages/core/src/db/DatabaseManager.js`).
+- chore(cli/branding): Rebranded active MCP router CLI entrypoints to `borg-mcp-router` in TypeScript sources (`cli/mcp-router-cli/mcp-router-cli.ts`, `cli/mcp-router-cli/mcp-router-cli-mock.ts`).
+- chore(cli/compat): Maintained export-format compatibility by treating `borg` as the primary format while preserving legacy internal format handling in `mcp-router-cli`, avoiding abrupt behavior breaks.
+- chore(core/config): Updated active MCP router core config handling to prefer `.borg.json` / `borg` while keeping legacy `.legacy_config.json` / `legacy` aliases for backward compatibility (`cli/mcp-router-cli/packages/core/src/services/ConfigurationService.js`).
+- chore(core/db): Switched MCP router DB startup to prefer `borg.db` while auto-falling back to `legacy_borg.db`; new API keys now use `borg_` prefix (`cli/mcp-router-cli/packages/core/src/db/DatabaseManager.js`).
 - docs(version): Standardized stale alpha-track references in canonical docs (`VISION.md`, `TODO.md`) to the current release line.
 
 ## [2.7.315] — 2026-03-17
@@ -1694,6 +1947,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 - task completed: P0-1 (Task 007: Startup Orchestration Truthfulness) - Deterministic boot contract verified with 13/13 startup tests passing, canonical readiness definition implemented, fresh-install boot flow validated.
 - task completed: P0-6 (Task 008: Dashboard Honesty Pass) - All core dashboard pages labeled with proper maturity badges (beta/stable/experimental), primary nav distinguishes HyperCode 1.0 features from Labs/Experimental surfaces, external embeds clearly marked.
+- task completed: P0-6 (Task 008: Dashboard Honesty Pass) - All core dashboard pages labeled with proper maturity badges (beta/stable/experimental), primary nav distinguishes borg 1.0 features from Labs/Experimental surfaces, external embeds clearly marked.
 - task completed: P1-7 (Task 009: Health, Logs & Operator Surfaces) - Health/Logs/Audit dashboard pages complete with real tRPC integration, searchable/filterable entries, appropriate status labeling, backend routers fully utilized.
 - test(validation): P0 prerequisites confirmed stable - web build all routes prerendered, startup orchestration 13/13 tests, core package 156/157 (99.4%).
 
@@ -1721,6 +1975,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ## [2.7.307] — 2026-03-17
 
 - feat(core/mcp): Upgraded `SessionToolWorkingSet` with explicit runtime `reconfigure(...)` support and bounded eviction history (`getEvictionHistory` / `clearEvictionHistory`) so capacity and eviction telemetry remain observable through HyperCode-native meta-tools.
+- feat(core/mcp): Upgraded `SessionToolWorkingSet` with explicit runtime `reconfigure(...)` support and bounded eviction history (`getEvictionHistory` / `clearEvictionHistory`) so capacity and eviction telemetry remain observable through borg-native meta-tools.
 - feat(core/mcp): Hardened working-set eviction accounting with idle-aware metadata (`idleEvicted`, `idleDurationMs`, `tier`) and unified history recording for both loaded-tier and hydrated-tier evictions.
 - feat(core/mcp): Added native `set_capacity`, `get_eviction_history`, and `clear_eviction_history` handling in `NativeSessionMetaTools` to keep direct/native mode behavior aligned with MetaMCP proxy expectations.
 - test(core): Added focused `SessionToolWorkingSet` coverage (`packages/core/src/mcp/SessionToolWorkingSet.test.ts`) and expanded native meta-tool tests for capacity updates + eviction history (`packages/core/src/mcp/NativeSessionMetaTools.test.ts`); focused tests passed and direct core typecheck passed (`pnpm -C packages/core exec tsc --noEmit`).
@@ -1728,12 +1983,14 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ## [2.7.306] — 2026-03-17
 
 - fix(core/mcp): Switched legacy downstream stdio client paths (`Router` and `mcp/StdioClient`) to HyperCode's managed stdio transport so Windows child consoles stay hidden while stdout/stderr remain observable in the MetaMCP log store.
+- fix(core/mcp): Switched legacy downstream stdio client paths (`Router` and `mcp/StdioClient`) to borg's managed stdio transport so Windows child consoles stay hidden while stdout/stderr remain observable in the MetaMCP log store.
 - test(core): Added regression coverage proving legacy stdio client paths now request managed piped diagnostics instead of raw SDK stdio transport (`packages/core/src/stdio-transport-visibility.test.ts`).
 - test(core): Focused stdio validation passed (`packages/core/src/backgroundCoreBootstrap.test.ts`, `packages/core/src/stdioLoader.test.ts`, `packages/core/src/stdio-transport-visibility.test.ts`); direct core typecheck passed (`pnpm -C packages/core exec tsc --noEmit --pretty false`).
 
 ## [2.7.305] — 2026-03-17
 
 - feat(core/mcp): Split the stdio-facing HyperCode MCP entrypoint into a lightweight loader that advertises cached downstream tool inventory immediately, triggers background core startup, and avoids cold-start stalls during MCP host discovery.
+- feat(core/mcp): Split the stdio-facing borg MCP entrypoint into a lightweight loader that advertises cached downstream tool inventory immediately, triggers background core startup, and avoids cold-start stalls during MCP host discovery.
 - feat(core/mcp): Added a dedicated loader status tool plus HTTP proxy handoff for tool execution so the stdio loader can report warming state until the background control plane is ready.
 - refactor(core/orchestrator): Background control-plane startup now launches `MCPServer` with `skipStdio`, leaving stdio ownership to the external loader and preventing duplicated transport responsibility.
 - test(core): Focused loader/bootstrap tests passed (`packages/core/src/backgroundCoreBootstrap.test.ts`, `packages/core/src/stdioLoader.test.ts`); direct core typecheck passed (`pnpm -C packages/core exec tsc --noEmit --pretty false`).
@@ -1909,6 +2166,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ## [2.7.277] — 2026-03-16
 
 - feat(web/mcp/search): `Hydrate schema` now supports load-aware hydration from search results and lane cards — if a tool is not loaded, HyperCode performs `load -> hydrate` in one action.
+- feat(web/mcp/search): `Hydrate schema` now supports load-aware hydration from search results and lane cards — if a tool is not loaded, borg performs `load -> hydrate` in one action.
 - feat(web/mcp/search): Added `Tool visibility lanes` panel with explicit `Always-on advertised` and `Keep warm profile` sections, each showing current loaded/schema state and direct load/hydrate actions.
 - feat(web/mcp/search): Schema-ready badges now resolve from live working-set state so hydrated status remains accurate even when catalog metadata lags.
 - test(validation): `WEB_TSC_OK`; focused MCP tests passed (`apps/web/src/lib/mcp-import.test.ts`, `apps/web/src/app/dashboard/mcp/mcp-dashboard-utils.test.ts`).
@@ -2089,6 +2347,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ## [2.7.251] — 2026-03-16
 
 - feat(web/dashboard): New `system/page.tsx` — operator console showing HyperCode uptime, subsystem readiness checks (from `startupStatus` contract), blocking boot reasons, and navigation cards to Health, Logs, and Audit.
+- feat(web/dashboard): New `system/page.tsx` — operator console showing borg uptime, subsystem readiness checks (from `startupStatus` contract), blocking boot reasons, and navigation cards to Health, Logs, and Audit.
 - feat(web/dashboard): `health/page.tsx` — added `PageStatusBanner` (beta) for maturity labeling.
 - feat(web/dashboard): `logs/page.tsx` — added `PageStatusBanner` (beta) for maturity labeling.
 - feat(web/dashboard): `audit/page.tsx` — added `PageStatusBanner` (beta) for maturity labeling.
@@ -2099,6 +2358,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - fix(core/startup): `buildStartupStatusSnapshot` no longer blocks a **zero-server fresh install** on `mcp_config_sync_pending`. When `configuredServerCount === 0 && persistedServerCount === 0`, config sync is trivially satisfied — waiting for `lastCompletedAt` would stall the boot indefinitely with no MCP servers to sync.
 - fix(core/startup): `configuredServerCount` is now computed before `configSyncReady` so the zero-server guard can reference it cleanly.
 - fix(cli/start): `hypercode start` banner now reads the actual version from the repo `VERSION` file instead of the hardcoded `v2.5.0` string.
+- fix(cli/start): `borg start` banner now reads the actual version from the repo `VERSION` file instead of the hardcoded `v2.5.0` string.
 - test(core/startup): 2 new tests — `zero-server fresh install boots cleanly when aggregator is initialized even if config sync has never run` + `zero-server pre-init: shows mcp_aggregator_not_initialized but not mcp_config_sync_pending while aggregator bootstraps`; total `startupStatus.test.ts` now 13/13.
 - test(validation): `vitest startupStatus.test.ts` 13/13 passed · `CORE_TSC_OK`.
 
@@ -2108,6 +2368,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - feat(web/dashboard): `autopilot/page.tsx` — marked **external-embed**: embeds OpenCode Autopilot dashboard via iframe; URL visible in banner note.
 - feat(web/dashboard): `webui/page.tsx` — marked **external-embed**: embeds Open-WebUI via iframe; URL visible in banner note.
 - feat(web/dashboard): `deer-flow/page.tsx` — marked **experimental**: DeerFlow is an external LangGraph agent harness; HyperCode-native orchestration planned for a future release.
+- feat(web/dashboard): `deer-flow/page.tsx` — marked **experimental**: DeerFlow is an external LangGraph agent harness; borg-native orchestration planned for a future release.
 - feat(web/dashboard): `workflows/page.tsx` — marked **beta**: workflow execution UI is functional but under active development.
 - feat(web/dashboard): `swarm/page.tsx` — marked **experimental**: swarm multi-agent orchestration (consensus, slashing, adversarial debate) is under active development.
 - test(validation): `WEB_TSC_OK` — no TypeScript errors.
@@ -2589,11 +2850,13 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 - changed(web/mcp): `/dashboard/mcp/inspector` telemetry now mirrors search-page decision observability by surfacing ignored-result counts and ignored top-choice names per event.
 - feat(web/mcp): added an inspector telemetry triage preset for `Auto-load skips` to quickly isolate cached-ranking search decisions where HyperCode intentionally did not auto-load.
+- feat(web/mcp): added an inspector telemetry triage preset for `Auto-load skips` to quickly isolate cached-ranking search decisions where borg intentionally did not auto-load.
 - changed(web/mcp): inspector telemetry cards now include second-result context (`secondResultName`, `secondMatchReason`, `secondScore`) to make ranking ambiguity easier to debug during operator triage.
 
 ## [2.7.172] — 2026-03-15
 
 - feat(core/mcp): search telemetry now records `ignoredResultCount` and compact `ignoredResultNames` so operators can see what ranked options HyperCode intentionally did not load.
+- feat(core/mcp): search telemetry now records `ignoredResultCount` and compact `ignoredResultNames` so operators can see what ranked options borg intentionally did not load.
 - changed(core/mcp): runtime-search, cached-ranking, and live-aggregator search paths now all emit ignored-candidate context alongside top/second score telemetry.
 - feat(web/mcp): `/dashboard/mcp/search` telemetry panel now surfaces ignored-result counts and ignored top-choice names per event, plus an `Auto-load skips` preset for faster triage of decision friction.
 
@@ -2693,6 +2956,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ## [2.7.154] — 2026-03-15
 
 - feat(core/mcp): added runtime lifecycle mode controls in `McpServerPool` via `getLifecycleModes()` and `setLifecycleModes()` so lazy/single-active policy can be changed without restarting HyperCode.
+- feat(core/mcp): added runtime lifecycle mode controls in `McpServerPool` via `getLifecycleModes()` and `setLifecycleModes()` so lazy/single-active policy can be changed without restarting borg.
 - feat(core/mcp): added `mcp.setLifecycleModes` admin mutation to update lazy session startup and single-active downstream policy at runtime.
 - feat(web/mcp): added Router Status control buttons in `/dashboard/mcp` to toggle Lazy Sessions and Single-active mode directly from the dashboard.
 - changed(core/mcp): `mcp.getStatus` lifecycle values now reflect live pool runtime settings rather than process env defaults.
@@ -2712,6 +2976,8 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 - feat(core/mcp): downstream MCP processes now default to lazy session mode (`HYPERCODE_MCP_LAZY_SESSIONS`), preventing idle prewarm spawns until a tool is actually executed.
 - feat(core/mcp): global single-active downstream lifecycle added (`HYPERCODE_MCP_SINGLE_ACTIVE_SERVER`) so one downstream server process remains active at a time; stale active/idle sessions are cleaned before switching.
+- feat(core/mcp): downstream MCP processes now default to lazy session mode (`BORG_MCP_LAZY_SESSIONS`), preventing idle prewarm spawns until a tool is actually executed.
+- feat(core/mcp): global single-active downstream lifecycle added (`BORG_MCP_SINGLE_ACTIVE_SERVER`) so one downstream server process remains active at a time; stale active/idle sessions are cleaned before switching.
 - changed(core/mcp): `tools/list` in MetaMCP proxy now prefers cached tool inventory (`getCachedToolInventory`) to avoid spawning all downstream servers during initial MCP host load.
 - changed(core/mcp): downstream tool execution now lazy-connects on first call when no active client mapping exists, instead of requiring eager bootstrap during discovery.
 - changed(core/mcp): STDIO downstream client wiring now logs both `stderr` and `stdout` to MetaMCP log store while keeping child processes hidden on Windows.
@@ -2826,6 +3092,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ## [2.7.134] — 2026-03-14
 
 - fixed(mcp/discovery): added per-server timeout guards for downstream `prompts/list`, `resources/list`, and `resources/templates/list` requests so slow or hung downstream servers cannot stall HyperCode discovery handlers.
+- fixed(mcp/discovery): added per-server timeout guards for downstream `prompts/list`, `resources/list`, and `resources/templates/list` requests so slow or hung downstream servers cannot stall borg discovery handlers.
 - fixed(mcp/discovery): added timeout protection around downstream session bootstrap (`mcpServerPool.getSession`) during discovery scans to prevent `/mcp list` prompt discovery from hanging on unhealthy servers.
 - test(core): added `packages/core/src/mcp/downstreamDiscovery.test.ts` coverage for prompt-discovery timeout fallback and mixed healthy+hung server behavior.
 - changed(build): rebuilt `packages/core/dist` so `server-stdio.js` picks up the MCP discovery timeout fix at runtime.
@@ -2851,6 +3118,10 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - changed(mcp/config): local compatibility-mode reads now prioritize HyperCode config home and retain repo-root `mcp.jsonc`/`mcp.json` as legacy fallback read sources only.
 - test(mcp/config): updated tRPC route compatibility tests to run against an isolated temporary `HYPERCODE_CONFIG_DIR`, validating local managed-server actions without mutating workspace-root config files.
 - changed(mcp/search-ui): MCP JSONC editor tooltip now reflects HyperCode config-home save location rather than claiming root-repo writes.
+- fixed(mcp/config): local dashboard compatibility-mode MCP config writes now target borg config home (`~/.borg/mcp.jsonc` + `~/.borg/mcp.json`) instead of repo-root files.
+- changed(mcp/config): local compatibility-mode reads now prioritize borg config home and retain repo-root `mcp.jsonc`/`mcp.json` as legacy fallback read sources only.
+- test(mcp/config): updated tRPC route compatibility tests to run against an isolated temporary `BORG_CONFIG_DIR`, validating local managed-server actions without mutating workspace-root config files.
+- changed(mcp/search-ui): MCP JSONC editor tooltip now reflects borg config-home save location rather than claiming root-repo writes.
 
 ## [2.7.129] — 2026-03-14
 
@@ -2974,6 +3245,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - feat(dashboard): added `/dashboard/chronicle` — Git Chronicle page with configurable commit log and working-tree status via `git` tRPC namespace.
 - feat(dashboard): added `/dashboard/library` — Resource Library hub linking to scripts, skills, tool sets, memory, plans, manual, chronicle, and architecture with live item counts from `savedScripts` and `skills` tRPC namespaces.
 - feat(dashboard): added `/dashboard/context` — Context Manager page for add/remove/clear of context files and assembled context prompt viewer via `hypercodeContext` tRPC namespace.
+- feat(dashboard): added `/dashboard/context` — Context Manager page for add/remove/clear of context files and assembled context prompt viewer via `borgContext` tRPC namespace.
 - changed(nav): added "Sessions" link to `CORE_DASHBOARD_NAV` pointing to `/dashboard/session` so the session supervisor is reachable from the main nav section.
 - changed(nav): added "Context Manager" entry to `LABS_DASHBOARD_NAV` pointing to `/dashboard/context`.
 - changed(nav): added inline descriptions for `Command`, `Symbols`, `Code`, `Chronicle`, and `Library` nav items.
@@ -2982,6 +3254,8 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+=======
+>>>>>>> origin/rewrite/main-sanitized
 - changed(health): `/dashboard/health` now treats degraded `startupStatus` compat-fallback snapshots as a first-class state in the top-level MCP Router metric, showing degraded router telemetry instead of implying the router is merely still initializing.
 
 - changed(health): `/dashboard/health` now treats degraded `startupStatus` compat-fallback snapshots as a first-class state in the top-level Event Bus metric, showing degraded telemetry instead of implying the service is merely still starting.
@@ -3000,6 +3274,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 - changed(dashboard): improved the `/dashboard` first-run zero-provider experience so the overview metric, provider panel, and fallback panel now tell operators to configure their first provider instead of showing passive empty-state copy.
 
+<<<<<<< HEAD
 - docs(readme): aligned `README.md` with the current local `pnpm run dev` readiness launcher, clarified that Docker still exposes the dashboard on `localhost:3001`, documented dynamic dashboard port fallback for local dev, and pointed the repo layout at `apps/hypercode-extension` as the official browser-extension workspace.
 
 - docs(deploy): aligned `DEPLOY.md` with the verified `0.9.0-beta` control-plane workflow, including the root `pnpm run dev` readiness launcher, dashboard port fallback behavior, core bridge probes on `3001`, and startup troubleshooting for dynamic dashboard ports.
@@ -3007,6 +3282,19 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - fix(startup): gate verbose `packages/core/src/MCPServer.ts` import/boot progress logs behind `HYPERCODE_MCP_SERVER_DEBUG=1` or `DEBUG=hypercode:mcp-server`, keeping normal `pnpm run dev` output quiet while preserving real errors and fallback warnings.
 
 - fix(startup): `pnpm run dev` now best-effort replaces a reused HyperCode core bridge that is healthy but serving an older `startupStatus` contract by stopping the stale owner via the HyperCode startup lock when available, or via the current port-3001 listener PID only when that listener's command line still looks HyperCode-owned, before launching a fresh CLI/core instance.
+=======
+>>>>>>> origin/rewrite/main-sanitized
+- docs(readme): aligned `README.md` with the current local `pnpm run dev` readiness launcher, clarified that Docker still exposes the dashboard on `localhost:3001`, documented dynamic dashboard port fallback for local dev, and pointed the repo layout at `apps/borg-extension` as the official browser-extension workspace.
+
+- docs(deploy): aligned `DEPLOY.md` with the verified `0.9.0-beta` control-plane workflow, including the root `pnpm run dev` readiness launcher, dashboard port fallback behavior, core bridge probes on `3001`, and startup troubleshooting for dynamic dashboard ports.
+
+- fix(startup): gate verbose `packages/core/src/MCPServer.ts` import/boot progress logs behind `BORG_MCP_SERVER_DEBUG=1` or `DEBUG=borg:mcp-server`, keeping normal `pnpm run dev` output quiet while preserving real errors and fallback warnings.
+
+<<<<<<< HEAD
+- fix(startup): `pnpm run dev` now best-effort replaces a reused borg core bridge that is healthy but serving an older `startupStatus` contract by stopping the stale owner via the borg startup lock when available, or via the current port-3001 listener PID only when that listener's command line still looks borg-owned, before launching a fresh CLI/core instance.
+=======
+- fix(startup): `pnpm run dev` now best-effort replaces a reused Borg core bridge that is healthy but serving an older `startupStatus` contract by stopping the stale owner via the Borg startup lock when available, or via the current port-3001 listener PID only when that listener's command line still looks Borg-owned, before launching a fresh CLI/core instance.
+>>>>>>> origin/rewrite/main-sanitized
 
 - fix(startup): `pnpm run dev` now requires the live `startupStatus` payload to expose the current readiness-contract fields before declaring the stack ready, so reusing an older core bridge no longer produces a false green boot summary and instead surfaces a specific startup-contract refresh warning.
 
@@ -3026,6 +3314,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - changed(memory): added a backend `getMemoryTimelineWindow` path plus a pure session-window helper so `/dashboard/memory` can show nearby same-session records around the selected memory anchor instead of relying only on generic related-record heuristics.
 - changed(memory): added a backend `searchMemoryPivot` path and service-level structured pivot matching for session/tool/concept/file metadata, then wired `/dashboard/memory` to use those backend results so inspector pivots return real related records instead of only steering local UI state.
 - changed(memory): added one-click inspector search pivots to `/dashboard/memory` so selected records can immediately re-query by session, tool, concept, or file metadata, and made `All Records` aggregate generic facts with observation/prompt/session-summary searches instead of only hitting the generic memory path.
+<<<<<<< HEAD
 - changed(memory): added related-record pivots to the `/dashboard/memory` inspector so selected observations, prompts, and session summaries can jump to correlated records from the same session, tool, source, concepts, or files without leaving the native HyperCode memory timeline.
 - changed(memory): turned `/dashboard/memory` search results into a structured timeline plus detail inspector, grouping records by day and rendering observation/prompt/session-summary sections so operators can drill into HyperCode-native memory provenance instead of scanning a flat blob list.
 - changed(memory): upgraded `/dashboard/memory` from a generic full-text list into a HyperCode-native record explorer with explicit search modes for facts, observations, prompts, and session summaries, added a visible memory-model explainer, and extracted tested helper logic for coherent record titles, previews, timestamps, and provenance tokens.
@@ -3048,6 +3337,48 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
   - `Logs Dashboard`: Live searchable view of tool executions, error rates, average latency, and top requested tools.
   - `System Audit Dashboard`: Centralized timeline of security, configuration, and agent-driven events.
 - **Dashboard Honesty Pass**: Restructured application navigation (Top Nav & Sidebar) to clearly separate "HyperCode 1.0 Core" features from "Labs & Experimental" pages.
+- changed(memory): added related-record pivots to the `/dashboard/memory` inspector so selected observations, prompts, and session summaries can jump to correlated records from the same session, tool, source, concepts, or files without leaving the native borg memory timeline.
+- changed(memory): turned `/dashboard/memory` search results into a structured timeline plus detail inspector, grouping records by day and rendering observation/prompt/session-summary sections so operators can drill into borg-native memory provenance instead of scanning a flat blob list.
+- changed(memory): upgraded `/dashboard/memory` from a generic full-text list into a borg-native record explorer with explicit search modes for facts, observations, prompts, and session summaries, added a visible memory-model explainer, and extracted tested helper logic for coherent record titles, previews, timestamps, and provenance tokens.
+- changed(memory): aligned the primary memory dashboard and claude-mem parity surface around borg's actual native memory model, including typed observations, captured prompts, session summaries, clearer provenance, and corrected tier/stat reporting instead of framing claude-mem as the whole runtime story.
+- docs(tasking): completed the ecosystem assimilation consolidation brief, promoted the memory-story follow-up into `tasks/active/`, and anchored the borg-native Track A-F capability map in the roadmap, TODO, and handoff docs so future work references scoped borg tracks instead of repo-wide parity demands.
+- fixed(startup): aligned the Tabby dev launcher waiting logic with resident/always-on MCP runtime semantics, so borg no longer reports startup complete before resident servers warm or waits on the wrong live-runtime label.
+- changed(startup): borg's stdio MCP entrypoint now best-effort boots the long-running borg core as a detached background process when an MCP client launches the router before the control plane is already up, so the interactive MCP client can proceed while the dashboard/bridge warm in parallel.
+- changed(mcp): always-on downstream MCP servers now warm in the background from cached advertised inventory, keeping startup non-blocking while exposing live runtime state, warmup posture, and latest runtime errors more truthfully in the MCP dashboard and inspection panel.
+- fixed(startup): `startupStatus` now counts only actually connected downstream MCP servers as live, while separately surfacing warming and failed warmup counts so the dashboard no longer overstates live runtime readiness during non-blocking startup.
+- changed(startup): split borg startup readiness into cached MCP inventory vs live MCP runtime semantics, including advertised cached server/tool counts and always-on tool counts so operators can see what is available immediately while live connections continue warming.
+=======
+- changed(memory): added related-record pivots to the `/dashboard/memory` inspector so selected observations, prompts, and session summaries can jump to correlated records from the same session, tool, source, concepts, or files without leaving the native Borg memory timeline.
+- changed(memory): turned `/dashboard/memory` search results into a structured timeline plus detail inspector, grouping records by day and rendering observation/prompt/session-summary sections so operators can drill into Borg-native memory provenance instead of scanning a flat blob list.
+- changed(memory): upgraded `/dashboard/memory` from a generic full-text list into a Borg-native record explorer with explicit search modes for facts, observations, prompts, and session summaries, added a visible memory-model explainer, and extracted tested helper logic for coherent record titles, previews, timestamps, and provenance tokens.
+- changed(memory): aligned the primary memory dashboard and claude-mem parity surface around Borg's actual native memory model, including typed observations, captured prompts, session summaries, clearer provenance, and corrected tier/stat reporting instead of framing claude-mem as the whole runtime story.
+- docs(tasking): completed the ecosystem assimilation consolidation brief, promoted the memory-story follow-up into `tasks/active/`, and anchored the Borg-native Track A-F capability map in the roadmap, TODO, and handoff docs so future work references scoped Borg tracks instead of repo-wide parity demands.
+- fixed(startup): aligned the Tabby dev launcher waiting logic with resident/always-on MCP runtime semantics, so Borg no longer reports startup complete before resident servers warm or waits on the wrong live-runtime label.
+- changed(startup): Borg's stdio MCP entrypoint now best-effort boots the long-running Borg core as a detached background process when an MCP client launches the router before the control plane is already up, so the interactive MCP client can proceed while the dashboard/bridge warm in parallel.
+- changed(mcp): always-on downstream MCP servers now warm in the background from cached advertised inventory, keeping startup non-blocking while exposing live runtime state, warmup posture, and latest runtime errors more truthfully in the MCP dashboard and inspection panel.
+- fixed(startup): `startupStatus` now counts only actually connected downstream MCP servers as live, while separately surfacing warming and failed warmup counts so the dashboard no longer overstates live runtime readiness during non-blocking startup.
+- changed(startup): split Borg startup readiness into cached MCP inventory vs live MCP runtime semantics, including advertised cached server/tool counts and always-on tool counts so operators can see what is available immediately while live connections continue warming.
+>>>>>>> origin/rewrite/main-sanitized
+- changed(dashboard): updated the home dashboard, MCP system status helpers, and launcher waiting labels to explain cached-vs-live MCP posture, memory/context readiness, and non-blocking warmup behavior more truthfully.
+- test(startup): added focused regression coverage for always-on cached tool advertisement, cached-vs-live startup checklist copy, system status rows, and launcher wait-label semantics.
+- fix(mcp): `discoverServerTools` now supports SSE and STREAMABLE_HTTP transports alongside STDIO, with a 30-second timeout to prevent hanging discoveries.
+- fix(config): `mcp.json` and `mcp.jsonc` now default to `~/.borg/` instead of the workspace root via new `getBorgConfigDir()` helper; `JsonConfigProvider` updated to match.
+## [0.9.0-beta] - 2026-03-11
+
+### ✨ Features & Parity Updates
+<<<<<<< HEAD
+- **Health, Logs & Operator Surfaces**: Exposed real-time tRPC-driven dashboards under the "borg 1.0 Core" section.
+  - `Health Dashboard`: Tracks system startup readiness, event bus/DB status, and instance-level MCP server crash counts/error states.
+  - `Logs Dashboard`: Live searchable view of tool executions, error rates, average latency, and top requested tools.
+  - `System Audit Dashboard`: Centralized timeline of security, configuration, and agent-driven events.
+- **Dashboard Honesty Pass**: Restructured application navigation (Top Nav & Sidebar) to clearly separate "borg 1.0 Core" features from "Labs & Experimental" pages.
+=======
+- **Health, Logs & Operator Surfaces**: Exposed real-time tRPC-driven dashboards under the "Borg 1.0 Core" section.
+  - `Health Dashboard`: Tracks system startup readiness, event bus/DB status, and instance-level MCP server crash counts/error states.
+  - `Logs Dashboard`: Live searchable view of tool executions, error rates, average latency, and top requested tools.
+  - `System Audit Dashboard`: Centralized timeline of security, configuration, and agent-driven events.
+- **Dashboard Honesty Pass**: Restructured application navigation (Top Nav & Sidebar) to clearly separate "Borg 1.0 Core" features from "Labs & Experimental" pages.
+>>>>>>> origin/rewrite/main-sanitized
 - **Experimental Guardrails**: Added explicit "Labs" and "Beta" UI badges to developmental surfaces including the Director, Council, and Super Assistant dashboards.
 
 ### 🐛 Fixes & Polish
@@ -3059,6 +3390,11 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - fix(cli): `hypercode start` now writes a single-instance lock in `~/.hypercode/lock`, refuses duplicate live startups, clears stale locks automatically, and reuses the stale lock's old port when that port is still available.
 - changed(mcp): removed the active namespaces/endpoints tRPC surface from HyperCode's current control plane so MCP discovery now leans on semantic search/grouping instead of operator-managed namespace or multi-endpoint configuration.
 - fix(core): resolve the supervisor entry from the monorepo root instead of the caller cwd so `@hypercode/cli` dev startup no longer looks for `packages/cli/packages/hypercode-supervisor/dist/index.js`.
+- docs: replaced the root `ROADMAP.md` milestone stub with a reality-based roadmap that reflects the current shipped, partial, and blocked borg surfaces.
+- docs: added canonical root `TODO.md` and `HANDOFF.md` files so implementor models have an ordered queue and current handoff instead of relying on archived docs.
+- fix(cli): `borg start` now writes a single-instance lock in `~/.borg/lock`, refuses duplicate live startups, clears stale locks automatically, and reuses the stale lock's old port when that port is still available.
+- changed(mcp): removed the active namespaces/endpoints tRPC surface from borg's current control plane so MCP discovery now leans on semantic search/grouping instead of operator-managed namespace or multi-endpoint configuration.
+- fix(core): resolve the supervisor entry from the monorepo root instead of the caller cwd so `@borg/cli` dev startup no longer looks for `packages/cli/packages/borg-supervisor/dist/index.js`.
 - fix(core): defer the MCP bridge HTTP/WebSocket bind to `MCPServer.start()` while preserving `/api/mesh/stream`, so the control plane claims port `3001` in one place during startup.
 - test(core): added `packages/core/test/orchestrator.test.ts` to lock the cwd-independent supervisor resolution behavior.
 
@@ -3096,6 +3432,39 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Added the first MCP-SuperAssistant assimilation slice for HyperCode's browser extension by widening the manifest/content-script browser-chat footprint to ChatGPT, Claude, Gemini, Google AI Studio, Perplexity, Grok, DeepSeek, OpenRouter, T3 Chat, GitHub Copilot, Mistral, Kimi, Qwen Chat, and Z.ai across Chrome/Edge/Firefox.
 - Added a richer `apps/extension` popup operator view that now reports the active surface, supported-platform footprint, and live bridge capabilities instead of only showing ingest buttons.
 - Added a real `/dashboard/super-assistant` parity/status surface that distinguishes what HyperCode has already assimilated from MCP-SuperAssistant (generic bridge footprint and browser tooling) versus the still-pending adapter/sidebar/automation slices.
+- Added a borg-native structured observation ingest path in `AgentMemoryService`, including typed observation records, heuristic fact/concept/file extraction, short-window content-hash deduplication, richer memory stats, and new memory-router procedures for recording plus querying recent/searchable observations.
+- Added provider-native memory interchange support for borg JSON and claude-mem stores, including import/export and format conversion through the memory dashboard and tRPC API.
+- Added one-click MCP server operator actions on `/dashboard/mcp`, including a combined `Load + cache` flow plus direct shortcuts into tool inspection, tool-behavior editing, and logs for each downstream server.
+- Added default-section coverage reporting to `memory.getClaudeMemStatus` plus state-aware operator guidance on `/dashboard/memory/claude-mem`, so the parity page now distinguishes between a missing adapter store, an empty seeded store, incomplete default bucket coverage, and an actively populated claude-mem shell.
+- Added active memory-pipeline reporting to `memory.getClaudeMemStatus`, so `/dashboard/memory/claude-mem` now shows whether claude-mem is actually wired into borg's current runtime memory fan-out instead of only inferring readiness from the presence of `.borg/claude_mem.json` on disk.
+- Added a core-backed install-artifact detector for the Integration Hub so `/dashboard/integrations` now reports whether browser-extension bundles, Firefox-ready assets, VS Code `.vsix` packages, and borg MCP config sources actually exist on disk instead of only showing static build hints.
+- Added a formal extension-bridge client registration contract in `packages/core/src/bridge/bridge-manifest.ts`, including `BORG_CLIENT_HELLO` metadata normalization plus supported non-MCP capability and hook-phase manifests for live bridge clients.
+- Added focused bridge-manifest regression coverage in `packages/core/src/bridge/bridge-manifest.test.ts` for default client registration, hello metadata merge behavior, and stable manifest generation.
+- Added task-filtered fallback-chain inspection to `billing.getFallbackChain`, plus a selector on `/dashboard/billing` so operators can inspect the ranked provider chain for general, coding, planning, research, worker, and supervisor work instead of only a single generic fallback list.
+- Added a core-backed `memory.getClaudeMemStatus` query plus live adapter-store details on `/dashboard/memory/claude-mem`, so the parity page now reports actual `.borg/claude_mem.json` existence, section counts, and last-update state instead of only static audit copy.
+- Added a dedicated `/dashboard/memory/claude-mem` parity/status surface that replaces the old vector-dashboard passthrough with an honest view of borg's current claude-mem assimilation: shipped adapter pieces, partial adjacent memory foundations, and the still-missing upstream hook/search/injection/runtime gaps.
+- Added a cross-panel operator alert strip to `/dashboard` that summarizes router disconnects, startup readiness drift, degraded providers, and failed supervised sessions in one place so first-time operators can spot trouble without scanning every panel.
+- Added a real supervised-session creation flow on `/dashboard/session`, including detected CLI harness selection, working-directory/env/arg inputs, worktree and auto-restart toggles, and live session controls so operators can launch borg-managed CLI sessions from the dashboard instead of only from backend procedures.
+- Added a session details dialog on `/dashboard/session` with buffered supervisor logs, health status, and copyable attach command details so the session supervisor now exposes operator-facing runtime context instead of only compact card summaries.
+- Added a task-routing matrix to `/dashboard/billing` plus a new billing router query so operators can see borg's per-task provider strategy defaults and top-ranked fallback previews for coding, planning, research, worker, supervisor, and general requests.
+- Added fleet-level MCP discovery actions on `/dashboard/mcp`, including managed-server summary counts plus one-click retry for unresolved metadata and full binary rediscovery across all managed servers.
+- Added editable provider-routing controls on `/dashboard/billing`, including live default strategy updates and per-task routing overrides so operators can tune cost-versus-quality behavior without restarting borg.
+- Added the thirteenth MCP-SuperAssistant assimilation slice for borg's browser extension by preserving stable DOM-backed message identifiers in chat-surface snapshots when surfaces expose them, which reduces operator-facing timeline churn during streaming updates.
+- Added the twelfth MCP-SuperAssistant assimilation slice for borg's browser extension by making chat-surface streaming detection adapter-aware for key surfaces like ChatGPT, Claude, and Gemini, so in-progress assistant output survives nested DOM wrappers more reliably.
+- Added the eleventh MCP-SuperAssistant assimilation slice for borg's browser extension by making chat-surface role inference adapter-aware for key surfaces like ChatGPT, Claude, and Gemini, so nested DOM wrappers preserve who said what more reliably.
+- Added the tenth MCP-SuperAssistant assimilation slice for borg's browser extension by preserving per-execution streaming state in chat-surface snapshots, so pending or newly matched tool runs stay visibly "live" in the traffic inspector instead of dropping back to static timeline rows.
+- Added the ninth MCP-SuperAssistant assimilation slice for borg's browser extension by preserving best-effort message roles and streaming-state hints in chat-surface snapshots, so the traffic inspector can distinguish user, assistant, tool, and in-progress messages instead of showing anonymous text only.
+- Added the eighth MCP-SuperAssistant assimilation slice for borg's browser extension by recognizing unfinished streaming markdown fence blocks in chat-surface snapshots, so in-progress tool calls and results show up before the closing fence lands.
+- Added the seventh MCP-SuperAssistant assimilation slice for borg's browser extension by teaching chat-surface snapshots to recognize unfenced plain-text tool calls and function results, then correlate them into the execution timeline alongside XML/JSON/markdown payloads.
+- Added the sixth MCP-SuperAssistant assimilation slice for borg's browser extension by correlating chat-surface tool calls and function results into a lightweight execution timeline that survives unmatched pending/result-only observations.
+- Added the fifth MCP-SuperAssistant assimilation slice for borg's browser extension by enriching chat-surface snapshots with structured function-result status, summary, and key-field extraction for future render-widget and automation work.
+- Added the fourth MCP-SuperAssistant assimilation slice for borg's browser extension by enriching chat-surface snapshots with extracted tool parameters and function-result candidate detection for future automation and widget rendering work.
+- Added the third MCP-SuperAssistant assimilation slice for borg's browser extension by introducing chat-surface observation telemetry, lightweight tool-call candidate extraction, and traffic-inspector visibility for supported web AI chat surfaces.
+- Added the second MCP-SuperAssistant assimilation slice for borg's browser extension by introducing a host-aware adapter registry plus an injected shadow-DOM sidebar scaffold across the supported browser-chat footprint.
+- Added in-page borg browser actions for supported AI chat surfaces, including adapter-detected input/submit controls, quick page absorption, RAG ingestion, URL copy, and dashboard deep-linking from the new sidebar shell.
+- Added the first MCP-SuperAssistant assimilation slice for borg's browser extension by widening the manifest/content-script browser-chat footprint to ChatGPT, Claude, Gemini, Google AI Studio, Perplexity, Grok, DeepSeek, OpenRouter, T3 Chat, GitHub Copilot, Mistral, Kimi, Qwen Chat, and Z.ai across Chrome/Edge/Firefox.
+- Added a richer `apps/extension` popup operator view that now reports the active surface, supported-platform footprint, and live bridge capabilities instead of only showing ingest buttons.
+- Added a real `/dashboard/super-assistant` parity/status surface that distinguishes what borg has already assimilated from MCP-SuperAssistant (generic bridge footprint and browser tooling) versus the still-pending adapter/sidebar/automation slices.
 - Added a canonical `startupStatus` tRPC system procedure in `packages/core` that summarizes MCP, memory, browser, session-supervisor, and extension-bridge readiness for boot-time orchestration and dashboard consumers.
 - Added boot-state tracking getters for MCP config sync, session restoration, and MCP aggregator initialization so `startupStatus` can report completed startup work instead of only object presence.
 - Added a normalized provider-routing layer under `packages/core/src/providers/` with provider auth-state detection, quota snapshots, task-aware routing strategies, and fallback-chain inspection for dashboard consumers.
@@ -3103,11 +3472,13 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Added a new supervised CLI session runtime under `packages/core/src/supervisor/` with typed session metadata, crash-aware restart handling, persisted session state, log capture, attach info, and worktree-aware isolation hooks.
 - Added focused session-supervisor coverage in `packages/core/supervisor/__tests__/` for spawn, restart, health, persistence, and parallel worktree isolation behavior.
 - Added a real `/dashboard` home surface in `apps/web/src/app/dashboard/` that composes live MCP status, recent traffic, supervised session controls, and provider quota/fallback state into the four HyperCode 1.0 panels.
+- Added a real `/dashboard` home surface in `apps/web/src/app/dashboard/` that composes live MCP status, recent traffic, supervised session controls, and provider quota/fallback state into the four borg 1.0 panels.
 - Added focused web coverage for the new dashboard home view and summary helpers in `apps/web/src/app/dashboard/dashboard-home-view.test.tsx`.
 - Added dashboard integration coverage under `apps/web/tests/integration/` for MCP router status bridging, provider fallback visibility, and supervised session lifecycle actions.
 
 ### Changed
 - Clarified `/dashboard/mcp` when HyperCode is operating in local compat fallback mode by surfacing fleet-level `Local compat` counts plus per-server labels that explain those action links are backed by HyperCode-managed local config records while live core telemetry is unavailable.
+- Clarified `/dashboard/mcp` when borg is operating in local compat fallback mode by surfacing fleet-level `Local compat` counts plus per-server labels that explain those action links are backed by borg-managed local config records while live core telemetry is unavailable.
 - Made `/dashboard/integrations` operator actions directly copyable with inline clipboard feedback, so build commands, install commands, bundle paths, manifest paths, and internal routes can be used without manual retyping.
 - Made `/dashboard/integrations` more actionable by deriving a concrete operator action for each install surface, such as the loadable unpacked folder, Firefox manifest path, VSIX install command, packaging command, or MCP settings route.
 - Refined `/dashboard/integrations` artifact reporting again so install cards now identify the detected artifact kind (for example VSIX package vs compiled output vs unpacked browser bundle) and show the exact detected timestamp alongside the relative freshness label.
@@ -3120,6 +3491,14 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Updated the home dashboard session ordering so attention-needed supervised sessions (`error`, `restarting`, and other transitional states) now appear ahead of merely recent healthy sessions, making crash/restart posture easier to spot at a glance.
 - Exposed session restart policy in the dashboard and session views, so operators can now see when a supervised CLI session is configured for manual restart only instead of assuming HyperCode will always auto-recover it after a crash.
 - Enriched the supervised session surface so HyperCode now records queued restart timestamps and last-exit details in `packages/core/src/supervisor/`, then surfaces restart countdowns on `/dashboard` and `/dashboard/session` instead of making operators infer backoff posture from raw logs alone.
+- Tightened `/dashboard/integrations` so browser-extension install cards now point at the current packaged `apps/borg-extension` workspace and include status-aware next-step guidance such as build, package, load, or sync actions instead of only static install prose.
+- Refined the `startupStatus` readiness contract so borg now treats an initialized-but-empty MCP inventory as valid, reports the extension bridge as ready when the listener is accepting connections even before any clients attach, and keeps the dashboard startup checklist aligned with that fresher boot semantics instead of waiting forever on zero-client/zero-server fresh installs.
+- Replaced the root `build` entrypoint with a cross-platform `scripts/build_all.mjs` orchestrator that now builds borg's first-party Turbo workspace graph, refreshes and builds the excluded `apps/borg-extension` workspace for both Chromium and Firefox while preserving separate `dist-chromium` / `dist-firefox` outputs, and skips the JetBrains plugin only when Gradle is unavailable unless `BORG_REQUIRE_JETBRAINS_BUILD=true` is set.
+- Extended borg Core's live extension bridge in `packages/core/src/MCPServer.ts` and `packages/core/src/routers/systemProcedures.ts` so connected browser and VS Code clients now self-identify, advertise non-MCP capabilities and supported hook phases, and surface that richer runtime state through `startupStatus` instead of only reporting a raw websocket client count.
+- Updated the browser extension, VS Code extension, and `/dashboard/integrations` operator surface so live bridge clients now register with borg Core on connect and the Integration Hub shows connected clients, advertised non-MCP capabilities, hook phases, and last-seen metadata.
+- Updated the home dashboard session ordering so attention-needed supervised sessions (`error`, `restarting`, and other transitional states) now appear ahead of merely recent healthy sessions, making crash/restart posture easier to spot at a glance.
+- Exposed session restart policy in the dashboard and session views, so operators can now see when a supervised CLI session is configured for manual restart only instead of assuming borg will always auto-recover it after a crash.
+- Enriched the supervised session surface so borg now records queued restart timestamps and last-exit details in `packages/core/src/supervisor/`, then surfaces restart countdowns on `/dashboard` and `/dashboard/session` instead of making operators infer backoff posture from raw logs alone.
 - Updated the Jules session activity feed so transcript export actions now live behind the upper-right overflow menu, with PDF print joining the existing Markdown/Text/JSON exports through a print-friendly transcript layout.
 - Updated the same activity-feed export flow to use format-specific MIME types for Markdown/TXT/JSON downloads and aligned the transcript menu label from `Text` to `TXT`.
 - Updated the Jules activity feed's new below-bubble action row so copy now unwraps real message text from placeholder/wrapped payloads and hides itself for empty or non-copyable entries instead of copying useless sentinel strings.
@@ -3130,6 +3509,8 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Updated the browser chat-surface observer, protocol spec, traffic inspector, and `/dashboard/super-assistant` parity copy to surface message-role and streaming metadata alongside the existing tool-call/result timeline.
 - Updated the browser chat-surface observer, protocol spec, and `/dashboard/super-assistant` parity copy to reflect that HyperCode now understands both complete and still-streaming fenced tool/result hints, not just fully closed blocks.
 - Updated the browser chat-surface observer, protocol spec, and `/dashboard/super-assistant` parity copy to reflect that HyperCode now recognizes both fenced and plain-text streamed tool/result hints before the full AST/widget layer lands.
+- Updated the browser chat-surface observer, protocol spec, and `/dashboard/super-assistant` parity copy to reflect that borg now understands both complete and still-streaming fenced tool/result hints, not just fully closed blocks.
+- Updated the browser chat-surface observer, protocol spec, and `/dashboard/super-assistant` parity copy to reflect that borg now recognizes both fenced and plain-text streamed tool/result hints before the full AST/widget layer lands.
 - Updated the dashboard traffic inspector, protocol spec, and `/dashboard/super-assistant` parity copy to surface the new chat-surface execution timeline alongside tool-call and function-result summaries.
 - Updated the dashboard traffic inspector and `/dashboard/super-assistant` parity copy to surface structured function-result telemetry instead of only raw candidate detection.
 - Updated the dashboard traffic inspector and `/dashboard/super-assistant` parity copy to surface the richer chat-surface snapshots, including structured tool-call parameters and function-result summaries.
@@ -3179,6 +3560,43 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Expanded HyperCode-first downstream routing so plain tool names that already belong to the aggregated MCP inventory also prefer `MCPAggregator` execution before falling back to the MetaMCP proxy path.
 - Removed the hard `MetaMCPController` import from `MCPServer`, lazy-loaded the bridge only when needed, and made startup fall back to HyperCode-native direct handlers if MetaMCP bootstrap fails.
 - Removed the hard `executeProxiedTool` import from `MCPServer`, lazy-loaded the MetaMCP proxy executor only when proxy execution is still required, and kept HyperCode-native aggregator/router fallback behavior when the proxy module is unavailable.
+- Added a new `/dashboard/integrations` hub that consolidates borg browser-extension install paths, VS Code packaging hints, supported MCP client sync targets, known config locations for adjacent clients, and live bridge/runtime readiness into one operator-facing setup surface.
+- Submodule inventory and cleanup tooling now use `.gitmodules` as the live registry source; `scripts/update_submodules_doc.mjs` rebuilds `docs/SUBMODULES.md` from the current registry, `docs/SUBMODULE_DASHBOARD.md` reflects the actual five approved tracked submodules, and `scripts/prune_orphaned_gitlinks.mjs` can remove legacy orphaned gitlinks from the index without touching the five live entries.
+- Direct borg-native MCP mode now exposes a MetaMCP-compatible `run_code` alias and executes it without requiring operators to manually toggle Code Mode first, shrinking the remaining proxy-only surface in `packages/core/src/MCPServer.ts`.
+- Direct borg-native MCP mode now also exposes a MetaMCP-compatible `run_python` alias backed by borg's sandbox service, further reducing the remaining MetaMCP-only execution surface.
+- Direct borg-native MCP mode now also exposes a MetaMCP-compatible `run_agent` path backed by borg's native LLM service and delegated direct-mode tool execution, including recursion guards that keep autonomous agent loops from re-entering `run_agent` or `run_code`.
+- Direct borg-native MCP mode now also exposes a MetaMCP-compatible `save_memory` alias backed by borg's native agent memory service, trimming another direct-mode dependency on the MetaMCP proxy.
+- Direct borg-native MCP mode now also exposes MetaMCP-compatible `save_script` plus direct-mode `script__*` saved-script tools backed by borg-managed config storage and sandbox execution.
+- Direct borg-native MCP mode now also exposes MetaMCP-compatible `save_tool_set`, `load_tool_set`, and `toolset_list` behavior backed by borg-managed config storage plus the native session working set, eliminating another chunk of remaining direct-mode proxy dependence.
+- Direct borg-native MCP mode now also exposes MetaMCP-compatible `import_mcp_config` backed by borg's existing config import service, which closes out the old proxy meta-tool cluster for direct-mode sessions.
+- borg-native MCP handlers now serve downstream `prompts/list`, `prompts/get`, `resources/list`, `resources/read`, and `resources/templates/list` through the shared downstream session pool, so prompt/resource discovery no longer depends on the MetaMCP bridge even when that bridge is still mounted for tool middleware.
+- The optional MetaMCP proxy now reuses borg's shared downstream discovery helper for prompt/resource/template passthrough instead of maintaining a second inline implementation, narrowing the remaining bridge-specific surface to tool list/call middleware behavior.
+- `packages/core/src/MCPServer.ts` now mounts the optional MetaMCP proxy with downstream discovery registration disabled, so borg's native prompt/resource handlers stay canonical while the proxy is reduced further toward tool list/call middleware responsibilities.
+- Wired `packages/core/src/MCPServer.ts` to use `CoreModelSelector` and updated `billingRouter` to surface normalized provider quota/auth/fallback data when available.
+- Extended `packages/core/src/routers/sessionRouter.ts` with supervisor-backed create/list/start/stop/restart/log/health procedures while preserving the existing lightweight session-state endpoints.
+- Changed MCP server persistence so `packages/core` now discovers STDIO tool metadata when servers are created or updated, stores the rich cache in borg-owned `mcp.jsonc`, mirrors discovered tools into the existing DB cache, and keeps a stripped `mcp.json` compatibility export for clients that only understand standard MCP config.
+- Archived the legacy phase-based roadmap to `docs/archive/ROADMAP_LEGACY.md` and replaced `ROADMAP.md` with the borg 1.0/1.5/2.0 milestone plan.
+- Seeded the task-file workflow under `tasks/` with initial clean-install, MCP router, provider fallback, session supervisor, and dashboard task briefs.
+- Rewrote `README.md` around the focused borg control-plane scope and updated the quick-start guidance to match the current install/start path.
+- Rewrote `VISION.md` to describe the long-term borg direction in orchestration-first terms instead of the old assimilation/parity framing.
+- Added `docs/research/MCP_ROUTER_REFERENCE_EVALUATION_2026-03-07.md`, comparing external MCP router candidates against borg 1.0 requirements and documenting the recommendation to use upstreams as references rather than adopting a foreign router as borg's base.
+- Tightened the MCP disclosure design guidance in `docs/research/MCP_ROUTER_REFERENCE_EVALUATION_2026-03-07.md` and `docs/guides/PROGRESSIVE_DISCLOSURE.md` to define a tiny always-visible meta-tool set, deferred binary startup, and tool-count-based loading/unloading thresholds.
+- Expanded the MCP router research memo with the second lazy-loading/code-mode repo set, a concrete analysis of why aggregators fail in practice, and a borg-specific hybrid blueprint covering ranked discovery, silent high-confidence loads, deferred binary startup, profiles, code mode, and operator-visible routing decisions.
+- Tightened the MetaMCP session working-set runtime to use smaller progressive-disclosure caps, added explicit `unload_tool` / `list_loaded_tools` meta-tools, and added focused unit coverage for loaded-tool and hydrated-schema eviction behavior.
+- Refreshed the MCP dashboard search and inspector pages to reflect the new progressive-disclosure flow with visible working-set state, quick load/unload/schema actions, and a more inspector-style multi-pane operator layout inspired by the reviewed example projects.
+- Rebuilt `/dashboard/mcp` around borg's router/aggregator control-plane story, added `/dashboard/mcp/testing` for exploratory MCP surfaces, and updated the MCP navigation so testing workflows no longer crowd the main control-plane landing page.
+- Tightened remaining MCP UI copy so borg's router/control-plane stays primary while the upstream MetaMCP integration is described explicitly as a bridge detail in the sidebar palette, testing lab, and bridge-management page.
+- Tightened MCP bridge naming further so navigation and bridge-management UI present borg as the primary server-bridge surface while still identifying MetaMCP as the upstream implementation detail.
+- Refreshed `docs/guides/PROGRESSIVE_DISCLOSURE.md` to match the current search/load/schema/unload working-set model and aligned the remaining MCP landing-page and agent-playground labels with the borg-first server-bridge terminology.
+- Finished the remaining MCP copy cleanup by renaming the standalone bridge embed page to borg-first bridge terminology and tightening the agent-playground description around the router session working set.
+- Renamed the sidebar command-palette MCP action to match the borg router naming and refreshed the live MCP API/bridge docs so borg stays primary while MetaMCP is documented as the upstream bridge layer.
+- Started the runtime MetaMCP extraction by adding a real `MCP_DISABLE_METAMCP` source-level path in `packages/core/src/MCPServer.ts`, wiring borg-native direct MCP handlers when the proxy is disabled, and adding focused tests for the new mode-selection helpers.
+- Added a borg-native session working-set manager and direct-handler meta tools (`search_tools`, `load_tool`, `get_tool_schema`, `unload_tool`, `list_loaded_tools`) so the MetaMCP-disabled runtime keeps progressive disclosure behavior without relying on the old proxy layer.
+- Removed the redundant constructor-time `MetaMCPController` initialization in `MCPServer`, so the remaining MetaMCP attachment happens only once through the real `setupHandlers()` path with the actual native tool list.
+- Reduced proxy dependence further by routing namespaced downstream tools through borg's native `MCPAggregator` before the MetaMCP proxy, keeping the bridge focused on non-namespaced proxy-only behavior.
+- Expanded borg-first downstream routing so plain tool names that already belong to the aggregated MCP inventory also prefer `MCPAggregator` execution before falling back to the MetaMCP proxy path.
+- Removed the hard `MetaMCPController` import from `MCPServer`, lazy-loaded the bridge only when needed, and made startup fall back to borg-native direct handlers if MetaMCP bootstrap fails.
+- Removed the hard `executeProxiedTool` import from `MCPServer`, lazy-loaded the MetaMCP proxy executor only when proxy execution is still required, and kept borg-native aggregator/router fallback behavior when the proxy module is unavailable.
 - Removed the remaining `MetaMCPController` shim indirection by lazy-loading `attachTo(...)` directly from `MCPServer`, leaving the MetaMCP bridge as an optional attach step instead of a dedicated singleton controller service.
 - Linked the MCP search and inspector pages more tightly by deep-linking individual tool results into the inspector and auto-selecting the requested tool inside the inspector workspace.
 - Kept the MCP inspector URL synchronized with the current tool selection so manual focus changes preserve context across refreshes, shared links, and browser navigation.
@@ -3189,6 +3607,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Switched the MCP dashboard search page to the dedicated `mcp.searchTools` contract and embedded the live `TrafficInspector` into the MCP inspector page so the new router traffic/search APIs are operator-visible.
 - Added reusable MCP client-config sync support for Claude Desktop, Cursor, and VS Code, including resolved target discovery, previewable exported configs, and router-backed write operations.
 - Added an MCP settings dashboard surface for selecting supported clients, previewing the generated config JSON, and writing HyperCode-managed MCP config files directly from the UI.
+- Added an MCP settings dashboard surface for selecting supported clients, previewing the generated config JSON, and writing borg-managed MCP config files directly from the UI.
 
 ### Fixed
 - Fixed the dashboard tRPC compatibility route in `apps/web/src/app/api/trpc/[trpc]/route.ts` so GET/query-style `mcpServers.get` requests now read their tRPC input from the URL `input` param during local fallback, which stops React Query from receiving `undefined` for local pseudo-managed server detail queries.
@@ -3199,6 +3618,12 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Excluded the legacy nested `apps/hypercode-extension` monorepo from the root `pnpm-workspace.yaml`, so root `pnpm run dev` no longer parses that package's incompatible standalone `turbo.json` while bringing up HyperCode's main core/web/extension stack.
 - Fixed `packages/core/src/mcp/MCPAggregator.ts` so ordinary downstream tool-call failures no longer mark an otherwise healthy MCP server as fully errored; the router now preserves connected status while still recording the failure in server state and traffic history.
 - Fixed the dashboard tRPC proxy in `apps/web` so it now probes HyperCode Core's actual default tRPC endpoint on `http://127.0.0.1:4000/trpc` before legacy MCP bridge fallbacks, which restores mutations like `mcpServers.bulkImport` instead of surfacing a proxy-generated 502.
+- Fixed the excluded `apps/borg-extension` build path enough for root aggregation by adding the missing `eciesjs` dependency in `packages/env`, correcting Rollup plugin typings in `packages/hmr`, and tightening stale session supervisor runtime contracts in `packages/core/src/lib/trpc-core.ts` plus `packages/core/src/routers/sessionRouter.ts` so the dashboard session pages and root build compile cleanly again.
+- Fixed `borg start`/root `pnpm run dev` startup wiring so the CLI now launches borg's real Core orchestrator and tRPC control plane instead of only instantiating `MCPServer` without starting the HTTP API, which restores `startupStatus`, `memory.getAgentStats`, and `browser.status` readiness probes during dev boot.
+- Fixed the web tRPC upstream preference order to probe the CLI dev control-plane port (`3100`) before the legacy `4000` path, so Windows dev environments where Docker/WSL already owns `4000` still route dashboard startup, memory, and browser queries into borg Core.
+- Excluded the legacy nested `apps/borg-extension` monorepo from the root `pnpm-workspace.yaml`, so root `pnpm run dev` no longer parses that package's incompatible standalone `turbo.json` while bringing up borg's main core/web/extension stack.
+- Fixed `packages/core/src/mcp/MCPAggregator.ts` so ordinary downstream tool-call failures no longer mark an otherwise healthy MCP server as fully errored; the router now preserves connected status while still recording the failure in server state and traffic history.
+- Fixed the dashboard tRPC proxy in `apps/web` so it now probes borg Core's actual default tRPC endpoint on `http://127.0.0.1:4000/trpc` before legacy MCP bridge fallbacks, which restores mutations like `mcpServers.bulkImport` instead of surfacing a proxy-generated 502.
 - Fixed the dashboard MCP query bridge in `apps/web/src/app/api/trpc/[trpc]/route.ts` so modern procedure batches (`mcp.listServers`, `mcp.listTools`, `mcp.getStatus`) now fall back through the compatibility bridge instead of incorrectly returning `502 Bad Gateway` when the upstream is unavailable.
 - Fixed the Next.js app-route typing contract in `apps/web` by moving `resolveUpstreamBases` out of `src/app/api/trpc/[trpc]/` into `src/lib/trpc-upstream.ts`, which removes the illegal extra route export and restores clean webpack builds.
 - Made root `pnpm install` succeed on Windows by replacing the `packages/MCP-SuperAssistant` bash-based `copy_env` postinstall step with a cross-platform Node-based copy.
@@ -3210,6 +3635,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Declared `date-fns` in `apps/web/package.json` so the Dockerized dashboard build resolves the `LogEntry` timestamp formatter the same way the local workspace build does.
 - Replaced the stock Next.js metadata in `apps/web/src/app/layout.tsx` so the live dashboard no longer shows the `Create Next App` title.
 - Excluded nested `.hypercode/worktrees/**` copies from the root `vitest.config.ts` discovery and coverage paths so workspace-root validation no longer pulls duplicate shadow tests into the main suite.
+- Excluded nested `.borg/worktrees/**` copies from the root `vitest.config.ts` discovery and coverage paths so workspace-root validation no longer pulls duplicate shadow tests into the main suite.
 
 ### Validated
 - Verified `pnpm exec vitest run apps/web/src/app/api/trpc/[trpc]/route.test.ts` passes after the local compat query-input fallback fix.
@@ -3220,6 +3646,10 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Verified `pnpm exec vitest run packages/cli/src/commands/start.test.ts` passes after wiring the CLI start path into the real Core orchestrator.
 - Verified `pnpm exec vitest run --config vitest.config.ts packages/core/src/bridge/bridge-manifest.test.ts apps/web/src/app/dashboard/integrations/integration-catalog.test.ts` passes after wiring live bridge client registration and Integration Hub capability reporting.
 - Verified `pnpm exec turbo run dev --dry --concurrency 22 --filter=!mcp-superassistant --filter=!@extension/hmr --filter=!@opencode-autopilot/cli --filter=!backend --filter=!frontend --filter=!@repo/*` now completes planning without the previous `turbo_json_parse_error` from `apps/hypercode-extension/turbo.json`.
+- Verified `pnpm run build` now completes successfully from the repository root, including the first-party workspace build plus the excluded borg browser-extension Chromium/Firefox build flow, with JetBrains downgraded to an explicit warning when Gradle is not installed locally.
+- Verified `pnpm exec vitest run packages/cli/src/commands/start.test.ts` passes after wiring the CLI start path into the real Core orchestrator.
+- Verified `pnpm exec vitest run --config vitest.config.ts packages/core/src/bridge/bridge-manifest.test.ts apps/web/src/app/dashboard/integrations/integration-catalog.test.ts` passes after wiring live bridge client registration and Integration Hub capability reporting.
+- Verified `pnpm exec turbo run dev --dry --concurrency 22 --filter=!mcp-superassistant --filter=!@extension/hmr --filter=!@opencode-autopilot/cli --filter=!backend --filter=!frontend --filter=!@repo/*` now completes planning without the previous `turbo_json_parse_error` from `apps/borg-extension/turbo.json`.
 - Verified `pnpm exec vitest run apps/web/src/app/dashboard/DashboardHomeClient.test.tsx apps/web/src/app/dashboard/dashboard-home-view.test.tsx` passes after prioritizing attention-needed sessions in the home dashboard ordering.
 - Verified `pnpm exec vitest run apps/web/src/app/dashboard/dashboard-home-view.test.tsx apps/web/src/app/dashboard/DashboardHomeClient.test.tsx` passes after surfacing manual-restart policy visibility for supervised sessions.
 - Verified `pnpm exec vitest run packages/core/src/supervisor/SessionSupervisor.test.ts apps/web/src/app/dashboard/dashboard-home-view.test.tsx` passes after adding queued restart visibility for supervised sessions.
@@ -3246,6 +3676,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Re-verified `pnpm exec vitest run packages/core/mcp/__tests__/downstream-discovery.test.ts packages/core/mcp/__tests__/direct-mode-compatibility.test.ts` passes after the proxy-side de-duplication, and `pnpm -C packages/core exec tsc --noEmit` still returns `CORE_TSC_OK`.
 - Re-verified `pnpm exec vitest run packages/core/mcp/__tests__/downstream-discovery.test.ts packages/core/mcp/__tests__/direct-mode-compatibility.test.ts` passes after disabling duplicate proxy discovery registration in `MCPServer`, and `pnpm -C packages/core exec tsc --noEmit` still returns `CORE_TSC_OK`.
 - Verified `pnpm exec vitest run packages/core/test/proxy_middleware.test.ts packages/core/test/proxy_logging_middleware.test.ts packages/core/mcp/__tests__/downstream-discovery.test.ts packages/core/mcp/__tests__/direct-mode-compatibility.test.ts` now completes cleanly with the proxy tests intentionally skipped and the focused MCP tests passing, after excluding `.hypercode/worktrees/**` from root Vitest discovery.
+- Verified `pnpm exec vitest run packages/core/test/proxy_middleware.test.ts packages/core/test/proxy_logging_middleware.test.ts packages/core/mcp/__tests__/downstream-discovery.test.ts packages/core/mcp/__tests__/direct-mode-compatibility.test.ts` now completes cleanly with the proxy tests intentionally skipped and the focused MCP tests passing, after excluding `.borg/worktrees/**` from root Vitest discovery.
 - Added focused `packages/core/test/mcpJsonConfig.test.ts` coverage for rich `mcp.jsonc` persistence, clean `mcp.json` compatibility export, and metadata preservation through the JSON config provider.
 - Verified `pnpm exec vitest run packages/core/providers/__tests__/auth.test.ts packages/core/providers/__tests__/quota-tracker.test.ts packages/core/providers/__tests__/strategy.test.ts packages/core/providers/__tests__/fallback-chain.test.ts` passes.
 - Verified `pnpm exec vitest run packages/core/supervisor/__tests__/spawn.test.ts packages/core/supervisor/__tests__/restart.test.ts packages/core/supervisor/__tests__/health.test.ts packages/core/supervisor/__tests__/worktree.test.ts packages/core/supervisor/__tests__/session-persist.test.ts` passes.
@@ -3279,12 +3710,18 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 ### Documentation
 - Standardized the root instruction set to reference a root-level `ARCHITECTURE.md` as the canonical HyperCode architecture overview.
+- Replaced the old assimilation-oriented `AGENTS.md` with a focused borg v1.0 stabilization directive centered on the control-plane kernel: MCP routing, provider fallback, session supervision, dashboard workflows, and capability contracts.
+- Added explicit stop conditions, scope restrictions, test expectations, and documentation-truth rules for future development agents.
+
+### Documentation
+- Standardized the root instruction set to reference a root-level `ARCHITECTURE.md` as the canonical borg architecture overview.
 
 ## [2.7.108] - 2026-03-06
 ### Added
 - **Phase 146: Browser Knowledge Activity Dashboard Surface**
   - Added a dedicated Browser dashboard knowledge-activity card that combines live browser-originated `KNOWLEDGE_CAPTURED` and `RAG_INGESTED` websocket events with the canonical research ingestion queue summary.
   - Added queue visibility for pending, failed, and recently processed URL ingests directly on the browser page so browser operators can see what the extension already pushed into HyperCode knowledge without detouring into separate dashboards.
+  - Added queue visibility for pending, failed, and recently processed URL ingests directly on the browser page so browser operators can see what the extension already pushed into borg knowledge without detouring into separate dashboards.
   - Updated the extension parity matrix to reflect browser-dashboard visibility for recent knowledge and RAG activity.
 ### Validated
 - Verified `pnpm -C apps/web build --webpack` passes.
@@ -3313,6 +3750,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Added
 - **Phase 143: Browser CDP Event Inspector Stream**
   - Rebroadcast browser extension `BROWSER_DEBUG_EVENT` packets through HyperCode Core so Chrome DevTools Protocol events become part of the shared live traffic stream.
+  - Rebroadcast browser extension `BROWSER_DEBUG_EVENT` packets through borg Core so Chrome DevTools Protocol events become part of the shared live traffic stream.
   - Extended the dashboard `TrafficInspector` to render live CDP event rows with method, tab id, source, and structured params output.
   - Hardened the browser dashboard proxy-fetch response rendering so loosely typed bridge payloads display safely under strict React/Next.js typing.
 ### Validated
@@ -3324,6 +3762,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Added
 - **Phase 142: Browser Debug & Proxy Fetch Dashboard Surface**
   - Added `browser.debug` and `browser.proxyFetch` procedures to the Core browser router, backed by the existing `browser_debug` and `browser_proxy_fetch` bridge methods in HyperCode Core and the browser extension.
+  - Added `browser.debug` and `browser.proxyFetch` procedures to the Core browser router, backed by the existing `browser_debug` and `browser_proxy_fetch` bridge methods in borg Core and the browser extension.
   - Added a dedicated Browser dashboard proxy-fetch panel with URL, method, headers, request body, and live response rendering so browser-routed fetches are now directly usable from the UI.
   - Added a dedicated Browser dashboard CDP panel with attach/detach controls plus raw command execution for active-tab Chrome DevTools Protocol diagnostics.
   - Updated the extension parity matrix to mark CDP debug proxy and proxy fetch as shipped dashboard/browser capabilities instead of browser-extension-only hidden bridge features.
@@ -3347,6 +3786,8 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
   - Added a new Core compatibility endpoint `POST /knowledge.ingest-url` backed by the existing deep-research URL ingestion service.
   - Added browser-extension popup support for ingesting the active tab URL or an operator-edited URL directly into HyperCode Knowledge.
   - Added `HyperCode: Ingest URL to Knowledge` plus a matching VS Code mini-dashboard action so URL ingestion is now available from both extension surfaces.
+  - Added browser-extension popup support for ingesting the active tab URL or an operator-edited URL directly into borg Knowledge.
+  - Added `borg: Ingest URL to Knowledge` plus a matching VS Code mini-dashboard action so URL ingestion is now available from both extension surfaces.
   - Updated the parity matrix to mark URL ingestion as shipped across dashboard, browser extension, and VS Code extension.
 ### Validated
 - Verified Core typecheck plus browser and VS Code extension builds pass after the new URL ingestion flow was added.
@@ -3391,6 +3832,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Added
 - **Phase 135: VS Code RAG Ingestion Parity**
   - Added `HyperCode: Ingest Selection to RAG` to the VS Code extension so the active selection or full file can be sent directly to HyperCode's `/rag.ingest-text` compatibility endpoint.
+  - Added `borg: Ingest Selection to RAG` to the VS Code extension so the active selection or full file can be sent directly to borg's `/rag.ingest-text` compatibility endpoint.
   - Added a matching **Ingest to RAG** quick action to the VS Code mini-dashboard so RAG ingestion is available from both the command palette and the sidebar UI.
   - Added an editor context-menu entry for direct selection ingestion and updated the parity matrix to mark VS Code RAG ingestion as shipped.
 ### Validated
@@ -3400,6 +3842,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Added
 - **Phase 134: Unified Extension WebSocket Protocol Specification**
   - Added `docs/WEBSOCKET_PROTOCOL_SPEC.md` as the single implementation-aligned reference for the HyperCode Core, browser extension, and VS Code extension WebSocket bridge.
+  - Added `docs/WEBSOCKET_PROTOCOL_SPEC.md` as the single implementation-aligned reference for the borg Core, browser extension, and VS Code extension WebSocket bridge.
   - Documented the currently implemented command, response, telemetry, and rebroadcast packet shapes, including `STATUS_UPDATE`/`RESPONSE` compatibility behavior and browser method-based RPC packets.
   - Captured the current protocol normalization debt and a recommended future envelope strategy so all extension surfaces can converge on one transport contract.
 ### Validated
@@ -3412,6 +3855,10 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
   - Added live sidebar snapshot state for Core connection health, active researcher/coder availability, active editor, active terminal, and a recent activity feed.
   - Added quick actions for dashboard deep links, memory, tools, logs, analytics, council/debate flows, architect mode, and direct tool invocation through the Core compatibility endpoint.
   - Added `hypercode.dashboardUrl` configuration and updated the VS Code activity-bar view label from `Dispatch` to `Mini Dashboard` to reflect the expanded surface.
+  - Recreated `packages/vscode/src/extension.ts` with a richer borg sidebar that now functions as a real mini-dashboard instead of a thin dispatch-only surface.
+  - Added live sidebar snapshot state for Core connection health, active researcher/coder availability, active editor, active terminal, and a recent activity feed.
+  - Added quick actions for dashboard deep links, memory, tools, logs, analytics, council/debate flows, architect mode, and direct tool invocation through the Core compatibility endpoint.
+  - Added `borg.dashboardUrl` configuration and updated the VS Code activity-bar view label from `Dispatch` to `Mini Dashboard` to reflect the expanded surface.
 ### Validated
 - Verified `pnpm -C packages/vscode build` passes.
 - Verified VS Code diagnostics are clean for `packages/vscode/src/extension.ts` and `packages/vscode/package.json`.
@@ -3423,6 +3870,9 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
   - Hardened the popup UX with richer online/offline messaging, endpoint visibility, a direct settings action, and disabled action buttons when HyperCode Core is unreachable.
   - Extended the background bridge to react to storage updates live, refresh connection URLs without restart, and return structured connection diagnostics to the popup.
   - Added extension manifest/build support for the new options page and widened localhost host permissions to include the active HyperCode Core port (`3001`).
+  - Hardened the popup UX with richer online/offline messaging, endpoint visibility, a direct settings action, and disabled action buttons when borg Core is unreachable.
+  - Extended the background bridge to react to storage updates live, refresh connection URLs without restart, and return structured connection diagnostics to the popup.
+  - Added extension manifest/build support for the new options page and widened localhost host permissions to include the active borg Core port (`3001`).
 ### Validated
 - Verified `pnpm -C apps/extension build` passes.
 - Verified extension TypeScript diagnostics are clean for `src/background.ts`, `src/popup.ts`, and `src/options.ts`.
@@ -3433,6 +3883,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Added
 - **Phase 131: VS Code Sidebar Dispatch UI**
   - Added a `HyperCode` activity-bar container and a `Dispatch` webview view to the VS Code extension.
+  - Added a `borg` activity-bar container and a `Dispatch` webview view to the VS Code extension.
   - Added a sidebar UI for hub status, research dispatch, coder dispatch, and quick memory capture from the active selection.
   - Connected the sidebar UI to the already-shipped Core expert endpoints and refreshed sidebar status on Core connect/disconnect events.
 ### Validated
@@ -3445,6 +3896,8 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
   - Added `/expert.dispatch` and `/expert.status` Core compatibility endpoints so non-dashboard clients can invoke the existing researcher/coder agents and query their availability.
   - Implemented `HyperCode: Run Agent` in the VS Code extension with command-palette-driven dispatch to either the Research Agent or Coder Agent.
   - Implemented `HyperCode: Show Hub Status` in the VS Code extension to display Core connection state plus researcher/coder availability.
+  - Implemented `borg: Run Agent` in the VS Code extension with command-palette-driven dispatch to either the Research Agent or Coder Agent.
+  - Implemented `borg: Show Hub Status` in the VS Code extension to display Core connection state plus researcher/coder availability.
 ### Validated
 - Verified `pnpm -C packages/core exec tsc --noEmit` passes.
 - Verified `pnpm -C packages/vscode compile` passes.
@@ -3454,6 +3907,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Added
 - **Phase 129: Browser Extension RAG Ingestion**
   - Added a lightweight `/rag.ingest-text` Core compatibility endpoint backed by `DocumentIntakeService` so extension-captured page content can be chunked and embedded directly into HyperCode RAG memory.
+  - Added a lightweight `/rag.ingest-text` Core compatibility endpoint backed by `DocumentIntakeService` so extension-captured page content can be chunked and embedded directly into borg RAG memory.
   - Added a dedicated **Ingest Page to RAG** action in the browser extension popup alongside the existing markdown memory capture flow.
   - Added extension background support for `INGEST_RAG_TEXT` so the popup can send page content into the new RAG ingestion endpoint without bespoke client-side chunking.
 ### Validated
@@ -3475,6 +3929,8 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **Phase 127 Completion: VS Code Knowledge Capture Bridge**
   - Registered the existing `HyperCode: Remember Selection` command in the VS Code extension and wired it to emit `KNOWLEDGE_CAPTURE` events to HyperCode Core.
   - Extended Phase 127 cross-surface knowledge capture so both the browser extension and VS Code can push context directly into HyperCode memory through the shared Core bridge.
+  - Registered the existing `borg: Remember Selection` command in the VS Code extension and wired it to emit `KNOWLEDGE_CAPTURE` events to borg Core.
+  - Extended Phase 127 cross-surface knowledge capture so both the browser extension and VS Code can push context directly into borg memory through the shared Core bridge.
 ### Validated
 - Verified `pnpm -C packages/vscode compile` passes.
 - Verified `pnpm -C apps/web build --webpack` passes.
@@ -3484,6 +3940,8 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **Phase 127: Extension Surface Cross-Intelligence**
   - Added a lightweight `/knowledge.capture` core endpoint so the browser extension can persist captured page context directly into HyperCode memory without round-tripping through legacy memorize paths.
   - Rebroadcast browser extension console events and captured-page events over the shared HyperCode Core WebSocket as `BROWSER_LOG` and `KNOWLEDGE_CAPTURED` packets.
+  - Added a lightweight `/knowledge.capture` core endpoint so the browser extension can persist captured page context directly into borg memory without round-tripping through legacy memorize paths.
+  - Rebroadcast browser extension console events and captured-page events over the shared borg Core WebSocket as `BROWSER_LOG` and `KNOWLEDGE_CAPTURED` packets.
   - Extended the dashboard `TrafficInspector` to render browser console traffic and knowledge-capture activity in real time.
 ### Validated
 - Verified `pnpm -C packages/core exec tsc --noEmit` passes after the cross-surface bridge updates.
@@ -3499,6 +3957,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
   - Updated the MCP catalog dashboard to badge deferred tools and explain when full schemas are intentionally withheld until requested.
 ### Validated
 - Rebuilt `@hypercode/core` to refresh exported declarations for the new deferred-tool contract.
+- Rebuilt `@borg/core` to refresh exported declarations for the new deferred-tool contract.
 - Verified `pnpm -C apps/web build --webpack` passes with the updated core and dashboard UI.
 
 ## [2.7.86] - 2026-03-06
@@ -3532,6 +3991,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Fixed
 - **Phase 104: Browser Extension Env-Safe URLs**
   - Replaced hardcoded `localhost:3001` in `background.ts` with configurable `chrome.storage.sync` keys (`hypercodeCoreUrl`, `hypercodeWsUrl`).
+  - Replaced hardcoded `localhost:3001` in `background.ts` with configurable `chrome.storage.sync` keys (`borgCoreUrl`, `borgWsUrl`).
   - WebSocket auto-reconnects when storage values change.
   - Updated Extension Parity Matrix Milestone 1 items.
 
@@ -3601,6 +4061,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **Phase 97: External Link Ingestion Telemetry**
   - Built `scripts/record-fetch-outcome.mjs` to incrementally log fetch failures, successes, and pending queue targets.
   - Deployed `Ingestion Dashboard` (`/dashboard/ingestion`) displaying real-time metrics for total, processed, pending, and failed ingestion queue items along with their respective stack traces from `HYPERCODE_MASTER_INDEX.jsonc`.
+  - Deployed `Ingestion Dashboard` (`/dashboard/ingestion`) displaying real-time metrics for total, processed, pending, and failed ingestion queue items along with their respective stack traces from `BORG_MASTER_INDEX.jsonc`.
   - Check-marked Phase 97 implementation points in `ROADMAP.md` and `DETAILED_BACKLOG.md` (Item 6.2).
 
 ## [2.7.56] - 2026-03-05
@@ -3891,12 +4352,14 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **Phase 79: Swarm Event Visualization Engine**
 - Integrated real-time P2P traffic monitoring via SSE over port 3001.
 - Added a high-fidelity "Telemetry" dashboard in `@hypercode/web` with Framer Motion animations.
+- Added a high-fidelity "Telemetry" dashboard in `@borg/web` with Framer Motion animations.
 - Wired internal `MeshService` traffic to the central `MCPServer` `eventBus` for visualization.
 
 ## [2.7.38] - 2026-02-28
 
 ### Added
 - **Phase 78: Mesh Network Realization (Redis)**: Migrated `MeshService.ts` from a local-only simulation to a distributed Pub/Sub architecture using `ioredis`. Local node processes now detect standard `REDIS_URL` secrets to fuse instances to a `hypercode:swarm:mesh` channel, enabling swarm logic across server instances. Developed dual-topic stream architecture natively blocking pub/sub echo storms.
+- **Phase 78: Mesh Network Realization (Redis)**: Migrated `MeshService.ts` from a local-only simulation to a distributed Pub/Sub architecture using `ioredis`. Local node processes now detect standard `REDIS_URL` secrets to fuse instances to a `borg:swarm:mesh` channel, enabling swarm logic across server instances. Developed dual-topic stream architecture natively blocking pub/sub echo storms.
 
 ## [2.7.37] - 2026-02-28
 
@@ -3933,6 +4396,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Verified
 - **Full Dev Readiness**: All 4 critical services pass `verify_dev_readiness.mjs` in strict mode:
   - ✅ `hypercode-web` (port 3000)
+  - ✅ `borg-web` (port 3000)
   - ✅ `metamcp-frontend` (port 12008)
   - ✅ `metamcp-backend` (port 12009, `/health` → 200 OK)
   - ✅ `autopilot-server` (port 3847)
@@ -3943,11 +4407,13 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **Phase 76: Deep Ecosystem Integration (Open-WebUI)**:
   - Added `external/open-webui` as the 7th submodule, integrating the robust conversational interface natively into the workspace.
   - **Frontend Sync**: Scaffolded `/dashboard/webui` Next.js page, embedding the interface into HyperCode's primary navigation system (`nav-config.ts`), marking it as a top-level native integration tab. 
+  - **Frontend Sync**: Scaffolded `/dashboard/webui` Next.js page, embedding the interface into borg's primary navigation system (`nav-config.ts`), marking it as a top-level native integration tab. 
   - **Backend Sync**: Created `openWebUIRouter.ts` and exposed it via the main `AppRouter`, proxying native tooling and swarm capabilities into the WebUI backend architecture.
 
 - **Phase 6: React Native Mobile App (Native PWA Shell)**:
   - Initialized an Expo React Native wrapper project via `npx create-expo-app` in `apps/mobile`. 
   - Wired `react-native-webview` with dynamic screen padding to natively mount the HyperCode web dashboard onto iOS and Android platforms. 
+  - Wired `react-native-webview` with dynamic screen padding to natively mount the borg web dashboard onto iOS and Android platforms. 
 
 ### Changed
 - **Version Bump**: Incremented version to 2.7.34 to mark the completion of the baseline submodule integrations and mobile scaffolding.
@@ -3967,6 +4433,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Fixed
 - **tRPC v11 Migration**: Replaced deprecated `isLoading` with `isPending` across `swarm/page.tsx` (React Query v5 API).
 - **Stale Dist Types**: Rebuilt `@hypercode/core` dist declarations to propagate `swarmRouter` into `AppRouter` type for frontend consumption.
+- **Stale Dist Types**: Rebuilt `@borg/core` dist declarations to propagate `swarmRouter` into `AppRouter` type for frontend consumption.
 - **Implicit Any Parameters**: Added explicit type annotations to `.map()` callbacks in debate transcript and consensus candidate rendering.
 
 ## [2.7.31] - 2026-02-26
@@ -3999,6 +4466,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **Phase 69: Deep Submodule Assimilation Sprint** — Completed full integration of all four core submodules.
 - **MetaMCP True Proxy Architecture**: `MCPServer.executeTool` now delegates to `executeProxiedTool` from the MetaMCP proxy service, with legacy fallbacks retained for backward compatibility.
 - **MCP-SuperAssistant HyperCode Bridge**: Injected HyperCode Hub WebSocket bridge (`connectHyperCodeHub`) into SuperAssistant's background script and `window.hypercode.callTool()` API + console interceptor into the content script.
+- **MCP-SuperAssistant borg Bridge**: Injected borg Hub WebSocket bridge (`connectBorgHub`) into SuperAssistant's background script and `window.borg.callTool()` API + console interceptor into the content script.
 - **claude-mem Redundant Memory Pipeline**: Created `ClaudeMemAdapter.ts` (section-based storage) and `RedundantMemoryManager.ts` (fan-out writes to all providers). Default `MemoryManager` provider changed from `json` to `redundant`.
 - **Cloud Dev Management Dashboard**: Created `cloudDevRouter.ts` tRPC router for multi-provider cloud dev session management (Jules, Codex, Copilot Workspace, Devin) and `/dashboard/cloud-dev/page.tsx` with full CRUD UI.
 
@@ -4022,12 +4490,14 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **TRPC Router Typing**: Fixed generic TS inference errors in `appRouter` affecting `healerRouter` and `auditRouter`. Rewired all `SecurityPage`TRPC calls to correct `policies.*` and `audit.log` endpoints instead of previous untyped endpoints.
 - **Strict Compliance**: Both `packages/core` and `packages/ui` now successfully compile under `tsc --noEmit` locally with zero fallback mocks or stubs. 
 - **Browser Extension Bridge**: Implemented fuzzy text matching and validated the end-to-end local MCP click action logic in `@hypercode/browser-extension-pkg` background execution worker.
+- **Browser Extension Bridge**: Implemented fuzzy text matching and validated the end-to-end local MCP click action logic in `@borg/browser-extension-pkg` background execution worker.
 
 ## [2.7.25] - 2026-02-25
 
 ### Added
 - **Phase 68: DeerFlow Super Agent Harness Assessment**: Successfully assimilated Bytedance's `deer-flow` deep-research reasoning super agent as a git submodule (`external/deer-flow`).
 - **Core Bridge Networking**: Scaffolded `@hypercode/core` with proxy mechanisms connected to the Python LangGraph gateway via `DeerFlowBridgeService.ts` and wired into Central TRPC scope via `deerFlowRouter.ts`.
+- **Core Bridge Networking**: Scaffolded `@borg/core` with proxy mechanisms connected to the Python LangGraph gateway via `DeerFlowBridgeService.ts` and wired into Central TRPC scope via `deerFlowRouter.ts`.
 - **Dashboard Portal Overlay**: Deep-linked the Next.js `deer-flow` UI overlay into the root Master Control Panel under `apps/web/src/app/dashboard/deer-flow`.
 
 ## [2.7.24] - 2026-02-25
@@ -4045,6 +4515,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 ### Fixed
 - **Next.js Tailwind Build**: Fixed a Turbopack/Webpack configuration issue in `@hypercode/web` that was preventing Tailwind CSS v4 from building correctly on the MetaMCP Dashboard.
+- **Next.js Tailwind Build**: Fixed a Turbopack/Webpack configuration issue in `@borg/web` that was preventing Tailwind CSS v4 from building correctly on the MetaMCP Dashboard.
 
 ### Changed
 - **Version Bump**: Incremented version to 2.7.23.
@@ -4060,6 +4531,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Added
 - **Memory Multi-Backend (Phase 68)**: Assimilated `memora` and `memory-opensource` as physical submodules in `external/memory/`.
 - **Memora Integration**: Registered the `memora` MCP server in `hypercode.config.json` for semantic persistent storage.
+- **Memora Integration**: Registered the `memora` MCP server in `borg.config.json` for semantic persistent storage.
 - **Native Memory Viewer**: Replaced the `claude-mem` iframe with a high-fidelity, native React UI for searching and managing tiered agent memory (Session, Working, Long-Term).
 
 ### Changed
@@ -4121,6 +4593,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 ### Fixed
 - **Web Linting**: Resolved `@hypercode/web` release gate failure by mocking `eslint-plugin-react-hooks` in flat syntax config.
+- **Web Linting**: Resolved `@borg/web` release gate failure by mocking `eslint-plugin-react-hooks` in flat syntax config.
 - **Dashboard**: Regenerated `SUBMODULES.md` dashboard.
 
 ### Security
@@ -4202,6 +4675,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 - **Turbo lint scope stabilization**:
   - Updated root `lint:turbo` script to temporarily exclude `@hypercode/web` in addition to existing exclusions.
+  - Updated root `lint:turbo` script to temporarily exclude `@borg/web` in addition to existing exclusions.
   - This isolates known legacy lint rule debt in `apps/web` while preserving monorepo lint signal for the remaining workspace packages.
 
 ### Validation
@@ -4299,6 +4773,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 - **Strict local readiness regression gate**:
   - Verified strict readiness pass across HyperCode web, MetaMCP frontend/backend, and autopilot server once services are active.
+  - Verified strict readiness pass across borg web, MetaMCP frontend/backend, and autopilot server once services are active.
 
 ## [2.7.2] - 2026-02-22
 
@@ -4316,6 +4791,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
   - Added `scripts/verify_dev_readiness.mjs`.
   - Added root script `check:dev-readiness` in `package.json`.
   - Verifies live readiness across HyperCode Web, MetaMCP frontend/backend, and OpenCode Autopilot server with deterministic endpoint checks.
+  - Verifies live readiness across borg Web, MetaMCP frontend/backend, and OpenCode Autopilot server with deterministic endpoint checks.
   - Supports strict mode (non-zero on critical failures) and `--soft` mode for diagnostic runs.
 
 ### Fixed
@@ -4333,6 +4809,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 - **Scalable Link Ingestion Sync**:
   - Added `scripts/sync_master_index.mjs` to normalize and synchronize `HYPERCODE_MASTER_INDEX.jsonc` from `scripts/resources-list.json` and `scripts/ingestion-status.json`.
+  - Added `scripts/sync_master_index.mjs` to normalize and synchronize `BORG_MASTER_INDEX.jsonc` from `scripts/resources-list.json` and `scripts/ingestion-status.json`.
   - Added `scripts/ingestion-status.json` for explicit processed/pending/failed outcome tracking and failure retry seeds.
   - Added root script alias: `npm run index:sync`.
 
@@ -4348,6 +4825,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 - **Master Index Schema Upgrade**:
   - Upgraded `HYPERCODE_MASTER_INDEX.jsonc` to schema `hypercode-master-index/v2`.
+  - Upgraded `BORG_MASTER_INDEX.jsonc` to schema `borg-master-index/v2`.
   - Added ingestion telemetry (`ingestion.sources`, `ingestion.queue`) and expanded per-entry metadata (`fetch_status`, `fetch_error`, `fetch_attempts`, `last_checked_at`, `processed_at`, `normalized_url`, `discovered_from`).
   - Synced canonical corpus to 565 tracked links with queue visibility (`processed=6`, `pending=558`, `failed=1`).
 
@@ -4358,15 +4836,16 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - **Phase 67: MetaMCP Submodule Assimilation**:
   - Added `https://github.com/robertpelloni/MetaMCP` as a Git submodule at `external/MetaMCP/`.
   - Registered `external/MetaMCP/packages/*` and `external/MetaMCP/apps/*` in `pnpm-workspace.yaml` as first-class workspace members.
-  - Resolved 100+ `<<<<<<< HEAD` merge conflict markers across MetaMCP TypeScript source files via automated script.
   - Modified `external/MetaMCP/apps/backend/tsup.config.ts` to emit a separate library bundle at `dist/metamcp.js` alongside the main Express server.
   - Created `packages/core/src/services/MetaMCPBridgeService.ts` — a typed HTTP client allowing HyperCode to communicate with the MetaMCP backend at `http://localhost:12009`.
+  - Created `packages/core/src/services/MetaMCPBridgeService.ts` — a typed HTTP client allowing borg to communicate with the MetaMCP backend at `http://localhost:12009`.
   - Added 4 new TRPC procedures to `mcpServersRouter`: `listFromMetaMCP`, `metamcpStatus`, `createInMetaMCP`, `deleteFromMetaMCP`.
   - Created ambient TypeScript declaration shim `packages/core/src/types/backend-metamcp.d.ts`.
 
 - **Phase 66: AI Command Center & Dashboards**:
   - Jules Autopilot Dashboard (`/dashboard/jules`) with API key controls and live connectivity testing.
   - OpenCode Autopilot Dashboard integrated into HyperCode web.
+  - OpenCode Autopilot Dashboard integrated into borg web.
   - Master AI Billing & API Key Dashboard.
   - Installed AI Tool Detector & Usage Tracker at `/dashboard/mcp/ai-tools`.
 
@@ -4377,6 +4856,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Fixed
 
 - `@hypercode/core` TypeScript build: restored missing `@hypercode/adk` dependency, resolved all merge conflict artifacts, confirmed `tsc` exits with code `0`.
+- `@borg/core` TypeScript build: restored missing `@borg/adk` dependency, resolved all merge conflict artifacts, confirmed `tsc` exits with code `0`.
 
 ## [2.6.3] - 2026-02-16
 ## [2.7.136] — 2026-03-14
@@ -4410,6 +4890,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
   - Replaced key MetaMCP proxy stub adapters for code execution, saved script CRUD/execution, tool search, and tool persistence with repository/service-backed implementations.
   - Replaced MetaMCP `run_agent` stub path with LLM-backed orchestration and removed dead run_python stub branch.
 - **Jules dashboard accessibility in HyperCode Web**:
+- **Jules dashboard accessibility in borg Web**:
   - Added `/dashboard/jules` in `apps/web` with embedded Jules Autopilot launch surface.
   - Added `apps/web` Jules API proxy route (`/api/jules`) for authenticated Jules API passthrough.
   - Added Jules card on dashboard home for direct discoverability.
@@ -4439,6 +4920,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
   - Fixed 6 disabled router references (TraceViewer, SystemStatus, RemoteAccessCard, GlobalSearch, ConfigEditor, TestStatusWidget) — replaced with static placeholder UI
   - Fixed TrafficInspector `handleReplay()` — disabled `logs.read` router replaced with console warning
   - Fixed router name mismatches: `context`→`hypercodeContext` (ContextWidget), `repoGraph`→`graph` (GraphWidget), `audit.getLogs`→`audit.query` (AuditLogViewer)
+  - Fixed router name mismatches: `context`→`borgContext` (ContextWidget), `repoGraph`→`graph` (GraphWidget), `audit.getLogs`→`audit.query` (AuditLogViewer)
   - Fixed procedure: `shell.execute`→`commands.execute` (CommandRunner), input shape `path`→`filePath` (ContextWidget)
   - Fixed union type access with safe casts: IndexingStatus, SystemPulse, CouncilConfig
   - Fixed Badge variants: `"success"`→`"default"` (SystemPulse, evolution/page, security/page)
@@ -4591,6 +5073,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 - **Phase 23 (Deep Data Search)**:
   - Created `Indexer` and `CodeSplitter` in `@hypercode/memory`.
+  - Created `Indexer` and `CodeSplitter` in `@borg/memory`.
   - Added AST-based symbol extraction for TypeScript.
   - Added semantic chunking logic.
   - Exposed `memory_index_codebase` and `memory_search` tools in `MCPServer`.
@@ -4601,6 +5084,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Added
 
 - **Master MCP Server Architecture (Phase 21)**: HyperCode now aggregates downstream MCP servers (`git`, `filesystem`, etc.) via `MCPAggregator`.
+- **Master MCP Server Architecture (Phase 21)**: borg now aggregates downstream MCP servers (`git`, `filesystem`, etc.) via `MCPAggregator`.
 - **Stdio Client**: Native integration for spawning and controlling local MCP tools.
 - **Unified Documentation**: Centralized all agent instructions into `docs/LLM_INSTRUCTIONS.md`.
 - **Vision Document**: Published `VISION.md` outlining the "Neural Operating System" goal.
@@ -4609,6 +5093,7 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 ### Changed
 
 - **Config**: `hypercode.config.json` is now the primary configuration point for adding tools.
+- **Config**: `borg.config.json` is now the primary configuration point for adding tools.
 - **Routing**: Tool calls are now prefixed (e.g., `git_commit`) to allow namespace isolation between multiple servers.
 
 ## [1.7.0] - 2026-02-03
@@ -4628,3 +5113,4 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Assimilated BobbyBookmarks workers (`ResearchWorker`, `AutoTagger`) into `@hypercode/core/Memory`.
 - Assimalated Maestro logic (`AgentDiscovery`, `ContextGroomer`, `DirectorNotes`) natively into `@hypercode/core`.
 - Updated `TODO.md` to check off A2A protocol implementation, dashboard verifications, and multi-model chatroom progress.
+- **Broader Harness Catalog Alignment**: Expanded the TypeScript supervisor catalog, council CLI registry, compiled CLI harness list, and Go sidecar harness registry so borg now tracks `borg`, `aider`, `cursor`, `copilot`, `qwen`, `superai-cli`, `codebuff`, `codemachine`, and `factory-droid` more consistently across session catalog and `/api/cli/harnesses` surfaces, while keeping non-borg parity claims explicitly limited to install/runtime metadata.

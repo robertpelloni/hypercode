@@ -1,0 +1,9 @@
+dist/
+release/
+node_modules/
+coverage/
+*.min.js
+.gitignore
+.hypercode_startup_marker
+VERSION
+metamcp.db

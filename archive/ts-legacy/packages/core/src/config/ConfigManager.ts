@@ -1,0 +1,58 @@
+import fs from 'fs';
+import path from 'path';
+
+type ConfigData = Record<string, unknown> & {
+    council?: {
+        personas: string[];
+        contextFiles: string[];
+        prompts: {
+            Architect: string;
+            Product: string;
+            Critic: string;
+        };
+    };
+    mcpServers?: unknown[];
+};
+
+export class ConfigManager {
+    private configPath: string;
+
+    constructor() {
+        // Use user home or workspace root? 
+<<<<<<< HEAD:archive/ts-legacy/packages/core/src/config/ConfigManager.ts
+        // MCPServer uses process.cwd()/.hypercode/skills
+        // Let's use process.cwd()/.hypercode/config.json
+        this.configPath = path.join(process.cwd(), '.hypercode', 'config.json');
+=======
+        // MCPServer uses process.cwd()/.borg/skills
+        // Let's use process.cwd()/.borg/config.json
+        this.configPath = path.join(process.cwd(), '.borg', 'config.json');
+>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/core/src/config/ConfigManager.ts
+    }
+
+    loadConfig(): ConfigData | null {
+        try {
+            if (fs.existsSync(this.configPath)) {
+                const content = fs.readFileSync(this.configPath, 'utf-8');
+                const parsed = JSON.parse(content) as unknown;
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    return parsed as ConfigData;
+                }
+            }
+        } catch (e) {
+            console.error("[ConfigManager] Failed to load config:", e);
+        }
+        return null;
+    }
+
+    saveConfig(config: Record<string, unknown>) {
+        try {
+            const dir = path.dirname(this.configPath);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2));
+            console.log("[ConfigManager] Saved config to", this.configPath);
+        } catch (e) {
+            console.error("[ConfigManager] Failed to save config:", e);
+        }
+    }
+}
