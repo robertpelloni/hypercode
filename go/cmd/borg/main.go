@@ -9,11 +9,11 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/robertpelloni/borg-go/internal/buildinfo"
-	"github.com/robertpelloni/borg-go/internal/config"
-	"github.com/robertpelloni/borg-go/internal/controlplane"
-	"github.com/robertpelloni/borg-go/internal/httpapi"
-	"github.com/robertpelloni/borg-go/internal/lockfile"
+	"github.com/borghq/borg-go/internal/buildinfo"
+	"github.com/borghq/borg-go/internal/config"
+	"github.com/borghq/borg-go/internal/controlplane"
+	"github.com/borghq/borg-go/internal/httpapi"
+	"github.com/borghq/borg-go/internal/lockfile"
 )
 
 func main() {

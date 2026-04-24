@@ -9,7 +9,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/robertpelloni/borg-go/internal/lockfile"
+	"github.com/borghq/borg-go/internal/lockfile"
 	"github.com/borghq/borg-go/internal/lockfile"
 )
 

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/robertpelloni/borg-go/internal/interop"
+	"github.com/borghq/borg-go/internal/interop"
 	"github.com/borghq/borg-go/internal/interop"
 )
 

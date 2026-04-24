@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/robertpelloni/borg-go/internal/ai"
+	"github.com/borghq/borg-go/internal/ai"
 )
 
 func TestRunDebateApprovedFlow(t *testing.T) {

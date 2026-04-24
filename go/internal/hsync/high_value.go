@@ -15,9 +15,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/robertpelloni/borg-go/internal/ai"
-	"github.com/robertpelloni/borg-go/internal/harnesses"
-	mcp_pkg "github.com/robertpelloni/borg-go/internal/mcp"
+	"github.com/borghq/borg-go/internal/ai"
+	"github.com/borghq/borg-go/internal/harnesses"
+	mcp_pkg "github.com/borghq/borg-go/internal/mcp"
 )
 
 type HighValueIngestor struct {

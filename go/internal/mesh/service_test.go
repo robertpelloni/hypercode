@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/robertpelloni/borg-go/internal/config"
+	"github.com/borghq/borg-go/internal/config"
 	"github.com/borghq/borg-go/internal/config"
 )
 

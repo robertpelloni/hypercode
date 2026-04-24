@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robertpelloni/borg-go/internal/lockfile"
+	"github.com/borghq/borg-go/internal/lockfile"
 	"github.com/borghq/borg-go/internal/lockfile"
 )
 

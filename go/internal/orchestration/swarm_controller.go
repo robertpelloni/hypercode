@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/robertpelloni/borg-go/internal/ai"
+	"github.com/borghq/borg-go/internal/ai"
 )
 
 type SwarmRole string

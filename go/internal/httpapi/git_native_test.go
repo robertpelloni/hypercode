@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/robertpelloni/borg-go/internal/config"
+	"github.com/borghq/borg-go/internal/config"
 )
 
 func TestSubmoduleUpdateAllFallsBackToNativeGitReport(t *testing.T) {

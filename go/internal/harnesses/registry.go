@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/robertpelloni/borg-go/internal/controlplane"
+	"github.com/borghq/borg-go/internal/controlplane"
 )
 
 type Definition struct {

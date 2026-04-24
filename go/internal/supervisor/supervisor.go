@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/robertpelloni/borg-go/internal/mcp"
-	worktreegit "github.com/robertpelloni/borg-go/internal/git"
+	"github.com/borghq/borg-go/internal/mcp"
+	worktreegit "github.com/borghq/borg-go/internal/git"
 )
 
 type SessionState string

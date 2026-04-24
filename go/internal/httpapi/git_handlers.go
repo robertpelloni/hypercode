@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/robertpelloni/borg-go/internal/git"
+	"github.com/borghq/borg-go/internal/git"
 )
 
 func (s *Server) handleSubmoduleUpdateAll(w http.ResponseWriter, r *http.Request) {

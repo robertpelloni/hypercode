@@ -15,7 +15,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/robertpelloni/borg-go/internal/ai"
+	"github.com/borghq/borg-go/internal/ai"
 )
 
 type ToolPredictor struct {

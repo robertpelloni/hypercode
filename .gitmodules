@@ -109,9 +109,6 @@
 [submodule "apps/maestro"]
 	path = apps/maestro
 	url = https://github.com/robertpelloni/Maestro
-[submodule "apps/cloud-orchestrator"]
-	path = apps/cloud-orchestrator
-	url = https://github.com/robertpelloni/jules-autopilot
 [submodule "submodules/prism-mcp"]
 	path = submodules/prism-mcp
 	url = https://github.com/dcostenco/prism-mcp

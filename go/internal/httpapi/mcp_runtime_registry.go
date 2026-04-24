@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/robertpelloni/borg-go/internal/mcp"
+	"github.com/borghq/borg-go/internal/mcp"
 )
 
 type runtimeServerRecord struct {

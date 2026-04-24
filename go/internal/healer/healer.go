@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/robertpelloni/borg-go/internal/ai"
+	"github.com/borghq/borg-go/internal/ai"
 )
 
 // Diagnosis represents an LLM-generated diagnosis of an error.

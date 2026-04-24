@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/robertpelloni/borg-go/internal/config"
-	"github.com/robertpelloni/borg-go/internal/workflow"
+	"github.com/borghq/borg-go/internal/config"
+	"github.com/borghq/borg-go/internal/workflow"
 )
 
 func newNativeTestServer(t *testing.T) (*Server, string) {

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/robertpelloni/borg-go/internal/controlplane"
+	"github.com/borghq/borg-go/internal/controlplane"
 )
 
 func TestListBuildsHarnessDefinitions(t *testing.T) {
