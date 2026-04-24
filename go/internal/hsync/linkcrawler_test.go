@@ -72,7 +72,7 @@ func TestCrawlPendingLinksProcessesPendingBacklogEntries(t *testing.T) {
 				    <link rel="icon" href="/favicon.ico">
 				  </head>
 				  <body>
-				    <main>HyperCode native crawler extracts backlog metadata and tags.</main>
+				    <main>Borg native crawler extracts backlog metadata and tags.</main>
 				  </body>
 				</html>
 			`))

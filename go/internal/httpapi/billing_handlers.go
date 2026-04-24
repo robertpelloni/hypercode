@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hypercodehq/hypercode-go/internal/providers"
+	"github.com/robertpelloni/borg-go/internal/providers"
 	"github.com/borghq/borg-go/internal/providers"
 )
 

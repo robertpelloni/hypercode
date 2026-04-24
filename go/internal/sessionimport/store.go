@@ -127,8 +127,8 @@ type ImportedSessionStore struct {
 func NewImportedSessionStore(workspaceRoot string) *ImportedSessionStore {
 	return &ImportedSessionStore{
 		dbPath:      filepath.Join(workspaceRoot, "metamcp.db"),
-		archiveRoot: filepath.Join(workspaceRoot, ".hypercode", "imported_sessions", "archive"),
-		docsDir:     filepath.Join(workspaceRoot, ".hypercode", "imported_sessions", "docs"),
+		archiveRoot: filepath.Join(workspaceRoot, ".borg", "imported_sessions", "archive"),
+		docsDir:     filepath.Join(workspaceRoot, ".borg", "imported_sessions", "docs"),
 	}
 }
 

@@ -3,7 +3,7 @@ package cmd
 import (
 	"log"
 
-	"github.com/robertpelloni/hypercode/tui"
+	"github.com/robertpelloni/borg/tui"
 	"github.com/spf13/cobra"
 )
 

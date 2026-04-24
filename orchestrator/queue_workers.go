@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/robertpelloni/hypercode/agents"
+	"github.com/robertpelloni/borg/agents"
 )
 
 // HandleIndexCodebase explicitly proxies out the TS handler triggering our new Vector Store recursively.

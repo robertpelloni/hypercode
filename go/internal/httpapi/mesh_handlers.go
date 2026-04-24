@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hypercodehq/hypercode-go/internal/mesh"
+	"github.com/robertpelloni/borg-go/internal/mesh"
 	"github.com/borghq/borg-go/internal/mesh"
 )
 

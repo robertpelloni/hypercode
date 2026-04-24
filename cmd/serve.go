@@ -8,9 +8,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/websocket/v2"
-	foundationrepomap "github.com/robertpelloni/hypercode/foundation/repomap"
-	"github.com/robertpelloni/hypercode/mcp"
-	"github.com/robertpelloni/hypercode/orchestrator"
+	foundationrepomap "github.com/robertpelloni/borg/foundation/repomap"
+	"github.com/robertpelloni/borg/mcp"
+	"github.com/robertpelloni/borg/orchestrator"
 	"github.com/spf13/cobra"
 )
 
@@ -505,7 +505,7 @@ var serveCmd = &cobra.Command{
 		})
 
 		app.Get("/health", func(c *fiber.Ctx) error {
-			return c.JSON(fiber.Map{"status": "hypercode_active", "version": "1.0.0", "daemon": "fiber"})
+			return c.JSON(fiber.Map{"status": "borg_active", "version": "1.0.0", "daemon": "fiber"})
 		})
 
 		// Render the compiled React Single Page App bridging Localhost execution replacing Vite/Next!

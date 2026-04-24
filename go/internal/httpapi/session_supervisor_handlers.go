@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hypercodehq/hypercode-go/internal/supervisor"
+	"github.com/robertpelloni/borg-go/internal/supervisor"
 )
 
 func (s *Server) handleSupervisorSessionList(w http.ResponseWriter, r *http.Request) {

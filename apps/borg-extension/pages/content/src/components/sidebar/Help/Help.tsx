@@ -51,11 +51,11 @@ const Help: React.FC = () => {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>What is HyperCode Extension?</CardTitle>
+              <CardTitle>What is Borg Extension?</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <Typography variant="body" className="text-sm">
-                HyperCode Extension is a Chrome extension that bridges the Model Context Protocol (MCP) with web-based AI
+                Borg Extension is a Chrome extension that bridges the Model Context Protocol (MCP) with web-based AI
               <CardTitle>What is borg Extension?</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -97,11 +97,11 @@ const Help: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-2">
               <Typography variant="body" className="text-sm">
-                To connect to local MCP servers, you need to run the HyperCode Extension Proxy. This proxy bridges the
+                To connect to local MCP servers, you need to run the Borg Extension Proxy. This proxy bridges the
                 browser (extension) to your local MCP servers.
               </Typography>
               <div className="bg-slate-100 dark:bg-slate-900 p-2 rounded-md text-xs font-mono overflow-x-auto border border-slate-200 dark:border-slate-700">
-                npx -y @srbhptl39/hypercode-extension-proxy@latest --config ./config.json
+                npx -y @srbhptl39/borg-extension-proxy@latest --config ./config.json
                 To connect to local MCP servers, you need to run the borg Extension Proxy. This proxy bridges the
                 browser (extension) to your local MCP servers.
               </Typography>
@@ -522,7 +522,7 @@ const Help: React.FC = () => {
               </Typography>
               <div className="flex flex-col gap-3 mt-4">
                 <a
-                  href="https://github.com/srbhptl39/HyperCode-Extension/issues"
+                  href="https://github.com/srbhptl39/Borg-Extension/issues"
                   href="https://github.com/srbhptl39/borg-Extension/issues"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -536,7 +536,7 @@ const Help: React.FC = () => {
                   </Button>
                 </a>
                 <a
-                  href="https://github.com/srbhptl39/HyperCode-Extension"
+                  href="https://github.com/srbhptl39/Borg-Extension"
                   href="https://github.com/srbhptl39/borg-Extension"
                   target="_blank"
                   rel="noopener noreferrer"

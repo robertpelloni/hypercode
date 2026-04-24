@@ -37,7 +37,7 @@ func (s *Server) handleCloudOrchestratorManifest() http.HandlerFunc {
 				"rag":      "/api/rag/query",
 				"reindex":  "/api/rag/reindex",
 			},
-			"hypercodeCompatible": true,
+			"borgCompatible": true,
 		})
 	}
 }

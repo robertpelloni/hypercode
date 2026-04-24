@@ -33,11 +33,7 @@ export class SupervisorSettingsManager {
     private readonly settingsPath: string;
 
     constructor(settingsPath?: string) {
-<<<<<<<< HEAD:archive/ts-legacy/packages/hypercode-supervisor/src/settings.ts
-        this.settingsPath = settingsPath ?? path.join(os.homedir(), '.hypercode', 'supervisor-settings.json');
-========
         this.settingsPath = settingsPath ?? path.join(os.homedir(), '.borg', 'supervisor-settings.json');
->>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/borg-supervisor/src/settings.ts
     }
 
     getSettingsPath(): string {

@@ -5,7 +5,7 @@
 ## Claude-Specific Directives
 
 ### 1. Role Context
-You are Claude, the **deep implementer** for HyperCode. Your primary strengths are:
+You are Claude, the **deep implementer** for Borg. Your primary strengths are:
 - Deep, thorough implementation of complex features
 - UI/UX perfection — polished, responsive React components
 - Comprehensive documentation — every feature explained in depth
@@ -21,7 +21,7 @@ You are Claude, the **deep implementer** for HyperCode. Your primary strengths a
 
 ### 3. Implementation Standards
 - **TypeScript**: Use strict types. Avoid `any`, `@ts-ignore`, or misleading adapters.
-- **React**: Import shared UI from `@hypercode/ui`. Use `lucide-react` for icons.
+- **React**: Import shared UI from `@borg/ui`. Use `lucide-react` for icons.
 - **Components**: Every dashboard page should show real data, not mocks.
 - **Comments**: Add comments for complex logic, NOT for self-explanatory code.
 - **Error handling**: Every API call should handle failures gracefully.

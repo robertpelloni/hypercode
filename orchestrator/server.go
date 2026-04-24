@@ -17,7 +17,7 @@ type Server struct {
 func NewServer() *Server {
 	app := fiber.New(fiber.Config{
 		DisableStartupMessage: false,
-		AppName:               "Hypercode / Borg Orchestrator",
+		AppName:               "Borg / Borg Orchestrator",
 	})
 
 	// Middleware
@@ -55,6 +55,6 @@ func setupRoutes(app *fiber.App) {
 
 	// Stub for tRPC equivalent or REST bridges
 	api.Get("/v1/status", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{"status": "hypercode_active"})
+		return c.JSON(fiber.Map{"status": "borg_active"})
 	})
 }

@@ -7,9 +7,9 @@ These are the top-level projects integrated into the monorepo.
 
 | Path | Description | Rationale |
 | :--- | :--- | :--- |
-| `submodules/hyperharness/` | HyperCode CLI Harness | Experimental primary CLI harness assimilation track for HyperCode. |
+| `submodules/hyperharness/` | Borg CLI Harness | Experimental primary CLI harness assimilation track for Borg. |
 | `apps/maestro/` | electron-orchestrator desktop shell | Core desktop surface for multi-agent coordination. |
-| `hypercode/` | Autonomous IDE | The central intelligence and supervision engine. |
+| `borg/` | Autonomous IDE | The central intelligence and supervision engine. |
 | `submodules/borg/` | borg CLI Harness | Experimental primary CLI harness assimilation track for borg. |
 | `apps/maestro/` | electron-orchestrator desktop shell | Core desktop surface for multi-agent coordination. |
 | `borg/` | Autonomous IDE | The central intelligence and supervision engine. |

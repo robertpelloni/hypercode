@@ -1,7 +1,7 @@
 package tools
 
 import (
-	"github.com/robertpelloni/hypercode/repl"
+	"github.com/robertpelloni/borg/repl"
 )
 
 var sessions = make(map[string]*repl.Session)

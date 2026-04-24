@@ -40,8 +40,8 @@ func TestSnapshotReportsKeyPaths(t *testing.T) {
 	if !status.borgSubmodule.Exists {
 		t.Fatalf("expected borg submodule path to exist")
 	}
-	if !status.HyperCodeConfigFile.Exists || !status.MCPConfigFile.Exists {
-		t.Fatalf("expected repo config files to exist, got hypercode=%+v mcp=%+v", status.HyperCodeConfigFile, status.MCPConfigFile)
+	if !status.BorgConfigFile.Exists || !status.MCPConfigFile.Exists {
+		t.Fatalf("expected repo config files to exist, got borg=%+v mcp=%+v", status.BorgConfigFile, status.MCPConfigFile)
 	if !status.BorgConfigFile.Exists || !status.MCPConfigFile.Exists {
 		t.Fatalf("expected repo config files to exist, got borg=%+v mcp=%+v", status.BorgConfigFile, status.MCPConfigFile)
 	}

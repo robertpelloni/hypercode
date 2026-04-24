@@ -1,8 +1,8 @@
-# HyperCode Extension User Manual
+# Borg Extension User Manual
 
 ## Overview
 
-HyperCode Extension is a Chrome extension that bridges the Model Context Protocol (MCP) with web-based AI platforms like ChatGPT, Claude, Perplexity, and others. It allows you to use your local tools and data directly within these AI interfaces, enhancing their capabilities with file system access, command execution, and more.
+Borg Extension is a Chrome extension that bridges the Model Context Protocol (MCP) with web-based AI platforms like ChatGPT, Claude, Perplexity, and others. It allows you to use your local tools and data directly within these AI interfaces, enhancing their capabilities with file system access, command execution, and more.
 # borg Extension User Manual
 
 ## Overview
@@ -14,7 +14,7 @@ borg Extension is a Chrome extension that bridges the Model Context Protocol (MC
 ### Installation
 
 1.  **Install the Extension**: Load the extension in Chrome (Developer Mode) or install from the Chrome Web Store.
-2.  **Install the Proxy**: To connect to local MCP servers, you need to run the HyperCode Extension Proxy.
+2.  **Install the Proxy**: To connect to local MCP servers, you need to run the Borg Extension Proxy.
 2.  **Install the Proxy**: To connect to local MCP servers, you need to run the borg Extension Proxy.
 
 ### Proxy Setup
@@ -40,7 +40,7 @@ The proxy bridges the browser (extension) to your local MCP servers.
 2.  **Run the Proxy**:
 
     ```bash
-    npx -y @srbhptl39/hypercode-extension-proxy@latest --config ./config.json
+    npx -y @srbhptl39/borg-extension-proxy@latest --config ./config.json
     npx -y @srbhptl39/borg-extension-proxy@latest --config ./config.json
     ```
 

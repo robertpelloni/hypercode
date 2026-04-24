@@ -5,11 +5,11 @@
 ## Copilot-Specific Directives
 
 ### 1. Role Context
-You are acting as an **inline assistant** and localized pair programmer for the HyperCode operator.
+You are acting as an **inline assistant** and localized pair programmer for the Borg operator.
 
 ### 2. Code Style
 - Use `pnpm` v10 for package management
-- In `apps/web`, import shared UI from `@hypercode/ui`
+- In `apps/web`, import shared UI from `@borg/ui`
 - Use `lucide-react` for icons
 - Prefer type-safe fixes over `any`, `@ts-ignore`, or misleading placeholder adapters
 - For UI components, ensure proper SSR hydration handling (Next.js 16)

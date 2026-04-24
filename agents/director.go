@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/robertpelloni/hypercode/foundation/adapters"
-	foundationorchestration "github.com/robertpelloni/hypercode/foundation/orchestration"
+	"github.com/robertpelloni/borg/foundation/adapters"
+	foundationorchestration "github.com/robertpelloni/borg/foundation/orchestration"
 )
 
 // Director Agent translates the TS core Director orchestrator.
@@ -18,12 +18,12 @@ type Director struct {
 	State        map[string]interface{}
 	History      []Message
 	WorkingDir   string
-	HyperAdapter *adapters.HyperCodeAdapter
+	HyperAdapter *adapters.BorgAdapter
 }
 
 func NewDirector(provider ILLMProvider) *Director {
 	cwd, _ := os.Getwd()
-	hyperAdapter := adapters.NewHyperCodeAdapter(cwd)
+	hyperAdapter := adapters.NewBorgAdapter(cwd)
 	return &Director{
 		Name:         "Director",
 		Provider:     provider,

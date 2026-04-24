@@ -5,4 +5,4 @@ package buildinfo
 var Version = "1.0.0-alpha.32"
 
 // ProductName is the display name of the product.
-const ProductName = "HyperCode"
+const ProductName = "Borg"

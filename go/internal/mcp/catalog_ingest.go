@@ -48,7 +48,7 @@ func safeFetchJSON(ctx context.Context, client *http.Client, url string, target 
 		return err
 	}
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "HyperCode/MCP-Catalog-Ingestor-Go")
+	req.Header.Set("User-Agent", "Borg/MCP-Catalog-Ingestor-Go")
 
 	resp, err := client.Do(req)
 	if err != nil {

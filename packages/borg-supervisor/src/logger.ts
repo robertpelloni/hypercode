@@ -8,11 +8,7 @@ export class Logger {
 
     constructor() {
         const homeDir = os.homedir();
-<<<<<<<< HEAD:archive/ts-legacy/packages/hypercode-supervisor/src/logger.ts
-        const logDir = path.join(homeDir, '.hypercode', 'logs');
-========
         const logDir = path.join(homeDir, '.borg', 'logs');
->>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/borg-supervisor/src/logger.ts
         this.logPath = path.join(logDir, 'supervisor.log');
 
         // Ensure log directory exists

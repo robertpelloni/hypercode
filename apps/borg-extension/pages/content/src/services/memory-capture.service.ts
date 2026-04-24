@@ -129,7 +129,7 @@ export class MemoryCaptureService {
         sourceTitle: title,
       });
 
-      // 2. Send to background to save to HyperCode Core memory
+      // 2. Send to background to save to Borg Core memory
       // 2. Send to background to save to borg Core memory
       try {
         await sendMessage('mcp:save-context', {

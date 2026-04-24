@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 1.0.0-alpha.25
 # Version
 
@@ -65,6 +64,3 @@ After updating the files above:
 1. Search active files for the previous version string to confirm none remain.
 2. Run `pnpm run typecheck`.
 3. If the version bump also changed release notes, verify `CHANGELOG.md` and `VERSION` agree with the new version.
-=======
-Proceed # Borg Project Version: 2.7.130
->>>>>>> origin/rewrite/main-sanitized

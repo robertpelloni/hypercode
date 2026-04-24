@@ -9,19 +9,11 @@ import (
 	"os/signal"
 	"time"
 
-<<<<<<< HEAD:go/cmd/hypercode/main.go
-	"github.com/hypercodehq/hypercode-go/internal/buildinfo"
-	"github.com/hypercodehq/hypercode-go/internal/config"
-	"github.com/hypercodehq/hypercode-go/internal/controlplane"
-	"github.com/hypercodehq/hypercode-go/internal/httpapi"
-	"github.com/hypercodehq/hypercode-go/internal/lockfile"
-=======
-	"github.com/borghq/borg-go/internal/buildinfo"
-	"github.com/borghq/borg-go/internal/config"
-	"github.com/borghq/borg-go/internal/controlplane"
-	"github.com/borghq/borg-go/internal/httpapi"
-	"github.com/borghq/borg-go/internal/lockfile"
->>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:go/cmd/borg/main.go
+	"github.com/robertpelloni/borg-go/internal/buildinfo"
+	"github.com/robertpelloni/borg-go/internal/config"
+	"github.com/robertpelloni/borg-go/internal/controlplane"
+	"github.com/robertpelloni/borg-go/internal/httpapi"
+	"github.com/robertpelloni/borg-go/internal/lockfile"
 )
 
 func main() {

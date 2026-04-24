@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Starting HyperCode 1.0.0-alpha.32 (Go Native Core)..."
+echo "Starting Borg 1.0.0-alpha.32 (Go Native Core)..."
 
 if ! command -v go &> /dev/null
 then
@@ -10,10 +10,10 @@ then
 fi
 
 VER="1.0.0-alpha.32"
-echo "Building HyperCode Go Control Plane..."
+echo "Building Borg Go Control Plane..."
 cd go
-go build -ldflags "-X internal/buildinfo.Version=$VER" -buildvcs=false -o ../bin/hypercode ./cmd/hypercode
+go build -ldflags "-X internal/buildinfo.Version=$VER" -buildvcs=false -o ../bin/borg ./cmd/borg
 cd ..
 
-echo "Launching HyperCode..."
-./bin/hypercode "$@"
+echo "Launching Borg..."
+./bin/borg "$@"

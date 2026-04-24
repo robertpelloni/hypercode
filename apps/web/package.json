@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
     "name": "@borg/web",
     "version": "1.0.0-alpha.1",
     "private": true,
@@ -69,34 +68,6 @@
         "@tailwindcss/oxide-win32-x64-msvc": "4.1.18"
     }
 }
-=======
-  "name": "@borg/web",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@borg/core": "workspace:*",
-    "@radix-ui/react-slot": "^1.2.4",
-    "@tanstack/react-query": "^5.90.19",
-    "@trpc/client": "^11.8.1",
-    "@trpc/react-query": "^11.8.1",
-    "@trpc/server": "^11.8.1",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "framer-motion": "^12.29.0",
-    "lucide-react": "^0.562.0",
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "next": "16.1.5",
-=======
-    "mermaid": "^10.9.5",
-    "next": "16.2.3",
->>>>>>> origin/dependabot/npm_and_yarn/apps/hypercode-extension/npm_and_yarn-a6bd13da71
 =======
     "mermaid": "^10.9.5",
     "next": "16.2.3",

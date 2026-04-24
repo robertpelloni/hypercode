@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # UNIVERSAL LLM INSTRUCTIONS
 
 > **CRITICAL**: This file contains the foundational rules for all AI models, agents, and tools operating in the borg workspace. Model-specific files such as `CLAUDE.md`, `GEMINI.md`, `GPT.md`, and `copilot-instructions.md` should contain only lightweight overrides.
@@ -123,43 +122,3 @@ Prefer a **modular monolith first** with shared packages and stable contracts. S
 3. Extract `borgmcpd` when MCP routing/probing/cache lifecycle clearly needs its own uptime or crash boundary.
 4. Extract `borgmemd` and/or `borgingest` when background ingestion, session processing, or memory persistence starts competing with operator latency.
 5. Extract `borgharnessborgharnessd` when harness execution needs its own resource envelope or failure isolation.
-=======
-
-# Universal LLM Instructions
-
-> Superseded by [`AGENTS.md`](../AGENTS.md).
-
-This file remains in place only as a compatibility shim for older references throughout the repository.
-
-## Source of truth
-
-The canonical instruction set for Borg development agents is:
-
-- [`AGENTS.md`](../AGENTS.md)
-
-If any older document, prompt, or model-specific file conflicts with `AGENTS.md`, follow `AGENTS.md`.
-
-## Purpose of this file
-
-This file should stay intentionally short.
-
-It exists to:
-
-- redirect legacy references to `AGENTS.md`
-- avoid duplicated or contradictory operating instructions
-- preserve compatibility while the repository is being consolidated
-
-## Migration note
-
-Older Borg and omni-workspace guidance that encouraged:
-
-- endless scope expansion
-- recursive scraping and mirroring
-- phase inflation
-- uncontrolled submodule growth
-- autonomous continuation past the assigned task
-
-is no longer active for Borg.
-
-Use the Borg consensus in `AGENTS.md` instead.
->>>>>>> origin/rewrite/main-sanitized

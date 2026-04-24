@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hypercodehq/hypercode-go/internal/config"
-	"github.com/hypercodehq/hypercode-go/internal/interop"
-	"github.com/hypercodehq/hypercode-go/internal/memorystore"
+	"github.com/robertpelloni/borg-go/internal/config"
+	"github.com/robertpelloni/borg-go/internal/interop"
+	"github.com/robertpelloni/borg-go/internal/memorystore"
 	"github.com/borghq/borg-go/internal/config"
 	"github.com/borghq/borg-go/internal/interop"
 	"github.com/borghq/borg-go/internal/memorystore"
@@ -113,7 +113,7 @@ func (s *Server) buildStartupStatus(ctx context.Context) (StartupStatus, error) 
 				"workspaceRootAvailable": configStatus.WorkspaceRoot.Exists,
 				"goConfigDirAvailable":   configStatus.ConfigDir.Exists,
 				"mainConfigDirAvailable": configStatus.MainConfigDir.Exists,
-				"repoConfigAvailable":    configStatus.HyperCodeConfigFile.Exists,
+				"repoConfigAvailable":    configStatus.BorgConfigFile.Exists,
 				"mcpConfigAvailable":     configStatus.MCPConfigFile.Exists,
 			},
 			"memory": map[string]any{

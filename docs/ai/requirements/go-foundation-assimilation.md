@@ -1,7 +1,7 @@
 # Go Foundation Assimilation Requirements
 
 ## Problem
-The current repository has an aspirational Go CLI and orchestration shell, but the implementation is still mostly stub-level and does not yet provide truthful parity with Pi, OpenCode, Aider, Goose, Factory Droid, Grok CLI, HyperCode, or the other imported submodules.
+The current repository has an aspirational Go CLI and orchestration shell, but the implementation is still mostly stub-level and does not yet provide truthful parity with Pi, OpenCode, Aider, Goose, Factory Droid, Grok CLI, Borg, or the other imported submodules.
 
 The user goal is not a narrow feature addition. The goal is to create a new **Go-native foundation** that can eventually become a best-in-class coding harness and operator-facing agent runtime with:
 
@@ -10,7 +10,7 @@ The user goal is not a narrow feature addition. The goal is to create a new **Go
 3. Aider-level repository context and edit strategy quality.
 4. Goose/Crush-grade native performance and terminal feel.
 5. Factory/Grok-grade long-running orchestration, verification, and delegation.
-6. HyperCode/Borg-native integration for MCP routing, memory, provider routing, and context continuity.
+6. Borg/Borg-native integration for MCP routing, memory, provider routing, and context continuity.
 7. Exact model-facing tool names and parameter contracts wherever compatibility matters.
 
 ## Non-Negotiable Requirements
@@ -27,7 +27,7 @@ Initial exact-name focus:
 Longer-term exact-contract focus:
 - Pi-compatible default tool surface
 - Codex/OpenCode-compatible high-value tool surfaces where stable public contracts exist
-- HyperCode/Borg-backed MCP tool surfaces exposed through stable adapters
+- Borg/Borg-backed MCP tool surfaces exposed through stable adapters
 
 ### 2. Clean-room implementation
 Assimilation should preserve behavior, not copy licensed internals from closed or questionable upstream sources.
@@ -43,10 +43,10 @@ Not allowed:
 - claiming parity that is not implemented
 - silent compatibility drift
 
-### 3. HyperCode as substrate, not competitor
-The new harness should not reimplement HyperCode’s core control-plane responsibilities unless there is a compelling reliability reason.
+### 3. Borg as substrate, not competitor
+The new harness should not reimplement Borg’s core control-plane responsibilities unless there is a compelling reliability reason.
 
-HyperCode should remain the preferred substrate for:
+Borg should remain the preferred substrate for:
 - MCP aggregation
 - provider routing/fallback
 - memory and session import/export

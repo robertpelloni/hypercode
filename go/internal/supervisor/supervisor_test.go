@@ -98,12 +98,12 @@ func TestFailingProcessRestartsAndEventuallyFails(t *testing.T) {
 func TestCreateSessionCapturesMetadata(t *testing.T) {
 	manager := NewManager()
 	workspace := t.TempDir()
-	env := map[string]string{"HYPERCODE_TEST": "1"}
+	env := map[string]string{"BORG_TEST": "1"}
 	session, err := manager.CreateSession("meta", "go", []string{"version"}, env, workspace, 3)
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	if session.WorkingDirectory != workspace || session.MaxRestarts != 3 || session.Env["HYPERCODE_TEST"] != "1" {
+	if session.WorkingDirectory != workspace || session.MaxRestarts != 3 || session.Env["BORG_TEST"] != "1" {
 		t.Fatalf("unexpected session metadata: %#v", session)
 	}
 	if session.State != StateCreated {
@@ -112,7 +112,7 @@ func TestCreateSessionCapturesMetadata(t *testing.T) {
 	if session.ExecutionPolicy == nil {
 		t.Fatalf("expected execution policy on created session, got %#v", session)
 	}
-	if strings.TrimSpace(session.Env["HYPERCODE_EXECUTION_PROFILE_REQUESTED"]) == "" || strings.TrimSpace(session.Env["HYPERCODE_EXECUTION_PROFILE_EFFECTIVE"]) == "" {
+	if strings.TrimSpace(session.Env["BORG_EXECUTION_PROFILE_REQUESTED"]) == "" || strings.TrimSpace(session.Env["BORG_EXECUTION_PROFILE_EFFECTIVE"]) == "" {
 		t.Fatalf("expected execution policy env vars, got %#v", session.Env)
 	}
 }
@@ -126,7 +126,7 @@ func TestManagerPersistsAndRestoresCreatedSessions(t *testing.T) {
 		CliType:             "custom",
 		Command:             "go",
 		Args:                []string{"version"},
-		Env:                 map[string]string{"HYPERCODE_TEST": "1"},
+		Env:                 map[string]string{"BORG_TEST": "1"},
 		RequestedWorkingDir: "C:/workspace/project",
 		WorkingDirectory:    "C:/workspace/project",
 		ExecutionProfile:    "auto",
@@ -187,8 +187,8 @@ func initGitRepositoryForWorktreeTest(t *testing.T) string {
 		}
 	}
 	run("init")
-	run("config", "user.email", "hypercode@example.com")
-	run("config", "user.name", "HyperCode Test")
+	run("config", "user.email", "borg@example.com")
+	run("config", "user.name", "Borg Test")
 	readmePath := filepath.Join(repoRoot, "README.md")
 	if err := os.WriteFile(readmePath, []byte("worktree test\n"), 0o644); err != nil {
 		t.Fatalf("write README: %v", err)
@@ -286,8 +286,8 @@ func TestManagerAllocatesWorktreeForConflictingSession(t *testing.T) {
 	if strings.TrimSpace(isolated.WorktreePath) == "" || isolated.WorkingDirectory != isolated.WorktreePath {
 		t.Fatalf("expected worktree-backed working directory, got %#v", isolated)
 	}
-	if !strings.Contains(filepath.ToSlash(isolated.WorktreePath), ".hypercode/worktrees/") {
-		t.Fatalf("expected worktree path under .hypercode/worktrees, got %s", isolated.WorktreePath)
+	if !strings.Contains(filepath.ToSlash(isolated.WorktreePath), ".borg/worktrees/") {
+		t.Fatalf("expected worktree path under .borg/worktrees, got %s", isolated.WorktreePath)
 	}
 	if _, err := os.Stat(isolated.WorktreePath); err != nil {
 		t.Fatalf("expected worktree path to exist: %v", err)
@@ -306,7 +306,7 @@ func TestStartSessionWithCustomEnvCanRunProcess(t *testing.T) {
 	if err := os.WriteFile(testFile, []byte("ok"), 0o644); err != nil {
 		t.Fatalf("failed to seed file: %v", err)
 	}
-	if _, err := manager.CreateSession("env-run", goBinary, []string{"version"}, map[string]string{"HYPERCODE_TEST": "1"}, workspace, 0); err != nil {
+	if _, err := manager.CreateSession("env-run", goBinary, []string{"version"}, map[string]string{"BORG_TEST": "1"}, workspace, 0); err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
 	if err := manager.StartSession(context.Background(), "env-run"); err != nil {

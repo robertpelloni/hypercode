@@ -25,7 +25,7 @@ func Default() Config {
 }
 
 func DefaultConfigDir() string {
-	if configured := os.Getenv("HYPERCODE_GO_CONFIG_DIR"); configured != "" {
+	if configured := os.Getenv("BORG_GO_CONFIG_DIR"); configured != "" {
 		return configured
 	}
 
@@ -38,7 +38,7 @@ func DefaultConfigDir() string {
 }
 
 func DefaultMainConfigDir() string {
-	if configured := os.Getenv("HYPERCODE_MAIN_CONFIG_DIR"); configured != "" {
+	if configured := os.Getenv("BORG_MAIN_CONFIG_DIR"); configured != "" {
 		return configured
 	}
 
@@ -51,7 +51,7 @@ func DefaultMainConfigDir() string {
 }
 
 func DefaultWorkspaceRoot() string {
-	if configured := os.Getenv("HYPERCODE_WORKSPACE_ROOT"); configured != "" {
+	if configured := os.Getenv("BORG_WORKSPACE_ROOT"); configured != "" {
 		return configured
 	}
 

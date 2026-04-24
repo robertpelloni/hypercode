@@ -14,11 +14,7 @@ export class Installer {
     }
 
     async install(): Promise<string> {
-<<<<<<<< HEAD:archive/ts-legacy/packages/hypercode-supervisor/src/installer.ts
-        console.error(`Attempting to install HyperCode Supervisor to: ${this.configPath}`);
-========
-        console.error(`Attempting to install borg Supervisor to: ${this.configPath}`);
->>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/borg-supervisor/src/installer.ts
+        console.error(`Attempting to install Borg Supervisor to: ${this.configPath}`);
 
         try {
             await fs.access(this.configPath);
@@ -33,11 +29,7 @@ export class Installer {
         const scriptPath = path.resolve(__dirname, 'index.js');
 
         config.servers = config.servers || {};
-<<<<<<<< HEAD:archive/ts-legacy/packages/hypercode-supervisor/src/installer.ts
-        config.servers['hypercode-supervisor'] = {
-========
         config.servers['borg-supervisor'] = {
->>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/borg-supervisor/src/installer.ts
             command: 'node',
             args: [scriptPath],
             env: {
@@ -48,10 +40,6 @@ export class Installer {
         };
 
         await fs.writeFile(this.configPath, JSON.stringify(config, null, 4), 'utf-8');
-<<<<<<<< HEAD:archive/ts-legacy/packages/hypercode-supervisor/src/installer.ts
-        return `Successfully installed 'hypercode-supervisor' to ${this.configPath}`;
-========
         return `Successfully installed 'borg-supervisor' to ${this.configPath}`;
->>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/borg-supervisor/src/installer.ts
     }
 }

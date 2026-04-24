@@ -1,6 +1,6 @@
-# Ideas for Improvement: HyperCode Extension
+# Ideas for Improvement: Borg Extension
 
-Creative improvement ideas to evolve the HyperCode browser extension from a bridge into a universal agent interface.
+Creative improvement ideas to evolve the Borg browser extension from a bridge into a universal agent interface.
 # Ideas for Improvement: borg Extension
 
 Creative improvement ideas to evolve the borg browser extension from a bridge into a universal agent interface.
@@ -8,10 +8,10 @@ Creative improvement ideas to evolve the borg browser extension from a bridge in
 ## 1. Universal Intelligence Integration
 - **WASM-Based MCP Server Runner:** Allow the extension to download and run MCP servers directly within the browser using WASM, bypassing the need for a local Node.js process for simple tools.
 - **Deep DOM Injection & "Agent Lens":** An overlay that identifies and "labels" elements on any webpage that an agent can interact with, providing a visual map of the page's "API."
-- **Contextual "Magic Bar":** A floating command bar that appears only when relevant context is detected (e.g., show "HyperCode Refactor" when on a GitHub PR page).
+- **Contextual "Magic Bar":** A floating command bar that appears only when relevant context is detected (e.g., show "Borg Refactor" when on a GitHub PR page).
 
 ## 2. Advanced Browsing & Memory
-- **Automatic Knowledge Harvesting:** Silently capture and summarize relevant information as the operator browses (e.g., documentation pages, technical blogs) and sync it to the HyperCode memory swarm.
+- **Automatic Knowledge Harvesting:** Silently capture and summarize relevant information as the operator browses (e.g., documentation pages, technical blogs) and sync it to the Borg memory swarm.
 - **Contextual "Magic Bar":** A floating command bar that appears only when relevant context is detected (e.g., show "borg Refactor" when on a GitHub PR page).
 
 ## 2. Advanced Browsing & Memory
@@ -22,7 +22,7 @@ Creative improvement ideas to evolve the borg browser extension from a bridge in
 ## 3. Decentralized Economy & Mesh
 - **Bobcoin-Powered Micro-Payments:** Integrate with the Bobcoin ledger to allow agents to pay for premium MCP tool usage or specific browsing data.
 - **Extension-to-Extension P2P:** Allow multiple browser extensions on the same local network to share active tabs and browsed context directly, without going through the orchestrator.
-- **Verified Fact Gossip:** When an agent learns a new fact on a webpage, the extension should "gossip" a cryptographically signed proof of that fact to the wider HyperCode mesh.
+- **Verified Fact Gossip:** When an agent learns a new fact on a webpage, the extension should "gossip" a cryptographically signed proof of that fact to the wider Borg mesh.
 - **Verified Fact Gossip:** When an agent learns a new fact on a webpage, the extension should "gossip" a cryptographically signed proof of that fact to the wider borg mesh.
 
 ## 4. Architectural Enhancements

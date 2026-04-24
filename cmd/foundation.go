@@ -7,11 +7,11 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/robertpelloni/hypercode/foundation/adapters"
-	"github.com/robertpelloni/hypercode/foundation/assimilation"
-	"github.com/robertpelloni/hypercode/foundation/compat"
-	foundationpi "github.com/robertpelloni/hypercode/foundation/pi"
-	"github.com/robertpelloni/hypercode/foundation/repomap"
+	"github.com/robertpelloni/borg/foundation/adapters"
+	"github.com/robertpelloni/borg/foundation/assimilation"
+	"github.com/robertpelloni/borg/foundation/compat"
+	foundationpi "github.com/robertpelloni/borg/foundation/pi"
+	"github.com/robertpelloni/borg/foundation/repomap"
 	"github.com/spf13/cobra"
 )
 
@@ -191,16 +191,16 @@ var foundationRepomapCmd = &cobra.Command{
 
 var foundationAdaptersCmd = &cobra.Command{
 	Use:   "adapters",
-	Short: "Inspect HyperCode/Borg, provider, and MCP adapter seams for the foundation runtime",
+	Short: "Inspect Borg/Borg, provider, and MCP adapter seams for the foundation runtime",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cwd, err := os.Getwd()
 		if err != nil {
 			return err
 		}
-		hyperAdapter := adapters.NewHyperCodeAdapter(cwd)
+		hyperAdapter := adapters.NewBorgAdapter(cwd)
 		mcpAdapter := adapters.NewMCPAdapter(cwd)
 		payload := map[string]any{
-			"hypercode": hyperAdapter.Status(),
+			"borg": hyperAdapter.Status(),
 			"mcp":       mcpAdapter.Status(),
 		}
 		enc := json.NewEncoder(os.Stdout)

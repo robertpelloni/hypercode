@@ -264,7 +264,7 @@ func HandleWebFetch(ctx context.Context, args map[string]interface{}) (ToolRespo
 	if e != nil {
 		return err(fmt.Sprintf("Error creating request: %v", e))
 	}
-	req.Header.Set("User-Agent", "HyperCode/ToolParity-Go")
+	req.Header.Set("User-Agent", "Borg/ToolParity-Go")
 
 	resp, e := client.Do(req)
 	if e != nil {

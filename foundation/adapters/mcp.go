@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/robertpelloni/hypercode/borg"
+	"github.com/robertpelloni/borg/borg"
 )
 
 type MCPStatus struct {

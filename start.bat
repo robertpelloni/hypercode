@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableDelayedExpansion
-echo Starting HyperCode 1.0.0-alpha.32 (Go Native Core)...
+echo Starting Borg 1.0.0-alpha.32 (Go Native Core)...
 
 cd go
 where go >nul 2>nul
@@ -10,16 +10,16 @@ if errorlevel 1 (
 )
 
 set VER=1.0.0-alpha.32
-echo Building HyperCode Go Control Plane...
-go build -ldflags "-X internal/buildinfo.Version=%VER%" -buildvcs=false -o ../bin/hypercode.exe ./cmd/hypercode
+echo Building Borg Go Control Plane...
+go build -ldflags "-X internal/buildinfo.Version=%VER%" -buildvcs=false -o ../bin/borg.exe ./cmd/borg
 if errorlevel 1 (
     echo Go build failed.
     exit /b 1
 )
 
 cd ..
-echo Launching HyperCode...
-bin\hypercode.exe %*
+echo Launching Borg...
+bin\borg.exe %*
 echo Starting borg...
 
 where pnpm >nul 2>nul

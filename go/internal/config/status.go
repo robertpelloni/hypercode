@@ -17,7 +17,7 @@ type Status struct {
 	WorkspaceRoot        PathStatus `json:"workspaceRoot"`
 	ConfigDir            PathStatus `json:"configDir"`
 	MainConfigDir        PathStatus `json:"mainConfigDir"`
-	HyperCodeConfigFile       PathStatus `json:"hypercodeConfigFile"`
+	BorgConfigFile       PathStatus `json:"borgConfigFile"`
 	MCPConfigFile        PathStatus `json:"mcpConfigFile"`
 	GoLockPath           PathStatus `json:"goLockPath"`
 	MainLockPath         PathStatus `json:"mainLockPath"`
@@ -35,7 +35,7 @@ func Snapshot(cfg Config) Status {
 		WorkspaceRoot:        buildPathStatus(cfg.WorkspaceRoot),
 		ConfigDir:            buildPathStatus(cfg.ConfigDir),
 		MainConfigDir:        buildPathStatus(cfg.MainConfigDir),
-		HyperCodeConfigFile:       buildPathStatus(filepath.Join(cfg.WorkspaceRoot, "hypercode.config.json")),
+		BorgConfigFile:       buildPathStatus(filepath.Join(cfg.WorkspaceRoot, "borg.config.json")),
 		BorgConfigFile:       buildPathStatus(filepath.Join(cfg.WorkspaceRoot, "borg.config.json")),
 		MCPConfigFile:        buildPathStatus(filepath.Join(cfg.WorkspaceRoot, "mcp.jsonc")),
 		GoLockPath:           buildPathStatus(cfg.LockPath()),

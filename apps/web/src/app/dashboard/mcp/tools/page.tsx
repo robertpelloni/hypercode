@@ -7,15 +7,10 @@ import { Terminal, Globe, Wrench, Layers, ExternalLink, ShieldCheck, Cpu, Box, C
 import { normalizeShellHistory } from './tools-page-normalizers';
 
 export default function ToolsRegistryDashboard() {
-<<<<<<< HEAD
     const shellHistoryQuery = trpc.shell.getSystemHistory.useQuery({ limit: 10 }, { refetchInterval: 5000 });
     const { data: shellHistory, isLoading } = shellHistoryQuery;
     const normalizedShellHistory = normalizeShellHistory(shellHistory);
     const shellHistoryUnavailable = shellHistoryQuery.isError || (shellHistory != null && !Array.isArray(shellHistory));
-=======
-    const { data: shellHistory, isLoading } = trpc.shell.getSystemHistory.useQuery({ limit: 10 }, { refetchInterval: 5000 });
-    const normalizedShellHistory = normalizeShellHistory(shellHistory);
->>>>>>> origin/rewrite/main-sanitized
 
     return (
         <div className="p-8 space-y-8 h-full flex flex-col">
@@ -128,13 +123,10 @@ export default function ToolsRegistryDashboard() {
                             <span className="w-2 h-4 bg-fuchsia-500 animate-bounce"></span>
                             Loading shell history...
                         </div>
-<<<<<<< HEAD
                     ) : shellHistoryUnavailable ? (
                         <div className="p-8 text-red-300">
                             Shell history unavailable{shellHistoryQuery.isError ? `: ${shellHistoryQuery.error.message}` : ' due to malformed data'}.
                         </div>
-=======
->>>>>>> origin/rewrite/main-sanitized
                     ) : normalizedShellHistory.length === 0 ? (
                         <div className="p-8 text-zinc-600">
                             <span className="text-emerald-500">server@borg</span><span className="text-zinc-400">:</span><span className="text-blue-500">~</span>$ No commands logged in recent history.

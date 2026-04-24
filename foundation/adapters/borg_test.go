@@ -6,16 +6,16 @@ import (
 	"testing"
 )
 
-func TestHyperCodeAdapterBuildsStatusWithoutPanicking(t *testing.T) {
+func TestBorgAdapterBuildsStatusWithoutPanicking(t *testing.T) {
 	dir := t.TempDir()
-	hypercodeDir := filepath.Join(dir, "..", "hypercode")
-	if err := os.MkdirAll(hypercodeDir, 0o755); err != nil {
+	borgDir := filepath.Join(dir, "..", "borg")
+	if err := os.MkdirAll(borgDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(hypercodeDir, "README.md"), []byte("# HyperCode"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(borgDir, "README.md"), []byte("# Borg"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	adapter := NewHyperCodeAdapter(dir)
+	adapter := NewBorgAdapter(dir)
 	status := adapter.Status()
 	if !status.Assimilated {
 		t.Fatal("expected assimilated borg adapter")
@@ -26,8 +26,8 @@ func TestHyperCodeAdapterBuildsStatusWithoutPanicking(t *testing.T) {
 	if status.Provider.CurrentProvider == "" {
 		t.Fatal("expected provider status")
 	}
-	if status.HyperCodeRepoPath == "" {
-		t.Fatal("expected discovered hypercode repo path")
+	if status.BorgRepoPath == "" {
+		t.Fatal("expected discovered borg repo path")
 	}
 	if adapter.RouteMCP("list tools") == "" {
 		t.Fatal("expected routed MCP string")

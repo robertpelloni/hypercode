@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/robertpelloni/hypercode/foundation/adapters"
-	"github.com/robertpelloni/hypercode/foundation/compat"
-	foundationorchestration "github.com/robertpelloni/hypercode/foundation/orchestration"
-	foundationpi "github.com/robertpelloni/hypercode/foundation/pi"
-	foundationrepomap "github.com/robertpelloni/hypercode/foundation/repomap"
+	"github.com/robertpelloni/borg/foundation/adapters"
+	"github.com/robertpelloni/borg/foundation/compat"
+	foundationorchestration "github.com/robertpelloni/borg/foundation/orchestration"
+	foundationpi "github.com/robertpelloni/borg/foundation/pi"
+	foundationrepomap "github.com/robertpelloni/borg/foundation/repomap"
 )
 
 type foundationExecRequest struct {
@@ -66,10 +66,10 @@ func currentFoundationRuntime() (*foundationpi.Runtime, string, error) {
 }
 
 func foundationAdaptersPayload(cwd string) map[string]any {
-	hyperAdapter := adapters.NewHyperCodeAdapter(cwd)
+	hyperAdapter := adapters.NewBorgAdapter(cwd)
 	mcpAdapter := adapters.NewMCPAdapter(cwd)
 	return map[string]any{
-		"hypercode": hyperAdapter.Status(),
+		"borg": hyperAdapter.Status(),
 		"mcp":       mcpAdapter.Status(),
 	}
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-// MCPHost represents the internal Model Context Protocol engine of Hypercode
+// MCPHost represents the internal Model Context Protocol engine of Borg
 type MCPHost struct {
 	server *server.MCPServer
 }
@@ -16,7 +16,7 @@ type MCPHost struct {
 // NewMCPHost creates a native Go MCP server matching the TS implementation
 func NewMCPHost() *MCPHost {
 	mcpServer := server.NewMCPServer(
-		"Hypercode Borg Core",
+		"Borg Borg Core",
 		"0.2.0",
 	)
 
@@ -31,11 +31,11 @@ func (h *MCPHost) RegisterNativeTools() {
 	// Example stub of native Go tool registration (equivalent to @borg/tools)
 
 	systemStatusTool := mcp.NewTool("system_status",
-		mcp.WithDescription("Get the health and status of the Hypercode native core."),
+		mcp.WithDescription("Get the health and status of the Borg native core."),
 	)
 
 	h.server.AddTool(systemStatusTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return mcp.NewToolResultText("Hypercode Native Core is running smoothly with 100% capacity."), nil
+		return mcp.NewToolResultText("Borg Native Core is running smoothly with 100% capacity."), nil
 	})
 
 	fmt.Println("[MCP] Native Tools registered directly to host.")

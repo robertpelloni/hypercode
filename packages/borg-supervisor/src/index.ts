@@ -23,11 +23,7 @@ class SupervisorServer {
         this.uiAutomationManager = new UiAutomationManager();
         this.server = new Server(
             {
-<<<<<<<< HEAD:archive/ts-legacy/packages/hypercode-supervisor/src/index.ts
-                name: "hypercode-supervisor",
-========
                 name: "borg-supervisor",
->>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/borg-supervisor/src/index.ts
                 version: "0.1.0",
             },
             {
@@ -46,11 +42,7 @@ class SupervisorServer {
                 tools: [
                     {
                         name: "install_supervisor",
-<<<<<<<< HEAD:archive/ts-legacy/packages/hypercode-supervisor/src/index.ts
-                        description: "Install HyperCode Supervisor into Antigravity MCP Config",
-========
-                        description: "Install borg Supervisor into Antigravity MCP Config",
->>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/borg-supervisor/src/index.ts
+                        description: "Install Borg Supervisor into Antigravity MCP Config",
                         inputSchema: {
                             type: "object",
                             properties: {
@@ -484,17 +476,10 @@ class SupervisorServer {
     }
 
     async start() {
-<<<<<<<< HEAD:archive/ts-legacy/packages/hypercode-supervisor/src/index.ts
-        logger.info("HyperCode Supervisor Starting...");
+        logger.info("Borg Supervisor Starting...");
         const transport = new StdioServerTransport();
         await this.server.connect(transport);
-        logger.info("HyperCode Supervisor Connected to Stdio");
-========
-        logger.info("borg Supervisor Starting...");
-        const transport = new StdioServerTransport();
-        await this.server.connect(transport);
-        logger.info("borg Supervisor Connected to Stdio");
->>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/borg-supervisor/src/index.ts
+        logger.info("Borg Supervisor Connected to Stdio");
     }
 }
 

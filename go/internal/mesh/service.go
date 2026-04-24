@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hypercodehq/hypercode-go/internal/config"
-	"github.com/hypercodehq/hypercode-go/internal/interop"
+	"github.com/robertpelloni/borg-go/internal/config"
+	"github.com/robertpelloni/borg-go/internal/interop"
 	"github.com/borghq/borg-go/internal/config"
 	"github.com/borghq/borg-go/internal/interop"
 )

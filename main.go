@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/robertpelloni/hypercode/cmd"
+	"github.com/robertpelloni/borg/cmd"
 )
 
 func main() {

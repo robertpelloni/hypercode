@@ -1,5 +1,5 @@
 /**
- * Centralized logging system for HyperCode Extension
+ * Centralized logging system for Borg Extension
  * Centralized logging system for borg Extension
  *
  * Features:

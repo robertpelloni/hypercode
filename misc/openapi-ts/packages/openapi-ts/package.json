@@ -102,17 +102,10 @@
     "typescript": ">=5.5.3"
   },
   "devDependencies": {
-<<<<<<< HEAD
     "@angular/common": "19.2.17",
     "@angular/compiler": "19.2.18",
     "@angular/compiler-cli": "19.2.17",
     "@angular/core": "21.1.1",
-=======
-    "@angular/common": "19.2.18",
-    "@angular/compiler": "19.2.18",
-    "@angular/compiler-cli": "19.2.17",
-    "@angular/core": "21.1.0",
->>>>>>> origin/dependabot/npm_and_yarn/auth/openai-codex/npm_and_yarn-39baa59e7d
     "@angular/platform-browser": "19.2.17",
     "@angular/platform-browser-dynamic": "19.2.17",
     "@angular/router": "19.2.17",

@@ -97,7 +97,7 @@ func TestExportSessionsUsesDefaultOutputDirWhenBlank(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ExportSessions returned error: %v", err)
 	}
-	want := filepath.Join(workspace, ".hypercode", "exports")
+	want := filepath.Join(workspace, ".borg", "exports")
 	if result.OutputPath != want {
 		t.Fatalf("expected default output path %q, got %#v", want, result)
 	}

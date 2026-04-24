@@ -96,11 +96,7 @@ Add-Type @"
 using System;
 using System.Runtime.InteropServices;
 
-<<<<<<<< HEAD:archive/ts-legacy/packages/hypercode-supervisor/src/ui_automation.ts
-public static class HyperCodeNativeAutomation {
-========
-public static class borgNativeAutomation {
->>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/borg-supervisor/src/ui_automation.ts
+public static class BorgNativeAutomation {
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
@@ -235,11 +231,7 @@ function Test-IsLikelyChatInput($element) {
 }
 
 function Get-ForegroundAutomationWindow() {
-<<<<<<<< HEAD:archive/ts-legacy/packages/hypercode-supervisor/src/ui_automation.ts
-    $handle = [HyperCodeNativeAutomation]::GetForegroundWindow()
-========
-    $handle = [borgNativeAutomation]::GetForegroundWindow()
->>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/borg-supervisor/src/ui_automation.ts
+    $handle = [BorgNativeAutomation]::GetForegroundWindow()
     if ($handle -eq [IntPtr]::Zero) {
         throw 'No foreground window available'
     }
@@ -404,17 +396,10 @@ function Invoke-Element([System.Windows.Automation.AutomationElement]$element) {
     if ($rect.Width -gt 0 -and $rect.Height -gt 0) {
         $x = [int][Math]::Round($rect.Left + ($rect.Width / 2))
         $y = [int][Math]::Round($rect.Top + ($rect.Height / 2))
-<<<<<<<< HEAD:archive/ts-legacy/packages/hypercode-supervisor/src/ui_automation.ts
-        [HyperCodeNativeAutomation]::SetCursorPos($x, $y) | Out-Null
+        [BorgNativeAutomation]::SetCursorPos($x, $y) | Out-Null
         Start-Sleep -Milliseconds 50
-        [HyperCodeNativeAutomation]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero)
-        [HyperCodeNativeAutomation]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero)
-========
-        [borgNativeAutomation]::SetCursorPos($x, $y) | Out-Null
-        Start-Sleep -Milliseconds 50
-        [borgNativeAutomation]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero)
-        [borgNativeAutomation]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero)
->>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:packages/borg-supervisor/src/ui_automation.ts
+        [BorgNativeAutomation]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero)
+        [BorgNativeAutomation]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero)
         return 'mouse-click'
     }
 

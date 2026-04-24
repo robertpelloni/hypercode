@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	foundationpi "github.com/robertpelloni/hypercode/foundation/pi"
-	foundationrepomap "github.com/robertpelloni/hypercode/foundation/repomap"
+	foundationpi "github.com/robertpelloni/borg/foundation/pi"
+	foundationrepomap "github.com/robertpelloni/borg/foundation/repomap"
 )
 
 func TestExecuteFoundationToolAndSessions(t *testing.T) {
@@ -48,15 +48,15 @@ func TestExecuteFoundationToolAndSessions(t *testing.T) {
 
 func TestFoundationAdaptersPayloadAndRepomap(t *testing.T) {
 	cwd := t.TempDir()
-	hypercodeDir := filepath.Join(cwd, "..", "hypercode")
-	if err := os.MkdirAll(hypercodeDir, 0o755); err != nil {
+	borgDir := filepath.Join(cwd, "..", "borg")
+	if err := os.MkdirAll(borgDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(hypercodeDir, "README.md"), []byte("# HyperCode"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(borgDir, "README.md"), []byte("# Borg"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	payload := foundationAdaptersPayload(cwd)
-	if payload["hypercode"] == nil || payload["mcp"] == nil {
+	if payload["borg"] == nil || payload["mcp"] == nil {
 		t.Fatalf("unexpected adapter payload: %#v", payload)
 	}
 	setMCPEnv(t, cwd)

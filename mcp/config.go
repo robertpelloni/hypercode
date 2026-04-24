@@ -1,6 +1,6 @@
 package mcp
 
-import "github.com/robertpelloni/hypercode/foundation/adapters"
+import "github.com/robertpelloni/borg/foundation/adapters"
 
 // Config binds the ~/.borg/mcp.json native parsing.
 type Config struct {

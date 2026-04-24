@@ -13,8 +13,8 @@
 **Implication**: This is intended behavior to keep LLM context clean. Models are expected to use `search_tools` and `load_tool` to dynamically fetch what they need.
 
 ### 3. Config Directory Resolution
-**Observation**: `getHyperCodeConfigDir()` historically hardcoded `os.homedir() + '/.hypercode'`. 
-**Resolution**: It now dynamically respects `process.env.HYPERCODE_CONFIG_DIR`, and falls back to checking `process.cwd()/mcp.jsonc` before defaulting to the user's home directory. This allows local repository configurations to be authoritative during development.
+**Observation**: `getBorgConfigDir()` historically hardcoded `os.homedir() + '/.borg'`. 
+**Resolution**: It now dynamically respects `process.env.BORG_CONFIG_DIR`, and falls back to checking `process.cwd()/mcp.jsonc` before defaulting to the user's home directory. This allows local repository configurations to be authoritative during development.
 **Observation**: `getBorgConfigDir()` historically hardcoded `os.homedir() + '/.borg'`. 
 **Resolution**: It now dynamically respects `process.env.BORG_CONFIG_DIR`, and falls back to checking `process.cwd()/mcp.jsonc` before defaulting to the user's home directory. This allows local repository configurations to be authoritative during development.
 
@@ -36,7 +36,7 @@
 **Resolution**: Added REST API bridge routes in `orchestrator.ts` that serve the same data as the tRPC router, so the dashboard's native-control-plane fetch path works cleanly.
 
 ### 8. Worktree Complexity
-**Observation**: The project uses git worktrees with the submodule structure at `.git/modules/hypercode`. The actual working directory (`hypercode-push`) can become detached from `main`.
+**Observation**: The project uses git worktrees with the submodule structure at `.git/modules/borg`. The actual working directory (`borg-push`) can become detached from `main`.
 **Resolution**: Manually update the worktree HEAD file to point to `refs/heads/main`. Don't try to use `git checkout main` across worktrees.
 
 ### 9. Go Sidecar Version Injection (Added 2026-04-08)
@@ -76,7 +76,7 @@
 **Implication**: The Go sidecar can fulfill many critical developer tasks autonomously even if the TypeScript server is restarting or unreachable.
 
 ### 16. Package Build Dependency in Monorepo (Added 2026-04-08)
-**Observation**: Adding new files and exports to sub-packages (like `@hypercode/agents`) requires an explicit build of those packages before the main control plane (`@hypercode/core`) or CLI can see the changes, especially if they depend on built artifacts or have strict type checking.
+**Observation**: Adding new files and exports to sub-packages (like `@borg/agents`) requires an explicit build of those packages before the main control plane (`@borg/core`) or CLI can see the changes, especially if they depend on built artifacts or have strict type checking.
 **Resolution**: Run `pnpm build` in the affected sub-packages before building the consumer.
 **Implication**: Automated build scripts should handle package topological sorting or ensure all dependencies are built.
 
@@ -123,10 +123,10 @@
 ### 25. Standard Tool Visibility Fix (Added 2026-04-08)
 **Observation**: The "Ultra-Streamlined Advertising" filter was too aggressive, hiding basic standard library tools (bash, filesystem) from models. This forced a manual discovery turn that most agents (like pi) weren't prepared for.
 **Resolution**: Modified `getDirectModeTools` to treat standard library and tool parity aliases as `alwaysOn` by default.
-**Implication**: HyperCode is now immediately useful as an MCP server for any host agent, as basic coding capabilities are advertised upfront.
+**Implication**: Borg is now immediately useful as an MCP server for any host agent, as basic coding capabilities are advertised upfront.
 
 ### 26. Directory Clutter Reduction (Added 2026-04-08)
-**Observation**: The nested hash-based directory structure for session archives was creating thousands of nearly-empty subdirectories, making the `.hypercode` folder difficult to manage.
+**Observation**: The nested hash-based directory structure for session archives was creating thousands of nearly-empty subdirectories, making the `.borg` folder difficult to manage.
 **Resolution**: Flattened the archive structure in `ImportedSessionStore` to store all session files in a single `sessions/` directory.
 **Implication**: Improved filesystem performance and much cleaner project directory structure.
 
@@ -142,7 +142,7 @@
 
 ### 29. Go Native Skill Management (Added 2026-04-08)
 **Observation**: The Go sidecar previously relied on the Node server to list and save skills, creating a dependency for "Total Autonomy".
-**Resolution**: Implemented `SkillStore` in Go. It natively reads and writes `.md` runbooks with frontmatter metadata in the `.hypercode/skills` directory.
+**Resolution**: Implemented `SkillStore` in Go. It natively reads and writes `.md` runbooks with frontmatter metadata in the `.borg/skills` directory.
 **Implication**: The Go sidecar can now independently manage the system's operational knowledge base.
 
 ### 30. Monorepo Build Sequencing (Added 2026-04-08)
@@ -173,7 +173,7 @@
 ### 35. Automated Browser Memory Ingestion (Added 2026-04-08)
 **Observation**: Manually clicking "Sync to Memory" in the extension is a friction point that leads to missing context.
 **Resolution**: Implemented a `MutationObserver` in the extension's `MemoryCaptureService`. It now watches for new DOM nodes matching AI message patterns and automatically schedules a capture.
-**Implication**: Conversations from web chat interfaces now flow into the HyperCode memory bank in near real-time without user intervention.
+**Implication**: Conversations from web chat interfaces now flow into the Borg memory bank in near real-time without user intervention.
 
 ### 36. Persistent A2A Audit Logs (Added 2026-04-08)
 **Observation**: Live A2A traffic in the dashboard is transient and lost on page refresh, making long-term debugging difficult.

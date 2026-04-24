@@ -9,7 +9,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/hypercodehq/hypercode-go/internal/lockfile"
+	"github.com/robertpelloni/borg-go/internal/lockfile"
 	"github.com/borghq/borg-go/internal/lockfile"
 )
 
@@ -23,7 +23,7 @@ func TestResolveTRPCBasesPrefersLockedAndConfiguredBases(t *testing.T) {
 		t.Fatalf("failed to seed lock file: %v", err)
 	}
 
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", "http://127.0.0.1:4200/trpc")
+	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:4200/trpc")
 
 	bases := ResolveTRPCBases(mainLockPath)
 	if len(bases) < 2 {
@@ -55,7 +55,7 @@ func TestCallTRPCProcedureReturnsUnwrappedJSONData(t *testing.T) {
 	}))
 	defer server.Close()
 
-	t.Setenv("HYPERCODE_TRPC_UPSTREAM", server.URL+"/trpc")
+	t.Setenv("BORG_TRPC_UPSTREAM", server.URL+"/trpc")
 
 	result, err := CallTRPCProcedure(context.Background(), filepath.Join(t.TempDir(), "missing-lock"), "session.list", nil)
 	if err != nil {

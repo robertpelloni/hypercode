@@ -7,37 +7,37 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/robertpelloni/hypercode/borg"
+	"github.com/robertpelloni/borg/borg"
 )
 
-type HyperCodeStatus struct {
+type BorgStatus struct {
 	Assimilated       bool           `json:"assimilated"`
 	BorgCoreURL       string         `json:"borgCoreUrl,omitempty"`
 	MemoryContext     string         `json:"memoryContext,omitempty"`
 	Provider          ProviderStatus `json:"provider"`
 	MCPServerNames    []string       `json:"mcpServerNames,omitempty"`
 	MCPConfigPath     string         `json:"mcpConfigPath,omitempty"`
-	HyperCodeRepoPath string         `json:"hypercodeRepoPath,omitempty"`
+	BorgRepoPath string         `json:"borgRepoPath,omitempty"`
 	Warnings          []string       `json:"warnings,omitempty"`
 }
 
-type HyperCodeAdapter struct {
+type BorgAdapter struct {
 	borgAdapter *borg.Adapter
 	workingDir  string
 	homeDir     string
 }
 
-func NewHyperCodeAdapter(workingDir string) *HyperCodeAdapter {
+func NewBorgAdapter(workingDir string) *BorgAdapter {
 	homeDir, _ := os.UserHomeDir()
-	return &HyperCodeAdapter{
+	return &BorgAdapter{
 		borgAdapter: borg.NewAdapter(),
 		workingDir:  workingDir,
 		homeDir:     homeDir,
 	}
 }
 
-func (a *HyperCodeAdapter) Status() HyperCodeStatus {
-	status := HyperCodeStatus{
+func (a *BorgAdapter) Status() BorgStatus {
+	status := BorgStatus{
 		Assimilated:   a.borgAdapter != nil && a.borgAdapter.Assimilated,
 		MemoryContext: a.MemoryContext(),
 		Provider:      BuildProviderStatus(),
@@ -45,10 +45,10 @@ func (a *HyperCodeAdapter) Status() HyperCodeStatus {
 	if a.borgAdapter != nil {
 		status.BorgCoreURL = a.borgAdapter.BorgCoreURL
 	}
-	if repoPath, ok := a.findHyperCodeRepo(); ok {
-		status.HyperCodeRepoPath = repoPath
+	if repoPath, ok := a.findBorgRepo(); ok {
+		status.BorgRepoPath = repoPath
 	} else {
-		status.Warnings = append(status.Warnings, "adjacent hypercode repo not found")
+		status.Warnings = append(status.Warnings, "adjacent borg repo not found")
 	}
 	if configPath, names, err := a.listMCPServers(); err == nil {
 		status.MCPConfigPath = configPath
@@ -59,24 +59,24 @@ func (a *HyperCodeAdapter) Status() HyperCodeStatus {
 	return status
 }
 
-func (a *HyperCodeAdapter) MemoryContext() string {
+func (a *BorgAdapter) MemoryContext() string {
 	if a.borgAdapter == nil {
 		return ""
 	}
 	return a.borgAdapter.GetMemoryContext()
 }
 
-func (a *HyperCodeAdapter) RouteMCP(request string) string {
+func (a *BorgAdapter) RouteMCP(request string) string {
 	if a.borgAdapter == nil {
 		return request
 	}
 	return a.borgAdapter.RouteMCP(request)
 }
 
-func (a *HyperCodeAdapter) BuildSystemContext() string {
+func (a *BorgAdapter) BuildSystemContext() string {
 	status := a.Status()
 	parts := []string{
-		"[HyperCode Adapter]",
+		"[Borg Adapter]",
 		fmt.Sprintf("Assimilated: %t", status.Assimilated),
 	}
 	if status.BorgCoreURL != "" {
@@ -91,8 +91,8 @@ func (a *HyperCodeAdapter) BuildSystemContext() string {
 	if len(status.MCPServerNames) > 0 {
 		parts = append(parts, fmt.Sprintf("Configured MCP servers: %s", strings.Join(status.MCPServerNames, ", ")))
 	}
-	if status.HyperCodeRepoPath != "" {
-		parts = append(parts, fmt.Sprintf("HyperCode repo: %s", status.HyperCodeRepoPath))
+	if status.BorgRepoPath != "" {
+		parts = append(parts, fmt.Sprintf("Borg repo: %s", status.BorgRepoPath))
 	}
 	if len(status.Warnings) > 0 {
 		parts = append(parts, fmt.Sprintf("Warnings: %s", strings.Join(status.Warnings, "; ")))
@@ -100,7 +100,7 @@ func (a *HyperCodeAdapter) BuildSystemContext() string {
 	return strings.Join(parts, "\n")
 }
 
-func (a *HyperCodeAdapter) listMCPServers() (string, []string, error) {
+func (a *BorgAdapter) listMCPServers() (string, []string, error) {
 	configPath, config, err := ParseMCPConfig(a.homeDir)
 	if err != nil {
 		return configPath, nil, fmt.Errorf("mcp config unavailable: %w", err)
@@ -113,16 +113,16 @@ func (a *HyperCodeAdapter) listMCPServers() (string, []string, error) {
 	return configPath, names, nil
 }
 
-func (a *HyperCodeAdapter) findHyperCodeRepo() (string, bool) {
+func (a *BorgAdapter) findBorgRepo() (string, bool) {
 	candidates := []string{}
 	if a.workingDir != "" {
 		candidates = append(candidates,
-			filepath.Join(a.workingDir, "..", "hypercode"),
-			filepath.Join(a.workingDir, "../hypercode"),
+			filepath.Join(a.workingDir, "..", "borg"),
+			filepath.Join(a.workingDir, "../borg"),
 		)
 	}
 	if a.homeDir != "" {
-		candidates = append(candidates, filepath.Join(a.homeDir, "workspace", "hypercode"))
+		candidates = append(candidates, filepath.Join(a.homeDir, "workspace", "borg"))
 	}
 	for _, candidate := range candidates {
 		clean := filepath.Clean(candidate)

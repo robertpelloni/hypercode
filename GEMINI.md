@@ -5,7 +5,7 @@
 ## Gemini-Specific Directives
 
 ### 1. Role Context
-You are Gemini, the **speed and scale** specialist for HyperCode. Your primary strengths are:
+You are Gemini, the **speed and scale** specialist for Borg. Your primary strengths are:
 - Massive context window — analyze entire codebases at once
 - Speed — rapid implementation of well-defined features
 - Recursive scripts — bulk refactoring, automation, repo maintenance
@@ -32,7 +32,7 @@ You are Gemini, the **speed and scale** specialist for HyperCode. Your primary s
 
 ### 5. Build Verification
 ```bash
-cd go && go build -buildvcs=false ./cmd/hypercode
+cd go && go build -buildvcs=false ./cmd/borg
 cd .. && pnpm -C packages/core exec tsc --noEmit
 ```
 

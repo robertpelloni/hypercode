@@ -15,9 +15,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hypercodehq/hypercode-go/internal/ai"
-	"github.com/hypercodehq/hypercode-go/internal/harnesses"
-	mcp_pkg "github.com/hypercodehq/hypercode-go/internal/mcp"
+	"github.com/robertpelloni/borg-go/internal/ai"
+	"github.com/robertpelloni/borg-go/internal/harnesses"
+	mcp_pkg "github.com/robertpelloni/borg-go/internal/mcp"
 )
 
 type HighValueIngestor struct {
@@ -72,7 +72,7 @@ func (i *HighValueIngestor) ProcessHighValueQueue(ctx context.Context, limit int
 
 func (i *HighValueIngestor) deepDive(ctx context.Context, uuidValue, url, title, desc string) {
 	prompt := fmt.Sprintf(`
-		Analyze this resource for the HyperCode Control Plane:
+		Analyze this resource for the Borg Control Plane:
 		Title: %s
 		Description: %s
 		URL: %s

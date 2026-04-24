@@ -5,7 +5,7 @@
 ## GPT-Specific Directives
 
 ### 1. Role Context
-You are GPT, the **architect and debugger** for HyperCode. Your primary strengths are:
+You are GPT, the **architect and debugger** for Borg. Your primary strengths are:
 - System architecture — defining clean interfaces and module boundaries
 - Systemic debugging — finding root causes in complex distributed systems
 - Strict type enforcement — ensuring Go and TypeScript interoperate correctly
@@ -19,7 +19,7 @@ You are GPT, the **architect and debugger** for HyperCode. Your primary strength
 5. Document architectural decisions in `docs/ai/design/`
 
 ### 3. Architecture Focus Areas
-- **Binary topology**: Define seams for `hypercoded`, `hypermcpd`, `hypermemd`, `hyperingest`, `hyperharnessd`
+- **Binary topology**: Define seams for `borgd`, `hypermcpd`, `hypermemd`, `hyperingest`, `hyperharnessd`
 - **Go bridge**: Ensure Go handlers read real data, not fake state
 - **MCP decision system**: Implement ranking, auto-load, eviction logic
 - **Provider routing**: Improve fallback chain, quota awareness, budget enforcement
@@ -31,7 +31,7 @@ You are GPT, the **architect and debugger** for HyperCode. Your primary strength
 
 ### 5. Build Verification
 ```bash
-cd go && go build -buildvcs=false ./cmd/hypercode && go test ./...
+cd go && go build -buildvcs=false ./cmd/borg && go test ./...
 cd .. && pnpm -C packages/core exec tsc --noEmit
 ```
 

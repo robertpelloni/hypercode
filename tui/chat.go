@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/robertpelloni/hypercode/agents"
+	"github.com/robertpelloni/borg/agents"
 )
 
 type model struct {
@@ -25,7 +25,7 @@ func initialModel() model {
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
 	return model{
-		director: agents.NewDirector(agents.NewHyperCodeProvider()),
+		director: agents.NewDirector(agents.NewBorgProvider()),
 		input:    "",
 		history:  []string{},
 		loading:  false,

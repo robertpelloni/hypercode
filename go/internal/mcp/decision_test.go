@@ -37,7 +37,7 @@ func TestDecisionSystemLoadUnload(t *testing.T) {
 	ds.AddCatalogEntries(BuiltinTools())
 
 	// Load a tool
-	lt, err := ds.LoadTool(context.Background(), "hypercode__bash")
+	lt, err := ds.LoadTool(context.Background(), "borg__bash")
 	if err != nil {
 		t.Fatalf("LoadTool failed: %v", err)
 	}
@@ -49,24 +49,24 @@ func TestDecisionSystemLoadUnload(t *testing.T) {
 	loaded := ds.ListLoadedTools()
 	found := false
 	for _, l := range loaded {
-		if l.Name == "hypercode__bash" {
+		if l.Name == "borg__bash" {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Error("hypercode__bash should be in loaded list")
+		t.Error("borg__bash should be in loaded list")
 	}
 
 	// Unload
-	if err := ds.UnloadTool("hypercode__bash"); err != nil {
+	if err := ds.UnloadTool("borg__bash"); err != nil {
 		t.Fatalf("UnloadTool failed: %v", err)
 	}
 
 	loaded = ds.ListLoadedTools()
 	for _, l := range loaded {
-		if l.Name == "hypercode__bash" {
-			t.Error("hypercode__bash should not be in loaded list after unload")
+		if l.Name == "borg__bash" {
+			t.Error("borg__bash should not be in loaded list after unload")
 		}
 	}
 }

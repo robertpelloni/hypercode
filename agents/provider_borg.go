@@ -10,17 +10,17 @@ import (
 	"time"
 )
 
-type HyperCodeControlPlaneProvider struct {
+type BorgControlPlaneProvider struct {
 	BaseURL string
 }
 
-func NewHyperCodeProvider() *HyperCodeControlPlaneProvider {
-	return &HyperCodeControlPlaneProvider{
+func NewBorgProvider() *BorgControlPlaneProvider {
+	return &BorgControlPlaneProvider{
 		BaseURL: "http://127.0.0.1:4000",
 	}
 }
 
-func (p *HyperCodeControlPlaneProvider) Chat(ctx context.Context, messages []Message, tools []Tool) (Message, error) {
+func (p *BorgControlPlaneProvider) Chat(ctx context.Context, messages []Message, tools []Tool) (Message, error) {
 	// Re-map messages to the format expected by the /api/agent/chat endpoint
 	type payloadMsg struct {
 		Role    string `json:"role"`
@@ -53,13 +53,13 @@ func (p *HyperCodeControlPlaneProvider) Chat(ctx context.Context, messages []Mes
 	client := &http.Client{Timeout: 120 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return Message{}, fmt.Errorf("failed to contact HyperCode Control Plane: %w", err)
+		return Message{}, fmt.Errorf("failed to contact Borg Control Plane: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return Message{}, fmt.Errorf("HyperCode API error: %s - %s", resp.Status, string(body))
+		return Message{}, fmt.Errorf("Borg API error: %s - %s", resp.Status, string(body))
 	}
 
 	var result struct {
@@ -73,11 +73,11 @@ func (p *HyperCodeControlPlaneProvider) Chat(ctx context.Context, messages []Mes
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return Message{}, fmt.Errorf("failed to parse HyperCode response: %w", err)
+		return Message{}, fmt.Errorf("failed to parse Borg response: %w", err)
 	}
 
 	if !result.Success {
-		return Message{}, fmt.Errorf("HyperCode rejected chat: %s", result.Error)
+		return Message{}, fmt.Errorf("Borg rejected chat: %s", result.Error)
 	}
 
 	return Message{
@@ -86,7 +86,7 @@ func (p *HyperCodeControlPlaneProvider) Chat(ctx context.Context, messages []Mes
 	}, nil
 }
 
-func (p *HyperCodeControlPlaneProvider) Stream(ctx context.Context, messages []Message, tools []Tool, chunkChan chan<- string) error {
+func (p *BorgControlPlaneProvider) Stream(ctx context.Context, messages []Message, tools []Tool, chunkChan chan<- string) error {
 	// Fallback to synchronous chat if streaming isn't perfectly supported on the sidecar yet
 	msg, err := p.Chat(ctx, messages, tools)
 	if err != nil {
@@ -97,6 +97,6 @@ func (p *HyperCodeControlPlaneProvider) Stream(ctx context.Context, messages []M
 	return nil
 }
 
-func (p *HyperCodeControlPlaneProvider) GetModelName() string {
-	return "hypercode-router-active"
+func (p *BorgControlPlaneProvider) GetModelName() string {
+	return "borg-router-active"
 }

@@ -60,10 +60,10 @@
     },
     {
       "id": "6",
-      "subject": "Rename all HyperCode references back to borg",
-      "description": "Find all references to HyperCode, hypercode, @hypercode, hypercodehq, etc. and rename to borg equivalents. This includes package names, imports, URLs, display strings, config, docs, folder names, etc.",
+      "subject": "Rename all Borg references back to borg",
+      "description": "Find all references to Borg, borg, @borg, robertpelloni, etc. and rename to borg equivalents. This includes package names, imports, URLs, display strings, config, docs, folder names, etc.",
       "status": "in_progress",
-      "activeForm": "Renaming HyperCode to borg across codebase",
+      "activeForm": "Renaming Borg to borg across codebase",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],

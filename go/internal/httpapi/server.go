@@ -18,8 +18,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"github.com/hypercodehq/hypercode-go/internal/memorystore"
-	"github.com/hypercodehq/hypercode-go/internal/codeexec"
+	"github.com/robertpelloni/borg-go/internal/memorystore"
+	"github.com/robertpelloni/borg-go/internal/codeexec"
 	"regexp"
 	"runtime"
 	"slices"
@@ -29,31 +29,31 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hypercodehq/hypercode-go/internal/buildinfo"
-	"github.com/hypercodehq/hypercode-go/internal/config"
-	"github.com/hypercodehq/hypercode-go/internal/controlplane"
-	"github.com/hypercodehq/hypercode-go/internal/harnesses"
-	"github.com/hypercodehq/hypercode-go/internal/interop"
-	"github.com/hypercodehq/hypercode-go/internal/mesh"
-	"github.com/hypercodehq/hypercode-go/internal/providers"
-	"github.com/hypercodehq/hypercode-go/internal/sessionimport"
-	"github.com/hypercodehq/hypercode-go/internal/hsync"
-	"github.com/hypercodehq/hypercode-go/internal/mcp"
-	"github.com/hypercodehq/hypercode-go/internal/orchestration"
-	"github.com/hypercodehq/hypercode-go/internal/supervisor"
-	"github.com/hypercodehq/hypercode-go/internal/tools"
-	"github.com/hypercodehq/hypercode-go/internal/workflow"
+	"github.com/robertpelloni/borg-go/internal/buildinfo"
+	"github.com/robertpelloni/borg-go/internal/config"
+	"github.com/robertpelloni/borg-go/internal/controlplane"
+	"github.com/robertpelloni/borg-go/internal/harnesses"
+	"github.com/robertpelloni/borg-go/internal/interop"
+	"github.com/robertpelloni/borg-go/internal/mesh"
+	"github.com/robertpelloni/borg-go/internal/providers"
+	"github.com/robertpelloni/borg-go/internal/sessionimport"
+	"github.com/robertpelloni/borg-go/internal/hsync"
+	"github.com/robertpelloni/borg-go/internal/mcp"
+	"github.com/robertpelloni/borg-go/internal/orchestration"
+	"github.com/robertpelloni/borg-go/internal/supervisor"
+	"github.com/robertpelloni/borg-go/internal/tools"
+	"github.com/robertpelloni/borg-go/internal/workflow"
 
-	"github.com/hypercodehq/hypercode-go/internal/cache"
-	"github.com/hypercodehq/hypercode-go/internal/ctxharvester"
-	"github.com/hypercodehq/hypercode-go/internal/eventbus"
-	"github.com/hypercodehq/hypercode-go/internal/gitservice"
-	"github.com/hypercodehq/hypercode-go/internal/healer"
-	"github.com/hypercodehq/hypercode-go/internal/metrics"
-	processmanager "github.com/hypercodehq/hypercode-go/internal/process"
-	"github.com/hypercodehq/hypercode-go/internal/session"
-	"github.com/hypercodehq/hypercode-go/internal/toolregistry"
-	"github.com/hypercodehq/hypercode-go/internal/workspaces"
+	"github.com/robertpelloni/borg-go/internal/cache"
+	"github.com/robertpelloni/borg-go/internal/ctxharvester"
+	"github.com/robertpelloni/borg-go/internal/eventbus"
+	"github.com/robertpelloni/borg-go/internal/gitservice"
+	"github.com/robertpelloni/borg-go/internal/healer"
+	"github.com/robertpelloni/borg-go/internal/metrics"
+	processmanager "github.com/robertpelloni/borg-go/internal/process"
+	"github.com/robertpelloni/borg-go/internal/session"
+	"github.com/robertpelloni/borg-go/internal/toolregistry"
+	"github.com/robertpelloni/borg-go/internal/workspaces"
 	"github.com/google/uuid"
 	"github.com/borghq/borg-go/internal/buildinfo"
 	"github.com/borghq/borg-go/internal/config"
@@ -415,7 +415,7 @@ type SummaryBucket struct {
 
 func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
 	memoryManager := memorystore.NewManager(filepath.Join(cfg.ConfigDir, "memory.json"))
-	codeExecutor := codeexec.NewSandbox(filepath.Join(cfg.WorkspaceRoot, ".hypercode", "sandbox"))
+	codeExecutor := codeexec.NewSandbox(filepath.Join(cfg.WorkspaceRoot, ".borg", "sandbox"))
 	server := &Server{
 		cfg:       cfg,
 		memoryManager: memoryManager,
@@ -436,7 +436,7 @@ func New(cfg config.Config, detector controlplane.ToolProvider) *Server {
 		darwinState:       newLocalDarwinStateManager(filepath.Join(cfg.WorkspaceRoot, "darwin_state.json")),
 		runtimeServers:    newRuntimeServerRegistry(),
 		supervisorManager: supervisor.NewManager(supervisor.ManagerOptions{WorktreeRoot: cfg.WorkspaceRoot, PersistencePath: filepath.Join(cfg.ConfigDir, "session-supervisor.json")}),
-		sessionState:      newLocalSessionStateManager(filepath.Join(cfg.WorkspaceRoot, ".hypercode-session.json")),
+		sessionState:      newLocalSessionStateManager(filepath.Join(cfg.WorkspaceRoot, ".borg-session.json")),
 		workflowEngine:    workflow.NewEngine(),
 		toolsRegistry:     tools.NewRegistry(),
 		mcpAggregator:     mcp.NewAggregator(),
@@ -4727,14 +4727,14 @@ func (s *Server) handleGraphSymbols(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleContextList(w http.ResponseWriter, r *http.Request) {
 	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "hypercodeContext.list", nil, &result)
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "borgContext.list", nil, &result)
 	if err == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"data":    result,
 			"bridge": map[string]any{
 				"upstreamBase": upstreamBase,
-				"procedure":    "hypercodeContext.list",
+				"procedure":    "borgContext.list",
 			},
 		})
 		return
@@ -4745,34 +4745,34 @@ func (s *Server) handleContextList(w http.ResponseWriter, r *http.Request) {
 		"data":    []string{},
 		"bridge": map[string]any{
 			"fallback":  "go-local-context",
-			"procedure": "hypercodeContext.list",
+			"procedure": "borgContext.list",
 			"reason":    "upstream unavailable; using local empty context list",
 		},
 	})
 }
 
 func (s *Server) handleContextAdd(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "hypercodeContext.add")
+	s.handleTRPCBridgeBodyCall(w, r, "borgContext.add")
 }
 
 func (s *Server) handleContextRemove(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeBodyCall(w, r, "hypercodeContext.remove")
+	s.handleTRPCBridgeBodyCall(w, r, "borgContext.remove")
 }
 
 func (s *Server) handleContextClear(w http.ResponseWriter, r *http.Request) {
-	s.handleTRPCBridgeCall(w, r, http.MethodPost, "hypercodeContext.clear", nil)
+	s.handleTRPCBridgeCall(w, r, http.MethodPost, "borgContext.clear", nil)
 }
 
 func (s *Server) handleContextPrompt(w http.ResponseWriter, r *http.Request) {
 	var result any
-	upstreamBase, err := s.callUpstreamJSON(r.Context(), "hypercodeContext.getPrompt", nil, &result)
+	upstreamBase, err := s.callUpstreamJSON(r.Context(), "borgContext.getPrompt", nil, &result)
 	if err == nil {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"data":    result,
 			"bridge": map[string]any{
 				"upstreamBase": upstreamBase,
-				"procedure":    "hypercodeContext.getPrompt",
+				"procedure":    "borgContext.getPrompt",
 			},
 		})
 		return
@@ -4783,7 +4783,7 @@ func (s *Server) handleContextPrompt(w http.ResponseWriter, r *http.Request) {
 		"data":    "",
 		"bridge": map[string]any{
 			"fallback":  "go-local-context",
-			"procedure": "hypercodeContext.getPrompt",
+			"procedure": "borgContext.getPrompt",
 			"reason":    "upstream unavailable; using local empty context prompt",
 		},
 	})
@@ -7270,7 +7270,7 @@ func (s *Server) handleSavedScriptsCreate(w http.ResponseWriter, r *http.Request
 		"bridge": map[string]any{
 			"fallback":  "go-local-operator",
 			"procedure": "savedScripts.create",
-			"reason":    "upstream unavailable; saved script to local HyperCode config",
+			"reason":    "upstream unavailable; saved script to local Borg config",
 		},
 	})
 }
@@ -7308,7 +7308,7 @@ func (s *Server) handleSavedScriptsUpdate(w http.ResponseWriter, r *http.Request
 		"bridge": map[string]any{
 			"fallback":  "go-local-operator",
 			"procedure": "savedScripts.update",
-			"reason":    "upstream unavailable; updated saved script in local HyperCode config",
+			"reason":    "upstream unavailable; updated saved script in local Borg config",
 		},
 	})
 }
@@ -7346,7 +7346,7 @@ func (s *Server) handleSavedScriptsDelete(w http.ResponseWriter, r *http.Request
 		"bridge": map[string]any{
 			"fallback":  "go-local-operator",
 			"procedure": "savedScripts.delete",
-			"reason":    "upstream unavailable; deleted saved script from local HyperCode config",
+			"reason":    "upstream unavailable; deleted saved script from local Borg config",
 		},
 	})
 }
@@ -10284,7 +10284,7 @@ func (s *Server) handleRuntimeStatus(w http.ResponseWriter, r *http.Request) {
 				WorkspaceRootAvailable:      configStatus.WorkspaceRoot.Exists,
 				ConfigDirAvailable:          configStatus.ConfigDir.Exists,
 				MainConfigDirAvailable:      configStatus.MainConfigDir.Exists,
-				RepoConfigAvailable:         configStatus.HyperCodeConfigFile.Exists,
+				RepoConfigAvailable:         configStatus.BorgConfigFile.Exists,
 				MCPConfigAvailable:          configStatus.MCPConfigFile.Exists,
 				borgSubmoduleAvailable: configStatus.borgSubmodule.Exists,
 			},
@@ -13054,12 +13054,12 @@ func localProjectHandoffs(workspaceRoot string) []map[string]any {
 }
 
 func localInfrastructureStatus(workspaceRoot string) map[string]any {
-	infraBinary := strings.TrimSpace(os.Getenv("HYPERCODE_INFRA_BINARY"))
+	infraBinary := strings.TrimSpace(os.Getenv("BORG_INFRA_BINARY"))
 	if infraBinary == "" {
 		infraBinary = "mcpetes"
 	}
 
-	infraSubmoduleDir := strings.TrimSpace(os.Getenv("HYPERCODE_INFRA_SUBMODULE"))
+	infraSubmoduleDir := strings.TrimSpace(os.Getenv("BORG_INFRA_SUBMODULE"))
 	if infraSubmoduleDir == "" {
 		infraSubmoduleDir = infraBinary
 	}
@@ -13120,7 +13120,7 @@ func localSettingsConfig(workspaceRoot string) map[string]any {
 }
 
 func writeLocalSettingsConfig(workspaceRoot string, config map[string]any) error {
-	configDir := filepath.Join(workspaceRoot, ".hypercode")
+	configDir := filepath.Join(workspaceRoot, ".borg")
 	if err := os.MkdirAll(configDir, 0o755); err != nil {
 		return err
 	}
@@ -13821,7 +13821,7 @@ func normalizeResearchURL(raw string) string {
 
 func (s *Server) localResearchQueue() (map[string]any, error) {
 	statusPath := filepath.Join(s.cfg.WorkspaceRoot, "scripts", "ingestion-status.json")
-	indexPath := filepath.Join(s.cfg.WorkspaceRoot, "HYPERCODE_MASTER_INDEX.jsonc")
+	indexPath := filepath.Join(s.cfg.WorkspaceRoot, "BORG_MASTER_INDEX.jsonc")
 
 	var statusDoc struct {
 		Processed []string `json:"processed"`
@@ -14922,7 +14922,7 @@ func localFallbackToolSchema(payload map[string]any) (map[string]any, error) {
 }
 
 func (s *Server) localMCPRegistrySnapshot() ([]map[string]any, error) {
-	indexPath := filepath.Join(s.cfg.WorkspaceRoot, "HYPERCODE_MASTER_INDEX.jsonc")
+	indexPath := filepath.Join(s.cfg.WorkspaceRoot, "BORG_MASTER_INDEX.jsonc")
 	content, err := os.ReadFile(indexPath)
 	if err != nil {
 		return nil, err

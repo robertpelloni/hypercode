@@ -11,7 +11,7 @@ _Last updated: 2026-04-08, version 1.0.0-alpha.12_
 
 ## Framing
 
-HyperCode has two jobs at once:
+Borg has two jobs at once:
 1. ship a reliable local control plane,
 2. preserve a credible long-term vision for richer AI orchestration.
 
@@ -30,14 +30,14 @@ Deliverables officially achieved and stabilized in the `1.0.0-alpha.1` milestone
 
 ### 2. Dashboard convergence
 - completed high-value data-binding work for MCP Server Health, Integrations, and Traffic inspection.
-- removed or clearly labeled misleading states (e.g. `hypercode mcp import` now gracefully errors on missing files instead of printing fake success messages).
-- improved empty states and setup guidance (e.g. "Welcome to HyperCode! Let's get started" first-run banners now guide operators correctly).
+- removed or clearly labeled misleading states (e.g. `borg mcp import` now gracefully errors on missing files instead of printing fake success messages).
+- improved empty states and setup guidance (e.g. "Welcome to Borg! Let's get started" first-run banners now guide operators correctly).
 
 ### 3. Extension and runtime reliability
 - fixed storage access failures across the SQLite database connections.
 - reduced workspace build failures (re-aligned `pnpm-workspace.yaml` boundaries for proper transitive closure calculation).
-- formalized internal daemon architecture (`hypercoded`, `hypermcpd`, `hyperingest`, `hyperharnessd`) and placed boundaries in `packages/core/src/daemons/`.
-- successfully assimilated `bobbybookmarks` deduplication engines, absorbing 12,000+ validated external URLs and 900+ verified MCP catalogs into the robust internal `.hypercode` store.
+- formalized internal daemon architecture (`borgd`, `hypermcpd`, `hyperingest`, `hyperharnessd`) and placed boundaries in `packages/core/src/daemons/`.
+- successfully assimilated `bobbybookmarks` deduplication engines, absorbing 12,000+ validated external URLs and 900+ verified MCP catalogs into the robust internal `.borg` store.
 
 ### 4. Release discipline
 - unified version story across all packages, dashboards, and CLIs (`1.0.0-alpha.1`).
@@ -127,26 +127,16 @@ Deliverables officially achieved and stabilized in the `1.0.0-alpha.1` milestone
 ### C. Session workflow quality
 - cleaner create/edit flows
 - clearer isolation behavior
-- converge primary CLI harness support around first-class HyperCode identities, starting with `hypercode`
+- converge primary CLI harness support around first-class Borg identities, starting with `borg`
 
-<<<<<<< HEAD
 ### D. Provider routing polish
 - clearer fallback history
 - stronger quota truthfulness
 - more actionable auth-state and routing config
-=======
-The canonical consolidation map for post-1.0 capability planning now lives in `tasks/completed/015-ecosystem-assimilation-consolidation.md`, especially:
-
-- **Track C** — browser extension platform
-- **Track D** — IDE / CLI / hook-based memory capture
-- **Track E** — portable session fabric across tools and models
-
-### 1.5 target outcomes
->>>>>>> origin/rewrite/main-sanitized
 
 ### E. Architecture convergence
-- converge the repo toward the recommended HyperCode binary family without splitting everything at once
-- turn current packages into clearer extraction seams for `hypercoded`, `hypermcpd`, `hypermemd`, `hyperingest`, and `hyperharnessd`
+- converge the repo toward the recommended Borg binary family without splitting everything at once
+- turn current packages into clearer extraction seams for `borgd`, `hypermcpd`, `hypermemd`, `hyperingest`, and `hyperharnessd`
 - keep CLIs and GUIs as clients of daemon-owned state
 - keep shared contracts and config stable before promoting them into cross-process APIs
 - treat the current Go workspace as an **Experimental** coexistence lane for truthful read-parity and bridge-first replacement work, not as proof that the daemon boundaries are already extracted
@@ -164,7 +154,7 @@ The canonical consolidation map for post-1.0 capability planning now lives in `t
 
 These remain exploratory until the control plane is stronger:
 - advanced council or debate systems
-- a definitive internal library of MCP servers aggregated from public lists and kept refreshed inside HyperCode
+- a definitive internal library of MCP servers aggregated from public lists and kept refreshed inside Borg
 - benchmarking and comparative ranking across competing MCP server implementations
 - eventual model reach to any relevant MCP tool through one operator-controlled control plane
 - an operator-owned substrate spanning any model, any provider, any session, and any relevant tool
@@ -183,13 +173,7 @@ A credible `v1.0.0` should mean:
 - meaningful session and memory continuity
 - documentation that does not overclaim
 
-<<<<<<< HEAD
 ## Explicit de-scope until v1 ships
-=======
-The same consolidation brief maps 2.0 work primarily to **Track F — Advanced autonomy and marketplace**, with spillover from the more mature end of **Track E** once supervised sessions are trustworthy.
-
-### 2.0 target outcomes
->>>>>>> origin/rewrite/main-sanitized
 
 Do not prioritize these ahead of core convergence:
 - economy or payment ideas

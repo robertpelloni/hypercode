@@ -1,20 +1,3 @@
-<<<<<<<< HEAD:archive/ts-legacy/apps/web/src/app/prompts/page.tsx
-
-'use client';
-
-import { PromptLibrary } from "@hypercode/ui";
-
-export default function PromptsPage() {
-    return (
-        <div className="p-8 h-screen flex flex-col">
-            <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Prompt Registry
-            </h1>
-            <PromptLibrary />
-        </div>
-    );
-}
-========
 
 'use client';
 
@@ -30,4 +13,3 @@ export default function PromptsPage() {
         </div>
     );
 }
->>>>>>>> origin/dependabot/cargo/packages/zed-extension/cargo-64b2a50fd2:apps/web/src/app/dashboard/prompts/page.tsx
