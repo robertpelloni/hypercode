@@ -115,3 +115,9 @@ audit-*.jsonl
 screenshot*.png
 .hypercode/skills/
 go/hypercode
+packages/claude-mem
+archive/OmniRoute
+submodules/LinJun
+submodules/*
+archive/*
+packages/claude-mem/*

@@ -27,7 +27,7 @@ _Last updated: 2026-04-08, version 1.0.0-alpha.25_
 - [x] Go A2A signal auditing
 - [x] ZIP-based session archiving with fact extraction
 - [x] Go native Director loop
-- [ ] Add remaining free-tier providers to fallback chain (OpenRouter free, Google AI Studio)
+- [ ] Add remaining free-tier providers to fallback chain (OpenRouter free, Google AI Studio) **[NEXT FOCUS]**
 - [x] Update all submodules to latest upstream
 - [x] Comprehensive tool parity aliases (Claude Code, Codex, Gemini CLI, OpenCode, Pi, Cursor, Windsurf)
 - [x] Supervisor tool prediction — watch conversation, inject tool ads preemptively
@@ -67,7 +67,7 @@ _Last updated: 2026-04-08, version 1.0.0-alpha.25_
 - [ ] Mesh or federation ideas
 - [ ] Browser extension for MCP superassistant
 - [x] Multi-model shared-context chatroom
-- [ ] Native lightweight UI (no Electron)
+- [ ] Native lightweight UI (no Electron) **[NEXT FOCUS]**
 - [x] A2A protocol implementation
 - [ ] Mobile remote control of sessions
 

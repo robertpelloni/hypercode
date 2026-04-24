@@ -67,8 +67,8 @@ Deliverables officially achieved and stabilized in the `1.0.0-alpha.1` milestone
 - ✅ OpenCode/Pi parity: read, write, edit, bash, glob, grep, ls, web_fetch
 - [ ] Cursor/Windsurf/Kiro-specific tool signatures
 - [ ] Goose/Crush/Codebuff/Amp-specific tool signatures
-- [ ] Wire tool parity aliases into MCP server tool surface
-- [ ] Go-native parity tools (port ToolParityAliases to Go)
+- [x] Wire tool parity aliases into MCP server tool surface
+- [x] Go-native parity tools (port ToolParityAliases to Go)
 
 ### C. Dashboard completeness (BETA)
 - ✅ Health page with real server health and crash tracking

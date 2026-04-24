@@ -4637,3 +4637,10 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 
 ### Fixed
 - Resolved `Server` struct cyclic mock issues and invalid import pointers inside `go/internal/httpapi/server.go`.
+
+## [v1.0.0-alpha.33] - 2026-04-19
+### Changed
+- Recursively synchronized and updated all project submodules to ensure we are tracking the latest upstreams.
+- Pruned invalid submodule pointers from the `.gitmodules` to resolve recursive fetch timeouts.
+- Evaluated missing feature set and updated `ANALYSIS_MISSING_FEATURES.md`.
+- Added `SUBMODULES_INDEX.md` mapping the exact hierarchy and architecture of integrated external repositories against the Go control plane.
