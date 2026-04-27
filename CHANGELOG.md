@@ -5083,3 +5083,10 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Assimalated Maestro logic (`AgentDiscovery`, `ContextGroomer`, `DirectorNotes`) natively into `@borg/core`.
 - Updated `TODO.md` to check off A2A protocol implementation, dashboard verifications, and multi-model chatroom progress.
 - **Broader Harness Catalog Alignment**: Expanded the TypeScript supervisor catalog, council CLI registry, compiled CLI harness list, and Go sidecar harness registry so borg now tracks `borg`, `aider`, `cursor`, `copilot`, `qwen`, `superai-cli`, `codebuff`, `codemachine`, and `factory-droid` more consistently across session catalog and `/api/cli/harnesses` surfaces, while keeping non-borg parity claims explicitly limited to install/runtime metadata.
+
+## [1.0.0-alpha.33] - 2026-04-26
+### Added
+- **Go Control Plane Boilerplate**: Implemented foundational Go structs and interfaces based on the multi-agent architectural directive.
+  - `go/internal/ai/waterfall.go`: Introduced the `WaterfallClient` to implement the cascading fallback pattern (NVIDIA NIM -> OpenRouter -> Local LM Studio) on 429/5xx errors, ensuring resilient model inference.
+  - `go/internal/memory/dualtier.go`: Added `L1Scratchpad` and `L2Vault` interfaces, establishing the dual-tier architecture. Implemented the Bridge interface connecting ephemeral session storage to persistent SQLite-backed semantic memory.
+  - `go/internal/mcp/progressive_router.go`: Added semantic search interfaces and routing logic for the two-layer MCP progressive tool discovery, restricting tool payload bloat by identifying capabilities dynamically via vector filtering.
