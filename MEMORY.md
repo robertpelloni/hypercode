@@ -221,3 +221,19 @@
 **Implication**: The Go sidecar now maintains its own live semantic index of the project, further reducing its dependency on the TypeScript control plane.
 
 *Update this file whenever a major systemic pattern, recurring bug, or deep architectural quirk is discovered.*
+
+### 9. tRPC Type Recursion Limit (Discovered 2026-04-29)
+**Observation**: The appRouter has 67+ procedures. When `@trpc/react-query` tries to infer `AppRouter` types for the React client, TypeScript hits its internal type recursion depth limit and collapses to error strings like `"The property 'useContext' in your router collides with a built-in method"`.
+**Resolution**: Use `createTRPCReact<any>()` instead of `createTRPCReact<AppRouter>()`. Type safety comes from the server-side router definition. A dynamic `require('@trpc/react-query')` is needed because pnpm strict isolation means `@trpc/react-query` isn't accessible from `packages/ui/node_modules`.
+
+### 10. Turbo v2 Requires `extends` in All Package turbo.json (Discovered 2026-04-29)
+**Observation**: Turbo v2.8.x requires `"extends": ["//"]` in every non-root `turbo.json`. Without it, the build fails with "add extends key here".
+**Resolution**: Add `"extends": ["//"]` to all package-level turbo.json files.
+
+### 11. Duplicate VS Code Extension Package (Discovered 2026-04-29)
+**Observation**: `apps/vscode` and `packages/vscode` had the same package name (`borg-vscode-extension`), causing Turbo workspace collision.
+**Resolution**: Removed `packages/vscode` (stale, alpha.34). `apps/vscode` is canonical (alpha.36+).
+
+### 12. CLI Version Read Path (Discovered 2026-04-29)
+**Observation**: The CLI `getVersion()` tried to read `VERSION.md` from `../../../..VERSION.md` relative to `__dirname` in compiled output. The compiled output is at `packages/cli/dist/cli/src/index.js`, so the path resolved to `packages/cli/VERSION` (wrong).
+**Resolution**: Changed to `../../../../../VERSION` (5 levels up) and filename to `VERSION` (not `VERSION.md`).

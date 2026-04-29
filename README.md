@@ -1,4 +1,3 @@
-# superai
 # borg
 
 **The local-first control plane for AI operations.**
