@@ -1,44 +1,66 @@
 import { writeFileSync } from "fs";
 
+// Correct procedure names based on router source
 const procs = [
-	"startupStatus",
+	// Core
+	"health",
 	"mcp.listServers",
 	"mcp.getStatus",
 	"mcp.getWorkingSet",
 	"mcp.listTools",
 	"mcpServers.list",
 	"savedScripts.list",
+	"serverHealth.reset",
+
+	// Memory
 	"memory.getAgentStats",
-	"settings.getAll",
-	"sessionRouter.list",
-	"billing.getOverview",
+
+	// Settings
+	"settings.get",
+	"secrets.list",
+
+	// Sessions
+	"session.list",
+	"session.catalog",
+
+	// Billing
+	"billing.getStatus",
+
+	// Agents
 	"squad.list",
-	"council.getActiveRun",
-	"workflow.list",
-	"context.listChunks",
-	"metrics.getMetrics",
 	"director.status",
-	"supervisor.listSessions",
-	"healer.listAlerts",
-	"agentMemory.getRecentObservations",
-	"knowledge.search",
-	"lsp.status",
+	"supervisor.status",
+	"agent.list",
+
+	// Tools
+	"tools.list",
+	"toolSets.list",
+	"catalog.list",
 	"skills.list",
-	"tests.list",
-	"autoDev.status",
-	"commands.list",
-	"symbols.search",
-	"graph.status",
-	"research.status",
-	"pulse.status",
-	"audit.list",
-	"darwin.status",
-	"autonomy.status",
-	"git.status",
-	"submodule.list",
-	"expert.list",
+
+	// Browser
+	"browser.status",
+
+	// Infrastructure
+	"logs.list",
+	"apiKeys.list",
+	"policies.list",
+	"unifiedDirectory.list",
+	"workspace.list",
+	"marketplace.list",
+	"linksBacklog.list",
+
+	// Healer
+	"healer.getHistory",
+
+	// Knowledge
+	"knowledge.getStats",
+
+	// Suggestions
 	"suggestions.list",
-	"plan.list",
+
+	// Commands
+	"commands.list",
 ];
 
 let ok = 0,
@@ -49,23 +71,26 @@ const lines = [];
 for (const proc of procs) {
 	try {
 		const res = await fetch(`http://127.0.0.1:4000/trpc/${proc}`, {
-			signal: AbortSignal.timeout(3000),
+			signal: AbortSignal.timeout(5000),
 		});
 		if (res.ok) {
 			lines.push(`  ✓ ${proc}`);
 			ok++;
 		} else {
-			lines.push(`  ? ${proc} → HTTP ${res.status}`);
+			const body = await res.text();
+			const msg = body.substring(0, 80).replace(/\n/g, " ");
+			lines.push(`  ✗ ${proc} → HTTP ${res.status}: ${msg}`);
 			err++;
 		}
 	} catch (e) {
-		lines.push(`  ✗ ${proc} → ${e.message}`);
+		lines.push(`  ✗ ${proc} → ${e.message?.substring(0, 40)}`);
 		fail++;
 	}
 }
 
 lines.push("");
-lines.push(`Summary: ${ok} ok, ${fail} timeout, ${err} error`);
+lines.push(`Summary: ${ok} ok, ${err} error, ${fail} timeout`);
+lines.push(`Total procedures tested: ${procs.length}`);
 const out = lines.join("\n");
 console.log(out);
 writeFileSync("/tmp/trpc-audit.txt", out);
