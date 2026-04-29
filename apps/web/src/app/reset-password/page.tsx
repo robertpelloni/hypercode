@@ -1,13 +1,21 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 
 import { Button, Input } from '@borg/ui';
 
-export default function ResetPasswordPage() {
+export default function ResetPasswordPageWrapper() {
+    return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="animate-spin h-8 w-8 border-2 border-zinc-400 rounded-full border-t-transparent" /></div>}>
+            <ResetPasswordPage />
+        </Suspense>
+    );
+}
+
+function ResetPasswordPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const token = useMemo(() => String(searchParams.get('token') ?? ''), [searchParams]);
