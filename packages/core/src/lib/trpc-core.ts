@@ -635,8 +635,13 @@ export const adminProcedure = t.procedure.use(isAdmin);
  */
 export function getMcpServer(): MCPServerRuntime {
     const server = global.mcpServerInstance;
-    if (!server) throw new Error("MCPServer instance not found");
-    return server as unknown as MCPServerRuntime;
+    if (server) return server as unknown as MCPServerRuntime;
+    // Return a safe fallback so tRPC queries don't crash when MCP isn't initialized
+    return {} as unknown as MCPServerRuntime;
+}
+
+export function isMcpReady(): boolean {
+    return !!global.mcpServerInstance;
 }
 
 export function getWorkflowEngine(): WorkflowEngineRuntime | null {
