@@ -25,22 +25,56 @@ export function registerToolsCommand(program: Command): void {
     .option('--namespace <ns>', 'Filter by namespace')
     .option('--enabled', 'Show only enabled tools')
     .option('--disabled', 'Show only disabled tools')
-    .action(async (opts) => {
+    .action(async (opts, cmd) => {
+      const allOpts = cmd ? cmd.optsWithGlobals() : opts;
+      const isJson = allOpts.json === true;
+
+      let servers: any[] = [];
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/mcp.listServers', { signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          const json = await res.json();
+          servers = json?.result?.data ?? [];
+        }
+      } catch {}
+
+      // Extract tools from servers
+      let toolsList: any[] = [];
+      for (const s of servers) {
+        if (s.toolCount > 0) {
+          toolsList.push({ name: `(${s.toolCount} tools)`, server: s.name, namespace: (s.tags ?? [])[0] ?? '', enabled: s.runtimeConnected, priority: '—', calls: '—', latency: '—' });
+        }
+      }
+      if (opts.server) toolsList = toolsList.filter((t: any) => t.server === opts.server);
+      if (opts.namespace) toolsList = toolsList.filter((t: any) => t.namespace === opts.namespace);
+
+      if (isJson) {
+        console.log(JSON.stringify({ tools: toolsList, serverCount: servers.length, totalToolCount: servers.reduce((a: number, s: any) => a + (s.toolCount ?? 0), 0) }, null, 2));
+        return;
+      }
+
       const chalk = (await import('chalk')).default;
       const Table = (await import('cli-table3')).default;
 
-      if (opts.json) {
-        console.log(JSON.stringify({ tools: [] }, null, 2));
+      if (toolsList.length === 0) {
+        console.log(chalk.bold.cyan('\n  Available Tools\n'));
+        console.log(chalk.dim('  No tools loaded. Is the server running? Use `borg start`.\n'));
         return;
       }
 
       const table = new Table({
-        head: ['Tool', 'Server', 'Namespace', 'Enabled', 'Priority', 'Calls', 'Avg Latency'],
+        head: ['Server', 'Tools', 'Namespace', 'Connected'],
         style: { head: ['cyan'] },
       });
 
-      console.log(chalk.bold.cyan('\n  Available Tools\n'));
-      console.log(chalk.dim('  No tools loaded. Start MCP servers with `borg mcp start`.\n'));
+      for (const t of toolsList) {
+        table.push([t.server, t.name, t.namespace, t.enabled ? chalk.green('✓') : '—']);
+      }
+
+      const total = servers.reduce((a: number, s: any) => a + (s.toolCount ?? 0), 0);
+      console.log(chalk.bold.cyan(`\n  Available Tools (${total} across ${servers.length} servers)\n`));
+      console.log(table.toString());
+      console.log('');
     });
 
   tools
@@ -54,11 +88,39 @@ Examples:
   $ borg tools search "run shell commands"
   $ borg tools search "search code semantically"
     `)
-    .action(async (query, opts) => {
+    .action(async (query, opts, cmd) => {
+      const allOpts = cmd ? cmd.optsWithGlobals() : opts;
+      const isJson = allOpts.json === true;
+
+      let results: any[] = [];
+      try {
+        const input = encodeURIComponent(JSON.stringify({ query, limit: parseInt(opts.topK) || 10 }));
+        const res = await fetch(`http://127.0.0.1:4000/trpc/mcp.searchTools?input=${input}`, { signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          const json = await res.json();
+          results = json?.result?.data?.tools ?? json?.result?.data ?? [];
+        }
+      } catch {}
+
+      if (isJson) {
+        console.log(JSON.stringify({ query, results }, null, 2));
+        return;
+      }
+
       const chalk = (await import('chalk')).default;
       console.log(chalk.bold.cyan(`\n  Tool Search: "${query}"\n`));
-      console.log(chalk.dim(`  Searching ${opts.topK} results with semantic matching...\n`));
-      console.log(chalk.dim('  No tools available for search.\n'));
+      if (results.length === 0) {
+        console.log(chalk.dim('  No tools found. Is the server running?\n'));
+        return;
+      }
+
+      const Table = (await import('cli-table3')).default;
+      const table = new Table({ head: ['Tool', 'Server', 'Score'], style: { head: ['cyan'] } });
+      for (const r of results.slice(0, 20)) {
+        table.push([r.name ?? r.toolName, r.serverName ?? '—', r.score ? r.score.toFixed(3) : '—']);
+      }
+      console.log(table.toString());
+      console.log('');
     });
 
   tools

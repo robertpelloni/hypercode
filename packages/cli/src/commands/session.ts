@@ -24,15 +24,47 @@ export function registerSessionCommand(program: Command): void {
     .option('--json', 'Output as JSON')
     .option('--active', 'Show only active sessions')
     .option('--cloud', 'Show only cloud dev sessions')
-    .action(async (opts) => {
+    .action(async (opts, cmd) => {
+      const allOpts = cmd ? cmd.optsWithGlobals() : opts;
+      const isJson = allOpts.json === true;
+
+      let sessions: any[] = [];
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/sessionRouter.list', { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          const json = await res.json();
+          sessions = json?.result?.data ?? [];
+        }
+      } catch {}
+
+      if (opts.active) sessions = sessions.filter((s: any) => s.status === 'active');
+      if (opts.cloud) sessions = sessions.filter((s: any) => s.type === 'cloud');
+
+      if (isJson) {
+        console.log(JSON.stringify({ sessions }, null, 2));
+        return;
+      }
+
       const chalk = (await import('chalk')).default;
+
+      if (sessions.length === 0) {
+        console.log(chalk.bold.cyan('\n  Development Sessions\n'));
+        console.log(chalk.dim('  No sessions found. Use `borg session start` to create one.\n'));
+        return;
+      }
+
       const Table = (await import('cli-table3')).default;
       const table = new Table({
-        head: ['ID', 'Name', 'Workdir', 'Harness', 'Model', 'Status', 'Last Activity'],
+        head: ['ID', 'Status', 'Model', 'Last Activity'],
         style: { head: ['cyan'] },
       });
-      console.log(chalk.bold.cyan('\n  Development Sessions\n'));
-      console.log(chalk.dim('  No sessions found. Use `borg session start` to create one.\n'));
+      for (const s of sessions) {
+        const status = s.status === 'active' ? chalk.green('● Active') : chalk.dim('○ Stopped');
+        table.push([s.id ?? s.sessionId, status, s.model ?? '—', s.lastActivity ?? s.updatedAt ?? '—']);
+      }
+      console.log(chalk.bold.cyan(`\n  Development Sessions (${sessions.length})\n`));
+      console.log(table.toString());
+      console.log('');
     });
 
   session
