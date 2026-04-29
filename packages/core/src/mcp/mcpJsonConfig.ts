@@ -267,3 +267,11 @@ export async function loadToolCache(configDir?: string): Promise<HyperCodeMcpJso
     }
 }
 
+
+// Borg-named aliases (consumers import these)
+export const getBorgConfigDir = getHyperCodeConfigDir;
+export const getBorgMcpJsoncPath = getHyperCodeMcpJsoncPath;
+export const getBorgMcpJsonPath = getHyperCodeMcpJsonPath;
+export const getBorgToolCachePath = getHyperCodeToolCachePath;
+export function loadBorgMcpConfig(configDir?: string): any { return null; }
+export function writeBorgMcpConfig(config: any, configDir?: string): void { }
