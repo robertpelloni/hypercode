@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableDelayedExpansion
-echo Starting Borg 1.0.0-alpha.35 (Go Native Core)...
+echo Starting Borg 1.0.0-alpha.36 (Go Native Core)...
 
 cd go
 where go >nul 2>nul
@@ -9,7 +9,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-set VER=1.0.0-alpha.35
+set VER=1.0.0-alpha.36
 echo Building Borg Go Control Plane...
 go build -ldflags "-X internal/buildinfo.Version=%VER%" -buildvcs=false -o ../bin/borg.exe ./cmd/borg
 if errorlevel 1 (

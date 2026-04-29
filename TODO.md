@@ -1,6 +1,15 @@
 # TODO
 
-_Last updated: 2026-04-08, version 1.0.0-alpha.25_
+_Last updated: 2026-04-29, version 1.0.0-alpha.35_
+
+## Build Status (GREEN)
+
+All four compilation targets type-check with zero errors:
+- Go build + tests: 0 errors, 25/25 packages pass
+- TypeScript core: 0 errors
+- TypeScript cli: 0 errors
+- TypeScript web: 0 errors
+- Zero `hypercode` references in active source code
 
 ## P0 — Must do now
 
