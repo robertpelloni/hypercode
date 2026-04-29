@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.34] - 2026-04-29
+
+### Fixed
+- Resolved all Go compile errors: deduplicated import blocks across 12+ files, fixed merged harness registry (duplicate `package` declaration), exported `BorgSubmodule` field for cross-package access.
+- Restored missing `tsconfig.json` files for `packages/core`, `packages/cli`, `apps/web`, and `packages/tsconfig/base.json` that were lost during the HyperCode→Borg rename.
+- Resolved merge conflict artifacts in `packages/core/package.json`, `apps/web/package.json`, and `packages/ui/package.json` (removed duplicate dependency blocks from Dependabot branches).
+- Fixed `AgentDiscovery.ts` merged class (two `AgentDiscovery` classes and two interfaces in one file — kept the more complete version with `AgentCapability` scanning).
+- Fixed `config/status_test.go` duplicate `if` block and missing closing brace, updated field reference from `borgSubmodule` to `BorgSubmodule`.
+
+### Changed
+- Version bumped to `1.0.0-alpha.34` across all monorepo packages.
+- Removed `metamcp.db` (2.1 GB) and `.hypercode/` local state artifacts from git history.
+
 ## [1.0.0-alpha.32] - 2026-04-09
 
 ### Added

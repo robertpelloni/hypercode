@@ -1,6 +1,36 @@
 # Handoff
 
-## What was done
+## What was done (v1.0.0-alpha.34 session)
+
+### Go compile fixes
+- Deduplicated import blocks across 12+ Go files (`billing_handlers.go`, `mesh_handlers.go`, `server.go`, `session_context_handlers.go`, `startup_handlers.go`, `controlplane.go`, `sessionbridge.go`, `service.go`, `tracker.go`, and their tests). All caused by a bad merge that duplicated `import` blocks.
+- Fixed `internal/harnesses/registry.go` — entire file was duplicated (first 196 lines were a truncated copy of the complete content starting at line 197). Removed the truncated first copy.
+- Exported `BorgSubmodule` field in `config/status.go` (was `borgSubmodule`, unexported, causing cross-package access failure in `httpapi/server.go`).
+- Fixed `config/status_test.go` — duplicate `if` block, missing closing brace, stale field reference.
+- Fixed `mesh/service_test.go`, `projects/tracker.go`, `harnesses/registry_test.go`, `httpapi/server_test.go` — duplicate imports and duplicate `package` declarations from bad merge.
+
+### TypeScript fixes
+- Restored missing `tsconfig.json` files: `packages/core/tsconfig.json`, `packages/cli/tsconfig.json`, `apps/web/tsconfig.json`, `packages/tsconfig/base.json`.
+- Resolved merge conflict artifacts in `packages/core/package.json`, `apps/web/package.json`, `packages/ui/package.json`.
+- Fixed `AgentDiscovery.ts` — two classes and two interfaces merged into one file; kept the more complete version with `AgentCapability` scanning.
+- Verified `packages/core` compiles cleanly (only missing `@types/express`/`@types/vitest` from uninstalled `node_modules`).
+
+### Repo cleanup
+- Removed `metamcp.db` (2.1 GB) and `.hypercode/` local state from tracked history.
+- Verified zero `hypercode` references in tracked filenames and contents.
+- Updated CHANGELOG.md with v1.0.0-alpha.34 entry.
+
+## Build status
+- Go: `go build ./cmd/borg` passes cleanly. `go build ./...` passes cleanly.
+- TypeScript: `packages/core` type-checks (minus missing type defs from uninstalled node_modules).
+- All changes pushed to `origin/main`.
+
+## Recommended next steps
+1. Run `pnpm install && pnpm rebuild better-sqlite3` to restore node_modules and verify full TS build.
+2. Fix remaining Dependabot merge conflicts in `archive/` directory (low priority).
+3. Continue Go test fixes (`go vet ./...` still has issues in test files).
+4. Address P0 TODO items: recurring extension/runtime errors, dashboard truth pass.
+5. Run full Go test suite: `go test ./...` (expect some fixture/test issues from the merge cleanup).
 - Added a Go-native foundation bootstrap for a Pi-derived harness:
   - `foundation/pi`
   - `foundation/compat`
