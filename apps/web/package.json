@@ -1,6 +1,6 @@
 {
     "name": "@borg/web",
-    "version": "1.0.0-alpha.1",
+    "version": "1.0.0-alpha.34",
     "private": true,
     "scripts": {
         "dev": "node ./scripts/dev.mjs",
@@ -68,23 +68,3 @@
         "@tailwindcss/oxide-win32-x64-msvc": "4.1.18"
     }
 }
-=======
-    "mermaid": "^10.9.5",
-    "next": "16.2.3",
->>>>>>> origin/dependabot/npm_and_yarn/next-16.2.3
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "tailwind-merge": "^3.4.0"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.3",
-    "tailwindcss": "^4",
-    "typescript": "^5"
-  }
-}
->>>>>>> origin/dependabot/npm_and_yarn/agents/maestro/npm_and_yarn-762c137bfe
