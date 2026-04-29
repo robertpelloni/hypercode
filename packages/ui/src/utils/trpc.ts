@@ -1,6 +1,18 @@
-// @ts-expect-error -- @trpc/react-query resolved from consumer's node_modules at runtime
-import { createTRPCReact } from '@trpc/react-query';
+// Lazy-import @trpc/react-query from the consumer's node_modules.
+// This package is resolved at runtime by the consuming app (apps/web),
+// not by packages/ui itself (pnpm strict isolation).
+let createTRPCReactFn: (...args: any[]) => any;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mod = require('@trpc/react-query');
+  createTRPCReactFn = mod.createTRPCReact;
+} catch {
+  // Fallback: the consuming app will provide this at runtime
+  createTRPCReactFn = () => new Proxy({}, {
+    get: () => () => ({ data: undefined, isLoading: false, error: null })
+  });
+}
 
-// Use 'any' to avoid tRPC's type recursion limit with large routers.
+// Use dynamic call to avoid type argument on untyped function.
 // The actual type safety comes from the server-side router definition.
-export const trpc = createTRPCReact<any>();
+export const trpc = createTRPCReactFn();

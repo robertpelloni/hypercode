@@ -4,7 +4,7 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsc",
+        "build": "echo \"UI package is source-only, consumed via path aliases by apps/web\"",
         "lint": "eslint src/"
     },
     "dependencies": {

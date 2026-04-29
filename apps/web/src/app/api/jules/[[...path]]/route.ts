@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 
 const JULES_API_BASE = "https://jules.googleapis.com/v1alpha";
 
-async function proxyRequest(request: NextRequest, { params }: { params: { path?: string[] } }) {
+async function proxyRequest(request: NextRequest, { params }: { params: Promise<{ path?: string[] }> }) {
     try {
         const apiKey = request.headers.get("x-jules-api-key");
         if (!apiKey) {
@@ -10,7 +10,8 @@ async function proxyRequest(request: NextRequest, { params }: { params: { path?:
         }
 
         // Join path segments: ['sessions', '123'] -> '/sessions/123'
-        const pathSegments = params.path || [];
+        const resolvedParams = await params;
+        const pathSegments = resolvedParams.path || [];
         const pathStr = pathSegments.length > 0 ? `/${pathSegments.join("/")}` : "";
 
         // Also append query params from the original request!
