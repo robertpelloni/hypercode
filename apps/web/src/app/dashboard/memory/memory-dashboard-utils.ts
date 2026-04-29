@@ -1,0 +1,22 @@
+// Auto-generated stub
+export const MEMORY_MODEL_PILLARS = (() => ({})) as any;
+export const MEMORY_SEARCH_MODES = (() => ({})) as any;
+export type MemoryPivotAction = Record<string, any>;
+export type MemoryRecord = Record<string, any>;
+export type MemorySearchMode = Record<string, any>;
+export type RelatedMemoryRecord = Record<string, any>;
+export const filterMemoryRecords = (() => ({})) as any;
+export const getMemoryBadgeLabel = (() => ({})) as any;
+export const getMemoryDetailSections = (() => ({})) as any;
+export const getMemoryModeHint = (() => ({})) as any;
+export const getMemoryPivotSections = (() => ({})) as any;
+export const getMemoryPreview = (() => ({})) as any;
+export const getMemoryProvenance = (() => ({})) as any;
+export const getMemoryRecordKey = (() => ({})) as any;
+export const getMemorySessionId = (() => ({})) as any;
+export const getMemoryTimestamp = (() => ({})) as any;
+export const getMemoryTitle = (() => ({})) as any;
+export const getRelatedMemoryRecords = (() => ({})) as any;
+export const groupMemoryRecordsByDay = (() => ({})) as any;
+export const groupMemoryWindowAroundAnchor = (() => ({})) as any;
+export const sortMemoryRecordsByTimestamp = (() => ({})) as any;
