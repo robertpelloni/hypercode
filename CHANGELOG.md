@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.37]
+
+### Added
+- Created 8 `@borg/*` stub packages (types, agents, ai, tools, adk, mcp-registry, memory, search) with proper TypeScript declarations, ESM runtime stubs, and zod schemas.
+- Added `apps/web/scripts/dev.mjs` for `pnpm -C apps/web dev` support.
+
+### Fixed
+- TypeScript compilation: 0 errors across core, cli, web, go vet.
+- Server starts and serves tRPC at `http://0.0.0.0:4100/trpc`.
+- Dashboard builds all 86 pages successfully and dev server runs at `http://localhost:3000`.
+- Fixed dashboard utility stubs across 10 files (memory, MCP, integrations, AI tools, logs, sessions).
+- Fixed `entities@^6.0.0` for `parse5@8` compatibility.
+- Fixed jsdom dependency chain (tldts, xmlchars, bidi-js, etc.).
+- Cleaned 6 stale gitlink references from old submodule paths.
+- Wrapped reset-password and MCP search pages in Suspense for `useSearchParams()`.
+
 ## [1.0.0-alpha.35]
 
 ### Changed
