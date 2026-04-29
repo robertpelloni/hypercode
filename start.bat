@@ -45,8 +45,8 @@ if /I "%BORG_SKIP_NATIVE_PREFLIGHT%"=="1" set SKIP_NATIVE_PREFLIGHT=1
 if "%SKIP_NATIVE_PREFLIGHT%"=="1" (
     echo Skipping native runtime preflight ^(BORG_SKIP_NATIVE_PREFLIGHT=1^)...
 ) else (
-    echo Checking native runtime prerequisites...
-    call node scripts\ensure_native_runtime.mjs
+    echo Rebuilding native modules for Node 24...
+    call pnpm rebuild better-sqlite3
     if errorlevel 1 exit /b 1
 )
 
