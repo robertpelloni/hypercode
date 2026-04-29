@@ -1,23 +1,13 @@
-// Auto-generated stub exports
-export const A2ALogger: any = undefined as any;
-export type A2ALogger = any;
-export const Council: any = undefined as any;
-export type Council = any;
-export const CouncilRole: any = undefined as any;
-export type CouncilRole = any;
-export const Director: any = undefined as any;
-export type Director = any;
-export const PairOrchestrator: any = undefined as any;
-export type PairOrchestrator = any;
-export const Supervisor: any = undefined as any;
-export type Supervisor = any;
-export const SwarmController: any = undefined as any;
-export type SwarmController = any;
-export const SwarmRole: any = undefined as any;
-export type SwarmRole = any;
-export const ToolPredictor: any = undefined as any;
-export type ToolPredictor = any;
-export const a2aBroker: any = undefined as any;
-export type a2aBroker = any;
-export const taskQueue: any = undefined as any;
-export type taskQueue = any;
+// @borg/agents -- stub
+
+export const A2ALogger: any = undefined;
+export const Council: any = undefined;
+export const CouncilRole: any = undefined;
+export const Director: any = undefined;
+export const PairOrchestrator: any = undefined;
+export const Supervisor: any = undefined;
+export const SwarmController: any = undefined;
+export const SwarmRole: any = undefined;
+export const ToolPredictor: any = undefined;
+export const a2aBroker: any = undefined;
+export const taskQueue: any = undefined;

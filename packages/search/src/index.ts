@@ -1,5 +1,4 @@
-// Auto-generated stub exports
-export const SearchResult: any = undefined as any;
-export type SearchResult = any;
-export const SearchService: any = undefined as any;
-export type SearchService = any;
+// @borg/search -- stub
+
+export const SearchResult: any = undefined;
+export const SearchService: any = undefined;

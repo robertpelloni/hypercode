@@ -1,3 +1,2 @@
-// Auto-generated stub exports
-export const Registry: any = undefined as any;
-export type Registry = any;
+// @borg/mcp-registry -- stub
+export const Registry: any = undefined;

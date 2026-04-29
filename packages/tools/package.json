@@ -1,7 +1,14 @@
 {
-  "name": "@borg/tools",
-  "version": "1.0.0-alpha.34",
-  "private": true,
-  "main": "src/index.ts",
-  "types": "src/index.ts"
+    "name": "@borg/tools",
+    "version": "1.0.0-alpha.34",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "src/index.ts",
+    "type": "module",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./src/index.ts"
+        }
+    }
 }

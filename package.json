@@ -35,7 +35,8 @@
         "eslint": "^8.57.1",
         "turbo": "^2.8.3",
         "typescript": "^5.3.3",
-        "vitest": "^4.0.16"
+        "vitest": "^4.0.16",
+        "xmlchars": "^2.2.0"
     },
     "pnpm": {
         "onlyBuiltDependencies": [
@@ -52,6 +53,13 @@
         }
     },
     "dependencies": {
-        "@vscode/ripgrep": "^1.17.0"
+        "@asamuzakjp/nwsapi": "^2.3.9",
+        "@exodus/bytes": "^1.15.0",
+        "@vscode/ripgrep": "^1.17.0",
+        "bidi-js": "^1.0.3",
+        "entities": "^6.0.1",
+        "is-potential-custom-element-name": "^1.0.1",
+        "tldts": "^7.0.29",
+        "xml-name-validator": "^5.0.0"
     }
 }

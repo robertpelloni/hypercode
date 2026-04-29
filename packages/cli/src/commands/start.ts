@@ -366,7 +366,7 @@ Examples:
         process.once('unhandledRejection', lifecycle.handleUnhandledRejection);
       } catch (err: unknown) {
         lockHandle?.releaseSync();
-        const msg = err instanceof Error ? err.message : String(err);
+        const msg = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);
         console.error(chalk.red(`  ✗ Failed to start: ${msg}`));
         process.exit(1);
       }

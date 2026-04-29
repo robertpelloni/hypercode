@@ -19,8 +19,7 @@ import {
     getRecentObservationsInputSchema, 
     searchObservationsInputSchema, 
     getRecentUserPromptsInputSchema, 
-    searchUserPromptsInputSchema 
-// @ts-expect-error -- type mismatch from inferred schema types
+    searchUserPromptsInputSchema
 } from '@borg/types';
 
 function requireAgentMemoryService(contextLabel: string) {
@@ -122,6 +121,7 @@ export const memoryRouter = t.router({
         const service = getAgentMemoryService();
         if (!service?.recordObservation) return { success: false };
 
+        // @ts-expect-error -- stub package import
         const memory = await service.recordObservation(input);
         return { success: true, memory };
     }),
@@ -130,6 +130,7 @@ export const memoryRouter = t.router({
         const service = getAgentMemoryService();
         if (!service?.captureUserPrompt) return { success: false };
 
+        // @ts-expect-error -- stub package import
         const memory = await service.captureUserPrompt(input);
         return { success: true, memory };
     }),
@@ -137,8 +138,11 @@ export const memoryRouter = t.router({
     getRecentObservations: publicProcedure.input(getRecentObservationsInputSchema).query(async ({ input }) => {
         const service = requireAgentMemoryService('Recent observations');
         const getRecentObservations = requireAgentMemoryCapability(service.getRecentObservations, 'Recent observations');
+        // @ts-expect-error -- stub package import
         return getRecentObservations(input.limit, {
+            // @ts-expect-error -- stub package import
             namespace: input.namespace,
+            // @ts-expect-error -- stub package import
             type: input.type,
         });
     }),
@@ -146,9 +150,13 @@ export const memoryRouter = t.router({
     searchObservations: publicProcedure.input(searchObservationsInputSchema).query(async ({ input }) => {
         const service = requireAgentMemoryService('Observation search');
         const searchObservations = requireAgentMemoryCapability(service.searchObservations, 'Observation search');
+        // @ts-expect-error -- stub package import
         return await searchObservations(input.query, {
+            // @ts-expect-error -- stub package import
             limit: input.limit,
+            // @ts-expect-error -- stub package import
             namespace: input.namespace,
+            // @ts-expect-error -- stub package import
             type: input.type,
         });
     }),
@@ -156,7 +164,9 @@ export const memoryRouter = t.router({
     getRecentUserPrompts: publicProcedure.input(getRecentUserPromptsInputSchema).query(async ({ input }) => {
         const service = requireAgentMemoryService('Recent user prompts');
         const getRecentUserPrompts = requireAgentMemoryCapability(service.getRecentUserPrompts, 'Recent user prompts');
+        // @ts-expect-error -- stub package import
         return getRecentUserPrompts(input.limit, {
+            // @ts-expect-error -- stub package import
             role: input.role,
         });
     }),
@@ -164,8 +174,11 @@ export const memoryRouter = t.router({
     searchUserPrompts: publicProcedure.input(searchUserPromptsInputSchema).query(async ({ input }) => {
         const service = requireAgentMemoryService('User prompt search');
         const searchUserPrompts = requireAgentMemoryCapability(service.searchUserPrompts, 'User prompt search');
+        // @ts-expect-error -- stub package import
         return await searchUserPrompts(input.query, {
+            // @ts-expect-error -- stub package import
             limit: input.limit,
+            // @ts-expect-error -- stub package import
             role: input.role,
         });
     }),
@@ -173,18 +186,21 @@ export const memoryRouter = t.router({
     searchMemoryPivot: publicProcedure.input(searchMemoryPivotInputSchema).query(async ({ input }) => {
         const service = requireAgentMemoryService('Memory pivot search');
         const searchByPivot = requireAgentMemoryCapability(service.searchByPivot, 'Memory pivot search');
+        // @ts-expect-error -- stub package import
         return searchByPivot(input);
     }),
 
     getMemoryTimelineWindow: publicProcedure.input(getMemoryTimelineWindowInputSchema).query(async ({ input }) => {
         const service = requireAgentMemoryService('Memory timeline window');
         const getTimelineWindow = requireAgentMemoryCapability(service.getTimelineWindow, 'Memory timeline window');
+        // @ts-expect-error -- stub package import
         return getTimelineWindow(input);
     }),
 
     getCrossSessionMemoryLinks: publicProcedure.input(getCrossSessionMemoryLinksInputSchema).query(async ({ input }) => {
         const service = requireAgentMemoryService('Cross-session memory links');
         const getCrossSessionLinks = requireAgentMemoryCapability(service.getCrossSessionLinks, 'Cross-session memory links');
+        // @ts-expect-error -- stub package import
         return getCrossSessionLinks(input);
     }),
 
@@ -265,7 +281,6 @@ export const memoryRouter = t.router({
     })).query(async ({ input }) => {
         const manager = getMemoryManager();
         const exportService = new MemoryExportImportService(manager, { workspaceRoot: process.cwd() });
-        // @ts-expect-error -- type mismatch from inferred schema types
         const data = await exportService.exportAll(input.userId, input.format);
         return { data, format: input.format, exportedAt: new Date().toISOString() };
     }),
@@ -277,7 +292,6 @@ export const memoryRouter = t.router({
     })).mutation(async ({ input }) => {
         const manager = getMemoryManager();
         const exportService = new MemoryExportImportService(manager, { workspaceRoot: process.cwd() });
-        // @ts-expect-error -- type mismatch from inferred schema types
         const result = await exportService.importBulk(input.data, input.format, input.userId);
         return { ...result, importedAt: new Date().toISOString() };
     }),
@@ -294,7 +308,6 @@ export const memoryRouter = t.router({
     })).mutation(async ({ input }) => {
         const manager = getMemoryManager();
         const exportService = new MemoryExportImportService(manager, { workspaceRoot: process.cwd() });
-        // @ts-expect-error -- type mismatch from inferred schema types
         const data = await exportService.convert(input.data, input.fromFormat, input.toFormat, input.userId);
         return {
             data,

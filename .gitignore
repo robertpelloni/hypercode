@@ -239,3 +239,11 @@ metamcp.db
 tmp_*.ts
 tmp_*.tsx
 tmp_*.js
+
+# Stale submodule checkout dirs
+borg/research/
+hyperingest/
+hypermcp/
+hypermem/
+hyperharness/
+jules-autopilot/

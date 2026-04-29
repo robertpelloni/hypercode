@@ -1,19 +1,11 @@
-// Auto-generated stub exports
-export const ChatMessage: any = undefined as any;
-export type ChatMessage = any;
-export const DEFAULT_OPENROUTER_FREE_MODEL: any = undefined as any;
-export type DEFAULT_OPENROUTER_FREE_MODEL = any;
-export const IAgent: any = undefined as any;
-export type IAgent = any;
-export const LLMService: any = undefined as any;
-export type LLMService = any;
-export const ModelSelectionRequest: any = undefined as any;
-export type ModelSelectionRequest = any;
-export const ModelSelector: any = undefined as any;
-export type ModelSelector = any;
-export const QuotaConfig: any = undefined as any;
-export type QuotaConfig = any;
-export const QuotaService: any = undefined as any;
-export type QuotaService = any;
-export const SelectedModel: any = undefined as any;
-export type SelectedModel = any;
+// @borg/ai -- stub
+
+export const ChatMessage: any = undefined;
+export const DEFAULT_OPENROUTER_FREE_MODEL: any = undefined;
+export const IAgent: any = undefined;
+export const LLMService: any = undefined;
+export const ModelSelectionRequest: any = undefined;
+export const ModelSelector: any = undefined;
+export const QuotaConfig: any = undefined;
+export const QuotaService: any = undefined;
+export const SelectedModel: any = undefined;

@@ -5,7 +5,8 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "echo \"UI package is source-only, consumed via path aliases by apps/web\"",
-        "lint": "eslint src/"
+        "lint": "eslint src/",
+        "dev": "echo \"UI package is source-only\""
     },
     "dependencies": {
         "@dnd-kit/core": "^6.3.1",
