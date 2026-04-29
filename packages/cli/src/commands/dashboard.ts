@@ -72,7 +72,7 @@ Examples:
         console.log(JSON.stringify({
           name: 'Borg',
           subtitle: 'The Neural Operating System',
-          version: '2.5.0',
+          version: '1.0.0-alpha.36',
           codename: 'AIOS',
           packages: ['@borg/core', '@borg/cli', '@borg/types', '@borg/ai', '@borg/agents', '@borg/tools', '@borg/search', '@borg/memory', '@borg/adk'],
           repository: 'https://github.com/robertpelloni/borg',
@@ -81,7 +81,7 @@ Examples:
       }
 
       console.log(chalk.bold.cyan('\n  ⬡ Borg — The Neural Operating System'));
-      console.log(chalk.dim('  Version: 2.5.0 | Codename: AIOS\n'));
+      console.log(chalk.dim('  Version: 1.0.0-alpha.36 | Codename: AIOS\n'));
       console.log(chalk.dim('  "The Ultimate AI Tool Dashboard & Development Orchestrator"\n'));
 
       console.log(chalk.bold('  Packages:'));

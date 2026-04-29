@@ -30,10 +30,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 /** Read version from VERSION.md (single source of truth) */
 function getVersion(): string {
   try {
-    const versionPath = resolve(__dirname, '..', '..', '..', 'VERSION.md');
+    const versionPath = resolve(__dirname, '..', '..', '..', '..', '..', 'VERSION');
     return readFileSync(versionPath, 'utf-8').trim();
   } catch {
-    return '2.5.0';
+    return '1.0.0-alpha.36';
   }
 }
 

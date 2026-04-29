@@ -4,7 +4,7 @@
     "private": true,
     "packageManager": "pnpm@10.28.0",
     "scripts": {
-        "start": "node packages/cli/dist/index.js start",
+        "start": "node packages/cli/dist/cli/src/index.js start",
         "build": "node scripts/build_all.mjs",
         "build:workspace": "node scripts/build_all.mjs --workspace-only",
         "build:extensions": "node scripts/build_all.mjs --extensions-only",

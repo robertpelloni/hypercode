@@ -27,7 +27,7 @@ Examples:
 
       if (opts.json) {
         const status = {
-          version: '2.5.0',
+          version: '1.0.0-alpha.36',
           server: { status: 'running', uptime: process.uptime() },
           mcp: { servers: 0, running: 0, tools: 0 },
           sessions: { active: 0, paused: 0, total: 0 },

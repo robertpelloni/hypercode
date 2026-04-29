@@ -27,7 +27,7 @@ export function registerConfigCommand(program: Command): void {
       const chalk = (await import('chalk')).default;
 
       const defaultConfig = {
-        version: '2.5.0',
+        version: '1.0.0-alpha.36',
         server: { host: '0.0.0.0', port: 3000, cors: true },
         mcp: {
           enabled: true,

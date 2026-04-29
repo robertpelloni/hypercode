@@ -312,7 +312,7 @@ Examples:
       const explicitPort = process.argv.includes('--port') || process.argv.includes('-p');
       let lockHandle: BorgStartLockHandle | null = null;
 
-      console.log(chalk.bold.cyan('\n  ⬡ Borg AIOS v2.5.0'));
+      console.log(chalk.bold.cyan('\n  ⬡ Borg AIOS v1.0.0-alpha.36'));
       console.log(chalk.dim('  The Neural Operating System\n'));
 
       try {
