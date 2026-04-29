@@ -23,12 +23,37 @@ export function registerConfigCommand(program: Command): void {
     .description('Display the current Borg configuration')
     .option('--json', 'Output as raw JSON')
     .option('--section <section>', 'Show specific section: server, mcp, memory, providers, sessions, director')
-    .action(async (opts) => {
-      const chalk = (await import('chalk')).default;
+    .action(async (opts, cmd) => {
+      const allOpts = cmd ? cmd.optsWithGlobals() : opts;
+      const isJson = allOpts.json === true;
+
+      const { readFileSync } = await import('fs');
+      const { resolve } = await import('path');
+
+      // Read real version from VERSION file
+      let version = 'unknown';
+      try {
+        for (let dir = process.cwd(); dir !== resolve(dir, '..'); dir = resolve(dir, '..')) {
+          try {
+            version = readFileSync(resolve(dir, 'VERSION'), 'utf8').trim();
+            break;
+          } catch {}
+        }
+      } catch {}
+
+      // Try to get config from running server
+      let serverConfig: any = null;
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/settings.getAll', { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          const json = await res.json();
+          serverConfig = json?.result?.data ?? null;
+        }
+      } catch {}
 
       const defaultConfig = {
-        version: '1.0.0-alpha.36',
-        server: { host: '0.0.0.0', port: 3000, cors: true },
+        version,
+        server: { host: '0.0.0.0', port: 4000, cors: true },
         mcp: {
           enabled: true,
           progressiveDisclosure: true,
@@ -50,12 +75,16 @@ export function registerConfigCommand(program: Command): void {
         dataDir: '~/.borg',
       };
 
-      if (opts.json) {
-        const data = opts.section ? (defaultConfig as Record<string, unknown>)[opts.section] : defaultConfig;
+      // Merge server config if available
+      const config = serverConfig ? { ...defaultConfig, ...serverConfig, version } : defaultConfig;
+
+      if (isJson) {
+        const data = opts.section ? (config as Record<string, unknown>)[opts.section] : config;
         console.log(JSON.stringify(data, null, 2));
         return;
       }
 
+      const chalk = (await import('chalk')).default;
       console.log(chalk.bold.cyan('\n  Borg Configuration\n'));
       const printConfig = (obj: Record<string, unknown>, prefix = '  ') => {
         for (const [key, val] of Object.entries(obj)) {
@@ -68,10 +97,10 @@ export function registerConfigCommand(program: Command): void {
         }
       };
 
-      if (opts.section && opts.section in defaultConfig) {
-        printConfig({ [opts.section]: (defaultConfig as Record<string, unknown>)[opts.section] });
+      if (opts.section && opts.section in config) {
+        printConfig({ [opts.section]: (config as Record<string, unknown>)[opts.section] });
       } else {
-        printConfig(defaultConfig);
+        printConfig(config);
       }
       console.log('');
     });
