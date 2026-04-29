@@ -1466,9 +1466,6 @@ func TestMCPAddAndRemoveServerFallBackToLocalConfiguredServers(t *testing.T) {
 	borgDir := filepath.Join(workspaceRoot, ".borg")
 	if err := os.MkdirAll(borgDir, 0o755); err != nil {
 		t.Fatalf("failed to create .borg dir: %v", err)
-	borgDir := filepath.Join(workspaceRoot, ".borg")
-	if err := os.MkdirAll(borgDir, 0o755); err != nil {
-		t.Fatalf("failed to create .borg dir: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(borgDir, "mcp.jsonc"), []byte("{\"mcpServers\":{}}"), 0o644); err != nil {
 		t.Fatalf("failed to seed mcp.jsonc: %v", err)
@@ -4597,8 +4594,6 @@ func TestConfigStatusEndpoint(t *testing.T) {
 	if payload.Data.MainConfigDir.Path != cfg.MainConfigDir || !payload.Data.MainConfigDir.Exists {
 		t.Fatalf("expected main config dir status for %s, got %+v", cfg.MainConfigDir, payload.Data.MainConfigDir)
 	}
-	if payload.Data.BorgConfigFile.Exists || payload.Data.MCPConfigFile.Exists {
-		t.Fatalf("expected config files to be absent in this fixture, got borg=%+v mcp=%+v", payload.Data.BorgConfigFile, payload.Data.MCPConfigFile)
 	if payload.Data.BorgConfigFile.Exists || payload.Data.MCPConfigFile.Exists {
 		t.Fatalf("expected config files to be absent in this fixture, got borg=%+v mcp=%+v", payload.Data.BorgConfigFile, payload.Data.MCPConfigFile)
 	}
@@ -13483,7 +13478,7 @@ func demo() {
 	if !payload.Data.Config.RepoConfigAvailable || !payload.Data.Config.MCPConfigAvailable {
 		t.Fatalf("expected repo config files to be available, got %+v", payload.Data.Config)
 	}
-	if !payload.Data.Config.borgSubmoduleAvailable {
+	if !payload.Data.Config.BorgSubmoduleAvailable {
 		t.Fatalf("expected borg submodule to be available")
 	}
 	if !payload.Data.ImportedInstructions.Available {

@@ -230,7 +230,7 @@ type ConfigRuntimeSummary struct {
 	MainConfigDirAvailable      bool `json:"mainConfigDirAvailable"`
 	RepoConfigAvailable         bool `json:"repoConfigAvailable"`
 	MCPConfigAvailable          bool `json:"mcpConfigAvailable"`
-	borgSubmoduleAvailable bool `json:"borgSubmoduleAvailable"`
+	BorgSubmoduleAvailable bool `json:"borgSubmoduleAvailable"`
 }
 
 type MemoryRuntimeSummary struct {
@@ -10277,7 +10277,7 @@ func (s *Server) handleRuntimeStatus(w http.ResponseWriter, r *http.Request) {
 				MainConfigDirAvailable:      configStatus.MainConfigDir.Exists,
 				RepoConfigAvailable:         configStatus.BorgConfigFile.Exists,
 				MCPConfigAvailable:          configStatus.MCPConfigFile.Exists,
-				borgSubmoduleAvailable: configStatus.BorgSubmodule.Exists,
+				BorgSubmoduleAvailable: configStatus.BorgSubmodule.Exists,
 			},
 			CLI: CLIRuntimeSummary{
 				ToolCount:                   cliSummary.ToolCount,
