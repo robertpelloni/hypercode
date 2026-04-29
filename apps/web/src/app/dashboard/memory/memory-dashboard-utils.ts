@@ -3,7 +3,7 @@ export const MEMORY_MODEL_PILLARS = (() => ({})) as any;
 export const MEMORY_SEARCH_MODES = (() => ({})) as any;
 export type MemoryPivotAction = Record<string, any>;
 export type MemoryRecord = Record<string, any>;
-export type MemorySearchMode = Record<string, any>;
+export type MemorySearchMode = string;
 export type RelatedMemoryRecord = Record<string, any>;
 export const filterMemoryRecords = (() => ({})) as any;
 export const getMemoryBadgeLabel = (() => ({})) as any;
