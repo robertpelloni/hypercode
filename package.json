@@ -49,16 +49,21 @@
             "qs": ">=6.14.1",
             "@modelcontextprotocol/sdk": ">=1.25.2",
             "@types/react": "18.3.3",
-            "@types/react-dom": "18.3.0"
+            "@types/react-dom": "18.3.0",
+            "basic-ftp": ">=5.2.0",
+            "protobufjs": ">=7.5.5"
         }
     },
     "dependencies": {
         "@asamuzakjp/nwsapi": "^2.3.9",
         "@exodus/bytes": "^1.15.0",
         "@vscode/ripgrep": "^1.17.0",
+        "basic-ftp": "^5.3.1",
         "bidi-js": "^1.0.3",
         "entities": "^6.0.1",
         "is-potential-custom-element-name": "^1.0.1",
+        "next": "^16.1.7",
+        "protobufjs": "^7.5.6",
         "tldts": "^7.0.29",
         "xml-name-validator": "^5.0.0"
     }
