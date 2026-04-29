@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.35]
+
+### Changed
+- Completed hypercode→borg rename: zero references remain in all active TS/Go/JSON source.
+- Renamed 4 tracked files (HyperCodeConfig→BorgConfig, hypercode-orchestrator→borg-orchestrator, etc.).
+- Updated go.mod module path, Dockerfiles, .dockerignore.
+- Fixed duplicate identifier errors from bulk rename in mcpJsonConfig.ts.
+- Bumped all package.json versions to 1.0.0-alpha.35.
+
 ## [1.0.0-alpha.34] - 2026-04-29
 
 ### Milestone
