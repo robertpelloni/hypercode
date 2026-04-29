@@ -16,7 +16,11 @@ export const buildDashboardServerRecords = (servers: any[], managedList: any[]):
 };
 
 /** Build tool-action link rows for a given server. */
-export const buildServerToolActionLinks = (_serverName: string, _tools?: any[]): any[] => [];
+export const buildServerToolActionLinks = (_serverName: string, _tools?: any[]): {
+    logsHref: string; editToolsHref: string; inspectToolsHref: string;
+} => ({
+    logsHref: '#', editToolsHref: '#', inspectToolsHref: '#',
+});
 
 /** Return UUIDs of managed servers that need bulk metadata refresh. */
 export const getBulkMetadataTargetUuids = (managedList: any[], _filter?: string): string[] =>

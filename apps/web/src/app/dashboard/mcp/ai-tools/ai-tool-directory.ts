@@ -1,4 +1,4 @@
-// Auto-generated stub
-export const getCliHarnessCards = (() => ({})) as any;
-export const getProviderDirectoryCards = (() => ({})) as any;
-export const getStatusBadgeClasses = (() => ({})) as any;
+// Dashboard utility stubs for AI Tools page
+export const getCliHarnessCards = (..._args: any[]): any[] => [];
+export const getProviderDirectoryCards = (..._args: any[]): any[] => [];
+export const getStatusBadgeClasses = (_status: string): string => '';

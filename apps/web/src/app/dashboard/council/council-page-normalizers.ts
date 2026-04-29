@@ -1,3 +1,4 @@
-// Auto-generated stub
+// Dashboard utility stubs
 export type CouncilSessionRow = Record<string, any>;
-export const normalizeCouncilSessions = (() => ({})) as any;
+export const normalizeCouncilSessions = (..._args: any[]) => [];
+
