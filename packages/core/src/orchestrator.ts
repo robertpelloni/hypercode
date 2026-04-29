@@ -54,53 +54,8 @@ export async function startOrchestrator(options: StartOrchestratorOptions = {}) 
         credentials: true,
     }));
 
-    // Bridge REST API from Council (Hono) into Express
-    // This unifies both systems on the same port (3847)
-    app.all('/api/*', async (req, res) => {
-        try {
-            // Convert Express Request to Web Standard Request for Hono
-            const protocol = req.protocol;
-            const host = req.get('host');
-            const url = `${protocol}://${host}${req.originalUrl}`;
-            
-            const webReq = new Request(url, {
-                method: req.method,
-                headers: new Headers(req.headers as Record<string, string>),
-                body: ['POST', 'PUT', 'PATCH'].includes(req.method) ? JSON.stringify(req.body) : undefined,
-            });
-
-            // Call Hono's fetch handler
-            const honoRes = await (councilApp as any).fetch(webReq);
-            
-            // Convert Web Standard Response back to Express Response
-            res.status(honoRes.status);
-            honoRes.headers.forEach((value: string, key: string) => {
-                res.setHeader(key, value);
-            });
-            
-            const body = await honoRes.text();
-            res.send(body);
-        } catch (error) {
-            console.error('[Core:Bridge] Hono bridging error:', error);
-            res.status(500).json({ success: false, error: 'Internal server error in API bridge' });
-        }
-    });
-
-    // Health endpoint — must precede TRPC so probes don't fall through to
-    // middleware that calls getMcpServer() (which throws before init).
-    app.get('/health', (_req, res) => {
-        res.json({
-            status: 'ok',
-            name: '@borg/core',
-            uptime: process.uptime(),
-            timestamp: Date.now(),
-            mcpReady: !!global.mcpServerInstance,
-        });
-    });
-
-    // REST API: /api/scripts — bridge so the dashboard's native-control-plane
-    // fetch reaches the same saved-scripts store that the tRPC router serves.
-    // The Go server registers these routes too; this covers the TS-primary path.
+    // REST API: /api/scripts — must be registered BEFORE the /api/* wildcard
+    // so these specific routes take priority over the Hono bridge.
     app.get('/api/scripts', async (_req, res) => {
         try {
             const scripts = await jsonConfigProvider.loadScripts();
@@ -158,6 +113,52 @@ export async function startOrchestrator(options: StartOrchestratorOptions = {}) 
             res.json({ success: false, error: err?.message });
         }
     });
+
+    // Bridge REST API from Council (Hono) into Express
+    // This unifies both systems on the same port (3847)
+    app.all('/api/*', async (req, res) => {
+        try {
+            // Convert Express Request to Web Standard Request for Hono
+            const protocol = req.protocol;
+            const host = req.get('host');
+            const url = `${protocol}://${host}${req.originalUrl}`;
+            
+            const webReq = new Request(url, {
+                method: req.method,
+                headers: new Headers(req.headers as Record<string, string>),
+                body: ['POST', 'PUT', 'PATCH'].includes(req.method) ? JSON.stringify(req.body) : undefined,
+            });
+
+            // Call Hono's fetch handler
+            const honoRes = await (councilApp as any).fetch(webReq);
+            
+            // Convert Web Standard Response back to Express Response
+            res.status(honoRes.status);
+            honoRes.headers.forEach((value: string, key: string) => {
+                res.setHeader(key, value);
+            });
+            
+            const body = await honoRes.text();
+            res.send(body);
+        } catch (error) {
+            console.error('[Core:Bridge] Hono bridging error:', error);
+            res.status(500).json({ success: false, error: 'Internal server error in API bridge' });
+        }
+    });
+
+    // Health endpoint — must precede TRPC so probes don't fall through to
+    // middleware that calls getMcpServer() (which throws before init).
+    app.get('/health', (_req, res) => {
+        res.json({
+            status: 'ok',
+            name: '@borg/core',
+            uptime: process.uptime(),
+            timestamp: Date.now(),
+            mcpReady: !!global.mcpServerInstance,
+        });
+    });
+
+    // (scripts routes moved above /api/* wildcard)
 
     // tRPC middleware
     app.use('/trpc', createExpressMiddleware({
