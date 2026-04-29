@@ -27,8 +27,8 @@ export class McpmInstaller {
         if (mcpServer) {
             console.log(`[McpmInstaller] Installing MCP Server: ${mcpServer.package}`);
             try {
-                // Execute the internal hypercode CLI command
-                await this.runCommand(`npx hypercode mcp install ${mcpServer.package}`);
+                // Execute the internal borg CLI command
+                await this.runCommand(`npx borg mcp install ${mcpServer.package}`);
                 return `Successfully installed MCP Server '${mcpServer.name}'`;
             } catch (e: unknown) {
                 throw new Error(`Failed to install MCP server: ${getErrorMessage(e)}`);

@@ -41,7 +41,7 @@ describe('buildToolContextPayload', () => {
             observations: [],
             summaries: [
                 {
-                    content: 'HyperCode Dev Session ended after wiring session-start bootstrap metadata into supervised sessions.',
+                    content: 'Borg Dev Session ended after wiring session-start bootstrap metadata into supervised sessions.',
                     cliType: 'tabby',
                     status: 'stopped',
                     recordedAt: 100,

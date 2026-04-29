@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-type HyperCodeLockRecord = {
+type BorgLockRecord = {
     port?: number;
     host?: string;
 };
@@ -27,27 +27,27 @@ function resolveBrowserHost(host: string): string {
         : host;
 }
 
-export function resolveHyperCodeConfigDir(env: OrchestratorEnv = process.env): string {
-    const configuredDir = env.HYPERCODE_CONFIG_DIR?.trim();
+export function resolveBorgConfigDir(env: OrchestratorEnv = process.env): string {
+    const configuredDir = env.BORG_CONFIG_DIR?.trim();
     if (configuredDir) {
         return configuredDir;
     }
 
-    return path.join(os.homedir(), '.hypercode');
+    return path.join(os.homedir(), '.borg');
 }
 
-export function resolveHyperCodeLockPath(env: OrchestratorEnv = process.env): string {
-    return path.join(resolveHyperCodeConfigDir(env), 'lock');
+export function resolveBorgLockPath(env: OrchestratorEnv = process.env): string {
+    return path.join(resolveBorgConfigDir(env), 'lock');
 }
 
-export function resolveLockedHyperCodeBase(env: OrchestratorEnv = process.env): string | null {
-    const lockPath = resolveHyperCodeLockPath(env);
+export function resolveLockedBorgBase(env: OrchestratorEnv = process.env): string | null {
+    const lockPath = resolveBorgLockPath(env);
     if (!existsSync(lockPath)) {
         return null;
     }
 
     try {
-        const parsed = JSON.parse(readFileSync(lockPath, 'utf8')) as HyperCodeLockRecord;
+        const parsed = JSON.parse(readFileSync(lockPath, 'utf8')) as BorgLockRecord;
         if (!parsed || typeof parsed.port !== 'number' || parsed.port <= 0) {
             return null;
         }
@@ -63,9 +63,9 @@ export function resolveLockedHyperCodeBase(env: OrchestratorEnv = process.env): 
 }
 
 export function resolveOrchestratorBase(env: OrchestratorEnv = process.env): string | null {
-    return normalizeBaseURL(env.HYPERCODE_ORCHESTRATOR_URL)
-        ?? normalizeBaseURL(env.HYPERCODE_TRPC_UPSTREAM)
-        ?? resolveLockedHyperCodeBase(env)
-        ?? normalizeBaseURL(env.NEXT_PUBLIC_HYPERCODE_ORCHESTRATOR_URL)
+    return normalizeBaseURL(env.BORG_ORCHESTRATOR_URL)
+        ?? normalizeBaseURL(env.BORG_TRPC_UPSTREAM)
+        ?? resolveLockedBorgBase(env)
+        ?? normalizeBaseURL(env.NEXT_PUBLIC_BORG_ORCHESTRATOR_URL)
         ?? normalizeBaseURL(env.NEXT_PUBLIC_AUTOPILOT_URL);
 }

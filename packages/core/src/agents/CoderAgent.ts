@@ -32,7 +32,7 @@ export class CoderAgent extends SpecializedAgent {
         console.log(`[CoderAgent] 🧠 Analyzing task: "${offer.task}"`);
 
         // 1. Think / Generate Code
-        const prompt = `You are a Coder Agent in the HyperCode Collective.
+        const prompt = `You are a Coder Agent in the Borg Collective.
 Task: ${offer.task}
 
 Return JSON with:

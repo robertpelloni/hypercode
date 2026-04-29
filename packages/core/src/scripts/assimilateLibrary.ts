@@ -20,8 +20,8 @@ import { MemoryManager } from '../services/MemoryManager.js';
 import { SearchService } from '@borg/search';
 
 async function run() {
-    const indexPath = path.join(root, 'HYPERCODE_MASTER_INDEX.jsonc');
-    const skillsRoot = path.join(root, '.hypercode', 'skills');
+    const indexPath = path.join(root, 'BORG_MASTER_INDEX.jsonc');
+    const skillsRoot = path.join(root, '.borg', 'skills');
 
     console.log(`[Assimilator] Root: ${root}`);
     console.log(`[Assimilator] ANTHROPIC_API_KEY present: ${!!process.env.ANTHROPIC_API_KEY}`);

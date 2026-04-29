@@ -11,31 +11,31 @@ export const MCPServerConfigSchema = z.object({
 
 export type MCPServerConfig = z.infer<typeof MCPServerConfigSchema>;
 
-export const HyperCodeConfigSchema = z.object({
+export const BorgConfigSchema = z.object({
     mcpServers: z.record(MCPServerConfigSchema).default({})
 });
 
-export type HyperCodeConfig = z.infer<typeof HyperCodeConfigSchema>;
+export type BorgConfig = z.infer<typeof BorgConfigSchema>;
 
-export class HyperCodeConfigLoader {
+export class BorgConfigLoader {
     private static getConfigPath(): string {
         // Look in current working directory (project root)
-        return path.join(process.cwd(), 'hypercode.config.json');
+        return path.join(process.cwd(), 'borg.config.json');
     }
 
-    public static loadConfig(): HyperCodeConfig {
+    public static loadConfig(): BorgConfig {
         const configPath = this.getConfigPath();
         if (!fs.existsSync(configPath)) {
-            console.warn(`[HyperCodeConfig] No config found at ${configPath}. Using defaults.`);
+            console.warn(`[BorgConfig] No config found at ${configPath}. Using defaults.`);
             return { mcpServers: {} };
         }
 
         try {
             const raw = fs.readFileSync(configPath, 'utf-8');
             const json = JSON.parse(raw);
-            return HyperCodeConfigSchema.parse(json);
+            return BorgConfigSchema.parse(json);
         } catch (error) {
-            console.error(`[HyperCodeConfig] Failed to load config:`, error);
+            console.error(`[BorgConfig] Failed to load config:`, error);
             return { mcpServers: {} };
         }
     }

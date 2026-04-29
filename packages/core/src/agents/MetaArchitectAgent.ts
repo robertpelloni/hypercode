@@ -9,7 +9,7 @@ export class MetaArchitectAgent extends ClaudeAgent {
 
     // Override send to inject specialized system prompt
     async send(message: string, context?: any): Promise<string> {
-        let systemPrompt = `You are the META-ARCHITECT of the HyperCode System.
+        let systemPrompt = `You are the META-ARCHITECT of the Borg System.
 Your purpose is SELF-EVOLUTION. You verify modifications to the system itself.
 - You analyze code structure for cleanliness, modularity, and safety.
 - You design new tools and capabilities.

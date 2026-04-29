@@ -51,7 +51,7 @@ export class MarketplaceService {
             id: item.name,
             name: item.name,
             description: "Official Skill",
-            author: "HyperCode Ecosystem",
+            author: "Borg Ecosystem",
             type: 'skill', // Legacy are mostly skills
             source: 'official',
             url: item.url,
@@ -143,7 +143,7 @@ export class MarketplaceService {
         try {
             const os = await import('os');
             // Check the unified config path
-            const mcpJsonPath = path.join(os.homedir(), '.hypercode', 'mcp.json');
+            const mcpJsonPath = path.join(os.homedir(), '.borg', 'mcp.json');
             const mcpJsonRaw = await fs.readFile(mcpJsonPath, 'utf-8');
             const mcpConfig = JSON.parse(mcpJsonRaw);
 

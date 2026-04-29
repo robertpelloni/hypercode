@@ -174,10 +174,10 @@ export async function startOrchestrator(options: StartOrchestratorOptions = {}) 
     // 1.5. Start Supervisor (Native Input / Watchdog)
     if (startSupervisor) {
         try {
-            console.log("[Core] 1.5 Starting HyperCode Supervisor...");
+            console.log("[Core] 1.5 Starting Borg Supervisor...");
             const supervisorPath = resolveSupervisorEntryPath();
             if (!supervisorPath) {
-                console.warn("[Core] HyperCode Supervisor build not found. Skipping supervisor startup.");
+                console.warn("[Core] Borg Supervisor build not found. Skipping supervisor startup.");
             } else {
                 const supervisor = spawn('node', [supervisorPath], {
                     stdio: 'inherit',

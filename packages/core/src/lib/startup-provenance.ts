@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
-export interface HypercodeStartupProvenance {
+export interface BorgStartupProvenance {
     requestedRuntime?: string;
     activeRuntime?: string;
     requestedPort?: number;
@@ -24,10 +24,10 @@ interface HypercodeStartLockRecord {
     port: number;
     host: string;
     createdAt: string;
-    startup?: HypercodeStartupProvenance;
+    startup?: BorgStartupProvenance;
 }
 
-function normalizeStartupProvenance(record: HypercodeStartLockRecord | null): HypercodeStartupProvenance | null {
+function normalizeStartupProvenance(record: HypercodeStartLockRecord | null): BorgStartupProvenance | null {
     if (!record || typeof record.port !== 'number' || record.port <= 0) {
         return null;
     }
@@ -86,6 +86,6 @@ function readStartLockRecord(dataDir: string): HypercodeStartLockRecord | null {
     }
 }
 
-export function readLocalStartupProvenance(dataDir: string = process.env.HYPERCODE_DATA_DIR ?? '~/.hypercode'): HypercodeStartupProvenance | null {
+export function readLocalStartupProvenance(dataDir: string = process.env.BORG_DATA_DIR ?? '~/.borg'): BorgStartupProvenance | null {
     return normalizeStartupProvenance(readStartLockRecord(dataDir));
 }

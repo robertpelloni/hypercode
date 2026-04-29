@@ -15,7 +15,7 @@ class MockMemoryManager {
 describe('Phase 28: Smart Context Retrieval', () => {
     let graph: GraphMemory;
     let service: KnowledgeService;
-    const testPath = '.hypercode_test_smart_context';
+    const testPath = '.borg_test_smart_context';
 
     beforeEach(async () => {
         // Cleanup handled by GraphMemory logic usually, but here we use in-memory or temp path

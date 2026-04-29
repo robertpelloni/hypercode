@@ -6,7 +6,7 @@ import { rethrowSqliteUnavailableAsTrpc } from './sqliteTrpc.js';
 /**
  * Browser Controls Router (Phase J)
  *
- * Enables HyperCode to interact with browser content:
+ * Enables Borg to interact with browser content:
  * - Scrape web pages (via fetch or headless browser)
  * - Read browser history (from extension bridge)
  * - Intercept console/debug logs (from extension bridge)
@@ -108,7 +108,7 @@ export const browserControlsRouter = t.router({
         .mutation(async ({ input }) => {
             const headers: Record<string, string> = {
                 Accept: 'text/html,application/xhtml+xml',
-                'User-Agent': input.userAgent || 'HyperCode/BrowserControls (compatible)',
+                'User-Agent': input.userAgent || 'Borg/BrowserControls (compatible)',
             };
 
             const response = await fetch(input.url, { headers });

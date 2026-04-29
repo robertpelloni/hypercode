@@ -34,7 +34,7 @@ interface VectorStoreLike {
     listDocuments(where?: string, limit?: number): Promise<VectorStoreDocument[]>;
 }
 
-interface HyperCodeMemoryModule {
+interface BorgMemoryModule {
     LanceDBStore: new (dbPath: string) => VectorStoreLike;
     MemoryVectorStore: new () => VectorStoreLike;
     GraphMemory: new () => GraphMemory;
@@ -116,8 +116,8 @@ export class MemoryManager {
     }
 
     constructor(workspaceRoot: string = process.cwd()) {
-        this.dbPath = path.join(workspaceRoot, '.hypercode', 'db');
-        this.registryPath = path.join(workspaceRoot, '.hypercode', 'memory', 'contexts.json');
+        this.dbPath = path.join(workspaceRoot, '.borg', 'db');
+        this.registryPath = path.join(workspaceRoot, '.borg', 'memory', 'contexts.json');
         this.pruner = new ContextPruner();
     }
 
@@ -128,7 +128,7 @@ export class MemoryManager {
 
         // Lazy load the providers from @borg/memory
         // This allows switching to Chroma/SQLite/Memory based on config
-        const { LanceDBStore, MemoryVectorStore, GraphMemory } = await import('@borg/memory') as unknown as HyperCodeMemoryModule;
+        const { LanceDBStore, MemoryVectorStore, GraphMemory } = await import('@borg/memory') as unknown as BorgMemoryModule;
 
         // Select Backend
         let store: VectorStoreLike;

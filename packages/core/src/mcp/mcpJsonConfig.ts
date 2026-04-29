@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import type { SavedScriptConfig, SavedToolSetConfig } from '../interfaces/IConfigProvider.js';
 
-export type HyperCodeMcpToolMetadata = {
+export type BorgMcpToolMetadata = {
     name: string;
     title?: string | null;
     description?: string | null;
@@ -21,7 +21,7 @@ export type HyperCodeMcpToolMetadata = {
     raw?: Record<string, unknown> | null;
 };
 
-export type HyperCodeMcpServerDiscoveryMetadata = {
+export type BorgMcpServerDiscoveryMetadata = {
     status: 'ready' | 'failed' | 'unsupported' | 'pending';
     metadataVersion?: number;
     metadataSource?: 'binary' | 'cache' | 'derived';
@@ -43,11 +43,11 @@ export type HyperCodeMcpServerDiscoveryMetadata = {
     headerKeys?: string[];
     reloadableFromCache?: boolean;
     toolCount: number;
-    tools: HyperCodeMcpToolMetadata[];
+    tools: BorgMcpToolMetadata[];
     error?: string;
 };
 
-export type HyperCodeMcpServerEntry = {
+export type BorgMcpServerEntry = {
     command?: string;
     args?: string[];
     env?: Record<string, string>;
@@ -55,11 +55,11 @@ export type HyperCodeMcpServerEntry = {
     disabled?: boolean;
     description?: string | null;
     type?: 'STDIO' | 'SSE' | 'STREAMABLE_HTTP';
-    _meta?: HyperCodeMcpServerDiscoveryMetadata;
+    _meta?: BorgMcpServerDiscoveryMetadata;
 };
 
-export type HyperCodeMcpJsonConfig = {
-    mcpServers: Record<string, HyperCodeMcpServerEntry>;
+export type BorgMcpJsonConfig = {
+    mcpServers: Record<string, BorgMcpServerEntry>;
     alwaysVisibleTools?: string[];
     scripts?: SavedScriptConfig[];
     toolSets?: SavedToolSetConfig[];
@@ -69,13 +69,13 @@ export type HyperCodeMcpJsonConfig = {
 
 import os from 'node:os';
 
-const JSONC_HEADER = `// HyperCode MCP configuration\n// This file is HyperCode-owned and may include cached server metadata under mcpServers.<name>._meta.\n`;
+const JSONC_HEADER = `// Borg MCP configuration\n// This file is Borg-owned and may include cached server metadata under mcpServers.<name>._meta.\n`;
 
-export function getHyperCodeConfigDir(): string {
+export function getBorgConfigDir(): string {
     // If there is an mcp.jsonc in the current working directory, use it
     // This allows project-level config to be the source of truth if intended.
-    if (process.env.HYPERCODE_CONFIG_DIR) {
-        return process.env.HYPERCODE_CONFIG_DIR;
+    if (process.env.BORG_CONFIG_DIR) {
+        return process.env.BORG_CONFIG_DIR;
     }
     const cwdPath = process.cwd();
     try {
@@ -86,18 +86,18 @@ export function getHyperCodeConfigDir(): string {
     } catch {
         // Fall back
     }
-    return path.join(os.homedir(), '.hypercode');
+    return path.join(os.homedir(), '.borg');
 }
 
-export function getHyperCodeMcpJsoncPath(configDir: string = getHyperCodeConfigDir()): string {
+export function getBorgMcpJsoncPath(configDir: string = getBorgConfigDir()): string {
     return path.join(configDir, 'mcp.jsonc');
 }
 
-export function getHyperCodeMcpJsonPath(configDir: string = getHyperCodeConfigDir()): string {
+export function getBorgMcpJsonPath(configDir: string = getBorgConfigDir()): string {
     return path.join(configDir, 'mcp.json');
 }
 
-export function getHyperCodeToolCachePath(configDir: string = getHyperCodeConfigDir()): string {
+export function getBorgToolCachePath(configDir: string = getBorgConfigDir()): string {
     return path.join(configDir, 'mcp-cache.json');
 }
 
@@ -179,12 +179,12 @@ export function stripJsonComments(content: string): string {
     return result;
 }
 
-function normalizeConfigShape(config: unknown): HyperCodeMcpJsonConfig {
+function normalizeConfigShape(config: unknown): BorgMcpJsonConfig {
     if (!config || typeof config !== 'object') {
         return { mcpServers: {} };
     }
 
-    const candidate = config as HyperCodeMcpJsonConfig;
+    const candidate = config as BorgMcpJsonConfig;
     return {
         ...candidate,
         mcpServers: candidate.mcpServers && typeof candidate.mcpServers === 'object'
@@ -205,7 +205,7 @@ function normalizeConfigShape(config: unknown): HyperCodeMcpJsonConfig {
     };
 }
 
-function toCompatibilityConfig(config: HyperCodeMcpJsonConfig): Record<string, unknown> {
+function toCompatibilityConfig(config: BorgMcpJsonConfig): Record<string, unknown> {
     const compatibilityServers = Object.fromEntries(
         Object.entries(config.mcpServers || {}).map(([name, server]) => {
             const { _meta: _ignoredMeta, ...serverWithoutMeta } = server;
@@ -223,8 +223,8 @@ function toCompatibilityConfig(config: HyperCodeMcpJsonConfig): Record<string, u
     return compatibilityConfig;
 }
 
-export async function loadHyperCodeMcpConfig(configDir?: string): Promise<HyperCodeMcpJsonConfig> {
-    const jsoncPath = getHyperCodeMcpJsoncPath(configDir);
+export async function loadBorgMcpConfig(configDir?: string): Promise<BorgMcpJsonConfig> {
+    const jsoncPath = getBorgMcpJsoncPath(configDir);
 
     try {
         const raw = await fs.readFile(jsoncPath, 'utf-8');
@@ -239,10 +239,10 @@ export async function loadHyperCodeMcpConfig(configDir?: string): Promise<HyperC
     return { mcpServers: {} };
 }
 
-export async function writeHyperCodeMcpConfig(config: HyperCodeMcpJsonConfig, configDir?: string): Promise<void> {
+export async function writeBorgMcpConfig(config: BorgMcpJsonConfig, configDir?: string): Promise<void> {
     const normalized = normalizeConfigShape(config);
-    const jsoncPath = getHyperCodeMcpJsoncPath(configDir);
-    const jsonPath = getHyperCodeMcpJsonPath(configDir);
+    const jsoncPath = getBorgMcpJsoncPath(configDir);
+    const jsonPath = getBorgMcpJsonPath(configDir);
 
     await fs.mkdir(path.dirname(jsoncPath), { recursive: true });
 
@@ -252,15 +252,15 @@ export async function writeHyperCodeMcpConfig(config: HyperCodeMcpJsonConfig, co
     await fs.writeFile(jsonPath, jsonBody, 'utf-8');
 }
 
-export async function writeToolCache(config: HyperCodeMcpJsonConfig, configDir?: string): Promise<void> {
-    const cachePath = getHyperCodeToolCachePath(configDir);
+export async function writeToolCache(config: BorgMcpJsonConfig, configDir?: string): Promise<void> {
+    const cachePath = getBorgToolCachePath(configDir);
     await fs.mkdir(path.dirname(cachePath), { recursive: true });
     await fs.writeFile(cachePath, JSON.stringify(config, null, 2), 'utf-8');
 }
 
-export async function loadToolCache(configDir?: string): Promise<HyperCodeMcpJsonConfig | null> {
+export async function loadToolCache(configDir?: string): Promise<BorgMcpJsonConfig | null> {
     try {
-        const raw = await fs.readFile(getHyperCodeToolCachePath(configDir), 'utf-8');
+        const raw = await fs.readFile(getBorgToolCachePath(configDir), 'utf-8');
         return normalizeConfigShape(JSON.parse(raw));
     } catch {
         return null;
@@ -268,10 +268,4 @@ export async function loadToolCache(configDir?: string): Promise<HyperCodeMcpJso
 }
 
 
-// Borg-named aliases (consumers import these)
-export const getBorgConfigDir = getHyperCodeConfigDir;
-export const getBorgMcpJsoncPath = getHyperCodeMcpJsoncPath;
-export const getBorgMcpJsonPath = getHyperCodeMcpJsonPath;
-export const getBorgToolCachePath = getHyperCodeToolCachePath;
-export function loadBorgMcpConfig(configDir?: string): any { return null; }
-export function writeBorgMcpConfig(config: any, configDir?: string): void { }
+// Aliases removed — original functions already use Borg naming

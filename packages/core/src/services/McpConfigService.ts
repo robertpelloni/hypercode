@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import { mcpServersRepository } from '../db/repositories/mcp-servers.repo.js';
 import { toolsRepository } from '../db/repositories/tools.repo.js';
 import { formatOptionalSqliteFailure, isSqliteUnavailableError, sqliteErrorMessage } from '../db/sqliteAvailability.js';
-import { loadHyperCodeMcpConfig } from '../mcp/mcpJsonConfig.js';
+import { loadBorgMcpConfig } from '../mcp/mcpJsonConfig.js';
 
 export class McpConfigService {
     private syncState: {
@@ -21,8 +21,8 @@ export class McpConfigService {
     };
 
     /**
-     * Reads HyperCode's mcp.jsonc (falling back to mcp.json) and updates the database to match.
-     * This makes HyperCode's config file the authoritative source for config entry existence/content.
+     * Reads Borg's mcp.jsonc (falling back to mcp.json) and updates the database to match.
+     * This makes Borg's config file the authoritative source for config entry existence/content.
      */
     async syncWithDatabase() {
         console.log('[McpConfigService] Syncing Database with mcp.jsonc...');
@@ -43,7 +43,7 @@ export class McpConfigService {
                 throw e;
             }
 
-            const config = await loadHyperCodeMcpConfig();
+            const config = await loadBorgMcpConfig();
             const servers = config.mcpServers || {};
             this.syncState.lastServerCount = Object.keys(servers).length;
 

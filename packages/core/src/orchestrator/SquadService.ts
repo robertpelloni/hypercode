@@ -85,7 +85,7 @@ export class SquadService {
     private worktreesDir: string;
 
     constructor(private server: IMCPServer) {
-        this.worktreesDir = path.join(process.cwd(), '.hypercode', 'worktrees');
+        this.worktreesDir = path.join(process.cwd(), '.borg', 'worktrees');
     }
 
     /**
