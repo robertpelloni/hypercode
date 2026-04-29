@@ -26,11 +26,11 @@
 - All changes pushed to `origin/main`.
 
 ## Recommended next steps
-1. Run `pnpm install && pnpm rebuild better-sqlite3` to restore node_modules and verify full TS build.
+1. Fix remaining 104 TS compile errors — mostly optional vs required property mismatches in DB schemas, council routes, and provider code.
 2. Fix remaining Dependabot merge conflicts in `archive/` directory (low priority).
-3. Continue Go test fixes (`go vet ./...` still has issues in test files).
-4. Address P0 TODO items: recurring extension/runtime errors, dashboard truth pass.
-5. Run full Go test suite: `go test ./...` (expect some fixture/test issues from the merge cleanup).
+3. Address P0 TODO items: recurring extension/runtime errors, dashboard truth pass.
+4. Run `pnpm install && pnpm rebuild better-sqlite3` to restore node_modules and verify full TS build.
+5. Restore `packages/agents`, `packages/memory`, etc. with actual implementations (currently stubs).
 - Added a Go-native foundation bootstrap for a Pi-derived harness:
   - `foundation/pi`
   - `foundation/compat`
