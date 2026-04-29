@@ -33,8 +33,11 @@ borg exists to reduce that fragmentation without requiring a hosted backend.
 - Local control-plane foundations
 - MCP aggregation and management primitives
 - Provider fallback infrastructure
-- Core dashboard architecture
-- Build, test, and typecheck workflows
+- Core dashboard architecture (64 pages)
+- Build, test, and typecheck workflows — all four compilation targets at zero errors
+- Go sidecar with 543 REST API routes (113 Go-native with fallback)
+- CLI with version, status, start, and 10 command groups
+- VS Code extension build pipeline
 
 ### Beta
 - Session supervision workflows
@@ -90,12 +93,14 @@ Today, `electron-orchestrator` and `cli-orchestrator` do **not** yet have 100% f
 ## Quick start
 
 ### Requirements
-- Node.js 22+
+- Node.js 22+ (tested on Node 24)
+- Go 1.22+
 - pnpm 10+
 
 ### Local development
 ```bash
 pnpm install
+pnpm rebuild better-sqlite3   # Node 24 requires this
 pnpm run dev
 ```
 

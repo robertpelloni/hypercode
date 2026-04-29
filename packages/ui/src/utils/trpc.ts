@@ -7,12 +7,30 @@ try {
   const mod = require('@trpc/react-query');
   createTRPCReactFn = mod.createTRPCReact;
 } catch {
-  // Fallback: the consuming app will provide this at runtime
-  createTRPCReactFn = () => new Proxy({}, {
-    get: () => () => ({ data: undefined, isLoading: false, error: null })
-  });
+  // Fallback: return a deep proxy that won't crash SSR prerendering.
+  // Handles trpc.router.subRouter.useQuery() style access.
+  const noopQuery = () => ({ data: undefined, isLoading: false, error: null, mutate: () => {}, mutateAsync: async () => {}, refetch: async () => ({}) });
+  const handler: ProxyHandler<any> = {
+    get: (_target: any, _prop: string | symbol) => {
+      return new Proxy(noopQuery, handler);
+    },
+    apply: () => noopQuery(),
+  };
+  createTRPCReactFn = () => {
+    const trpcObj = {
+      Provider: ({ children }: { children: any }) => children,
+      useContext: () => new Proxy({}, handler),
+      useUtils: () => new Proxy({}, handler),
+      createClient: () => ({}),
+    };
+    return new Proxy(trpcObj, {
+      get: (target, prop) => {
+        if (prop in target) return (target as any)[prop];
+        return new Proxy(noopQuery, handler);
+      }
+    });
+  };
 }
 
-// Use dynamic call to avoid type argument on untyped function.
-// The actual type safety comes from the server-side router definition.
+// Dynamic call to avoid type argument on untyped function.
 export const trpc = createTRPCReactFn();
