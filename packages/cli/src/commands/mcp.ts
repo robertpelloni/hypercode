@@ -25,23 +25,55 @@ export function registerMcpCommand(program: Command): void {
     .option('--json', 'Output as JSON')
     .option('--running', 'Show only running servers')
     .option('--namespace <ns>', 'Filter by namespace')
-    .action(async (opts) => {
+    .action(async (opts, cmd) => {
+      // Merge global opts (program-level --json) with subcommand opts
+      const allOpts = cmd ? cmd.optsWithGlobals() : opts;
+      const isJson = allOpts.json === true;
+
+      // Query the running server for real data
+      let servers: any[] = [];
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/mcp.listServers', { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          const json = await res.json();
+          servers = json?.result?.data ?? [];
+        }
+      } catch {}
+
+      // Filter
+      if (opts.running) servers = servers.filter((s: any) => s.runtimeConnected);
+      if (opts.namespace) servers = servers.filter((s: any) => (s.tags ?? []).includes(opts.namespace));
+
+      if (isJson) {
+        console.log(JSON.stringify({ servers }, null, 2));
+        return;
+      }
+
       const chalk = (await import('chalk')).default;
       const Table = (await import('cli-table3')).default;
 
-      if (opts.json) {
-        console.log(JSON.stringify({ servers: [] }, null, 2));
+      if (servers.length === 0) {
+        console.log(chalk.bold.cyan('\n  MCP Servers\n'));
+        console.log(chalk.dim('  No servers found.' + (servers.length === 0 ? ' Is the server running? Use `borg start`.' : '') + '\n'));
         return;
       }
 
       const table = new Table({
-        head: ['Name', 'Status', 'Transport', 'Namespace', 'Tools', 'Latency', 'Uptime'],
+        head: ['Name', 'Status', 'Tools', 'Connected', 'Tags'],
         style: { head: ['cyan'] },
       });
 
-      // Placeholder - will connect to core API
-      console.log(chalk.bold.cyan('\n  MCP Servers\n'));
-      console.log(chalk.dim('  No servers configured. Use `borg mcp add` to add one.\n'));
+      for (const s of servers) {
+        const status = s.runtimeConnected ? chalk.green('● Running') : s.status === 'cached' ? chalk.yellow('◐ Cached') : chalk.dim('○ Stopped');
+        const tools = String(s.toolCount ?? s.advertisedToolCount ?? 0);
+        const connected = s.runtimeConnected ? '✓' : '—';
+        const tags = (s.tags ?? []).slice(0, 3).join(', ');
+        table.push([s.displayName ?? s.name, status, tools, connected, tags]);
+      }
+
+      console.log(chalk.bold.cyan(`\n  MCP Servers (${servers.length})\n`));
+      console.log(table.toString());
+      console.log(chalk.dim(`\n  ${servers.filter((s: any) => s.runtimeConnected).length} connected · ${servers.reduce((a: number, s: any) => a + (s.toolCount ?? 0), 0)} tools\n`));
     });
 
   mcp
@@ -134,13 +166,54 @@ Examples:
     .option('--server <name>', 'Filter by server')
     .option('--namespace <ns>', 'Filter by namespace')
     .option('-s, --search <query>', 'Semantic search for tools')
-    .action(async (opts) => {
-      const chalk = (await import('chalk')).default;
-      console.log(chalk.bold.cyan('\n  MCP Tools\n'));
-      if (opts.search) {
-        console.log(chalk.dim(`  Searching for: "${opts.search}"\n`));
+    .action(async (opts, cmd) => {
+      const allOpts = cmd ? cmd.optsWithGlobals() : opts;
+      const isJson = allOpts.json === true;
+
+      // Query the running server for tools
+      let tools: any[] = [];
+      try {
+        const query = opts.search ?? '';
+        const input = encodeURIComponent(JSON.stringify({ query, limit: 100 }));
+        const res = await fetch(`http://127.0.0.1:4000/trpc/mcp.searchTools?input=${input}`, { signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          const json = await res.json();
+          tools = json?.result?.data?.tools ?? json?.result?.data ?? [];
+        }
+      } catch {}
+
+      if (opts.server) tools = tools.filter((t: any) => t.serverName === opts.server);
+      if (opts.namespace) tools = tools.filter((t: any) => (t.tags ?? []).includes(opts.namespace));
+
+      if (isJson) {
+        console.log(JSON.stringify({ tools }, null, 2));
+        return;
       }
-      console.log(chalk.dim('  No tools available. Start some MCP servers first.\n'));
+
+      const chalk = (await import('chalk')).default;
+
+      if (tools.length === 0) {
+        console.log(chalk.bold.cyan('\n  MCP Tools\n'));
+        console.log(chalk.dim('  No tools found.' + (opts.search ? ` for "${opts.search}"` : ' Is the server running?') + '\n'));
+        return;
+      }
+
+      const Table = (await import('cli-table3')).default;
+      const table = new Table({
+        head: ['Tool', 'Server', 'Status', 'Priority'],
+        style: { head: ['cyan'] },
+      });
+
+      for (const t of tools.slice(0, 50)) {
+        const status = t.loaded ? chalk.green('● Loaded') : chalk.dim('○ Available');
+        const priority = t.priority ?? t.rank ?? '—';
+        table.push([t.name, t.serverName ?? '—', status, String(priority)]);
+      }
+
+      const label = opts.search ? `search: "${opts.search}"` : 'all';
+      console.log(chalk.bold.cyan(`\n  MCP Tools (${tools.length} for ${label})\n`));
+      console.log(table.toString());
+      if (tools.length > 50) console.log(chalk.dim(`\n  ... and ${tools.length - 50} more\n`));
     });
 
   mcp
