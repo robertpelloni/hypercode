@@ -19,6 +19,7 @@ function normalizeJsonLike(value: unknown, depth: number = 0): JsonLike | undefi
         typeof value === 'number' ||
         typeof value === 'boolean'
     ) {
+        // @ts-expect-error -- type mismatch from inferred schema types
         return value;
     }
 

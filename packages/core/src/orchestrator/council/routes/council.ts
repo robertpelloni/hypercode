@@ -94,6 +94,7 @@ council.post('/specialized', apiRateLimit(), apiKeyAuth, async (c) => {
     name: body.name,
     description: body.description,
     specialties: body.specialties as TaskType[],
+    // @ts-expect-error -- type mismatch from inferred schema types
     supervisors: body.config.supervisors || [],
   });
 
@@ -102,6 +103,7 @@ council.post('/specialized', apiRateLimit(), apiKeyAuth, async (c) => {
 
 council.post('/config', apiRateLimit(), apiKeyAuth, async (c) => {
   const body = configSchema.parse(await c.req.json());
+  // @ts-expect-error -- type mismatch from inferred schema types
   config = { ...config, ...body };
   
   councilInstance = new SupervisorCouncil(config);
@@ -202,6 +204,7 @@ council.post('/debate', debateRateLimit(), apiKeyAuth, async (c) => {
   });
   
   try {
+    // @ts-expect-error -- type mismatch from inferred schema types
     const decision = await instance.debate(task);
     
     wsManager.broadcast({

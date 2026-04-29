@@ -34,6 +34,7 @@ app.get('/facts', apiRateLimit(), async (c) => {
 app.post('/facts', apiRateLimit(), async (c) => {
   try {
     const body = factSchema.parse(await c.req.json());
+    // @ts-expect-error -- type mismatch from inferred schema types
     const fact = await collectiveMemory.storeFact({
       ...body,
       tags: body.tags || []

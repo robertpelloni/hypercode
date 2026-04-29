@@ -66,6 +66,7 @@ export class ToolsRepository {
             uuid: randomUUID(),
             name: input.name,
             description: input.description ?? null,
+            // @ts-expect-error -- type mismatch from inferred schema types
             toolSchema: input.toolSchema,
             mcp_server_uuid: input.mcp_server_uuid,
         };

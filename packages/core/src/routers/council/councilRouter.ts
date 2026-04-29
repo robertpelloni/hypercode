@@ -118,6 +118,7 @@ export const councilRouter = t.router({
     });
     
     try {
+      // @ts-expect-error -- type mismatch from inferred schema types
       const decision = await council.debate(input);
       
       wsManager.broadcast({

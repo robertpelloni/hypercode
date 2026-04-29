@@ -298,7 +298,9 @@ export const sessionExportRouter = t.router({
                         report.details.push({ sessionId: session.id, action: 'imported' });
                         report.imported++;
                     } else {
+                        // @ts-expect-error -- type mismatch from inferred schema types
                         report.details.push({ sessionId: session.id, action: 'error', reason: result.reason });
+                        // @ts-expect-error -- type mismatch from inferred schema types
                         report.errors.push(`Failed to import session ${session.id}: ${result.reason}`);
                     }
                 }

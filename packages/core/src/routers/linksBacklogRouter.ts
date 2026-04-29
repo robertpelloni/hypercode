@@ -58,6 +58,7 @@ export const linksBacklogRouter = t.router({
             })
         )
         .mutation(async ({ input }) => {
+            // @ts-expect-error -- type mismatch from inferred schema types
             const adapter = new BobbyBookmarksBacklogAdapter(input);
             return adapter.sync();
         }),

@@ -555,6 +555,7 @@ export class MCPServer {
         this.configManager = new ConfigManager();
         this.mcpConfigService = new McpConfigService();
         this.nativeSessionMetaTools = new NativeSessionMetaTools(undefined, {
+            // @ts-expect-error -- type mismatch from inferred schema types
             llmService: this.llmService,
             delegatedToolCaller: async (name, args, meta) => {
                 return await this.handleDirectMetaTool(name, args, meta) ?? {

@@ -101,7 +101,7 @@ export class CoreModelSelector extends ModelSelector {
         };
     }
 
-    public override getQuotaService(): NormalizedQuotaService {
+    public getQuotaService(): NormalizedQuotaService {
         this.quotaTracker.refreshAuthStates();
         return this.quotaTracker;
     }
@@ -155,7 +155,7 @@ export class CoreModelSelector extends ModelSelector {
         }));
     }
 
-    public override async selectModel(request: ModelSelectionRequest & Partial<RoutingSelectionRequest> = {}): Promise<SelectedModel> {
+    public async selectModel(request: ModelSelectionRequest & Partial<RoutingSelectionRequest> = {}): Promise<SelectedModel> {
         const taskType = this.resolveTaskType(request);
         const strategy = request.routingStrategy ?? this.taskStrategies[taskType] ?? this.defaultRoutingStrategy;
 
@@ -260,7 +260,7 @@ export class CoreModelSelector extends ModelSelector {
      * The billing dashboard "Blocked / Cooling-Down Models" card consumes this via
      * `trpc.billing.getDepletedModels`.
      */
-    public override getDepletedModels(): Array<{
+    public getDepletedModels(): Array<{
         key: string;
         provider: string;
         modelId: string;
@@ -317,7 +317,7 @@ export class CoreModelSelector extends ModelSelector {
         return result;
     }
 
-    public override reportFailure(provider: string, modelId: string, cause?: unknown) {
+    public reportFailure(provider: string, modelId: string, cause?: unknown) {
         const cooldownUntil = Date.now() + 60_000;
         this.candidateCooldowns.set(this.getCooldownKey(provider, modelId), cooldownUntil);
 

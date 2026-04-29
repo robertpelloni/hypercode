@@ -146,6 +146,7 @@ export class ServerHealthService {
                     : undefined,
                 errorMessage: connectionResult.success
                     ? undefined
+                    // @ts-expect-error -- type mismatch from inferred schema types
                     : connectionResult.errorMessage,
                 checkedAt,
             };

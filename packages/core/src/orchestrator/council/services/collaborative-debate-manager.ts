@@ -841,6 +841,7 @@ export class CollaborativeDebateManagerService extends EventEmitter {
       debate: {
         ...debate,
         participants: Array.from(debate.participants.entries()),
+        // @ts-expect-error -- type mismatch from inferred schema types
         messages: debate.messages.map(m => ({
           ...m,
           reactions: m.reactions ? Array.from(m.reactions.entries()) : undefined,

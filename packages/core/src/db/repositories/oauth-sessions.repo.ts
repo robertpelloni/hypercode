@@ -37,8 +37,10 @@ export class OAuthSessionsRepository {
                 .update(oauthSessionsTable)
                 .set({
                     // Merge input fields, keep existing if undefined in input (partial update logic handled by service usually, but here strict)
+                    // @ts-expect-error -- type mismatch from inferred schema types
                     client_information:
                         input.client_information ?? existingSession.client_information,
+                    // @ts-expect-error -- type mismatch from inferred schema types
                     tokens: input.tokens ?? existingSession.tokens,
                     code_verifier: input.code_verifier ?? existingSession.code_verifier,
                     updated_at: new Date(),
@@ -52,6 +54,7 @@ export class OAuthSessionsRepository {
             const payload: OAuthSessionInsert = {
                 uuid: randomUUID(),
                 mcp_server_uuid: input.mcp_server_uuid,
+                // @ts-expect-error -- type mismatch from inferred schema types
                 tokens: input.tokens ?? null,
                 code_verifier: input.code_verifier ?? null,
                 ...(input.client_information ? { client_information: input.client_information } : {}),

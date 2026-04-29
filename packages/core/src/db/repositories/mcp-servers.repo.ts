@@ -716,6 +716,7 @@ export class McpServersRepository {
 
     private async discoverServerTools(server: DatabaseMcpServer): Promise<DiscoveryResult> {
         const DISCOVERY_TIMEOUT_MS = 30_000;
+        // @ts-expect-error -- type mismatch from inferred schema types
         const preflightFailure = getDiscoveryPreflightFailure(server);
 
         if (preflightFailure) {

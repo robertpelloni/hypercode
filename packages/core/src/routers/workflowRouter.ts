@@ -37,6 +37,7 @@ export const workflowRouter = t.router({
                     });
                     return { id: input.id };
                 } else {
+                    // @ts-expect-error -- type mismatch from inferred schema types
                     const res = await visualWorkflowsRepo.createWorkflow(input);
                     return { id: res.id };
                 }

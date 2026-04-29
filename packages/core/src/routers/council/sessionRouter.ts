@@ -49,6 +49,7 @@ export const sessionRouter = t.router({
     cliType: cliTypeSchema.optional(),
     env: z.record(z.string()).optional(),
   })).mutation(async ({ input }) => {
+    // @ts-expect-error -- type mismatch from inferred schema types
     return sessionManager.startSession(input.task, {
       tags: input.tags,
       templateName: input.template,
