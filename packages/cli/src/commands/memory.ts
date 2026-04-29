@@ -32,9 +32,24 @@ Examples:
     `)
     .action(async (content, opts) => {
       const chalk = (await import('chalk')).default;
+
+      // Try to persist via API
+      let persisted = false;
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/memory.addObservation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content, type: opts.type, tags: opts.tags, source: opts.source }),
+          signal: AbortSignal.timeout(3000),
+        });
+        if (res.ok) persisted = true;
+      } catch {}
+
       console.log(chalk.green(`  ✓ Memory added (${opts.type})`));
       console.log(chalk.dim(`    Content: ${content.substring(0, 80)}${content.length > 80 ? '...' : ''}`));
       if (opts.tags) console.log(chalk.dim(`    Tags: ${opts.tags.join(', ')}`));
+      if (persisted) console.log(chalk.dim(`    Persisted: yes`));
+      else console.log(chalk.dim(`    Persisted: no (server not running)`));
     });
 
   mem
@@ -46,10 +61,36 @@ Examples:
     .option('--threshold <score>', 'Minimum relevance score (0-1)', '0.5')
     .option('--json', 'Output as JSON')
     .option('--backend <backend>', 'Search specific backend')
-    .action(async (query, opts) => {
+    .action(async (query, opts, cmd) => {
+      const allOpts = cmd ? cmd.optsWithGlobals() : opts;
+      const isJson = allOpts.json === true;
+
+      let results: any[] = [];
+      try {
+        const input = encodeURIComponent(JSON.stringify({ query, topK: parseInt(opts.topK) || 10 }));
+        const res = await fetch(`http://127.0.0.1:4000/trpc/memory.semanticSearch?input=${input}`, { signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          const json = await res.json();
+          results = json?.result?.data ?? [];
+        }
+      } catch {}
+
+      if (isJson) {
+        console.log(JSON.stringify({ query, results }, null, 2));
+        return;
+      }
+
       const chalk = (await import('chalk')).default;
       console.log(chalk.bold.cyan(`\n  Memory Search: "${query}"\n`));
-      console.log(chalk.dim('  No memories found. Add some with `borg memory add`.\n'));
+      if (results.length === 0) {
+        console.log(chalk.dim('  No memories found. Add some with `borg memory add`.\n'));
+        return;
+      }
+      for (const r of results.slice(0, 20)) {
+        console.log(chalk.dim(`  ${r.type ?? 'memory'}  `) + (r.content ?? r.text ?? '').substring(0, 100));
+        if (r.score) console.log(chalk.dim(`    score: ${r.score.toFixed(3)}`));
+      }
+      console.log('');
     });
 
   mem
@@ -58,10 +99,36 @@ Examples:
     .option('-n, --limit <count>', 'Number of entries to show', '20')
     .option('-t, --type <type>', 'Filter by type')
     .option('--json', 'Output as JSON')
-    .action(async (opts) => {
+    .action(async (opts, cmd) => {
+      const allOpts = cmd ? cmd.optsWithGlobals() : opts;
+      const isJson = allOpts.json === true;
+
+      let memories: any[] = [];
+      try {
+        const input = encodeURIComponent(JSON.stringify({ limit: parseInt(opts.limit) || 20 }));
+        const res = await fetch(`http://127.0.0.1:4000/trpc/memory.getRecentObservations?input=${input}`, { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          const json = await res.json();
+          memories = json?.result?.data ?? [];
+        }
+      } catch {}
+
+      if (isJson) {
+        console.log(JSON.stringify({ memories }, null, 2));
+        return;
+      }
+
       const chalk = (await import('chalk')).default;
       console.log(chalk.bold.cyan('\n  Recent Memories\n'));
-      console.log(chalk.dim('  No memories stored yet.\n'));
+      if (memories.length === 0) {
+        console.log(chalk.dim('  No memories stored yet.\n'));
+        return;
+      }
+      for (const m of memories.slice(0, 20)) {
+        const ts = m.createdAt ? new Date(m.createdAt).toLocaleString() : '';
+        console.log(`  ${chalk.dim(ts)}  ${(m.content ?? m.text ?? '').substring(0, 80)}`);
+      }
+      console.log('');
     });
 
   mem
@@ -122,14 +189,31 @@ Examples:
     .command('stats')
     .description('Show memory system statistics')
     .option('--json', 'Output as JSON')
-    .action(async (opts) => {
+    .action(async (opts, cmd) => {
+      const allOpts = cmd ? cmd.optsWithGlobals() : opts;
+      const isJson = allOpts.json === true;
+
+      let stats: any = {};
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/memory.getAgentStats', { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          const json = await res.json();
+          stats = json?.result?.data ?? {};
+        }
+      } catch {}
+
+      if (isJson) {
+        console.log(JSON.stringify(stats, null, 2));
+        return;
+      }
+
       const chalk = (await import('chalk')).default;
       console.log(chalk.bold.cyan('\n  Memory Statistics\n'));
-      console.log(chalk.dim('  Total entries:   ') + '0');
-      console.log(chalk.dim('  Active backends: ') + '1');
-      console.log(chalk.dim('  Storage used:    ') + '0 KB');
-      console.log(chalk.dim('  Last harvest:    ') + 'never');
-      console.log(chalk.dim('  Last prune:      ') + 'never');
+      console.log(chalk.dim('  Total entries:   ') + String(stats.totalEntries ?? stats.total ?? 0));
+      console.log(chalk.dim('  Active backends: ') + String(stats.backendCount ?? 1));
+      console.log(chalk.dim('  Storage used:    ') + String(stats.storageUsed ?? '0 KB'));
+      console.log(chalk.dim('  Last harvest:    ') + String(stats.lastHarvest ?? 'never'));
+      console.log(chalk.dim('  Last prune:      ') + String(stats.lastPrune ?? 'never'));
       console.log('');
     });
 }
