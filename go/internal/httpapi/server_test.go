@@ -26,13 +26,6 @@ import (
 	"github.com/borghq/borg-go/internal/memorystore"
 	"github.com/borghq/borg-go/internal/providers"
 	"github.com/borghq/borg-go/internal/sessionimport"
-	"github.com/borghq/borg-go/internal/config"
-	"github.com/borghq/borg-go/internal/controlplane"
-	"github.com/borghq/borg-go/internal/interop"
-	"github.com/borghq/borg-go/internal/lockfile"
-	"github.com/borghq/borg-go/internal/memorystore"
-	"github.com/borghq/borg-go/internal/providers"
-	"github.com/borghq/borg-go/internal/sessionimport"
 	_ "modernc.org/sqlite"
 )
 
@@ -12722,8 +12715,6 @@ func TestCLIHarnessesEndpoint(t *testing.T) {
 		t.Fatalf("failed to create borg tools path: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(toolsDir, "registry.go"), []byte(`
-package tools
-
 func demo() {
 	_ = Tool{Name: "run_shell_command"}
 	_ = Tool{Name: "read_file"}
@@ -12784,8 +12775,6 @@ func TestCLISummaryEndpoint(t *testing.T) {
 		t.Fatalf("failed to create borg tools path: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(toolsDir, "registry.go"), []byte(`
-package tools
-
 func demo() {
 	_ = Tool{Name: "run_shell_command"}
 	_ = Tool{Name: "read_file"}
@@ -13395,8 +13384,6 @@ func TestRuntimeStatusEndpoint(t *testing.T) {
 		t.Fatalf("failed to create borg tools path: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(toolsDir, "registry.go"), []byte(`
-package tools
-
 func demo() {
 	_ = Tool{Name: "run_shell_command"}
 	_ = Tool{Name: "read_file"}

@@ -19,8 +19,6 @@ func TestListBuildsHarnessDefinitions(t *testing.T) {
 		t.Fatalf("failed to create borg tools path: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(toolsDir, "registry.go"), []byte(`
-package tools
-
 func demo() {
 	_ = Tool{Name: "run_shell_command"}
 	_ = Tool{Name: "read_file"}
@@ -94,8 +92,6 @@ func TestListBuildsHarnessDefinitions(t *testing.T) {
 		t.Fatalf("failed to create borg tools path: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(toolsDir, "registry.go"), []byte(`
-package tools
-
 func demo() {
 	_ = Tool{Name: "run_shell_command"}
 	_ = Tool{Name: "read_file"}
