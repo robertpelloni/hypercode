@@ -11,9 +11,7 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "types": [
-      "node",
-      "express",
-      "vitest"
+      "node"
     ]
   },
   "include": [
