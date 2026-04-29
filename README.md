@@ -99,9 +99,10 @@ Today, `electron-orchestrator` and `cli-orchestrator` do **not** yet have 100% f
 
 ### Local development
 ```bash
-pnpm install
-pnpm rebuild better-sqlite3   # Node 24 requires this
-pnpm run dev
+make install   # pnpm install + rebuild native modules
+make build     # Go binary + TS core + TS CLI
+make typecheck # Verify all targets at 0 errors
+make dev       # Start development server
 ```
 
 ### borg harness lane
