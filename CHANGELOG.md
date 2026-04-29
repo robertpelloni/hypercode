@@ -5145,3 +5145,18 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Assimalated Maestro logic (`AgentDiscovery`, `ContextGroomer`, `DirectorNotes`) natively into `@borg/core`.
 - Updated `TODO.md` to check off A2A protocol implementation, dashboard verifications, and multi-model chatroom progress.
 - **Broader Harness Catalog Alignment**: Expanded the TypeScript supervisor catalog, council CLI registry, compiled CLI harness list, and Go sidecar harness registry so borg now tracks `borg`, `aider`, `cursor`, `copilot`, `qwen`, `superai-cli`, `codebuff`, `codemachine`, and `factory-droid` more consistently across session catalog and `/api/cli/harnesses` surfaces, while keeping non-borg parity claims explicitly limited to install/runtime metadata.
+
+## [1.0.0-alpha.38]
+
+### Fixed
+- tRPC `getMcpServer()` returns a safe fallback instead of throwing when MCP isn't initialized.
+- REST API route ordering: `/api/scripts` now matches before the `/api/*` Hono wildcard.
+- All `@borg/*` runtime stubs now have real constructors (InputTools, SystemStatusTool, Director, Council, LLMService, etc.).
+- `HypercodeStartLockRecord` → `BorgStartLockRecord`, `HYPERCODE_CLIENT_HELLO` → `BORG_CLIENT_HELLO`.
+- Zero `hypercode` references remain in any active TypeScript source file.
+
+### Verified
+- tRPC batch queries work through Next.js proxy: `startupStatus`, `mcp.listServers` return real data.
+- MCP inventory: **135 servers, 1302 tools** in config.
+- Go sidecar detects **24 installed CLI tools** across 22 harnesses.
+- Full stack end-to-end: TS server (port 4000) + Go sidecar (port 4300) + Next.js dashboard (port 3000).
