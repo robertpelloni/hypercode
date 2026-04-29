@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - Resolved merge conflict artifacts in `packages/core/package.json`, `apps/web/package.json`, and `packages/ui/package.json` (removed duplicate dependency blocks from Dependabot branches).
 - Fixed `AgentDiscovery.ts` merged class (two `AgentDiscovery` classes and two interfaces in one file — kept the more complete version with `AgentCapability` scanning).
 - Fixed `config/status_test.go` duplicate `if` block and missing closing brace, updated field reference from `borgSubmodule` to `BorgSubmodule`.
+- Fixed `server_test.go` brace mismatch (depth 2 → 0): removed duplicate code blocks in `TestMCPAddAndRemoveServerFallBackToLocalConfiguredServers` and `TestConfigStatusEndpoint`.
+- Fixed `inventory_test.go` DB path mismatch — test created `metamcp.db` in `workspace/packages/core/` but code reads from `workspace/metamcp.db`.
+- Fixed `ctxharvester` chunk ID collisions — chunks created in the same millisecond generated identical IDs, causing map overwrites. Added atomic sequence counter.
+- **Go test suite now passes 100%** (`go test ./...` — all 25 testable packages pass, zero failures).
 
 ### Changed
 - Version bumped to `1.0.0-alpha.34` across all monorepo packages.
