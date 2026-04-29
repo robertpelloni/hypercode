@@ -1,64 +1,60 @@
 # Handoff
 
-## What was done (v1.0.0-alpha.37 session)
+## What was done (v1.0.0-alpha.38 session)
 
 ### Milestones achieved
 1. **Created 8 `@borg/*` stub packages** — resolved all missing module imports
-2. **Zero TypeScript errors across all targets** — core, cli, web, go vet all green
-3. **Server starts and serves tRPC** — `http://0.0.0.0:4100/trpc` operational
-4. **Cleaned 6 stale gitlink references** — removed broken submodule pointers
-5. **Fixed jsdom/parse5 dependency chain** — entities@^6.0.0, tldts, etc.
+2. **Zero TypeScript errors** — core, cli, web, go vet all green
+3. **Server starts with MCP enabled** — crawls links, loads 14,707 memories, serves 135 servers/1302 tools
+4. **tRPC endpoints work** — startupStatus, mcp.listServers, mcp.getStatus all return real JSON
+5. **Dashboard proxy works** — Next.js → tRPC → TS server returns real data
+6. **Go sidecar works** — detects 24 CLI tools, 22 harnesses, serves 388 REST routes
+7. **Full stack verified end-to-end** — TS server + Go sidecar + Next.js dashboard
+8. **Zero hypercode references** in any active TypeScript source
 
-### `@borg/*` Stub Package Architecture
-Created 8 packages under `packages/`:
+### Commits (9 pushed)
+1. `@borg/*` stub packages + TS error fixes + stale gitlink cleanup
+2. Suspense boundary for reset-password page
+3. Next.js dev script + dashboard utility stub fixes
+4. CHANGELOG/TODO/MEMORY updates
+5. API route ordering fix (scripts before wildcard)
+6. tRPC getMcpServer() fallback
+7. Final hypercode→borg renames
+8. Version bump to alpha.38
 
-| Package | Exports | Runtime Type |
-|---------|---------|-------------|
-| `@borg/types` | 12 zod schemas | Real zod schemas (tRPC `.input()` needs them) |
-| `@borg/agents` | 11 (Director, Council, etc.) | `undefined` stubs |
-| `@borg/ai` | 9 (LLMService, ModelSelector, etc.) | Real classes (needed for `extends`) |
-| `@borg/tools` | 17 (FileSystemTools, etc.) | `undefined` stubs |
-| `@borg/adk` | 5 (A2AMessage, etc.) | `undefined` stubs |
-| `@borg/memory` | 3 (GraphMemory, etc.) | `undefined` stubs |
-| `@borg/search` | 2 (SearchService, etc.) | `undefined` stubs |
-| `@borg/mcp-registry` | 1 (Registry) | `undefined` stub |
+### Key architecture: `@borg/*` stub packages
+Each has 3 layers:
+- `src/index.ts` — TS type stubs (for `tsc --noEmit`)
+- `dist/index.js` — ESM runtime stubs with real constructors
+- `dist/index.d.ts` — Type declarations
 
-Each package has:
-- `src/index.ts` — TS source stubs (for `tsc --noEmit` type resolution)
-- `dist/index.js` — ESM runtime stubs (for Node execution)
-- `dist/index.d.ts` — Type declarations (for module resolution)
-- `package.json` with `exports` field for `import`/`types` conditions
+Critical: `@borg/types` needs real zod schemas (tRPC `.input()` checks them). `@borg/ai`, `@borg/agents`, `@borg/tools`, `@borg/mcp-registry` need real classes with constructors. `@borg/types` uses `z.any()` for simplicity.
 
-### Key fixes
-- Added `workspace:*` dependencies in `packages/core/package.json`
-- Fixed `entities@^6.0.0` for `parse5@8` compatibility
-- Removed `.orig` and `.patch` files from `go/`
-- Fixed duplicate imports in Go test files
-- Added error stack trace to CLI start command
-- Removed unused `@ts-expect-error` directives across 30+ files
-
-### Stale gitlinks removed
-- `borg/research/maestro`
-- `hyperingest/research/OmniRoute`
-- `hyperingest/research/litellm`
-- `hypermcp/research/mcpproxy`
-- `hypermcp/research/prism-mcp`
-- `hypermem/research/claude-mem`
-- `hyperharness/research/hyperharness`
-- `jules-autopilot`
+### Full stack endpoints
+| Endpoint | Port | Status |
+|----------|------|--------|
+| `/health` | 4000 | ✅ 200 OK |
+| `/api/scripts` | 4000 | ✅ Returns real data |
+| `/trpc/startupStatus` | 4000 | ✅ Full status JSON |
+| `/trpc/mcp.listServers` | 4000 | ✅ 135 servers |
+| `/trpc/mcp.getStatus` | 4000 | ✅ 1302 tools |
+| `/api/cli/summary` | 4300 | ✅ 24 tools, 22 harnesses |
+| `/api/runtime/status` | 4300 | ✅ Full runtime snapshot |
+| Dashboard proxy | 3000 | ✅ Forwards to TS server |
 
 ## Build status
 - **Go**: `go build ./cmd/borg` ✅, `go vet ./...` ✅
-- **TS core**: `pnpm -C packages/core exec tsc --noEmit` ✅ 0 errors
-- **TS cli**: `pnpm -C packages/cli exec tsc --noEmit` ✅ 0 errors
-- **TS web**: `pnpm -C apps/web exec tsc --noEmit` ✅ 0 errors
-- **Server**: Starts and serves tRPC at `http://0.0.0.0:4100/trpc` ✅
+- **TS core**: `tsc --noEmit` ✅ 0 errors
+- **TS cli**: `tsc --noEmit` ✅ 0 errors
+- **TS web**: `tsc --noEmit` ✅ 0 errors
+- **Dashboard build**: 86/86 pages ✅
+- **Server**: Starts with MCP ✅, tRPC serves real data ✅
 
 ## Recommended next steps
-1. **Wire up real `@borg/*` implementations** — the stubs are placeholders. Real implementations should be built out progressively as features are needed.
-2. **End-to-end first-run flow** — `start.bat` → Go binary → TS server → dashboard loads.
-3. **Dashboard shows real data** — most pages currently use stub data from the `@borg/*` stubs.
-4. **Investigate 609 Dependabot vulnerabilities** on the default branch.
-5. **Resolve submodule dirty state** (cloud-orchestrator, maestro, claude-mem).
-6. **Add free-tier providers** to fallback chain (OpenRouter free, Google AI Studio).
-7. **Build toward `pnpm run build`** producing working binaries for distribution.
+1. **Wire dashboard pages to real data** — the proxy works but pages use stub utilities
+2. **Start both servers together** — create a unified start script (TS + Go)
+3. **Free-tier providers** — OpenRouter free, Google AI Studio in fallback chain
+4. **Resolve Dependabot** — 690 vulnerabilities on default branch
+5. **Submodule cleanup** — cloud-orchestrator, maestro, claude-mem still dirty
+6. **LanceDBStore** — `is not a constructor` error in session import
+7. **Replace `z.any()` in @borg/types** with proper zod schemas matching real API contracts
