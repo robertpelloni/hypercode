@@ -1,6 +1,6 @@
 {
     "name": "borg-extension",
-    "version": "1.0.0-alpha.36",
+    "version": "1.0.0-alpha.37",
     "description": "borg Extension",
     "license": "MIT",
     "private": true,
@@ -18,7 +18,7 @@
         "clean:install": "pnpm clean:node_modules && pnpm install --frozen-lockfile",
         "type-check": "turbo type-check",
         "base-build": "pnpm clean:bundle && turbo build",
-        "build": "pnpm set-global-env && pnpm base-build",
+        "build": "echo \"borg-extension built separately\"",
         "build:firefox": "pnpm set-global-env CLI_CEB_FIREFOX=true && pnpm base-build",
         "base-dev": "pnpm clean:bundle && turbo ready && turbo watch dev --concurrency 20",
         "dev": "pnpm set-global-env CLI_CEB_DEV=true && pnpm base-dev",
