@@ -237,3 +237,22 @@
 ### 12. CLI Version Read Path (Discovered 2026-04-29)
 **Observation**: The CLI `getVersion()` tried to read `VERSION.md` from `../../../..VERSION.md` relative to `__dirname` in compiled output. The compiled output is at `packages/cli/dist/cli/src/index.js`, so the path resolved to `packages/cli/VERSION` (wrong).
 **Resolution**: Changed to `../../../../../VERSION` (5 levels up) and filename to `VERSION` (not `VERSION.md`).
+
+### 13. @borg/* Stub Package Architecture (Discovered 2026-04-29)
+**Observation**: The core package imports from 8 `@borg/*` packages that don't have real implementations. TypeScript compilation and Node runtime both fail without them.
+**Resolution**: Created stub packages in `packages/` with three layers:
+  - `src/index.ts` — TS type stubs (for `tsc --noEmit` via `exports.types` condition)
+  - `dist/index.js` — ESM runtime stubs (for Node via `exports.import` condition)
+  - `dist/index.d.ts` — Type declarations (fallback resolution)
+  Key insight: `@borg/types` must export real zod schemas (tRPC `.input()` calls `'~standard' in schema`). `@borg/ai` must export real classes for `extends` (NormalizedQuotaService extends QuotaService). All others can be `undefined` stubs.
+  The `exports` field in package.json must have both `import` and `types` conditions pointing to the correct files. Without `exports`, tsc resolves incorrectly (230 errors).
+**Implication**: As real implementations are built, each stub can be replaced incrementally. The zod schemas in `@borg/types` are already functional and used by tRPC routers.
+
+### 14. Dashboard Utility Stubs Must Match Usage Patterns (Discovered 2026-04-29)
+**Observation**: Auto-generated stubs returning `(() => ({})) as any` crash Next.js build when pages call `.map()` on the result or access properties like `.topTools`.
+**Resolution**: Utility functions must return the correct base type: arrays for anything used with `.map()`, objects for property access, strings for display, numbers for timestamps. The heuristic: function names containing "rows/records/sections/items/list/groups" → `[]`, "label/title/hint/message" → `''`, everything else → `{}`.
+**Implication**: When replacing stubs with real implementations, the return type contracts are already implicitly defined by page usage.
+
+### 15. Next.js useSearchParams Requires Suspense Boundary (Discovered 2026-04-29)
+**Observation**: Pages using `useSearchParams()` from `next/navigation` fail during static prerendering with "useSearchParams() should be wrapped in a suspense boundary".
+**Resolution**: Wrap the default export in a `<Suspense>` boundary. Pattern: `export default function PageWrapper() { return <Suspense fallback={...}><Page /></Suspense>; }` then rename the original to `function Page()`.
