@@ -18,7 +18,7 @@ export interface BorgStartupProvenance {
     updatedAt?: string;
 }
 
-interface HypercodeStartLockRecord {
+interface BorgStartLockRecord {
     instanceId: string;
     pid: number;
     port: number;
@@ -27,7 +27,7 @@ interface HypercodeStartLockRecord {
     startup?: BorgStartupProvenance;
 }
 
-function normalizeStartupProvenance(record: HypercodeStartLockRecord | null): BorgStartupProvenance | null {
+function normalizeStartupProvenance(record: BorgStartLockRecord | null): BorgStartupProvenance | null {
     if (!record || typeof record.port !== 'number' || record.port <= 0) {
         return null;
     }
@@ -62,14 +62,14 @@ function resolveDataDir(dataDir: string, homeDirectory: string = homedir()): str
     return path.isAbsolute(dataDir) ? dataDir : path.resolve(dataDir);
 }
 
-function readStartLockRecord(dataDir: string): HypercodeStartLockRecord | null {
+function readStartLockRecord(dataDir: string): BorgStartLockRecord | null {
     const lockPath = path.join(resolveDataDir(dataDir), 'lock');
     if (!existsSync(lockPath)) {
         return null;
     }
 
     try {
-        const parsed = JSON.parse(readFileSync(lockPath, 'utf8')) as Partial<HypercodeStartLockRecord>;
+        const parsed = JSON.parse(readFileSync(lockPath, 'utf8')) as Partial<BorgStartLockRecord>;
         if (
             typeof parsed.instanceId !== 'string'
             || typeof parsed.pid !== 'number'
@@ -80,7 +80,7 @@ function readStartLockRecord(dataDir: string): HypercodeStartLockRecord | null {
             return null;
         }
 
-        return parsed as HypercodeStartLockRecord;
+        return parsed as BorgStartLockRecord;
     } catch {
         return null;
     }

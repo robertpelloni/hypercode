@@ -806,7 +806,7 @@ async function connectToCore() {
                 reconnectTimer = null;
             }
             socket?.send(JSON.stringify({
-                type: 'HYPERCODE_CLIENT_HELLO',
+                type: 'BORG_CLIENT_HELLO',
                 clientType: 'vscode-extension',
                 clientName: 'Borg VS Code Bridge',
                 platform: `${vscode.env.appName} ${vscode.version}`,
@@ -1191,7 +1191,7 @@ async function architectMode() {
 }
 
 async function handleMessage(msg: Record<string, unknown>) {
-    if (msg.type === 'HYPERCODE_CORE_MANIFEST') {
+    if (msg.type === 'BORG_CORE_MANIFEST') {
         const manifest = msg.manifest as { connectedClients?: Array<{ clientName?: string }>; supportedHookPhases?: string[] } | undefined;
         addActivity(
             'system',
