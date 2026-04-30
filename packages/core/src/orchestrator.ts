@@ -224,6 +224,23 @@ export async function startOrchestrator(options: StartOrchestratorOptions = {}) 
             console.error("Failed to start MCP server:", err);
             throw err;
         }
+    } else {
+        // Lightweight MCP init — just create the instance for tRPC routers to use
+        try {
+            console.log("[Core] 2. Instantiating lightweight MCPServer (no stdio/bridge)...");
+            const inputTools = new InputTools();
+            const systemStatusTool = new SystemStatusTool();
+            const mcp = new MCPServer({
+                inputTools,
+                systemStatusTool,
+                skipAutoDrive: true,
+                skipStdio: true,
+            });
+            global.mcpServerInstance = mcp;
+            console.log("[Core] MCPServer initialized (lightweight — no tool discovery).");
+        } catch (err) {
+            console.error("[Core] Failed to initialize lightweight MCP:", err);
+        }
     }
 
     return {
