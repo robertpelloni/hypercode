@@ -82,7 +82,21 @@ export function registerMcpCommand(program: Command): void {
     .action(async (name) => {
       const chalk = (await import('chalk')).default;
       console.log(chalk.yellow(`  Starting MCP server: ${name}...`));
-      console.log(chalk.green(`  ✓ Server '${name}' started`));
+      try {
+        const res = await fetch(`http://127.0.0.1:4000/trpc/mcp.startServer?input=${encodeURIComponent(JSON.stringify({ name }))}`, {
+          signal: AbortSignal.timeout(10000),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          console.log(chalk.green(`  ✓ Server '${name}' started`));
+        } else {
+          const json = await res.json().catch(() => ({}));
+          console.log(chalk.red(`  ✗ Failed: ${json.error?.message ?? res.statusText}`));
+        }
+      } catch (e: any) {
+        console.log(chalk.red(`  ✗ Error: ${e.message}`));
+        console.log(chalk.dim(`    Is the server running? Use borg start`));
+      }
     });
 
   mcp
@@ -91,7 +105,19 @@ export function registerMcpCommand(program: Command): void {
     .action(async (name) => {
       const chalk = (await import('chalk')).default;
       console.log(chalk.yellow(`  Stopping MCP server: ${name}...`));
-      console.log(chalk.green(`  ✓ Server '${name}' stopped`));
+      try {
+        const res = await fetch(`http://127.0.0.1:4000/trpc/mcp.stopServer?input=${encodeURIComponent(JSON.stringify({ name }))}`, {
+          signal: AbortSignal.timeout(10000),
+        });
+        if (res.ok) {
+          console.log(chalk.green(`  ✓ Server '${name}' stopped`));
+        } else {
+          const json = await res.json().catch(() => ({}));
+          console.log(chalk.red(`  ✗ Failed: ${json.error?.message ?? res.statusText}`));
+        }
+      } catch (e: any) {
+        console.log(chalk.red(`  ✗ Error: ${e.message}`));
+      }
     });
 
   mcp
