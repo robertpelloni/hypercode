@@ -83,8 +83,11 @@ export function registerMcpCommand(program: Command): void {
       const chalk = (await import('chalk')).default;
       console.log(chalk.yellow(`  Starting MCP server: ${name}...`));
       try {
-        const res = await fetch(`http://127.0.0.1:4000/trpc/mcp.startServer?input=${encodeURIComponent(JSON.stringify({ name }))}`, {
-          signal: AbortSignal.timeout(10000),
+        const res = await fetch('http://127.0.0.1:4000/trpc/mcp.connectServer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
+          signal: AbortSignal.timeout(15000),
         });
         if (res.ok) {
           const json = await res.json();
@@ -106,7 +109,10 @@ export function registerMcpCommand(program: Command): void {
       const chalk = (await import('chalk')).default;
       console.log(chalk.yellow(`  Stopping MCP server: ${name}...`));
       try {
-        const res = await fetch(`http://127.0.0.1:4000/trpc/mcp.stopServer?input=${encodeURIComponent(JSON.stringify({ name }))}`, {
+        const res = await fetch('http://127.0.0.1:4000/trpc/mcp.disconnectServer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
           signal: AbortSignal.timeout(10000),
         });
         if (res.ok) {
