@@ -35,7 +35,7 @@ borg exists to reduce that fragmentation without requiring a hosted backend.
 - Provider fallback infrastructure
 - Core dashboard architecture (50+ pages)
 - Build, test, and typecheck workflows — all four compilation targets at zero errors
-- Go sidecar with 388 REST API routes (113 Go-native with fallback)
+- Go sidecar with 543 REST API routes across 26 categories
 - CLI with version, status, start, and 10 command groups — all querying live tRPC API
 - VS Code extension build pipeline
 - 62 tRPC routers registered, 23+ procedures verified returning real data
