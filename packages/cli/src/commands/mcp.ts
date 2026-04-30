@@ -145,9 +145,33 @@ Examples:
     `)
     .action(async (name, command, opts) => {
       const chalk = (await import('chalk')).default;
-      console.log(chalk.green(`  ✓ Added MCP server '${name}' (${opts.transport})`));
-      console.log(chalk.dim(`    Command: ${command}`));
-      console.log(chalk.dim(`    Namespace: ${opts.namespace}`));
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/mcpServers.create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            command,
+            transport: opts.transport,
+            namespace: opts.namespace,
+            args: opts.args,
+            env: opts.env?.reduce((acc: any, v: string) => { const [k, ...r] = v.split('='); acc[k] = r.join('='); return acc; }, {}),
+            autoStart: opts.autoStart,
+          }),
+          signal: AbortSignal.timeout(5000),
+        });
+        if (res.ok) {
+          console.log(chalk.green(`  ✓ Added MCP server '${name}' (${opts.transport})`));
+          console.log(chalk.dim(`    Command: ${command}`));
+          console.log(chalk.dim(`    Namespace: ${opts.namespace}`));
+        } else {
+          const json = await res.json().catch(() => ({}));
+          console.log(chalk.red(`  ✗ Failed: ${json.error?.message ?? res.statusText}`));
+        }
+      } catch (e: any) {
+        console.log(chalk.red(`  ✗ Error: ${e.message}`));
+        console.log(chalk.dim(`    Is the server running?`));
+      }
     });
 
   mcp
@@ -165,11 +189,40 @@ Examples:
     .action(async (name) => {
       const chalk = (await import('chalk')).default;
       console.log(chalk.bold.cyan(`\n  MCP Server: ${name}\n`));
-      console.log(chalk.dim('  Status:    ') + 'stopped');
-      console.log(chalk.dim('  Transport: ') + 'stdio');
-      console.log(chalk.dim('  Tools:     ') + '0');
-      console.log(chalk.dim('  Calls:     ') + '0');
-      console.log(chalk.dim('  Avg Latency: ') + '0ms');
+
+      try {
+        // Get server list and find the one matching name
+        const res = await fetch('http://127.0.0.1:4000/trpc/mcp.listServers', {
+          signal: AbortSignal.timeout(5000),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const servers = json?.result?.data ?? [];
+          const server = servers.find((s: any) => s.name === name);
+          if (!server) {
+            console.log(chalk.red(`  ✗ Server '${name}' not found`));
+            console.log(chalk.dim(`    Use borg mcp list to see available servers`));
+            return;
+          }
+          console.log(chalk.dim('  Status:     ') + (server.runtimeConnected ? chalk.green('● Connected') : chalk.dim('○ Disconnected')));
+          console.log(chalk.dim('  Transport:  ') + (server.transport ?? 'stdio'));
+          console.log(chalk.dim('  Tools:      ') + (server.toolCount ?? 0));
+          console.log(chalk.dim('  Source:     ') + (server.source ?? 'unknown'));
+          if (server.description) console.log(chalk.dim('  Description: ') + server.description);
+          if (server.tags?.length) console.log(chalk.dim('  Tags:       ') + server.tags.join(', '));
+          if (server.tools?.length) {
+            console.log(chalk.dim('  Tool List:'));
+            for (const t of server.tools.slice(0, 20)) {
+              console.log(chalk.dim('    • ') + (t.name ?? t));
+            }
+            if (server.tools.length > 20) console.log(chalk.dim(`    ... and ${server.tools.length - 20} more`));
+          }
+        }
+      } catch {
+        console.log(chalk.dim('  Status:    ') + 'unknown (server not reachable)');
+        console.log(chalk.dim('  Transport: ') + 'stdio');
+        console.log(chalk.dim('  Tools:     ') + '0');
+      }
       console.log('');
     });
 
