@@ -59,6 +59,10 @@ function test(name, cmd, expectFn) {
 
   test('health', 'health', o => o.includes('Subsystem') || o.includes('health'));
 
+  test('catalog stats', 'catalog stats', o => o.includes('Catalog') || o.includes('340'));
+
+  test('catalog search', 'catalog search memory', o => o.includes('memory') || o.includes('results'));
+
   console.log(`\n  ${passed} passed, ${failed} failed\n`);
   process.exit(failed > 0 ? 1 : 0);
 })();
