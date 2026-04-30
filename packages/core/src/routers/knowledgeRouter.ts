@@ -27,8 +27,10 @@ export const knowledgeRouter = t.router({
         }),
 
     getStats: publicProcedure.query(async () => {
-        const contexts = await getMemoryManager().listContexts();
-        return { count: contexts.length };
+        try {
+            const contexts = await getMemoryManager()?.listContexts() ?? [];
+            return { count: contexts.length };
+        } catch { return { count: 0 }; }
     }),
 
     ingest: publicProcedure

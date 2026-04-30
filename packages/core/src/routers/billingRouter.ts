@@ -119,6 +119,7 @@ export const billingRouter = t.router({
             groq: !!process.env.GROQ_API_KEY,
         };
 
+        try {
         const llm = getLLMService();
         const stats = llm.getCostStats();
         const quota = llm.modelSelector.getQuotaService();
@@ -135,6 +136,9 @@ export const billingRouter = t.router({
         };
 
         return { keys, usage };
+        } catch {
+            return { keys, usage: { currentMonth: 0, limit: 100.00, breakdown: [{ provider: 'No Usage Yet', cost: 0, requests: 0 }] } };
+        }
     }),
 
     /** Get quota information per provider — limits, remaining, reset dates */

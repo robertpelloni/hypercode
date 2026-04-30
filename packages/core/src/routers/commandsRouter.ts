@@ -17,11 +17,13 @@ export const commandsRouter = t.router({
     }),
 
     list: publicProcedure.query(() => {
-        const commands = getCommandRegistry().getCommands?.() ?? [];
+        try {
+        const commands = getCommandRegistry()?.getCommands?.() ?? [];
         return commands.map((cmd) => ({
                 name: cmd.name,
                 description: cmd.description
         }));
+        } catch { return []; }
     }),
 });
 

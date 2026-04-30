@@ -3,7 +3,7 @@ import { t, publicProcedure, getMcpServer, getSuggestionService } from '../lib/t
 
 export const suggestionsRouter = t.router({
     list: publicProcedure.query(() => {
-        return getSuggestionService().getPendingSuggestions();
+        try { return getSuggestionService()?.getPendingSuggestions() ?? []; } catch { return []; }
     }),
     resolve: publicProcedure.input(z.object({
         id: z.string(),

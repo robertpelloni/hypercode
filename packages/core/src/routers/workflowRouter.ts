@@ -68,7 +68,9 @@ export const workflowRouter = t.router({
     // --- Workflow Definitions ---
 
     list: publicProcedure.query(() => {
+        try {
         const engine = requireWorkflowEngine();
+        if (!engine) return [];
         return getWorkflowDefinitions(engine).map((w) => ({
             id: w.id,
             name: w.name ?? w.id,
@@ -77,6 +79,7 @@ export const workflowRouter = t.router({
             nodeCount: w.nodes?.size ?? 0,
             edgeCount: w.edges?.length ?? 0,
         }));
+        } catch { return []; }
     }),
 
     getGraph: publicProcedure

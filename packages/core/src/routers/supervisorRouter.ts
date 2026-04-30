@@ -68,13 +68,13 @@ export const supervisorRouter = t.router({
         }
 
         const server = getMcpServer();
-        const sup = server.supervisor;
+        const sup = server?.supervisor;
         return {
-            isActive: sup.isActive?.() ?? false,
-            activeWorkers: (sup.getActiveWorkers?.() ?? []).concat(orchestratorActive > 0 ? [`Orchestrator (${orchestratorActive})`] : []),
-            queueDepth: sup.getQueueDepth?.() ?? 0,
-            lastActivity: sup.getLastActivity?.() ?? null,
-            totalTasksCompleted: sup.getTotalCompleted?.() ?? 0,
+            isActive: sup?.isActive?.() ?? false,
+            activeWorkers: (sup?.getActiveWorkers?.() ?? []).concat(orchestratorActive > 0 ? [`Orchestrator (${orchestratorActive})`] : []),
+            queueDepth: sup?.getQueueDepth?.() ?? 0,
+            lastActivity: sup?.getLastActivity?.() ?? null,
+            totalTasksCompleted: sup?.getTotalCompleted?.() ?? 0,
         };
     }),
 

@@ -15,7 +15,7 @@ export const healerRouter = t.router({
         return { success };
     }),
     getHistory: t.procedure.query(async () => {
-        return getHealerService().getHistory();
+        try { return getHealerService()?.getHistory() ?? []; } catch { return []; }
     }),
     subscribe: publicProcedure.subscription(() => {
         return observable<unknown>((emit) => {

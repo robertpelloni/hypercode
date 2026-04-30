@@ -51,7 +51,7 @@ export const directorRouter = t.router({
         return result;
     }),
     status: t.procedure.query(() => {
-        return getDirectorRuntime().getStatus?.() ?? { status: 'offline' };
+        try { return getDirectorRuntime()?.getStatus?.() ?? { status: 'offline' }; } catch { return { status: 'offline' }; }
     }),
     updateConfig: t.procedure.input(z.object({
         defaultTopic: z.string().optional()
