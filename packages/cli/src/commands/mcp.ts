@@ -529,4 +529,61 @@ Supported clients:
       }
       console.log('');
     });
+
+  mcp
+    .command('connect-all')
+    .description('Attempt to connect all configured MCP servers')
+    .option('--timeout <ms>', 'Connection timeout per server', '10000')
+    .action(async (opts) => {
+      const chalk = (await import('chalk')).default;
+      console.log(chalk.bold.cyan('\n  MCP Connect All\n'));
+
+      try {
+        // Get list of servers
+        const listRes = await fetch('http://127.0.0.1:4000/trpc/mcp.listServers', {
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!listRes.ok) {
+          console.log(chalk.red('  ✗ Failed to fetch server list'));
+          return;
+        }
+        const listJson = await listRes.json();
+        const servers = listJson?.result?.data ?? [];
+        const disconnected = servers.filter((s: any) => !s.runtimeConnected);
+        const alreadyConnected = servers.length - disconnected.length;
+
+        console.log(chalk.dim(`  Found ${servers.length} servers (${alreadyConnected} already connected)`));
+        console.log(chalk.dim(`  Attempting to connect ${disconnected.length} servers...\n`));
+
+        let connected = 0, failed = 0;
+        for (const server of disconnected.slice(0, 20)) {
+          const name = server.name;
+          try {
+            const res = await fetch('http://127.0.0.1:4000/trpc/mcp.connectServer', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name }),
+              signal: AbortSignal.timeout(parseInt(opts.timeout)),
+            });
+            if (res.ok) {
+              connected++;
+              console.log(chalk.green(`  ✓ ${name}`));
+            } else {
+              failed++;
+              const json = await res.json().catch(() => ({}));
+              console.log(chalk.red(`  ✗ ${name}: ${json.error?.message ?? 'failed'}`));
+            }
+          } catch (e: any) {
+            failed++;
+            console.log(chalk.red(`  ✗ ${name}: ${e.message}`));
+          }
+        }
+        console.log(chalk.dim(`\n  ${connected} connected, ${failed} failed`));
+        if (disconnected.length > 20) {
+          console.log(chalk.dim(`  (${disconnected.length - 20} servers skipped — use individual connect for more)`));
+        }
+      } catch (e: any) {
+        console.log(chalk.red(`  ✗ Error: ${e.message}`));
+      }
+    });
 }
