@@ -367,24 +367,56 @@ Examples:
     .option('--json', 'Output raw JSON config')
     .action(async (opts) => {
       const chalk = (await import('chalk')).default;
-      const config = {
-        namespaces: { default: { enabled: true } },
-        progressiveDisclosure: true,
-        semanticSearch: true,
-        toonFormat: false,
-        codeMode: false,
-        toolRenaming: true,
-        keepAlive: true,
-        heartbeatInterval: 30000,
-      };
-      if (opts.json) {
-        console.log(JSON.stringify(config, null, 2));
-      } else {
-        console.log(chalk.bold.cyan('\n  MCP Router Config\n'));
-        for (const [key, val] of Object.entries(config)) {
-          console.log(chalk.dim(`  ${key}: `) + JSON.stringify(val));
+
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/settings.get', { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          const json = await res.json();
+          const settings = json?.result?.data ?? {};
+          if (opts.json) {
+            console.log(JSON.stringify(settings, null, 2));
+          } else {
+            console.log(chalk.bold.cyan('\n  Borg Configuration\n'));
+            const mcp = settings.mcp ?? {};
+            console.log(chalk.bold('  MCP Router:'));
+            console.log(chalk.dim('    progressiveDisclosure: ') + (mcp.progressiveDisclosure ?? true));
+            console.log(chalk.dim('    semanticSearch:        ') + (mcp.semanticSearch ?? true));
+            console.log(chalk.dim('    codeMode:              ') + (mcp.codeMode ?? false));
+            console.log(chalk.dim('    toolRenaming:          ') + (mcp.toolRenaming ?? true));
+            console.log(chalk.dim('    keepAlive:             ') + (mcp.keepAlive ?? true));
+            console.log('');
+            console.log(chalk.bold('  Server:'));
+            console.log(chalk.dim('    port:    ') + (settings.server?.port ?? 4000));
+            console.log(chalk.dim('    host:    ') + (settings.server?.host ?? '0.0.0.0'));
+            console.log(chalk.dim('    logLevel: ') + (settings.server?.logLevel ?? 'info'));
+            console.log('');
+            const providers = settings.providers ?? [];
+            console.log(chalk.bold('  Providers:'), providers.length > 0 ? providers.length + ' configured' : 'none (use env vars)');
+            console.log('');
+          }
+        } else {
+          console.log(chalk.yellow('  Server returned ' + res.status));
         }
-        console.log('');
+      } catch {
+        // Fallback to static config
+        const config = {
+          namespaces: { default: { enabled: true } },
+          progressiveDisclosure: true,
+          semanticSearch: true,
+          codeMode: false,
+          toolRenaming: true,
+          keepAlive: true,
+        };
+        if (opts.json) {
+          console.log(JSON.stringify(config, null, 2));
+        } else {
+          console.log(chalk.bold.cyan('\n  MCP Router Config (default)\n'));
+          for (const [key, val] of Object.entries(config)) {
+            console.log(chalk.dim(`  ${key}: `) + JSON.stringify(val));
+          }
+          console.log(chalk.dim('\n  Note: Server not reachable — showing defaults'));
+          console.log('');
+        }
       }
     });
 
