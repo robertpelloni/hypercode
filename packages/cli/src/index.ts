@@ -27,6 +27,7 @@ import { registerDashboardCommand } from './commands/dashboard.js';
 import { registerTopCommand } from './commands/top.js';
 import { registerHealthCommand } from './commands/health.js';
 import { registerPingCommand } from './commands/ping.js';
+import { registerCatalogCommand } from './commands/catalog.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -67,6 +68,7 @@ registerDashboardCommand(program);
 registerTopCommand(program);
 registerHealthCommand(program);
 registerPingCommand(program);
+registerCatalogCommand(program);
 
 // Default action: show help if no command given
 program.action(() => {
