@@ -559,9 +559,47 @@ Examples:
     .command('import <file>')
     .description('Import MCP configuration from JSON file')
     .option('--merge', 'Merge with existing config instead of replacing')
-    .action(async (file) => {
+    .action(async (file, opts) => {
       const chalk = (await import('chalk')).default;
-      console.log(chalk.green(`  ✓ Imported MCP config from ${file}`));
+      const { readFileSync, existsSync } = await import('fs');
+      const { resolve } = await import('path');
+
+      const filePath = resolve(process.cwd(), file);
+      if (!existsSync(filePath)) {
+        console.log(chalk.red(`  ✗ File not found: ${filePath}`));
+        return;
+      }
+
+      try {
+        const raw = readFileSync(filePath, 'utf8');
+        const imported = JSON.parse(raw);
+        const servers = imported?.servers ?? imported?.mcpServers ?? [];
+        const serverList = Array.isArray(servers) ? servers : Object.entries(servers).map(([name, config]: [string, any]) => ({ name, ...config }));
+
+        console.log(chalk.yellow(`  Importing ${serverList.length} servers from ${file}...`));
+
+        let imported_count = 0, failed = 0;
+        for (const server of serverList.slice(0, 50)) {
+          try {
+            const res = await fetch('http://127.0.0.1:4000/trpc/mcp.addServer', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: server.name,
+                command: server.command ?? 'npx',
+                args: server.args ?? [],
+                env: server.env ?? {},
+              }),
+              signal: AbortSignal.timeout(3000),
+            });
+            if (res.ok) imported_count++; else failed++;
+          } catch { failed++; }
+        }
+        console.log(chalk.green(`  ✓ Imported ${imported_count} servers from ${file}`));
+        if (failed > 0) console.log(chalk.yellow(`  ⚠ ${failed} servers failed to import`));
+      } catch (e: any) {
+        console.log(chalk.red(`  ✗ Error: ${e.message}`));
+      }
     });
 
   mcp
