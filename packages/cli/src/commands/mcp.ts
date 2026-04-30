@@ -266,10 +266,51 @@ Examples:
     .description('Search the MCP directory for available servers')
     .option('-c, --category <cat>', 'Filter by category')
     .option('-n, --limit <count>', 'Max results', '20')
-    .action(async (query) => {
+    .action(async (query, opts, cmd) => {
+      const allOpts = cmd ? cmd.optsWithGlobals() : opts;
+      const isJson = allOpts.json === true;
+
+      let servers: any[] = [];
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/mcp.listServers', { signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          const json = await res.json();
+          servers = json?.result?.data ?? [];
+        }
+      } catch {}
+
+      // Fuzzy search across name, tags, description
+      const q = query.toLowerCase();
+      const results = servers.filter((s: any) => {
+        const name = (s.name ?? '').toLowerCase();
+        const tags = (s.tags ?? []).join(' ').toLowerCase();
+        const display = (s.displayName ?? '').toLowerCase();
+        return name.includes(q) || tags.includes(q) || display.includes(q);
+      });
+
+      const limit = parseInt(opts.limit) || 20;
+      const limited = results.slice(0, limit);
+
+      if (isJson) {
+        console.log(JSON.stringify({ query, results: limited }, null, 2));
+        return;
+      }
+
       const chalk = (await import('chalk')).default;
-      console.log(chalk.bold.cyan(`\n  MCP Directory Search: "${query}"\n`));
-      console.log(chalk.dim('  No results found. Directory not yet populated.\n'));
+      console.log(chalk.bold.cyan(`\n  MCP Directory Search: "${query}" (${limited.length}/${results.length} results)\n`));
+
+      if (limited.length === 0) {
+        console.log(chalk.dim('  No matching servers found.\n'));
+        return;
+      }
+
+      const Table = (await import('cli-table3')).default;
+      const table = new Table({ head: ['Name', 'Tools', 'Tags'], style: { head: ['cyan'] } });
+      for (const s of limited) {
+        table.push([s.name, String(s.toolCount ?? 0), (s.tags ?? []).slice(0, 3).join(', ')]);
+      }
+      console.log(table.toString());
+      console.log('');
     });
 
   mcp
@@ -278,7 +319,34 @@ Examples:
     .option('-o, --output <file>', 'Output file path', 'borg-mcp-export.json')
     .action(async (opts) => {
       const chalk = (await import('chalk')).default;
-      console.log(chalk.green(`  ✓ Exported MCP config to ${opts.output}`));
+      const { writeFileSync } = await import('fs');
+
+      let servers: any[] = [];
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/mcp.listServers', { signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          const json = await res.json();
+          servers = json?.result?.data ?? [];
+        }
+      } catch {}
+
+      const exported = {
+        exportedAt: new Date().toISOString(),
+        version: await (async () => { try { const { readFileSync } = await import('fs'); const { resolve } = await import('path'); let d = process.cwd(); for (let i = 0; i < 20; i++) { try { return readFileSync(resolve(d, 'VERSION'), 'utf8').trim(); } catch {} const p = resolve(d, '..'); if (p === d) break; d = p; } } catch {} return 'unknown'; })(),
+        serverCount: servers.length,
+        totalTools: servers.reduce((a: number, s: any) => a + (s.toolCount ?? 0), 0),
+        servers: servers.map((s: any) => ({
+          name: s.name,
+          tags: s.tags,
+          toolCount: s.toolCount,
+          status: s.status,
+          alwaysOn: s.alwaysOn,
+          config: s.config,
+        })),
+      };
+
+      writeFileSync(opts.output, JSON.stringify(exported, null, 2));
+      console.log(chalk.green(`  ✓ Exported ${servers.length} servers (${exported.totalTools} tools) to ${opts.output}`));
     });
 
   mcp
