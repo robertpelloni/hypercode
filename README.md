@@ -33,11 +33,14 @@ borg exists to reduce that fragmentation without requiring a hosted backend.
 - Local control-plane foundations
 - MCP aggregation and management primitives
 - Provider fallback infrastructure
-- Core dashboard architecture (64 pages)
+- Core dashboard architecture (50+ pages)
 - Build, test, and typecheck workflows — all four compilation targets at zero errors
-- Go sidecar with 543 REST API routes (113 Go-native with fallback)
-- CLI with version, status, start, and 10 command groups
+- Go sidecar with 388 REST API routes (113 Go-native with fallback)
+- CLI with version, status, start, and 10 command groups — all querying live tRPC API
 - VS Code extension build pipeline
+- 62 tRPC routers registered, 23+ procedures verified returning real data
+- Full tRPC proxy through Next.js dashboard
+- Server uptime verified at 50+ minutes continuous operation
 
 ### Beta
 - Session supervision workflows
