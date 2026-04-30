@@ -40,7 +40,7 @@ borg exists to reduce that fragmentation without requiring a hosted backend.
 - VS Code extension build pipeline
 - 62 tRPC routers registered, 23+ procedures verified returning real data
 - Full tRPC proxy through Next.js dashboard
-- Server uptime verified at 50+ minutes continuous operation
+- Server uptime verified at 110+ minutes continuous operation
 
 ### Beta
 - Session supervision workflows
