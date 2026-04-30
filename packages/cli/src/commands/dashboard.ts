@@ -23,7 +23,7 @@ function getVersion(): string {
       dir = parent;
     }
   } catch {}
-  return '1.0.0-alpha.39';
+  return 'dev';
 }
 
 export function registerDashboardCommand(program: Command): void {
@@ -68,10 +68,10 @@ Examples:
         const { spawn } = await import('child_process');
         const { resolve } = await import('path');
         const webDir = resolve(process.cwd(), 'apps/web');
-        const nextBin = resolve(process.cwd(), 'node_modules/.pnpm/next@16.1.7_@babel+core@7.2_1282a12bd07be361d8910af11a5013c9/node_modules/next/dist/bin/next');
-        const child = spawn(process.execPath, [nextBin, 'dev', '--port', String(opts.port)], {
+        const child = spawn('pnpm', ['dev', '--port', String(opts.port)], {
           stdio: 'inherit',
           cwd: webDir,
+          shell: true,
           env: { ...process.env, BORG_TRPC_UPSTREAM: `http://127.0.0.1:4000/trpc` },
         });
         child.on('exit', (code) => process.exit(code ?? 0));
