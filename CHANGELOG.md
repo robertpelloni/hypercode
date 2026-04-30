@@ -5220,3 +5220,34 @@ and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0
 - MCP inventory: **135 servers, 1302 tools** in config.
 - Go sidecar detects **24 installed CLI tools** across 22 harnesses.
 - Full stack end-to-end: TS server (port 4000) + Go sidecar (port 4300) + Next.js dashboard (port 3000).
+
+## [1.0.0-alpha.41] - 2026-04-30
+
+### Added
+- `borg catalog list/stats/search` — Browse 340 MCP servers from smithery.ai + GitHub catalog
+- `borg ping` — Connectivity and latency test (TS server, Go sidecar, MCP data)
+- `borg health` — 8 subsystem readiness checks with blocking reasons
+- `borg provider add` — Persist API keys to `~/.borg/config.jsonc`
+- `borg mcp connect-all` — Batch connect up to 20 MCP servers at once
+- `borg mcp sync` — Detects installed AI tools (Claude Desktop, Cursor, VS Code)
+- `borg mcp import <file>` — Import servers from JSON file via tRPC
+- `borg mcp install <pkg>` — Add server to config via tRPC
+- `borg mcp config` — Shows real MCP router settings from tRPC API
+- `mcp.connectServer/disconnectServer` — New tRPC mutations for connecting servers
+- Go sidecar auto-launch on `borg start` when binary exists
+- Dashboard dev command uses `pnpm` instead of hardcoded next binary path
+- Lightweight MCP init loads 115 server configs from `mcp.jsonc` into aggregator
+- `@trpc/react-query` and `ms` dependencies added for dashboard
+
+### Fixed
+- Dashboard tRPC proxy: port 3001 → 4000 (was causing 502 errors on all dashboard data)
+- `connectServer` reads config from `mcp.jsonc` instead of nonexistent `configuredServers` property
+- Inventory readiness now considers persisted database data (135 servers, 1302 tools)
+- Dashboard builds cleanly: 86/86 pages generated
+
+### Verified
+- 36/36 tests pass (12 smoke + 24 CLI integration)
+- Dashboard: 86/86 pages, 0 build errors
+- Go sidecar: 543 routes, 340 catalog entries, 25/25 test packages
+- 8 providers detected from environment variables
+- 3 AI tools detected (Claude Desktop, Cursor, VS Code)
