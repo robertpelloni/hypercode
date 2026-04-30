@@ -274,3 +274,23 @@
 **Observation**: Next.js 16 Turbopack crashes with `range start index 1607525553 out of range for slice of length 468465` in static_sorted_file.rs. The `.next/` cache gets corrupted.
 **Resolution**: Delete `apps/web/.next/` and rebuild. Set `turbopack.root` in `next.config.js` to the monorepo root.
 **Implication**: If the dashboard fails to start, first try clearing `.next/`.
+
+### 20. Dashboard tRPC Proxy Port Mismatch (Discovered 2026-04-30)
+**Observation**: The Next.js dashboard's tRPC API route (`apps/web/src/app/api/trpc/[trpc]/route.ts`) defaulted to `http://127.0.0.1:3001/trpc` (MCP WebSocket port) instead of `http://127.0.0.1:4000/trpc` (tRPC server). All dashboard data queries returned 502 errors.
+**Resolution**: Changed `DEFAULT_UPSTREAM_TRPC_URL` from port 3001 to 4000. Can also be overridden via `BORG_TRPC_UPSTREAM` env var.
+**Implication**: This was the root cause of empty dashboard data. The proxy is the only way the dashboard reaches the TS server.
+
+### 21. Lightweight MCP Init Without Full Discovery (Discovered 2026-04-30)
+**Observation**: When `--no-mcp` is used, `global.mcpServerInstance` is never set, causing ALL tRPC routers to return empty objects from `getMcpServer()`. Session supervisor, memory manager, and other services are unavailable.
+**Resolution**: Added a lightweight init path that creates MCPServer with `skipAutoDrive: true, skipStdio: true` and sets `global.mcpServerInstance`. This gives routers their dependencies without the 45-second discovery phase.
+**Implication**: Next server restart with `--no-mcp` will have functional tRPC routers (sessions, memory, agents) even without MCP tool discovery.
+
+### 22. MCP Inventory Known When Persisted Data Exists (Discovered 2026-04-30)
+**Observation**: `startupStatus` showed `inventoryReady: false` even though the database had 135 persisted servers and 1302 tools. The `inventoryKnown` check required `aggregatorStatus.initialized` which is only set during full MCP startup.
+**Resolution**: Added `|| persistedServerCount > 0` to the `inventoryKnown` condition in `startupStatus.ts`.
+**Implication**: `borg health` will now correctly report inventory as ready when data exists in the database.
+
+### 23. CLI Provider Auto-Detection (Discovered 2026-04-30)
+**Observation**: 8 API keys were available in environment variables (OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, GEMINI_API_KEY, XAI_API_KEY, DEEPSEEK_API_KEY, MISTRAL_API_KEY, OPENROUTER_API_KEY) but `borg provider list` showed "No providers configured".
+**Resolution**: Added environment variable scanning as fallback when no providers are explicitly configured. Shows provider name, "● Available" status, and the env var source.
+**Implication**: Users see their available providers immediately without explicit configuration.
