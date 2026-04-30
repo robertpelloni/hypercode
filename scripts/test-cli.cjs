@@ -53,6 +53,12 @@ function test(name, cmd, expectFn) {
   test('agent list', 'agent list', o => o.includes('gent'));
   test('agent council', 'agent council', o => o.includes('ouncil') || o.includes('irector'));
 
+  test('mcp config', 'mcp config', o => o.includes('Configuration') || o.includes('MCP'));
+
+  test('ping', 'ping', o => o.includes('OK') || o.includes('unreachable'));
+
+  test('health', 'health', o => o.includes('Subsystem') || o.includes('health'));
+
   console.log(`\n  ${passed} passed, ${failed} failed\n`);
   process.exit(failed > 0 ? 1 : 0);
 })();
