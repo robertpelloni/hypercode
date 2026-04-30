@@ -237,6 +237,30 @@ export async function startOrchestrator(options: StartOrchestratorOptions = {}) 
                 skipStdio: true,
             });
             global.mcpServerInstance = mcp;
+
+            // Load server configs from mcp.jsonc into the aggregator
+            try {
+                const { loadBorgMcpConfig } = await import('./mcp/mcpJsonConfig.js');
+                const config = await loadBorgMcpConfig();
+                const serverConfigs = config.mcpServers ?? {};
+                let loaded = 0;
+                for (const [name, serverConfig] of Object.entries(serverConfigs)) {
+                    const sc = serverConfig as any;
+                    if (sc.command) {
+                        mcp.mcpAggregator.addServerConfig(name, {
+                            command: sc.command,
+                            args: sc.args ?? [],
+                            env: sc.env ?? {},
+                            enabled: sc.enabled !== false,
+                        }).catch(() => {}); // Don't block on connection failures
+                        loaded++;
+                    }
+                }
+                console.log(`[Core] Loaded ${loaded} server configs from mcp.jsonc into aggregator`);
+            } catch (e) {
+                console.log('[Core] Could not load mcp.jsonc configs:', (e as Error).message);
+            }
+
             console.log("[Core] MCPServer initialized (lightweight — no tool discovery).");
         } catch (err) {
             console.error("[Core] Failed to initialize lightweight MCP:", err);
