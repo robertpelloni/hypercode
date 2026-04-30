@@ -432,10 +432,39 @@ Examples:
   $ borg mcp install --pip mcp-server-sqlite
   $ borg mcp install --github anthropics/mcp-servers
     `)
-    .action(async (pkg) => {
+    .action(async (pkg, opts) => {
       const chalk = (await import('chalk')).default;
       console.log(chalk.yellow(`  Installing MCP server: ${pkg}...`));
-      console.log(chalk.green(`  ✓ Installed '${pkg}'`));
+
+      // Derive server name from package
+      const serverName = pkg.replace(/^@.*?\//, '').replace(/^mcp-server-/, '').replace(/\/.*$/, '');
+      const command = opts.npm ? 'npm' : opts.pip ? 'pip' : 'npx';
+      const args = opts.pip ? ['install', pkg] : opts.npm ? ['install', '-g', pkg] : ['-y', pkg];
+
+      try {
+        // Add to Borg MCP config via tRPC
+        const res = await fetch('http://127.0.0.1:4000/trpc/mcp.addServer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: serverName,
+            command: 'npx',
+            args: ['-y', pkg],
+            env: {},
+          }),
+          signal: AbortSignal.timeout(5000),
+        });
+        if (res.ok) {
+          console.log(chalk.green(`  ✓ Installed '${pkg}' as '${serverName}'`));
+          console.log(chalk.dim(`    Use 'borg mcp start ${serverName}' to connect`));
+        } else {
+          const json = await res.json().catch(() => ({}));
+          console.log(chalk.red(`  ✗ Failed: ${json.error?.message ?? res.statusText}`));
+        }
+      } catch (e: any) {
+        console.log(chalk.red(`  ✗ Error: ${e.message}`));
+        console.log(chalk.dim('    Is the server running? Use borg start'));
+      }
     });
 
   mcp
