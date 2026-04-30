@@ -16,6 +16,7 @@ interface StatusData {
   sessions: { active: number; paused: number; total: number };
   memory: { entries: number; backends: number };
   providers: { configured: number; active: number };
+  goSidecar?: { ok: boolean; version: string; uptimeSec: number };
 }
 
 async function fetchTRPC(host: string, path: string): Promise<any> {
@@ -30,10 +31,11 @@ async function fetchTRPC(host: string, path: string): Promise<any> {
 }
 
 async function getRealStatus(host: string): Promise<StatusData | null> {
-  const [startupStatus, mcpStatus, health] = await Promise.all([
+  const [startupStatus, mcpStatus, health, goHealth] = await Promise.all([
     fetchTRPC(host, '/trpc/startupStatus'),
     fetchTRPC(host, '/trpc/mcp.getStatus'),
     fetchTRPC(host, '/health'),
+    (async () => { try { const r = await fetch('http://127.0.0.1:4300/health', { signal: AbortSignal.timeout(2000) }); return r.ok ? await r.json() : null; } catch { return null; } })(),
   ]);
 
   if (!health) return null;
@@ -54,6 +56,7 @@ async function getRealStatus(host: string): Promise<StatusData | null> {
     sessions: { active: 0, paused: 0, total: 0 },
     memory: { entries: 0, backends: 1 },
     providers: { configured: 0, active: 0 },
+    goSidecar: goHealth ? { ok: goHealth.ok, version: goHealth.version, uptimeSec: goHealth.uptimeSec } : undefined,
   };
 }
 
@@ -131,6 +134,7 @@ Examples:
           ['Sessions', chalk.dim('○ None'), `Active: ${real.sessions.active} | Paused: ${real.sessions.paused}`],
           ['Providers', real.providers.configured > 0 ? chalk.yellow(`◐ ${real.providers.configured}`) : chalk.dim('○ None'), `Active: ${real.providers.active}`],
           ['Dashboard', chalk.dim('○ Stopped'), 'http://localhost:3000'],
+          ['Go Sidecar', real.goSidecar ? chalk.green(`● Running (${real.goSidecar.version})`) : chalk.dim('○ Stopped'), 'http://127.0.0.1:4300 | 543 routes'],
         );
         console.log(table.toString());
         console.log(chalk.dim(`\n  Server: http://${host}/trpc  |  Health: http://${host}/health\n`));
@@ -144,6 +148,7 @@ Examples:
           ['Sessions', chalk.dim('○ None'), 'No active sessions'],
           ['Providers', chalk.dim('○ None'), 'Not configured'],
           ['Dashboard', chalk.dim('○ Stopped'), 'http://localhost:3000'],
+          ['Go Sidecar', real?.goSidecar ? chalk.green('● Running') : chalk.dim('○ Stopped'), `http://127.0.0.1:4300${real?.goSidecar ? ' | ' + real.goSidecar.version : ''}`],
         );
         console.log(table.toString());
         console.log(chalk.dim(`\n  Use ${chalk.cyan('`borg start`')} to launch the server\n`));
