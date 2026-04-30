@@ -412,6 +412,25 @@ Examples:
 				});
 
 				console.log(chalk.dim("  Core loaded: orchestrator started"));
+
+				// Detect available providers from environment
+				const providerEnvMap: Record<string, string> = {
+					OPENAI_API_KEY: 'OpenAI',
+					ANTHROPIC_API_KEY: 'Anthropic',
+					GOOGLE_API_KEY: 'Google',
+					GEMINI_API_KEY: 'Gemini',
+					XAI_API_KEY: 'xAI',
+					DEEPSEEK_API_KEY: 'DeepSeek',
+					MISTRAL_API_KEY: 'Mistral',
+					OPENROUTER_API_KEY: 'OpenRouter',
+				};
+				const detectedProviders = Object.entries(providerEnvMap)
+					.filter(([env]) => process.env[env])
+					.map(([, name]) => name);
+				if (detectedProviders.length > 0) {
+					console.log(chalk.dim(`  Providers: ${detectedProviders.join(', ')}`));
+				}
+
 				console.log(
 					chalk.green(
 						`  ✓ tRPC control plane running at http://${runtime.host}:${runtime.trpcPort}/trpc`,
