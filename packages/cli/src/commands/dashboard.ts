@@ -62,6 +62,22 @@ Examples:
       console.log(chalk.dim(`  Mode: ${opts.dev ? 'development' : 'production'}`));
       console.log('');
 
+      if (opts.dev) {
+        // Start the Next.js dev server
+        console.log(chalk.yellow('  Starting Next.js dev server...'));
+        const { spawn } = await import('child_process');
+        const { resolve } = await import('path');
+        const webDir = resolve(process.cwd(), 'apps/web');
+        const nextBin = resolve(process.cwd(), 'node_modules/.pnpm/next@16.1.7_@babel+core@7.2_1282a12bd07be361d8910af11a5013c9/node_modules/next/dist/bin/next');
+        const child = spawn(process.execPath, [nextBin, 'dev', '--port', String(opts.port)], {
+          stdio: 'inherit',
+          cwd: webDir,
+          env: { ...process.env, BORG_TRPC_UPSTREAM: `http://127.0.0.1:4000/trpc` },
+        });
+        child.on('exit', (code) => process.exit(code ?? 0));
+        return;
+      }
+
       if (opts.open !== false) {
         try {
           const open = (await import('open')).default;
