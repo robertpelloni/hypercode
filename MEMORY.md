@@ -256,3 +256,21 @@
 ### 15. Next.js useSearchParams Requires Suspense Boundary (Discovered 2026-04-29)
 **Observation**: Pages using `useSearchParams()` from `next/navigation` fail during static prerendering with "useSearchParams() should be wrapped in a suspense boundary".
 **Resolution**: Wrap the default export in a `<Suspense>` boundary. Pattern: `export default function PageWrapper() { return <Suspense fallback={...}><Page /></Suspense>; }` then rename the original to `function Page()`.
+
+### 16. tRPC Service Dependency Chain (Discovered 2026-04-29)
+**Observation**: 8 tRPC routers crash with `Cannot read properties of undefined` when MCP services aren't initialized. Root cause: `getMcpServer()` returns `{}` when server isn't ready, then getters like `getSuggestionService()` return `undefined`, and calling methods on `undefined` crashes.
+**Resolution**: Wrap service calls in try/catch with safe defaults: `try { return getService()?.method() ?? []; } catch { return []; }`
+**Implication**: When running with `--no-mcp`, all routers should return empty/safe defaults instead of 500 errors.
+
+### 17. Server Startup Takes ~45 Seconds (Discovered 2026-04-29)
+**Observation**: `borg start --no-mcp` takes ~45 seconds to fully bind port 4000. The MCPServer imports 53+ phases before Express starts listening.
+**Implication**: CLI health checks and tests must wait at least 50 seconds before testing endpoints. The `borg status` command uses `AbortSignal.timeout(3000)` which may not be enough during startup.
+
+### 18. Commander.js Global --json Doesn't Merge to Subcommands (Discovered 2026-04-29)
+**Observation**: When `--json` is registered as a global option on the program AND as a subcommand option, the subcommand `opts` object is empty `{}`. The global option consumes the flag.
+**Resolution**: Use `cmd.optsWithGlobals()` in the action handler: `async (opts, cmd) => { const allOpts = cmd ? cmd.optsWithGlobals() : opts; const isJson = allOpts.json === true; }`
+
+### 19. Turbopack Cache Corruption (Discovered 2026-04-29)
+**Observation**: Next.js 16 Turbopack crashes with `range start index 1607525553 out of range for slice of length 468465` in static_sorted_file.rs. The `.next/` cache gets corrupted.
+**Resolution**: Delete `apps/web/.next/` and rebuild. Set `turbopack.root` in `next.config.js` to the monorepo root.
+**Implication**: If the dashboard fails to start, first try clearing `.next/`.

@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.39]
+
+### Added
+- All CLI commands now query live tRPC API: `status`, `mcp list`, `mcp tools`, `memory *`, `config show`, `tools list`, `session list`.
+- tRPC surface audit: 62 routers registered, 31 procedures tested, 23 returning real data.
+- Health check script (`scripts/health-check.cjs`) and audit script (`scripts/audit.cjs`).
+
+### Fixed
+- 8 tRPC routers (suggestions, session, billing, director, supervisor, healer, knowledge, commands, workflow) now gracefully handle uninitialized services with safe empty defaults.
+- Dynamic VERSION file read in `borg start` banner (was hardcoded alpha.36).
+- Go binary output path in start.bat/start.sh corrected from `../../bin` to `../bin`.
+- Go ldflags use full module path `github.com/borghq/borg-go/internal/buildinfo.Version`.
+- Dashboard dev script uses spawn instead of execFileSync, correct 3-level path resolution.
+- Turbopack root configured in next.config.js to fix workspace detection warning.
+- CLI bin entry corrected from `dist/index.js` to `dist/cli/src/index.js`.
+
+## [1.0.0-alpha.38]
+
+### Added
+- Created 8 `@borg/*` stub packages (types, agents, ai, tools, adk, mcp-registry, memory, search) with proper TypeScript declarations, ESM runtime stubs, and zod schemas.
+- Added `apps/web/scripts/dev.mjs` for `pnpm -C apps/web dev` support.
+- Unified start script (start.bat/start.sh) launches Go sidecar + TS control plane together.
+
+### Fixed
+- TypeScript compilation: 0 errors across core, cli, web, go vet.
+- Server starts and serves tRPC at `http://0.0.0.0:4000/trpc`.
+- Dashboard builds all 86 pages successfully and dev server runs at `http://localhost:3000`.
+- Resolved 2 critical CVEs (cookie, path-to-regexp) via dependency updates.
+- Fixed dashboard utility stubs across 10 files (memory, MCP, integrations, AI tools, logs, sessions).
+- Fixed `entities@^6.0.0` for `parse5@8` compatibility.
+- Fixed jsdom dependency chain (tldts, xmlchars, bidi-js, etc.).
+- Cleaned 6 stale gitlink references from old submodule paths.
+- Wrapped reset-password and MCP search pages in Suspense for `useSearchParams()`.
+
 ## [1.0.0-alpha.37]
 
 ### Added

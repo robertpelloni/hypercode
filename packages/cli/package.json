@@ -1,9 +1,9 @@
 {
     "name": "@borg/cli",
-    "version": "1.0.0-alpha.38",
+    "version": "1.0.0-alpha.39",
     "type": "module",
     "bin": {
-        "borg": "./dist/index.js"
+        "borg": "./dist/cli/src/index.js"
     },
     "scripts": {
         "build": "tsc",
