@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -139,6 +140,18 @@ func (s *Server) callUpstreamJSON(ctx context.Context, procedure string, payload
 	result, err := interop.CallTRPCProcedure(ctx, s.cfg.MainLockPath(), procedure, payload)
 	if err != nil {
 		return "", err
+	}
+	// Check if tRPC returned an error in the response body
+	var probe struct {
+		Error *struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(result.Data, &probe); err != nil {
+		return "", err
+	}
+	if probe.Error != nil {
+		return "", fmt.Errorf("upstream procedure %s returned error: %s", procedure, probe.Error.Message)
 	}
 	if err := json.Unmarshal(result.Data, target); err != nil {
 		return "", err
