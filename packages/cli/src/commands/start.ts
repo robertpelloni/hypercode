@@ -457,6 +457,26 @@ Examples:
 				}
 				console.log(chalk.dim("\n  Press Ctrl+C to stop\n"));
 
+				// Launch Go sidecar if available
+				try {
+					const { existsSync } = await import('fs');
+					const { resolve } = await import('path');
+					const goBin = resolve(process.cwd(), 'go', 'borg.exe');
+					if (existsSync(goBin)) {
+						const { spawn } = await import('child_process');
+						const goProc = spawn(goBin, ['serve', '--port', '4300'], {
+							stdio: 'ignore',
+							detached: true,
+							env: { ...process.env, BORG_WORKSPACE: process.cwd() },
+						});
+						goProc.unref();
+						console.log(chalk.green('  ✓ Go sidecar launched on port 4300'));
+					}
+				} catch (e: any) {
+					// Go sidecar is optional
+					console.log(chalk.dim('  Go sidecar: not available (optional)'));
+					}
+
 				process.once("exit", lifecycle.cleanup);
 				process.once("SIGINT", lifecycle.handleSigint);
 				process.once("SIGTERM", lifecycle.handleSigterm);
