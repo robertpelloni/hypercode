@@ -26,8 +26,21 @@ export function registerProviderCommand(program: Command): void {
       const chalk = (await import('chalk')).default;
       const Table = (await import('cli-table3')).default;
 
+      // Try to get provider data from API
+      let providers: any[] = [];
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/settings.get', {
+          signal: AbortSignal.timeout(3000),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const settings = json?.result?.data;
+          providers = settings?.providers ?? [];
+        }
+      } catch {}
+
       if (opts.json) {
-        console.log(JSON.stringify({ providers: [] }, null, 2));
+        console.log(JSON.stringify({ providers }, null, 2));
         return;
       }
 
@@ -37,9 +50,57 @@ export function registerProviderCommand(program: Command): void {
       });
 
       console.log(chalk.bold.cyan('\n  AI Providers\n'));
-      console.log(chalk.dim('  No providers configured. Use `borg provider add` to add one.\n'));
-      console.log(chalk.dim('  Supported: openai, anthropic, google, xai, deepseek, mistral,'));
-      console.log(chalk.dim('             openrouter, copilot, antigravity, local\n'));
+
+      if (providers.length === 0) {
+        // Check environment variables for known API keys
+        const envProviders: string[] = [];
+        const envMap: Record<string, string> = {
+          OPENAI_API_KEY: 'openai',
+          ANTHROPIC_API_KEY: 'anthropic',
+          GOOGLE_API_KEY: 'google',
+          GEMINI_API_KEY: 'google',
+          XAI_API_KEY: 'xai',
+          DEEPSEEK_API_KEY: 'deepseek',
+          MISTRAL_API_KEY: 'mistral',
+          OPENROUTER_API_KEY: 'openrouter',
+        };
+        for (const [env, provider] of Object.entries(envMap)) {
+          if (process.env[env]) {
+            envProviders.push(provider);
+            table.push([
+              provider,
+              chalk.green('● Available'),
+              chalk.dim('env: ' + env),
+              '-',
+              '-',
+              '-',
+              '-',
+            ]);
+          }
+        }
+        if (envProviders.length > 0) {
+          console.log(table.toString());
+          console.log(chalk.dim(`\n  ${envProviders.length} provider(s) detected from environment variables`));
+          console.log(chalk.dim(`  Use ${chalk.cyan('borg provider add <name>')} to configure explicitly\n`));
+        } else {
+          console.log(chalk.dim('  No providers configured. Use `borg provider add` to add one.\n'));
+          console.log(chalk.dim('  Supported: openai, anthropic, google, xai, deepseek, mistral,'));
+          console.log(chalk.dim('             openrouter, copilot, antigravity, local\n'));
+        }
+      } else {
+        for (const p of providers) {
+          table.push([
+            p.name ?? p,
+            p.connected ? chalk.green('● Connected') : chalk.yellow('○ Disconnected'),
+            p.authType ?? 'api-key',
+            p.models?.length ?? '-',
+            p.quotaUsed ?? '-',
+            p.quotaLimit ?? '-',
+            p.quotaResets ?? '-',
+          ]);
+        }
+        console.log(table.toString() + '\n');
+      }
     });
 
   provider
