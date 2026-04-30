@@ -199,8 +199,66 @@ OAuth-capable subscription services:
     .action(async (name) => {
       const chalk = (await import('chalk')).default;
       console.log(chalk.yellow(`  Testing provider: ${name}...`));
-      console.log(chalk.dim('  Sending test request...'));
-      console.log(chalk.yellow(`  ⚠ Provider '${name}' not configured`));
+
+      // Map provider names to env vars and test endpoints
+      const providerTests: Record<string, { envKey: string; url: string; header: (key: string) => [string, string] }> = {
+        openai: { envKey: 'OPENAI_API_KEY', url: 'https://api.openai.com/v1/models', header: (k) => ['Authorization', `Bearer ${k}`] },
+        anthropic: { envKey: 'ANTHROPIC_API_KEY', url: 'https://api.anthropic.com/v1/models', header: (k) => ['x-api-key', k] },
+        google: { envKey: 'GOOGLE_API_KEY', url: 'https://generativelanguage.googleapis.com/v1beta/models?key=', header: () => ['', ''] },
+        gemini: { envKey: 'GEMINI_API_KEY', url: 'https://generativelanguage.googleapis.com/v1beta/models?key=', header: () => ['', ''] },
+        xai: { envKey: 'XAI_API_KEY', url: 'https://api.x.ai/v1/models', header: (k) => ['Authorization', `Bearer ${k}`] },
+        deepseek: { envKey: 'DEEPSEEK_API_KEY', url: 'https://api.deepseek.com/v1/models', header: (k) => ['Authorization', `Bearer ${k}`] },
+        mistral: { envKey: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/models', header: (k) => ['Authorization', `Bearer ${k}`] },
+        openrouter: { envKey: 'OPENROUTER_API_KEY', url: 'https://openrouter.ai/api/v1/models', header: (k) => ['Authorization', `Bearer ${k}`] },
+      };
+
+      const test = providerTests[name.toLowerCase()];
+      if (!test) {
+        console.log(chalk.red(`  ✗ Unknown provider: ${name}`));
+        console.log(chalk.dim(`    Supported: ${Object.keys(providerTests).join(', ')}`));
+        return;
+      }
+
+      const apiKey = process.env[test.envKey];
+      if (!apiKey) {
+        console.log(chalk.red(`  ✗ No API key found (${test.envKey})`));
+        console.log(chalk.dim(`    Set it: export ${test.envKey}=sk-...`));
+        return;
+      }
+
+      try {
+        const start = Date.now();
+        let url = test.url;
+        const [headerName, headerValue] = test.header(apiKey);
+        const headers: Record<string, string> = {};
+        if (headerName) headers[headerName] = headerValue;
+        if (name.toLowerCase() === 'anthropic') headers['anthropic-version'] = '2023-06-01';
+
+        // Google/Gemini use key in URL
+        if (name.toLowerCase() === 'google' || name.toLowerCase() === 'gemini') {
+          url += apiKey;
+        }
+
+        const res = await fetch(url, { headers, signal: AbortSignal.timeout(10000) });
+        const latency = Date.now() - start;
+
+        if (res.ok) {
+          const data = await res.json();
+          const models = data?.data ?? data?.models ?? [];
+          console.log(chalk.green(`  ✓ ${name} authenticated (${latency}ms)`));
+          console.log(chalk.dim(`    Models available: ${Array.isArray(models) ? models.length : 'unknown'}`));
+          if (Array.isArray(models) && models.length > 0) {
+            const sampleNames = models.slice(0, 5).map((m: any) => m.id ?? m.name).join(', ');
+            console.log(chalk.dim(`    Sample: ${sampleNames}`));
+          }
+        } else {
+          const body = await res.text().catch(() => '');
+          console.log(chalk.red(`  ✗ ${name} returned ${res.status} (${latency}ms)`));
+          console.log(chalk.dim(`    ${body.substring(0, 100)}`));
+        }
+      } catch (e: any) {
+        console.log(chalk.red(`  ✗ ${name} error: ${e.message}`));
+      }
     });
 
   provider
