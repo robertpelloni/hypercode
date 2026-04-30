@@ -33,7 +33,7 @@ function getVersion(): string {
     const versionPath = resolve(__dirname, '..', '..', '..', '..', '..', 'VERSION');
     return readFileSync(versionPath, 'utf-8').trim();
   } catch {
-    return '1.0.0-alpha.37';
+    return '1.0.0-alpha.39';
   }
 }
 

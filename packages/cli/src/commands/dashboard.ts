@@ -10,6 +10,21 @@
  */
 
 import type { Command } from 'commander';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+
+function getVersion(): string {
+  try {
+    let dir = process.cwd();
+    for (let i = 0; i < 20; i++) {
+      try { return readFileSync(resolve(dir, 'VERSION'), 'utf8').trim(); } catch {}
+      const parent = resolve(dir, '..');
+      if (parent === dir) break;
+      dir = parent;
+    }
+  } catch {}
+  return '1.0.0-alpha.39';
+}
 
 export function registerDashboardCommand(program: Command): void {
   program
@@ -72,7 +87,7 @@ Examples:
         console.log(JSON.stringify({
           name: 'Borg',
           subtitle: 'The Neural Operating System',
-          version: '1.0.0-alpha.36',
+          version: getVersion(),
           codename: 'AIOS',
           packages: ['@borg/core', '@borg/cli', '@borg/types', '@borg/ai', '@borg/agents', '@borg/tools', '@borg/search', '@borg/memory', '@borg/adk'],
           repository: 'https://github.com/robertpelloni/borg',
@@ -81,7 +96,7 @@ Examples:
       }
 
       console.log(chalk.bold.cyan('\n  ⬡ Borg — The Neural Operating System'));
-      console.log(chalk.dim('  Version: 1.0.0-alpha.36 | Codename: AIOS\n'));
+      console.log(chalk.dim(`  Version: ${getVersion()} | Codename: AIOS\n`));
       console.log(chalk.dim('  "The Ultimate AI Tool Dashboard & Development Orchestrator"\n'));
 
       console.log(chalk.bold('  Packages:'));
