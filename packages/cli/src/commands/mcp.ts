@@ -126,7 +126,24 @@ export function registerMcpCommand(program: Command): void {
     .action(async (name) => {
       const chalk = (await import('chalk')).default;
       console.log(chalk.yellow(`  Restarting MCP server: ${name}...`));
-      console.log(chalk.green(`  ✓ Server '${name}' restarted`));
+      try {
+        // Stop
+        await fetch(`http://127.0.0.1:4000/trpc/mcp.stopServer?input=${encodeURIComponent(JSON.stringify({ name }))}`, {
+          signal: AbortSignal.timeout(5000),
+        });
+        // Start
+        const res = await fetch(`http://127.0.0.1:4000/trpc/mcp.startServer?input=${encodeURIComponent(JSON.stringify({ name }))}`, {
+          signal: AbortSignal.timeout(10000),
+        });
+        if (res.ok) {
+          console.log(chalk.green(`  ✓ Server '${name}' restarted`));
+        } else {
+          const json = await res.json().catch(() => ({}));
+          console.log(chalk.red(`  ✗ Failed: ${json.error?.message ?? res.statusText}`));
+        }
+      } catch (e: any) {
+        console.log(chalk.red(`  ✗ Error: ${e.message}`));
+      }
     });
 
   mcp
@@ -178,9 +195,25 @@ Examples:
     .command('remove <name>')
     .description('Remove an MCP server from configuration')
     .option('-f, --force', 'Skip confirmation')
-    .action(async (name) => {
+    .action(async (name, opts) => {
       const chalk = (await import('chalk')).default;
-      console.log(chalk.green(`  ✓ Removed MCP server '${name}'`));
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/mcpServers.delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
+          signal: AbortSignal.timeout(5000),
+        });
+        if (res.ok) {
+          console.log(chalk.green(`  ✓ Removed MCP server '${name}'`));
+        } else {
+          const json = await res.json().catch(() => ({}));
+          console.log(chalk.red(`  ✗ Failed: ${json.error?.message ?? res.statusText}`));
+        }
+      } catch (e: any) {
+        console.log(chalk.red(`  ✗ Error: ${e.message}`));
+        console.log(chalk.dim(`    Is the server running?`));
+      }
     });
 
   mcp
@@ -235,7 +268,34 @@ Examples:
     .action(async (opts) => {
       const chalk = (await import('chalk')).default;
       console.log(chalk.bold.cyan('  MCP Traffic Inspector'));
-      console.log(chalk.dim('  Watching for MCP traffic... (Ctrl+C to stop)\n'));
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/mcp.traffic', {
+          signal: AbortSignal.timeout(5000),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const events = json?.result?.data ?? [];
+          if (events.length === 0) {
+            console.log(chalk.dim('  No traffic events recorded.'));
+          } else {
+            let filtered = events;
+            if (opts.server) filtered = filtered.filter((e: any) => e.server === opts.server);
+            if (opts.method) filtered = filtered.filter((e: any) => e.method === opts.method);
+            const limit = parseInt(opts.limit) || 50;
+            filtered = filtered.slice(-limit);
+            for (const e of filtered) {
+              const dir = e.direction === 'in' ? chalk.green('→') : chalk.blue('←');
+              const lat = e.latencyMs ? chalk.dim(`${e.latencyMs}ms`) : '';
+              console.log(`  ${dir} [${e.server ?? 'unknown'}] ${e.method ?? 'unknown'} ${lat}`);
+            }
+            console.log(chalk.dim(`\n  ${filtered.length} events shown`));
+          }
+        } else {
+          console.log(chalk.dim('  Traffic endpoint not available.'));
+        }
+      } catch {
+        console.log(chalk.dim('  Server not reachable. Use borg start to launch.'));
+      }
     });
 
   mcp
