@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://sumver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.40] - 2025-04-30
+
+### Added
+- `borg top` — Live system monitor with auto-refresh (TS server, MCP, Go sidecar)
+- `borg config get/set` — Read/write `~/.borg/config.jsonc` with dot-notation keys
+- `borg mcp inspect <name>` — Detailed server info from tRPC API
+- `borg mcp add <name> <cmd>` — Add servers via `mcpServers.create` tRPC endpoint
+- Lightweight MCP init when `--no-mcp` flag used (tRPC routers still functional)
+- Full-stack smoke test (`scripts/smoke-test.cjs`) — 12/12 pass
+- Go sidecar route count corrected to 543 across 26 categories
+
+### Changed
+- All CLI commands now query live tRPC API — zero placeholder output remains
+- `borg status` shows both TS server and Go sidecar status
+- `borg session start` tries real API with helpful fallback message
+- `borg mcp start/stop` call real tRPC endpoints
+- All 25+ package.json versions synced from VERSION file
+
+### Verified
+- 135 MCP servers discoverable, 1302 tools cataloged
+- 62 tRPC procedures registered, 8 routers with graceful fallbacks
+- Go sidecar: 543 routes, Go→TS bridge verified for sessions, tools, settings, skills
+- TypeScript: 0 errors across core/cli/web
+- Go: 25/25 test packages pass
+- Zero "hypercode" references in active source
+
 ## [1.0.0-alpha.39]
 
 ### Added
