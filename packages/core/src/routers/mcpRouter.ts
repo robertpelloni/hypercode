@@ -1073,13 +1073,12 @@ export const mcpRouter = t.router({
     connectServer: adminProcedure.input(z.object({
         name: z.string().min(1),
     })).mutation(async ({ input }) => {
-        const mcp = getMcpServer();
         const aggregator = getMcpAggregator();
         if (!aggregator) throw new Error('MCP Aggregator not initialized');
 
-        // Find server config from the configured servers
-        const configured = mcp?.configuredServers ?? [];
-        const serverConfig = configured.find((s: any) => s.name === input.name);
+        // Find server config from the JSONC config
+        const config = await loadBorgMcpConfig();
+        const serverConfig = config.mcpServers?.[input.name];
         if (!serverConfig) {
             throw new Error(`Server '${input.name}' not found in configuration. Use mcp.listServers to see available servers.`);
         }
