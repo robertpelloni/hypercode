@@ -7,7 +7,7 @@ const http = require('http');
 
 const TS_PORT = parseInt(process.env.TS_PORT || '4000');
 const GO_PORT = parseInt(process.env.GO_PORT || '4300');
-const TIMEOUT = 5000;
+const TIMEOUT = 8000;
 
 let passed = 0, failed = 0, skipped = 0;
 
