@@ -142,15 +142,64 @@ Examples:
 		)
 		.action(async (key, value) => {
 			const chalk = (await import("chalk")).default;
-			console.log(chalk.green(`  ✓ Set ${key} = ${value}`));
+			const { readFileSync, writeFileSync, mkdirSync } = await import("fs");
+			const { resolve, dirname } = await import("path");
+			const { homedir } = await import("os");
+
+			const configDir = process.env.BORG_CONFIG_DIR || resolve(homedir(), ".borg");
+			const configPath = resolve(configDir, "config.jsonc");
+
+			let config: Record<string, any> = {};
+			try {
+				const raw = readFileSync(configPath, "utf8");
+				// Strip comments for JSON parsing
+				config = JSON.parse(raw.replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, ""));
+			} catch {
+				// Config doesn't exist yet, start fresh
+			}
+
+			// Set nested key using dot notation
+			const parts = key.split(".");
+			let obj = config;
+			for (let i = 0; i < parts.length - 1; i++) {
+				if (!obj[parts[i]]) obj[parts[i]] = {};
+				obj = obj[parts[i]];
+			}
+			// Parse value as JSON if possible, otherwise keep as string
+			let parsedValue: any = value;
+			try { parsedValue = JSON.parse(value); } catch {}
+			obj[parts[parts.length - 1]] = parsedValue;
+
+			mkdirSync(dirname(configPath), { recursive: true });
+			writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
+			console.log(chalk.green(`  ✓ Set ${key} = ${JSON.stringify(parsedValue)}`));
 		});
 
 	config
 		.command("get <key>")
 		.description("Get a configuration value")
 		.action(async (key) => {
+			const { readFileSync } = await import("fs");
+			const { resolve } = await import("path");
+			const { homedir } = await import("os");
 			const chalk = (await import("chalk")).default;
-			console.log(chalk.dim(`  ${key}: `) + "undefined");
+
+			const configDir = process.env.BORG_CONFIG_DIR || resolve(homedir(), ".borg");
+			const configPath = resolve(configDir, "config.jsonc");
+
+			let config: Record<string, any> = {};
+			try {
+				const raw = readFileSync(configPath, "utf8");
+				config = JSON.parse(raw.replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, ""));
+			} catch {}
+
+			// Get nested key
+			const parts = key.split(".");
+			let val: any = config;
+			for (const p of parts) {
+				val = val?.[p];
+			}
+			console.log(chalk.dim(`  ${key}: `) + (val !== undefined ? chalk.white(JSON.stringify(val)) : chalk.dim("undefined")));
 		});
 
 	config
