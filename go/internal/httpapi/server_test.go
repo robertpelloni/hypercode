@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -36,6 +37,16 @@ type stubDetector struct {
 
 func (s stubDetector) DetectAll(context.Context) ([]controlplane.Tool, error) {
 	return s.tools, s.err
+}
+
+// skipIfServerRunning skips the test if a real TS server is reachable,
+// because fallback tests require the upstream to be offline.
+func skipIfServerRunning(t *testing.T) {
+	t.Helper()
+	if conn, err := net.DialTimeout("tcp", "127.0.0.1:4000", 100*time.Millisecond); err == nil {
+		conn.Close()
+		t.Skip("TS server running on port 4000 — fallback test requires offline upstream")
+	}
 }
 
 func TestHealthEndpoint(t *testing.T) {
@@ -1049,6 +1060,7 @@ func TestMemoryAgentStatsFallsBackToPersistedState(t *testing.T) {
 }
 
 func TestMCPEmptyStateRoutesFallBackLocally(t *testing.T) {
+	skipIfServerRunning(t)
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 	cfg := config.Default()
 	cfg.WorkspaceRoot = t.TempDir()
@@ -1283,6 +1295,7 @@ func seedPersistedAgentMemories(t *testing.T, workspaceRoot string) {
 }
 
 func TestMemoryServiceBackedMutationsFallBackLocally(t *testing.T) {
+	skipIfServerRunning(t)
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 	cfg := config.Default()
 	cfg.WorkspaceRoot = t.TempDir()
@@ -4039,6 +4052,7 @@ func TestConfigAuthProvidersFallsBackToLocalOIDCAvailability(t *testing.T) {
 }
 
 func TestObservabilityReadEndpointsFallBackToLocalPreview(t *testing.T) {
+	skipIfServerRunning(t)
 	t.Setenv("BORG_TRPC_UPSTREAM", "http://127.0.0.1:1/trpc")
 
 	workspaceRoot := t.TempDir()
@@ -9948,6 +9962,7 @@ func TestMCPSyncTargetsAndExportFallBackToLocalJsonc(t *testing.T) {
 }
 
 func TestMCPToolPreferencesFallBackToLocalJsonc(t *testing.T) {
+	skipIfServerRunning(t)
 	mainConfigDir := t.TempDir()
 	jsoncContent := `// borg MCP configuration
 {
