@@ -518,14 +518,71 @@ Supported clients:
     `)
     .action(async (opts) => {
       const chalk = (await import('chalk')).default;
+      const { existsSync, readFileSync, writeFileSync, mkdirSync } = await import('fs');
+      const { resolve, join } = await import('path');
+      const { homedir } = await import('os');
+      const home = homedir();
+
       console.log(chalk.bold.cyan('\n  MCP Config Sync\n'));
       if (opts.dryRun) {
         console.log(chalk.yellow('  [DRY RUN] No changes will be written\n'));
       }
-      console.log(chalk.dim('  Scanning for AI tool configs...\n'));
-      const clients = ['Claude Desktop', 'Cursor', 'VS Code', 'Windsurf', 'OpenCode'];
-      for (const client of clients) {
-        console.log(chalk.dim(`  ${client}: `) + chalk.yellow('not found'));
+
+      // Get our MCP config
+      let ourServers: any[] = [];
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/mcp.listServers', { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          const json = await res.json();
+          ourServers = json?.result?.data ?? [];
+        }
+      } catch {}
+
+      console.log(chalk.dim(`  Borg has ${ourServers.length} configured servers\n`));
+
+      // Define client config paths
+      const clients: Record<string, { name: string; paths: string[]; format: string }> = {
+        claude: {
+          name: 'Claude Desktop',
+          paths: [
+            resolve(home, 'AppData/Roaming/Claude/claude_desktop_config.json'),
+            resolve(home, '.config/claude/claude_desktop_config.json'),
+          ],
+          format: 'mcpServers',
+        },
+        cursor: {
+          name: 'Cursor',
+          paths: [resolve(home, '.cursor/mcp.json')],
+          format: 'mcpServers',
+        },
+        vscode: {
+          name: 'VS Code',
+          paths: [
+            resolve(home, 'AppData/Roaming/Code/User/settings.json'),
+            resolve(home, '.config/Code/User/settings.json'),
+          ],
+          format: 'settings',
+        },
+        windsurf: {
+          name: 'Windsurf',
+          paths: [resolve(home, '.windsurf/mcp.json')],
+          format: 'mcpServers',
+        },
+        opencode: {
+          name: 'OpenCode',
+          paths: ['opencode.json'],
+          format: 'mcpServers',
+        },
+      };
+
+      for (const [key, client] of Object.entries(clients)) {
+        if (opts.client && opts.client !== key) continue;
+        const found = client.paths.find(p => existsSync(p));
+        if (found) {
+          console.log(chalk.green(`  ✓ ${client.name}`) + chalk.dim(` (${found})`));
+        } else {
+          console.log(chalk.dim(`  ○ ${client.name}: not found`));
+        }
       }
       console.log('');
     });
