@@ -131,15 +131,45 @@ OAuth-capable subscription services:
     `)
     .action(async (name, opts) => {
       const chalk = (await import('chalk')).default;
+
       if (opts.oauth) {
         console.log(chalk.yellow(`  Starting OAuth flow for ${name}...`));
         console.log(chalk.dim('  (OAuth login not yet implemented)'));
-      } else if (opts.apiKey) {
-        console.log(chalk.green(`  ✓ Provider '${name}' added with API key`));
-      } else {
+        return;
+      }
+
+      if (!opts.apiKey) {
         console.log(chalk.yellow(`  Set API key via environment variable or --api-key flag`));
         console.log(chalk.dim(`  Example: export ${name.toUpperCase()}_API_KEY=sk-...`));
+        return;
       }
+
+      // Write provider config to ~/.borg/config.jsonc
+      const { readFileSync, writeFileSync, mkdirSync } = await import('fs');
+      const { resolve, dirname } = await import('path');
+      const { homedir } = await import('os');
+      const configDir = process.env.BORG_CONFIG_DIR || resolve(homedir(), '.borg');
+      const configPath = resolve(configDir, 'config.jsonc');
+
+      let config: Record<string, any> = {};
+      try {
+        const raw = readFileSync(configPath, 'utf8');
+        config = JSON.parse(raw.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''));
+      } catch {}
+
+      if (!config.providers) config.providers = {};
+      config.providers[name] = {
+        apiKey: opts.apiKey,
+        baseUrl: opts.baseUrl,
+        models: opts.models,
+        addedAt: new Date().toISOString(),
+      };
+
+      mkdirSync(dirname(configPath), { recursive: true });
+      writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
+      console.log(chalk.green(`  ✓ Provider '${name}' configured`));
+      if (opts.baseUrl) console.log(chalk.dim(`    Base URL: ${opts.baseUrl}`));
+      if (opts.models?.length) console.log(chalk.dim(`    Models: ${opts.models.join(', ')}`));
     });
 
   provider
