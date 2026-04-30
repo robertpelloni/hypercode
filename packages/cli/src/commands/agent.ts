@@ -23,38 +23,65 @@ export function registerAgentCommand(program: Command): void {
     .option('--json', 'Output as JSON')
     .option('--provider <provider>', 'Filter by provider')
     .option('--role <role>', 'Filter by role')
-    .action(async (opts) => {
-      const chalk = (await import('chalk')).default;
-      const Table = (await import('cli-table3')).default;
+    .action(async (opts, cmd) => {
+      const allOpts = cmd ? cmd.optsWithGlobals() : opts;
+      const isJson = allOpts.json === true;
 
-      if (opts.json) {
-        console.log(JSON.stringify({ agents: [] }, null, 2));
+      // Try to get squads/agents from the live server
+      let squads: any[] = [];
+      try {
+        const res = await fetch('http://127.0.0.1:4000/trpc/squad.list', { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          const json = await res.json();
+          squads = json?.result?.data ?? [];
+        }
+      } catch {}
+
+      if (isJson) {
+        console.log(JSON.stringify({ agents: squads }, null, 2));
         return;
       }
 
+      const chalk = (await import('chalk')).default;
+
+      if (squads.length > 0) {
+        const Table = (await import('cli-table3')).default;
+        const table = new Table({
+          head: ['Name', 'Members', 'Status'],
+          style: { head: ['cyan'] },
+        });
+        for (const s of squads) {
+          const status = s.active ? chalk.green('● Active') : chalk.dim('○ Inactive');
+          table.push([s.name ?? s.id, String(s.memberCount ?? s.members?.length ?? 0), status]);
+        }
+        console.log(chalk.bold.cyan(`\n  Agent Squads (${squads.length})\n`));
+        console.log(table.toString());
+        console.log('');
+        return;
+      }
+
+      // Fallback: show built-in agent definitions
+      const Table = (await import('cli-table3')).default;
       const table = new Table({
-        head: ['Name', 'Model', 'Provider', 'Role', 'Status'],
+        head: ['Name', 'Model', 'Provider', 'Role'],
         style: { head: ['cyan'] },
       });
 
       const agents = [
-        ['architect', 'claude-opus-4', 'anthropic', 'Architect', 'available'],
-        ['builder', 'gpt-5.2-codex', 'openai', 'Builder', 'available'],
-        ['researcher', 'gemini-3-pro', 'google', 'Researcher', 'available'],
-        ['critic', 'grok-4', 'xai', 'Critic', 'available'],
-        ['supernova', 'claude-sonnet-4', 'anthropic', 'General', 'available'],
+        ['architect', 'claude-opus-4', 'anthropic', 'Architect'],
+        ['builder', 'gpt-5.2-codex', 'openai', 'Builder'],
+        ['researcher', 'gemini-3-pro', 'google', 'Researcher'],
+        ['critic', 'grok-4', 'xai', 'Critic'],
+        ['supernova', 'claude-sonnet-4', 'anthropic', 'General'],
       ];
 
       for (const a of agents) {
-        const status = a[4] === 'running'
-          ? (await import('chalk')).default.green('● running')
-          : (await import('chalk')).default.dim('○ available');
-        table.push([a[0], a[1], a[2], a[3], status]);
+        table.push([a[0], a[1], a[2], a[3]]);
       }
 
       console.log(chalk.bold.cyan('\n  Available Agents\n'));
       console.log(table.toString());
-      console.log(chalk.dim(`\n  ${agents.length} agents available. Use \`borg agent spawn <name>\` to start one.\n`));
+      console.log(chalk.dim(`\n  ${agents.length} built-in agents. Use \`borg agent spawn <name>\` to start one.\n`));
     });
 
   agent
@@ -124,12 +151,33 @@ Examples:
     .option('--stop', 'Stop the council')
     .option('--status', 'Show council status')
     .option('--json', 'Output as JSON')
-    .action(async (opts) => {
+    .action(async (opts, cmd) => {
+      const allOpts = cmd ? cmd.optsWithGlobals() : opts;
+      const isJson = allOpts.json === true;
+
+      // Query real status from the API
+      let director: any = null;
+      let supervisor: any = null;
+      try {
+        const [dRes, sRes] = await Promise.all([
+          fetch('http://127.0.0.1:4000/trpc/director.status', { signal: AbortSignal.timeout(3000) }),
+          fetch('http://127.0.0.1:4000/trpc/supervisor.status', { signal: AbortSignal.timeout(3000) }),
+        ]);
+        if (dRes.ok) director = (await dRes.json())?.result?.data;
+        if (sRes.ok) supervisor = (await sRes.json())?.result?.data;
+      } catch {}
+
+      if (isJson) {
+        console.log(JSON.stringify({ director, supervisor }, null, 2));
+        return;
+      }
+
       const chalk = (await import('chalk')).default;
       console.log(chalk.bold.cyan('\n  Agent Council\n'));
-      console.log(chalk.dim('  Director:   ') + chalk.yellow('not configured'));
-      console.log(chalk.dim('  Supervisor: ') + chalk.yellow('not configured'));
-      console.log(chalk.dim('  Council:    ') + chalk.yellow('0 members'));
-      console.log(chalk.dim('\n  Configure in `borg config set director.enabled true`\n'));
+      console.log(chalk.dim('  Director:   ') + (director?.status === 'active' ? chalk.green('● Active') : director ? chalk.yellow('○ ' + (director.status ?? 'offline')) : chalk.dim('not configured')));
+      console.log(chalk.dim('  Supervisor: ') + (supervisor?.isActive ? chalk.green('● Active') : supervisor ? chalk.dim('○ Inactive') : chalk.dim('not configured')));
+      console.log(chalk.dim('  Workers:    ') + String(supervisor?.activeWorkers?.length ?? 0));
+      console.log(chalk.dim('  Queue:      ') + String(supervisor?.queueDepth ?? 0));
+      console.log('');
     });
 }
