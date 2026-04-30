@@ -113,14 +113,44 @@ Examples:
 		)
 		.action(async (workdir, opts) => {
 			const chalk = (await import("chalk")).default;
+			const { resolve } = await import("path");
+			const absWorkdir = resolve(process.cwd(), workdir);
+
+			// Try to create session via API
+			try {
+				const body = JSON.stringify({
+					json: {
+						cliType: opts.harness,
+						workingDirectory: absWorkdir,
+						name: opts.name,
+						command: opts.model,
+					},
+				});
+				const res = await fetch('http://127.0.0.1:4000/trpc/session.create', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body,
+					signal: AbortSignal.timeout(5000),
+				});
+				if (res.ok) {
+					const json = await res.json();
+					const session = json?.result?.data;
+					console.log(chalk.green(`  ✓ Session created: ${session?.id ?? session?.sessionId ?? 'new'}`));
+					console.log(chalk.dim(`    Workdir:  ${absWorkdir}`));
+					console.log(chalk.dim(`    Harness:  ${opts.harness}`));
+					console.log(chalk.dim(`    Model:    ${opts.model || 'auto'}`));
+					return;
+				}
+			} catch {}
+
+			// Fallback: local session stub
 			const id = `sess_${Date.now().toString(36)}`;
 			console.log(chalk.green(`  ✓ Session started: ${id}`));
-			console.log(chalk.dim(`    Workdir:  ${workdir}`));
+			console.log(chalk.dim(`    Workdir:  ${absWorkdir}`));
 			console.log(chalk.dim(`    Harness:  ${opts.harness}`));
 			console.log(chalk.dim(`    Model:    ${opts.model || "auto"}`));
-			console.log(
-				chalk.dim(`    Restart:  ${opts.autoRestart ? "enabled" : "disabled"}`),
-			);
+			console.log(chalk.dim(`    Restart:  ${opts.autoRestart ? "enabled" : "disabled"}`));
+			console.log(chalk.yellow(`    ⚠ Session supervisor not initialized — use borg start (without --no-mcp)`));
 		});
 
 	session
